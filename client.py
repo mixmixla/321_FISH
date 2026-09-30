@@ -13272,14 +13272,24 @@ def _raise_current_window() -> None:
                 return True
             rect = ctypes.wintypes.RECT()
             user32.GetWindowRect(hwnd, ctypes.byref(rect))
-            if rect.right - rect.left >= 100 and rect.bottom - rect.top >= 100:
-                tops.append((order[0], hwnd))
-                order[0] += 1
+            if rect.right - rect.left < 100 or rect.bottom - rect.top < 100:
+                return True
+            # 跳过离屏窗口（历史多屏/隐藏位置会残留在虚拟屏外，拉起后仍看不见）
+            vx = user32.GetSystemMetrics(76)       # SM_XVIRTUALSCREEN
+            vy = user32.GetSystemMetrics(77)       # SM_YVIRTUALSCREEN
+            vw = user32.GetSystemMetrics(78)       # SM_CXVIRTUALSCREEN
+            vh = user32.GetSystemMetrics(79)       # SM_CYVIRTUALSCREEN
+            cx = (rect.left + rect.right) // 2
+            cy = (rect.top + rect.bottom) // 2
+            if not (vx <= cx < vx + vw and vy <= cy < vy + vh):
+                return True
+            tops.append((order[0], hwnd))
+            order[0] += 1
             return True
 
         user32.EnumWindows(WNDENUMPROC(cb), 0)
         if tops:
-            _z, hwnd = max(tops)                   # 后枚举 = 更靠前
+            _z, hwnd = tops[0]                     # 枚举序 = Z 序自上而下 → 首个即最靠前
             user32.ShowWindow(hwnd, 9)             # SW_RESTORE（藏起的确认窗先还原）
             user32.SetForegroundWindow(hwnd)
     except Exception:

@@ -189,6 +189,25 @@ class LoginDialog:
             self._nick_ent.focus_set()
         except Exception:
             pass
+        # 后台启动时 Windows 前台锁会吞掉 lift/focus_force（登录窗被其它窗口盖住，
+        # 表现就是"进程在跑但没显示"）。SetWindowPos(HWND_TOPMOST) 不受前台锁限制，
+        # 再延时重试一次覆盖窗口刚 map 时未生效的情况。
+        def _force_foreground(w):
+            try:
+                import ctypes
+                u = ctypes.windll.user32
+                hwnd = int(w.winfo_id())
+                SWP_NOSIZE, SWP_NOMOVE = 0x0001, 0x0002
+                u.SetWindowPos(hwnd, -1, 0, 0, 0, 0,
+                               SWP_NOSIZE | SWP_NOMOVE)   # HWND_TOPMOST
+                u.SetForegroundWindow(hwnd)
+            except Exception:
+                pass
+        _force_foreground(dlg)
+        try:
+            dlg.after(400, _force_foreground, dlg)
+        except Exception:
+            pass
 
         self._start_disco()
 

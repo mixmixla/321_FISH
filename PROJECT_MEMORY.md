@@ -4,7 +4,7 @@
 
 - 用途：Windows 局域网聊天、文件/媒体、网页端与桌游；Tkinter 桌面客户端。
 - 栈与入口：Python 3.14.5，`dev.ps1` / `run.py`；Hub 加密 TCP，网页 HTTP(S)/SSE。
-- 最近核对：2026-09-30，原始提交 `0fffac4`，包含本轮审核修复与可编辑工作表改动。
+- 最近核对：2026-09-30，从 `origin/main` 的 `c8f2860` 拉取登录窗反馈与协作任务清单。
 - 当前机器路径 `D:\Project\321_FISH`，迁移后以任务工作区为准。
 - 个人开发技能：`$fish-assistant-dev`；源码事实优先于技能旧索引。
 
@@ -56,14 +56,22 @@
   `ChatWindow._send_excel_text` 与 `tests/test_excel*`。
 - 2026-09-30 — 音频 callback 只入队，普通线程执行 wave API；保留 native buffer
   生命周期 — 证据：`voice_api.py`, `tests/test_audit_audio_callbacks.py`。
+- 2026-09-30 — 独立登录窗不 transient 到 withdrawn 宿主，映射后才 grab/聚焦；
+  原生置顶操作 GA_ROOT 顶层 HWND，重试保留密码框焦点；退出清理 grab/定时任务。
+  不修改其它弹窗的 `_hide_owner` — 证据：`widgets/login_box.py`, `tests/test_login_*.py`。
 
 ## Current work
 
-- 交付分支 `feature/excel-skin-and-audit`；远端合并与发布状态以 GitHub PR 和提交记录为准。
+- Excel/环境/审核改动已通过 PR #1 合入 main；后续前台唤起改动通过 PR #2 合入。
+- 当前修复分支 `fix/login-hidden-root`：处理隐藏宿主导致登录窗不渲染的反馈，
+  修复与独立回归已完成，走 PR 交付，远端合并与发布状态以 GitHub 记录为准。
 - 已完成：测试误报修复、成员/上传归属、多端删号/ token、动态图片权限、链接预览
   SSRF、E2EE 计数窗口、音频 callback/PCM 指针/池回收及可编辑 Excel 皮肤。
 - 最近验证：可编辑工作表修订全量 1228 passed / 2 默认跳过；最终工作表专项
   8 passed，真实 GUI 与 680×480 冒烟通过。这是历史结果，后续改动需重新核对。
+- 登录修复验证：101 个测试文件分进程逐文件通过；最后补充边界用例后重跑登录
+  两个文件，共 16 passed，累计当前门禁 1244 passed / 2 默认跳过。真实自有 Tk
+  宿主下登录窗可见/聚焦；取消、再次登录、最小化宿主和映射超时均已验证。
 - 未验证：发布 EXE、全部游戏 UI 可达性、完整可选扩展、真实音频长期稳定性。
 
 ## Risks and follow-ups

@@ -26,6 +26,7 @@ _SUB = "#8a8f98"
 _TX = "#1a1a1a"
 _WHITE = "#ffffff"
 _FAM = "Microsoft YaHei UI"
+_VISIBILITY_TIMEOUT_MS = 2000
 
 
 def _rrect_pts(x1, y1, x2, y2, r):
@@ -34,20 +35,51 @@ def _rrect_pts(x1, y1, x2, y2, r):
             x2 - r, y2, x1 + r, y2, x1, y2, x1, y2 - r, x1, y1 + r, x1, y1)
 
 
+def _force_foreground(win) -> bool:
+    """尽力置顶并激活实际的 Win32 顶层窗口，不能使用 Tk 的 client HWND。"""
+    try:
+        if not win.winfo_exists() or not win.winfo_viewable():
+            return False
+        import ctypes
+        from ctypes import wintypes
+        user32 = ctypes.windll.user32
+        user32.GetAncestor.argtypes = [wintypes.HWND, wintypes.UINT]
+        user32.GetAncestor.restype = wintypes.HWND
+        user32.IsWindow.argtypes = [wintypes.HWND]
+        user32.IsWindow.restype = wintypes.BOOL
+        user32.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND,
+                                       ctypes.c_int, ctypes.c_int,
+                                       ctypes.c_int, ctypes.c_int, wintypes.UINT]
+        user32.SetWindowPos.restype = wintypes.BOOL
+        user32.SetForegroundWindow.argtypes = [wintypes.HWND]
+        user32.SetForegroundWindow.restype = wintypes.BOOL
+        hwnd = user32.GetAncestor(int(win.winfo_id()), 2)  # GA_ROOT: Tk wrapper
+        if not hwnd or not user32.IsWindow(hwnd):
+            return False
+        placed = user32.SetWindowPos(hwnd, wintypes.HWND(-1), 0, 0, 0, 0,
+                                     0x0001 | 0x0002)  # NOSIZE | NOMOVE
+        activated = user32.SetForegroundWindow(hwnd)
+        return bool(placed and activated)
+    except Exception:
+        return False
+
+
 class LoginDialog:
     """微信式登录窗。result 为 {"nick","pwd","host","port","name","remember"}。"""
 
     def __init__(self, root, prefs, default_host="127.0.0.1",
-                 default_port=None) -> None:
+                 default_port=None, *, owner_hidden=False) -> None:
         self.root = root
         self.prefs = prefs
         self.result = None
         self._disco = None
         self._poll_job = None
+        self._raise_job = None
         self._panel_open = False
 
         dlg = tk.Toplevel(root)
         self.dlg = dlg
+        dlg.withdraw()  # 布局完成再映射，避免空白窗和提前取得不可见窗口的 grab。
         dlg.title(APP_NAME)
         dlg.configure(bg=_WHITE)
         try:
@@ -59,9 +91,12 @@ class LoginDialog:
             dlg.attributes("-topmost", True)
         except Exception:
             pass
-        dlg.transient(root)
-        dlg.grab_set()
+        # transient 会跟随 owner 的 withdrawn 状态；独立登录的 root 仅是 Tcl 宿主。
+        # 现有可见主窗作为 master 时保留窗口归属，不修改其它弹窗的宿主策略。
+        if not owner_hidden and root.state() == "normal":
+            dlg.transient(root)
         dlg.resizable(False, False)
+        dlg.protocol("WM_DELETE_WINDOW", self._cancel)
 
         # ---- 当前目标服务器（折叠行显示）----
         ls = prefs.get("last_server") or {}
@@ -178,38 +213,56 @@ class LoginDialog:
         except Exception:
             x, y = 100, 100
         dlg.geometry("%dx%d+%d+%d" % (w, h, x, y))
+        dlg.deiconify()
+        dlg.update_idletasks()
+        if not dlg.winfo_viewable():
+            # WM 拒绝映射或宿主在此时关闭时，不能无限等待，也不能抓住输入。
+            timeout_job = dlg.after(_VISIBILITY_TIMEOUT_MS, self._cancel)
+            try:
+                dlg.wait_visibility()
+            except tk.TclError:
+                self._stop()
+                try:
+                    if dlg.winfo_exists():
+                        dlg.destroy()
+                except tk.TclError:
+                    pass  # 宿主也可能已被外部关闭。
+                return
+            finally:
+                try:
+                    dlg.after_cancel(timeout_job)
+                except tk.TclError:
+                    pass
+            if not dlg.winfo_viewable():
+                self._cancel()
+                return
+        dlg.grab_set()
         try:
             from widgets import ui_fx
             ui_fx.fade_in(dlg)
         except Exception:
             pass
-        try:
-            dlg.lift()
-            dlg.focus_force()
-            self._nick_ent.focus_set()
-        except Exception:
-            pass
         # 后台启动时 Windows 前台锁会吞掉 lift/focus_force（登录窗被其它窗口盖住，
         # 表现就是"进程在跑但没显示"）。SetWindowPos(HWND_TOPMOST) 不受前台锁限制，
         # 再延时重试一次覆盖窗口刚 map 时未生效的情况。
-        def _force_foreground(w):
-            try:
-                import ctypes
-                u = ctypes.windll.user32
-                hwnd = int(w.winfo_id())
-                SWP_NOSIZE, SWP_NOMOVE = 0x0001, 0x0002
-                u.SetWindowPos(hwnd, -1, 0, 0, 0, 0,
-                               SWP_NOSIZE | SWP_NOMOVE)   # HWND_TOPMOST
-                u.SetForegroundWindow(hwnd)
-            except Exception:
-                pass
-        _force_foreground(dlg)
-        try:
-            dlg.after(400, _force_foreground, dlg)
-        except Exception:
-            pass
+        self._activate(initial=True)
+        self._raise_job = dlg.after(400, self._activate)
 
         self._start_disco()
+
+    def _activate(self, initial=False):
+        if not initial:
+            self._raise_job = None
+        try:
+            if not self.dlg.winfo_exists() or not self.dlg.winfo_viewable():
+                return
+            self.dlg.lift()
+            _force_foreground(self.dlg)
+            # 重试不能把用户正在输入密码的焦点又移回账号框。
+            if initial or self.dlg.focus_get() is None:
+                self._nick_ent.focus_force()
+        except tk.TclError:
+            pass
 
     # ---------- 自绘圆角输入框 / 按钮 ----------
     def _round_field(self, parent, label, show=""):
@@ -352,6 +405,17 @@ class LoginDialog:
         self.dlg.destroy()
 
     def _stop(self):
+        if self._raise_job is not None:
+            try:
+                self.dlg.after_cancel(self._raise_job)
+            except tk.TclError:
+                pass
+            self._raise_job = None
+        try:
+            if self.dlg.grab_current() == self.dlg:
+                self.dlg.grab_release()
+        except tk.TclError:
+            pass
         if self._poll_job is not None:
             try:
                 self.dlg.after_cancel(self._poll_job)
@@ -371,19 +435,28 @@ def show_login(master=None, prefs=None, default_host="127.0.0.1",
     """弹微信式登录窗（模态）。返回 {"nick","pwd","host","port","name",
     "remember"} 或 None（取消/关闭）。"""
     from prefs import Prefs
-    from widgets import dialogbox
     prefs = prefs or Prefs()
     root = master or tk.Tk()
     if master is None:
+        root.withdraw()  # 宿主不显示、不占任务栏；登录窗不 transient 到它。
         from dpi import fix_scaling               # R43C 高分屏缩放校正
         fix_scaling(root)
-        dialogbox._hide_owner(root)
     once = master is None
-    box = LoginDialog(root, prefs, default_host, default_port)
-    root.wait_window(box.dlg)
-    if once:
+    box = None
+    try:
+        box = LoginDialog(root, prefs, default_host, default_port,
+                          owner_hidden=once)
         try:
-            root.destroy()
-        except Exception:
-            pass
-    return box.result
+            if box.dlg.winfo_exists():
+                root.wait_window(box.dlg)
+        except tk.TclError:
+            pass  # 等待期间外部关闭宿主，按取消处理并执行 finally 清理。
+        return box.result
+    finally:
+        if box is not None:
+            box._stop()  # 外部销毁/异常退出也停止发现线程与定时回调。
+        if once:
+            try:
+                root.destroy()
+            except tk.TclError:
+                pass

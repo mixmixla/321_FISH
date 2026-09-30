@@ -39,6 +39,7 @@ pystray（托盘）；开发还需 pytest、PyInstaller。可选语音转写、�
 | 昵称密码与网页登录 | `test_auth.py`, `test_r47.py`, `test_p0_web_security.py` |
 | 群与频道 | `test_r28_group_mgmt.py`, `test_r53.py`, `test_r54.py`, `test_r73.py` |
 | 消息列表、主题与设置 | `test_msg_list.py`, `test_msglist_group.py`, `test_session_list.py`, `test_theme.py`, `test_settings_nav.py` |
+| 登录窗显示、焦点与原生句柄 | `test_login_visibility.py`, `test_login_foreground.py` |
 | Excel 工作表 | `test_excel_sheet.py`, `test_excel_skin.py`, `tests/_smoke_excel_skin.py` |
 | 文件/网页附件/转发 | `test_filexfer.py`, `test_fwd_media.py`, `test_r46b_web_fix.py` 及对应 R 系列 |
 | E2EE | `test_r36.py`, `test_r42.py`, `test_r44.py`, `test_audit_e2ee_limits.py` |
@@ -47,7 +48,13 @@ pystray（托盘）；开发还需 pytest、PyInstaller。可选语音转写、�
 | 审核修复 | `test_audit_*.py`, `test_test_runner_exitcodes.py` |
 
 用 `rg` 在测试中找实际函数/消息类型，不因 R 编号接近就猜覆盖范围。
-目标代码改变后按 `COLLABORATION.md` 跑全量；文档/技能更新一般只需核对引用，
+目标代码改变后按 `COLLABORATION.md` 跑全量；当前 `docs/任务清单.md` 要求按文件
+分进程跑门禁，避免长生命周期中的 Tk/网络状态串扰，不把多文件合并成一次 pytest。
+完整验证应遍历当前所有 `tests/test_*.py`，汇总各进程真实退出码和计数。
+`dev.ps1 test` 目前仍使用单个 pytest 进程，T1 的 `test-all` 入口尚未实现；
+逐文件验收可分别用 `.venv\Scripts\python.exe -m pytest -q tests/单个文件.py`
+并为每个进程指定独立 `--basetemp`，不要假定未来命令已经存在。
+文档/技能更新一般只需核对引用，
 不重复运行整个 GUI/网络门禁。
 
 ## GUI 与设备检查

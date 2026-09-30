@@ -24,6 +24,17 @@
 `tkguard` 处理 Font/Image/Variable 析构及 Tkapp 生命周期，不能删除守卫后
 用“测试退出为 0”掩盖 Tcl 错误。
 
+登录入口：`launcher.launch → show_login → LoginDialog`。独立登录用 withdrawn
+root 作 Tcl 宿主，`owner_hidden=True` 时不能把它设置为 transient owner；
+已有可见 master 保留 transient 关系。完整布局、映射后再取得本地 grab 和
+输入焦点；退出时取消发现轮询/前台重试并释放自己的 grab。Win32 置顶须用
+`GetAncestor(winfo_id(), GA_ROOT)` 的实际顶层 HWND 和指针宽度安全的原型，
+不能直接操作 Tk client HWND；延迟唤起不能把密码框焦点移回账号框。
+最小化宿主不作为 transient owner；映射等待有 2 秒上限，超时按取消清理，
+外部关闭窗口也要停止发现线程，不能只依靠 Tk 销毁定时命令。
+只修改登录自己的宿主策略，不全局改 `dialogbox._hide_owner` 或口令锁宿主。
+回归见 `tests/test_login_visibility.py` 和 `tests/test_login_foreground.py`。
+
 Excel 接线：`client.py` → `widgets.excel_chrome.ExcelChrome` →
 `widgets.excel_sheet.ExcelSheet`；`theme.py` 提供配色 token，通过
 `ChatWindow._sync_excel_layout/_send_excel_text` 接入。

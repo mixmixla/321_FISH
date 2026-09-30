@@ -1,0 +1,4 @@
+# Windows / Python 3.14.5；运行依赖、测试与 EXE 打包。
+-r requirements.txt
+pytest==9.1.1
+pyinstaller==6.22.3

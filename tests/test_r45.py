@@ -18,6 +18,7 @@
 真机（skipif 无摄像头）：CamRecorder 采集 ≥5 帧。
 """
 import random
+import queue
 import socket
 import struct
 import threading
@@ -121,11 +122,41 @@ class FakeCam:
         return not self.stopped
 
 
+class FakeMic:
+    """通信集成用例只处理内存帧，不启用本机麦克风。"""
+    def __init__(self, on_error=None):
+        self.frames = queue.Queue()
+        self.stopped = False
+
+    def start(self):
+        return True
+
+    def stop(self):
+        self.stopped = True
+
+
+class FakeSpk:
+    def __init__(self, on_error=None):
+        self.frames = queue.Queue()
+
+    def start(self):
+        return True
+
+    def feed(self, pcm):
+        self.frames.put(bytes(pcm))
+
+    def stop(self):
+        pass
+
+
 def _setup_call(hub, tmp_path, monkeypatch, cam=True):
     """建 hub + 两端 → a 呼 b → 接通（incall）。返回 (a, cola, b, colb)。"""
     monkeypatch.setattr(video_api, "_AVAILABLE", True)
     monkeypatch.setattr(video_api, "CamRecorder", FakeCam)
     monkeypatch.setattr(video_api, "available", lambda: cam)
+    monkeypatch.setattr(voice_call.voice_api, "available", lambda: True)
+    monkeypatch.setattr(voice_call.voice_api, "MicRecorder", FakeMic)
+    monkeypatch.setattr(voice_call.voice_api, "SpkPlayer", FakeSpk)
     a, cola = _spawn(hub[1], "甲", tmp_path)
     b, colb = _spawn(hub[1], "乙", tmp_path)
     assert a.calls.start_call(b.uid)
@@ -391,6 +422,7 @@ def test_end_call_cleans_video_state(hub, tmp_path, monkeypatch):
 
 # ---------- 真机（无摄像头自动跳过） ----------
 
+@pytest.mark.hardware
 def test_real_camera_capture():
     if not video_api.available():
         pytest.skip("本机无摄像头")

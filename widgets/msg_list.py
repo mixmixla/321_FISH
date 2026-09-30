@@ -349,6 +349,7 @@ class MsgList(tk.Canvas):
         if colors:
             self._pal.update(colors)
         self._wallpaper: str | None = None    # R32B4：聊天壁纸（None=主题默认 bg）
+        self._grid_color: str | None = None  # Excel 皮肤的视口网格；不影响消息行/滚动位置
         kw.setdefault("bg", self._pal["bg"])
         kw.setdefault("highlightthickness", 0)
         kw.setdefault("relief", "flat")
@@ -662,6 +663,27 @@ class MsgList(tk.Canvas):
             return
         self._me_uid = uid
         self._render()
+
+    def set_grid(self, color: str | None) -> None:
+        if color != self._grid_color:
+            self._grid_color = color
+            self._render()
+
+    def _draw_grid(self) -> None:
+        self.delete("excel_grid")
+        if not self._grid_color:
+            return
+        w, h = self.winfo_width(), self.winfo_height()
+        top = self.canvasy(0)
+        # 只绘制视口内的线，消息历史长度不会增加 Canvas item 数量。
+        for x in range(0, max(w, 1), 88):
+            self.create_line(x, top, x, top + h, fill=self._grid_color,
+                             tags=("excel_grid",))
+        first = int(top // 24) * 24
+        for y in range(first, int(top + h) + 24, 24):
+            self.create_line(0, y, w, y, fill=self._grid_color,
+                             tags=("excel_grid",))
+        self.tag_lower("excel_grid")
 
     def set_colors(self, colors: dict) -> None:
         """T3：主题切换——整批替换颜色表并重绘（不改行数据/滚动位置）。
@@ -2428,6 +2450,11 @@ class MsgList(tk.Canvas):
         return {"ink": "#f0e0c2", "fill": "#f5e7cd", "ac": "#ffd9b0"}
 
     def _draw_doodles(self) -> None:
+        if self._grid_color:
+            self.delete(self._DOODLE_TAG)
+            self._draw_grid()
+            return
+        self.delete("excel_grid")
         """只在「最后一条消息下方的留白区」铺一层淡手绘涂鸦。用独立 tag 管理，
         不进入 _item_ids，因此不影响滚动区计算，也绝不会压在文字/气泡上。"""
         self.delete(self._DOODLE_TAG)

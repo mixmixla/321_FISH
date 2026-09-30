@@ -26,6 +26,36 @@ _POOL = 8               # 播放 header 池
 _AVAILABLE = None       # 惰性探测结果缓存
 
 
+class _AsyncErrorReporter:
+    """把设备错误交给独立线程，避免回调/生命周期锁同步互相等待。"""
+
+    def __init__(self, callback) -> None:
+        self._callback = callback
+        self._queue = queue.Queue()
+        self._thread = None
+        if callback is not None:
+            self._thread = threading.Thread(target=self._run, daemon=True,
+                                            name="audio-error")
+            self._thread.start()
+
+    def report(self, message: str) -> None:
+        if self._callback is None:
+            return
+        try:
+            self._queue.put_nowait(str(message))
+        except Exception:
+            pass
+
+    def _run(self) -> None:
+        while True:
+            message = self._queue.get()
+            try:
+                self._callback(message)
+            except Exception:
+                # 设备错误回调属于降级通知，不能反过来杀掉音频线程。
+                pass
+
+
 def available() -> bool:
     """本机是否具备音频采集能力（非 Windows / 无输入设备 → False）。"""
     global _AVAILABLE
@@ -138,7 +168,9 @@ if os.name == "nt":
                     ("cbSize", wt.WORD)]
 
     class WAVEHDR(ctypes.Structure):
-        _fields_ = [("lpData", ctypes.c_char_p),
+        # 原始指针必须保持为 c_void_p；c_char_p 读取字段会自动转成以
+        # NUL 截断的 bytes，含 0x00 的 PCM 帧会因此读错长度/越界。
+        _fields_ = [("lpData", ctypes.c_void_p),
                     ("dwBufferLength", wt.DWORD),
                     ("dwBytesRecorded", wt.DWORD),
                     ("dwUser", ctypes.c_size_t),
@@ -160,162 +192,320 @@ if os.name == "nt":
 
 
     class MicRecorder:
-        """麦克风采集：start() 后后台持续填帧到 frames 队列；stop() 释放设备。"""
+        """麦克风采集；waveIn 回调只拷贝帧并通知普通线程重挂缓冲。"""
 
         def __init__(self, on_error=None) -> None:
             self.frames: "queue.Queue[bytes]" = queue.Queue(maxsize=200)
-            self._on_error = on_error          # 设备级异常回调（UI 提示/挂断）
+            self._on_error = on_error
+            self._error_reporter = _AsyncErrorReporter(on_error)
             self._h = None
-            self._hdrs = []
+            self._hdrs = []                  # 直到 waveInClose 完成前保持引用
             self._bufs = []
-            self._proc = None
+            self._proc = None                # 直到 waveInClose 完成前保持引用
             self._running = False
             self._lock = threading.Lock()
+            self._lifecycle = threading.Lock()
+            self._native_lock = threading.Lock()
+            self._events = queue.Queue()     # callback -> pump（无界，绝不丢重挂事件）
+            self._stop_event = threading.Event()
+            self._worker = None
+
+        @staticmethod
+        def _drain(q) -> None:
+            try:
+                while True:
+                    q.get_nowait()
+            except queue.Empty:
+                pass
+
+        def _finish_device(self, h, hdrs, worker) -> None:
+            """等待重挂线程后 Reset/Unprepare/Close，最后才释放 ctypes 引用。"""
+            self._stop_event.set()
+            if worker is not None and worker is not threading.current_thread():
+                worker.join()
+            if h is not None:
+                with self._native_lock:
+                    try:
+                        winmm = _winmm()
+                    except Exception:
+                        winmm = None
+                    if winmm is not None:
+                        try:
+                            winmm.waveInReset(h)
+                        except Exception:
+                            pass
+                        for hdr in hdrs:
+                            try:
+                                winmm.waveInUnprepareHeader(
+                                    h, ctypes.byref(hdr), ctypes.sizeof(hdr))
+                            except Exception:
+                                pass
+                        try:
+                            winmm.waveInClose(h)
+                        except Exception:
+                            pass
+            with self._lock:
+                if self._h is h:
+                    self._h = None
+                    self._hdrs = []
+                    self._bufs = []
+                    self._proc = None
+                    self._worker = None
+            self._drain(self._events)
 
         def start(self) -> bool:
             if not available():
                 return False
-            with self._lock:
-                if self._running:
-                    return True
-                winmm = _winmm()
-                fmt = WAVEFORMATEX(_WAVE_FORMAT_PCM, CHANNELS, SAMPLE_RATE,
-                                   SAMPLE_RATE * CHANNELS * BITS // 8,
-                                   CHANNELS * BITS // 8, BITS, 0)
-                h = ctypes.c_void_p()
-                # 回调持引用防 GC
-                self._proc = _PROC(self._callback)
-                rc = winmm.waveInOpen(ctypes.byref(h), _WAVE_MAPPER,
-                                      ctypes.byref(fmt), self._proc, 0,
-                                      _CALLBACK_FUNCTION)
-                if rc != 0:
-                    self._proc = None
-                    return False
-                self._h = h
-                self._hdrs = []
-                self._bufs = []
-                for _ in range(4):
-                    buf = ctypes.create_string_buffer(FRAME_BYTES)
-                    hdr = WAVEHDR()
-                    hdr.lpData = ctypes.cast(buf, ctypes.c_char_p)
-                    hdr.dwBufferLength = FRAME_BYTES
-                    rc = winmm.waveInPrepareHeader(h, ctypes.byref(hdr),
-                                                   ctypes.sizeof(hdr))
+            cleanup = None
+            with self._lifecycle:
+                with self._lock:
+                    if self._running:
+                        return True
+                    # 旧设备已完成 Close 后才允许新一轮事件进入 pump。
+                    self._drain(self._events)
+                    self._stop_event.clear()
+                    winmm = _winmm()
+                    fmt = WAVEFORMATEX(
+                        _WAVE_FORMAT_PCM, CHANNELS, SAMPLE_RATE,
+                        SAMPLE_RATE * CHANNELS * BITS // 8,
+                        CHANNELS * BITS // 8, BITS, 0)
+                    h = ctypes.c_void_p()
+                    self._proc = _PROC(self._callback)
+                    try:
+                        rc = winmm.waveInOpen(
+                            ctypes.byref(h), _WAVE_MAPPER, ctypes.byref(fmt),
+                            self._proc, 0, _CALLBACK_FUNCTION)
+                    except Exception:
+                        rc = -1
                     if rc != 0:
-                        continue
-                    rc = winmm.waveInAddBuffer(h, ctypes.byref(hdr),
-                                               ctypes.sizeof(hdr))
-                    if rc != 0:
-                        winmm.waveInUnprepareHeader(h, ctypes.byref(hdr),
-                                                    ctypes.sizeof(hdr))
-                        continue
-                    self._hdrs.append(hdr)
-                    self._bufs.append(buf)
-                if not self._hdrs:
-                    self.stop()
-                    return False
-                self._running = True
-                winmm.waveInStart(h)
-                return True
+                        self._proc = None
+                        return False
+                    self._h = h
+                    self._hdrs = []
+                    self._bufs = []
+                    for _ in range(4):
+                        buf = ctypes.create_string_buffer(FRAME_BYTES)
+                        hdr = WAVEHDR()
+                        hdr.lpData = ctypes.cast(buf, ctypes.c_void_p)
+                        hdr.dwBufferLength = FRAME_BYTES
+                        try:
+                            rc = winmm.waveInPrepareHeader(
+                                h, ctypes.byref(hdr), ctypes.sizeof(hdr))
+                        except Exception:
+                            rc = -1
+                        if rc != 0:
+                            continue
+                        try:
+                            rc = winmm.waveInAddBuffer(
+                                h, ctypes.byref(hdr), ctypes.sizeof(hdr))
+                        except Exception:
+                            rc = -1
+                        if rc != 0:
+                            try:
+                                winmm.waveInUnprepareHeader(
+                                    h, ctypes.byref(hdr), ctypes.sizeof(hdr))
+                            except Exception:
+                                pass
+                            continue
+                        self._hdrs.append(hdr)
+                        self._bufs.append(buf)
+                    worker = None
+                    if self._hdrs:
+                        self._running = True
+                        worker = threading.Thread(target=self._pump, daemon=True,
+                                                   name="mic-pump")
+                        self._worker = worker
+                        worker.start()
+                        try:
+                            rc = winmm.waveInStart(h)
+                        except Exception:
+                            rc = -1
+                        if rc in (0, None):
+                            return True
+                        self._running = False
+                    # 不能在持有非重入 _lock 时调用 stop；由同一生命周期
+                    # 流程在释放锁后完成完整 Reset/Close。
+                    cleanup = (h, list(self._hdrs), worker)
+                    self._stop_event.set()
+            if cleanup is not None:
+                self._finish_device(*cleanup)
+            return False
 
         def stop(self) -> None:
-            with self._lock:
-                h, self._h = self._h, None
-                hdrs, self._hdrs = self._hdrs, []
-                bufs, self._bufs = self._bufs, []
-                self._running = False
-            if h is None:
-                self._proc = None
-                return
-            winmm = _winmm()
-            try:
-                winmm.waveInReset(h)
-                for hdr in hdrs:
-                    winmm.waveInUnprepareHeader(h, ctypes.byref(hdr),
-                                                ctypes.sizeof(hdr))
-                winmm.waveInClose(h)
-            except Exception:
-                pass
-            self._proc = None
-            # 清空残留帧，避免下次通话误播旧音频
-            try:
-                while True:
-                    self.frames.get_nowait()
-            except queue.Empty:
-                pass
+            with self._lifecycle:
+                with self._lock:
+                    h = self._h
+                    hdrs = list(self._hdrs)
+                    worker = self._worker
+                    self._running = False
+                    self._stop_event.set()
+                if h is not None:
+                    self._finish_device(h, hdrs, worker)
+                else:
+                    self._drain(self._events)
+            # 清空残留帧，避免下次通话误播旧音频。
+            self._drain(self.frames)
 
         def _callback(self, _h, msg, _inst, param1, _param2) -> None:
-            """winmm 回调：仅拷贝入队 + 重新挂缓冲；任何异常吞掉（回调里抛错崩进程）。"""
+            """waveInProc：只拷贝数据、入队并通知 pump，绝不调用 wave 函数。"""
             try:
-                if msg != _WIM_DATA or not self._running:
-                    return
+                with self._lock:
+                    if msg != _WIM_DATA or not self._running:
+                        return
                 hdr = ctypes.cast(param1, ctypes.POINTER(WAVEHDR)).contents
-                got = int(hdr.dwBytesRecorded)
-                if got > 0:
-                    buf = ctypes.string_at(hdr.lpData, got)
+                got = max(0, min(int(hdr.dwBytesRecorded),
+                                  int(hdr.dwBufferLength), FRAME_BYTES))
+                if got:
                     try:
-                        self.frames.put_nowait(buf)
+                        self.frames.put_nowait(ctypes.string_at(hdr.lpData, got))
                     except queue.Full:
                         pass                      # 丢帧优于阻塞音频回调
-                if self._h is not None:
-                    _winmm().waveInAddBuffer(self._h, ctypes.byref(hdr),
-                                             ctypes.sizeof(hdr))
+                self._events.put_nowait(("data", ctypes.addressof(hdr)))
             except Exception as exc:
+                self._events.put_nowait(("error", f"采集异常: {exc}"))
+
+        def _pump(self) -> None:
+            while not self._stop_event.is_set():
                 try:
-                    if self._on_error is not None:
-                        self._on_error(f"采集异常: {exc}")
-                except Exception:
-                    pass
+                    kind, value = self._events.get(timeout=0.1)
+                except queue.Empty:
+                    continue
+                if self._stop_event.is_set():
+                    return
+                if kind == "error":
+                    self._error_reporter.report(value)
+                    continue
+                with self._lock:
+                    h = self._h
+                    hdr = next((item for item in self._hdrs
+                                if ctypes.addressof(item) == value), None)
+                    running = self._running
+                if not running or h is None or hdr is None:
+                    continue
+                with self._native_lock:
+                    with self._lock:
+                        if (not self._running) or self._h is not h:
+                            continue
+                    try:
+                        rc = _winmm().waveInAddBuffer(
+                            h, ctypes.byref(hdr), ctypes.sizeof(hdr))
+                    except Exception as exc:
+                        self._error_reporter.report(f"采集异常: {exc}")
+                        continue
+                    if rc not in (0, None):
+                        self._error_reporter.report(f"采集异常: waveInAddBuffer={rc}")
 
 
     class SpkPlayer:
-        """扬声器播放：feed() 进 jitter 队列；内部线程出帧 waveOutWrite。
-
-        underrun（缓冲不足 JITTER_MIN 帧）垫静音，避免爆音；stop() 释放设备。
-        """
+        """扬声器播放；WOM_DONE 回调只入队，pump 线程负责回收 header。"""
 
         def __init__(self, on_error=None) -> None:
             self._jitter: "queue.Queue[bytes]" = queue.Queue(maxsize=100)
             self._on_error = on_error
+            self._error_reporter = _AsyncErrorReporter(on_error)
             self._h = None
             self._proc = None
             self._free: collections.deque = collections.deque()
             self._pool = []                    # (hdr, buffer) 池
+            self._prepared = set()              # ctypes.addressof(hdr)
             self._running = False
             self._thread = None
             self._cond = threading.Condition()
+            self._lifecycle = threading.Lock()
+            self._native_lock = threading.Lock()
+            self._events = queue.Queue()        # callback -> pump
+            self._stop_event = threading.Event()
+
+        @staticmethod
+        def _drain(q) -> None:
+            try:
+                while True:
+                    q.get_nowait()
+            except queue.Empty:
+                pass
+
+        def _finish_device(self, h, pool, thread) -> None:
+            """等待 pump 后 Reset/Unprepare/Close，再释放 pool/proc 引用。"""
+            self._stop_event.set()
+            with self._cond:
+                self._cond.notify_all()
+            if thread is not None and thread is not threading.current_thread():
+                thread.join()
+            if h is not None:
+                with self._cond:
+                    prepared = set(self._prepared)
+                with self._native_lock:
+                    try:
+                        winmm = _winmm()
+                    except Exception:
+                        winmm = None
+                    if winmm is not None:
+                        try:
+                            winmm.waveOutReset(h)
+                        except Exception:
+                            pass
+                        for hdr, _buf in pool:
+                            if ctypes.addressof(hdr) in prepared:
+                                try:
+                                    winmm.waveOutUnprepareHeader(
+                                        h, ctypes.byref(hdr), ctypes.sizeof(hdr))
+                                except Exception:
+                                    pass
+                        try:
+                            winmm.waveOutClose(h)
+                        except Exception:
+                            pass
+            with self._cond:
+                if self._h is h:
+                    self._h = None
+                    self._pool = []
+                    self._free.clear()
+                    self._prepared.clear()
+                    self._proc = None
+                    self._thread = None
+                    self._cond.notify_all()
+            self._drain(self._events)
 
         def start(self) -> bool:
             if not available():
                 return False
-            with self._cond:
-                if self._running:
+            with self._lifecycle:
+                with self._cond:
+                    if self._running:
+                        return True
+                    self._drain(self._events)
+                    self._stop_event.clear()
+                    winmm = _winmm()
+                    fmt = WAVEFORMATEX(
+                        _WAVE_FORMAT_PCM, CHANNELS, SAMPLE_RATE,
+                        SAMPLE_RATE * CHANNELS * BITS // 8,
+                        CHANNELS * BITS // 8, BITS, 0)
+                    h = ctypes.c_void_p()
+                    self._proc = _PROC(self._callback)
+                    try:
+                        rc = winmm.waveOutOpen(
+                            ctypes.byref(h), _WAVE_MAPPER, ctypes.byref(fmt),
+                            self._proc, 0, _CALLBACK_FUNCTION)
+                    except Exception:
+                        rc = -1
+                    if rc != 0:
+                        self._proc = None
+                        return False
+                    self._h = h
+                    self._pool = []
+                    self._free.clear()
+                    self._prepared.clear()
+                    for _ in range(_POOL):
+                        buf = ctypes.create_string_buffer(FRAME_BYTES)
+                        hdr = WAVEHDR()
+                        hdr.lpData = ctypes.cast(buf, ctypes.c_void_p)
+                        self._pool.append((hdr, buf))
+                        self._free.append((hdr, buf))
+                    self._running = True
+                    self._thread = threading.Thread(
+                        target=self._pump, daemon=True, name="spk-pump")
+                    self._thread.start()
                     return True
-                winmm = _winmm()
-                fmt = WAVEFORMATEX(_WAVE_FORMAT_PCM, CHANNELS, SAMPLE_RATE,
-                                   SAMPLE_RATE * CHANNELS * BITS // 8,
-                                   CHANNELS * BITS // 8, BITS, 0)
-                h = ctypes.c_void_p()
-                self._proc = _PROC(self._callback)
-                rc = winmm.waveOutOpen(ctypes.byref(h), _WAVE_MAPPER,
-                                       ctypes.byref(fmt), self._proc, 0,
-                                       _CALLBACK_FUNCTION)
-                if rc != 0:
-                    self._proc = None
-                    return False
-                self._h = h
-                self._pool = []
-                for _ in range(_POOL):
-                    buf = ctypes.create_string_buffer(FRAME_BYTES)
-                    hdr = WAVEHDR()
-                    hdr.lpData = ctypes.cast(buf, ctypes.c_char_p)
-                    self._pool.append((hdr, buf))
-                    self._free.append((hdr, buf))
-                self._running = True
-                self._thread = threading.Thread(target=self._pump, daemon=True,
-                                                name="spk-pump")
-                self._thread.start()
-                return True
 
         def feed(self, pcm: bytes) -> None:
             """喂入一帧解码后的 PCM（长度不足帧补齐，超长截断）。"""
@@ -329,39 +519,24 @@ if os.name == "nt":
                     pass
 
         def stop(self) -> None:
-            self._running = False
-            with self._cond:
-                self._cond.notify_all()
-            t, self._thread = self._thread, None
-            if t is not None:
-                t.join(timeout=1.0)
-            h, self._h = self._h, None
-            if h is not None:
-                winmm = _winmm()
-                try:
-                    winmm.waveOutReset(h)
-                    for hdr, _buf in self._pool:
-                        winmm.waveOutUnprepareHeader(h, ctypes.byref(hdr),
-                                                     ctypes.sizeof(hdr))
-                    winmm.waveOutClose(h)
-                except Exception:
-                    pass
-            self._pool = []
-            self._free.clear()
-            self._proc = None
-            try:
-                while True:
-                    self._jitter.get_nowait()
-            except queue.Empty:
-                pass
+            with self._lifecycle:
+                with self._cond:
+                    h = self._h
+                    pool = list(self._pool)
+                    thread = self._thread
+                    self._running = False
+                    self._stop_event.set()
+                    self._cond.notify_all()
+                if h is not None:
+                    self._finish_device(h, pool, thread)
+                else:
+                    self._drain(self._events)
+            self._drain(self._jitter)
 
         def _prime(self) -> int:
-            """开播预缓冲：等 jitter 队列攒到 JITTER_MIN 帧（或短超时即播）。
-
-            独立方法便于测试（欠载提前开播 / 足量即返回）。
-            """
+            """开播预缓冲：等 jitter 队列攒到 JITTER_MIN 帧（或短超时即播）。"""
             buffered = 1
-            while buffered < JITTER_MIN:
+            while buffered < JITTER_MIN and not self._stop_event.is_set():
                 try:
                     self._jitter.get(timeout=0.05)
                     buffered += 1
@@ -370,31 +545,66 @@ if os.name == "nt":
             return buffered
 
         def _callback(self, _h, msg, _inst, param1, _param2) -> None:
-            """WOM_DONE：unprepare 后把 header 归还空闲池；异常吞掉。"""
+            """waveOutProc：仅记录 header 地址并通知 pump，绝不调用 wave 函数。"""
             try:
                 if msg != _WOM_DONE:
                     return
-                winmm = _winmm()
                 hdr = ctypes.cast(param1, ctypes.POINTER(WAVEHDR)).contents
-                winmm.waveOutUnprepareHeader(self._h, ctypes.byref(hdr),
-                                             ctypes.sizeof(hdr))
-                for pair in self._pool:
-                    if pair[0] is hdr:
-                        with self._cond:
-                            self._free.append(pair)
-                            self._cond.notify_all()
-                        break
+                self._events.put_nowait(("done", ctypes.addressof(hdr)))
+                with self._cond:
+                    self._cond.notify_all()
             except Exception as exc:
+                self._events.put_nowait(("error", f"播放异常: {exc}"))
+                with self._cond:
+                    self._cond.notify_all()
+
+        def _drain_callback_events(self) -> None:
+            while not self._stop_event.is_set():
                 try:
-                    if self._on_error is not None:
-                        self._on_error(f"播放异常: {exc}")
-                except Exception:
-                    pass
+                    kind, value = self._events.get_nowait()
+                except queue.Empty:
+                    return
+                if kind == "error":
+                    self._error_reporter.report(value)
+                    continue
+                with self._cond:
+                    h = self._h
+                    running = self._running
+                    pair = next((item for item in self._pool
+                                 if ctypes.addressof(item[0]) == value), None)
+                    prepared = value in self._prepared
+                if not running or h is None or pair is None or not prepared:
+                    continue
+                hdr, _buf = pair
+                with self._native_lock:
+                    with self._cond:
+                        if (not self._running) or self._h is not h \
+                                or value not in self._prepared:
+                            continue
+                    try:
+                        rc = _winmm().waveOutUnprepareHeader(
+                            h, ctypes.byref(hdr), ctypes.sizeof(hdr))
+                    except Exception as exc:
+                        self._error_reporter.report(f"播放异常: {exc}")
+                        continue
+                    if rc not in (0, None):
+                        self._error_reporter.report(
+                            f"播放异常: waveOutUnprepareHeader={rc}")
+                        continue
+                with self._cond:
+                    self._prepared.discard(value)
+                    if not any(ctypes.addressof(item[0]) == value
+                               for item in self._free):
+                        self._free.append(pair)
+                    self._cond.notify_all()
 
         def _pump(self) -> None:
             # 先攒 jitter buffer 再开播（防开头 underrun）
             primed = False
-            while self._running:
+            while not self._stop_event.is_set():
+                self._drain_callback_events()
+                if self._stop_event.is_set():
+                    return
                 try:
                     pcm = self._jitter.get(timeout=0.1)
                 except queue.Empty:
@@ -402,21 +612,58 @@ if os.name == "nt":
                 if not primed:
                     self._prime()
                     primed = True
+                pair = None
                 with self._cond:
-                    while self._running and not self._free:
+                    while self._running and not self._stop_event.is_set():
+                        self._drain_callback_events()
+                        if self._free:
+                            pair = self._free.popleft()
+                            break
                         self._cond.wait(timeout=0.2)
-                    if not self._running:
+                    if pair is None or not self._running:
                         return
-                    hdr, buf = self._free.popleft()
+                hdr, buf = pair
                 data = (pcm or b"")[:FRAME_BYTES].ljust(FRAME_BYTES, b"\x00")
                 ctypes.memmove(buf, data, FRAME_BYTES)
                 hdr.dwBufferLength = FRAME_BYTES
                 hdr.dwFlags = 0
-                winmm = _winmm()
-                if winmm.waveOutPrepareHeader(self._h, ctypes.byref(hdr),
-                                              ctypes.sizeof(hdr)) == 0:
-                    winmm.waveOutWrite(self._h, ctypes.byref(hdr),
-                                       ctypes.sizeof(hdr))
+                with self._native_lock:
+                    with self._cond:
+                        h = self._h
+                        if not self._running or h is None:
+                            self._free.appendleft(pair)
+                            continue
+                    try:
+                        winmm = _winmm()
+                        rc = winmm.waveOutPrepareHeader(
+                            h, ctypes.byref(hdr), ctypes.sizeof(hdr))
+                        if rc not in (0, None):
+                            self._free.appendleft(pair)
+                            self._error_reporter.report(
+                                f"播放异常: waveOutPrepareHeader={rc}")
+                            continue
+                        with self._cond:
+                            self._prepared.add(ctypes.addressof(hdr))
+                        rc = winmm.waveOutWrite(
+                            h, ctypes.byref(hdr), ctypes.sizeof(hdr))
+                        if rc not in (0, None):
+                            winmm.waveOutUnprepareHeader(
+                                h, ctypes.byref(hdr), ctypes.sizeof(hdr))
+                            with self._cond:
+                                self._prepared.discard(ctypes.addressof(hdr))
+                                self._free.appendleft(pair)
+                            self._error_reporter.report(
+                                f"播放异常: waveOutWrite={rc}")
+                    except Exception as exc:
+                        try:
+                            winmm.waveOutUnprepareHeader(
+                                h, ctypes.byref(hdr), ctypes.sizeof(hdr))
+                        except Exception:
+                            pass
+                        with self._cond:
+                            self._prepared.discard(ctypes.addressof(hdr))
+                            self._free.appendleft(pair)
+                        self._error_reporter.report(f"播放异常: {exc}")
 else:
     class MicRecorder:                     # 非 Windows：占位（available()=False）
         def __init__(self, on_error=None) -> None:

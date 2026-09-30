@@ -6248,10 +6248,18 @@ class _Handler(BaseHTTPRequestHandler):
         self._json(200, {"ok": True, "posts": posts})
 
     def _moment_img(self, fn):
-        """GET /api/moment_img/{fn}：动态图片直出（仅 moments 目录，防穿越）。"""
+        """GET /api/moment_img/{fn}：已登录用户读取现存动态引用的图片。"""
+        sess = self._session(self._query())
+        if not sess:
+            self._json(401, {"ok": False, "error": "未登录"})
+            return
+        sess.touch()
         base = os.path.basename(fn)
         if base != fn or "." not in base:
             self._json(400, {"ok": False, "error": "非法文件名"})
+            return
+        if not self.hub._moment_image_active(base):
+            self._json(404, {"ok": False, "error": "图片不存在"})
             return
         path = os.path.join(self.hub.moment_dir, base)
         try:
@@ -6266,7 +6274,8 @@ class _Handler(BaseHTTPRequestHandler):
                  "bmp": "image/bmp"}.get(ext, "application/octet-stream")
         self.send_response(200)
         self.send_header("Content-Type", ctype)
-        self.send_header("Cache-Control", "max-age=3600")
+        self.send_header("Cache-Control", "private, no-store")
+        self.send_header("Vary", "Cookie")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)

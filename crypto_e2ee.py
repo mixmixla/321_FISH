@@ -52,6 +52,7 @@ ROTATE_EVERY = 64                         # 每发送 64 条触发一次 DH 轮�
 GROUP_ROTATE_EVERY = 64                   # R44 群 DFSS：每发送 64 条自动 re-key
 _OLD_EPOCH_KEEP = 2                       # 过渡期保留的旧纪元接收链数量
 _ROT_TIMEOUT = 15.0                       # 轮转握手超时（秒）
+MAX_RATCHET_SKIP = 1024                   # 未认证计数最多补链 1024 步，防超大计数耗尽 CPU
 _INFO_MSG = b"moeyu-e2ee/msg"
 _INFO_STEP = b"moeyu-e2ee/step"
 _INFO_DIR_LO = b"moeyu-e2ee/dir-lo>hi"    # 小 uid → 大 uid 方向链
@@ -283,6 +284,8 @@ class E2EEEngine:
                     raise E2EEError(f"未知纪元 {epoch}（请重新握手密聊）")
                 if n < r["n"]:
                     raise E2EEError("重放帧已拒收")
+                if n - r["n"] > MAX_RATCHET_SKIP:
+                    raise E2EEError("密聊计数跳跃超限，请重新握手", code="counter")
                 c = r["chain"]
                 for i in range(r["n"], n):       # 步进到目标计数（中间密钥即弃）
                     c = _step_chain(c, epoch, i)
@@ -603,6 +606,8 @@ class E2EEEngine:
                     raise E2EEError(f"缺纪元 {epoch} sender key", code="no_key")
                 if n < r["n"]:
                     raise E2EEError("重放帧已拒收", code="replay")
+                if n - r["n"] > MAX_RATCHET_SKIP:
+                    raise E2EEError("群密聊计数跳跃超限", code="counter")
                 c = r["chain"]
                 for i in range(r["n"], n):
                     c = _step_chain(c, epoch, i)

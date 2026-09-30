@@ -1,0 +1,4 @@
+# 加密握手/消息通信为必需依赖；Pillow 支持图片与屏幕共享。
+cryptography==50.0.1
+Pillow==12.3.0
+pystray==0.19.5

@@ -124,6 +124,20 @@ def test_flat_family_distinct():
     assert skin_family("不存在") == FAMILY_RETRO
 
 
+def test_excel_skin_has_workbook_palette_and_contrast():
+    """Excel 皮肤覆盖完整 token，并保留经典绿色标题/气泡的可读性。"""
+    from theme import FAMILY_EXCEL, SKINS, skin_family
+    assert "excel" in SKINS
+    assert skin_family("excel") == FAMILY_EXCEL
+    excel = get_skin("excel")
+    for key in ("titlebar_bg", "titlebar_fg", "accent", "glass_border",
+                "msg_bg", "bubble_out", "bubble_in", "bubble_r"):
+        assert key in excel
+    assert excel["accent"] == "#217346"
+    assert _contrast(excel["titlebar_fg"], excel["titlebar_bg"]) >= 4.5
+    assert _contrast(excel["self"], excel["bubble_out"]) >= 4.5
+
+
 def test_web_flat_theme_vars_and_js():
     """web 冷灰两套 CSS 变量齐全（覆写主变量），家族切换 JS 与下拉均在。"""
     import os

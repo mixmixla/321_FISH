@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """theme.py —— Token 主题系统（T3，对照 UI_改造设计.md §4 双皮肤 + R3 深色）。
 
-五套预置皮肤，每套是同一组 Token 的不同值：
+预置皮肤，每套是同一组 Token 的不同值：
 - apple     「Apple 浅色」：iMessage 风格（蓝气泡/灰气泡），macOS Sonoma 配色
 - apple_dark「Apple 深色」：iMessage 深色模式，macOS 深色配色
 - office    「办公灰蓝」：摸鱼安全（像内网 OA，低识别度）
 - chat      「畅聊模式」：像聊天软件（微信式绿意，自己气泡偏绿）
 - dark      「深色」      ：对应 Telegram night-green 调色板
+- excel     「Excel 工作簿」：经典绿色标题栏、灰白功能区与表格网格感
 
 接入方式：`get_skin(name)` 拿整张 token 表；key 命名与 msg_list.COLORS、
 client 顶层控件一一对应。皮肤名通过 prefs['skin'] 持久化。无第三方依赖。
@@ -31,6 +32,7 @@ BASE = {
 # ── 主题包家族常量（必须定义于 SKINS 之前，供 SKINS 内 family 字段引用）──
 FAMILY_RETRO = "retro"   # 暖粉手绘风（原家族，默认主家族）
 FAMILY_FLAT = "flat"     # 扁平极简冷灰风（浅灰/白卡/冷描边/单强调色；深色=墨蓝黑）
+FAMILY_EXCEL = "excel"   # Excel 工作簿风（绿色标题栏/功能区/网格线/工作表标签）
 
 SKINS = {
     # 全系改版：原创手绘暖粉家族（焦糖/珊瑚/浅紫蓝/薄荷，与网页/游戏画布一致）。
@@ -487,6 +489,58 @@ SKINS = {
         "titlebar_h": 26,
         "traffic_lights": False,
     },
+    # ── 主题包三：Excel 经典工作簿风 ─────────────────────────────────
+    # 这套 token 除了提供绿色/灰白配色，也由 client 的 ExcelChrome 组成
+    # 功能区、公式栏和工作表标签，让主聊天窗有明确的表格应用外观。
+    "excel": {
+        "name": "Excel 工作簿",
+        "family": FAMILY_EXCEL,
+        "window_bg": "#f3f6f4",
+        "panel_bg": "#ffffff",
+        "fg": "#1f2933",
+        "sub": "#5c6b62",
+        "list_bg": "#e7ece8",
+        "icon_bg": "#dce6df",
+        "accent": "#217346",              # Excel 经典绿色
+        "input_bg": "#ffffff",
+        "titlebar_bg": "#217346",
+        "titlebar_fg": "#ffffff",
+        "titlebar_close": "#f3b7b7",
+        "titlebar_btn": "#d9f0df",
+        "hover_bg": "#d6e8dc",
+        "glass_border": "#c5d2c8",       # 细网格/单元格描边
+        "msg_bg": "#fbfdfb",
+        "sys": "#63736a",
+        "self": "#ffffff",
+        "priv": "#355c45",
+        "normal": "#1f2933",
+        "hit": "#fff3cd",
+        "hit_active": "#f8d66d",
+        "bubble_in": "#ffffff",
+        "bubble_out": "#217346",
+        "bubble_inline": "#dfe9e2",
+        "bubble_outline": "#83b892",
+        "mention": "#107c41",
+        "link": "#107c41",
+        "mention_self": "#d9efdf",
+        "link_self": "#d9efdf",
+        "date": "#63736a",
+        "react_bg": "#e7ece8",
+        "react_fg": "#1f2933",
+        "react_own": "#217346",
+        "read": "#63736a",
+        "unread": "#c23b3b",
+        "sel_band": "#d9efdf",
+        "sel_ring": "#6da77e",
+        "pin_bg": "#fff7d6", "pin_fg": "#806000",
+        "ann_bg": "#e5f1e8", "ann_fg": "#217346",
+        "voice_bg": "#fff0e0", "voice_fg": "#c23b3b",
+        "bubble_r": 2,
+        "bubble_pad_h": 9,
+        "bubble_pad_v": 6,
+        "titlebar_h": 28,
+        "traffic_lights": False,
+    },
 }
 
 DEFAULT_SKIN = "apple"
@@ -573,7 +627,8 @@ def display_name(name: str) -> str:
 # 切换时分主题包，不做结构化的多份 CSS。够用即止，不过度设计。
 #   retro —— 暖粉手绘风（原五套 + 交互模式配色，默认主家族）
 #   flat  —— 扁平极简冷灰风（浅灰/白卡/冷描边/单强调色，深色=墨蓝黑）
-# 常量 FAMILY_RETRO / FAMILY_FLAT / FAMILY_KEY 已定义于文件顶部（SKINS 之前）。
+#   excel —— Excel 工作簿风（绿色标题栏、灰白功能区、单元格感）
+# 常量 FAMILY_RETRO / FAMILY_FLAT / FAMILY_EXCEL / FAMILY_KEY 已定义于文件顶部（SKINS 之前）。
 
 
 def skin_family(name: str = "") -> str:

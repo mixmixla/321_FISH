@@ -1,0 +1,6 @@
+interface:
+  display_name: "摸鱼助手开发"
+  short_description: "321_FISH客户端、服务器、桌游和可编辑Excel工作表开发参考"
+  default_prompt: "使用 $fish-assistant-dev，基于当前321_FISH源码完成所需开发，并验证相关功能。"
+policy:
+  allow_implicit_invocation: true

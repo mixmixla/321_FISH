@@ -322,11 +322,23 @@ def test_reconnect_and_rejoin_group(hub, tmp_path):
         bc.wait("group_state", pred=lambda e: e.get("gid") == gid
                 and "加入" in (e.get("text") or ""))
         assert gid in a._joined_groups
+        # Alice also receives Bob's join notification.  Remove that already
+        # consumed-generation state (and the initial welcome) before dropping
+        # the socket, so the reconnect assertions can only match the new
+        # welcome/group_state pair rather than a stale queued event.
+        with ac._lock:
+            ac.events[:] = [e for e in ac.events
+                            if e.get("t") != "welcome"
+                            and not (e.get("t") == "group_state"
+                                     and e.get("gid") == gid)]
         # 模拟网络中断：alice 掉线（服务器把 alice 移出群；bob 仍在 → 群存活）
         a.drop()
         assert ac.wait("state", timeout=5, pred=lambda e: e.get("state") == "offline")
         # 自动重连 → welcome → 自动重入群
         assert _online(ac, timeout=5)
+        welcome = ac.wait("welcome", timeout=5,
+                          pred=lambda e: e.get("uid") == a.uid)
+        assert welcome and welcome["uid"] == a.uid
         assert ac.wait("group_state", timeout=5, pred=lambda e:
                        e.get("gid") == gid
                        and any(m.get("uid") == a.uid for m in e.get("members", [])))

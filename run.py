@@ -8,24 +8,35 @@
     python run.py build      # PyInstaller 打包 server.exe / client.exe
 """
 import os
+import subprocess
 import sys
+import tempfile
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 def main() -> int:
-    args = [a for a in sys.argv[1:] if not a.startswith("-")]
-    cmd = args[0] if args else "test"
+    args = list(sys.argv[1:])
+    cmd = args.pop(0) if args and not args[0].startswith("-") else "test"
 
     # 去掉子命令本身，子模块 argparse 只看自己的参数
     # （README 示例：python run.py client --host 192.168.1.10）
-    if cmd != "test":
-        sys.argv = [sys.argv[0]] + [a for a in sys.argv[1:] if a != cmd]
+    sys.argv = [sys.argv[0]] + args
 
     if cmd == "test":
-        import pytest
-        return pytest.main(["-q", os.path.join(os.path.dirname(__file__), "tests")])
+        root = os.path.dirname(os.path.abspath(__file__))
+        temp_root = os.path.join(root, "_tmp_gui")
+        os.makedirs(temp_root, exist_ok=True)
+        # 每次门禁使用独立目录，避免不同 Windows 运行身份共享 pytest-of-*
+        # 时发生权限/锁冲突。父进程不加载 Tk，子进程可安全跳过 Tcl 收尾，
+        # 父进程仍能清理临时文件并返回真实退出码。
+        env = dict(os.environ)
+        env.setdefault("PYTHONIOENCODING", "utf-8")
+        with tempfile.TemporaryDirectory(prefix="pytest-", dir=temp_root) as temp:
+            return subprocess.call(
+                [sys.executable, "-m", "pytest", "-q", os.path.join(root, "tests"),
+                 "--basetemp", temp, *args], env=env)
     if cmd == "server":
         from server import main as smain
         return smain()

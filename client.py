@@ -55,6 +55,7 @@ from widgets.voice_room_window import VoiceRoomWindow  # R72 语音房窗口
 from widgets.vmemo_player import VmemoPlayer    # R72 圆形视频留言播放器
 from widgets.session_list import SessionList
 from widgets.avatar import AvatarCache, set_default_frame   # R52：全局共享头像缓存；功能④ 全局默认相框
+from widgets.excel_chrome import ExcelChrome         # Excel 工作簿风格主界面
 from widgets.lightbox import Lightbox
 from widgets.image_wall import ImageWall   # R69B5 会话图片墙（九宫格相册）
 from widgets.task_panel import TaskPanel   # R69B6/B7 群待办/接龙/签到面板
@@ -527,12 +528,19 @@ class ChatWindow:
             self._apply_dwm_corner()
         else:
             self.title_bar = None
+        # Excel 皮肤的功能区/公式栏/工作表标签。先隐藏构造，待状态条创建后
+        # 设置锚点，确保运行时从旧皮肤切回来时仍插在标题栏与状态条之间。
+        self._excel_chrome = ExcelChrome(
+            self.root, self, f, visible=False)
         self.root.title(APP_NAME)
 
         # 状态条
         sk = self._skin
         top = tk.Frame(self.root, bg=sk["window_bg"])
+        self._status_bar_frame = top
         top.pack(fill="x", padx=6, pady=(4, 2))
+        self._excel_chrome.set_anchor(top)
+        self._excel_chrome.set_visible(self._skin_name == "excel")
         self.status_dot = tk.Label(top, text="○", fg=sk["sub"], font=f,
                                    bg=sk["window_bg"])
         self.status_dot.pack(side="left")
@@ -550,9 +558,15 @@ class ChatWindow:
 
         # 主体：左侧名单/群 + 右侧会话
         body = tk.Frame(self.root, bg=sk["window_bg"])
+        self._body_frame = body
+        if self._skin_name == "excel":
+            body.configure(highlightthickness=1,
+                           highlightbackground=sk.get("glass_border", "#d0d7de"))
         body.pack(fill="both", expand=True, padx=6, pady=2)
         self._build_left(body)
         self._build_right(body)
+        self.msg_list.set_grid(sk["glass_border"] if self._skin_name == "excel" else None)
+        self._sync_excel_layout()
         # R-字号：会话/消息/输入三个控件已就绪，注入持久化的聊天主体字号
         # （只缩放聊天主体，顶栏/按钮等仍用 FONT_SIZE 默认字号）
         self._apply_font_scale()
@@ -682,6 +696,53 @@ class ChatWindow:
         self._archived_list.bind("<Double-Button-1>", self._open_archived)
         self._archived_list.bind("<Button-3>", self._on_archived_menu)
         self._archived_list.pack_forget()
+
+    def _sync_excel_layout(self, is_excel=None) -> None:
+        """Excel 使用工作表中心区域；其它皮肤与原聊天视图复用原控件。"""
+        chrome = getattr(self, "_excel_chrome", None)
+        body = getattr(self, "_body_frame", None)
+        status = getattr(self, "_status_bar_frame", None)
+        if chrome is None or body is None:
+            return
+        if is_excel is None:
+            is_excel = self._skin_name == "excel" and not getattr(self, "_ghost", False)
+        sheet_mode = is_excel and not chrome._native
+        if sheet_mode:
+            body.pack_forget()
+            if status is not None:
+                status.pack_forget()
+            chrome.sheet_area.pack(fill="both", expand=True)
+        else:
+            chrome.sheet_area.pack_forget()
+            if status is not None:
+                status.pack(fill="x", padx=6, pady=(4, 2))
+            body.pack(fill="both", expand=True, padx=6, pady=2)
+        title = getattr(getattr(self, "title_bar", None), "title", None)
+        if title is not None and not self._prefs.get("camo"):
+            title.configure(text="工作簿1 · 内部办公助手" if is_excel else self.core.nick)
+
+    def _send_excel_text(self, text: str) -> bool:
+        """从单元格发送新消息，仍使用聊天的统一发送和权限处理。"""
+        if getattr(self, "_ro_mode", False) or not str(text).strip():
+            return False
+        draft = self._entry_text()
+        reply, edit = self._pending_reply, self._pending_edit_seq
+        try:
+            # 单元格发送是一条新消息，不误用旧聊天编辑/引用状态；原草稿随后恢复。
+            self._pending_reply = None
+            self._pending_edit_seq = None
+            self.entry.delete("1.0", "end")
+            self.entry.insert("1.0", str(text))
+            before = len(self.msg_list._rows)
+            self._send()
+            rows = self.msg_list._rows
+            return not (len(rows) > before and rows[-1].raw.get("failed"))
+        finally:
+            self.entry.delete("1.0", "end")
+            self.entry.insert("1.0", draft)
+            self._pending_reply, self._pending_edit_seq = reply, edit
+            self._save_draft()
+            self._excel_chrome.refresh_messages()
 
     def _build_right(self, body) -> None:
         sk = self._skin
@@ -2139,13 +2200,13 @@ class ChatWindow:
     def _schedule_lastonline_refresh(self) -> None:
         """低频（30s）刷新离线用户「最后在线」相对文案；跳过无此需求时。"""
         if not getattr(self, "roster_list", None) or not self.core.known:
-            self.after(30000, self._schedule_lastonline_refresh)
+            self.root.after(30000, self._schedule_lastonline_refresh)
             return
         try:
             self._refresh_roster()
         except Exception:
             pass
-        self.after(30000, self._schedule_lastonline_refresh)
+        self.root.after(30000, self._schedule_lastonline_refresh)
 
     def _refresh_roster(self) -> None:
         order: list = []
@@ -3455,6 +3516,8 @@ class ChatWindow:
         if sharing:
             text += " · 📍 " + "、".join(self._marker_name(u) for u in sharing[:3]) + " 正在共享位置"
         self.chan_label.config(text=text)
+        if hasattr(self, "_excel_chrome"):
+            self._excel_chrome.set_context(text)
         if sharing:
             self.chan_label.configure(cursor="hand2", fg=self._skin.get("accent") or "#06c")
         else:
@@ -4899,6 +4962,9 @@ class ChatWindow:
 
     def _focus_search(self, _e=None) -> str:
         """Ctrl+F：开关聊天内搜索条（C1；全局名单/群过滤走左侧小框点击）。"""
+        excel = getattr(self, "_excel_chrome", None)
+        if getattr(self, "_skin_name", "") == "excel" and excel is not None and not excel._native:
+            return excel.find_cell()
         if self.chat_search.winfo_ismapped():
             self._close_chat_search()
             return "break"
@@ -8587,6 +8653,24 @@ class ChatWindow:
         self._dp = dialog_pal(sk)      # R57：对话框/独立面板派生配色（含深色）
         self._set_default_colors()     # R57B：未指定颜色的控件默认跟随皮肤
         self.root.configure(bg=sk["window_bg"])
+        # Excel chrome 只在主皮肤为 excel 时显示；ghost 透明模式暂时隐藏，
+        # 恢复原皮肤后再按持久化皮肤显示，避免装饰层破坏字幕模式。
+        ec = getattr(self, "_excel_chrome", None)
+        if ec is not None:
+            try:
+                ec.set_theme(sk)
+                ec.set_visible(palette is None and self._skin_name == "excel")
+                self._sync_excel_layout(palette is None and self._skin_name == "excel")
+            except tk.TclError:
+                pass
+        body = getattr(self, "_body_frame", None)
+        if body is not None:
+            try:
+                is_excel = palette is None and self._skin_name == "excel"
+                body.configure(highlightthickness=1 if is_excel else 0,
+                               highlightbackground=sk.get("glass_border", "#d0d7de"))
+            except tk.TclError:
+                pass
         # 状态条标签与按钮
         for w in (getattr(self, "status_dot", None),
                   getattr(self, "status_text", None)):
@@ -8692,6 +8776,8 @@ class ChatWindow:
                          selectforeground="#ffffff")
         # 消息列表整体换色（含气泡）
         self.msg_list.set_colors(msg_colors(sk))
+        self.msg_list.set_grid(
+            sk["glass_border"] if palette is None and self._skin_name == "excel" else None)
         self._apply_chat_theme()        # 聊天主题叠层：在皮肤 token 上叠加气泡主题色
         # R32B4：壁纸在换肤后恢复（启动首次 apply_theme 也走这里）
         try:

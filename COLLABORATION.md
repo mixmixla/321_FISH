@@ -9,7 +9,8 @@
 ## 1. 项目一句话
 
 Windows 桌面端的局域网聊天 + 内置桌游应用：Tkinter 客户端（伪装成办公助手界面）、
-自建 TCP 服务器（含网页端）、P2P 文件传输、语音通话、多款桌游。纯 Python 标准库。
+自建 TCP 服务器（含网页端）、P2P 文件传输、语音通话、多款桌游。使用 Python，
+加密通信依赖 cryptography，图片与屏幕共享依赖 Pillow。
 
 ## 2. 环境要求（双方必须一致，否则本地跑不起来）
 
@@ -17,7 +18,7 @@ Windows 桌面端的局域网聊天 + 内置桌游应用：Tkinter 客户端（�
 | --- | --- |
 | 系统 | Windows 10 / 11（客户端依赖 tkinter、注册表深浅色、托盘等 Windows 特性） |
 | Python | pyenv **3.14.5**（在项目根目录 `pyenv local 3.14.5`） |
-| 第三方包 | 无（纯标准库；测试另需 pytest，`pip install pytest`） |
+| 第三方包 | 开发环境安装 `pip install -r requirements-dev.txt`；运行依赖见 `requirements.txt` |
 | 自检 | `python -c "import tkinter"` 不报错即通过 |
 
 > 注意：本项目**不是跨平台**代码，不要引入 Linux/macOS 专用写法。
@@ -30,6 +31,9 @@ python run.py server      # 启动服务器（默认 TCP 9527 / 网页 9529，�
 python run.py client      # 启动客户端 GUI（可加 --host <服务器IP>）
 python run.py build       # PyInstaller 打包 server.exe / client.exe
 ```
+
+首次开发环境配置见 `docs/开发环境.md`。推荐使用 `.\dev.ps1` 调用项目
+虚拟环境，避免系统中旧 Python 影响运行。
 
 - 先起服务器再起客户端；开发时**各跑各的** server 即可（局域网互相联机是后话）。
 - 手动冒烟脚本见根目录 `_smoke_*.py`；改到哪块功能就跑对应 smoke。

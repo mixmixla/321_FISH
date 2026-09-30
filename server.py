@@ -14,8 +14,8 @@ import threading
 import time
 import hashlib
 import ipaddress
-import urllib.error
-import urllib.request
+import http.client
+import ssl
 from collections import defaultdict, deque
 from html.parser import HTMLParser
 from urllib.parse import urlparse
@@ -53,8 +53,11 @@ def _is_private_ip(host: str) -> bool:
         ip = ipaddress.ip_address(host)
     except ValueError:
         return True          # 解析不出 IP 当作不安全
-    return (ip.is_private or ip.is_loopback or ip.is_link_local
-            or ip.is_multicast or ip.is_unspecified or ip.is_reserved)
+    # is_global 同时排除 CGNAT、文档网段及其它非公网特殊地址；下面的
+    # 显式字段保留语义，覆盖不同 Python 版本对 is_global 的细节差异。
+    return (not ip.is_global or ip.is_private or ip.is_loopback
+            or ip.is_link_local or ip.is_multicast
+            or ip.is_unspecified or ip.is_reserved)
 
 
 class _MetaParser(HTMLParser):
@@ -107,50 +110,164 @@ def _parse_meta(html: str, url: str, cfg) -> dict:
             "image": image, "domain": parsed.netloc, "url": url}
 
 
-def fetch_preview(url: str, cfg) -> dict | None:
-    """抓取单条链接的预览元数据。失败/SSRF/超限一律返回 None（调用方静默降级）。
-    安全：仅 http/https；解析后拒绝私网 IP；重定向后目标地址再查一遍；512KB 截断。"""
+def _preview_public_addr(hostname: str, port: int):
+    """Resolve one preview host once and return a fixed public sockaddr.
+
+    Every answer must be public.  Rejecting a mixed DNS answer is deliberate:
+    selecting only its public member would leave a resolver-controlled private
+    address available for a later connection attempt.  The returned sockaddr
+    is passed to a raw socket, so the connect path does not resolve ``hostname``
+    a second time (DNS rebinding protection).
+    """
+    infos = socket.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
+    if not infos:
+        raise OSError("preview host has no addresses")
+    public = []
+    for family, socktype, proto, _canonname, sockaddr in infos:
+        address = sockaddr[0]
+        if _is_private_ip(address):
+            raise OSError("preview host resolves to a non-public address")
+        if family not in (socket.AF_INET, socket.AF_INET6):
+            continue
+        public.append((family, socktype, proto, sockaddr, address))
+    if not public:
+        raise OSError("preview host has no supported public address")
+    return public[0]
+
+
+def _preview_socket(address_info, timeout):
+    """Open a socket to an already-resolved address without another DNS lookup."""
+    family, socktype, proto, sockaddr, _address = address_info
+    sock = socket.socket(family, socktype, proto)
     try:
-        parsed = urlparse(url)
-        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        sock.settimeout(timeout)
+        sock.connect(sockaddr)
+    except Exception:
+        sock.close()
+        raise
+    return sock
+
+
+class _PinnedHTTPConnection(http.client.HTTPConnection):
+    """HTTPConnection whose TCP connect uses the one checked DNS answer."""
+
+    def __init__(self, host, port, address_info, *, timeout):
+        super().__init__(host, port, timeout=timeout)
+        self._preview_address_info = address_info
+
+    def connect(self):
+        self.sock = _preview_socket(self._preview_address_info, self.timeout)
+
+
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """Pinned HTTPS connection retaining hostname-based SNI/certificate checks."""
+
+    def __init__(self, host, port, address_info, *, timeout):
+        context = ssl.create_default_context()
+        super().__init__(host, port, timeout=timeout, context=context)
+        self._preview_address_info = address_info
+
+    def connect(self):
+        raw = _preview_socket(self._preview_address_info, self.timeout)
+        try:
+            # ``self.host`` is the URL hostname, so SNI and certificate
+            # verification still target the original name, not the pinned IP.
+            self.sock = self._context.wrap_socket(raw, server_hostname=self.host)
+        except Exception:
+            raw.close()
+            raise
+
+
+def _preview_host_header(hostname: str, port: int, scheme: str) -> str:
+    """Format Host without credentials and with correct IPv6 brackets."""
+    host = f"[{hostname}]" if ":" in hostname and not hostname.startswith("[") else hostname
+    default = 443 if scheme == "https" else 80
+    return host if port == default else f"{host}:{port}"
+
+
+def _preview_target(parsed) -> str:
+    """Return an origin-form request target, excluding fragments/userinfo."""
+    target = parsed.path or "/"
+    if parsed.query:
+        target += "?" + parsed.query
+    return target
+
+
+def fetch_preview(url: str, cfg) -> dict | None:
+    """抓取单条链接的预览元数据，失败/SSRF/超限静默降级为 ``None``。
+
+    只允许公网 HTTP/HTTPS。DNS 结果必须全部是公网地址，并且 TCP 连接
+    固定到本次检查过的 IP；HTTPS 仍以原始 hostname 做 SNI 和证书校验。
+    直接使用 ``http.client`` 也意味着环境代理不会绕过这套地址策略。
+    为避免未检查的跳转，预览默认拒绝任何 3xx 响应（代价是部分带跳转
+    的页面没有预览；后续如需支持应逐跳解析并重复上述检查）。
+    """
+    conn = None
+    try:
+        parsed = urlparse(str(url or ""))
+        scheme = parsed.scheme.lower()
+        if scheme not in ("http", "https") or not parsed.hostname:
             return None
-        # 预解析拒绝私网（防裸 DNS 到内网）
-        addrs = socket.getaddrinfo(parsed.netloc, None)
-        if not any(not _is_private_ip(a[4][0]) for a in addrs):
+        # 不允许 userinfo：它会让展示 Host、证书名和实际 URL 语义分叉。
+        if parsed.username is not None or parsed.password is not None:
             return None
-        req = urllib.request.Request(url, headers={
+        try:
+            hostname = parsed.hostname
+            port = parsed.port or (443 if scheme == "https" else 80)
+        except (TypeError, ValueError):
+            return None
+        if not hostname or not 1 <= int(port) <= 65535:
+            return None
+        address_info = _preview_public_addr(hostname, int(port))
+        host_header = _preview_host_header(hostname, int(port), scheme)
+        if scheme == "https":
+            conn = _PinnedHTTPSConnection(hostname, int(port), address_info,
+                                          timeout=cfg.preview_timeout)
+        else:
+            conn = _PinnedHTTPConnection(hostname, int(port), address_info,
+                                         timeout=cfg.preview_timeout)
+        conn.request("GET", _preview_target(parsed), headers={
+            "Host": host_header,
             "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                           "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"),
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"})
-        with urllib.request.urlopen(req, timeout=cfg.preview_timeout) as resp:
-            final = resp.geturl() or url
-            if urlparse(final).scheme not in ("http", "https"):
-                return None
-            # 重定向落地地址也做私网校验
-            try:
-                if not any(not _is_private_ip(a[4][0])
-                           for a in socket.getaddrinfo(urlparse(final).netloc, None)):
-                    return None
-            except OSError:
-                return None
-            ctype = resp.headers.get("Content-Type", "") or ""
-            if ctype and "html" not in ctype and "text/" not in ctype \
-                    and "xhtml" not in ctype:
-                return None
-            length = int(resp.headers.get("Content-Length") or 0)
-            if length > cfg.preview_max_bytes:
-                return None
-            data = bytearray()
-            while len(data) < cfg.preview_max_bytes:
-                chunk = resp.read(min(65536, cfg.preview_max_bytes - len(data)))
-                if not chunk:
-                    break
-                data.extend(chunk)
-            if not data:
-                return None
+                            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"),
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept": "text/html,application/xhtml+xml,text/plain;q=0.8,*/*;q=0.1",
+        })
+        resp = conn.getresponse()
+        # No implicit redirect: the next URL must be parsed/resolved/connected
+        # independently to keep redirect SSRF and rebinding checks explicit.
+        if 300 <= resp.status < 400:
+            return None
+        if resp.status < 200 or resp.status >= 300:
+            return None
+        ctype = resp.getheader("Content-Type", "") or ""
+        if ctype and "html" not in ctype and "text/" not in ctype \
+                and "xhtml" not in ctype:
+            return None
+        length_header = resp.getheader("Content-Length") or ""
+        try:
+            length = int(length_header or 0)
+        except (TypeError, ValueError):
+            return None
+        if length > cfg.preview_max_bytes:
+            return None
+        data = bytearray()
+        while len(data) < cfg.preview_max_bytes:
+            chunk = resp.read(min(65536, cfg.preview_max_bytes - len(data)))
+            if not chunk:
+                break
+            data.extend(chunk)
+        if not data:
+            return None
     except Exception as e:            # SSRF/超时/网络错误静默降级，但留日志便于排障
         print(f"[preview] 抓取失败 {url!r}: {e!r}", file=sys.stderr)
         return None
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
     text = bytes(data).decode("utf-8", errors="ignore")
     return _parse_meta(text, url, cfg)
 
@@ -1857,6 +1974,24 @@ class Hub:
         if affected:
             self._broadcast_game_list()
 
+    def _session_is_active(self, sess: Session) -> bool:
+        """判断会话是否仍属于 Hub。
+
+        已注销会话会被标记 closed；真实在线会话必须仍在该 uid 的在线集，
+        或仍是 ``sessions`` 中的代表。没有任何 Hub 注册记录的对象一律拒绝，
+        防止已断开的 TCP 读循环在 close_conn 生效前继续提交消息。
+        """
+        with self.lock:
+            if getattr(sess, "closed", False):
+                return False
+            clients = self._uid_clients.get(sess.uid)
+            return ((clients is not None and sess in clients)
+                    or self.sessions.get(sess.uid) is sess
+                    # 一些历史测试替身在 attach 后会改写 uid；仍以对象
+                    # 身份确认它确实留在 Hub 的代表映射里。
+                    or any(candidate is sess
+                           for candidate in self.sessions.values()))
+
     # ---------- 消息分发 ----------
     def dispatch(self, sess: Session, header: dict, body: bytes = b"") -> bool:
         """处理一帧；返回 False 表示应断开连接"""
@@ -1865,6 +2000,12 @@ class Hub:
             if t == MsgType.HELLO.value:
                 return self._on_hello(sess, header)
             self._error(sess, "auth", "请先发送 hello 登录")
+            return False
+        if not self._session_is_active(sess):
+            # close_conn 可能尚未来得及终止底层读循环；拒绝该帧，避免被删账号
+            # 继续借用旧 TCP 会话发消息。已 closed 的会话不再回写错误帧。
+            if not getattr(sess, "closed", False):
+                self._error(sess, "auth", "会话已失效")
             return False
         if t == MsgType.PING.value:
             sess.send({"t": "pong"})
@@ -3490,15 +3631,28 @@ class Hub:
         nick = self._append_nick_for_uid(uid, None)
         dissolved = self._admin_del_remove_groups(uid)      # 1) 移出全部群
         removed = self.bus.clear_uid(uid)                   # 2) 清空消息
-        tsess = self.sessions.get(uid)
-        if tsess is not None:                               # 3) 在线则下线
+        # 同一 uid 可以同时有桌面端、网页端和多个网页标签。只下线
+        # sessions 中的代表会话会留下其它端，旧 token 也会继续取到该 uid。
+        # 先在锁内拍快照并撤销全部 token，再逐个注销，避免遍历时修改在线集。
+        with self.lock:
+            targets = list(self._uid_clients.get(uid, ()))
+            representative = self.sessions.get(uid)
+            if representative is not None and representative not in targets:
+                targets.append(representative)
+            for token, token_uid in list(self.web_tokens.items()):
+                if token_uid == uid:
+                    del self.web_tokens[token]
+        for target in targets:                               # 3) 全部在线端强制下线
             try:
-                tsess.send({"t": MsgType.ERROR.value, "code": "deleted",
-                            "text": "你的账号已被管理员删除"})
+                target.send({"t": MsgType.ERROR.value, "code": "deleted",
+                             "text": "你的账号已被管理员删除"})
             except Exception:
                 pass
-            self.unregister(tsess, "admin_del")
-            tsess.close_conn()
+            self.unregister(target, "admin_del")
+            try:
+                target.close_conn()
+            except Exception:
+                pass
         with self.lock:
             # unregister 会重建 known 条目记录 last_online，故须在其后再删除账号
             self.known.pop(uid, None)                       # 4) 删除账号
@@ -4368,7 +4522,25 @@ class Hub:
             if post.get("uid") != sess.uid:
                 self._error(sess, "moment", "只能删除自己的动态")
                 return
+            images = [str(fn) for fn in (post.get("images") or [])]
             self.moments.pop(pid, None)
+            # 只删除本动态独占且位于 moments 根目录内的文件。即使旧状态中
+            # 出现重复文件名，也不能误删仍被其它动态引用的图片。
+            remaining_images = {
+                str(fn)
+                for other in self.moments.values()
+                for fn in (other.get("images") or [])
+            }
+            paths = [self._moment_image_path(fn)
+                     for fn in images
+                     if fn not in remaining_images]
+        for path in paths:
+            if not path:
+                continue
+            try:
+                os.remove(path)
+            except OSError:
+                pass
         self._persist()
         self._broadcast_moment({"t": "moment_update", "pid": pid, "post": None})
         self.audit.log(type="moment_del", uid=sess.uid, nick=sess.nick, pid=pid)
@@ -4378,6 +4550,30 @@ class Hub:
             posts = self._feed_sorted()
         sess.send({"t": "moment_feed", "posts": posts})
 
+    def _moment_image_path(self, fn: str) -> str | None:
+        """返回 moments 根目录下的安全图片路径；非法/越界名称返回 None."""
+        fn = str(fn or "")
+        base = os.path.basename(fn)
+        if base != fn or "." not in base:
+            return None
+        root = os.path.realpath(self.moment_dir)
+        path = os.path.realpath(os.path.join(root, base))
+        try:
+            if os.path.commonpath((root, path)) != root:
+                return None
+        except ValueError:                # 不同盘符等异常路径
+            return None
+        return path
+
+    def _moment_image_active(self, fn: str) -> bool:
+        """在 Hub 锁内确认文件名仍被现存动态引用。"""
+        base = str(fn or "")
+        if self._moment_image_path(base) is None:
+            return False
+        with self.lock:
+            return any(base in (post.get("images") or [])
+                       for post in self.moments.values())
+
     def _on_moment_img_get(self, sess: Session, header: dict) -> None:
         """按文件名回当前动态图片字节（防路径穿越：仅允许 moments 目录内文件）。"""
         fn = str(header.get("fn") or "")
@@ -4385,7 +4581,13 @@ class Hub:
         if base != fn or "." not in base:
             self._error(sess, "moment", "非法文件名")
             return
-        path = os.path.join(self.moment_dir, base)
+        if not self._moment_image_active(base):
+            self._error(sess, "moment", "图片不存在")
+            return
+        path = self._moment_image_path(base)
+        if path is None:
+            self._error(sess, "moment", "非法文件名")
+            return
         try:
             with open(path, "rb") as f:
                 blob = f.read()
@@ -5707,42 +5909,56 @@ class Hub:
             self._error(sess, "group_file", "参数错误")
             return
         fid = str(header.get("fid") or "")
-        g = self.groups.get(gid)
-        if not g or sess.uid not in g["members"]:
-            self._error(sess, "group_file", "不在该群或群不存在")
-            return
-        rec = next((r for r in self._gf_records(gid) if r["fid"] == fid), None)
-        if not rec:
-            self._error(sess, "group_file", "文件不存在")
-            return
-        cur = getattr(self, "_gf_uploading", {}).get(fid)
-        if cur is None:
-            self._error(sess, "group_file", "请先发起上传")
-            return
-        if off != cur:
-            self._error(sess, "group_file", "上传块乱序")
-            return
         if not body:
             self._error(sess, "group_file", "空数据块")
             return
-        nxt = cur + len(body)
-        if nxt > rec["size"]:
-            self._error(sess, "group_file", "数据超长")
-            return
-        try:
-            path = os.path.join(self._gf_write_dir(gid), fid)
-            with open(path, "ab") as fh:
-                fh.seek(cur)
-                fh.write(body)
-        except OSError:
-            self._error(sess, "group_file", "写入失败")
-            return
+        error = None
+        complete = False
         with self.lock:
-            self._gf_uploading[fid] = nxt
-        if nxt == rec["size"]:
-            # 全部到位：立即标记完成，防止漏发 DONE 也能下载
-            with self.lock:
-                self._gf_uploading.pop(fid, None)
+            g = self.groups.get(gid)
+            if not g or sess.uid not in g["members"]:
+                error = "不在该群或群不存在"
+            else:
+                rec = next((r for r in self._gf_records(gid)
+                            if r["fid"] == fid), None)
+                if not rec:
+                    error = "文件不存在"
+                elif rec.get("uid") != sess.uid:
+                    error = "无权写入该文件"
+                else:
+                    self._gf_uploading = getattr(self, "_gf_uploading", {})
+                    cur = self._gf_uploading.get(fid)
+                    if cur is None:
+                        error = "请先发起上传"
+                    elif off != cur:
+                        error = "上传块乱序"
+                    else:
+                        nxt = cur + len(body)
+                        if nxt > rec["size"]:
+                            error = "数据超长"
+                        else:
+                            try:
+                                path = os.path.join(self._gf_write_dir(gid), fid)
+                                # 校验、写入和推进偏移必须处在同一把锁内，
+                                # 防止并发会话/伪造者篡改同一上传。
+                                actual = (os.path.getsize(path)
+                                          if os.path.exists(path) else 0)
+                                if actual != cur:
+                                    error = "上传文件状态异常"
+                                else:
+                                    mode = "r+b" if os.path.exists(path) else "wb"
+                                    with open(path, mode) as fh:
+                                        fh.seek(cur)
+                                        fh.write(body)
+                                    self._gf_uploading[fid] = nxt
+                                    complete = nxt == rec["size"]
+                            except OSError:
+                                error = "写入失败"
+        if error:
+            self._error(sess, "group_file", error)
+            return
+        if complete:
+            # 保留 size 偏移直到 DONE，兼容桌面端“最后一块后再发收尾帧”。
             self._persist()
 
     def _on_group_file_upload_done(self, sess: Session, header: dict) -> None:
@@ -5754,28 +5970,45 @@ class Hub:
             self._error(sess, "group_file", "参数错误")
             return
         fid = str(header.get("fid") or "")
-        g = self.groups.get(gid)
-        rec = next((r for r in self._gf_records(gid) if r["fid"] == fid), None) \
-            if g else None
-        if not rec:
-            self._error(sess, "group_file", "文件不存在")
-            return
-        path = os.path.join(self._gf_write_dir(gid), fid)
-        try:
-            actual = os.path.getsize(path) if os.path.exists(path) else 0
-        except OSError:
-            actual = 0
-        if g and sess.uid in g["members"] and actual != rec["size"]:
-            self._error(sess, "group_file",
-                        f"大小不符（{actual}/{rec['size']}）")
-            self._gf_abort(gid, fid)
-            return
+        error = None
+        abort = False
         with self.lock:
-            self._gf_uploading = getattr(self, "_gf_uploading", {})
-            self._gf_uploading.pop(fid, None)
+            g = self.groups.get(gid)
+            if not g or sess.uid not in g["members"]:
+                error = "不在该群或群不存在"
+            else:
+                rec = next((r for r in self._gf_records(gid)
+                            if r["fid"] == fid), None)
+                if not rec:
+                    error = "文件不存在"
+                elif rec.get("uid") != sess.uid:
+                    error = "无权完成该文件上传"
+                else:
+                    self._gf_uploading = getattr(self, "_gf_uploading", {})
+                    cur = self._gf_uploading.get(fid)
+                    if cur is None:
+                        error = "请先发起上传"
+                    elif off != cur:
+                        error = "上传块乱序"
+                    else:
+                        path = os.path.join(self._gf_write_dir(gid), fid)
+                        try:
+                            actual = (os.path.getsize(path)
+                                      if os.path.exists(path) else 0)
+                        except OSError:
+                            actual = 0
+                        if actual != rec["size"] or off != rec["size"]:
+                            error = f"大小不符（{actual}/{rec['size']}）"
+                            abort = True
+                        else:
+                            self._gf_uploading.pop(fid, None)
+        if error:
+            self._error(sess, "group_file", error)
+            if abort:
+                self._gf_abort(gid, fid)
+            return
         self._persist()
-        if g:
-            self._gf_broadcast(gid, f"{sess.nick} 上传了群文件「{rec['name']}」")
+        self._gf_broadcast(gid, f"{sess.nick} 上传了群文件「{rec['name']}」")
         self._gf_send_list(sess, gid)
 
     def _gf_abort(self, gid: int, fid: str) -> None:

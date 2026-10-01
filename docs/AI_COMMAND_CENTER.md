@@ -10,10 +10,10 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 [PR #4](https://github.com/mixmixla/321_FISH/pull/4)已合并；CC-02A已交付[Draft PR #5](https://github.com/mixmixla/321_FISH/pull/5)，RETIRE和CC-03入口筛查尚未闭合。
 已完成的`BATCH-R1`是有限实现批次，不能据此宣布整个Pro R1里程碑通过。
 
-已合并基线：远端main `cc7e2951695041face3ea2451ef98a02d469d15b`（PR #4），与本地HEAD `d07b29577a48367f887cc0c2dbf1671ed13bb326`文件树相同。
+已合并基线：远端main `cc7e2951695041face3ea2451ef98a02d469d15b`（PR #4），与原本地基线 `d07b29577a48367f887cc0c2dbf1671ed13bb326`文件树相同。
 已显式fetch main cc7e295，新分支codex/cc02a-consistency的代码e065591/资料f48a833已推送并创建Draft PR #5。
-创建时head f48a833，base cc7e295，当前open/draft；source305 raw/规范化映射不变，实际交付状态纯docs补录进行中，未merge/release。
-用户已批准PR-DELIVERY-02：将CC-02A及必要资料交付到新Draft PR；当前Git交付Goal active，不合并/发布或开始RETIRE。
+创建时head f48a833，首轮实际记录head15a4510已推送核验，base cc7e295，当前open/draft；source305 raw/规范化不变，未merge/release。
+PR-DELIVERY-02新Draft PR交付已独立验收ACCEPTED，Git交付Goal已由工具确认complete（3076秒，约51分钟）。
 已完成首批：**CC-02A：PROFILE → RESTORE → KICK**，独立验收ACCEPTED，Goal已由工具确认complete（9741秒，约2小时42分钟）。
 [架构决定](decisions/CC-02_架构审查决定_v1.md)选择M1，先做基础三片；[冻结Task](task-packages/CC-02A.md)限定首批，
 [修订草案](task-packages/CC-02-IMPLEMENTATION-DRAFT.md)中的RETIRE/STORE-COMMIT、CREDENTIAL、LOCAL/CLOUD尚未获本批实施授权。
@@ -49,6 +49,9 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 | Backlog · SEC-01 | Git历史敏感信息与旧部署凭据评估 | PROPOSED；不阻塞当前交付 | 独立安全评估 / 用户决定 | 先评估；不自动重写Git历史或改真实凭据 |
 
 ### 上轮整理与当前 Goal
+
+`PR-DELIVERY-02 v1`已完成新Draft PR #5交付和独立终核，Goal已由工具确认complete（3076秒，约51分钟），未设预算。
+本轮只提交已验收CC-02A和批准资料；应用/测试输入保持，后续RETIRE需按新窗口资料任务接续，未获本轮实施授权。
 
 用户于2026-10-01明确答复“我是批准首批实施”，`CC-02A v1`已独立验收，Goal complete（9741秒），仅覆盖PROFILE→RESTORE→KICK。
 113文件1355/0/2、source305一致、真实Tk/Web及20后验检查通过；旧heartbeat保持PAUSED，不自动开始RETIRE或其它候选。
@@ -108,14 +111,14 @@ Android、完整云账号、47款全面美术和大规模重写维持Backlog，�
 
 | ID | 状态 | 批次/依赖 | 执行者 / 审查者 | 下一动作与证据 |
 | --- | --- | --- | --- | --- |
-| PR-DELIVERY-02 | REVIEWING | 独立树审查满足、已push/新Draft PR #5，实际docs补录待终核 | 主控 / cc02_docs_review只读 | [PR #5](https://github.com/mixmixla/321_FISH/pull/5)，创建head f48a833/base cc7e295；[Task](task-packages/PR-DELIVERY-02.md) / [Review](review-packages/PR-DELIVERY-02-r1.md) |
+| PR-DELIVERY-02 | ACCEPTED | 新Draft PR #5实际交付/独立终核满足，Goal complete（3076秒） | 主控 / cc02_docs_review只读 | [PR #5](https://github.com/mixmixla/321_FISH/pull/5)，code e065591/docs f48a833/实际补录15a4510，base cc7e295；[Task](task-packages/PR-DELIVERY-02.md) / [Review](review-packages/PR-DELIVERY-02-r1.md) |
 | CC-02A | ACCEPTED | 用户批准首批已完成，已Draft PR #5；实施Goal complete | cc02a_backend/主控 / cc02_docs_review只读 | [Task](task-packages/CC-02A.md) / [Review](review-packages/CC-02A-r1.md)，113文件1355/0/2，source305一致，未merge/release |
 | CC02-PROFILE | ACCEPTED | 统一最终候选/全量/独立终审满足 | cc02a_backend唯一server / cc02_docs_review只读 | 空值/False及资料保持、真实JSON/重登、原红2/修绿2，范围不扩退群规则 |
 | CC02-RESTORE | ACCEPTED | 统一最终候选/全量/独立终审满足 | cc02a_backend唯一server / cc02_docs_review只读 | 白名单/异常冲突拒绝、JSON权限/禁言/已读，补强8绿/相关94，burn保持 |
 | CC02-KICK | ACCEPTED | 统一最终候选/全量/独立终审满足 | backend主树server+主控UI / cc02_docs_review只读 | 全现有端撤权/新登录保护、Core/Tk/Web手动登录、真实UI和原失败保持，未封禁/退役 |
 | CC-02-DESIGN | ACCEPTED | 本次资料目标已满足；Goal complete（1930秒） | 当前主控 / cc02_docs_review独立只读 | 四正文ID49fbcd01…，13检查/99最终链接通过；终审无必须项；[Task](task-packages/CC-02-DESIGN.md) / [Review](review-packages/CC-02-DESIGN-r1.md) |
 | CC02-RETIRE | PROPOSED | M1已技术选择，下一主线，未获本批实施授权 | Pro审可靠提交设计 / 用户批准下一批 | [修订草案draft-v2](task-packages/CC-02-IMPLEMENTATION-DRAFT.md)含STORE-COMMIT/全写入面/失败重试/回滚；首批不实施 |
-| DOC-ROADMAP-01 | ACCEPTED | 路线/Goal接续资料已完成；未提交 | 主控 + `file_auth_impl`仅来源文档 / `file_auth_review`只读 | 原Pro路线映射、投影清单/恢复规则/独立审查通过；[Task](task-packages/DOC-ROADMAP-01.md) / [Review](review-packages/DOC-ROADMAP-01-r1.md) |
+| DOC-ROADMAP-01 | ACCEPTED | 路线/Goal接续资料已完成；已随Draft PR #5提交 | 主控 + `file_auth_impl`仅来源文档 / `file_auth_review`只读 | 原Pro路线映射、投影清单/恢复规则/独立审查通过；[Task](task-packages/DOC-ROADMAP-01.md) / [Review](review-packages/DOC-ROADMAP-01-r1.md) |
 | PR-DELIVERY-01 | MERGED | PR #4已合并，未发布 | 主控 / `file_auth_review`只读 | GitHub已核验merge cc7e295；[Task](task-packages/PR-DELIVERY-01.md) / [Review](review-packages/PR-DELIVERY-01-r1.md) |
 | BATCH-R1 | MERGED | 三子任务已随PR #4合并，未发布 | 原主控 / `file_auth_review`独立只读 | 原108文件1335/0/2和300项证据保持；[Task](task-packages/BATCH-R1.md) / [Review](review-packages/BATCH-R1-r1.md) |
 | SESSION-01 | MERGED | PR #4 | `file_auth_impl` + 原主控 / `file_auth_review`只读 | 原会话退出/多端隔离验收保留；[Task](task-packages/SESSION-01.md) / [Review](review-packages/SESSION-01-r1.md) |
@@ -185,7 +188,17 @@ Android、完整云账号、全面游戏美术、大规模模块拆分仍为暂�
 本次连续授权覆盖BATCH-R1三个生命周期任务，已自动推进至本批验收终点，不因单项结束而等待用户。
 其它Roadmap未转为执行授权；后续产品范围/批次由用户确认，普通批次内整改继续无需逐项推动。
 
-## 当前检查点 PR02-CP-04（推送与新 Draft PR 实际结果）
+## 当前检查点 PR02-CP-05（新 PR 交付独立验收终点）
+
+- PR-DELIVERY-02 v1已ACCEPTED，cc02_docs_review独立提交/补录终审可接受，无必须项；Goal已由工具确认complete（3076秒，约51分钟），未设预算。
+- [Draft PR #5](https://github.com/mixmixla/321_FISH/pull/5)已创建并attach；open/draft/merged=false，base main cc7e295，30 changed files。
+- 当前已核对首轮实际补录head15a4510403f50ff4130930ae2563b4cdcd928e2d，本地/remote/PR一致，workingtree/index曾clean；此后仅最终状态/Goal纯docs补录，最新head以remote或本机final-delivery.json为准。
+- 原code e065591/docs f48a833、source305 raw1f94f8fc…/canonicalea5097fc…保持；9项交付检查/160链接有效、30路径边界和规范化blob0mismatch。
+- 凭据只在内存用于已授权GitHub API创建，未输出/落盘；首轮docs push网络连接失败后正常重试成功，未强推/main未变。
+- 所有Git交付与资料更新已完成，旧fix分支d07保持，无应用/测试、额外消息/Pro/RETIRE/merge/release/heartbeat动作。
+- 后续新窗口先核对当前branch/实际head/PR状态再准备RETIRE设计；当前没有下一实现READY，不把PR已创建当合并/Pro里程碑。
+
+## 历史检查点 PR02-CP-04（推送与新 Draft PR 实际结果）
 
 - Task PR-DELIVERY-02 v1，Goal active；独立两层树审查可接受，无必须项，10源/测试+20docs准确，159资料相对链接有效。
 - source305 raw1f94f8fc…/clean规范化ea5097fc…不变，code e065591/docs f48a833，base cc7e295，main未直接push/未变。

@@ -632,6 +632,7 @@ class ClientCore:
         self.game_state: dict | None = None  # 当前房间公开快照
         self.game_private: dict | None = None  # 私密信息（手牌/身份/词面）
         self.game_events = deque(maxlen=200)   # 房间事件行
+        self._game_left_rooms: set[str] = set()  # 离房确认后忽略旧帧，显式重入才解除。
         self.fish_board: dict = {}           # R70H game -> [{uid,nick,score}]（排行榜缓存）
 
         self.events: queue.Queue = queue.Queue(maxsize=16384)
@@ -996,8 +997,11 @@ class ClientCore:
         elif t == MsgType.GAME_STATE.value:
             self._on_game_state(h)
         elif t == MsgType.GAME_PRIVATE.value:
-            self.game_private = h.get("state")
-            self._push(h)
+            room = self.game_room or {}
+            if (h.get("room_id") == room.get("room_id")
+                    and room.get("status") == "playing"):
+                self.game_private = h.get("state")
+                self._push(h)
         elif t == MsgType.FISH_BOARD.value:          # R70H 排行榜（广播/单播共用同一形状）
             game = str(h.get("game") or "")
             if game:
@@ -1490,7 +1494,30 @@ class ClientCore:
                                  "tid": int(tid)})
 
     def _on_game_state(self, h: dict) -> None:
-        self.game_room = h.get("room")
+        room = h.get("room")
+        rid = str(h.get("room_id") or (room.get("room_id") if isinstance(room, dict) else "") or "")
+        current = self.game_room or {}
+        current_rid = str(current.get("room_id") or "")
+        member = (isinstance(room, dict)
+                  and (self.uid in (room.get("players") or [])
+                       or self.uid in (room.get("spectators") or [])))
+        if not member:
+            if not current_rid or rid != current_rid:
+                return
+            self._game_left_rooms.add(rid)
+            self.game_room = self.game_state = self.game_private = None
+            self.game_events.clear()
+            self._push(h)
+            return
+        if rid in self._game_left_rooms:
+            return
+        if (rid != current_rid or room.get("round") != current.get("round")
+                or room.get("status") == "created"):
+            self.game_private = None
+            self.game_events.clear()
+        if room.get("status") != "playing":
+            self.game_private = None
+        self.game_room = room
         self.game_state = h.get("state")
         for line in h.get("events") or []:
             self.game_events.append(line)
@@ -2626,10 +2653,19 @@ class ClientCore:
         return self._send_frame({"t": MsgType.GAME_CREATE.value, "game": game})
 
     def game_join(self, room_id: str) -> bool:
-        return self._send_frame({"t": MsgType.GAME_JOIN.value, "room_id": room_id})
+        return self._game_reentry(MsgType.GAME_JOIN, room_id)
 
     def game_spectate(self, room_id: str) -> bool:
-        return self._send_frame({"t": MsgType.GAME_SPECTATE.value, "room_id": room_id})
+        return self._game_reentry(MsgType.GAME_SPECTATE, room_id)
+
+    def _game_reentry(self, kind: MsgType, room_id: str) -> bool:
+        rid = str(room_id)
+        was_left = rid in self._game_left_rooms
+        self._game_left_rooms.discard(rid)  # 接收线程可能在发送返回前处理新房间状态。
+        sent = self._send_frame({"t": kind.value, "room_id": room_id})
+        if not sent and was_left and (self.game_room or {}).get("room_id") != rid:
+            self._game_left_rooms.add(rid)
+        return sent
 
     def game_leave(self, room_id: str) -> bool:
         return self._send_frame({"t": MsgType.GAME_LEAVE.value, "room_id": room_id})

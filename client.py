@@ -11936,12 +11936,18 @@ class GameWindow:
             self._last_list = (dict(core.game_meta), list(core.game_rooms))
             self._refresh_lists()
         if (core.game_room, core.game_state) != (self._last_room, self._last_state):
+            left_room = self._last_room is not None and core.game_room is None
             self._last_room = core.game_room
             self._last_state = core.game_state
             self._render_state()
+            self._events_shown = 0  # 文本区重建后按本轮 core 记录重画，不能按旧长度跳过。
+            if left_room:
+                self.hide()
         if core.game_private != self._last_private:
             self._last_private = core.game_private
             self._render_private()
+        if len(core.game_events) < self._events_shown:
+            self._events_shown = 0
         if len(core.game_events) > self._events_shown:
             new = list(core.game_events)[self._events_shown:]
             self._events_shown = len(core.game_events)
@@ -12192,7 +12198,7 @@ class GameWindow:
         self._append_state(f"玩家：{'、'.join(players) or '无'}", "sys")
         if spec:
             self._append_state(f"观战：{len(spec)} 人", "sys")
-        if room.get("owner_uid") == me:
+        if room.get("owner_uid") == me and room.get("status") == "created":
             self._append_state("你是房主，可开始对局", "mine")
         if st is None:
             if room.get("status") == "created":
@@ -12215,7 +12221,7 @@ class GameWindow:
         （大厅内嵌 game_cv 与独立专注窗 BoardFocusWindow 共用）。"""
         room = self.core.game_room
         st = self.core.game_state
-        if not room or not st or room.get("status") != "playing":
+        if not room or not st or room.get("status") not in ("playing", "ended"):
             cv.delete("all")
             return
         game = room.get("game")
@@ -12671,7 +12677,7 @@ class GameWindow:
         for w in self.act_btns.winfo_children():
             w.destroy()
         self.act_hint.config(text="")
-        if not game:
+        if not game or (self.core.game_room or {}).get("status") != "playing":
             return
         acc = self._pal.get("accent", "#4f6ef2")
         acc_hover = self._pal.get("accent_hover", "#3d5be0")
@@ -12790,8 +12796,9 @@ class GameWindow:
         return None
 
     def _do_action(self, action: dict) -> None:
-        rid = (self.core.game_room or {}).get("room_id")
-        if rid:
+        room = self.core.game_room or {}
+        rid = room.get("room_id")
+        if rid and room.get("status") == "playing":
             self.core.game_action(rid, action)
 
     # ---------- 房间操作 ----------
@@ -12867,6 +12874,9 @@ class GameWindow:
 
     def hide(self) -> None:
         self.win.withdraw()
+        bwin = getattr(self, "_board_win", None)
+        if bwin is not None:
+            bwin.hide()
 
     def close(self) -> None:
         self._closed = True

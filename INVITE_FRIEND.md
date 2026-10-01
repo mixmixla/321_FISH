@@ -1,6 +1,6 @@
 # 邀请朋友加入仓库说明
 
-> 仓库：`https://github.com/mixmixla/321_FISH`（私有）
+> 仓库：`https://github.com/mixmixla/321_FISH`（公开）
 > 用途：把这篇文档发给朋友，跟着做就能加入开发。
 
 ---
@@ -28,7 +28,7 @@ Hi！跟我一起开发「摸鱼助手」吧～
 
 1. 让朋友**注册 GitHub** 并把用户名发给你。
 2. 打开仓库页面 → `Settings` → 左侧 `Collaborators and teams`（协作者）→ `Add people` → 输入朋友的用户名 → 邀请。
-3. 朋友会收到邮件 / GitHub 通知，**接受邀请**后即可 clone 和推送。
+3. 朋友会收到邮件 / GitHub 通知，**接受邀请**后可直接推送；公开仓库可直接 clone，也可通过 fork 提 PR。
 4. （推荐）保护 `main` 分支：`Settings` → `Branches` → `Add rule`，分支名填 `main`，
    勾选 `Require a pull request before merging` —— 这样 main 只能通过 PR 合并，不会被误推。
 
@@ -80,7 +80,8 @@ git push -u origin <分支名>
 
 | 事项 | 说明 |
 | --- | --- |
-| 私有仓库 | 只有协作者能看代码，别人搜不到，放心传 |
+| 公开仓库 | 任何人都能读取代码；实际密码、token、私钥与运行数据不得提交或放进共享材料 |
+| 管理员凭据 | 服务器通过 `MOYU_ADMIN_PASSWORD` 配置；未配置时关闭管理员登录，详见 [部署说明](docs/管理员凭据与公开仓库安全.md) |
 | 敏感文件 | `prefs.json`、聊天记录、证书等已被 `.gitignore` 排除，**不要手动 git add 它们** |
 | 测试门禁 | 提交前 `python run.py` 必须全绿，这是合并的硬条件 |
 | 推送失败 | 国内网络连 GitHub 偶尔会 `curl 55` 断连：`git config http.postBuffer 524288000` 后重推 |
@@ -89,6 +90,6 @@ git push -u origin <分支名>
 
 ## 五、常见问题
 
-- **clone 时提示需要登录/权限？** 说明还没接受邀请，检查邮箱里的 GitHub 邀请邮件，或让主理人重新邀请。
+- **clone 时提示需要登录/权限？** 当前仓库公开，先核对 URL 和本地 Git 凭据/网络配置；直接 push 的权限仍须接受协作者邀请。
 - **pyenv 装不上 3.14.5？** 确认用的是 PowerShell（不是 cmd），重开终端后 `pyenv install 3.14.5`。
 - **测试挂了但没动过代码？** 先 `git pull origin main` 确认是最新代码，再问主理人。

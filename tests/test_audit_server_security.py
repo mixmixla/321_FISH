@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """服务端安全回归：群文件归属、删号会话失效、朋友圈图片生命周期。"""
+import secrets
 from dataclasses import replace
 
 from config import CFG
@@ -19,15 +20,23 @@ class _Rec:
 
 
 def _hub(tmp_path):
-    cfg = replace(CFG, audit_dir=str(tmp_path / "audit"),
-                  web_files_dir=str(tmp_path / "web"))
-    return Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"))
+    admin_password = secrets.token_urlsafe(24)
+    cfg = replace(CFG, admin_nick="L57", audit_dir=str(tmp_path / "audit"),
+                  web_files_dir=str(tmp_path / "web"),
+                  admin_pwd=admin_password)
+    hub = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"))
+    hub._test_admin_password = admin_password
+    return hub
 
 
-def _session(hub, nick, stype="tcp"):
+def _session(hub, nick, stype="tcp", pwd=""):
     rec = _Rec()
     sess = Session(0, nick, stype, "127.0.0.1", rec.send)
-    assert hub._attach(sess)
+    if nick == hub._admin_nick:
+        assert hub._on_hello(sess, {"t": MsgType.HELLO.value,
+                                    "nick": nick, "pwd": pwd})
+    else:
+        assert hub._attach(sess)
     return sess, rec
 
 
@@ -81,12 +90,13 @@ def test_group_file_upload_requires_owner_and_serialized_offset(tmp_path):
 
 def test_admin_delete_invalidates_all_sessions_and_tokens(tmp_path):
     hub = _hub(tmp_path)
-    admin, _ = _session(hub, "L57")
-    admin.is_admin = True
+    admin, _ = _session(hub, hub._admin_nick,
+                        pwd=hub._test_admin_password)
+    assert admin.is_admin
     first, first_rec = _session(hub, "victim", "tcp")
     second, second_rec = _session(hub, "victim", "web")
     token = "old-web-token"
-    hub.web_tokens[token] = second.uid
+    hub.web_tokens[token] = second
     assert first.uid == second.uid
 
     hub.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value,

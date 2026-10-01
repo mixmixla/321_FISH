@@ -559,7 +559,7 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
     <div class="item" onclick="openMoments()"><span class="dot"></span>看看大家的动态</div>
   </div>
   <div id="chat">
-    <div id="head"><span id="btnSide" title="会话列表" onclick="toggleSide()">☰</span><span id="headTitle">公共聊天</span><span class="sub" id="headSub"></span><span id="btnBlock" class="add" style="display:none" title="屏蔽/解除屏蔽"></span><span id="btnAdmin" class="add" style="display:none" title="管理员面板" onclick="adminPanel()">🧹</span><span id="btnExport" class="add" title="导出本会话记录（txt）" onclick="exportChat()">⬇</span><span class="add" title="图片墙（聚合本会话已加载图片）" onclick="openAlbum()">🖼</span><span class="add" title="我的资料" onclick="profilePanel()">👤</span><span class="add" title="昵称密码" onclick="pwdPanel()">🔑</span><span class="add" title="新消息提示音（关闭/轻柔/默认/叮咚）" onclick="soundPanel()">🔊</span><span class="add" title="勿扰时段（抑制通知/提示音）" onclick="dndPanel()">🔕</span><span class="add" title="关键词提醒（命中关键词始终系统通知）" onclick="kwPanel()">🔔</span><span class="add" title="敏感词打码（仅本机显示，点击揭示）" onclick="guardPanel()">🕶️</span><span class="add" title="摸鱼排行榜（只读，按游戏累计积分）" onclick="fishBoardPanel()">🏆</span><span class="add" title="主题风格（暖粉手绘/冷灰极简）"><select id="selThemeFamily" onchange="setThemeFamily(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="retro">暖粉</option><option value="flat">冷灰</option></select></span><span id="btnTheme" class="add" title="深浅色主题切换" onclick="toggleTheme()">🌙</span><select id="selChatTheme" class="add" title="聊天主题（气泡配色）" onchange="setChatTheme(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="">跟随皮肤</option><option value="mint">薄荷</option><option value="coral">珊瑚</option><option value="peach">暖粉</option><option value="ink">墨蓝</option></select></div>
+    <div id="head"><span id="btnSide" title="会话列表" onclick="toggleSide()">☰</span><span id="headTitle">公共聊天</span><span class="sub" id="headSub"></span><span id="btnBlock" class="add" style="display:none" title="屏蔽/解除屏蔽"></span><span id="btnAdmin" class="add" style="display:none" title="管理员面板" onclick="adminPanel()">🧹</span><span id="btnExport" class="add" title="导出本会话记录（txt）" onclick="exportChat()">⬇</span><span class="add" title="图片墙（聚合本会话已加载图片）" onclick="openAlbum()">🖼</span><span class="add" title="我的资料" onclick="profilePanel()">👤</span><span class="add" title="退出登录" onclick="logout()">⏻</span><span class="add" title="昵称密码" onclick="pwdPanel()">🔑</span><span class="add" title="新消息提示音（关闭/轻柔/默认/叮咚）" onclick="soundPanel()">🔊</span><span class="add" title="勿扰时段（抑制通知/提示音）" onclick="dndPanel()">🔕</span><span class="add" title="关键词提醒（命中关键词始终系统通知）" onclick="kwPanel()">🔔</span><span class="add" title="敏感词打码（仅本机显示，点击揭示）" onclick="guardPanel()">🕶️</span><span class="add" title="摸鱼排行榜（只读，按游戏累计积分）" onclick="fishBoardPanel()">🏆</span><span class="add" title="主题风格（暖粉手绘/冷灰极简）"><select id="selThemeFamily" onchange="setThemeFamily(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="retro">暖粉</option><option value="flat">冷灰</option></select></span><span id="btnTheme" class="add" title="深浅色主题切换" onclick="toggleTheme()">🌙</span><select id="selChatTheme" class="add" title="聊天主题（气泡配色）" onchange="setChatTheme(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="">跟随皮肤</option><option value="mint">薄荷</option><option value="coral">珊瑚</option><option value="peach">暖粉</option><option value="ink">墨蓝</option></select></div>
     <div id="sbar" style="display:none">
       <input id="sinput" placeholder="搜索本会话消息（Ctrl+F，Enter 下一个）" autocomplete="off">
       <span id="scount"></span>
@@ -622,7 +622,7 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
 <div id="status"></div>
 <script>
 const $=s=>document.querySelector(s);
-const state={token:null,uid:0,nick:"",stickers:{},cur:{type:"public"},es:null,
+const state={token:null,uid:0,nick:"",stickers:{},cur:{type:"public"},es:null,esRetry:null,
   meIn:{},reads:{},panelGid:null,panelRole:"",serverGroups:[],
   convos:[],unread:{},pollData:{},drafts:{},reply:null,blocked:[],scheds:[],
   is_admin:false,editSeq:null,lastDay:null,burnMode:false,groupTotal:0,   // R50：屏蔽名单 / R51：定时消息 / R53：管理员标识 / R55-3：编辑态 / R55-9：日期分隔线 / R14：阅后即焚模式 // C9② 群成员总数
@@ -2298,6 +2298,36 @@ function enterMain(d){
   openStream();
   gotoDeepLink();                                  // R71：带 #会话键/seq 打开 → 切会话并定位高亮
 }
+function leaveLogin(){
+  if(state.esRetry){clearTimeout(state.esRetry);state.esRetry=null;}
+  const es=state.es;state.es=null;if(es)es.close();
+  state.token=null;state.uid=0;state.nick="";state.is_admin=false;
+  state.roster=[];state.groups=[];state.convos=[];state.unread={};
+  state.drafts={};state.blocked=[];state.scheds=[];state.cur={type:"public"};
+  state.groom=null;state.gst=null;state.gpriv=null;state.glog=[];state.grooms=[];state.gleft={};
+  const msgs=document.getElementById("msgs");if(msgs)msgs.innerHTML="";
+  const gpanel=document.getElementById("gpanel");if(gpanel)gpanel.remove();
+  if(typeof renderGames==="function")renderGames();
+  if(typeof closeLobby==="function")closeLobby();
+  const loginBox=document.getElementById("login");
+  const main=document.getElementById("main");
+  if(main)main.style.display="none";
+  if(loginBox)loginBox.style.display="";
+  $("#pwd").value="";$("#npwd").value="";
+}
+function logout(){
+  const tok=state.token;
+  if(!tok){leaveLogin();return}
+  fetch("/api/logout",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({token:tok})})
+    .then(async r=>{let d={};try{d=await r.json()}catch(_e){};
+      return {status:r.status,data:d};})
+    .then(({status,data})=>{
+      if((status===200&&data.ok)||status===401){leaveLogin();return}
+      showStatus(data.error||"退出失败");
+    })
+    .catch(()=>showStatus("退出失败，请检查网络后重试"));
+}
 function login(){
   const nick=$("#nick").value.trim();
   if(!nick){showStatus("请输入昵称");return}
@@ -2922,7 +2952,7 @@ function adminPanel(){
   d.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:99";
   const card=document.createElement("div");
   card.style.cssText="background:var(--side,#fff);border:1px solid var(--line,#ddd);border-radius:12px;padding:14px;width:min(340px,90vw)";
-  card.innerHTML="<div style='font-weight:600;margin-bottom:4px;color:#b71c1c'>🧹 管理员面板（L57）</div>"
+  card.innerHTML="<div style='font-weight:600;margin-bottom:4px;color:#b71c1c'>🧹 管理员面板</div>"
     +"<div style='font-size:11px;color:var(--dim);margin-bottom:10px'>以下操作对全员生效，不可恢复，请谨慎使用</div>"
     +"<button id='admClear' style='width:100%;background:#fdecea;color:#b71c1c;border:1px solid #f5c6c2;margin-bottom:8px'>清空全部聊天记录（全员）</button>"
     +"<div style='display:flex;gap:6px;margin-bottom:8px'>"
@@ -2981,7 +3011,7 @@ const renderAdm=()=>{
   renderAdm();loadAdminUsers();
   const timer=setInterval(()=>{if(document.getElementById("admldg")){renderAdm();loadAdminUsers()}else clearInterval(timer)},5000);
 }
-// ---- R56 网页端：系统管理员（L57）群管理：目录+增删成员+解散 ----
+// ---- R56 网页端：系统管理员群管理：目录+增删成员+解散 ----
 let _grpData=[],_grpSelG=-1,_grpSelM=-1;
 function grpReq(op,gid,uid,cb){
   const body={token:state.token,op:op,gid:gid};
@@ -3006,7 +3036,7 @@ function adminGroupsPanel(){
   const card=document.createElement("div");
   card.style.cssText="background:var(--side,#fff);border:1px solid var(--line,#ddd);border-radius:12px;padding:14px;width:min(760px,94vw);height:min(560px,88vh);display:flex;flex-direction:column";
   card.innerHTML=
-    "<div style='font-weight:600;color:#b71c1c'>👥 群管理 · 系统管理员（L57）</div>"
+    "<div style='font-weight:600;color:#b71c1c'>👥 群管理 · 系统管理员</div>"
     +"<div style='font-size:11px;color:var(--dim);margin-bottom:8px'>选中群查看成员；可增删成员或直接解散群</div>"
     +"<div style='display:flex;flex:1;gap:10px;min-height:0'>"
     +"  <div style='flex:1;display:flex;flex-direction:column;min-width:0'>"
@@ -3224,6 +3254,8 @@ function toggleSide(){const open=$("#side").classList.toggle("open");
   sideScrim().classList.toggle("on",open);}
 function closeSide(){$("#side").classList.remove("open");const s=$("#scrim");if(s)s.classList.remove("on");}
 function openStream(){
+  if(!state.token)return;
+  if(state.esRetry){clearTimeout(state.esRetry);state.esRetry=null;}
   if(state.es)state.es.close();
   function mpMTime(ts){const d=new Date(ts*1000);const n=Date.now();const s=(n-ts*1000)/1000;if(s<60)return"刚刚";if(s<3600)return Math.floor(s/60)+"分钟前";if(s<86400)return Math.floor(s/3600)+"小时前";if(s<86400*3)return Math.floor(s/86400)+"天前";const p=x=>String(x).padStart(2,"0");return(d.getMonth()+1)+"月"+p(d.getDate()+"")+"日"}
   const mfx=(a,b)=>{const s=(b.toString().charCodeAt(0)||0)%a.length;return a[s]};     // 头像色板
@@ -3405,6 +3437,7 @@ function openStream(){
   const es=new EventSource("/api/events");
   state.es=es;
   es.onmessage=e=>{
+    if(state.es!==es||!state.token)return;
     let d;try{d=JSON.parse(e.data)}catch(err){return}
     if(d.t==="chat"||d.t==="poll"){
       if(d.channel==="private")bumpConvo(d);      // R22：维护最近私聊 + 未读
@@ -3471,13 +3504,22 @@ function openStream(){
       if(d.nicks)state.gnicks=Object.assign({},state.gnicks,d.nicks);
       const inR=d.room&&((d.room.players||[]).includes(state.uid)
         ||(d.room.spectators||[]).includes(state.uid));
+      if(state.groom===d.room_id&&!inR){
+        state.gleft[d.room_id]=true;hideGamePanel();return;}
+      if(inR&&state.gleft[d.room_id])return;
       if(!state.groom&&inR)openGamePanel(d.room_id);       // 建房/加入自动开面板
       if(state.groom===d.room_id){
+        const previous=state.gst&&state.gst.room;
+        if(!previous||previous.round!==d.room.round||d.room.status==="created"){
+          state.gpriv=null;state.glog=[];}
+        if(d.room.status!=="playing")state.gpriv=null;
         state.gst=d;(d.events||[]).forEach(e=>state.glog.push(e));
         if(state.glog.length>200)state.glog=state.glog.slice(-200);
         renderGamePanel();}}
     else if(d.t==="game_private"){                         // R49：私密投递（手牌/词面）
-      if(state.groom===d.room_id){state.gpriv=d.state;renderGamePanel();}}
+      if(state.groom===d.room_id&&state.gst&&state.gst.room
+          &&state.gst.room.status==="playing"){
+        state.gpriv=d.state;renderGamePanel();}}
     else if(d.t==="fish_board"){                           // R70H：排行榜实时刷新（广播/单播同形）
       if(d.game){state.fish=Object.assign({},state.fish||{});state.fish[d.game]=d.entries||[];}
       if(state.fishOpen)window.fishRender();}
@@ -3495,7 +3537,14 @@ function openStream(){
     else if(d.t==="moment_cover"){                                // 朋友圈：我的封面变更 → 立即重绘
       if(state.mpanelOpen&&d.uid===state.uid)window.applyCover(d.cover||null)}
   };
-  es.onerror=()=>{setTimeout(openStream,2000)};
+  es.onerror=()=>{
+    if(state.es!==es||!state.token)return;
+    if(state.esRetry)return;
+    state.esRetry=setTimeout(()=>{
+      state.esRetry=null;
+      if(state.es===es&&state.token)openStream();
+    },2000);
+  };
 }
 $("#btnLogin").onclick=login;
 $("#nick").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
@@ -3584,7 +3633,7 @@ function applyRO(){
 // ==================== R49 网页端桌游 ====================
 // 数据通路：REST /api/game → hub.dispatch GAME 帧 → 服务器经 SSE 推回
 // game_list（房间清单）/ game_state（房间快照+events+nicks）/ game_private（手牌/词面）。
-state.gmeta={};state.grooms=[];state.groom=null;state.gst=null;state.gpriv=null;
+state.gmeta={};state.grooms=[];state.groom=null;state.gst=null;state.gpriv=null;state.gleft={};
 state.gnicks={};state.glog=[];state.globbyOpen=false;
 state.fish={};state.fishOpen=false;state.fishGame="";   // R70H 摸鱼排行榜缓存
 const GICON={guess_number:"🔢",gomoku:"⚫",rps:"✊",spy:"🕵️",uno:"🃏",blackjack:"🂠",
@@ -3666,9 +3715,17 @@ function gnick(u){if(state.gnicks[u])return state.gnicks[u];
 function scoreHTML(sc){return "🏆 "+Object.entries(sc||{}).map(([u,v])=>esc(gnick(+u))+" "+v).join("　")}
 function gameAPI(op,extra,quiet){
   const b=Object.assign({token:state.token,op:op},extra||{});
+  const rid=extra&&extra.room_id,reentry=(op==="join"||op==="spectate")&&rid;
+  const wasLeft=reentry&&state.gleft[rid];
+  if(reentry)delete state.gleft[rid];       // SSE 状态可能先于 HTTP 回应到达。
+  const restore=()=>{if(wasLeft&&state.token===b.token
+      &&!(state.gst&&state.gst.room&&state.gst.room.room_id===rid
+        &&((state.gst.room.players||[]).includes(state.uid)
+          ||(state.gst.room.spectators||[]).includes(state.uid))))state.gleft[rid]=true;};
   return fetch("/api/game",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify(b)}).then(r=>r.json())
-    .then(d=>{if(!d.ok&&!quiet)showStatus(d.error||"操作失败");return d});}
+    .then(d=>{if(!d.ok){restore();if(!quiet)showStatus(d.error||"操作失败");}return d})
+    .catch(e=>{restore();throw e});}
 function renderGames(){                        // 侧栏房间速览
   const box=$("#games");if(!box)return;box.innerHTML="";
   if(!(state.grooms||[]).length){
@@ -3757,10 +3814,12 @@ function openGamePanel(rid){
   p.onclick=e=>{if(e.target===p)hideGamePanel()};
   renderGamePanel();
 }
-function hideGamePanel(){state.groom=null;const p=$("#gpanel");if(p)p.remove()}
+function hideGamePanel(){state.groom=null;state.gst=null;state.gpriv=null;state.glog=[];
+  const p=$("#gpanel");if(p)p.remove()}
 function gHeadBtn(txt,fn){const b=document.createElement("button");b.className="gbtn";b.textContent=txt;b.onclick=fn;return b}
 function gBtn(txt,act,dis){const b=document.createElement("button");b.className="gbtn";b.textContent=txt;
-  if(dis)b.disabled=true;else b.onclick=()=>gameAPI("action",{room_id:state.groom,action:act});return b}
+  if(dis||!state.gst||!state.gst.room||state.gst.room.status!=="playing")b.disabled=true;
+  else b.onclick=()=>gameAPI("action",{room_id:state.groom,action:act});return b}
 function gLog(line){const box=$("#glog");if(!box)return;
   const d=document.createElement("div");d.className="glogl";d.textContent=line;
   box.appendChild(d);box.scrollTop=box.scrollHeight}
@@ -3779,14 +3838,15 @@ function renderGamePanel(){
   if(room){
     if(room.status==="created"&&room.owner_uid===state.uid)
       head.appendChild(gHeadBtn("▶ 开始对局",()=>gameAPI("start",{room_id:room.room_id})));
-    head.appendChild(gHeadBtn("🚪 离开",()=>{gameAPI("leave",{room_id:room.room_id},true);hideGamePanel()}));
+    head.appendChild(gHeadBtn("🚪 离开",()=>gameAPI("leave",{room_id:room.room_id},true)));
   }
   head.appendChild(gHeadBtn("✕",hideGamePanel));
   const lb=$("#glog");lb.innerHTML="";(state.glog||[]).forEach(gLog);
   const main=$("#gmain"),priv=$("#gpriv");
   main.innerHTML="";priv.style.display="none";priv.innerHTML="";
   if(!room)return;
-  if(room.status!=="playing"){
+  main.inert=room.status==="ended";
+  if(room.status!=="playing"&&room.status!=="ended"){
     main.innerHTML="<div style='padding:24px;text-align:center'>"
       +(room.status==="created"
         ?"👥 "+(room.players||[]).map(u=>esc(gnick(u))).join("、")+"<br><br>⏳ 等待房主开始…（至少 "
@@ -3797,6 +3857,10 @@ function renderGamePanel(){
   if(!s){main.textContent="等待状态…";return}
   const fn=GRENDER[gname];
   if(fn)fn(main,s);else main.textContent="暂不支持的游戏渲染";
+  if(room.status==="ended"){
+    main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
+    const note=document.createElement("div");note.className="gsec";
+    note.textContent="🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
   const pv=state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+pv.hand.join(" "));
@@ -5839,6 +5903,58 @@ class _Handler(BaseHTTPRequestHandler):
     def _session(self, body: dict) -> "Session | None":
         return self.hub.session_by_token(self._tok_any(body))
 
+    def _same_origin(self) -> bool:
+        """退出 POST 若带 Origin，必须与当前请求 Host/协议同源。"""
+        raw = self.headers.get("Origin")
+        if raw is None:
+            return True                         # 兼容无 Origin 的程序化客户端
+        origin = raw.strip()
+        if not origin or origin.lower() == "null":
+            return False
+        try:
+            parsed = urllib.parse.urlsplit(origin)
+            if parsed.scheme not in ("http", "https") or not parsed.hostname:
+                return False
+            if parsed.username is not None or parsed.password is not None:
+                return False
+            if parsed.path not in ("", "/") or parsed.query or parsed.fragment:
+                return False
+            expected_scheme = "https" if self._is_tls() else "http"
+            if parsed.scheme != expected_scheme:
+                return False
+            host = (self.headers.get("Host") or "").strip()
+            if not host:
+                return False
+            request_host = urllib.parse.urlsplit(f"{expected_scheme}://{host}")
+            if not request_host.hostname:
+                return False
+            origin_port = parsed.port or (443 if parsed.scheme == "https" else 80)
+            request_port = request_host.port or (443 if expected_scheme == "https" else 80)
+            return (parsed.hostname.rstrip(".").lower()
+                    == request_host.hostname.rstrip(".").lower()
+                    and origin_port == request_port)
+        except (TypeError, ValueError):
+            return False
+
+    def _clear_login_cookie(self) -> str:
+        cookie = (f"{COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict")
+        if self._is_tls():
+            cookie += "; Secure"
+        return cookie
+
+    def _logout(self, body: dict):
+        if not self._same_origin():
+            self._json(403, {"ok": False, "error": "退出请求来源不合法"})
+            return
+        sess = self._session(body)
+        clear_cookie = self._clear_login_cookie()
+        if not sess:
+            self._json(401, {"ok": False, "error": "未登录"},
+                       set_cookie=clear_cookie)
+            return
+        self.hub.unregister(sess, "web_logout")
+        self._json(200, {"ok": True}, set_cookie=clear_cookie)
+
     # ---------- 路由 ----------
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
@@ -5910,6 +6026,8 @@ class _Handler(BaseHTTPRequestHandler):
         body = self._read_json()
         if path == "/api/login":
             self._login(body)
+        elif path == "/api/logout":
+            self._logout(body)
         elif path == "/api/block":
             self._block(body)                # R50：网页端屏蔽/解除
         elif path == "/api/nudge":

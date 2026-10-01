@@ -1,0 +1,40 @@
+# 321_FISH 开工与恢复
+
+本仓库是 Windows/Tkinter 局域网聊天与桌游项目。先确认工作区、`run.py`、
+`client_core.py` 和 `games_pkg/`；当前机器目录为 `D:/Project/321_FISH`。
+
+## 启动顺序
+
+1. 读本文件、[协作规范](COLLABORATION.md) 和 [指挥中心](docs/AI_COMMAND_CENTER.md)。
+2. 读指挥中心指定的 Task Package、必要的 [项目记忆](PROJECT_MEMORY.md) 段落。
+3. 核对 `git status --short --branch`、HEAD、实际 diff 和当前 Review Package。
+4. 按检查点确认已有进程和文件归属，再继续下一动作；不重复启动仍在运行的测试。
+
+## 执行规则
+
+- Windows 的所有 shell 命令使用 PowerShell 7（`pwsh`），不得调用 `powershell.exe`。
+  runner 默认旧 PowerShell 时，用 `pwsh -NoProfile -Command "..."` 执行实际命令。
+- 沿用 `.python-version`、`.venv`、`dev.ps1` 与 requirements；不要更换其它项目环境。
+- 用户确认批次范围；Pro 审方向、重大设计与里程碑；Codex 调度实现和独立审查。
+  只有当前批准批次中的 READY 任务可以开始；候选清单不构成执行授权。
+- [指挥中心](docs/AI_COMMAND_CENTER.md) 是执行状态与下一任务的唯一来源。
+  Task Package 冻结需求，Review Package 保存版本/证据/审查结论，项目记忆保存稳定事实。
+- 同一核心模块最多一个写入者。代理明确文件所有权，不覆盖用户或其他代理修改。
+  需要并行写代码时使用独立 checkout/worktree；当前有未提交交付时先保存边界，勿自动 pull。
+- 需求变化记录任务包版本与决定来源；发现的问题不能自行扩大批准范围。
+- 日常选测、领域验证、最终全量的适用条件见协作规范。纯文档只做文档/边界检查；
+  CC-01A 明确要求的最终全量仍须完成，历史失败不能用专项通过或重试抹掉。
+- 实现者不能自行验收。独立审查从任务包、实际差异与原始证据开始；
+  ACCEPTED、MERGED、里程碑通过和发布完成分别记录。
+- 提交、推送、PR、合并、发布和修改真实用户数据的权限分别按批准批次约定。
+  不因角色分工而自动获得权限；main 禁止直接 push。
+- 私有聊天全文、实际凭据/token、prefs、用户历史、运行状态、TLS 私钥不得入库。
+  ignored 日志只作原始证据，不能成为唯一交接或状态来源。
+
+## 检查点与中断
+
+修改、长测试开始/结束、审查交接时更新指挥中心：任务 ID/包版本、base/head、
+分支/dirty 标识、执行者、已完成/未完成、命令/结果、下一动作、活动进程/日志、待决事项。
+新上下文按启动顺序恢复；版本变动先核对归属，不能沿用旧版本的审查通过结论。
+越界或必测失败时保存检查点和具体问题；Goal/heartbeat 仅在用户明确启动后使用，
+同一队列同一时刻只有一个主控写入者。

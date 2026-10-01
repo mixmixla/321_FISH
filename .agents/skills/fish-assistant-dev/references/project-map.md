@@ -51,7 +51,9 @@ TCP 握手后 `uid=0` Session 只接受 HELLO；`_on_hello/_attach` 校验昵称
 复用稳定 uid。`_uid_clients` 包含全部 TCP/Web 端，`sessions` 为代表会话。
 welcome 初始化名单、群、历史及关联状态；最后一个端离线才做 uid 下线清理。
 
-Web 登录包含站点口令限速和昵称密码两个层次；`login_web` 创建 token。
+Web 登录包含站点口令限速和昵称密码两个层次；`login_web` 创建绑定原 Web Session 的 token。
+管理员走同一个登录校验，密码来自部署环境 `MOYU_ADMIN_PASSWORD`，未配置时拒绝登录，
+管理员昵称不允许普通账号认领。参见 `docs/管理员凭据与公开仓库安全.md`。
 `mt_token` Cookie 是优先入口，HttpOnly、SameSite=Strict，TLS 下 Secure；旧
 query/body token 仍作为兼容入口。REST 不能另造与 Hub 不同的业务权限规则。
 

@@ -22,7 +22,7 @@ from urllib.parse import urlparse
 import json
 import copy
 
-from config import CFG, DRAFT_TTL, MAX_NICK_LEN, enable_crashlog
+from config import ADMIN_NICK, CFG, DRAFT_TTL, MAX_NICK_LEN, enable_crashlog
 from crypto import HandshakeError, server_handshake
 from protocol import MsgType, ProtocolError
 from filexfer import TransferMeta, XferStatus
@@ -401,7 +401,7 @@ class Session:
         self.close_conn = lambda: None      # 踢人时由服务器主动关连接
         self.last_seen = _now()
         self.closed = False
-        self.is_admin = False       # R53：管理员（L57 登录成功置 True，最高清理权限）
+        self.is_admin = False       # 只由服务器凭据校验成功后授予
 
     def touch(self) -> None:
         self.last_seen = _now()
@@ -420,16 +420,25 @@ class Hub:
                           else self.cfg.web_idle_timeout)
         self._web_password = (web_password if web_password is not None
                               else self.cfg.web_password)
-        # R53：管理员固定账号（昵称/密码不可被占用或修改）
-        self._admin_nick = str(getattr(self.cfg, "admin_nick", "L57") or "L57")
-        self._admin_pwd_hash = auth.make(
-            str(getattr(self.cfg, "admin_pwd", "L57") or "L57"))
+        # 部署侧凭据，不允许缺省/空配置回退到公开密码。
+        admin_nick = getattr(self.cfg, "admin_nick", ADMIN_NICK)
+        if (not isinstance(admin_nick, str) or not admin_nick.strip()
+                or len(admin_nick.strip()) > MAX_NICK_LEN):
+            raise ValueError(f"管理员昵称配置无效（须为 1–{MAX_NICK_LEN} 字符）")
+        self._admin_nick = admin_nick.strip()
+        # 更换登录标识后也保留旧标识，避免普通用户冒充旧管理员。
+        self._reserved_admin_nicks = {ADMIN_NICK, self._admin_nick}
+        admin_pwd = getattr(self.cfg, "admin_pwd", "")
+        self._admin_pwd_hash = (auth.make(admin_pwd)
+                                if isinstance(admin_pwd, str) and admin_pwd.strip()
+                                else None)
         self._zombie_web_idle = getattr(self.cfg, "zombie_web_idle", 30.0)
         self.lock = threading.RLock()
         self.sessions = {}          # uid -> 代表会话（在线集按 uid 唯一；任一端在线即在线）
         self._uid_clients = {}      # uid -> set[Session]（同一 uid 的全部在线会话，多端并存）
         self.nick_to_uid = {}
-        self.web_tokens = {}        # token -> uid（网页端）
+        self._offline_notice_records: dict = {}  # uid -> {text,state=pending|cancelled}
+        self.web_tokens = {}        # token -> 已认证的 Web Session（不能借同 uid 的其它端续权）
         self.groups = {}            # gid -> {gid,name,owner,members:{uid:nick}}
         # R55-7 群邀请码防爆破：ip -> [失败时间戳...]（滑动窗口限速）
         self._invite_fails: dict = {}
@@ -1098,7 +1107,7 @@ class Hub:
             return {u: dict(info) for u, info in self.known.items()}
 
     def _is_admin_uid(self, uid: int) -> bool:
-        """R54：该 uid 当前是否管理员会话（L57 登录）。"""
+        """R54：该 uid 当前是否已认证的管理员会话。"""
         s = self.sessions.get(uid)
         return bool(s and s.is_admin)
 
@@ -1232,6 +1241,41 @@ class Hub:
 
     def _broadcast_system(self, text: str) -> None:
         self._broadcast({"t": "system", "text": text, "ts": round(_now(), 3)})
+
+    def _offline_notice_before_snapshot(self, uid: int, text: str) -> None:
+        """离线通知收件人快照前的受控栅栏（生产路径为空操作）。"""
+        return None
+
+    def _broadcast_offline_notice(self, uid: int, nick: str) -> None:
+        """提交 UID 下线通知；校验与收件人快照在同一锁临界区完成。"""
+        text = f"{nick} 已下线"
+        rec = {"text": text, "state": "pending"}
+        with self.lock:
+            if self._uid_clients.get(uid):
+                return
+            self._offline_notice_records[uid] = rec
+        try:
+            self._offline_notice_before_snapshot(uid, text)
+            payload = {"t": "system", "text": text, "ts": round(_now(), 3)}
+            with self.lock:
+                current = self._offline_notice_records.get(uid)
+                if (current is not rec or rec.get("state") == "cancelled"
+                        or self._uid_clients.get(uid)):
+                    if current is rec:
+                        self._offline_notice_records.pop(uid, None)
+                    return
+                recipients = [s for clients in self._uid_clients.values()
+                              for s in clients]
+                self._offline_notice_records.pop(uid, None)
+            for sess in recipients:
+                try:
+                    sess.send(payload)
+                except Exception:
+                    pass
+        finally:
+            with self.lock:
+                if self._offline_notice_records.get(uid) is rec:
+                    self._offline_notice_records.pop(uid, None)
 
     def _broadcast_roster(self) -> None:
         """在线/已知名单按查看者过滤发送（隐身用户对非管理员/非本人隐藏）。"""
@@ -1500,6 +1544,9 @@ class Hub:
             self._uid_clients.setdefault(sess.uid, set()).add(sess)
             self.sessions[sess.uid] = sess            # 最近会话作代表（在线集仍按 uid 唯一）
             self.nick_to_uid[sess.nick] = sess.uid
+            notice = self._offline_notice_records.get(sess.uid)
+            if notice is not None and notice.get("state") == "pending":
+                notice["state"] = "cancelled"
             # R25B：登记已知用户（保留旧 last_online，跨重连/断线不丢）
             # R47-B：pwd 同样保留（登录校验依赖，重建字典不得丢）
             # R52：sign/avatar 同样保留（换端重登不得丢资料）
@@ -1551,7 +1598,7 @@ class Hub:
             return None, err
         sess = Session(0, nick, "web", peer_ip,
                        send=self._make_web_send())
-        # R53：管理员账号（固定密码，登录即授予最高清理权限）。
+        # 只有通过部署凭据校验才能到达这里。
         # 须在 _attach（发送 welcome 帧）之前赋值，否则 welcome 的 is_admin 恒为 False。
         sess.is_admin = (nick == self._admin_nick)
         self._attach(sess)                  # 同账号多端并存：登记不再失败
@@ -1559,7 +1606,7 @@ class Hub:
             self._pwd_claim(sess.uid, password)
         token = secrets.token_hex(16)
         with self.lock:
-            self.web_tokens[token] = sess.uid
+            self.web_tokens[token] = sess
         return sess, token
 
     # ---------- R47-B：昵称可选密码 ----------
@@ -1568,8 +1615,10 @@ class Hub:
 
         已设密码：password 必须匹配（PBKDF2 校验在锁外做，避免占 Hub 锁）；
         未设密码：放行（带密码时由调用方在 attach 成功后 claim 绑定）。
-        R53：管理员昵称固定——无论是否已设密码都必须匹配管理员密码，防冒用。"""
-        if nick == self._admin_nick:
+        管理员标识始终保留；未配置部署凭据时不降级为普通账号。"""
+        if nick in self._reserved_admin_nicks:
+            if nick != self._admin_nick or not self._admin_pwd_hash:
+                return "管理员登录未启用，请联系服务器部署者"
             if not auth.verify(password, self._admin_pwd_hash):
                 return "管理员密码错误"
             return None
@@ -1610,13 +1659,13 @@ class Hub:
 
         - 未设密码：new 非空=绑定；new 空=报「尚未设置密码」；
         - 已设密码：old 必须匹配；new 空=清除。
-        R53：管理员账号密码固定，拒绝任何修改/清除。"""
+        管理员凭据由部署侧管理，拒绝通过普通账号接口修改/清除。"""
         with self.lock:
             info = self.known.get(uid)
             if info is None:
                 return "用户不存在"
-            if info.get("nick") == self._admin_nick:
-                return "管理员账号密码固定，不可修改"
+            if info.get("nick") in self._reserved_admin_nicks:
+                return "管理员凭据由服务器配置管理，不可修改"
             stored = info.get("pwd")
         if stored and not auth.verify(old, stored):
             return "旧密码错误"
@@ -1803,7 +1852,7 @@ class Hub:
             pass
 
     def _on_admin_invis_set(self, sess: Session, header: dict) -> None:
-        """R56B：系统管理员强制某用户显身/隐身（超管 override，仅 L57）。
+        """R56B：系统管理员强制某用户显身/隐身（超管 override）。
         同 INV_SET 一样服务器权威持久并重放名单；额外审计记录操作人。"""
         if not sess.is_admin:
             self._error(sess, "forbid", "仅系统管理员可执行")
@@ -1828,7 +1877,7 @@ class Hub:
                 pass
         self.audit.log(type="admin_force_invis", target=uid, target_nick=nick,
                        on=on, actor=sess.uid)
-        print(f"[admin][隐身/显身] L57 将 @{nick} 设为 "
+        print(f"[admin][隐身/显身] {sess.nick} 将 @{nick} 设为 "
               + ("隐身" if on else "显身"))
         self._broadcast_system(f"系统管理员已让 @{nick} "
                                + ("隐身" if on else "恢复正常可见"))
@@ -1895,17 +1944,21 @@ class Hub:
 
     def session_by_token(self, token: str) -> Session | None:
         with self.lock:
-            uid = self.web_tokens.get(token)
-            if uid is None:
+            sess = self.web_tokens.get(token)
+            if sess is None:
                 return None
-            return self.sessions.get(uid)
+            if not self._session_is_active(sess):
+                self.web_tokens.pop(token, None)
+                return None
+            return sess
 
     def unregister(self, sess: Session, reason: str,
                    min_idle: float | None = None) -> None:
         """注销（一个）在线会话。min_idle 非 None 时（R47-A1 僵尸释放路径）：
         仅当该会话闲置已超过 min_idle 才执行——锁内复查，防止误踢复活会话。
         R批次③：同 uid 多端并存——仅当该 uid 最后一个会话离线时才真正
-        「下线」（更新 last_online、清理 web token、退群、广播已下线）。"""
+        「下线」（更新 last_online、退群、广播已下线）。
+        本会话的 Web token 每次注销都撤销，不能借其它在线端继续使用。"""
         dissolved = []
         with self.lock:
             clients = self._uid_clients.get(sess.uid)
@@ -1914,6 +1967,9 @@ class Hub:
             if min_idle is not None and (_now() - sess.last_seen) <= min_idle:
                 return                       # 已复活：不踢，让登录方按活会话拒绝
             clients.discard(sess)
+            for tok, token_sess in list(self.web_tokens.items()):
+                if token_sess is sess:
+                    del self.web_tokens[tok]
             is_last = not clients
             if is_last:
                 # 最后一个端离线：从在线集移除、补代表、记录 last_online
@@ -1930,10 +1986,9 @@ class Hub:
                 if prev.get("pwd"):
                     self.known[sess.uid]["pwd"] = prev["pwd"]
                 # R12fix：保留 nick→uid 映射（断线不删），同名重连复用同一 uid
-                if sess.type == "web":
-                    for tok, u in list(self.web_tokens.items()):
-                        if u == sess.uid:
-                            del self.web_tokens[tok]
+                for tok, token_sess in list(self.web_tokens.items()):
+                    if token_sess.uid == sess.uid:
+                        del self.web_tokens[tok]
                 for gid, g in list(self.groups.items()):
                     if sess.uid in g["members"]:
                         del g["members"][sess.uid]
@@ -1954,6 +2009,9 @@ class Hub:
                 self.sessions[sess.uid] = next(iter(clients))
         for gid in dissolved:
             with self.lock:
+                group = self.groups.get(gid)
+                if group and group.get("members"):
+                    continue
                 self.groups.pop(gid, None)
                 self.voice_rooms.pop(f"group:{gid}", None)   # R72：群解散连同语音房名册
         sess.closed = True
@@ -1963,16 +2021,10 @@ class Hub:
             self._send_to(other, payload)
         self._broadcast_roster()
         if self.sessions.get(sess.uid) is None:          # 本 uid 已完全离线
-            self._broadcast_system(f"{sess.nick} 已下线")
+            self._broadcast_offline_notice(sess.uid, sess.nick)
             self._drop_voice_rooms(sess.uid)             # R72：离线即退出所有语音房
         self._broadcast_group_list()
-        affected = self.rooms.on_disconnect(sess.uid)
-        for rid in affected:
-            room = self.rooms.room_for(rid)
-            if room:
-                self._send_room_state(room, events=["有玩家离开房间"])
-        if affected:
-            self._broadcast_game_list()
+        self._disconnect_rooms_of(sess.uid)
 
     def _session_is_active(self, sess: Session) -> bool:
         """判断会话是否仍属于 Hub。
@@ -2277,7 +2329,7 @@ class Hub:
             self._error(sess, "pwd", err)      # 客户端据此弹密码框
             return False
         sess.nick = nick
-        # R53：管理员账号（固定密码，登录即授予最高清理权限）。
+        # 只有通过部署凭据校验才能到达这里。
         # 须在 _attach（发送 welcome 帧）之前赋值，否则 welcome 的 is_admin 恒为 False。
         sess.is_admin = (nick == self._admin_nick)
         self._attach(sess)                  # 同账号多端并存：登记不再失败
@@ -3230,7 +3282,7 @@ class Hub:
             else:
                 g = self.groups.get(to)
                 members = g["members"] if g else {}
-                # R54：管理员（L57）非成员也可接收所有群消息（含私有群）
+                # R54：管理员非成员也可接收所有群消息（含私有群）
                 targets = [u for u in self.sessions
                            if u in members or self._is_admin_uid(u)]
             out = []
@@ -3248,7 +3300,7 @@ class Hub:
             return sess.uid in (msg.get("uid"), msg.get("to"))
         if ch == "group":
             g = self.groups.get(msg.get("to"))
-            # R54：管理员（L57）非成员也可回应/置顶群消息
+            # R54：管理员非成员也可回应/置顶群消息
             return bool(g and (sess.uid in g["members"] or sess.is_admin))
         return False
 
@@ -3396,9 +3448,9 @@ class Hub:
         self._broadcast_system(f"管理员已将 {nick} 强制下线")
         self.audit.log(type="admin_kick", uid=sess.uid, target=uid,
                        target_nick=nick)
-        print(f"[admin][踢下线] L57 将 @{nick}(uid={uid}) 强制下线")
+        print(f"[admin][踢下线] {sess.nick} 将 @{nick}(uid={uid}) 强制下线")
 
-    # ---------- 系统管理员（L57）群目录 + 增删成员 + 解散群 ----------
+    # ---------- 系统管理员群目录 + 增删成员 + 解散群 ----------
     def _admin_groups_payload(self) -> dict:
         """管理员（超管）专用：全量群目录，含每个群的成员花名册。
         与普通 `_group_list`（只给可见群的摘要）不同：此接口不经任何权限过滤，
@@ -3571,7 +3623,7 @@ class Hub:
         self._broadcast({"t": MsgType.CLEARED.value, "all": True})
         self._broadcast_system(f"管理员已清空全部聊天记录（{removed} 条）")
         self.audit.log(type="admin_clear_all", uid=sess.uid, removed=removed)
-        print(f"[admin][清空全局] L57 清空全部聊天记录（{removed} 条）")
+        print(f"[admin][清空全局] {sess.nick} 清空全部聊天记录（{removed} 条）")
 
     def _on_admin_clear_uid(self, sess: Session, header: dict) -> None:
         """管理员清空指定用户全部消息（跨全部频道），广播 CLEARED uid。"""
@@ -3591,7 +3643,7 @@ class Hub:
         self._broadcast_system(f"管理员已清空用户 {nick} 的全部消息（{removed} 条）")
         self.audit.log(type="admin_clear_uid", uid=sess.uid, target=uid,
                        removed=removed)
-        print(f"[admin][清空用户] L57 清空 @{nick}(uid={uid}) 消息（{removed} 条）")
+        print(f"[admin][清空用户] {sess.nick} 清空 @{nick}(uid={uid}) 消息（{removed} 条）")
 
     def _admin_del_remove_groups(self, uid: int) -> int:
         """把 uid 从服务器全部群成员中移除；返回因此解散的群数。
@@ -3617,7 +3669,7 @@ class Hub:
         2) 清空其跨全部频道的聊天消息；
         3) 从已知账号 known 删除（离线账号一并移除、不可再登录）；
         4) 若在线则强制下线。
-        不可清除自己（L57 管理员）。"""
+        不可清除自己（当前管理员）。"""
         if not sess.is_admin:
             self._error(sess, "forbid", "仅系统管理员可执行")
             return
@@ -3632,15 +3684,15 @@ class Hub:
         dissolved = self._admin_del_remove_groups(uid)      # 1) 移出全部群
         removed = self.bus.clear_uid(uid)                   # 2) 清空消息
         # 同一 uid 可以同时有桌面端、网页端和多个网页标签。只下线
-        # sessions 中的代表会话会留下其它端，旧 token 也会继续取到该 uid。
+        # sessions 中的代表会话会留下其它端，须撤销所有端及其 token。
         # 先在锁内拍快照并撤销全部 token，再逐个注销，避免遍历时修改在线集。
         with self.lock:
             targets = list(self._uid_clients.get(uid, ()))
             representative = self.sessions.get(uid)
             if representative is not None and representative not in targets:
                 targets.append(representative)
-            for token, token_uid in list(self.web_tokens.items()):
-                if token_uid == uid:
+            for token, token_sess in list(self.web_tokens.items()):
+                if token_sess.uid == uid:
                     del self.web_tokens[token]
         for target in targets:                               # 3) 全部在线端强制下线
             try:
@@ -3662,7 +3714,7 @@ class Hub:
         self._broadcast_system(f"系统管理员已清除用户 {nick} 的账号")
         self.audit.log(type="admin_user_del", uid=sess.uid, target=uid,
                        target_nick=nick, removed=removed, dissolved=dissolved)
-        print(f"[admin][删除账号] L57 清除 @{nick}(uid={uid})："
+        print(f"[admin][删除账号] {sess.nick} 清除 @{nick}(uid={uid})："
               f"清消息 {removed} 条，解散群 {dissolved} 个，已从 known 移除")
 
     def _on_reaction(self, sess: Session, header: dict) -> None:
@@ -3757,7 +3809,7 @@ class Hub:
                 g = self.groups.get(int(key.split(":", 1)[1]))
             except (ValueError, TypeError):
                 g = None
-            # R54：管理员（L57）非成员也可查群已读
+            # R54：管理员非成员也可查群已读
             ok = bool(g and (uid in g["members"] or self._is_admin_uid(uid)))
         if not ok:
             return None
@@ -4812,7 +4864,7 @@ class Hub:
                     except ValueError:
                         continue
                     g = self.groups.get(gid)
-                    # R54：管理员（L57）非成员也可见群置顶
+                    # R54：管理员非成员也可见群置顶
                     if g and (sess.uid in g["members"] or sess.is_admin):
                         out.append(dict(p, key=key))
             return out
@@ -4829,7 +4881,7 @@ class Hub:
             return ChatBus.key("private", sess.uid, to)
         if channel == "group":
             g = self.groups.get(to)
-            # R54：管理员（L57）非成员也可拉群历史（含私有群）
+            # R54：管理员非成员也可拉群历史（含私有群）
             if not g or (sess.uid not in g["members"] and not sess.is_admin):
                 return None
             return f"group:{to}"
@@ -5037,12 +5089,27 @@ class Hub:
             self._room_broadcast(room, payload)
         return True
 
+    def _drop_voice_rooms_locked(self, uid: int) -> list:
+        """锁内摘除 uid，返回待锁外广播的 (room, payload) 列表。"""
+        if self._uid_clients.get(uid):
+            return []
+        notes = []
+        for room, members in list(self.voice_rooms.items()):
+            if uid not in members:
+                continue
+            del members[uid]
+            if members:
+                notes.append((room, self._room_state_payload(room)))
+            else:
+                self.voice_rooms.pop(room, None)
+        return notes
+
     def _drop_voice_rooms(self, uid: int) -> None:
         """断线/完全离线：把该 uid 从所有语音房摘除。"""
         with self.lock:
-            rooms = [r for r, m in self.voice_rooms.items() if uid in m]
-        for r in rooms:
-            self._room_drop(r, uid)
+            notes = self._drop_voice_rooms_locked(uid)
+        for room, payload in notes:
+            self._room_broadcast(room, payload)
 
     def _on_room_join(self, sess: Session, header: dict) -> None:
         """入房：校验房间键 + 人数上限 → 登记 → 广播名册 → 单播在房者地址。
@@ -5178,9 +5245,10 @@ class Hub:
     def _on_file_reject(self, sess: Session, header: dict) -> None:
         fid = str(header.get("file_id") or "")
         with self.lock:
-            rec = self.xfers.pop(fid, None)
+            rec = self.xfers.get(fid)
             if not rec or rec.receiver_uid != sess.uid:
                 return
+            self.xfers.pop(fid, None)
             sender_uid = rec.sender_uid
         self._send_to(sender_uid, {"t": "file_reject", "file_id": fid,
                                    "text": "对方拒绝了文件"})
@@ -5237,9 +5305,10 @@ class Hub:
         fid = str(header.get("file_id") or "")
         ok = bool(header.get("ok"))
         with self.lock:
-            rec = self.xfers.pop(fid, None)
+            rec = self.xfers.get(fid)
             if not rec or rec.receiver_uid != sess.uid:
                 return
+            self.xfers.pop(fid, None)
             sender_uid = rec.sender_uid
         self._send_to(sender_uid, {"t": "file_verify", "file_id": fid, "ok": ok})
         self.audit.log(type="file_done", file_id=fid, ok=ok)
@@ -5247,9 +5316,10 @@ class Hub:
     def _on_file_cancel(self, sess: Session, header: dict) -> None:
         fid = str(header.get("file_id") or "")
         with self.lock:
-            rec = self.xfers.pop(fid, None)
-            if not rec:
+            rec = self.xfers.get(fid)
+            if not rec or sess.uid not in (rec.sender_uid, rec.receiver_uid):
                 return
+            self.xfers.pop(fid, None)
             other = (rec.receiver_uid if rec.sender_uid == sess.uid
                      else rec.sender_uid)
         self._send_to(other, {"t": "file_cancel", "file_id": fid,
@@ -5259,6 +5329,10 @@ class Hub:
         """会话下线时取消其相关传输；返回 [(other_uid, payload), ...] 待锁外通知"""
         notes = []
         with self.lock:
+            # 旧 Session 的注销可能在锁外清理阶段遇到同 UID 重登；
+            # 新端已加入时，旧端不得清理新端建立的传输。
+            if self._uid_clients.get(uid):
+                return notes
             for fid, rec in list(self.xfers.items()):
                 if rec.sender_uid == uid or rec.receiver_uid == uid:
                     del self.xfers[fid]
@@ -5268,6 +5342,32 @@ class Hub:
                         notes.append((other, {"t": "file_cancel", "file_id": fid,
                                               "text": "对方已离线，传输取消"}))
         return notes
+
+    def _disconnect_rooms_of(self, uid: int) -> list:
+        """仅在 uid 仍完全离线时执行游戏房间掉线清理。"""
+        with self.lock:
+            if self._uid_clients.get(uid):
+                return []
+            # Hub 锁保护 UID 离线复查；detail 只修改 RoomManager 内存。
+            details = self.rooms.on_disconnect_detail(uid)
+        affected = []
+        for detail in details:
+            room = detail.get("room")
+            affected.append(detail.get("room_id"))
+            if room is None or detail.get("closed"):
+                continue
+            events = list(detail.get("events") or ["有玩家离开房间"])
+            if detail.get("ended"):
+                self._finish_game(room, detail["ended"], events,
+                                  expected_gs=detail.get("gs"),
+                                  expected_round=detail.get("round_no"))
+            else:
+                self._send_room_state(room, events=events,
+                                      expected_gs=detail.get("gs"),
+                                      expected_round=detail.get("round_no"))
+        if affected:
+            self._broadcast_game_list()
+        return affected
 
     def _sweep_stale_xfers(self) -> None:
         """清理超时的传输记录（offer 超期 + 中转/直连长期闲置，防僵尸泄漏）。
@@ -6281,29 +6381,47 @@ class Hub:
         s = self.sessions.get(uid)
         return s.nick if s else f"玩家{uid}"
 
-    def _send_room_state(self, room, events=None) -> None:
-        """给房间成员发当前状态：公开快照 + 各自私密投递 + 事件行。
-
-        锁内快照（含玩家/观战/对局状态），锁外发送——避免与入座/掉线/开局并发。
-        """
+    def _game_state_payload(self, room, events=None, expected_gs=None,
+                            expected_round=None, expected_status=None):
+        """锁内构造公开/私密快照；调用方负责锁外发送。"""
         with self.rooms.lock:
+            if (expected_gs is not None and room.gs is not expected_gs) \
+                    or (expected_round is not None and room.round_no != expected_round) \
+                    or (expected_status is not None and room.status != expected_status):
+                return None
             payload = {"t": "game_state", "room_id": room.room_id,
                        "room": room.summary(), "state": None,
                        "events": list(events or []), "ts": round(_now(), 3)}
             priv_map = {}
-            if room.status == RoomStatus.PLAYING and room.gs is not None:
+            if room.gs is not None and room.status in (RoomStatus.PLAYING,
+                                                        RoomStatus.ENDED):
                 payload["state"] = room.gs.snapshot()
-                for u in room.members:
-                    priv = room.gs.private(u)
-                    if priv:
-                        priv_map[u] = priv
+                if room.status == RoomStatus.PLAYING:
+                    for u in room.members:
+                        priv = room.gs.private(u)
+                        if priv:
+                            priv_map[u] = priv
             targets = list(room.members)
             # R49：uid→昵称映射（桌面端可忽略；网页端无 roster 全量，房间渲染需要）
             payload["nicks"] = {u: self._room_nick(u) for u in targets}
-        for u in targets:
-            s = self.sessions.get(u)
-            if s is None:
-                continue
+        return payload, priv_map, targets
+
+    def _send_room_state(self, room, events=None, expected_gs=None,
+                         expected_round=None, expected_status=None) -> bool:
+        """给房间成员发当前状态：公开快照 + 各自私密投递 + 事件行。"""
+        snapshot = self._game_state_payload(
+            room, events, expected_gs=expected_gs,
+            expected_round=expected_round, expected_status=expected_status)
+        if snapshot is None:
+            return False
+        payload, priv_map, targets = snapshot
+        with self.lock:
+            sessions = [(u, s) for u in targets
+                        for s in self._uid_clients.get(u, ())]
+            if not sessions:
+                sessions = [(u, self.sessions.get(u)) for u in targets
+                            if self.sessions.get(u) is not None]
+        for u, s in sessions:
             try:
                 s.send(payload)
                 if u in priv_map:
@@ -6311,23 +6429,88 @@ class Hub:
                             "state": priv_map[u]})
             except Exception:
                 pass
+        return True
 
-    def _finish_game(self, room, ended: dict) -> None:
+    def _send_game_leave_ack(self, sess: Session, detail: dict,
+                             events: list[str]) -> None:
+        """单播离房确认；room 成员已不含 sess.uid，空房用 room=None。"""
+        room = detail.get("room")
+        if detail.get("closed") or room is None:
+            payload = {"t": MsgType.GAME_STATE.value,
+                       "room_id": detail.get("room_id"), "room": None,
+                       "state": None, "events": list(events),
+                       "ts": round(_now(), 3), "nicks": {}}
+            with self.lock:
+                sessions = list(self._uid_clients.get(sess.uid, ()))
+                if not sessions and self.sessions.get(sess.uid) is not None:
+                    sessions = [self.sessions[sess.uid]]
+            for target in sessions:
+                target.send(payload)
+            return
+        snapshot = self._game_state_payload(
+            room, events, expected_gs=detail.get("gs"),
+            expected_round=detail.get("round_no"))
+        if snapshot is None:
+            payload = {"t": MsgType.GAME_STATE.value,
+                       "room_id": detail.get("room_id"), "room": None,
+                       "state": None, "events": list(events),
+                       "ts": round(_now(), 3), "nicks": {}}
+            priv_map = {}
+        else:
+            payload, priv_map, _targets = snapshot
+        with self.lock:
+            sessions = list(self._uid_clients.get(sess.uid, ()))
+            if not sessions and self.sessions.get(sess.uid) is not None:
+                sessions = [self.sessions[sess.uid]]
+        for target in sessions:
+            try:
+                target.send(payload)
+                if target.uid in priv_map:
+                    target.send({"t": MsgType.GAME_PRIVATE.value,
+                                 "room_id": room.room_id,
+                                 "state": priv_map[target.uid]})
+            except Exception:
+                pass
+
+    def _finish_game(self, room, ended: dict, events=None,
+                     expected_gs=None, expected_round=None) -> bool:
         """对局结算：置 ENDED 广播，3 秒后自动回大厅（保留玩家与跨轮分数）"""
         with self.rooms.lock:
+            if self.rooms.rooms.get(room.room_id) is not room \
+                    or room.status != RoomStatus.PLAYING \
+                    or (expected_gs is not None and room.gs is not expected_gs) \
+                    or (expected_round is not None and room.round_no != expected_round):
+                return False
+            captured_gs = room.gs
+            captured_round = room.round_no
             room.status = RoomStatus.ENDED
         self.audit.log(type="game_end", room_id=room.room_id,
                        game=room.game_name, detail=ended.get("detail", ""))
-        self._send_room_state(room, events=[f"🏁 本局结束：{ended.get('detail', '')}"])
+        lines = list(events or [])
+        lines.append(f"🏁 本局结束：{ended.get('detail', '')}")
+        self._send_room_state(room, events=lines, expected_gs=captured_gs,
+                              expected_round=captured_round,
+                              expected_status=RoomStatus.ENDED)
+        self._broadcast_game_list()
 
         def _reset():
             with self.rooms.lock:
-                if room.status == RoomStatus.ENDED:
-                    room.status = RoomStatus.CREATED
-                    room.gs = None
-            self._send_room_state(room, events=["对局已结束，可再次开始"])
+                if self.rooms.rooms.get(room.room_id) is not room \
+                        or room.status != RoomStatus.ENDED \
+                        or room.gs is not captured_gs \
+                        or room.round_no != captured_round:
+                    return
+                room.status = RoomStatus.CREATED
+                room.gs = None
+            self._broadcast_game_list()
+            self._send_room_state(room, events=["对局已结束，可再次开始"],
+                                  expected_round=captured_round,
+                                  expected_status=RoomStatus.CREATED)
 
-        threading.Timer(3.0, _reset, daemon=True).start()
+        timer = threading.Timer(3.0, _reset)
+        timer.daemon = True
+        timer.start()
+        return True
 
     def _on_game_create(self, sess: Session, header: dict) -> None:
         game = (header.get("game") or "").strip()
@@ -6357,13 +6540,23 @@ class Hub:
 
     def _on_game_leave(self, sess: Session, header: dict) -> None:
         room_id = str(header.get("room_id") or "")
-        self.rooms.leave(sess.uid, room_id)
+        detail = self.rooms.leave_detail(sess.uid, room_id)
+        room = detail.get("room")
+        events = list(detail.get("events") or [])
+        if not events:
+            events = [f"{sess.nick} 离开房间"]
         self.audit.log(type="game_leave", uid=sess.uid, nick=sess.nick,
                        room_id=room_id)
+        if room is not None and detail.get("ended") and not detail.get("closed"):
+            self._finish_game(room, detail["ended"], events,
+                              expected_gs=detail.get("gs"),
+                              expected_round=detail.get("round_no"))
+        elif room is not None and not detail.get("closed"):
+            self._send_room_state(room, events=events,
+                                  expected_gs=detail.get("gs"),
+                                  expected_round=detail.get("round_no"))
         self._broadcast_game_list()
-        room = self.rooms.room_for(room_id)
-        if room:
-            self._send_room_state(room, events=[f"{sess.nick} 离开房间"])
+        self._send_game_leave_ack(sess, detail, events)
 
     def _on_game_start(self, sess: Session, header: dict) -> None:
         room_id = str(header.get("room_id") or "")
@@ -6392,6 +6585,11 @@ class Hub:
         if not isinstance(action, dict):
             self._error(sess, "game", "动作格式错误")
             return
+        with self.rooms.lock:
+            captured_room = self.rooms.room_for(room_id)
+            captured_gs = (captured_room.gs if captured_room is not None else None)
+            captured_round = (captured_room.round_no
+                              if captured_room is not None else None)
         try:
             lines = self.rooms.handle_action(sess.uid, room_id, action)
         except GameRuleError as exc:
@@ -6400,13 +6598,23 @@ class Hub:
         room = self.rooms.room_for(room_id)
         if not room:
             return
+        with self.rooms.lock:
+            if (self.rooms.rooms.get(room_id) is not captured_room
+                    or room.gs is not captured_gs
+                    or room.round_no != captured_round
+                    or room.status != RoomStatus.PLAYING):
+                return
         self.audit.log(type="game_action", uid=sess.uid, nick=sess.nick,
                        room_id=room_id, action=str(action)[:120])
-        self._send_room_state(room, events=list(lines))
+        self._send_room_state(room, events=list(lines),
+                              expected_gs=captured_gs,
+                              expected_round=captured_round,
+                              expected_status=RoomStatus.PLAYING)
         if room.status == RoomStatus.PLAYING and room.gs is not None:
-            ended = room.gs.ended()
+            ended = captured_gs.ended() if captured_gs is not None else None
             if ended:
-                self._finish_game(room, ended)
+                self._finish_game(room, ended, expected_gs=captured_gs,
+                                  expected_round=captured_round)
 
     # ---------- R70H 摸鱼排行榜（opt-in，默认关闭） ----------
     def _fish_board_nick(self, uid: int) -> str:
@@ -6561,6 +6769,8 @@ def serve(hub: Hub, port: int | None = None, stop: threading.Event | None = None
     print(f"[服务器] TCP 监听 0.0.0.0:{port}，网页端 {scheme}://{lan}:{hub.cfg.web_port}/{tip}")
     print(f"        本机访问可用 {scheme}://127.0.0.1:{hub.cfg.web_port}/，"
           f"局域网其他机器用 {scheme}://{lan}:{hub.cfg.web_port}/")
+    if not hub._admin_pwd_hash:
+        print("[服务器] 管理员登录未启用；请在部署环境设置 MOYU_ADMIN_PASSWORD 后重启。")
     while not stop.is_set():
         try:
             conn, addr = srv.accept()
@@ -6616,16 +6826,28 @@ def _game_tick_loop(hub: Hub, stop: threading.Event) -> None:
     while not stop.wait(interval):
         now = _now()
         with hub.rooms.lock:
-            rooms = list(hub.rooms.rooms.values())
-        for room in rooms:
-            if room.status == RoomStatus.PLAYING and room.gs is not None:
+            rooms = [(room, room.gs, room.round_no)
+                     for room in hub.rooms.rooms.values()
+                     if room.status == RoomStatus.PLAYING and room.gs is not None]
+        for room, captured_gs, captured_round in rooms:
+            if captured_gs is not None:
                 try:
-                    lines = room.gs.tick(now)
-                    if lines:
-                        hub._send_room_state(room, events=list(lines))
-                    ended = room.gs.ended()
+                    lines = captured_gs.tick(now)
+                    with hub.rooms.lock:
+                        current = (hub.rooms.rooms.get(room.room_id) is room
+                                   and room.gs is captured_gs
+                                   and room.round_no == captured_round
+                                   and room.status == RoomStatus.PLAYING)
+                    if lines and current:
+                        hub._send_room_state(room, events=list(lines),
+                                             expected_gs=captured_gs,
+                                             expected_round=captured_round,
+                                             expected_status=RoomStatus.PLAYING)
+                    ended = captured_gs.ended()
                     if ended:
-                        hub._finish_game(room, ended)
+                        hub._finish_game(room, ended,
+                                         expected_gs=captured_gs,
+                                         expected_round=captured_round)
                 except Exception:
                     pass
 

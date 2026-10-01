@@ -17,6 +17,7 @@ Windows 桌面端的局域网聊天 + 内置桌游应用：Tkinter 客户端（�
 | 项 | 要求 |
 | --- | --- |
 | 系统 | Windows 10 / 11（客户端依赖 tkinter、注册表深浅色、托盘等 Windows 特性） |
+| Shell | PowerShell 7（`pwsh`）；不使用 `powershell.exe` |
 | Python | pyenv **3.14.5**（在项目根目录 `pyenv local 3.14.5`） |
 | 第三方包 | 开发环境安装 `pip install -r requirements-dev.txt`；运行依赖见 `requirements.txt` |
 | 自检 | `python -c "import tkinter"` 不报错即通过 |
@@ -26,7 +27,7 @@ Windows 桌面端的局域网聊天 + 内置桌游应用：Tkinter 客户端（�
 ## 3. 怎么跑起来
 
 ```powershell
-python run.py             # 全量测试门禁（提交前必须全绿）
+python run.py             # 默认全量测试门禁（应用交付候选必须按下述范围验证）
 python run.py server      # 启动服务器（默认 TCP 9527 / 网页 9529，可用环境变量覆盖）
 python run.py client      # 启动客户端 GUI（可加 --host <服务器IP>）
 python run.py build       # PyInstaller 打包 server.exe / client.exe
@@ -48,7 +49,9 @@ python run.py build       # PyInstaller 打包 server.exe / client.exe
 | `feature/<简述>` | 新功能，如 `feature/r73-forward` |
 | `fix/<简述>` | 修 bug，如 `fix/login-panel-overflow` |
 
-动手前先 `git pull origin main`，避免基于过期代码开发。
+新任务在干净工作树上核对并更新 `origin/main`，避免基于过期代码开发。
+已有任务分支和未提交交付时，先按 [AGENTS.md](AGENTS.md) 保存版本/文件归属，
+不要自动 pull、切分支或覆盖改动；本地 `origin/main` 不等于已 fetch 的最新远端。
 
 ### 4.2 提交信息规范
 
@@ -61,9 +64,12 @@ python run.py build       # PyInstaller 打包 server.exe / client.exe
 
 ### 4.3 合并流程（PR）
 
-1. 从最新 `main` 开分支 → 开发 → 本地全量测试绿
+1. 从核对后的 `main` 开分支 → 开发 → 完成任务包规定的验证与独立审查
 2. push 分支到 GitHub，发起 Pull Request（写清改了什么、怎么测）
 3. 主理人 review，必要时修改后再合；**合并进 main 前测试必须全绿**
+
+应用代码的最终合并候选须全量全绿；纯文档使用文档与范围检查，不运行整套应用测试。
+push、PR、merge、发布分别按用户授予的权限执行，不因完成实现而自动获准。
 
 ## 5. 版本号约定（重要）
 
@@ -86,8 +92,10 @@ python run.py build       # PyInstaller 打包 server.exe / client.exe
 - `prefs.json` —— 本地账号与会话配置
 - `crash.log`、`build/`、`dist/` —— 日志与打包产物
 
-> 约定：密钥、证书、用户数据一律不进仓库。`config.py` 里的管理员密码属代码逻辑
-> （局域网应用，默认密码仅对自家服务器有效），**仓库请保持私有**，不要公开。
+> 仓库已公开。密钥、密码、证书私钥和用户数据一律不进仓库；管理员密码必须由
+> 部署侧设置 `MOYU_ADMIN_PASSWORD`，没有公开默认密码。未配置时管理员登录关闭，
+> 管理员昵称仍保留，不能作为普通账号注册。配置与升级说明见
+> [管理员凭据与公开仓库安全](docs/管理员凭据与公开仓库安全.md)。
 
 ## 7. 目录速览
 
@@ -108,13 +116,50 @@ docs/ im_design_notes/       设计文档与学习笔记
 
 ## 9. 仓库可见性
 
-- **建议私有**（免费，协作者人数不限）：Settings → Collaborators → 添加朋友的 GitHub 账号，
-  朋友即可 `clone` / `push` / 提 PR。
-- 若改公开：请先评估 `config.py` 默认管理员密码、网页口令等配置是否可接受暴露
-  （本地局域网应用，风险相对可控，但请自行判断）。
+- 当前仓库为公开仓库，任何人都能读取和 clone；直接推送仍需协作者权限，其他人通过 fork 提 PR。
+- 公开源码不是部署配置。不得提交实际管理员密码、网页口令、会话 token、运行数据或 TLS 私钥，
+  也不得因服务器只用于局域网而把可用默认密码写进源码或文档。
 
 ## 10. 开工清单（朋友首次拿到仓库后）
 
 1. `git clone https://github.com/mixmixla/321_FISH.git`
 2. 按第 2 节配好环境，`python run.py` 全绿
 3. `git checkout -b feature/<要做的功能>` 开始第一个任务
+
+## 11. AI 协作、证据与验证节奏
+
+启动与中断恢复见 [AGENTS.md](AGENTS.md)，唯一当前执行队列见
+[AI_COMMAND_CENTER](docs/AI_COMMAND_CENTER.md)。`docs/任务清单.md` 等长期清单是规划参考，
+不能自行成为 READY 队列。源码说明实际行为，批准 Task Package 说明目标；
+不一致时标出差异并核对证据，不能用当前缺陷取消批准目标。
+
+用户确认有限批次与重要产品/数据决定；Pro 审方向、重大账号/协议/迁移方案和里程碑。
+Codex 主控安排日常实现、验证、独立审查与修复。实现代理明确文件所有权；
+独立审查尽量从新的上下文读取冻结任务、实际 diff 和原始证据，不能由实现者自验。
+同一模型体系的审查仍需真实环境验收补足。普通任务 ACCEPTED、实际 MERGED、
+Pro 里程碑通过和发布完成分开记录，权限/协议/数据迁移等重大决定交 Pro 审查。
+
+指挥中心保存批次、状态、依赖、执行者/审查者与下一动作；Task Package 冻结需求，
+Review Package 保存版本/命令/结果/审查，PROJECT_MEMORY 保存稳定事实与风险。
+状态不得在其它文件重复维护；ignored 日志不得成为唯一交接材料。
+检查点包括包版本、base/head、分支/dirty、完成/未完成、命令/结果、活动进程/日志和待决问题。
+
+验证采用三层，保留现有测试，不按数量删用例：
+
+1. 日常修订：受影响功能回归与必要静态检查；按修改函数、不变量和调用链选测。
+2. 任务/批次候选：相关领域集成；影响不明时扩大范围，GUI 改动做真实交互验证。
+3. 应用合并/发布、重大协议/认证/核心共享逻辑/依赖/门禁基础设施最终候选：全量门禁。
+   任务包明确要求全量时必须遵守；纯文档按文档检查验收。
+
+每轮修复先复测受影响项。代码、测试、依赖、命令、关键环境和合并基线未变时引用既有报告；
+历史全量失败仍是失败，专项或单次重试通过不替代全量。声称“基线已有失败”须在相同环境/命令
+对干净基线做对照，缺少对照就标待确认；保留行为断言，不用 skip 或弱化测试藏失败。
+
+本项目 Tk 门禁采用逐文件独立进程验证，并记录 UTF-8 输出、真实退出码、独立 basetemp、
+数量/默认 opt-in 跳过、失败与进度。当前 `dev.ps1`/`run.py` 默认是整套 pytest 子进程，
+没有新增的逐文件选测/恢复入口；已有本机逐文件脚本见对应 Review Package，
+固定入口的改造须单独批准。未提交交付绑定 base + patch/内容标识，审查后版本变化需重新核对。
+
+批次内连续推进 READY 项；没有 READY 项、越界或必测失败时保存检查点，不擅自放行依赖。
+Goal、heartbeat 与向 Pro 发消息各自需要用户明确启动；同一队列同一时刻只有一个主控写入者，
+唤醒先确认工作树与旧进程，避免重复执行。

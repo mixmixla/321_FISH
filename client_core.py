@@ -620,7 +620,7 @@ class ClientCore:
         self.me: dict = {}              # R52 uid -> {nick,sign,avatar}（我自己的资料）
         self.avatars: dict = {}         # R52 uid -> (ext, bytes)（头像原始字节缓存，防重复请求）
         self.group_avatars: dict = {}   # R9H gid -> (ext, bytes)（群头像原始字节缓存）
-        self.is_admin = False           # R53：管理员（L57 登录成功置 True，最高清理权限）
+        self.is_admin = False           # 管理员标识来自服务器已认证的 welcome
         self._last_typing_sent = 0.0    # R25A 本地 typing 限速（1s/人，服务器亦限速）
         self._last_nudge_sent = 0.0     # R67 本地 nudge 限速（5s/人，服务器亦限速）
         self._last_shake_sent = 0.0     # R68 本地 shake 限速（10s/人，服务器亦限速）
@@ -632,6 +632,7 @@ class ClientCore:
         self.game_state: dict | None = None  # 当前房间公开快照
         self.game_private: dict | None = None  # 私密信息（手牌/身份/词面）
         self.game_events = deque(maxlen=200)   # 房间事件行
+        self._game_left_rooms: set[str] = set()  # 离房确认后忽略旧帧，显式重入才解除。
         self.fish_board: dict = {}           # R70H game -> [{uid,nick,score}]（排行榜缓存）
 
         self.events: queue.Queue = queue.Queue(maxsize=16384)
@@ -996,8 +997,11 @@ class ClientCore:
         elif t == MsgType.GAME_STATE.value:
             self._on_game_state(h)
         elif t == MsgType.GAME_PRIVATE.value:
-            self.game_private = h.get("state")
-            self._push(h)
+            room = self.game_room or {}
+            if (h.get("room_id") == room.get("room_id")
+                    and room.get("status") == "playing"):
+                self.game_private = h.get("state")
+                self._push(h)
         elif t == MsgType.FISH_BOARD.value:          # R70H 排行榜（广播/单播共用同一形状）
             game = str(h.get("game") or "")
             if game:
@@ -1079,7 +1083,7 @@ class ClientCore:
                    "avatar": str(h.get("avatar") or ""),
                    "invisible": bool(h.get("invisible")),   # R56 隐身上线初始态
                    "status": str(h.get("status") or "online")}   # R68 我的在线状态
-        self.is_admin = bool(h.get("is_admin"))   # R53：管理员标识（L57 登录置 True）
+        self.is_admin = bool(h.get("is_admin"))   # 管理员标识（服务器授予）
         self.roster = {u["uid"]: u for u in h.get("roster", [])}
         self.groups = {g["gid"]: g for g in h.get("groups", [])}
         for g in self.groups.values():
@@ -1490,7 +1494,30 @@ class ClientCore:
                                  "tid": int(tid)})
 
     def _on_game_state(self, h: dict) -> None:
-        self.game_room = h.get("room")
+        room = h.get("room")
+        rid = str(h.get("room_id") or (room.get("room_id") if isinstance(room, dict) else "") or "")
+        current = self.game_room or {}
+        current_rid = str(current.get("room_id") or "")
+        member = (isinstance(room, dict)
+                  and (self.uid in (room.get("players") or [])
+                       or self.uid in (room.get("spectators") or [])))
+        if not member:
+            if not current_rid or rid != current_rid:
+                return
+            self._game_left_rooms.add(rid)
+            self.game_room = self.game_state = self.game_private = None
+            self.game_events.clear()
+            self._push(h)
+            return
+        if rid in self._game_left_rooms:
+            return
+        if (rid != current_rid or room.get("round") != current.get("round")
+                or room.get("status") == "created"):
+            self.game_private = None
+            self.game_events.clear()
+        if room.get("status") != "playing":
+            self.game_private = None
+        self.game_room = room
         self.game_state = h.get("state")
         for line in h.get("events") or []:
             self.game_events.append(line)
@@ -2527,7 +2554,7 @@ class ClientCore:
         return self._send_frame({"t": MsgType.INV_SET.value, "on": bool(on)})
 
     def send_admin_force_invis(self, target, on: bool) -> bool:
-        """R56B：系统管理员强制某用户显身/隐身（仅 L57，服务器校验）。
+        """R56B：系统管理员强制某用户显身/隐身（服务器校验）。
         target 可为 uid 或已知昵称。"""
         return self._send_frame({"t": MsgType.ADMIN_INVIS_SET.value,
                                  "uid": target, "on": bool(on)})
@@ -2626,10 +2653,19 @@ class ClientCore:
         return self._send_frame({"t": MsgType.GAME_CREATE.value, "game": game})
 
     def game_join(self, room_id: str) -> bool:
-        return self._send_frame({"t": MsgType.GAME_JOIN.value, "room_id": room_id})
+        return self._game_reentry(MsgType.GAME_JOIN, room_id)
 
     def game_spectate(self, room_id: str) -> bool:
-        return self._send_frame({"t": MsgType.GAME_SPECTATE.value, "room_id": room_id})
+        return self._game_reentry(MsgType.GAME_SPECTATE, room_id)
+
+    def _game_reentry(self, kind: MsgType, room_id: str) -> bool:
+        rid = str(room_id)
+        was_left = rid in self._game_left_rooms
+        self._game_left_rooms.discard(rid)  # 接收线程可能在发送返回前处理新房间状态。
+        sent = self._send_frame({"t": kind.value, "room_id": room_id})
+        if not sent and was_left and (self.game_room or {}).get("room_id") != rid:
+            self._game_left_rooms.add(rid)
+        return sent
 
     def game_leave(self, room_id: str) -> bool:
         return self._send_frame({"t": MsgType.GAME_LEAVE.value, "room_id": room_id})

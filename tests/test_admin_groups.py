@@ -7,6 +7,7 @@
 - 移除群主自动转让给其他成员；移空/解散即删除该群并广播。
 """
 import time
+import secrets
 import socket
 import threading
 from dataclasses import replace
@@ -16,7 +17,7 @@ import pytest
 from config import CFG
 from protocol import MsgType
 
-from test_r53 import _Sess  # 复用：真实 hello 登录（L57 带密码 → is_admin）
+from test_r53 import _Sess, _admin_session  # 复用真实 hello 登录
 
 
 def _free_port() -> int:
@@ -26,10 +27,19 @@ def _free_port() -> int:
 
 
 @pytest.fixture()
-def hub(tmp_path):
+def admin_password() -> str:
+    """为本模块显式注入一次随机部署管理员口令。"""
+    return secrets.token_urlsafe(24)
+
+
+@pytest.fixture()
+def hub(tmp_path, admin_password):
     from server import Hub, serve as serve_tcp
-    cfg = replace(CFG, audit_dir=str(tmp_path / "audit"))
+    cfg = replace(CFG, admin_nick="L57", audit_dir=str(tmp_path / "audit"),
+                  admin_pwd=admin_password)
     h = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"))
+    h._test_admin_password = admin_password
+    h._test_admin_nick = cfg.admin_nick
     port = _free_port()
     stop = threading.Event()
     threading.Thread(target=serve_tcp, args=(h, port, stop, False),
@@ -65,7 +75,7 @@ def test_admin_directory_lists_all_groups(hub):
     make_group(h, 1, "公共频道", owner=5, nick="甲", members={5: "甲", 6: "乙"})
     make_group(h, 2, "私有小群", owner=7, nick="丙",
                members={7: "丙", 8: "丁"}, public=0)
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     h.dispatch(a, {"t": MsgType.ADMIN_GROUPS.value})
     roster = a.last_frame(MsgType.ADMIN_GROUPS_ROSTER.value)
     assert roster and roster.get("groups")
@@ -82,7 +92,7 @@ def test_admin_add_member_to_private_group(hub):
     """超管将非成员加入私有群（override 私有/非成员限制）。"""
     h, _w, _ = hub
     make_group(h, 3, "私有群X", owner=7, nick="丙", members={7: "丙"})
-    a = _Sess(h, "L57", pwd="L57"); a.uid = 99; a.nick = "L57"
+    a = _admin_session(h); a.uid = 99; a.nick = h._test_admin_nick
     h.dispatch(a, {"t": MsgType.ADMIN_GROUP_SET.value,
                    "gid": 3, "op": "add", "uid": 8})
     assert 8 in h.groups[3]["members"]
@@ -92,7 +102,7 @@ def test_admin_add_member_to_private_group(hub):
 def test_admin_add_duplicate_rejected(hub):
     h, _w, _ = hub
     make_group(h, 4, "重复群", owner=7, nick="丙", members={7: "丙", 8: "丁"})
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     h.dispatch(a, {"t": MsgType.ADMIN_GROUP_SET.value,
                    "gid": 4, "op": "add", "uid": 8})
     assert any(f.get("code") == "member" for f in a.frames)
@@ -103,7 +113,7 @@ def test_admin_remove_transfers_owner(hub):
     h, _w, _ = hub
     make_group(h, 5, "转让群", owner=7, nick="丙",
                members={7: "丙", 8: "丁", 9: "戊"})
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     h.dispatch(a, {"t": MsgType.ADMIN_GROUP_SET.value,
                    "gid": 5, "op": "remove", "uid": 7})
     assert 8 in h.groups[5]["members"]
@@ -114,7 +124,7 @@ def test_admin_remove_last_dissolves(hub):
     """移除最后一名成员 → 群自动解散。"""
     h, _w, _ = hub
     make_group(h, 6, "独雁群", owner=7, nick="丙", members={7: "丙"})
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     h.dispatch(a, {"t": MsgType.ADMIN_GROUP_SET.value,
                    "gid": 6, "op": "remove", "uid": 7})
     assert 6 not in h.groups
@@ -125,7 +135,7 @@ def test_admin_dissolve_group(hub):
     h, _w, _ = hub
     make_group(h, 7, "待解散", owner=7, nick="丙",
                members={7: "丙", 8: "丁"})
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     h.dispatch(a, {"t": MsgType.ADMIN_GROUP_SET.value,
                    "gid": 7, "op": "dissolve"})
     assert 7 not in h.groups
@@ -138,7 +148,7 @@ def test_admin_user_info_and_nick_add(hub):
     h, _w, _ = hub
     t = _Sess(h, "佐助")                       # 登录注册为已知用户
     make_group(h, 31, "乙女心", owner=5, nick="甲", members={5: "甲"})
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     # 按昵称把 佐助 加入群（服务器 known 解析，不依赖 uid）
     h.dispatch(a, {"t": MsgType.ADMIN_GROUP_SET.value,
                    "gid": 31, "op": "add", "uid": "佐助"})
@@ -158,7 +168,7 @@ def test_admin_user_info_by_uid(hub):
     """超管：按 uid 查某人信息（非法 uid → 拒绝）。"""
     h, _w, _ = hub
     t = _Sess(h, "鸣人")
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     h.dispatch(a, {"t": MsgType.ADMIN_USER_GET.value, "uid": t.uid})
     info = a.last_frame(MsgType.ADMIN_USER_INFO.value)
     assert info and info["uid"] == t.uid and info["online"] is True
@@ -171,7 +181,7 @@ def test_admin_kick_by_nick_and_audit(hub):
     """超管按昵称踢下线 + 审计落库。"""
     h, _w, _ = hub
     t = _Sess(h, "露西")
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     h.dispatch(a, {"t": MsgType.ADMIN_KICK.value, "uid": "露西"})
     assert t.uid not in h.sessions
     # 审计：踢人已记录
@@ -186,7 +196,7 @@ def test_admin_kick_by_nick_and_audit(hub):
 def test_admin_kick_invalid_nick(hub):
     """超管踢不存在的昵称 → 目标无效错误。"""
     h, _w, _ = hub
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     h.dispatch(a, {"t": MsgType.ADMIN_KICK.value, "uid": "不存在的人Y"})
     assert any(f.get("code") == "uid" for f in a.frames)
 
@@ -200,7 +210,7 @@ def test_admin_group_roster_marks_invisible(hub):
     make_group(h, 41, "隐身群", owner=inv.uid, nick=nick,
                members={inv.uid: nick, 61: "正常乙"})
     h.dispatch(inv, {"t": MsgType.INV_SET.value, "on": True})   # 开启隐身
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     h.dispatch(a, {"t": MsgType.ADMIN_GROUPS.value})
     roster = a.last_frame(MsgType.ADMIN_GROUPS_ROSTER.value)
     g = next(x for x in roster["groups"] if x["gid"] == 41)
@@ -217,7 +227,7 @@ def test_admin_user_info_marks_invisible(hub):
     stamp = str(int(time.time() % 100000))
     u = _Sess(h, "影B" + stamp)
     h.dispatch(u, {"t": MsgType.INV_SET.value, "on": True})
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     h.dispatch(a, {"t": MsgType.ADMIN_USER_GET.value, "uid": u.uid})
     info = a.last_frame(MsgType.ADMIN_USER_INFO.value)
     assert info and info["invisible"] is True
@@ -233,7 +243,7 @@ def test_admin_users_includes_offline_and_invisible(hub):
     h, _w, _ = hub
     stamp = str(int(time.time() % 100000))
     off = _Sess(h, "离线X" + stamp)            # 登录 → 进入 known
-    a = _Sess(h, "L57", pwd="L57")
+    a = _admin_session(h)
     h.dispatch(a, {"t": MsgType.ADMIN_KICK.value, "uid": off.uid})  # 使其离线
     assert off.uid not in h.sessions          # 已下线但保留 known 记录
     inv = _Sess(h, "隐身X" + stamp)

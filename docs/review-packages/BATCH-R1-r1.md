@@ -83,6 +83,10 @@ HEAD仍ec73118，28入场保护无变化。`final-verification.json`22项全部t
 持续运行已自动走到批准终点；heartbeat `321-fish`已PAUSED并核验，Goal已complete，持续推进约3小时3分钟。
 没有下一READY，不续跑其它候选；后续产品批次决定不要求用户每小时检查或逐项催促。
 
+后续交付：用户明确批准提交/推送/创建PR后，已随[Draft PR #4](https://github.com/mixmixla/321_FISH/pull/4)提交；
+实现head30cc0b2，raw验收ID64b829…与Git clean换行规范化后300项逐路径一致，独立复核0mismatch。
+实际提交映射与PR状态见[PR交付记录](PR-DELIVERY-01-r1.md)。本包以下“无提交”限制指验收终点时的历史权限，不覆盖后续明确授权。
+
 实际限制：EXE/真实局域网设备、真实音视频、全部47款UI与长期负载未纳入；账号删除/踢所有端、
 FILE_ACCEPT离线可用性等仍是候选，未自动扩入本批。没有commit/push/PR/merge/发布或外部消息。
 原始证据都在`_tmp_gui/r1-lifecycle/`，本包保存可交接的范围、版本、结论与限制，ignored日志不是唯一状态来源。

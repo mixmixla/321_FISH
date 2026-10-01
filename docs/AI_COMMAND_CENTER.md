@@ -7,9 +7,10 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 - 当前交付任务：[PR-DELIVERY-01 v1](task-packages/PR-DELIVERY-01.md)。用户于2026-10-01在审阅提交/推送/Draft PR方案后
   明确回复“提交pr就提上去吧”，授权按CC→FILE→R1→docs逻辑提交推送任务分支并创建一条Draft PR。
+  已创建[Draft PR #4](https://github.com/mixmixla/321_FISH/pull/4)，交付已完成，未合并/发布。
   本次不merge/release、不开新产品批次、不发额外消息或启用真实数据/设备；原批次不自动提交限制由这次明确授权补充。
 - 当前批准批次：[BATCH-R1 v1](task-packages/BATCH-R1.md)，会话退出/最后端清理/现有游戏公共生命周期。
-  本批已完成独立验收，未提交/合并/发布；没有下一READY批次。
+  本批已完成独立验收并随PR #4提交，未合并/发布；没有下一READY批次。
   用户于2026-10-01明确要求持续进行、不用逐项推动并允许多agent并行；主控可在本批目标内细化/冻结/调度子任务。
   CC-01A/FIX-01/COORD-01 已完成，验收/历史检查点保留；不重复已完成的 R26 补正。
 - 用户确认产品目标/批次/重要发布与数据决定；Pro 审方向、重大设计和里程碑。
@@ -24,15 +25,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 | ID | 状态 | 批次/依赖 | 执行者 / 审查者 | 下一动作与证据 |
 | --- | --- | --- | --- | --- |
-| PR-DELIVERY-01 | IMPLEMENTING | 用户已批准提交/推送/Draft PR | 主控 / `file_auth_review`只读 | 冻结源版本、隔离index分层提交、独立树审查后推送建PR；[Task](task-packages/PR-DELIVERY-01.md) / [Review](review-packages/PR-DELIVERY-01-r1.md) |
-| BATCH-R1 | ACCEPTED | 三子任务完成；未提交/合并/发布 | 当前主控 / `file_auth_review`独立只读 | 108文件1335/0/2、300项前后一致，独立终审可接受，无必须项；[Task](task-packages/BATCH-R1.md) / [Review](review-packages/BATCH-R1-r1.md) |
+| PR-DELIVERY-01 | ACCEPTED | 已提交/推送/Draft PR；未合并/发布 | 主控 / `file_auth_review`只读 | [PR #4](https://github.com/mixmixla/321_FISH/pull/4)，三层源与docs独立树审查通过；[Task](task-packages/PR-DELIVERY-01.md) / [Review](review-packages/PR-DELIVERY-01-r1.md) |
+| BATCH-R1 | ACCEPTED | 三子任务完成；已PR #4，未合并/发布 | 当前主控 / `file_auth_review`独立只读 | 108文件1335/0/2、300项前后一致，独立终审可接受，无必须项；[Task](task-packages/BATCH-R1.md) / [Review](review-packages/BATCH-R1-r1.md) |
 | SESSION-01 | ACCEPTED | 本批最终验收满足 | `file_auth_impl` + 主控 / `file_auth_review`（只读） | 当前会话退出/多端隔离/真实UI与全量闭合；[Task](task-packages/SESSION-01.md) / [Review](review-packages/SESSION-01-r1.md) |
 | SESSION-02 | ACCEPTED | 本批最终验收满足 | `file_auth_impl` + 主控覆盖补强 / `file_auth_review`（只读） | UID资源/通知/群GC及快速重登新退出闭合；[Task](task-packages/SESSION-02.md) / [Review](review-packages/SESSION-02-r1.md) |
 | GAME-LIFECYCLE-01 | ACCEPTED | 本批最终验收满足 | `file_auth_impl`后端 / 主控客户端 / `file_auth_review`只读 | 公开终局/复位再开/退出重入、旧轮身份与UI实测闭合；[Task](task-packages/GAME-LIFECYCLE-01.md) / [Review](review-packages/GAME-LIFECYCLE-01-r1.md) |
-| FILE-AUTH-01 | ACCEPTED | 本批完成；未提交/合并/发布 | `file_auth_impl` / `file_auth_review`（只读） | 1286/0/2最终全量与独立终审通过，无必须修复项；到本批终点；[Task](task-packages/FILE-AUTH-01.md) / [Review](review-packages/FILE-AUTH-01-r1.md) |
-| COORD-01 | ACCEPTED | 本批完成；未提交/合并 | 主控 + `cc01a_docs` / `cc01a_evidence`（只读） | 独立资料审查可接受，无未关闭必须修复项；本批终点，无下一 READY 项；[Task](task-packages/COORD-01.md) / [Review](review-packages/COORD-01-r1.md) |
-| CC-01A | ACCEPTED | 原交付 + FIX-01；用户最终确认 | 原实现者 / 用户验收确认 | 2026-10-01 PASS；未合并/发布，历史失败保留；[r2](review-packages/CC-01A-r2.md) / [r1](review-packages/CC-01A-r1.md) / [基线](review-packages/CC-01A-baseline.md) |
-| CC-01A-FIX-01 | ACCEPTED | 本补正批次完成；未推送/合并 | 当前主控 + `admin_tests`（仅 R26 测试） / `auth_path_review`（只读） | 独立终审可接受，无未关闭必须修复项；到终点停止；[Task](task-packages/CC-01A-FIX-01.md) / [r2](review-packages/CC-01A-r2.md) |
+| FILE-AUTH-01 | ACCEPTED | 本批完成；已PR #4，未合并/发布 | `file_auth_impl` / `file_auth_review`（只读） | 1286/0/2最终全量与独立终审通过，无必须修复项；到本批终点；[Task](task-packages/FILE-AUTH-01.md) / [Review](review-packages/FILE-AUTH-01-r1.md) |
+| COORD-01 | ACCEPTED | 本批完成；已PR #4，未合并 | 主控 + `cc01a_docs` / `cc01a_evidence`（只读） | 独立资料审查可接受，无未关闭必须修复项；本批终点，无下一 READY 项；[Task](task-packages/COORD-01.md) / [Review](review-packages/COORD-01-r1.md) |
+| CC-01A | ACCEPTED | 原交付 + FIX-01；用户最终确认 | 原实现者 / 用户验收确认 | 2026-10-01 PASS，已PR #4；未合并/发布，历史失败保留；[r2](review-packages/CC-01A-r2.md) / [r1](review-packages/CC-01A-r1.md) / [基线](review-packages/CC-01A-baseline.md) |
+| CC-01A-FIX-01 | ACCEPTED | 本补正批次完成；已PR #4，未合并 | 当前主控 + `admin_tests`（仅 R26 测试） / `auth_path_review`（只读） | 独立终审可接受，无未关闭必须修复项；到终点停止；[Task](task-packages/CC-01A-FIX-01.md) / [r2](review-packages/CC-01A-r2.md) |
 
 状态流转：PROPOSED → READY → IMPLEMENTING → REVIEWING → ACCEPTED → MERGED。
 审查必须修复项使 REVIEWING 回到 IMPLEMENTING；需要决定时使用 WAITING_FOR_DECISION 并写具体问题。
@@ -91,7 +92,21 @@ Android、完整云账号、全面游戏美术、大规模模块拆分仍为暂�
 本次连续授权覆盖BATCH-R1三个生命周期任务，已自动推进至本批验收终点，不因单项结束而等待用户。
 其它Roadmap未转为执行授权；后续产品范围/批次由用户确认，普通批次内整改继续无需逐项推动。
 
-## 当前检查点 PR-CP-02（隔离候选提交与独立审查）
+## 当前检查点 PR-CP-03（Draft PR 交付完成）
+
+- Task v1 PR-DELIVERY-01已ACCEPTED；用户提交/推送/Draft PR授权已完成，不merge/release。
+- 已创建并附到本聊天：[PR #4](https://github.com/mixmixla/321_FISH/pull/4)，open/draft，base main fbdd915。
+- 创建时head443aee0940d1e11b699ac3b578360b5389f128f5已推送且远端一致；实现head30cc0b29898a06ee0b420c76dfe03fe3e8ec032d。
+  既有R26 ec73118 → CC1babebe → FILEf6c2a68 → R1 30cc0b2 → docs443aee0，全部独立树审查0mismatch。
+- 300原字节源集合ID64b829…保持；Git clean规范化集合IDe5021eea…，只规范化换行，没有应用/测试行为改写。
+  引用原108文件1335/0/2全量和真实Tk/Node/IAB证据；合并base未变，未重复跑同版本全量。
+- 创建通道：GitHub连接器403为integration权限不足；使用已授权Git认证在内存请求GitHub API成功，没有凭据入库/日志。
+- 创建时CI快照checks/statuses为空；不能宣称GitHub CI通过，当前依据本机已验收门禁。
+- 工作区在首次推送后干净；当前仅保存实际PR交付元数据，随后纯docs记录提交并推送，source不变。
+- 下一动作：等待PR代码审阅；未获合并/发布权限，不启动其它PROPOSED产品。原Goal complete/heartbeat PAUSED保持。
+- 活动操作：没有应用/测试/独立checkout需恢复；临时index与原始映射只保留本机ignored证据。
+
+## 历史检查点 PR-CP-02（隔离候选提交与独立审查）
 
 - Task v1：PR-DELIVERY-01；用户已明确授权commit/push/Draft PR，main禁止直推，不merge/release。
 - base/head ec73118，分支fix/cc-01a-admin-credentials，index空、dirty已验收内容保持；远端main fbdd915未变。

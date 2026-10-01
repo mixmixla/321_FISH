@@ -1,39 +1,129 @@
 # 321_FISH AI 指挥中心
 
 本文件是当前执行状态与下一任务的唯一权威。需求见 task-packages，证据和审查结论见
-review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-01（Asia/Shanghai）。
+review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-02（Asia/Shanghai）。
+
+<!-- BEGIN_ROADMAP_VIEW -->
+## 开发路线与当前位置
+
+**现在处于 Pro 路线的 R1：核心状态一致性。** 管理员安全、文件鉴权、会话退出和公共游戏生命周期已交付，
+[PR #4](https://github.com/mixmixla/321_FISH/pull/4)已合并；CC-02A为后续本地未提交交付，RETIRE和CC-03入口筛查尚未闭合。
+已完成的`BATCH-R1`是有限实现批次，不能据此宣布整个Pro R1里程碑通过。
+
+已合并基线：远端main `cc7e2951695041face3ea2451ef98a02d469d15b`（PR #4），与本地HEAD `d07b29577a48367f887cc0c2dbf1671ed13bb326`文件树相同。
+已显式fetch main cc7e295并建立新分支codex/cc02a-consistency；CC-02A代码/测试已本地提交e065591，source305原字节不变，资料提交/推送/新PR进行中，未发布。
+用户已批准PR-DELIVERY-02：将CC-02A及必要资料交付到新Draft PR；当前Git交付Goal active，不合并/发布或开始RETIRE。
+已完成首批：**CC-02A：PROFILE → RESTORE → KICK**，独立验收ACCEPTED，Goal已由工具确认complete（9741秒，约2小时42分钟）。
+[架构决定](decisions/CC-02_架构审查决定_v1.md)选择M1，先做基础三片；[冻结Task](task-packages/CC-02A.md)限定首批，
+[修订草案](task-packages/CC-02-IMPLEMENTATION-DRAFT.md)中的RETIRE/STORE-COMMIT、CREDENTIAL、LOCAL/CLOUD尚未获本批实施授权。
+正式逐文件门禁属于CC-05基线补齐，可作为并行候选；旗舰游戏UX属于后续CC-04，当前未开工。
+
+### 阶段路线
+
+| 阶段 | 目标 | 当前进度 | 进入下一阶段的检查点 |
+| --- | --- | --- | --- |
+| R0 公开安全与验证基线 | 管理员配置、权限、公开文档、可核验测试与构建状态 | CC-01A已获Pro/用户验收；最新候选隔离全量1355/0/2；正式门禁入口及构建基线仍需补齐 | 默认凭据问题关闭，报告绑定版本/环境，未测项目明确 |
+| R1 核心状态一致性 ← 当前 | 用户/会话/数据归属、文件权限、游戏公共流程 | CC-02A三片已独立验收；M1退役/可靠提交与CC-03入口矩阵仍未完成 | 退出不误伤其它端、非法请求无副作用、游戏可终局再开；持久数据边界明确 |
+| R2 特色体验与两款旗舰 | Excel主流程、收起恢复、五子棋/四子棋完整体验 | 未开始；等待R1前置与CC-04设计审查 | 操作/等待/观战/异常/恢复/结算可验证，设计与实现一致 |
+| R3 Windows可交付试用版 | EXE、非开发机器、实际网络、小范围试用 | 未开始；构建核验可提前准备，真机/发布另行批准 | 启动/重启/文件/游戏/退出通过，产物、日志、已知问题齐全 |
+| R4 按反馈扩展 | 第三款社交游戏、必要Web能力、针对性重构 | 暂缓，等待试用证据 | 有实际需求支持，保留既有稳定能力 |
+
+### 任务清单：已完成、下一项与后续
+
+| 顺序 / ID | 工作与剩余范围 | 状态 | 负责角色 | 依赖 / 完成条件 |
+| --- | --- | --- | --- | --- |
+| 0 · COORD-01 | 协作入口、Task/Review、状态与记忆分离 | MERGED；PR #4 | Codex / 独立审查 | 原冻结交付已合并，后续资料增量另计 |
+| 1 · CC-01A + FIX-01 | 管理员凭据安全、R26测试事件同步补正 | MERGED；Pro/用户已验收，PR #4 | Codex / Pro验收 | 1268/0/2原门禁；历史失败保留 |
+| 2 · FILE-AUTH-01 | 非参与者文件拒绝/校验/取消鉴权 | MERGED；PR #4 | Codex / 独立审查 | 原红、修绿、1286/0/2与当前全量保护 |
+| 3 · SESSION-01/02 | 本Web端退出、最后UID端清理、重登竞态 | MERGED；PR #4 | Codex / 独立审查 | 退出隔离、资源/通知边界验证通过；仅覆盖CC-02部分范围 |
+| 4 · GAME-LIFECYCLE-01 | 终局、复位再开、退出重入、旧轮身份 | MERGED；PR #4 | Codex / 独立审查 | 原1335/0/2和真实UI；仅覆盖CC-03公共层 |
+| 5 · PR-DELIVERY-01 | 保留逻辑提交、推送、原PR交付 | MERGED；PR #4实际已合并 | Codex / 独立树审查 | merged_at 2026-10-01 17:50:10（Asia/Shanghai），merge cc7e295；未发布 |
+| 6 · CC-02-DESIGN | 身份/17类数据事实、候选和架构决定 | ACCEPTED（资料）；技术决定M1已输入 | Codex / cc02_docs_review独立资料审查 | 原资料验收保留，CC-02A获准，RETIRE未实施，未等同R1通过 |
+| 6A · CC-02A | PROFILE资料保持→RESTORE身份map→KICK全现有端撤权/手动登录 | ACCEPTED；本地未提交，Goal complete | cc02a_backend/主控UI / cc02_docs_review独立只读 | source305同版113文件1355/0/2、真实Tk/Web、独立终审无必须项，未merge/release |
+| 6B · CC02-RETIRE ★ 下一审批点 | M1身份退役＋STORE-COMMIT可靠提交、全写入面/失败重试/回滚 | PROPOSED；技术方向已选，下一批待冻结/批准 | Codex准备Task，Pro审提交设计，用户批准范围 | 不自动开始；先补准确写入面与提交设计，再取得有限实施授权 |
+| 7 · CC-03-SCREEN | 47项游戏入口/主要操作矩阵；稳定与实验分类依据 | PROPOSED；公共生命周期已完成，筛查未开始 | Codex核验，Pro审分类决策 | 每项给出入口与行为证据；不以注册/画面存在等同可玩 |
+| 并行 · VB-01（CC-05基线） | 正式逐文件入口、同版本续跑、超时清理、真实退出/日志报告 | PROPOSED；未入实现队列 | Codex / 独立审查 | 批次范围批准，runner专项与最终门禁通过；不重做已修R26 |
+| 后续 · GAME-UI-01（CC-04） | 两款棋类Game UI Brief；回合/观战/胜线/规则提示；Excel和低打扰状态设计 | PROPOSED；设计/代码均未开始 | GPT设计 → Pro审查 → Codex | R1前置明确；先审设计，再实现与真实交互验收 |
+| 后续 · REL-01（CC-05交付） | 统一构建入口、EXE/机器/网络验收 | PROPOSED；尚无当前发布验收 | Codex准备，开发者真机，Pro验收 | 明确模型/扩展降级，产物hash/日志/试用条件与权限齐备 |
+| Backlog · SEC-01 | Git历史敏感信息与旧部署凭据评估 | PROPOSED；不阻塞当前交付 | 独立安全评估 / 用户决定 | 先评估；不自动重写Git历史或改真实凭据 |
+
+### 上轮整理与当前 Goal
+
+用户于2026-10-01明确答复“我是批准首批实施”，`CC-02A v1`已独立验收，Goal complete（9741秒），仅覆盖PROFILE→RESTORE→KICK。
+113文件1355/0/2、source305一致、真实Tk/Web及20后验检查通过；旧heartbeat保持PAUSED，不自动开始RETIRE或其它候选。
+
+用户于2026-10-01在“准备 CC-02 架构审查材料”聊天批准 `CC-02-DESIGN v1`，资料已独立验收，Goal已由工具确认complete（1930秒，约32分钟）。
+主控唯一文档写入，两个事实代理只读，cc02_docs_review独立资料审查可接受；只读源码、不改应用或真实数据、不发Pro消息。
+已交付最小方案候选、D1–D11和原实现草案；后续架构决定及用户批准已使CC-02A成为新批次，原资料验收不反写成代码验收。
+
+用户于2026-10-01批准路线清单和换窗口接续整理。`DOC-ROADMAP-01 v1`已ACCEPTED，独立资料审查可接受，
+本轮文档Goal已complete（1542秒，约26分钟）；主控为“按协作方案持续开发”聊天，实际聊天标识不写入阅读视图。
+用户进一步澄清：其主要偏好是**后续开发按已批准清单批次默认采用Goal持续完成**；本轮文档Goal完成后结束，
+不因此启动候选代码。未来批次确认一次目标/范围/权限，批次内实现、验证、审查整改自动衔接。
+本轮未改应用/测试/依赖、未启动候选产品或发Pro消息；9份资料、69相对链接、16项检查通过，旧清单已精确归档。
+旧R1 Goal已完成、heartbeat `321-fish`保持PAUSED；其它窗口先核对当前主控和活动操作，不重复启动同队列。
+
+路线依据：[原Pro路线与任务映射](路线来源与任务映射.md)。R0–R4和CC-01–CC-05为原接管建议，
+具体开工仍按用户批准批次和Pro前置审查；此前“R2棋类＋门禁”组合只是Codex建议，已让位于CC-02审查优先。
+Android、完整云账号、47款全面美术和大规模重写维持Backlog，不给未经验证的日期承诺。
+<!-- END_ROADMAP_VIEW -->
 
 ## 批次、角色与权限
 
-- 当前交付任务：[PR-DELIVERY-01 v1](task-packages/PR-DELIVERY-01.md)。用户于2026-10-01在审阅提交/推送/Draft PR方案后
+- 当前批准Git交付：[PR-DELIVERY-02 v1](task-packages/PR-DELIVERY-02.md)。用户在本聊天明确要求先提交未提交PR，
+  授权CC-02A及必要资料commit/push/新Draft PR到codex/cc02a-consistency，base main。主控唯一Git/资料写入，独立提交审查只读。
+  不merge/release、不发Pro/额外消息、不启动RETIRE；新窗口设计提示词尚不构成本聊天新产品实现授权。
+
+- 最近完成实施批次：[CC-02A v1](task-packages/CC-02A.md)，用户直接批准首批PROFILE→RESTORE→KICK，已ACCEPTED，Goal complete。
+  架构决定文件只提供方案输入，实施权限来自本聊天用户答复；完整决定已逐字节归档。
+  cc02a_backend唯一server.py/后端本批测试写入；主控仅Core/Tk/Web/客户端本批测试及资料；cc02_docs_review独立只读。
+  普通整改/阶段衔接自主推进；无commit/push/PR/merge/release/真实数据/外部消息/新heartbeat权限，旧守护不恢复。
+  RESTORE白名单/冲突处理、KICK接受点与异步边界先核验写Review，再按队列放行；不把资料或技术方案批准放大为RETIRE授权。
+
+- 历史已完成资料批次：[CC-02-DESIGN v1](task-packages/CC-02-DESIGN.md)，用户在本聊天明确批准只读架构材料准备及Goal。
+  主控“准备 CC-02 架构审查材料”唯一文档写入；`identity_facts` / `persistence_facts`只读调查已结束，`cc02_docs_review`独立资料终审可接受。
+  所有权：本批Task/Review、架构材料、实现Task草案、PROJECT_MEMORY、指挥中心、生成任务清单；本机证据`_tmp_gui/cc02-design/`。
+  不改应用/测试/依赖或真实数据，不运行应用测试、不commit/push/PR/merge/release、不发Pro/其它聊天消息、不恢复heartbeat。
+  原主控已idle/两轮completed，原Goal完成/守护PAUSED保持；本Goal仅属于新批准资料批次。Pro架构批准和实现授权尚未取得。
+- 上轮已完成资料任务：[DOC-ROADMAP-01 v1](task-packages/DOC-ROADMAP-01.md)。用户希望有可跨聊天恢复的清单和有限Goal连续执行方式，
+  已启动本轮文档Goal；这不批准CC-02改造或CC-04 UI实现、不恢复旧R1守护。新的产品Goal需冻结并批准范围后启动。
+- 已完成交付任务：[PR-DELIVERY-01 v1](task-packages/PR-DELIVERY-01.md)。用户于2026-10-01在审阅提交/推送/Draft PR方案后
   明确回复“提交pr就提上去吧”，授权按CC→FILE→R1→docs逻辑提交推送任务分支并创建一条Draft PR。
-  已创建[Draft PR #4](https://github.com/mixmixla/321_FISH/pull/4)，交付已完成，未合并/发布。
+  创建时为Draft；现已核验[PR #4](https://github.com/mixmixla/321_FISH/pull/4)合并到main cc7e295，未发布。
   本次不merge/release、不开新产品批次、不发额外消息或启用真实数据/设备；原批次不自动提交限制由这次明确授权补充。
-- 当前批准批次：[BATCH-R1 v1](task-packages/BATCH-R1.md)，会话退出/最后端清理/现有游戏公共生命周期。
-  本批已完成独立验收并随PR #4提交，未合并/发布；没有下一READY批次。
+- 历史批准批次：[BATCH-R1 v1](task-packages/BATCH-R1.md)，会话退出/最后端清理/现有游戏公共生命周期。
+  该批已完成独立验收并随PR #4合并，未发布；不由此推导整个Pro R1通过或后续候选获准。
   用户于2026-10-01明确要求持续进行、不用逐项推动并允许多agent并行；主控可在本批目标内细化/冻结/调度子任务。
   CC-01A/FIX-01/COORD-01 已完成，验收/历史检查点保留；不重复已完成的 R26 补正。
 - 用户确认产品目标/批次/重要发布与数据决定；Pro 审方向、重大设计和里程碑。
 - Codex 主控维护队列与检查点；实现代理在文件边界内工作；独立代理只读审查，不能由实现者自验。
-- 本批允许任务包限定的源码/测试/资料修改与隔离验证；不自动 commit、推送、PR、merge、发布、
+- 历史BATCH-R1允许任务包限定的源码/测试/资料修改与隔离验证；不自动 commit、推送、PR、merge、发布、
   修改真实用户数据或发 Pro 消息。原 FIX-01 的 R26 单独本地提交权限不延伸到本批。
-- 持续Goal已complete，本批目标已实现；heartbeat `321-fish`已按批次终点设PAUSED并核验，目标线程
-  `01a0f4f9-df9a-7d52-b410-50314b1abc0b`。恢复历史时不重新启动已结束的Goal/守护或门禁。
+- 历史BATCH-R1持续Goal已complete，该批目标已实现；heartbeat `321-fish`已按批次终点设PAUSED并核验，目标线程
+  为该批次原主控聊天。恢复历史时不重新启动已结束的Goal/守护或门禁，实际聊天标识留在本机工具配置中。
   只有一个主控写入者；暂停/预算限制不自行规避，无变化不重复报告；批次完成后结束Goal并关闭守护。
 
 ## 当前队列
 
 | ID | 状态 | 批次/依赖 | 执行者 / 审查者 | 下一动作与证据 |
 | --- | --- | --- | --- | --- |
-| PR-DELIVERY-01 | ACCEPTED | 已提交/推送/Draft PR；未合并/发布 | 主控 / `file_auth_review`只读 | [PR #4](https://github.com/mixmixla/321_FISH/pull/4)，三层源与docs独立树审查通过；[Task](task-packages/PR-DELIVERY-01.md) / [Review](review-packages/PR-DELIVERY-01-r1.md) |
-| BATCH-R1 | ACCEPTED | 三子任务完成；已PR #4，未合并/发布 | 当前主控 / `file_auth_review`独立只读 | 108文件1335/0/2、300项前后一致，独立终审可接受，无必须项；[Task](task-packages/BATCH-R1.md) / [Review](review-packages/BATCH-R1-r1.md) |
-| SESSION-01 | ACCEPTED | 本批最终验收满足 | `file_auth_impl` + 主控 / `file_auth_review`（只读） | 当前会话退出/多端隔离/真实UI与全量闭合；[Task](task-packages/SESSION-01.md) / [Review](review-packages/SESSION-01-r1.md) |
-| SESSION-02 | ACCEPTED | 本批最终验收满足 | `file_auth_impl` + 主控覆盖补强 / `file_auth_review`（只读） | UID资源/通知/群GC及快速重登新退出闭合；[Task](task-packages/SESSION-02.md) / [Review](review-packages/SESSION-02-r1.md) |
-| GAME-LIFECYCLE-01 | ACCEPTED | 本批最终验收满足 | `file_auth_impl`后端 / 主控客户端 / `file_auth_review`只读 | 公开终局/复位再开/退出重入、旧轮身份与UI实测闭合；[Task](task-packages/GAME-LIFECYCLE-01.md) / [Review](review-packages/GAME-LIFECYCLE-01-r1.md) |
-| FILE-AUTH-01 | ACCEPTED | 本批完成；已PR #4，未合并/发布 | `file_auth_impl` / `file_auth_review`（只读） | 1286/0/2最终全量与独立终审通过，无必须修复项；到本批终点；[Task](task-packages/FILE-AUTH-01.md) / [Review](review-packages/FILE-AUTH-01-r1.md) |
-| COORD-01 | ACCEPTED | 本批完成；已PR #4，未合并 | 主控 + `cc01a_docs` / `cc01a_evidence`（只读） | 独立资料审查可接受，无未关闭必须修复项；本批终点，无下一 READY 项；[Task](task-packages/COORD-01.md) / [Review](review-packages/COORD-01-r1.md) |
-| CC-01A | ACCEPTED | 原交付 + FIX-01；用户最终确认 | 原实现者 / 用户验收确认 | 2026-10-01 PASS，已PR #4；未合并/发布，历史失败保留；[r2](review-packages/CC-01A-r2.md) / [r1](review-packages/CC-01A-r1.md) / [基线](review-packages/CC-01A-baseline.md) |
-| CC-01A-FIX-01 | ACCEPTED | 本补正批次完成；已PR #4，未合并 | 当前主控 + `admin_tests`（仅 R26 测试） / `auth_path_review`（只读） | 独立终审可接受，无未关闭必须修复项；到终点停止；[Task](task-packages/CC-01A-FIX-01.md) / [r2](review-packages/CC-01A-r2.md) |
+| PR-DELIVERY-02 | IMPLEMENTING | 用户批准新PR；代码层已提交、资料/独立树审查进行中 | 主控 / cc02_docs_review只读 | 新分支codex/cc02a-consistency，base cc7e295，code e065591；[Task](task-packages/PR-DELIVERY-02.md) / [Review](review-packages/PR-DELIVERY-02-r1.md) |
+| CC-02A | ACCEPTED | 用户批准首批已完成；Goal complete | cc02a_backend/主控 / cc02_docs_review只读 | [Task](task-packages/CC-02A.md) / [Review](review-packages/CC-02A-r1.md)，113文件1355/0/2，source305一致，独立可接受 |
+| CC02-PROFILE | ACCEPTED | 统一最终候选/全量/独立终审满足 | cc02a_backend唯一server / cc02_docs_review只读 | 空值/False及资料保持、真实JSON/重登、原红2/修绿2，范围不扩退群规则 |
+| CC02-RESTORE | ACCEPTED | 统一最终候选/全量/独立终审满足 | cc02a_backend唯一server / cc02_docs_review只读 | 白名单/异常冲突拒绝、JSON权限/禁言/已读，补强8绿/相关94，burn保持 |
+| CC02-KICK | ACCEPTED | 统一最终候选/全量/独立终审满足 | backend主树server+主控UI / cc02_docs_review只读 | 全现有端撤权/新登录保护、Core/Tk/Web手动登录、真实UI和原失败保持，未封禁/退役 |
+| CC-02-DESIGN | ACCEPTED | 本次资料目标已满足；Goal complete（1930秒） | 当前主控 / cc02_docs_review独立只读 | 四正文ID49fbcd01…，13检查/99最终链接通过；终审无必须项；[Task](task-packages/CC-02-DESIGN.md) / [Review](review-packages/CC-02-DESIGN-r1.md) |
+| CC02-RETIRE | PROPOSED | M1已技术选择，下一主线，未获本批实施授权 | Pro审可靠提交设计 / 用户批准下一批 | [修订草案draft-v2](task-packages/CC-02-IMPLEMENTATION-DRAFT.md)含STORE-COMMIT/全写入面/失败重试/回滚；首批不实施 |
+| DOC-ROADMAP-01 | ACCEPTED | 路线/Goal接续资料已完成；未提交 | 主控 + `file_auth_impl`仅来源文档 / `file_auth_review`只读 | 原Pro路线映射、投影清单/恢复规则/独立审查通过；[Task](task-packages/DOC-ROADMAP-01.md) / [Review](review-packages/DOC-ROADMAP-01-r1.md) |
+| PR-DELIVERY-01 | MERGED | PR #4已合并，未发布 | 主控 / `file_auth_review`只读 | GitHub已核验merge cc7e295；[Task](task-packages/PR-DELIVERY-01.md) / [Review](review-packages/PR-DELIVERY-01-r1.md) |
+| BATCH-R1 | MERGED | 三子任务已随PR #4合并，未发布 | 原主控 / `file_auth_review`独立只读 | 原108文件1335/0/2和300项证据保持；[Task](task-packages/BATCH-R1.md) / [Review](review-packages/BATCH-R1-r1.md) |
+| SESSION-01 | MERGED | PR #4 | `file_auth_impl` + 原主控 / `file_auth_review`只读 | 原会话退出/多端隔离验收保留；[Task](task-packages/SESSION-01.md) / [Review](review-packages/SESSION-01-r1.md) |
+| SESSION-02 | MERGED | PR #4 | `file_auth_impl` + 原主控 / `file_auth_review`只读 | 原UID资源/通知/重登证据保留；[Task](task-packages/SESSION-02.md) / [Review](review-packages/SESSION-02-r1.md) |
+| GAME-LIFECYCLE-01 | MERGED | PR #4 | `file_auth_impl`后端 / 原主控UI / `file_auth_review`只读 | 原终局/复位/重入证据保留；[Task](task-packages/GAME-LIFECYCLE-01.md) / [Review](review-packages/GAME-LIFECYCLE-01-r1.md) |
+| FILE-AUTH-01 | MERGED | PR #4 | `file_auth_impl` / `file_auth_review`只读 | 原1286/0/2、鉴权边界与失败保留；[Task](task-packages/FILE-AUTH-01.md) / [Review](review-packages/FILE-AUTH-01-r1.md) |
+| COORD-01 | MERGED | 原冻结交付在PR #4；新路线资料另批未提交 | 原主控 + `cc01a_docs` / `cc01a_evidence`只读 | 原资料验收保留；[Task](task-packages/COORD-01.md) / [Review](review-packages/COORD-01-r1.md) |
+| CC-01A | MERGED | PR #4，用户PASS | 原实现者 / 用户确认 | 历史失败/版本保持，未发布；[r2](review-packages/CC-01A-r2.md) / [r1](review-packages/CC-01A-r1.md) / [基线](review-packages/CC-01A-baseline.md) |
+| CC-01A-FIX-01 | MERGED | PR #4 | 原主控 + `admin_tests` / `auth_path_review`只读 | 原R26单独提交与补正验收保持；[Task](task-packages/CC-01A-FIX-01.md) / [r2](review-packages/CC-01A-r2.md) |
 
 状态流转：PROPOSED → READY → IMPLEMENTING → REVIEWING → ACCEPTED → MERGED。
 审查必须修复项使 REVIEWING 回到 IMPLEMENTING；需要决定时使用 WAITING_FOR_DECISION 并写具体问题。
@@ -84,6 +174,8 @@ PASS
 
 | 候选 | 状态 | 进入可执行队列的条件 |
 | --- | --- | --- |
+| CC02-RETIRE/CREDENTIAL/LOCAL/CLOUD | PROPOSED | M1和技术边界已决定；首批CC-02A之外仍需独立Task/用户范围批准，不自动实施 |
+| CC-03-SCREEN：游戏可玩性筛查 | PROPOSED | 公共生命周期已完成；补47项入口矩阵与稳定/实验分类依据，不自动移除现有游戏 |
 | VB-01：剩余验证基线与门禁报告可靠性 | PROPOSED | R26 对照/修复及 CC-01A 最终全量已由 FIX-01 完成；剩余范围须单独批准，不重复已完成工作 |
 | GAME-UI-01：少量旗舰游戏与低打扰体验 | PROPOSED | 公共生命周期已归本批；旗舰UI仍需Pro设计审查与用户批准，五子棋/四子棋未获自动开发授权 |
 | REL-01：Windows EXE / 真实机器与网络试用 | PROPOSED | 候选实现及门禁符合条件，并取得发布/数据权限 |
@@ -92,7 +184,178 @@ Android、完整云账号、全面游戏美术、大规模模块拆分仍为暂�
 本次连续授权覆盖BATCH-R1三个生命周期任务，已自动推进至本批验收终点，不因单项结束而等待用户。
 其它Roadmap未转为执行授权；后续产品范围/批次由用户确认，普通批次内整改继续无需逐项推动。
 
-## 当前检查点 PR-CP-03（Draft PR 交付完成）
+## 当前检查点 PR02-CP-02（边界快照与代码提交）
+
+- Task PR-DELIVERY-02 v1，Goal active；入场367文件/原index已保存_tmp_gui/pr02/entry.json、entry-index，明确10代码/测试+20docs路径。
+- fetch实际main cc7e295，tree0bdde556…同入场d07，无应用基线变化；未pull/覆盖现有dirty，新分支codex/cc02a-consistency。
+- 代码提交e065591d32936115f7b36550ba0b1d9f7bb57f60，parent cc7e295，tree4b7288f2e42013efaffc507459a52ecc682fa37c；只有10批准路径，raw source305保持。
+- 当前305逐路径Git clean blob验证只读进行，未推送/创建PR；独立cc02_docs_review先审范围满足，待实际提交树复核。
+- 活动进程只有Git验证，不是应用测试；旧Goal/守护不恢复，RETIRE不启动。
+- 下一动作资料提交→独立两层树审查→push新分支/新Draft PR/attach真实URL→纯docs补录与Goal终点；不merge/release/发Pro。
+
+## 历史检查点 PR02-CP-01（新 PR 授权与入场）
+
+- PR-DELIVERY-02 v1，用户明确要求先提交新PR；分支codex/cc02a-consistency/base main，Goal准备启动。
+- 入场HEAD d07b295/原fix分支/index空/dirty已验收source与资料；远端main cc7e295、同tree0bdde556…，未pull/切分支。
+- 当前只有本聊天主控active，旧主控idle，无应用/测试进程；旧Goal完成/heartbeat PAUSED保持，不启动RETIRE。
+- 主控保存边界后fetch同基线/建分支，按10代码测试文件→批准docs两层提交，独立tree审查后push/新Draft PR。
+- 活动操作只有只读交付审查；未完成快照/提交/审查/push/PR/真实结果与Goal终点；不因已完成CC02A而自动获得merge/release权限。
+
+## 历史检查点 CC02A-CP-08（批次独立验收与交付终点）
+
+- 后续只读交付核对：2026-10-02 GitHub返回PR #4 merged/closed，merged_at 2026-10-01 17:50:10（Asia/Shanghai），main cc7e295；原历史open/draft段落不反写。
+- ls-remote main与GitHub一致；cc7e295的tree 0bdde556…与本地HEAD d07b295的tree相同。本地origin/main缓存fbdd915未fetch/pull。
+- source305仍与已测1f94f8fc…完全一致，无需因仅合并元数据重复应用门禁；CC-02A未commit/push，需要新任务分支/新PR，实际Git交付权限待用户明确批准。
+- 本次仅更正指挥中心/投影的远端状态与历史交付索引，未启动Goal、修改应用、提交/推送/创建PR或发送Pro消息；下一主线仍RETIRE设计。
+
+- CC-02A v1及三切片ACCEPTED；cc02_docs_review独立终审可接受，无必须项；Goal已由工具确认complete（9741秒，约2小时42分钟），下一READY为空。
+- base/head d07b29577a48367f887cc0c2dbf1671ed13bb326、branch fix/cc-01a-admin-credentials/index不变；本批源码/资料未commit/push/PR/merge/release。
+- 最终source305 ID1f94f8fca3da7746c5db293b05e5729e76b37935e1a05d0314658bde9de39830，主树/导出/门禁前后一致，静态资源无变化。
+- 全量113文件一次1355 passed/0 failed/2原opt-in skipped，373.21秒真实exit全0，Summary SHA081b25…；独立复算原日志/skip/exit与环境一致。
+- 真实Tk最终12/IAB12观察、Node13、阶段回归/领域及历史失败保持；20检查全true、75相对链接、投影/hash/diff-check通过。
+- 门禁后仅4份资料流转更新，应用/测试/依赖冻结不变；8份资料最终hash另捕获，原draft-v1及决定原字节可公开恢复。
+- UI worktree已确认archived_worktree且路径不存在，需要的ignored证据保留主树；所有应用/测试/harness/临时Tab结束，旧heartbeat PAUSED。
+- 已请求打开Review（queued），文件可从本工作区链接读；稳定记忆/草案/清单/检查点已更新，本批无未完成项。
+- 下一审批点CC02-RETIRE＋STORE-COMMIT提交设计/写入面与新批次批准，不自动实施；CREDENTIAL/LOCAL/CLOUD及CC-03等仍未放行，R1未整体验收。
+
+## 历史检查点 CC02A-CP-07（最终全量完成，独立终审交接）
+
+- CC-02A v1，Goal active；base/head d07b295/branch/index不变，未提交；最终源305 ID1f94f8fca3da7746c5db293b05e5729e76b37935e1a05d0314658bde9de39830。
+- 唯一final-full session2946已真实exit0，113文件一次、1355 passed/0failed/2原opt-in skipped，373.21秒，无重试。
+- Summary SHA081b25db2fe0ca5971e91284302c3e2341fd72042fb29aee290abad9c1aaea7d；原字节源/静态资源导出，原venv/隔离profile/cwd，未读复制真实数据。
+- 前后/导出305项一致，20后验全true、8资料75相对链接有效、投影/hash/diff-check通过；其余347入场文件保持，原draft-v1公开版本逐字节保留。
+- 真实Tk最终12/IAB12观察、Node13、各阶段及失败历史均可追版本；所有应用/测试/UIharness结束，Tab关闭，旧heartbeat PAUSED。
+- 独立终审cc02_docs_review从最终Task/diff/原始113日志/manifest/版本与资料检查，源码/测试/依赖保持冻结。
+- 未完成独立门禁/资料终审、临时UI worktree归档、最终状态/交付及Goal终点；下一动作收口，不扩RETIRE或自动提交/发布/外部消息。
+
+## 历史检查点 CC02A-CP-06（最终实现/真实UI冻结，准备全量）
+
+- Task CC-02A v1，Goal active，HEAD/base d07b295/branch/index不变；各阶段独立无未关闭必须项，尚未ACCEPTED。
+- 最终source305 ID1f94f8fca3da7746c5db293b05e5729e76b37935e1a05d0314658bde9de39830，server6f251c/Corecf9d/client745b/Webbc8b，5新测试/旧server两期望。
+- v1域82/2失败保留，修正源码而未弱化旧测试后v2相关27绿；packcover认证必修关闭，Node最终13行为绿，GUI最终域41绿。
+- Tk首次警告/中间回调清理挂起与窄句柄警告保留；最终Tk v5真实launcher/Entry/TCP12全true/exit0、stderr清洁。
+- 真实IAB双host12观察：三端同时撤权、双登录页、刷新不复活、手动同UID重登、logout隔离；server/Web与最终一致，旧client附带hash不作Desktop证据。
+- 域63822已真实exit0，Tk各最终进程结束，Tab均关闭，harness69870 exit0，无应用/测试需恢复；旧heartbeat PAUSED。
+- 最终原字节导出final-source已完成，source305 ID1f94f8fc…与主树一致；即将启动唯一final-full，113文件逐进程，不重跑已完成领域。
+- 全量命令：项目.venv python -X utf8 _tmp_gui/cc02a/run_gate.py --label final-full --source-dir _tmp_gui/cc02a/final-source；环境/源hash见final-export.json和full-command.json。
+- 活动操作即将为该唯一全量，UTF8/独立basetemp/240秒每文件、真实exit；不使用旧历史1335/0/2，不扩RETIRE。
+- 唯一全量已启动session2946；source305冻结，所有应用/测试/依赖写入已暂停，PROJECT_MEMORY只记录稳定源码事实。
+- 未完成最终同版full/门禁证据终审/项目记忆与最终交付/Goal终点；本批无提交/发布/真实数据/外部消息权限。
+
+## 历史检查点 CC02A-CP-05（KICK后端与UI集成/领域）
+
+- Task CC-02A v1，Goal active，HEAD/base d07b295/index不变；三后端独立阶段满足，客户端/Web待审查与真实UI。
+- 后端KICK原3红→3绿→异常补强4绿，相关65/三新后端14；reviewer无后端必须项，原失败/测试版本保留。
+- UI独立worktree三应用+两测试已前像hash围栏集成；Core/Tk同最终4红/4绿；Web最终11生产JS行为原5失败/修全true。
+- 负例隔离源故意换回三入场UI，最终两测试共5failed/exit1；ui-original-final-input.json明确版本，不冒称负例源与主树一样。
+- 正例kick-domain-v1导出raw前后完全一致，source305 IDd764a538…；8文件领域唯一session42873已开始，不重复启动。
+- 独立客户端/Web审查只读；backend停写并仅准备隔离双host UI harness，未启动它；原R1守护PAUSED。
+- 下一动作领域结束、真实Tk/双Web事件收口/重登、独立必须项整改，然后冻结最终导出full候选；目前未跑全量、不扩RETIRE。
+- 原日志/版本/本机证据_tmp_gui/cc02a/，忽略运行态不作唯一状态；旧资料与source边界保持，仅本批允许应用/测试变化。
+
+## 历史检查点 CC02A-CP-04（前两片审查满足与KICK放行）
+
+- Task CC-02A v1/Goal active，base/head d07b295/index不变；PROFILE/RESTORE独立阶段满足，KICK已READY。
+- RESTORE六类参数化补强8passed/相关94passed，测试hashd2ffcd7c…；server未因补测变动，独立无必须项，原失败保留。
+- KICK t0锁内目标closed/token撤销、锁外原注销/通知；t0后新认证保护，dispatch/Web认证接受点前拒绝/后可完成；不扩大RETIRE异步全写入屏障。
+- Core停止旧自动恢复/发送，Tk既有switch/轮询销毁保护；Web同源protected401当前token代际/探针/SSE错误收口，公共入口和暂断重连保持。
+- 并行采用独立UI worktree（创建操作1deb45a6…进行中），backend仍唯一主树server；主控UI三文件+两测试，文档仍主树唯一写入。
+- 前两片原字节/数据保护保持；暂无应用/全量进程需恢复。未完成KICK、真实UI、最终导出同版full和终审交付。
+- 下一动作backend KICK合成原红/修绿；主控等待worktree路径后UI原红/修复，集成时核对客户端未变；原始证据_tmp_gui/cc02a/。
+
+## 历史检查点 CC02A-CP-03（RESTORE候选与覆盖补强）
+
+- Task CC-02A v1，Goal active；HEAD/base d07b295/index不变，backend唯一server.py写入，主控客户端尚未写入。
+- PROFILE阶段审查满足；RESTORE仅groups/reads严格恢复与私有辅助，旧test_server两处键期望补正，资源字符串/其他既有转换与burn不变。
+- 有效同测试原红2、修绿2、PROFILE+RESTORE4passed、相关域88passed；错选组合1passed、r70exit5、旧期望failed分别保留。
+- 独立源码可接受，一项必须覆盖补強：admin/mute非成员、members/mutes非法结构/冲突；backend补测试，不伪造新增业务原红。
+- 最终隔离导出门禁方案独立静态可行；同venv、原字节source/assets、导出cwd/PYTHONPATH、子进程隔离profile，敏感环境清除，不改真实数据。
+- 活动操作backend测试覆盖、独立审查只读；没有待恢复全量/应用，KICK仍未开工。
+- 下一动作关闭RESTORE测试必须项后放行KICK；未完成客户端/服务器KICK、真实UI、最终同版full及独立终审；不扩RETIRE。
+
+## 历史检查点 CC02A-CP-02（PROFILE候选与阶段审查）
+
+- Task CC-02A v1，Goal active；HEAD/base d07b295、branch fix/cc-01a-admin-credentials、index不变；原资料保护，草案已draft-v2。
+- PROFILE仅字段常量+_attach/unregister：保留False/空值与深拷贝remarks；其它退出/群/资源/认证不变。
+- 原源有效2 failed、修2 passed；领域68 passed、附加8/103deselected；ACL环境错误独立保留，未当原红。
+- 新测试依Task改名test_cc02a_profile.py，hash fc78df6c…不变、新路径2 passed/exit0；历史日志保持。
+- 当前独立PROFILE审查cc02_docs_review只读，backend阶段结束；无待恢复应用/测试进程。RESTORE/KICK未改应用代码。
+- KICK接受边界与延迟业务限制已写Review；RESTORE身份字段白名单待冻结，已修路径不重复实现。
+- 未完成：阶段审查→RESTORE→KICK、真实UI、最终同版全量及终审交付；普通整改自主继续，不开RETIRE。
+- PROFILE独立结论已满足，groups/reads白名单和严格冲突拒绝策略已写Task/Review，RESTORE已READY；KICK仍待前片审查。
+- 下一动作RESTORE真实JSON原红/修绿与阶段审查；源/测试/命令元数据/日志_tmp_gui/cc02a/，历史1335/0/2不作本批结果。
+
+## 历史检查点 CC02A-CP-01（首批授权与入场冻结）
+
+- CC-02A v1获用户直接批准，Goal active，范围PROFILE→RESTORE→KICK；Pro决定SHA62e5a02a…原字节归档，四输入hash入场全匹配。
+- base/head d07b29577a48367f887cc0c2dbf1671ed13bb326，branch fix/cc-01a-admin-credentials，index空；356入场文件/source300 ID64b829…不变。
+- 上轮13份未提交Markdown保护，原文件副本/manifest在_tmp_gui/cc02a/entry.json；未pull/切分支、无待恢复应用/测试。
+- 主控唯一队列，旧主控idle/旧Goal已完成/heartbeat PAUSED；backend唯一server.py写入，主控必要Core/Tk/Web，独立审查只读。
+- 已完成：新Goal、决定归档、首批Task/Review与初始入口核对；PROFILE字段存在即保留，包括False/空值；草案修订中。
+- PROFILE已READY，backend先新增合成原红后修复；RESTORE/KICK代码等待白名单/接受边界及前片独立审查放行。
+- 未完成：三片实现/专项/领域/真实Tk-Web/独立审查/最终同版全量/交付；不把历史1335/0/2当成本批结果。
+- 最近命令：Git/status/diff、旧主控/Goal/进程核对、capture.py exit0，source300全部匹配；活动操作backend PROFILE，审查代理只读。
+- 下一动作PROFILE原红/修绿及阶段独立审查；普通衔接自主推进，不自动实现RETIRE/STORE-COMMIT/其它候选，不改真实数据或发Pro消息。
+
+## 历史检查点 CC02-CP-03（独立资料验收与交付）
+
+- CC-02-DESIGN v1资料ACCEPTED，独立审查cc02_docs_review可接受，无必须修复项；实现草案draft-v1未获授权。
+- base/head d07b29577a48367f887cc0c2dbf1671ed13bb326，branch fix/cc-01a-admin-credentials，index空/树0bdde556…不变。
+- 本批7份Markdown：3既有+4新建，300项源码/测试/依赖及其它349入场文件不变，旧路线未提交资料保留。
+- 四正文ID49fbcd01c28bb8bef3e9bbfcbd603276b26b093f488d7110ac1417502bf3e934，独立重算一致；13检查/93候选链接、最终流转后99链接、投影/hash、diff-check均通过。
+- 已完成：身份与17类数据表、既有修复/测试源边界、静态风险、M0/M1/M2、D1–D11、候选Task切片/验收矩阵、独立审查及展示请求。
+- open_in_codex返回queued，材料可从本机链接读取；无应用/测试进程，调查/独立审查均已结束；旧heartbeat仍PAUSED。
+- Goal已由工具确认complete，1930秒（约32分钟），未设预算；本批无未完成项，不恢复旧守护或开其它候选。
+- 最近命令：validate.py exit0；独立复算源码/正文/保护/链接/投影；原始证据_tmp_gui/cc02-design/，新应用测试未运行。
+- 下一动作仅Pro方案决定和用户批准有限实现范围；不发Pro消息、不commit/push/改真实数据，PR远端状态本次未重查。
+- 工具终点记录后同步阅读视图并捕获最终七文件版本到final-delivery.json；该快照只保留文档hash，不含真实用户数据。
+
+## 历史检查点 CC02-CP-02（材料候选冻结与独立审查交接）
+
+- Task CC-02-DESIGN v1、实现草案draft-v1；base/head d07b29577a48367f887cc0c2dbf1671ed13bb326，branch fix/cc-01a-admin-credentials，index空/不变。
+- 已完成：用户/UID/Session/token事实、17类数据表、已有修复与测试源边界、静态风险、M0/M1/M2、D1–D11及候选切片/验收矩阵。
+- 本批只3份原Markdown+4份新Markdown；source300/其它349入场文件不变。旧路线资料保留，未commit/push。
+- 四正文候选ID49fbcd01…；validate.py真实exit0，13项全true/93相对链接，投影/hash一致、diff-check exit0；Review保留算法和证据索引。
+- 独立资料审查cc02_docs_review只读，未参与编写；主控唯一文档写入，正文已冻结，待必须项反馈再整改。
+- Goal active；identity_facts/persistence_facts调查已结束，无应用/测试进程，旧Goal完成/heartbeat PAUSED保持。
+- 未完成：独立资料审查终审、必要整改复核、最终检查点/材料展示和Goal终点。
+- 下一动作：从冻结Task/实际diff/原始证据审查；方案待Pro决定，代码草案不置READY，不自动发Pro消息或开下一候选。
+
+## 历史检查点 CC02-CP-01（只读材料批次入场）
+
+- Task CC-02-DESIGN v1，用户批准，Goal active；base/head d07b29577a48367f887cc0c2dbf1671ed13bb326，branch fix/cc-01a-admin-credentials。
+- 入场dirty为上轮9份Markdown，index空/树0bdde556…；352入场文件已hash保护，source300与前轮raw manifest完全一致。
+- 原主控“按协作方案持续开发”idle，最近两轮completed；本聊天获准接续资料批次，旧Goal已结束/heartbeat PAUSED保持。
+- 无项目Python/pytest/应用进程；旧CUA Node runtime不属于待恢复测试。本批不启动测试，也不终止无关进程。
+- 已完成：启动资料Goal、冻结Task与文件归属、保存入场证据；两名代理只读事实核对，主控整合。
+- 未完成：架构/最小候选/Pro问题/实现草案、文档验证、独立资料审查、最终交付及Goal终点。
+- 最近命令：git status/rev-parse/diff、Win32_Process、旧聊天read_thread、automation字段核对；capture.py exit0/source300不变。
+- 活动操作：identity_facts、persistence_facts只读；本机证据_tmp_gui/cc02-design/；下一动作整合版本化材料，再冻结候选交独立审查。
+- 不改应用/真实数据、不commit/push/发Pro消息；实现及重大设计均未授权，材料ACCEPTED不表示R1里程碑通过。
+
+## 历史检查点 DOC-CP-02（路线与 Goal 接续资料验收）
+
+- Task DOC-ROADMAP-01 v1已ACCEPTED；原Pro路线与实际交付映射、阅读视图、接续指南和默认Goal偏好已落盘。
+- base/head d07b295、branch fix/cc-01a-admin-credentials未变；仅9份Markdown本地修改/新增，index空，source300原字节全不变。
+- 独立资料终审可接受，无必须修复项；真实聊天标识展示问题已关闭，16机械检查全true、69相对链接有效、diff-check exit0。
+- 原M0–M6完整正文逐字节保留archive；任务清单完全从CC源区块生成，不独立手填READY/ACCEPTED。
+- 用户明确偏好后续获准有限开发批次默认Goal、普通子任务自动衔接；本轮资料Goal已complete（1542秒），不启动后续候选代码。
+- 当前下一产品项仍CC-02-DESIGN PROPOSED：准备架构审查，不直接进行UID/持久数据改造或CC-04旗舰UI实现。
+- PR #4仍open/draft未合并，原R1 heartbeat保持PAUSED；无应用/测试进程。本次不commit/push/新建聊天/发Pro消息。
+- 文档在本工作区可跨聊天恢复；另一机器或checkout需获取相同文件，不假设未提交资料已自动同步。
+- 下一动作：CC-02设计材料批次待范围批准/Pro架构审查；具体启动语句见接续指南。本轮无需继续执行或重跑应用测试。
+
+## 历史检查点 DOC-CP-01（原路线核对与可恢复清单）
+
+- Task DOC-ROADMAP-01 v1，用户已批准本轮资料整理并希望以Goal推进；Goal active，当前主控/文件归属见上方。
+- base/head d07b295，branch fix/cc-01a-admin-credentials；入场clean，PR #4仍open/draft，远端main fbdd915；不pull/切分支。
+- 已直接核对原Pro R0–R4/CC-01–CC-05及最新CC-02 Architecture Review建议；纠正主控此前遗漏CC-02的R2提议。
+- 已保存4份原文件、source300字节证明和旧M0–M6原清单body，证据`_tmp_gui/roadmap-docs/`；只更新9份Markdown。
+- 主控写启动/清单/CC/恢复/TaskReview，worker仅路线来源；独立审查只读，无应用/测试进程。
+- 下一动作：生成阅读视图、完成Goal接续指南，核对source/归档/链接/投影，独立资料审查并打开结果。
+- 本次不commit/push/发Pro消息或启动新代码；旧Goal已完成/heartbeat暂停保持。
+
+## 历史检查点 PR-CP-03（Draft PR 交付完成）
 
 - Task v1 PR-DELIVERY-01已ACCEPTED；用户提交/推送/Draft PR授权已完成，不merge/release。
 - 已创建并附到本聊天：[PR #4](https://github.com/mixmixla/321_FISH/pull/4)，open/draft，base main fbdd915。

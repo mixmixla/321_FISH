@@ -4,7 +4,7 @@
 
 - 用途：Windows 局域网聊天、文件/媒体、网页端与桌游；Tkinter 桌面客户端。
 - 栈与入口：Python 3.14.5，`dev.ps1` / `run.py`；Hub 加密 TCP，网页 HTTP(S)/SSE。
-- 最近资料核对：2026-10-01；架构依据既有源码索引，本次未重新运行应用验证。
+- 最近源码核对：2026-10-01；当前分支候选的实施/验证证据见CC-02A Review，不能推导已合并/发布。
   当前任务、版本和测试结果统一见 [AI_COMMAND_CENTER](docs/AI_COMMAND_CENTER.md)。
 - 当前机器路径 `D:\Project\321_FISH`，迁移后以任务工作区为准。
 - 个人开发技能：`$fish-assistant-dev`；源码事实优先于技能旧索引。
@@ -36,6 +36,16 @@
   聊天控件，`_send_excel_text` 仍进入统一聊天发送，工作表值在 `Prefs.excel_cells`。
 - 本地历史/媒体/身份按 `_nick_history_dir` 隔离，首个新账号可能认领旧顶层资源；
   显式 history_dir 需调用者隔离。下载目录仍为全局 `_log_dir()/downloads`。
+- 当前本地历史键只含安全昵称，不含服务器/UID/身份代际；首次旧资源迁移仅覆盖顶层JSONL、voice和stickers_custom，
+  不含vmemo或旧E2EE身份。Prefs账号档案只切换pinned/muted/archived/drafts/stars/unread_marks六项；excel_cells仍设备共享。
+- 云历史是独立`cloud/{uid}.bin`，不在state.json；客户端解密restore直接merge，当前不校验包内UID/昵称/服务器/身份代际。
+  服务器快照包含group_files/moments等部分索引，独立媒体本体与Web fid元数据不等于快照事务。
+- `_attach/unregister`按字段存在性保留known的pwd/sign/avatar/invisible/status/remarks，空值/False同样保留；
+  正常最后端更新last_online，在线与否仍取存活会话，退群/转群主等既有语义不变。
+- JSON恢复仅对冻结的groups身份结构、reads内部UID键做严格规范化；非法或冲突组拒该组，reads拒该会话映射，
+  不把昵称/频道/资源字符串递归int化；burn及其它原有持久化格式保持。
+- KICK在锁内撤销目标UID当时全部现有Session/token，锁外承接原注销/通知/关闭；允许之后正常认证，新端不被旧清理误伤。
+  t0前已接受操作不追溯取消；Core/Tk/Web收到失效后回手动登录，普通暂断重连与单端logout隔离保持。
 
 ## Conventions and constraints
 
@@ -74,6 +84,9 @@
 - 2026-09-30 — 独立登录窗不 transient 到 withdrawn 宿主，映射后才 grab/聚焦；
   原生置顶操作 GA_ROOT 顶层 HWND，重试保留密码框焦点；退出清理 grab/定时任务。
   不修改其它弹窗的 `_hide_owner` — 证据：`widgets/login_box.py`, `tests/test_login_*.py`。
+- 2026-10-01 — 架构技术决定选M1退役旧UID/保留昵称，不开放同名重注册；首批仅PROFILE→RESTORE→KICK。
+  RETIRE含可靠持久提交、CREDENTIAL及LOCAL/CLOUD仍需独立冻结/授权；技术选择不等于已实现 —
+  证据：[决定v1](docs/decisions/CC-02_架构审查决定_v1.md)、[CC-02A Task](docs/task-packages/CC-02A.md)。
 
 ## Current work
 
@@ -107,7 +120,14 @@
 - 一对一 FILE_ACCEPT 合法接收确认后发送者离线的可用性/状态阶段竞态待单独核验，
   不把参与者鉴权修复扩大为整套传输状态机重写。
 - 账号删除仍保留 `nick_to_uid`，普通昵称可重新登录并复用 uid；草稿/定时任务/云历史等
-  uid 关联数据未统一清理。管理员踢人仍只踢代表会话。这些既有生命周期问题未在 CC-01A 修改。
+  uid 关联数据未统一清理。该删除生命周期风险待RETIRE，不能从KICK全端撤权推导已解决。
+- 删号清消息只移除目标作者UID的记录，对方私聊消息仍留；正常最后端注销还会退群/转群主/空群解散，
+  资料保持与离线退群是两项边界，不由注销修复推导删号完整。
+- `_sched_still_valid`只校验拉黑/群成员，没有校验创建者身份存活；删号未取消sched，未来消息有继续发布风险。
+- `_restore`的groups/reads字符串UID缺口已按白名单补正并有真实JSON后权限/禁言/已读证据；
+  未因此宣称全部快照格式、物理文件/索引或旧服务回滚可靠性已验证。
+- `ServerStore.save`写入/replace的OSError可静默返回，Hub force持久化无成功回执；不能由注释“返回即持久”推导IO失败时删除可靠。
+  首次密码认领/改密检查与写入分离锁区，并发提交规则尚需核验与决定。
 - `optional.has_lottie` 探测 rlottie、renderer 导入 rlottie_python；涉及该扩展先核对。
 - VmemoRecorder 后台 on_done/on_error 当前直接进入 GUI 预览/Toast 接线；相关
   开发需主线程移交，尚未真机复现，本次技能整理不修改业务代码。
@@ -133,6 +153,9 @@
 - `web._Handler._logout`, `tests/test_web_logout.py`, `tests/test_session_cleanup.py`,
   `tests/test_game_lifecycle.py` — 退出会话隔离、UID清理边界与公共房间状态回归，完整证据见R1 Review。
 - `tests/test_server_game_lifecycle.py`, `tests/test_game_client_lifecycle.py` — 公共终局/旧轮身份/同UID退出ACK与客户端清理重入。
+- [CC-02架构材料](docs/CC-02_用户会话与数据边界审查.md) — 版本化身份/持久数据事实、静态风险、候选与待决问题；
+  原v1为d07b295的历史观察；后续决定与切分见[修订草案](docs/task-packages/CC-02-IMPLEMENTATION-DRAFT.md)，执行状态仍只在指挥中心。
+- [CC-02A Review](docs/review-packages/CC-02A-r1.md) — 当前首批候选的原红/修绿、独立审查、真实Tk/Web和最终同版门禁证据。
 - `widgets/excel_chrome.py`, `widgets/excel_sheet.py` — 可编辑工作簿与发送接入。
 - `build.py`, `client.spec`, `server.spec`, `optional.py` — 打包入口和能力降级。
 - `docs/项目审核_2026-09-30.md`, `tests/test_audit_*.py`, `tests/test_excel*` — 审核/工作表证据。

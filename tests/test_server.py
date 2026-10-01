@@ -940,10 +940,10 @@ def test_persist_group_reads_pins_restore(tmp_path):
 
     h2 = _hub_with_store(tmp_path, str(store_dir))
     assert gid in h2.groups and h2.groups[gid]["name"] == "持久群"
-    assert h2.groups[gid]["members"].get(str(a.uid)) is not None
+    assert h2.groups[gid]["members"].get(a.uid) is not None
     assert h2.pins.get("public", {}).get("seq") == m["seq"]
     key = "public"
-    assert h2.reads.get(key, {}).get(str(b.uid)) == m["seq"]
+    assert h2.reads.get(key, {}).get(b.uid) == m["seq"]
 
 
 # ---------- R16 阶段一：落盘优化（无变更跳过重建 / 单次写 / 快照独立性） ----------

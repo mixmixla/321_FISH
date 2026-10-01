@@ -14,6 +14,7 @@ import threading
 import time
 import hashlib
 import ipaddress
+import math
 import http.client
 import ssl
 from collections import defaultdict, deque
@@ -41,6 +42,11 @@ def _now() -> float:
 
 
 PWD_MAX = 64                 # R47：昵称密码最大长度（明文，PBKDF2 后存储）
+
+# 正常注销/同 UID 换端时需要保留的 known 持久资料。Session、token 等运行态
+# 不属于该清单；字段即使是空字符串或 False 也要保持其原有值。
+_KNOWN_PROFILE_FIELDS = ("pwd", "sign", "avatar", "invisible", "status",
+                         "remarks")
 
 
 # ---------- R26D 链接预览（服务器出网抓取，自动；SSRF 防护 + 大小/时长上限） ----------
@@ -635,8 +641,112 @@ class Hub:
                 "pid_seq": self._pid_seq,
             }
 
+    @staticmethod
+    def _restore_identity_int(value) -> int:
+        """把快照中的 UID/GID 身份值严格规范化为正整数。
+
+        JSON object key 只能是字符串，因此兼容 ``"12"``；布尔值、浮点数、
+        空白/符号形式及其它类型都拒绝，避免把非法身份带入授权判断。
+        """
+        if isinstance(value, bool):
+            raise ValueError("bool is not an identity integer")
+        if isinstance(value, int):
+            result = value
+        elif (isinstance(value, str) and value
+              and all("0" <= ch <= "9" for ch in value)):
+            result = int(value)
+        else:
+            raise ValueError("invalid identity integer")
+        if result <= 0:
+            raise ValueError("identity integer must be positive")
+        return result
+
+    @staticmethod
+    def _restore_uid_map(raw: dict, value_kind: str) -> dict:
+        """严格恢复 UID 键映射；归一化冲突直接拒绝整个映射。"""
+        if not isinstance(raw, dict):
+            raise ValueError("identity map must be an object")
+        out = {}
+        for raw_uid, raw_value in raw.items():
+            uid = Hub._restore_identity_int(raw_uid)
+            if uid in out:
+                raise ValueError("identity key normalization conflict")
+            if value_kind == "nick":
+                if not isinstance(raw_value, str):
+                    raise ValueError("member nick must be a string")
+                value = raw_value
+            elif value_kind == "mute":
+                try:
+                    finite = math.isfinite(float(raw_value))
+                except (TypeError, OverflowError, ValueError):
+                    finite = False
+                if (isinstance(raw_value, bool)
+                        or not isinstance(raw_value, (int, float))
+                        or not finite):
+                    raise ValueError("mute deadline must be finite number")
+                value = raw_value
+            else:
+                raise ValueError("unknown identity map value kind")
+            out[uid] = value
+        return out
+
+    @staticmethod
+    def _restore_uid_list(raw) -> set:
+        """严格恢复 admins 等 UID 集合；重复归一化键按非法处理。"""
+        if not isinstance(raw, list):
+            raise ValueError("identity list must be an array")
+        out = set()
+        for raw_uid in raw:
+            uid = Hub._restore_identity_int(raw_uid)
+            if uid in out:
+                raise ValueError("identity list normalization conflict")
+            out.add(uid)
+        return out
+
+    @staticmethod
+    def _restore_read_seq(value) -> int:
+        """恢复 reads 游标；布尔/浮点/负数都不是有效序号。"""
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise ValueError("invalid read sequence")
+        return value
+
+    def _restore_group(self, raw_gid, raw_group: dict) -> tuple[int, dict]:
+        """恢复一个群；身份/授权结构任一异常即拒绝整个群。"""
+        gid = self._restore_identity_int(raw_gid)
+        if not isinstance(raw_group, dict):
+            raise ValueError("group must be an object")
+        if "gid" in raw_group:
+            embedded_gid = self._restore_identity_int(raw_group["gid"])
+            if embedded_gid != gid:
+                raise ValueError("group gid mismatch")
+        if "owner" not in raw_group:
+            raise ValueError("group owner missing")
+        owner = self._restore_identity_int(raw_group["owner"])
+        if "members" not in raw_group:
+            raise ValueError("group members missing")
+        members = self._restore_uid_map(raw_group["members"], "nick")
+        admins = self._restore_uid_list(raw_group.get("admins", []))
+        mutes = self._restore_uid_map(raw_group.get("mutes", {}), "mute")
+        if owner not in members or not admins.issubset(members):
+            raise ValueError("group role is not a member")
+        if not set(mutes).issubset(members):
+            raise ValueError("group mute target is not a member")
+        group = dict(raw_group)
+        group["gid"] = gid
+        group["owner"] = owner
+        group["admins"] = admins
+        group["members"] = members
+        group["mutes"] = mutes
+        group.setdefault("announce", "")
+        group.setdefault("announce_mode", 0)   # C9①：仅公告说话模式（旧数据缺省关闭）
+        group.setdefault("invite", "")         # R28：邀请码（旧数据缺省）
+        group.setdefault("kind", "")           # R26B：频道标记（旧数据缺省普通群）
+        group.setdefault("public", 0)           # R54：公开标记（旧数据缺省私有）
+        group.setdefault("slow", 0)             # R70D：群慢速档位（旧数据缺省关闭）
+        return gid, group
+
     def _restore(self, state: dict) -> None:
-        """从快照恢复内存态；逐项容错，坏数据跳过该项不崩 Hub。"""
+        """从快照恢复内存态；身份映射严格规范化，坏记录 fail closed。"""
         if not isinstance(state, dict):
             return
         try:
@@ -660,26 +770,55 @@ class Hub:
         except Exception:
             pass
         try:
-            for gid, g in (state.get("groups") or {}).items():
-                grp = dict(g)
-                grp["gid"] = int(gid)
-                grp["admins"] = set(grp.get("admins") or [])
-                grp["members"] = dict(grp.get("members") or {})
-                grp.setdefault("mutes", {})
-                grp.setdefault("announce", "")
-                grp.setdefault("announce_mode", 0)   # C9①：仅公告说话模式（旧数据缺省关闭）
-                grp.setdefault("invite", "")           # R28：邀请码（旧数据缺省）
-                grp.setdefault("kind", "")           # R26B：频道标记（旧数据缺省普通群）
-                grp.setdefault("public", 0)          # R54：公开标记（旧数据缺省私有）
-                grp.setdefault("slow", 0)            # R70D：群慢速档位（旧数据缺省关闭）
-                self.groups[int(gid)] = grp
+            raw_groups = state.get("groups") or {}
+            if not isinstance(raw_groups, dict):
+                raise ValueError("groups must be an object")
+            # 先记录每个归一化 GID 的唯一来源；"1"/"01" 等冲突会让该
+            # GID 的所有候选一起失效，不能由字典遍历顺序决定授权结果。
+            grouped = {}
+            conflicted = set()
+            for raw_gid, raw_group in raw_groups.items():
+                try:
+                    gid = self._restore_identity_int(raw_gid)
+                except (TypeError, ValueError):
+                    continue
+                if gid in grouped:
+                    grouped[gid] = None
+                    conflicted.add(gid)
+                    continue
+                try:
+                    parsed_gid, parsed_group = self._restore_group(
+                        raw_gid, raw_group)
+                    grouped[parsed_gid] = parsed_group
+                except (TypeError, ValueError):
+                    grouped[gid] = None
+            self.groups = {gid: group for gid, group in grouped.items()
+                           if gid not in conflicted and group is not None}
         except Exception:
-            pass
+            self.groups = {}
         try:
-            self.reads = {str(k): dict(v) for k, v
-                          in (state.get("reads") or {}).items()}
+            raw_reads = state.get("reads") or {}
+            if not isinstance(raw_reads, dict):
+                raise ValueError("reads must be an object")
+            restored_reads = {}
+            for key, raw_map in raw_reads.items():
+                if not isinstance(key, str) or not isinstance(raw_map, dict):
+                    continue
+                try:
+                    read_map = {}
+                    for raw_uid, raw_seq in raw_map.items():
+                        uid = self._restore_identity_int(raw_uid)
+                        if uid in read_map:
+                            raise ValueError("read UID normalization conflict")
+                        read_map[uid] = self._restore_read_seq(raw_seq)
+                except (TypeError, ValueError):
+                    # 一个会话的 UID map 有坏项时整份会话 reads 拒绝，不能
+                    # 选择更大的游标或留下部分状态造成误读/误焚。
+                    continue
+                restored_reads[key] = read_map
+            self.reads = restored_reads
         except Exception:
-            pass
+            self.reads = {}
         try:
             self.pins = dict(state.get("pins") or {})
         except Exception:
@@ -1548,14 +1687,14 @@ class Hub:
             if notice is not None and notice.get("state") == "pending":
                 notice["state"] = "cancelled"
             # R25B：登记已知用户（保留旧 last_online，跨重连/断线不丢）
-            # R47-B：pwd 同样保留（登录校验依赖，重建字典不得丢）
-            # R52：sign/avatar 同样保留（换端重登不得丢资料）
+            # 资料字段按成员关系保留；空字符串/False 也是已持久化的值，不能
+            # 用 truthiness 判断，否则换端会悄悄丢掉资料字段。
             prev = self.known.get(sess.uid)
             self.known[sess.uid] = {"nick": sess.nick,
                                     "last_online": (prev or {}).get("last_online", 0)}
-            for _k in ("pwd", "sign", "avatar", "invisible", "status", "remarks"):  # R56 含隐身持久；R68 含在线状态；R69C9 含备注名
-                if (prev or {}).get(_k):
-                    self.known[sess.uid][_k] = prev[_k]
+            for _k in _KNOWN_PROFILE_FIELDS:
+                if prev is not None and _k in prev:
+                    self.known[sess.uid][_k] = copy.deepcopy(prev[_k])
         sess.send({
             "t": "welcome", "uid": sess.uid, "nick": sess.nick,
             "is_admin": sess.is_admin,                       # R53：管理员标识
@@ -1978,13 +2117,14 @@ class Hub:
                     del self.sessions[sess.uid]
                 else:                        # 代表是别的会话（异常兜底）
                     self.sessions.pop(sess.uid, None)
-                # R25B：断线记录最后上线时间（known 保留 nick，供离线展示）
-                # R47-B：pwd 必须随 known 保留，否则注销一次后密码丢失
+                # R25B：断线记录最后上线时间（known 保留 nick，供离线展示）。
+                # 既有资料字段与 pwd 一并保留；Session/token 等运行对象不落盘。
                 prev = self.known.get(sess.uid) or {}
                 self.known[sess.uid] = {"nick": sess.nick,
                                         "last_online": _now()}
-                if prev.get("pwd"):
-                    self.known[sess.uid]["pwd"] = prev["pwd"]
+                for _k in _KNOWN_PROFILE_FIELDS:
+                    if _k in prev:
+                        self.known[sess.uid][_k] = copy.deepcopy(prev[_k])
                 # R12fix：保留 nick→uid 映射（断线不删），同名重连复用同一 uid
                 for tok, token_sess in list(self.web_tokens.items()):
                     if token_sess.uid == sess.uid:
@@ -3414,9 +3554,30 @@ class Hub:
         self._persist()                              # R16：撤回 tombstone 落盘
 
     # ---------- R53 服务器管理员（最高清理权限） ----------
+    def _kick_targets(self, uid: int) -> list[Session]:
+        """在同一锁内提交 UID 全端撤权，返回锁外通知/清理目标。
+
+        ``sessions`` 只是代表端；撤权集合必须来自 ``_uid_clients``，并以
+        代表端作异常兜底。closed 标记和 Web token 删除与集合抓取同属 t0，
+        使 t0 后的 dispatch/token 解析立即失效；网络通知、连接关闭和
+        unregister 留在锁外，且 unregister 的 UID 资源复查保护后续重登。
+        """
+        with self.lock:
+            targets = list(self._uid_clients.get(uid, ()))
+            representative = self.sessions.get(uid)
+            if representative is not None and representative not in targets:
+                targets.append(representative)
+            if not targets:
+                return []
+            for target in targets:
+                target.closed = True
+            for token, token_sess in list(self.web_tokens.items()):
+                if token_sess.uid == uid:
+                    del self.web_tokens[token]
+            return targets
+
     def _on_admin_kick(self, sess: Session, header: dict) -> None:
-        """管理员踢人下线：unregister 目标会话并关闭其连接（桌面端断线重连除外，
-        密码类操作靠登录校验兜底）。"""
+        """管理员踢目标 UID 当前全部端下线；允许之后重新认证。"""
         if not sess.is_admin:
             self._error(sess, "forbid", "仅管理员可执行")
             return
@@ -3432,19 +3593,22 @@ class Hub:
         if uid == sess.uid:
             self._error(sess, "uid", "不能踢自己")
             return
-        with self.lock:
-            tsess = self.sessions.get(uid)
-        if tsess is None:
+        targets = self._kick_targets(uid)
+        if not targets:
             self._error(sess, "offline", "该用户不在线")
             return
-        nick = tsess.nick
-        try:
-            tsess.send({"t": MsgType.ERROR.value, "code": "kicked",
-                        "text": "已被管理员强制下线"})
-        except Exception:
-            pass
-        self.unregister(tsess, "admin_kick")
-        tsess.close_conn()
+        nick = targets[0].nick
+        for target in targets:
+            try:
+                target.send({"t": MsgType.ERROR.value, "code": "kicked",
+                             "text": "已被管理员强制下线"})
+            except Exception:
+                pass
+            self.unregister(target, "admin_kick")
+            try:
+                target.close_conn()
+            except Exception:
+                pass
         self._broadcast_system(f"管理员已将 {nick} 强制下线")
         self.audit.log(type="admin_kick", uid=sess.uid, target=uid,
                        target_nick=nick)

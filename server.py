@@ -5194,9 +5194,10 @@ class Hub:
     def _on_file_reject(self, sess: Session, header: dict) -> None:
         fid = str(header.get("file_id") or "")
         with self.lock:
-            rec = self.xfers.pop(fid, None)
+            rec = self.xfers.get(fid)
             if not rec or rec.receiver_uid != sess.uid:
                 return
+            self.xfers.pop(fid, None)
             sender_uid = rec.sender_uid
         self._send_to(sender_uid, {"t": "file_reject", "file_id": fid,
                                    "text": "对方拒绝了文件"})
@@ -5253,9 +5254,10 @@ class Hub:
         fid = str(header.get("file_id") or "")
         ok = bool(header.get("ok"))
         with self.lock:
-            rec = self.xfers.pop(fid, None)
+            rec = self.xfers.get(fid)
             if not rec or rec.receiver_uid != sess.uid:
                 return
+            self.xfers.pop(fid, None)
             sender_uid = rec.sender_uid
         self._send_to(sender_uid, {"t": "file_verify", "file_id": fid, "ok": ok})
         self.audit.log(type="file_done", file_id=fid, ok=ok)
@@ -5263,9 +5265,10 @@ class Hub:
     def _on_file_cancel(self, sess: Session, header: dict) -> None:
         fid = str(header.get("file_id") or "")
         with self.lock:
-            rec = self.xfers.pop(fid, None)
-            if not rec:
+            rec = self.xfers.get(fid)
+            if not rec or sess.uid not in (rec.sender_uid, rec.receiver_uid):
                 return
+            self.xfers.pop(fid, None)
             other = (rec.receiver_uid if rec.sender_uid == sess.uid
                      else rec.sender_uid)
         self._send_to(other, {"t": "file_cancel", "file_id": fid,

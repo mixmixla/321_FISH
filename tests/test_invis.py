@@ -7,6 +7,7 @@
 - 隐身持久：known 落盘，重连 welcome 的 invisible 字段带回。
 """
 import time
+import secrets
 import socket
 import threading
 from dataclasses import replace
@@ -15,7 +16,7 @@ import pytest
 
 from config import CFG
 from protocol import MsgType
-from test_r53 import _Sess  # 真实 hello 登录
+from test_r53 import _Sess, _admin_session  # 真实 hello 登录
 
 
 def _free_port() -> int:
@@ -25,10 +26,19 @@ def _free_port() -> int:
 
 
 @pytest.fixture()
-def hub(tmp_path):
+def admin_password() -> str:
+    """为隐身权限回归显式注入随机管理员部署口令。"""
+    return secrets.token_urlsafe(24)
+
+
+@pytest.fixture()
+def hub(tmp_path, admin_password):
     from server import Hub, serve as serve_tcp
-    cfg = replace(CFG, audit_dir=str(tmp_path / "audit"))
+    cfg = replace(CFG, admin_nick="L57", audit_dir=str(tmp_path / "audit"),
+                  admin_pwd=admin_password)
     h = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"))
+    h._test_admin_password = admin_password
+    h._test_admin_nick = cfg.admin_nick
     port = _free_port()
     stop = threading.Event()
     threading.Thread(target=serve_tcp, args=(h, port, stop, False),
@@ -48,7 +58,7 @@ def test_invis_hides_from_normal_users(hub):
     stamp = str(int(time.time() % 100000))
     a = _Sess(h, "甲A" + stamp)          # 隐身者
     b = _Sess(h, "乙B" + stamp)          # 普通用户
-    adm = _Sess(h, "L57", "L57")         # 管理员
+    adm = _admin_session(h)               # 管理员
     assert a.uid and b.uid and adm.is_admin
 
     # 未隐身：普通用户 b 能看到甲（甲在线的会话名单位含 a.uid）
@@ -105,7 +115,7 @@ def test_admin_force_invis(hub):
     stamp = str(int(time.time()) % 100000)
     a = _Sess(h, "丁D" + stamp)          # 普通用户
     b = _Sess(h, "戊E" + stamp)          # 普通用户
-    adm = _Sess(h, "L57", "L57")         # 管理员
+    adm = _admin_session(h)               # 管理员
 
     # 非管理员调用 → forbid，状态不变
     h.dispatch(a, {"t": MsgType.ADMIN_INVIS_SET.value,

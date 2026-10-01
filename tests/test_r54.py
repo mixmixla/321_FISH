@@ -9,6 +9,7 @@
 - 快照持久化 public 字段，旧快照（无 public）restore 兼容。
 """
 import json
+import secrets
 import socket
 import threading
 import time
@@ -29,10 +30,19 @@ def _free_port() -> int:
 
 
 @pytest.fixture()
-def hub(tmp_path):
+def admin_password() -> str:
+    """为每个 R54 实例显式注入随机管理员部署口令。"""
+    return secrets.token_urlsafe(24)
+
+
+@pytest.fixture()
+def hub(tmp_path, admin_password):
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit"),
-                  web_files_dir=str(tmp_path / "web"))
+                  web_files_dir=str(tmp_path / "web"),
+                  admin_nick="L57", admin_pwd=admin_password)
     h = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"))
+    h._test_admin_password = admin_password
+    h._test_admin_nick = cfg.admin_nick
     port = _free_port()
     stop = threading.Event()
     threading.Thread(target=serve_tcp, args=(h, port, stop, False),
@@ -134,6 +144,14 @@ class _Web:
         return self._req("POST", "/api/send", body)
 
 
+def _admin_session(h: Hub):
+    return _Sess(h, h._test_admin_nick, pwd=h._test_admin_password)
+
+
+def _admin_web(h: Hub, port: int):
+    return _Web(port, h._test_admin_nick, pwd=h._test_admin_password)
+
+
 def _gid_by_name(h, name: str) -> int:
     for g in h.groups.values():
         if g["name"] == name:
@@ -224,7 +242,7 @@ def test_admin_sees_all_private_groups(hub):
     """管理员 L57：私有群列表可见、可收群消息、可拉群历史，无需加入。"""
     h, _w, _ = hub
     a = _Sess(h, "甲")
-    adm = _Sess(h, "L57", pwd="L57")
+    adm = _admin_session(h)
     assert adm.is_admin
     h.dispatch(a, {"t": MsgType.GROUP_CREATE.value, "name": "绝密群"})
     gid = _gid_by_name(h, "绝密群")
@@ -262,7 +280,7 @@ def test_web_groups_filtered_and_detail(hub):
     st, d = u.group_detail(pub)
     assert st == 200 and d.get("member") is False
     # 管理员 web 登录：私有群也可见
-    adm = _Web(wport, "L57", pwd="L57")
+    adm = _admin_web(h, wport)
     assert adm.last_login.get("is_admin") is True
     assert priv in {g["gid"] for g in (adm.last_login.get("groups") or [])}
 

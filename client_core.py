@@ -620,7 +620,7 @@ class ClientCore:
         self.me: dict = {}              # R52 uid -> {nick,sign,avatar}（我自己的资料）
         self.avatars: dict = {}         # R52 uid -> (ext, bytes)（头像原始字节缓存，防重复请求）
         self.group_avatars: dict = {}   # R9H gid -> (ext, bytes)（群头像原始字节缓存）
-        self.is_admin = False           # R53：管理员（L57 登录成功置 True，最高清理权限）
+        self.is_admin = False           # 管理员标识来自服务器已认证的 welcome
         self._last_typing_sent = 0.0    # R25A 本地 typing 限速（1s/人，服务器亦限速）
         self._last_nudge_sent = 0.0     # R67 本地 nudge 限速（5s/人，服务器亦限速）
         self._last_shake_sent = 0.0     # R68 本地 shake 限速（10s/人，服务器亦限速）
@@ -1079,7 +1079,7 @@ class ClientCore:
                    "avatar": str(h.get("avatar") or ""),
                    "invisible": bool(h.get("invisible")),   # R56 隐身上线初始态
                    "status": str(h.get("status") or "online")}   # R68 我的在线状态
-        self.is_admin = bool(h.get("is_admin"))   # R53：管理员标识（L57 登录置 True）
+        self.is_admin = bool(h.get("is_admin"))   # 管理员标识（服务器授予）
         self.roster = {u["uid"]: u for u in h.get("roster", [])}
         self.groups = {g["gid"]: g for g in h.get("groups", [])}
         for g in self.groups.values():
@@ -2527,7 +2527,7 @@ class ClientCore:
         return self._send_frame({"t": MsgType.INV_SET.value, "on": bool(on)})
 
     def send_admin_force_invis(self, target, on: bool) -> bool:
-        """R56B：系统管理员强制某用户显身/隐身（仅 L57，服务器校验）。
+        """R56B：系统管理员强制某用户显身/隐身（服务器校验）。
         target 可为 uid 或已知昵称。"""
         return self._send_frame({"t": MsgType.ADMIN_INVIS_SET.value,
                                  "uid": target, "on": bool(on)})

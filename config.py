@@ -139,9 +139,8 @@ AVATAR_MAX_BYTES = 1024 * 1024      # 头像单张图片上限（1MB，防撑爆
 AVATAR_EXTS = ("png", "jpg", "jpeg", "gif", "webp", "bmp")
 SIGN_MAX_LEN = 60                   # 个性签名最大长度（字符）
 
-# ---- R53 服务器管理员（最高清理权限；昵称/密码固定，不可被占用或修改）----
-ADMIN_NICK = "L57"                  # 管理员昵称（登录标识）
-ADMIN_PWD = "L57"                   # 管理员密码（固定；登录时强制校验，其他人无法冒用）
+# ---- 服务器管理员（部署侧凭据；未配置密码时禁止管理员登录）----
+ADMIN_NICK = "L57"                  # 默认保留的登录标识，昵称不是 secret
 
 # ---- 审计 ----
 AUDIT_DIR = "audit"                 # 审计日志目录（相对运行目录；exe 运行时落到用户目录）
@@ -286,8 +285,10 @@ class Cfg:
     avatar_max_bytes: int = AVATAR_MAX_BYTES     # R52 头像单张图片上限
     avatar_exts: tuple = AVATAR_EXTS              # R52 头像格式白名单
     sign_max_len: int = SIGN_MAX_LEN             # R52 个性签名最大长度
-    admin_nick: str = ADMIN_NICK                 # R53 管理员昵称（登录标识）
-    admin_pwd: str = ADMIN_PWD                   # R53 管理员密码（固定）
+    admin_nick: str = field(default_factory=lambda: os.environ.get(
+        "MOYU_ADMIN_NICK", ADMIN_NICK))
+    admin_pwd: str = field(default_factory=lambda: os.environ.get(
+        "MOYU_ADMIN_PASSWORD", ""), repr=False)  # 不把部署 secret 放进配置 repr
     # R72 多人语音房 / 位置共享 / 圆形视频留言
     voice_room_max: int = VOICE_ROOM_MAX         # 单语音房人数上限（mesh 全互联）
     geo_name_max: int = GEO_NAME_MAX             # 位置卡片地点名长度上限

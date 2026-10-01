@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
-"""R53 回归：服务器管理员账号（L57 / L57，最高清理权限）。
+"""R53 回归：服务器管理员账号（昵称 L57，最高清理权限）。
 
-- 管理员固定账号：昵称/密码固定，错误密码拒绝，不可被占用/修改密码；
+- 管理员部署凭据：错误密码拒绝，不可被占用或经账号接口修改；
 - 撤回任何人消息（任何频道）；清空全部聊天记录；清空指定用户全部消息；踢人下线；
 - 权限校验：非管理员一律拒绝（forbid）；
 - 广播 CLEARED 使桌面/网页客户端同步清空本地历史（core._apply_cleared）；
 - 网页端 /api/admin（kick/clear_all/clear_uid）+ 登录响应 is_admin 字段。
 """
 import json
+import secrets
 import socket
 import threading
 import time
@@ -28,10 +29,20 @@ def _free_port() -> int:
 
 
 @pytest.fixture()
-def hub(tmp_path):
+def admin_password() -> str:
+    """为每个管理员回归实例注入一次不可预测的部署口令。"""
+    return secrets.token_urlsafe(24)
+
+
+@pytest.fixture()
+def hub(tmp_path, admin_password):
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit"),
-                  web_files_dir=str(tmp_path / "web"))
+                  web_files_dir=str(tmp_path / "web"),
+                  admin_nick="L57", admin_pwd=admin_password)
     h = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"))
+    # 测试实例显式保存部署口令，避免全局 conftest 隐式开启管理员。
+    h._test_admin_password = admin_password
+    h._test_admin_nick = cfg.admin_nick
     port = _free_port()
     stop = threading.Event()
     threading.Thread(target=serve_tcp, args=(h, port, stop, False),
@@ -77,7 +88,7 @@ class _Sess:
 
 
 class _Web:
-    """轻量 web 客户端：登录拿 token（管理员带 L57 密码）。"""
+    """轻量 web 客户端：登录拿 token（管理员显式注入部署口令）。"""
     __test__ = False
 
     def __init__(self, port, nick, pwd=""):
@@ -122,34 +133,43 @@ class _Web:
         return self._req("POST", "/api/send", body)
 
 
+def _admin_session(h: Hub):
+    return _Sess(h, h._test_admin_nick, pwd=h._test_admin_password)
+
+
+def _admin_web(h: Hub, port: int):
+    return _Web(port, h._test_admin_nick, pwd=h._test_admin_password)
+
+
 # ================= 管理员账号登录/占用/改密 =================
 
 def test_admin_login_wrong_pwd_rejected(hub):
-    """管理员 L57 密码错误（空/错）一律拒绝，无法冒用。"""
+    """管理员昵称的空/错密码一律拒绝，无法冒用。"""
     h, _w, _ = hub
-    a = _Sess(h, "L57", pwd="")            # 空密码 → 拒
+    a = _Sess(h, h._test_admin_nick, pwd="")            # 空密码 → 拒
     assert any(f.get("code") == "pwd" for f in a.errors())
     assert a.uid == 0 and not a.is_admin
 
-    b = _Sess(h, "L57", pwd="wrong")       # 错密码 → 拒
+    b = _Sess(h, h._test_admin_nick, pwd="wrong")       # 错密码 → 拒
     assert any(f.get("code") == "pwd" for f in b.errors())
 
-    c = _Sess(h, "L57", pwd="L57")         # 正确密码 → 登录成功
+    c = _admin_session(h)                   # 正确密码 → 登录成功
     assert c.is_admin and c.uid > 0
     welcome = c.last_frame("welcome")
     assert welcome and welcome.get("is_admin") is True
 
 
-def test_admin_nick_password_fixed_not_modifiable(hub):
-    """管理员账号密码固定：set_password 拒绝修改/清除。"""
+def test_admin_deploy_password_not_modifiable_by_account_api(hub):
+    """管理员部署凭据不能经普通账号 set_password 修改/清除。"""
     h, _w, _ = hub
-    a = _Sess(h, "L57", pwd="L57")
-    err = h.set_password(a.uid, "L57", "newpwd")
-    assert err and "固定" in err
-    err2 = h.set_password(a.uid, "L57", "")
-    assert err2 and "固定" in err2
+    a = _admin_session(h)
+    err = h.set_password(a.uid, h._test_admin_nick, "newpwd")
+    assert err
+    err2 = h.set_password(a.uid, h._test_admin_nick, "")
+    assert err2
     # 密码仍可正常校验（未被改坏）
-    assert h._pwd_check_for_login("L57", "L57") is None
+    assert h._pwd_check_for_login(h._test_admin_nick,
+                                 h._test_admin_password) is None
 
 
 def test_normal_user_not_admin(hub):
@@ -167,7 +187,7 @@ def test_admin_del_any_message_any_channel(hub):
     h, _w, _ = hub
     a = _Sess(h, "甲")
     b = _Sess(h, "乙")
-    adm = _Sess(h, "L57", pwd="L57")
+    adm = _admin_session(h)
     # 公共频道：甲发消息，管理员撤回
     h.dispatch(a, {"t": MsgType.CHAT.value, "channel": "public", "text": "公聊内容"})
     seq_pub = h.bus.history("all")[-1]["seq"]
@@ -202,7 +222,7 @@ def test_admin_clear_all_only_admin(hub):
     h, _w, _ = hub
     a = _Sess(h, "甲")
     b = _Sess(h, "乙")
-    adm = _Sess(h, "L57", pwd="L57")
+    adm = _admin_session(h)
     h.dispatch(a, {"t": MsgType.CHAT.value, "channel": "public", "text": "t1"})
     h.dispatch(b, {"t": MsgType.CHAT.value, "channel": "public", "text": "t2"})
     assert len(h.bus.history("all")) >= 2
@@ -226,7 +246,7 @@ def test_admin_clear_uid_only_target(hub):
     h, _w, _ = hub
     a = _Sess(h, "甲")
     b = _Sess(h, "乙")
-    adm = _Sess(h, "L57", pwd="L57")
+    adm = _admin_session(h)
     h.dispatch(a, {"t": MsgType.CHAT.value, "channel": "public", "text": "甲-公"})
     h.dispatch(b, {"t": MsgType.CHAT.value, "channel": "public", "text": "乙-公"})
     h.dispatch(a, {"t": MsgType.CHAT.value, "channel": "private",
@@ -251,7 +271,7 @@ def test_admin_kick_user(hub):
     h, _w, _ = hub
     a = _Sess(h, "甲")
     b = _Sess(h, "乙")
-    adm = _Sess(h, "L57", pwd="L57")
+    adm = _admin_session(h)
     assert b.uid in h.sessions
     h.dispatch(adm, {"t": MsgType.ADMIN_KICK.value, "uid": b.uid})
     assert b.uid not in h.sessions              # 已注销
@@ -265,7 +285,7 @@ def test_admin_kick_user(hub):
 def test_admin_kick_offline_and_non_admin(hub):
     h, _w, _ = hub
     a = _Sess(h, "甲")
-    adm = _Sess(h, "L57", pwd="L57")
+    adm = _admin_session(h)
     # 踢离线用户 → offline
     h.dispatch(adm, {"t": MsgType.ADMIN_KICK.value, "uid": 999999})
     assert any(f.get("code") == "offline" for f in adm.errors())
@@ -317,7 +337,7 @@ def test_core_cleared_uid_removes_only_target(tmp_path):
 
 def test_web_admin_login_flag(hub):
     h, wport, _ = hub
-    adm = _Web(wport, "L57", pwd="L57")
+    adm = _admin_web(h, wport)
     assert adm.last_login.get("is_admin") is True
     u = _Web(wport, "普通")
     assert u.last_login.get("is_admin") is False
@@ -325,7 +345,7 @@ def test_web_admin_login_flag(hub):
 
 def test_web_admin_api(hub):
     h, wport, _ = hub
-    adm = _Web(wport, "L57", pwd="L57")
+    adm = _admin_web(h, wport)
     u = _Web(wport, "普通")
     # 非管理员 → 403
     st, d = u.admin({"op": "clear_all"})

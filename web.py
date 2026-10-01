@@ -2922,7 +2922,7 @@ function adminPanel(){
   d.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:99";
   const card=document.createElement("div");
   card.style.cssText="background:var(--side,#fff);border:1px solid var(--line,#ddd);border-radius:12px;padding:14px;width:min(340px,90vw)";
-  card.innerHTML="<div style='font-weight:600;margin-bottom:4px;color:#b71c1c'>🧹 管理员面板（L57）</div>"
+  card.innerHTML="<div style='font-weight:600;margin-bottom:4px;color:#b71c1c'>🧹 管理员面板</div>"
     +"<div style='font-size:11px;color:var(--dim);margin-bottom:10px'>以下操作对全员生效，不可恢复，请谨慎使用</div>"
     +"<button id='admClear' style='width:100%;background:#fdecea;color:#b71c1c;border:1px solid #f5c6c2;margin-bottom:8px'>清空全部聊天记录（全员）</button>"
     +"<div style='display:flex;gap:6px;margin-bottom:8px'>"
@@ -2981,7 +2981,7 @@ const renderAdm=()=>{
   renderAdm();loadAdminUsers();
   const timer=setInterval(()=>{if(document.getElementById("admldg")){renderAdm();loadAdminUsers()}else clearInterval(timer)},5000);
 }
-// ---- R56 网页端：系统管理员（L57）群管理：目录+增删成员+解散 ----
+// ---- R56 网页端：系统管理员群管理：目录+增删成员+解散 ----
 let _grpData=[],_grpSelG=-1,_grpSelM=-1;
 function grpReq(op,gid,uid,cb){
   const body={token:state.token,op:op,gid:gid};
@@ -3006,7 +3006,7 @@ function adminGroupsPanel(){
   const card=document.createElement("div");
   card.style.cssText="background:var(--side,#fff);border:1px solid var(--line,#ddd);border-radius:12px;padding:14px;width:min(760px,94vw);height:min(560px,88vh);display:flex;flex-direction:column";
   card.innerHTML=
-    "<div style='font-weight:600;color:#b71c1c'>👥 群管理 · 系统管理员（L57）</div>"
+    "<div style='font-weight:600;color:#b71c1c'>👥 群管理 · 系统管理员</div>"
     +"<div style='font-size:11px;color:var(--dim);margin-bottom:8px'>选中群查看成员；可增删成员或直接解散群</div>"
     +"<div style='display:flex;flex:1;gap:10px;min-height:0'>"
     +"  <div style='flex:1;display:flex;flex-direction:column;min-width:0'>"

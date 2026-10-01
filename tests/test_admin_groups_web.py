@@ -5,14 +5,14 @@
 import time
 
 from test_admin_groups import make_group
-from test_r53 import _Web, hub  # noqa: F401  hub 提供 (h, web_port, stop)
+from test_r53 import _Web, _admin_web, admin_password, hub  # noqa: F401 共享 Hub/口令 fixture
 
 
 def test_web_groups_directory(hub):
     """超管登录 → 拉群目录含成员花名册。"""
     _h, port, _s = hub
     make_group(_h, 21, "网页群", owner=5, nick="甲", members={5: "甲", 6: "乙"})
-    w = _Web(port, "L57", pwd="L57")
+    w = _admin_web(_h, port)
     st, d = w.admin({"op": "groups"})
     assert st == 200 and d.get("ok")
     gmap = {g["gid"]: g for g in d["groups"]}
@@ -24,7 +24,7 @@ def test_web_group_add_and_remove(hub):
     """超管经网页端加成员 + 移除成员。"""
     _h, port, _s = hub
     make_group(_h, 22, "增删群", owner=5, nick="甲", members={5: "甲"})
-    w = _Web(port, "L57", pwd="L57")
+    w = _admin_web(_h, port)
     st, d = w.admin({"op": "group_add", "gid": 22, "uid": 9})
     assert st == 200 and d.get("ok")
     assert 9 in _h.groups[22]["members"]
@@ -37,7 +37,7 @@ def test_web_group_dissolve(hub):
     """超管经网页端解散群。"""
     _h, port, _s = hub
     make_group(_h, 23, "解散群", owner=5, nick="甲", members={5: "甲", 6: "乙"})
-    w = _Web(port, "L57", pwd="L57")
+    w = _admin_web(_h, port)
     st, d = w.admin({"op": "group_dissolve", "gid": 23})
     assert st == 200 and d.get("ok")
     assert 23 not in _h.groups
@@ -56,7 +56,7 @@ def test_web_group_add_nick_and_user_groups(hub):
     _h, port, _s = hub
     make_group(_h, 32, "网页昵称群", owner=5, nick="甲", members={5: "甲"})
     u = _Web(port, "佐助尚")                    # 普通用户登录 → 服务器 known
-    a = _Web(port, "L57", pwd="L57")
+    a = _admin_web(_h, port)
     st, d = a.admin({"op": "group_add_nick", "gid": 32, "uid": "佐助尚"})
     assert st == 200 and d.get("ok")
     assert u.uid in _h.groups[32]["members"]
@@ -72,7 +72,7 @@ def test_web_kick_by_nick_and_audit(hub):
     """网页端：按昵称踢人 + 审计日志接口。"""
     _h, port, _s = hub
     u = _Web(port, "须佐")
-    a = _Web(port, "L57", pwd="L57")
+    a = _admin_web(_h, port)
     st, d = a.admin({"op": "kick", "uid": "须佐"})
     assert st == 200 and d.get("ok")
     assert u.uid not in _h.sessions
@@ -94,7 +94,7 @@ def test_web_admin_users_full_list(hub):
     """R58：网页端管理员拉全量账号——离线账号也在列，供管理所有账户。"""
     _h, port, _s = hub
     u = _Web(port, "须佐离")
-    a = _Web(port, "L57", pwd="L57")
+    a = _admin_web(_h, port)
     a.admin({"op": "kick", "uid": u.uid})       # 使其离线
     assert u.uid not in _h.sessions
     st, d = a.admin({"op": "users"})

@@ -180,13 +180,13 @@ class MsgType(str, Enum):
     # R69C9 好友备注名（本人视角，服务器按 owner 持久化；remark 空=清除）
     REMARK_SET = "remark_set"    # header: uid/remark（remark 长度≤24）
     REMARK_ACK = "remark_ack"    # 服务器回执（header: uid/remark）
-    # R53 服务器管理员（最高清理权限；昵称/密码固定）
+    # R53 服务器管理员（最高清理权限；凭据由部署侧配置）
     ADMIN_KICK = "admin_kick"    # 踢人下线（header: uid；仅管理员）
     CLEAR_ALL = "clear_all"      # 清空全部聊天记录（仅管理员；服务器广播 CLEARED all）
     CLEAR_UID = "clear_uid"      # 清空指定用户全部消息（header: uid；仅管理员；广播 CLEARED uid）
     CLEARED = "cleared"          # 服务器广播：{all: true} 或 {uid} → 客户端清本地历史
 
-    # 系统管理员（L57）群管理：目录 + 增删成员 + 解散群
+    # 系统管理员群管理：目录 + 增删成员 + 解散群
     ADMIN_GROUPS = "admin_groups"        # 管理员：拉取全部群+成员花名册（服务器回 ADMIN_GROUPS_ROSTER）
     ADMIN_GROUPS_ROSTER = "admin_groups_roster"  # 回帧：{groups:[{gid,name,kind,public,owner,
                                              #          admins,member_count,members:[{uid,nick}]}]}
@@ -196,7 +196,7 @@ class MsgType(str, Enum):
     ADMIN_USER_DEL = "admin_user_del"   # 管理员：清除用户（删除账号 header uid/known；清其消息、移出全部群）
     INV_SET = "invis_set"           # 隐身上线开关（header on；服务器按 uid 权威持久，仅广播他人可见名单过滤）
     INV_ACK = "invis_ack"           # 回帧：{on}；已生效
-    ADMIN_INVIS_SET = "admin_invis_set"  # R56B：管理员强制显身/隐身（header uid,on；仅L57）
+    ADMIN_INVIS_SET = "admin_invis_set"  # R56B：管理员强制显身/隐身（header uid,on；服务器校验）
     STATUS_SET = "status_set"       # R68：在线状态（header status=online/away/busy；服务器按 uid 持久并广播 roster）
 
     # 朋友圈（图文动态时间轴；复用广播+快照）

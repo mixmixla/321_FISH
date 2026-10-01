@@ -170,3 +170,5 @@ Node13、Tk最终12且stderr无错误、双hostIAB的实际server/Web版本与�
 
 后续Git交付：用户于2026-10-02明确授权提交/推送/新Draft PR，范围见[PR-DELIVERY-02](../task-packages/PR-DELIVERY-02.md)。
 本包“未提交”是实施验收终点状态；新交付已产生代码commit e065591，原source305/门禁证据保持，实际PR结果另记交付Review。
+已随[Draft PR #5](https://github.com/mixmixla/321_FISH/pull/5)交付，创建head f48a833/base cc7e295；原代码/测试仅Git clean换行规范化，305项blob独立0 mismatch。
+PR实际版本、远端核对与后续纯docs提交映射见[PR-DELIVERY-02 Review](PR-DELIVERY-02-r1.md)，未merge/release。

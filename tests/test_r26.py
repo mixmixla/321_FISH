@@ -265,10 +265,21 @@ def test_channel_create_kind_and_readonly(hub, tmp_path):
         assert _online(ac) and _online(bc)
         assert a.create_group("📢 官方公告", broadcast=True, public=True)  # R54：公开群才可被直接加入
         ev = ac.wait("group_state", pred=lambda e: e.get("name") == "📢 官方公告")
+        assert ev is not None
         gid = ev["gid"]
+        assert ac.wait(
+            "group_list",
+            pred=lambda e: any(g.get("gid") == gid
+                               and g.get("kind") == "channel"
+                               for g in e.get("groups", []))) is not None
         assert a.groups[gid]["kind"] == "channel"   # group_list 带频道标记
         assert b.join_group(gid) is True
-        bc.wait("group_state", pred=lambda e: e.get("gid") == gid)
+        assert bc.wait("group_state", pred=lambda e: e.get("gid") == gid) is not None
+        assert bc.wait(
+            "group_list",
+            pred=lambda e: any(g.get("gid") == gid
+                               and g.get("kind") == "channel"
+                               for g in e.get("groups", []))) is not None
         assert b.groups[gid]["kind"] == "channel"   # 成员端同样可见只读标记
         # 成员发言 → 拒绝
         assert b.send_chat("我来发言", channel="group", to=gid) is True
@@ -290,14 +301,25 @@ def test_normal_group_kind_empty(hub, tmp_path):
         assert _online(ac)
         assert a.create_group("普通讨论组", public=True) is True   # R54：公开群才可被直接加入
         ev = ac.wait("group_state", pred=lambda e: e.get("name") == "普通讨论组")
+        assert ev is not None
         gid = ev["gid"]
+        assert ac.wait(
+            "group_list",
+            pred=lambda e: any(g.get("gid") == gid
+                               and g.get("kind", "") == ""
+                               for g in e.get("groups", []))) is not None
         assert a.groups[gid]["kind"] == ""
         # 成员（bob 加入）可正常发言，不受只读限制
         b, bc = _spawn(port, "bob", tmp_path)
         try:
             assert _online(bc)
             assert b.join_group(gid) is True
-            bc.wait("group_state", pred=lambda e: e.get("gid") == gid)
+            assert bc.wait("group_state", pred=lambda e: e.get("gid") == gid) is not None
+            assert bc.wait(
+                "group_list",
+                pred=lambda e: any(g.get("gid") == gid
+                                   and g.get("kind", "") == ""
+                                   for g in e.get("groups", []))) is not None
             assert b.send_chat("随便聊聊", channel="group", to=gid) is True
             assert ac.wait("chat", pred=lambda e: e.get("text") == "随便聊聊")
         finally:

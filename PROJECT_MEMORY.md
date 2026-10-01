@@ -4,7 +4,8 @@
 
 - 用途：Windows 局域网聊天、文件/媒体、网页端与桌游；Tkinter 桌面客户端。
 - 栈与入口：Python 3.14.5，`dev.ps1` / `run.py`；Hub 加密 TCP，网页 HTTP(S)/SSE。
-- 最近核对：2026-09-30，从 `origin/main` 的 `c8f2860` 拉取登录窗反馈与协作任务清单。
+- 最近资料核对：2026-10-01；架构依据既有源码索引，本次未重新运行应用验证。
+  当前任务、版本和测试结果统一见 [AI_COMMAND_CENTER](docs/AI_COMMAND_CENTER.md)。
 - 当前机器路径 `D:\Project\321_FISH`，迁移后以任务工作区为准。
 - 个人开发技能：`$fish-assistant-dev`；源码事实优先于技能旧索引。
 
@@ -15,7 +16,7 @@
 - `protocol.MsgType/FrameReader` 管 JSON header + binary body 帧；`crypto` 管
   X25519/HKDF/AES-GCM 加密通道；`crypto_e2ee` 管消息层端到端密聊与 ratchet。
 - `server.Hub.dispatch/_on_*` 是权威业务入口；`ChatBus` 管频道历史与全局 seq。
-  `_uid_clients` 是同 uid 的全部端，`sessions` 是代表端，Web token 按 uid 映射。
+  `_uid_clients` 是同 uid 的全部端，`sessions` 是代表端，Web token 绑定原已认证会话。
 - `web.PAGE/_Handler/_sse_loop` 是内嵌网页与 HTTP/SSE；REST 复用 Hub 权限/业务，
   没有独立 npm 前端。`discovery` 管 UDP 发现，`tls_cert` 管自签 HTTPS。
 - `ServerStore` 保存启用持久化时的最新全量快照；audit 只记元数据。云历史在
@@ -23,6 +24,11 @@
 - `games_pkg` 注册 47 个当前游戏类，`RoomManager` 管房间，`BaseGame` 的
   snapshot/private/act/tick/ended 管公开、私有与规则；桌面 painter/点击/按钮
   分别在 `client_gameui`、`client._GAME_ACTIONS`，注册不等于 UI 完整可玩。
+- 公共房间只允许CREATED开始；leave/最后UID端断线承接既有player_left，观战退出不触发玩家规则。
+  finish/reset与action/tick公开snapshot以room/gs/round身份校验，ENDED保留公开结果但不再分发private，
+  复位保留房间成员供房主再开。人数不足且无native结果时公共层中止，不新增winner/奖励。
+- 游戏状态与匹配离房ACK按UID发给全部存活端；客户端清离房room/public/private/events并忽略迟到帧，
+  显式join/spectate发请求前解除旧房间fence，失败恢复。桌面/Web终局保留公开棋盘并阻止继续动作。
 - `FileManager` 管 P2P 优先与服务器回退，`filexfer` 是分块/PartFile 数据层；
   群文件库另走 Hub 权限路径。通话/语音房使用加密 UDP；位置、VMA1、WAV
   有各自 TTL/缓存与 UI 流程。
@@ -41,9 +47,18 @@
   协议/架构不兼容变化同步 PROTOCOL_VERSION；发布版本在 tag 时确定。
 - Tk 仅主线程操作，保留 tkguard；注入 Core.on_event 或录制回调仍可能在后台。
 - 保护 prefs/history/audit/server_state/web_tls/downloads，不入提交/技能/截图。
-  当前仓库私有，默认保留可见性，不复制配置口令值。
+  当前仓库已公开；管理员密码只来自部署配置，不复制实际口令值。
 - 门禁：`.\dev.ps1`；专项 `.\dev.ps1 test -k 关键词`；可加
   `-o faulthandler_timeout=60`。默认合成媒体，真机/截图需显式选项。
+  按 COLLABORATION 的日常/领域/最终全量分层；入口的默认整套 pytest 与
+  历史逐文件进程验证须区分，不把后续固定门禁入口当成已有能力。
+- 一对一文件权限取认证 `Session.uid` 与 `TransferMeta.sender_uid/receiver_uid`；
+  `file_id` 与请求头身份字段不能授权。REJECT/VERIFY 只允许接收者，CANCEL 允许双方，
+  身份校验与删除记录在同一锁内完成，拒绝请求不改状态/不通知合法双方；
+  DIRECT_OK 只允许发送者，继续沿用同 UID 多端语义。
+- Web显式退出走POST `/api/logout`，沿Cookie优先的原认证Session解析；只撤销当前端token，
+  Origin存在时验证同源，成功/失效清Cookie，正常SSE断开/刷新仍只detach并可恢复。
+  本端退出清SSE/重连和登录/游戏视图，旧ES对象与旧回调不能恢复已退出认证。
 - `run.py` 用独立项目临时目录和 pytest 子进程，父进程清理/透传退出码；
   conftest 通过 sessionfinish 保留真实退出状态，再避开 Tcl 关闭阶段。
 
@@ -62,20 +77,37 @@
 
 ## Current work
 
-- Excel/环境/审核改动已通过 PR #1 合入 main；后续前台唤起改动通过 PR #2 合入。
-- 当前修复分支 `fix/login-hidden-root`：处理隐藏宿主导致登录窗不渲染的反馈，
-  修复与独立回归已完成，走 PR 交付，远端合并与发布状态以 GitHub 记录为准。
-- 已完成：测试误报修复、成员/上传归属、多端删号/ token、动态图片权限、链接预览
-  SSRF、E2EE 计数窗口、音频 callback/PCM 指针/池回收及可编辑 Excel 皮肤。
-- 最近验证：可编辑工作表修订全量 1228 passed / 2 默认跳过；最终工作表专项
-  8 passed，真实 GUI 与 680×480 冒烟通过。这是历史结果，后续改动需重新核对。
-- 登录修复验证：101 个测试文件分进程逐文件通过；最后补充边界用例后重跑登录
-  两个文件，共 16 passed，累计当前门禁 1244 passed / 2 默认跳过。真实自有 Tk
-  宿主下登录窗可见/聚焦；取消、再次登录、最小化宿主和映射超时均已验证。
-- 未验证：发布 EXE、全部游戏 UI 可达性、完整可选扩展、真实音频长期稳定性。
+- 仅引用 [指挥中心](docs/AI_COMMAND_CENTER.md) 的当前任务与下一动作；本文件不维护执行状态。
+- 冻结需求/版本与测试证据分别保存在 `docs/task-packages/`、`docs/review-packages/`。
+  连续生命周期范围见 [BATCH-R1](docs/task-packages/BATCH-R1.md)与各子Task/Review，状态只由指挥中心维护。
+  一对一文件边界见 [FILE-AUTH-01 Task](docs/task-packages/FILE-AUTH-01.md) /
+  [Review](docs/review-packages/FILE-AUTH-01-r1.md)；CC-01A 原交接摘要见
+  [Task](docs/task-packages/CC-01A.md)，历史缺口/补正分别见
+  [r1](docs/review-packages/CC-01A-r1.md)、[r2](docs/review-packages/CC-01A-r2.md)。早期 Excel/登录验证摘要迁入
+  [资料批次 Review](docs/review-packages/COORD-01-r1.md)，均不代表当前工作树门禁结果。
+
+## Established delivery facts
+
+- Excel/环境/审核改动经 PR #1，前台唤起改动经 PR #2，隐藏宿主登录窗修复经 PR #3
+  合入 main；登录窗合并记录为 `fbdd915`。这些是既有交付索引，不推导新任务通过。
+- 当前管理员工作树使用部署环境变量、未配置 fail closed、保留管理员昵称；
+  Web token 绑定认证会话并逐会话撤销。行为/未提交版本边界见 CC-01A Task/Review。
+- 发布 EXE、全部游戏 UI 可达性、完整可选扩展、真实音频长期稳定性仍需后续专门证据。
 
 ## Risks and follow-ups
 
+- R26 测试读群摘要须等 `group_list`，不能仅等 `group_state`；干净 `fbdd915` 与 CC 候选
+  在相同测试侧事件屏障下均复现原等待竞态，测试侧同步修复见 [CC-01A r2](docs/review-packages/CC-01A-r2.md)。
+- R43A 淡入时序仍待核验：首次窗口映射后可能读不到 90ms 中间帧；历史观察见 CC-01A r1，
+  本次没有扩展为 R43A 的干净基线对照或修复，不由 R26 证据推导其归因。
+- Web关闭页面/SSE断开仍仅detach，显式logout通过新POST入口注销当前Session；
+  未显式退出的闲置会话沿用原清理，当前端token不能借另一在线端续权。
+- UID资源清理与下线通知必须在真正最后端且提交时仍离线的边界执行；重登取消旧待发送通知，
+  新端已建立的资源不能被旧注销清理，空群回收要复查是否已经有新成员。
+- 一对一 FILE_ACCEPT 合法接收确认后发送者离线的可用性/状态阶段竞态待单独核验，
+  不把参与者鉴权修复扩大为整套传输状态机重写。
+- 账号删除仍保留 `nick_to_uid`，普通昵称可重新登录并复用 uid；草稿/定时任务/云历史等
+  uid 关联数据未统一清理。管理员踢人仍只踢代表会话。这些既有生命周期问题未在 CC-01A 修改。
 - `optional.has_lottie` 探测 rlottie、renderer 导入 rlottie_python；涉及该扩展先核对。
 - VmemoRecorder 后台 on_done/on_error 当前直接进入 GUI 预览/Toast 接线；相关
   开发需主线程移交，尚未真机复现，本次技能整理不修改业务代码。
@@ -89,11 +121,18 @@
 ## Evidence index
 
 - `COLLABORATION.md`, `README.md`, `docs/开发环境.md` — 当前约定与启动方式。
+- `AGENTS.md`, `docs/AI_COMMAND_CENTER.md`, `docs/task-packages/`, `docs/review-packages/` —
+  启动/恢复、唯一状态队列、冻结需求与版本化证据。
 - `protocol.py`, `crypto.py`, `crypto_e2ee.py` — 帧、握手、消息 E2EE。
 - `client.py`, `client_core.py`, `prefs.py` — 主线程 UI、网络事件、本地状态。
 - `server.py`, `web.py`, `server_store.py`, `audit.py` — Hub、网页、权威快照与审计。
 - `games_pkg/base.py`, `games_pkg/rooms.py`, `games_pkg/__init__.py`, `client_gameui.py` — 游戏各层。
 - `file_client.py`, `voice_call.py`, `voice_room.py`, `voice_api.py`, `vmemo_api.py` — 文件/媒体链。
+- `Hub._on_file_reject/_on_file_verify/_on_file_cancel`, `tests/test_audit_file_auth.py` —
+  一对一传输身份检查顺序、无状态副作用、请求头防冒充、合法多端及取消通知方向。
+- `web._Handler._logout`, `tests/test_web_logout.py`, `tests/test_session_cleanup.py`,
+  `tests/test_game_lifecycle.py` — 退出会话隔离、UID清理边界与公共房间状态回归，完整证据见R1 Review。
+- `tests/test_server_game_lifecycle.py`, `tests/test_game_client_lifecycle.py` — 公共终局/旧轮身份/同UID退出ACK与客户端清理重入。
 - `widgets/excel_chrome.py`, `widgets/excel_sheet.py` — 可编辑工作簿与发送接入。
 - `build.py`, `client.spec`, `server.spec`, `optional.py` — 打包入口和能力降级。
 - `docs/项目审核_2026-09-30.md`, `tests/test_audit_*.py`, `tests/test_excel*` — 审核/工作表证据。

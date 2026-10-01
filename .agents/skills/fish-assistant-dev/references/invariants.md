@@ -9,6 +9,9 @@
 - `Hub.sessions[uid]` 是代表，不是 uid 的全部客户端；`_uid_clients` 才是多端集。
   删除账号/撤销会话要覆盖所有端和 `web_tokens`，`dispatch` 不接受失效连接。
   相关锚点：`_attach/unregister/_session_is_active/_on_admin_user_del`。
+- 管理员密码来自 `MOYU_ADMIN_PASSWORD`，未配置/空白时关闭登录，保留管理员昵称。
+  TCP/Web 共用 `_pwd_check_for_login`；普通 SET_PWD 不可修改部署凭据。
+  `web_tokens` 绑定已认证 Web Session，注销一端只撤销该端 token，删号撤销全部端。
 - `ChatBus.seq` 是消息主标识；编辑、撤回、反应和已读是在既有消息上更新。
   UI 等服务器事件确认，不直接改 raw 来假定远端成功。保持 pending/failed
   本地乐观行与回显去重；纯 core.history 会漏掉尚未回显的行。

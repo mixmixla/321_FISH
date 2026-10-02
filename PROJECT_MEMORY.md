@@ -4,7 +4,7 @@
 
 - 用途：Windows 局域网聊天、文件/媒体、网页端与桌游；Tkinter 桌面客户端。
 - 栈与入口：Python 3.14.5，`dev.ps1` / `run.py`；Hub 加密 TCP，网页 HTTP(S)/SSE。
-- 最近源码核对：2026-10-01；当前分支候选的实施/验证证据见CC-02A Review，不能推导已合并/发布。
+- 最近源码核对：2026-10-02；只读核对CC-02A同raw源候选，实施/验证证据见CC-02A Review，不能推导RETIRE已实现或R1通过。
   当前任务、版本和测试结果统一见 [AI_COMMAND_CENTER](docs/AI_COMMAND_CENTER.md)。
 - 当前机器路径 `D:\Project\321_FISH`，迁移后以任务工作区为准。
 - 个人开发技能：`$fish-assistant-dev`；源码事实优先于技能旧索引。
@@ -46,6 +46,10 @@
   不把昵称/频道/资源字符串递归int化；burn及其它原有持久化格式保持。
 - KICK在锁内撤销目标UID当时全部现有Session/token，锁外承接原注销/通知/关闭；允许之后正常认证，新端不被旧清理误伤。
   t0前已接受操作不追溯取消；Core/Tk/Web收到失效后回手动登录，普通暂断重连与单端logout隔离保持。
+- 当前CORE使用独立retired UID→nick/retired_at/operation_id JSON字段，保留昵称映射并阻止旧身份重登/UID复用；
+  t0清活跃known/本人draft/sched/blocks/reads、撤全旧端/token，CHAT/burn、due、PROFILE等核心C与t0在Hub→bus纯内存边界内排序。
+- 最小持久确认采用ServerStore.save显式True/False，实际writer取顺序锁后fresh capture，运行态请求代次保留捕获后的dirty；
+  没有持久revision/hash-proof/marker，当前有效JSON重启恢复退役；完整证据与未提交版本绑定见[CORE Review](docs/review-packages/CC-02A-RETIRE-CORE-r1.md)。
 
 ## Conventions and constraints
 
@@ -87,6 +91,9 @@
 - 2026-10-01 — 架构技术决定选M1退役旧UID/保留昵称，不开放同名重注册；首批仅PROFILE→RESTORE→KICK。
   RETIRE含可靠持久提交、CREDENTIAL及LOCAL/CLOUD仍需独立冻结/授权；技术选择不等于已实现 —
   证据：[决定v1](docs/decisions/CC-02_架构审查决定_v1.md)、[CC-02A Task](docs/task-packages/CC-02A.md)。
+- 2026-10-02 — Pro将下一实施拆为退役CORE与后续STORE/RESOURCE/存储加固，用户直接批准CORE；
+  仅后端/最少store/tests，不改UI/资源/整体loader；只保护当前管理员/默认有效保留名/实际BOT UID，不永久保留bot昵称或猜历史角色 —
+  证据：[最新决定](docs/decisions/CC02-RETIRE_核心实施审查决定_v1.md)、[CORE Task](docs/task-packages/CC-02A-RETIRE-CORE.md)。
 
 ## Current work
 
@@ -119,15 +126,21 @@
   新端已建立的资源不能被旧注销清理，空群回收要复查是否已经有新成员。
 - 一对一 FILE_ACCEPT 合法接收确认后发送者离线的可用性/状态阶段竞态待单独核验，
   不把参与者鉴权修复扩大为整套传输状态机重写。
-- 账号删除仍保留 `nick_to_uid`，普通昵称可重新登录并复用 uid；草稿/定时任务/云历史等
-  uid 关联数据未统一清理。该删除生命周期风险待RETIRE，不能从KICK全端撤权推导已解决。
+- CORE已用retired阻止旧UID/昵称复活，逻辑清本人草稿/定时/活跃私有记录；未由此宣称资源全写入面或UI闭合。
+  云文件/上传/bot回复/preview/媒体及其它已接受旧操作的资源迟到写仍需后续RESOURCE；有效JSON边界和源码证据见CORE Review。
 - 删号清消息只移除目标作者UID的记录，对方私聊消息仍留；正常最后端注销还会退群/转群主/空群解散，
   资料保持与离线退群是两项边界，不由注销修复推导删号完整。
-- `_sched_still_valid`只校验拉黑/群成员，没有校验创建者身份存活；删号未取消sched，未来消息有继续发布风险。
+- CORE的sched最终发布复查退役并取消本人队列/已摘due；正常离线定时仍按原群/屏蔽规则，不将KICK改成封禁。
 - `_restore`的groups/reads字符串UID缺口已按白名单补正并有真实JSON后权限/禁言/已读证据；
   未因此宣称全部快照格式、物理文件/索引或旧服务回滚可靠性已验证。
-- `ServerStore.save`写入/replace的OSError可静默返回，Hub force持久化无成功回执；不能由注释“返回即持久”推导IO失败时删除可靠。
-  首次密码认领/改密检查与写入分离锁区，并发提交规则尚需核验与决定。
+- CORE save只有真实dump/flush/fsync/replace成功才确认；失败不推进fp或解除退役，actual writer fresh capture与请求代次保护旧snapshot和后到dirty。
+  普通凭据CAS仍未实现；首次退役提交从未成功时不保证旧有效JSON重启后阻断，禁止用内存成功或未经审查降级/旧备份回滚替代持久确认。
+- snapshot核心一致捕获/deep remarks及burn.pend→既有恢复UID列表的必要适配已纳CORE；不等于全面JSON格式重写。
+  ServerStore.load仍将坏JSON/读取失败返回{}，整体loader/初始化marker/丢失状态恢复与durable intent明确延期CC-05存储加固。
+- CLOUD启动扫描在restore前，PUT先写内存/直接覆盖文件且吞IO错误仍回CLOUD_DONE；bot_say/已取due/preview及Webpasswd/upload/SSE旁路需单独最终屏障。
+  管理员UID不是固定号，实际bot保护按BOT_BY_UID；普通分配器当前未跳过botUID，同名bot登录字符串/历史管理员角色不能猜测迁移。
+- 现有ClientCore.send_admin_user_del在发送前乐观pop known/roster；RETIRE管理结果需要区分已提交、运行阻断、失败/未知与真正JSON确认。
+  UI仍未改，不能从服务端四态回执推导当前客户端已支持失败/重试或停止deleted自动重连；完整设计与延期边界见[RETIRE材料](docs/CC02-RETIRE_Pro审查材料.md)及CORE Task。
 - `optional.has_lottie` 探测 rlottie、renderer 导入 rlottie_python；涉及该扩展先核对。
 - VmemoRecorder 后台 on_done/on_error 当前直接进入 GUI 预览/Toast 接线；相关
   开发需主线程移交，尚未真机复现，本次技能整理不修改业务代码。

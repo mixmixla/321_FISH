@@ -484,6 +484,11 @@ class Hub:
         self._shake_ts = {}
         # R25B 已知用户：uid -> {nick, last_online}（断线保留，供「最后上线」展示）
         self.known = {}
+        # CC-02A-RETIRE-CORE M1：退役 UID 的最小持久占位；活跃 known 中不保留
+        # 退役 UID，nick_to_uid 仍保留以禁止同名/同 UID 重新认领。
+        self.retired: dict = {}
+        self._retire_ops: dict = {}       # uid -> 运行态 status/op_id（不落盘）
+        self._retired_schema_invalid = False
         # R50 屏蔽名单：uid -> set(被屏蔽 uid)（服务器权威，拦截私聊收发与密聊/语音）
         self.blocks: dict = {}
         # R51 服务器权威定时消息：uid -> {rid: {channel,to,text,fire_at,created}}（到点由 sweeper 发出）
@@ -546,8 +551,12 @@ class Hub:
         # 比较退化为字符串比对。指纹仅在 worker / flush 真正 save 成功后推进，
         # 失败则留旧值（避免把失败写当已落盘而漏掉兜底重写）。
         self._persist_fp = None
+        self._persist_request_seq = 0
         # 异步落盘：dump+写盘挪到后台 worker，连接线程只做浅拷贝快照（latest-wins）
         self._persist_lock = threading.Lock()
+        # actual writer 的唯一顺序锁。槽位只作唤醒，真正写入前必须重新捕获
+        # 当前完整状态，避免旧 worker/force capture 覆盖退役后的新快照。
+        self._persist_writer_lock = threading.Lock()
         self._persist_pending = False
         self._persist_slot = None
         self._persist_slot_fp = None
@@ -587,11 +596,11 @@ class Hub:
             member 值若为 dict 则浅复制（其键为整值替换，无原地子改）。
           - 其余字典型（nick_to_uid/drafts/scheds/…）均按值新建新 dict，无常驻原地改动。
         """
-        with self.bus._lock:
-            seq = self.bus._seq
-            channels = {k: [copy.deepcopy(m) for m in dq]
-                        for k, dq in self.bus._channels.items()}
         with self.lock:
+            with self.bus._lock:
+                seq = self.bus._seq
+                channels = {k: [copy.deepcopy(m) for m in dq]
+                            for k, dq in self.bus._channels.items()}
             def _copy_member_val(v):
                 return {kk: (dict(vv) if isinstance(vv, dict) else vv)
                         for kk, vv in v.items()}
@@ -607,36 +616,42 @@ class Hub:
                         "members": _copy_member_val(g["members"]),
                         "mutes": dict(g.get("mutes") or {}),
                         "announce": g.get("announce", ""),
-                        "announce_mode": g.get("announce_mode", 0),  # C9①：仅公告说话模式
-                        "invite": g.get("invite", ""),   # R28：邀请码
-                        "kind": g.get("kind", ""),       # R26B：频道标记
-                        "public": g.get("public", 0),    # R54：公开群标记
-                        "slow": int(g.get("slow") or 0),   # R70D：群慢速档位（秒，0=关闭）
+                        "announce_mode": g.get("announce_mode", 0),
+                        "invite": g.get("invite", ""),
+                        "kind": g.get("kind", ""),
+                        "public": g.get("public", 0),
+                        "slow": int(g.get("slow") or 0),
                     } for gid, g in self.groups.items()},
                 "reads": {k: dict(v) for k, v in self.reads.items()},
                 "pins": {k: dict(v) for k, v in self.pins.items()},
-                "burn": {k: dict(v) for k, v in self._burn.items()},
-                "known": {k: dict(v) for k, v in self.known.items()},  # R25B：已知用户
-                "blocks": {str(k): sorted(v) for k, v in self.blocks.items()},  # R50
+                "burn": {k: dict(v, pend=sorted(v.get("pend") or []))
+                         for k, v in self._burn.items()},
+                "known": {k: copy.deepcopy(v) for k, v in self.known.items()},
+                "retired": {str(k): {"nick": str(v["nick"]),
+                                      "retired_at": v["retired_at"],
+                                      "operation_id": str(v["operation_id"])}
+                            for k, v in self.retired.items()},
+                "blocks": {str(k): sorted(v) for k, v in self.blocks.items()},
                 "polls": {k: dict(v, votes=dict(v.get("votes") or {}),
                                   options=list(v.get("options") or []))
-                          for k, v in self._polls.items()},   # R26A：投票权威状态
-                "drafts": {f"{u}|{k}": dict(d) for (u, k), d in self._drafts.items()},  # R29B
+                          for k, v in self._polls.items()},
+                "drafts": {f"{u}|{k}": dict(d)
+                            for (u, k), d in self._drafts.items()},
                 "scheds": {str(u): {rid: dict(r) for rid, r in mine.items()}
-                           for u, mine in self.scheds.items()},  # R51：定时消息队列
+                           for u, mine in self.scheds.items()},
                 "custom_stickers": {k: dict(v) for k, v in self.custom_stickers.items()},
-                "sticker_pack_meta": {k: dict(v) for k, v in self.pack_meta.items()},  # R64
-                "group_files": {str(gid): [dict(r) for r in records]          # 群文件元数据
+                "sticker_pack_meta": {k: dict(v) for k, v in self.pack_meta.items()},
+                "group_files": {str(gid): [dict(r) for r in records]
                                 for gid, records in self.group_files.items()},
                 "gf_seq": self._gf_seq,
-                "tasks": {str(gid): [dict(t, done=dict(t.get("done") or {}))  # R69B6/B7
+                "tasks": {str(gid): [dict(t, done=dict(t.get("done") or {}))
                                      for t in recs]
                           for gid, recs in self.tasks.items()},
                 "task_seq": self._task_seq,
                 "fish_board": {str(g): {str(u): int(v) for u, v in sc.items()}
-                               for g, sc in self._fish.items()},   # R70H 摸鱼排行榜
+                               for g, sc in self._fish.items()},
                 "moments": {pid: copy.deepcopy(post)
-                            for pid, post in self.moments.items()},   # 朋友圈元数据
+                            for pid, post in self.moments.items()},
                 "moment_covers": {str(u): dict(v) for u, v in self.moment_covers.items()},
                 "pid_seq": self._pid_seq,
             }
@@ -749,6 +764,7 @@ class Hub:
         """从快照恢复内存态；身份映射严格规范化，坏记录 fail closed。"""
         if not isinstance(state, dict):
             return
+        self._retired_schema_invalid = False
         try:
             b = state.get("bus") or {}
             self.bus._seq = int(b.get("seq", 0))
@@ -824,8 +840,14 @@ class Hub:
         except Exception:
             pass
         try:
-            self._burn = {int(k): dict(v) for k, v
-                          in (state.get("burn") or {}).items()}
+            self._burn = {}
+            for k, v in (state.get("burn") or {}).items():
+                if not isinstance(v, dict):
+                    continue
+                rec = dict(v)
+                pend = rec.get("pend") or []
+                rec["pend"] = set(pend) if isinstance(pend, (list, tuple, set)) else set()
+                self._burn[int(k)] = rec
         except Exception:
             pass
         try:
@@ -833,6 +855,59 @@ class Hub:
                           in (state.get("known") or {}).items()}
         except Exception:
             pass
+        # CC-02A-RETIRE-CORE M1：新字段严格恢复。旧快照没有该字段时保持
+        # “未知”，不能从 known/nick_to_uid 缺失推断退役；新字段非法则本进程
+        # 进入 fail-closed 身份状态，避免宽松恢复后重新授权。
+        try:
+            raw_retired = state.get("retired", {})
+            if raw_retired is None:
+                raw_retired = {}
+            if not isinstance(raw_retired, dict):
+                raise ValueError("retired must be an object")
+            restored_retired = {}
+            for raw_uid, raw_rec in raw_retired.items():
+                uid = self._restore_identity_int(raw_uid)
+                if uid in restored_retired or uid in _bots.BOT_BY_UID:
+                    raise ValueError("retired UID collision")
+                if not isinstance(raw_rec, dict):
+                    raise ValueError("retired record must be an object")
+                if set(raw_rec) != {"nick", "retired_at", "operation_id"}:
+                    raise ValueError("retired record fields are not minimal")
+                nick = raw_rec.get("nick")
+                retired_at = raw_rec.get("retired_at")
+                operation_id = raw_rec.get("operation_id")
+                if (not isinstance(nick, str) or not nick.strip()
+                        or not isinstance(operation_id, str)
+                        or not operation_id.strip()
+                        or isinstance(retired_at, bool)
+                        or not isinstance(retired_at, (int, float))):
+                    raise ValueError("invalid retired record")
+                try:
+                    if not math.isfinite(float(retired_at)):
+                        raise ValueError("retired_at is not finite")
+                except (TypeError, ValueError, OverflowError):
+                    raise ValueError("invalid retired_at")
+                mapped = self.nick_to_uid.get(nick)
+                if mapped != uid or uid in self.known:
+                    raise ValueError("retired identity conflicts with active state")
+                if any(name != nick and mapped_uid == uid
+                       for name, mapped_uid in self.nick_to_uid.items()):
+                    raise ValueError("retired UID has conflicting nick mapping")
+                restored_retired[uid] = {
+                    "nick": nick,
+                    "retired_at": retired_at,
+                    "operation_id": operation_id,
+                }
+            self.retired = restored_retired
+            self._retire_ops = {
+                uid: {"status": "confirmed", "operation_id": rec["operation_id"],
+                      "target_uid": uid, "target_nick": rec["nick"]}
+                for uid, rec in restored_retired.items()
+            }
+        except Exception:
+            self.retired = {}
+            self._retire_ops = {}
+            self._retired_schema_invalid = True
         try:
             # R50：屏蔽名单恢复（值为 uid 列表）
             self.blocks = {}
@@ -1068,62 +1143,100 @@ class Hub:
             blob = repr(state)
         return hashlib.md5(blob.encode("utf-8", "replace")).hexdigest()
 
-    def _persist(self, force: bool = False) -> None:
+    def _persist_request(self) -> int:
+        with self._persist_lock:
+            self._persist_request_seq += 1
+            return self._persist_request_seq
+
+    def _persist_queue_trigger(self, fp: str | None = None) -> None:
+        self._ensure_persist_worker()
+        with self._persist_lock:
+            self._persist_slot = None
+            self._persist_slot_fp = fp
+            self._persist_pending = True
+            self._persist_wake.set()
+
+    def _persist(self, force: bool = False) -> bool | None:
         """节流写盘：窗口内合并突发变更，dump+写盘交给后台 worker（latest-wins）。
         无 store 时为空操作；force=True 恒写（关键变更同步落盘，返回即已持久）。
 
         R65：以内容指纹（md5(json)）判定无变更——不再常驻第二份全量快照、
         不做递归 dict 深比较。指纹仅在真正 save 成功后推进（失败留旧值，供 flush 兜底）。"""
         if self.store is None:
-            return
-        if not force:
-            now = time.time()
-            if now - self._persist_last < self._persist_interval:
-                self._persist_dirty = True        # 仍在窗口内，稍后 sweeper 兜底
-                return
+            return None
+        request_seq = self._persist_request()
+        if force:
+            # 关键变更（清空/解散/删号/Tombstone 等）：actual writer 取得
+            # writer lock 后才重新捕获当前状态；调用返回才表示真成功。
+            return self._persist_sync(_request_seq=request_seq)
+        now = time.time()
+        if now - self._persist_last < self._persist_interval:
+            self._persist_dirty = True        # 仍在窗口内，稍后 sweeper 兜底
+            return None
+        # 在捕获前打代际标记；snapshot/fingerprint期间的请求必须保留 dirty。
+        capture_seq = request_seq
         state = self._snapshot_state()            # 昂贵的全量私有快照——锁外构建
         fp = self._state_fingerprint(state)
         # 无新变更：指纹与最近一次"成功落盘"一致 → 不重建写盘（协调重复调用场景）
-        if not force and self._persist_fp is not None and fp == self._persist_fp:
+        if self._persist_fp is not None and fp == self._persist_fp:
             # R66：推进节流时钟，否则下一次 _persist() 会再次重建全量快照
             # （如 _on_group_invite_get 等"无实际变更也调用"的路径）
             self._persist_last = time.time()
-            self._persist_dirty = False
-            return
-        if force:
-            # 关键变更（清空/解散/删号/Tombstone 等）：同步落盘，调用返回即已持久
-            self._persist_sync(state, fp)
-            return
+            with self._persist_lock:
+                changed_during_capture = self._persist_request_seq != capture_seq
+                self._persist_dirty = changed_during_capture
+            if changed_during_capture:
+                self._persist_queue_trigger(fp)
+            return True
         self._persist_last = time.time()
-        self._persist_dirty = False
-        self._ensure_persist_worker()
         with self._persist_lock:
-            self._persist_slot = state            # 覆盖旧槽，latest-wins
-            self._persist_slot_fp = fp
-            self._persist_pending = True
-            self._persist_wake.set()
+            self._persist_dirty = self._persist_request_seq != capture_seq
+        self._persist_queue_trigger(fp)
+        return None
 
-    def _persist_sync(self, state: dict, fp: str) -> None:
-        """同步落盘（force 关键变更 / 关停兜底）：先丢弃后台未写的旧槽，
-        避免 worker 稍后用旧快照覆盖本次写（latest-wins 不被回退）。
-        调用方须在锁外（避免锁序自锁风险）。"""
+    def _persist_sync(self, _old_state=None, _old_fp=None,
+                      _request_seq: int | None = None) -> bool:
+        """同步 actual writer（force/关停兜底）。
+
+        旧参数仅保留兼容调用形状，永不直接写入；拿到唯一 writer lock 后
+        重新捕获当前状态，再进行 dump/flush/fsync/replace。调用方必须在
+        Hub 锁外进入本方法。
+        """
         self._persist_last = time.time()
-        self._persist_dirty = False
+        if _request_seq is None:
+            _request_seq = self._persist_request()
         with self._persist_lock:
             self._persist_slot = None
             self._persist_slot_fp = None
             self._persist_pending = False
-        try:
-            self.store.save(state)
+        with self._persist_writer_lock:
             with self._persist_lock:
-                self._persist_fp = fp
-        except Exception as e:            # 落盘失败：记审计告警 + stderr，避免静默丢数据
+                capture_seq = self._persist_request_seq
+            try:
+                state = self._snapshot_state()
+                fp = self._state_fingerprint(state)
+                ok = bool(self.store.save(state))
+            except Exception as e:
+                ok = False
+                exc = e
+            else:
+                exc = None
+            if ok:
+                with self._persist_lock:
+                    self._persist_fp = fp
+                    changed_during_io = self._persist_request_seq != capture_seq
+                    self._persist_dirty = changed_during_io
+                if changed_during_io and not self._persist_closing:
+                    self._persist_queue_trigger(fp)
+                return True
+            self._persist_dirty = True
             try:
                 self.audit.log(type="persist_error",
-                               reason=f"同步落盘失败: {e!r}")
+                               reason=f"同步落盘失败: {exc!r}")
             except Exception:
                 pass
-            print(f"[persist] 同步落盘失败: {e!r}", file=sys.stderr)
+            print(f"[persist] 同步落盘失败: {exc!r}", file=sys.stderr)
+            return False
 
     def _ensure_persist_worker(self) -> None:
         """懒启动后台落盘线程（daemon）。"""
@@ -1145,21 +1258,42 @@ class Hub:
             with self._persist_lock:
                 if not self._persist_pending:
                     continue                     # 空唤醒，继续等
-                state = self._persist_slot
-                fp = self._persist_slot_fp
                 self._persist_pending = False
                 self._persist_slot = None
-            try:
-                self.store.save(state)
+            with self._persist_writer_lock:
+                # 只把槽当触发器；真正写盘前重新捕获最新完整状态。
                 with self._persist_lock:
-                    self._persist_fp = fp
-            except Exception as e:            # 落盘失败：记审计告警，避免静默丢数据
+                    capture_seq = self._persist_request_seq
+                try:
+                    state = self._snapshot_state()
+                    fp = self._state_fingerprint(state)
+                    with self._persist_lock:
+                        if self._persist_fp is not None and fp == self._persist_fp:
+                            changed_during_capture = self._persist_request_seq != capture_seq
+                            self._persist_dirty = changed_during_capture
+                            if changed_during_capture:
+                                self._persist_pending = True
+                                self._persist_wake.set()
+                            continue
+                    ok = bool(self.store.save(state))
+                except Exception as e:
+                    ok = False
+                if ok:
+                    with self._persist_lock:
+                        self._persist_fp = fp
+                        changed_during_io = self._persist_request_seq != capture_seq
+                        self._persist_dirty = changed_during_io
+                        if changed_during_io:
+                            self._persist_pending = True
+                            self._persist_wake.set()
+                    continue
                 try:
                     self.audit.log(type="persist_error",
-                                   reason=f"后台落盘失败: {e!r}")
+                                   reason="后台落盘失败")
                 except Exception:
                     pass
-                print(f"[persist] 后台落盘失败: {e!r}", file=sys.stderr)
+                self._persist_dirty = True
+                print("[persist] 后台落盘失败", file=sys.stderr)
 
     def _persist_flush(self) -> None:
         """强制立即写盘（关停兜底 / sweeper 兜底）：合并为一次同步构建+落盘，
@@ -1168,8 +1302,7 @@ class Hub:
         仅当无 store 时空操作。"""
         if self.store is None:
             return
-        state = self._snapshot_state()          # 锁外构建私有快照
-        self._persist_sync(state, self._state_fingerprint(state))
+        return self._persist_sync()
 
     # ---------- 基础 ----------
     def _snapshot_sessions(self) -> list:
@@ -1456,6 +1589,8 @@ class Hub:
 
     def _on_block_set(self, sess: Session, header: dict) -> None:
         """设置/取消屏蔽：on=True 屏蔽 target / False 解除。防自屏蔽与 bot。"""
+        if self._retire_error(sess):
+            return
         try:
             target = int(header.get("target"))
         except (TypeError, ValueError):
@@ -1468,14 +1603,21 @@ class Hub:
         if on and _bots.is_bot(target):
             self._error(sess, "bot", "机器人无需屏蔽")
             return
+        rejected = False
         with self.lock:
-            cur = self.blocks.setdefault(sess.uid, set())
-            if on:
-                cur.add(target)
-            else:
-                cur.discard(target)
-                if not cur:
-                    self.blocks.pop(sess.uid, None)
+            rejected = (self._uid_retired_locked(sess.uid)
+                        or self._uid_retired_locked(target))
+            if not rejected:
+                cur = self.blocks.setdefault(sess.uid, set())
+                if on:
+                    cur.add(target)
+                else:
+                    cur.discard(target)
+                    if not cur:
+                        self.blocks.pop(sess.uid, None)
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         self._broadcast_block_list(sess.uid)
         self.audit.log(type="block_set" if on else "block_unset",
                        uid=sess.uid, target=target)
@@ -1514,6 +1656,8 @@ class Hub:
 
         服务器权威：客户端离线也会到点发出（sweeper 每轮扫到期项）。
         """
+        if self._retire_error(sess):
+            return
         channel = header.get("channel") or "public"
         if channel not in ("public", "private", "group"):
             self._error(sess, "channel", "未知频道")
@@ -1549,6 +1693,11 @@ class Hub:
             if not self._known_uid(to):
                 self._error(sess, "offline", "对方不存在或从未上线")
                 return
+            with self.lock:
+                target_retired = self._uid_retired_locked(to)
+            if target_retired:
+                self._error(sess, "retired", "目标账号已退役")
+                return
             if self._is_blocked_by(sess.uid, to):
                 self._error(sess, "blocked", "你已被对方屏蔽，定时消息不会送达")
                 return
@@ -1560,8 +1709,16 @@ class Hub:
         rid = os.urandom(4).hex()
         rec = {"channel": channel, "to": to, "text": text,
                "fire_at": fire_at, "created": _now()}
+        rejected = False
         with self.lock:
-            self.scheds.setdefault(sess.uid, {})[rid] = rec
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected and channel == "private":
+                rejected = self._uid_retired_locked(int(to))
+            if not rejected:
+                self.scheds.setdefault(sess.uid, {})[rid] = rec
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         self._send_sched_list(sess, sess.uid)
         self.audit.log(type="sched_set", uid=sess.uid, channel=channel,
                        to=to, fire_at=fire_at)
@@ -1573,10 +1730,17 @@ class Hub:
         if not rid:
             self._error(sess, "rid", "缺少 rid")
             return
+        if self._retire_error(sess):
+            return
         with self.lock:
-            mine = self.scheds.get(sess.uid)
-            if mine and rid in mine:
-                del mine[rid]
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                mine = self.scheds.get(sess.uid)
+                if mine and rid in mine:
+                    del mine[rid]
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._send_sched_list(sess, sess.uid)
         self.audit.log(type="sched_cancel", uid=sess.uid, rid=rid)
         self._persist()
@@ -1588,7 +1752,7 @@ class Hub:
     def _sweep_scheds(self, now: float | None = None) -> None:
         """sweeper 每轮调用：到点的定时消息以创建者身份入频道历史并广播。
 
-        在 Hub.lock 之外收集到期项（防锁内发帧阻塞），逐个以服务器身份投递。
+        Hub.lock 内只收集/最终提交内存，逐个以服务器身份的网络投递在锁外。
         """
         now = _now() if now is None else now
         due = []
@@ -1619,7 +1783,15 @@ class Hub:
                 if g:
                     msg["to"] = r["to"]
                     msg["group_name"] = g["name"]
-            msg = self.bus.publish(msg)
+            # 已摘出的 due 也必须在最终 publish C 重新检查退役；t0 与此
+            # 短内存边界互斥，发送/审计/持久化仍在锁外。
+            with self.lock:
+                target_uid = r.get("to") if r.get("channel") == "private" else None
+                if (self._uid_retired_locked(uid)
+                        or (target_uid is not None
+                            and self._uid_retired_locked(int(target_uid)))):
+                    continue
+                msg = self.bus.publish(msg)
             self._route(msg)
             self.audit.log(type="sched_fire", uid=uid, seq=msg["seq"],
                            channel=r["channel"], to=msg.get("to"))
@@ -1630,8 +1802,78 @@ class Hub:
         with self.lock:
             return uid in self.sessions or uid in self.known
 
+    # ---------- CC-02A-RETIRE-CORE：M1 身份屏障 ----------
+    def _uid_retired_locked(self, uid: int) -> bool:
+        """调用方已持有 Hub.lock 时判断 UID 是否永久退役/被 fence。"""
+        return uid in self.retired
+
+    def _retire_error(self, sess: Session, *, target_uid: int | None = None) -> bool:
+        """锁外向调用方报告退役/损坏身份屏障；返回是否应拒绝本次写入。"""
+        with self.lock:
+            blocked = self._retired_schema_invalid
+            if target_uid is not None:
+                blocked = blocked or self._uid_retired_locked(int(target_uid))
+            blocked = blocked or self._uid_retired_locked(int(getattr(sess, "uid", 0)))
+        if blocked:
+            self._error(sess, "retired", "账号已退役或身份状态不可用")
+        return blocked
+
+    def _resolve_uid_for_admin(self, raw) -> int | None:
+        """管理员目标解析：保留 retired 的 nick→UID 查询能力。"""
+        try:
+            if isinstance(raw, bool):
+                raise ValueError
+            uid = int(raw)
+            return uid if uid > 0 else None
+        except (TypeError, ValueError, OverflowError):
+            pass
+        if not isinstance(raw, str):
+            return None
+        with self.lock:
+            mapped = self.nick_to_uid.get(raw.strip())
+            if mapped is not None:
+                return int(mapped)
+            for uid, info in self.known.items():
+                if info.get("nick") == raw:
+                    return uid
+            for uid, info in self.retired.items():
+                if info.get("nick") == raw:
+                    return uid
+        return None
+
+    def _retirement_payload(self, uid: int) -> dict | None:
+        """ADMIN_USER_INFO 的最小退役状态；不暴露密码/session/token。"""
+        with self.lock:
+            rec = self.retired.get(uid)
+            op = self._retire_ops.get(uid)
+            if rec is None and op is None:
+                return None
+            if rec is not None:
+                nick = rec.get("nick", "")
+                op_id = rec.get("operation_id", "")
+            else:
+                nick = op.get("target_nick", "")
+                op_id = op.get("operation_id", "")
+            status = (op or {}).get("status") or ("confirmed" if rec else "unknown")
+            out = {"status": status, "operation_id": op_id,
+                   "target_uid": uid, "target_nick": nick,
+                   "target_revision": None, "committed_revision": None,
+                   "content_sha256": None, "failed_stage": None,
+                   "error_code": None, "retryable": status in ("failed", "unknown")}
+            if op:
+                for key in ("failed_stage", "error_code", "retryable"):
+                    if key in op:
+                        out[key] = op[key]
+            return out
+
     def _sched_still_valid(self, uid: int, r: dict) -> bool:
         """到点校验：私聊目标是否已拉黑我；群聊我是否仍是成员。"""
+        with self.lock:
+            if self._uid_retired_locked(uid):
+                return False
+            target_uid = r.get("to") if r.get("channel") == "private" else None
+            if target_uid is not None and self._uid_retired_locked(int(target_uid)):
+                return False
         if r["channel"] == "private" and r.get("to") is not None:
             if self._is_blocked_by(uid, r["to"]):
                 return False
@@ -1672,29 +1914,39 @@ class Hub:
         R47-A1：同名但为僵尸会话（断线未及清扫）先释放再放行。
         """
         self._release_zombie(sess.nick)      # R47-A1：先做僵尸释放（锁外）
+        reject = None
         with self.lock:
+            if self._retired_schema_invalid:
+                reject = "身份状态不可用，拒绝登录"
             old_uid = self.nick_to_uid.get(sess.nick)
-            if old_uid is not None:
-                sess.uid = old_uid                # 复用历史 uid（跨重连稳定）
-            else:
+            if reject is None and (old_uid in self.retired or any(
+                    rec.get("nick") == sess.nick for rec in self.retired.values())):
+                reject = "该昵称对应的 UID 已永久退役"
+            if reject is None and old_uid is not None:
+                sess.uid = old_uid
+            elif reject is None:
+                while (self._uid_seq in self.retired
+                       or self._uid_seq in self.known
+                       or self._uid_seq in _bots.BOT_BY_UID):
+                    self._uid_seq += 1
                 sess.uid = self._uid_seq
                 self._uid_seq += 1
-            was_online = sess.uid in self.sessions   # 是否已有其它端在线
+            was_online = sess.uid in self.sessions
             self._uid_clients.setdefault(sess.uid, set()).add(sess)
-            self.sessions[sess.uid] = sess            # 最近会话作代表（在线集仍按 uid 唯一）
+            self.sessions[sess.uid] = sess
             self.nick_to_uid[sess.nick] = sess.uid
             notice = self._offline_notice_records.get(sess.uid)
             if notice is not None and notice.get("state") == "pending":
                 notice["state"] = "cancelled"
-            # R25B：登记已知用户（保留旧 last_online，跨重连/断线不丢）
-            # 资料字段按成员关系保留；空字符串/False 也是已持久化的值，不能
-            # 用 truthiness 判断，否则换端会悄悄丢掉资料字段。
             prev = self.known.get(sess.uid)
             self.known[sess.uid] = {"nick": sess.nick,
                                     "last_online": (prev or {}).get("last_online", 0)}
             for _k in _KNOWN_PROFILE_FIELDS:
                 if prev is not None and _k in prev:
                     self.known[sess.uid][_k] = copy.deepcopy(prev[_k])
+        if reject is not None:
+            self._error(sess, "retired", reject)
+            return False
         sess.send({
             "t": "welcome", "uid": sess.uid, "nick": sess.nick,
             "is_admin": sess.is_admin,                       # R53：管理员标识
@@ -1721,6 +1973,10 @@ class Hub:
         if not was_online:                           # 仅当首个端上线时才广播「已上线」
             self._broadcast_system(f"{sess.nick} 已上线"
                                    + ("（网页端）" if sess.type == "web" else ""))
+        with self.lock:
+            if self._retired_schema_invalid or self._uid_retired_locked(sess.uid):
+                sess.closed = True
+                return False
         return True
 
     def login_web(self, nick: str, peer_ip: str,
@@ -1740,12 +1996,22 @@ class Hub:
         # 只有通过部署凭据校验才能到达这里。
         # 须在 _attach（发送 welcome 帧）之前赋值，否则 welcome 的 is_admin 恒为 False。
         sess.is_admin = (nick == self._admin_nick)
-        self._attach(sess)                  # 同账号多端并存：登记不再失败
+        if not self._attach(sess):           # t0 可能在最终 attach 前建立 fence
+            return None, "该昵称对应的 UID 已永久退役"
         if password and not sess.is_admin:
-            self._pwd_claim(sess.uid, password)
+            if not self._pwd_claim(sess.uid, password):
+                return None, "该账号已退役或登录已失效"
         token = secrets.token_hex(16)
         with self.lock:
+            if (self._retired_schema_invalid
+                    or self._uid_retired_locked(sess.uid)
+                    or sess.closed):
+                return None, "该账号已退役或登录已失效"
             self.web_tokens[token] = sess
+        with self.lock:
+            if not self._session_is_active(sess):
+                self.web_tokens.pop(token, None)
+                return None, "该账号已退役或登录已失效"
         return sess, token
 
     # ---------- R47-B：昵称可选密码 ----------
@@ -1755,6 +2021,14 @@ class Hub:
         已设密码：password 必须匹配（PBKDF2 校验在锁外做，避免占 Hub 锁）；
         未设密码：放行（带密码时由调用方在 attach 成功后 claim 绑定）。
         管理员标识始终保留；未配置部署凭据时不降级为普通账号。"""
+        with self.lock:
+            if self._retired_schema_invalid:
+                return "身份状态不可用，拒绝登录"
+            if (nick in self.nick_to_uid
+                    and self.nick_to_uid.get(nick) in self.retired):
+                return "该昵称对应的 UID 已永久退役"
+            if any(rec.get("nick") == nick for rec in self.retired.values()):
+                return "该昵称对应的 UID 已永久退役"
         if nick in self._reserved_admin_nicks:
             if nick != self._admin_nick or not self._admin_pwd_hash:
                 return "管理员登录未启用，请联系服务器部署者"
@@ -1772,26 +2046,35 @@ class Hub:
                 return "密码错误"
         return None
 
-    def _pwd_store(self, uid: int, stored: str | None) -> None:
+    def _pwd_store(self, uid: int, stored: str | None) -> bool:
         """known[uid]['pwd'] 写入/清除（R16 落盘随 _persist）。"""
         with self.lock:
+            if self._uid_retired_locked(uid):
+                return False
             info = self.known.get(uid)
             if info is None:
-                return
+                return False
             if stored:
                 info["pwd"] = stored
             else:
                 info.pop("pwd", None)
         self._persist()
+        return True
 
-    def _pwd_claim(self, uid: int, password: str) -> None:
+    def _pwd_claim(self, uid: int, password: str) -> bool:
         """登录时带了密码且该昵称未设密码 → 绑定（先到先得）。"""
         with self.lock:
+            if self._uid_retired_locked(uid):
+                return False
             info = self.known.get(uid)
-            if not info or info.get("pwd"):
-                return
-        self._pwd_store(uid, auth.make(password))
+            if not info:
+                return False
+            if info.get("pwd"):
+                return True
+        if not self._pwd_store(uid, auth.make(password)):
+            return False
         self.audit.log(type="pwd_claim", uid=uid)
+        return True
 
     def set_password(self, uid: int, old: str, new: str) -> str | None:
         """R47-B：设置/修改/清除昵称密码（需已登录身份）。返回错误文案或 None。
@@ -1800,6 +2083,8 @@ class Hub:
         - 已设密码：old 必须匹配；new 空=清除。
         管理员凭据由部署侧管理，拒绝通过普通账号接口修改/清除。"""
         with self.lock:
+            if self._retired_schema_invalid or self._uid_retired_locked(uid):
+                return "账号已退役或身份状态不可用"
             info = self.known.get(uid)
             if info is None:
                 return "用户不存在"
@@ -1811,12 +2096,14 @@ class Hub:
         if not new:
             if not stored:
                 return "尚未设置密码"
-            self._pwd_store(uid, None)
+            if not self._pwd_store(uid, None):
+                return "账号已退役或身份状态不可用"
             self.audit.log(type="pwd_change", uid=uid, action="clear")
             return None
         if len(new) > PWD_MAX:
             return f"密码过长（≤{PWD_MAX} 字符）"
-        self._pwd_store(uid, auth.make(new))
+        if not self._pwd_store(uid, auth.make(new)):
+            return "账号已退役或身份状态不可用"
         self.audit.log(type="pwd_change", uid=uid,
                        action="change" if stored else "set")
         return None
@@ -1858,6 +2145,8 @@ class Hub:
 
     def _on_avatar_set(self, sess: Session, header: dict, body: bytes) -> None:
         """R52：上传/更换头像（header: ext；body=图片字节 ≤1MB）。"""
+        if self._retire_error(sess):
+            return
         ext = str(header.get("ext") or "").lower().lstrip(".")
         if ext not in self.cfg.avatar_exts:
             self._error(sess, "avatar", "不支持的图片格式")
@@ -1883,13 +2172,24 @@ class Hub:
             except OSError:
                 pass
         with self.lock:
-            self.known.setdefault(uid, {})["avatar"] = ext
+            rejected = self._uid_retired_locked(uid)
+            if not rejected:
+                self.known.setdefault(uid, {})["avatar"] = ext
+        if rejected:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()
         self._broadcast_roster()
         sess.send({"t": MsgType.AVATAR_DATA.value, "uid": uid, "ext": ext}, body)
 
     def _on_avatar_del(self, sess: Session) -> None:
         """R52：删除头像。"""
+        if self._retire_error(sess):
+            return
         uid = sess.uid
         old_ext = self._avatar_known(uid)
         if old_ext:
@@ -1898,7 +2198,12 @@ class Hub:
             except OSError:
                 pass
         with self.lock:
-            (self.known.get(uid) or {}).pop("avatar", None)
+            rejected = self._uid_retired_locked(uid)
+            if not rejected:
+                (self.known.get(uid) or {}).pop("avatar", None)
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()
         self._broadcast_roster()
         sess.send({"t": MsgType.AVATAR_DATA.value, "uid": uid, "ext": ""})
@@ -1924,21 +2229,35 @@ class Hub:
 
     def _on_sign_set(self, sess: Session, header: dict) -> None:
         """R52：设置个性签名（服务器权威，广播 roster 全员同步）。"""
+        if self._retire_error(sess):
+            return
         sign = str(header.get("sign") or "").strip()[:self.cfg.sign_max_len]
         with self.lock:
-            self.known.setdefault(sess.uid, {})["sign"] = sign
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                self.known.setdefault(sess.uid, {})["sign"] = sign
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()
         self._broadcast_roster()
 
     def _on_status_set(self, sess: Session, header: dict) -> None:
         """R68：在线状态（online/away/busy）。服务器权威持久，广播 roster 全员同步；
         与隐身为正交维度（隐身控制「是否出现在名单」，状态控制「出现在名单时的点色」）。"""
+        if self._retire_error(sess):
+            return
         status = str(header.get("status") or "").strip().lower()
         if status not in ("online", "away", "busy"):
             self._error(sess, "status", "状态无效")
             return
         with self.lock:
-            self.known.setdefault(sess.uid, {})["status"] = status
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                self.known.setdefault(sess.uid, {})["status"] = status
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()
         self._broadcast_roster()
         try:
@@ -1950,6 +2269,8 @@ class Hub:
         """R69C9：设置/清除好友备注名（本人视角，按 owner 持久化，remark 空=清除）。
         备注只对本人生效：写入 known[sess.uid]["remarks"][uid] 后重播 roster，
         各会话按查看者视角拿到自己的备注，互不串号。"""
+        if self._retire_error(sess):
+            return
         try:
             target = int(header.get("uid"))
         except (TypeError, ValueError):
@@ -1957,18 +2278,24 @@ class Hub:
             return
         remark = str(header.get("remark") or "").strip()[:24]
         with self.lock:
-            info = self.known.setdefault(sess.uid, {})
-            rems = info.get("remarks")
-            if not isinstance(rems, dict):
-                rems = {}
-            if remark:
-                rems[str(target)] = remark
-            else:
-                rems.pop(str(target), None)
-            if rems:
-                info["remarks"] = rems
-            else:
-                info.pop("remarks", None)
+            rejected = (self._uid_retired_locked(sess.uid)
+                        or self._uid_retired_locked(target))
+            if not rejected:
+                info = self.known.setdefault(sess.uid, {})
+                rems = info.get("remarks")
+                if not isinstance(rems, dict):
+                    rems = {}
+                if remark:
+                    rems[str(target)] = remark
+                else:
+                    rems.pop(str(target), None)
+                if rems:
+                    info["remarks"] = rems
+                else:
+                    info.pop("remarks", None)
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         self._persist()
         self._broadcast_roster()
         try:
@@ -1980,9 +2307,16 @@ class Hub:
     def _on_invis_set(self, sess: Session, header: dict) -> None:
         """R56：隐身上线开关。服务器权威持久；回帧 invis_ack 让本人确认，
         并重放 `_broadcast_roster` 让各会话按查看者视角刷新名单。"""
+        if self._retire_error(sess):
+            return
         on = bool(header.get("on"))
         with self.lock:
-            self.known.setdefault(sess.uid, {})["invisible"] = on
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                self.known.setdefault(sess.uid, {})["invisible"] = on
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()
         self._broadcast_roster()
         try:
@@ -2002,11 +2336,17 @@ class Hub:
             return
         on = bool(header.get("on"))
         with self.lock:
-            self.known.setdefault(uid, {})["invisible"] = on
+            rejected = (self._retired_schema_invalid
+                        or self._uid_retired_locked(uid))
+            if not rejected:
+                self.known.setdefault(uid, {})["invisible"] = on
+                nick = (self.known.get(uid) or {}).get(
+                    "nick") or self.nick_to_uid.get(uid) or f"用户{uid}"
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         self._persist()
         self._broadcast_roster()
-        nick = (self.known.get(uid) or {}).get(
-            "nick") or self.nick_to_uid.get(uid) or f"用户{uid}"
         # 通知目标本人（若在线）以校准其 UI 开关
         tgt = self.sessions.get(uid)
         if tgt is not None:
@@ -2119,31 +2459,33 @@ class Hub:
                     self.sessions.pop(sess.uid, None)
                 # R25B：断线记录最后上线时间（known 保留 nick，供离线展示）。
                 # 既有资料字段与 pwd 一并保留；Session/token 等运行对象不落盘。
-                prev = self.known.get(sess.uid) or {}
-                self.known[sess.uid] = {"nick": sess.nick,
-                                        "last_online": _now()}
-                for _k in _KNOWN_PROFILE_FIELDS:
-                    if _k in prev:
-                        self.known[sess.uid][_k] = copy.deepcopy(prev[_k])
+                if not self._uid_retired_locked(sess.uid):
+                    prev = self.known.get(sess.uid) or {}
+                    self.known[sess.uid] = {"nick": sess.nick,
+                                            "last_online": _now()}
+                    for _k in _KNOWN_PROFILE_FIELDS:
+                        if _k in prev:
+                            self.known[sess.uid][_k] = copy.deepcopy(prev[_k])
                 # R12fix：保留 nick→uid 映射（断线不删），同名重连复用同一 uid
                 for tok, token_sess in list(self.web_tokens.items()):
                     if token_sess.uid == sess.uid:
                         del self.web_tokens[tok]
-                for gid, g in list(self.groups.items()):
-                    if sess.uid in g["members"]:
-                        del g["members"][sess.uid]
-                        g["admins"].discard(sess.uid)
-                        g["mutes"].pop(sess.uid, None)
-                        if not g["members"]:
-                            dissolved.append(gid)
-                        elif g["owner"] == sess.uid:
-                            # 转让群主：优先管理员，其次最早成员；前群主不当管理员
-                            cands = [u for u in g["members"] if u in g["admins"]]
-                            if not cands:
-                                cands = list(g["members"])
-                            new_owner = cands[0]
-                            g["owner"] = new_owner
-                            g["admins"].discard(new_owner)
+                if not self._uid_retired_locked(sess.uid):
+                    for gid, g in list(self.groups.items()):
+                        if sess.uid in g["members"]:
+                            del g["members"][sess.uid]
+                            g["admins"].discard(sess.uid)
+                            g["mutes"].pop(sess.uid, None)
+                            if not g["members"]:
+                                dissolved.append(gid)
+                            elif g["owner"] == sess.uid:
+                                # 转让群主：优先管理员，其次最早成员；前群主不当管理员
+                                cands = [u for u in g["members"] if u in g["admins"]]
+                                if not cands:
+                                    cands = list(g["members"])
+                                new_owner = cands[0]
+                                g["owner"] = new_owner
+                                g["admins"].discard(new_owner)
             elif self.sessions.get(sess.uid) is sess:
                 # 仍有其它端在线但本会话是代表 → 换一个仍在线者作代表
                 self.sessions[sess.uid] = next(iter(clients))
@@ -2175,6 +2517,8 @@ class Hub:
         """
         with self.lock:
             if getattr(sess, "closed", False):
+                return False
+            if self._retired_schema_invalid or self._uid_retired_locked(sess.uid):
                 return False
             clients = self._uid_clients.get(sess.uid)
             return ((clients is not None and sess in clients)
@@ -2472,10 +2816,15 @@ class Hub:
         # 只有通过部署凭据校验才能到达这里。
         # 须在 _attach（发送 welcome 帧）之前赋值，否则 welcome 的 is_admin 恒为 False。
         sess.is_admin = (nick == self._admin_nick)
-        self._attach(sess)                  # 同账号多端并存：登记不再失败
+        if not self._attach(sess):           # 同账号多端并存；退役 fence 仍拒绝
+            return False
         if pwd and not sess.is_admin:
-            self._pwd_claim(sess.uid, pwd)
-        return True
+            if not self._pwd_claim(sess.uid, pwd):
+                return False
+        with self.lock:
+            if self._retired_schema_invalid or self._uid_retired_locked(sess.uid):
+                return False
+            return self._session_is_active(sess)
 
     # ---------- R59 富文本：白名单清洗（只透传有限种类，防 UI 注入） ----------
     _RICH_KINDS = ("plain", "mention", "link", "hashtag", "bold", "italic",
@@ -2536,6 +2885,8 @@ class Hub:
         return geo
 
     def _on_chat(self, sess: Session, header: dict) -> None:
+        if self._retire_error(sess):
+            return
         channel = header.get("channel") or "public"
         if channel not in ("public", "private", "group"):
             self._error(sess, "channel", "未知频道")
@@ -2645,6 +2996,11 @@ class Hub:
             # R35 Bots：私聊发往 bot → 拦截处理（bot 不在 sessions，正常路径会误报 offline）
             if to is not None and _bots.is_bot(to):
                 self._bot_dispatch(sess, header, to)
+                return
+            with self.lock:
+                target_retired = self._uid_retired_locked(to)
+            if target_retired:
+                self._error(sess, "retired", "目标账号已退役")
                 return
             # R50 屏蔽：目标把我拉黑 → 拒收（仅私聊；群内发言不受个人屏蔽影响）
             if to is not None and to != sess.uid and self._is_blocked_by(sess.uid, to):
@@ -2761,7 +3117,25 @@ class Hub:
                 self._error(sess, "thread", "不支持在话题回复内再开话题")
                 return
             msg["thread_root"] = tr_i
-        msg = self.bus.publish(msg)
+        rejected = False
+        with self.lock:
+            rejected = self._uid_retired_locked(sess.uid)
+            target_uid = msg.get("to") if msg.get("channel") == "private" else None
+            if target_uid is not None:
+                rejected = rejected or self._uid_retired_locked(int(target_uid))
+            if not rejected:
+                msg = self.bus.publish(msg)
+                if header.get("burn") and msg.get("channel") in ("public", "private", "group"):
+                    recp = {u for u, _s in self._chan_recipients(
+                        msg["channel"], msg.get("uid"), msg.get("to"))}
+                    recp.discard(sess.uid)
+                    self._burn[msg["seq"]] = {
+                        "channel": msg["channel"], "uid": msg.get("uid"),
+                        "to": msg.get("to"), "ts": msg.get("ts", _now()),
+                        "pend": recp}
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         self._route(msg)
         # R26D 链接预览：先投递 chat，再补发 preview（缓存命中时同步、否则后台抓取），
         # 保证客户端按 chat → preview 顺序收帧，本地历史/渲染一致。
@@ -2769,16 +3143,6 @@ class Hub:
             m = _URL_RE.search(text)
             if m:
                 self._maybe_fetch_preview(m.group(0).rstrip(".,;:!?）)]}"), msg)
-        # R14 阅后即焚：全部收件方读到后由服务器删除（含发送方，发送方视为已读）
-        if header.get("burn") and msg.get("channel") in ("public", "private", "group"):
-            # 锁内修改共享 _burn：多连接线程并发发 burn，防丢失
-            with self.lock:
-                recp = {u for u, _s in self._chan_recipients(
-                    msg["channel"], msg.get("uid"), msg.get("to"))}
-                recp.discard(sess.uid)
-                self._burn[msg["seq"]] = {"channel": msg["channel"], "uid": msg.get("uid"),
-                                          "to": msg.get("to"), "ts": msg.get("ts", _now()),
-                                          "pend": recp}
         self.audit.log(type="chat", uid=sess.uid, nick=sess.nick, channel=channel,
                        to=msg.get("to"), seq=msg["seq"], length=len(text))
         self._persist()                              # R16：消息/阅后即焚落盘
@@ -2787,13 +3151,25 @@ class Hub:
     def _bot_dispatch(self, sess: Session, header: dict, bot_uid: int) -> None:
         """R35 Bots：私聊发往 bot → 用户消息正常入历史/路由（发送方看到回显），
         再由 bot 解析命令并经 bot_say 回复；不走 offline 校验、无阅后即焚/话题。"""
+        with self.lock:
+            rejected = (self._uid_retired_locked(sess.uid)
+                        or self._uid_retired_locked(bot_uid))
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         bot = _bots.BOT_BY_UID.get(bot_uid)
         if bot is None:
             return
         text = (header.get("text") or "").strip()
-        msg = self.bus.publish({"t": "chat", "channel": "private", "uid": sess.uid,
-                                "nick": sess.nick, "ts": round(_now(), 3),
-                                "to": bot_uid, "text": text})
+        with self.lock:
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                msg = self.bus.publish({"t": "chat", "channel": "private", "uid": sess.uid,
+                                        "nick": sess.nick, "ts": round(_now(), 3),
+                                        "to": bot_uid, "text": text})
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._route(msg)
         self.audit.log(type="bot", uid=sess.uid, nick=sess.nick, to=bot_uid,
                        seq=msg["seq"], length=len(text))
@@ -3737,21 +4113,29 @@ class Hub:
     def _admin_user_payload(self, target) -> dict | None:
         """系统管理员：构建某人信息+所属群载荷（target 为 uid 或已知昵称）。
         目标无效返回 None。"""
-        uid = self._alias_to_uid(self._known_names(), target)
+        uid = self._resolve_uid_for_admin(target)
         if uid is None:
             return None
-        nick = self._append_nick_for_uid(uid, None)
-        online = uid in self.sessions
         with self.lock:
+            retired = self.retired.get(uid)
+            nick = ((retired or {}).get("nick")
+                    or (self.known.get(uid) or {}).get("nick")
+                    or self._append_nick_for_uid(uid, None))
+            online = uid in self.sessions and uid not in self.retired
             groups = []
             for g in sorted(self.groups.values(), key=lambda x: x["gid"]):
                 if uid in g["members"]:
                     role = "owner" if g["owner"] == uid else \
                         ("admin" if uid in g["admins"] else "member")
                     groups.append({"gid": g["gid"], "name": g["name"], "role": role})
-        return {"t": MsgType.ADMIN_USER_INFO.value, "uid": uid, "nick": nick,
-                "online": online, "groups": groups,
-                "invisible": self._is_invisible(uid)}  # R57：管理员可见隐身态
+            invisible = self._is_invisible(uid) if not retired else False
+        payload = {"t": MsgType.ADMIN_USER_INFO.value, "uid": uid, "nick": nick,
+                   "online": online, "groups": groups,
+                   "invisible": invisible}  # R57：管理员可见隐身态
+        retirement = self._retirement_payload(uid)
+        if retirement is not None:
+            payload["retirement"] = retirement
+        return payload
 
     def _on_admin_user_get(self, sess: Session, header: dict) -> None:
         """系统管理员：查某人信息+所属全部群（uid 或已知昵称均可）。"""
@@ -3837,20 +4221,69 @@ class Hub:
         if not sess.is_admin:
             self._error(sess, "forbid", "仅系统管理员可执行")
             return
-        uid = self._alias_to_uid(self._known_names(), header.get("uid"))
+        uid = self._resolve_uid_for_admin(header.get("uid"))
         if uid is None:
             self._error(sess, "uid", "目标 uid/昵称 无效")
             return
         if uid == sess.uid:
             self._error(sess, "uid", "不能清除自己")
             return
-        nick = self._append_nick_for_uid(uid, None)
-        dissolved = self._admin_del_remove_groups(uid)      # 1) 移出全部群
-        removed = self.bus.clear_uid(uid)                   # 2) 清空消息
-        # 同一 uid 可以同时有桌面端、网页端和多个网页标签。只下线
-        # sessions 中的代表会话会留下其它端，须撤销所有端及其 token。
-        # 先在锁内拍快照并撤销全部 token，再逐个注销，避免遍历时修改在线集。
+        if self.store is None:
+            self._error(sess, "store_required", "退役需要已启用的持久化 Store")
+            return
         with self.lock:
+            protected_bot = uid in _bots.BOT_BY_UID
+            protected_admin = any(s.is_admin and s.uid == uid
+                                  for s in self._snapshot_sessions())
+        if protected_bot:
+            self._error(sess, "uid", "系统机器人身份不可退役")
+            return
+        if protected_admin:
+            self._error(sess, "uid", "当前认证管理员身份不可退役")
+            return
+        with self.lock:
+            existing_rec = self.retired.get(uid)
+            candidate_nick = ((existing_rec or {}).get("nick")
+                              or (self.known.get(uid) or {}).get("nick")
+                              or self.nick_to_uid.get(uid)
+                              or f"用户{uid}")
+            mapped_uid = self.nick_to_uid.get(candidate_nick)
+        if mapped_uid not in (None, uid):
+            self._error(sess, "uid", "昵称映射与目标 UID 冲突")
+            return
+        with self.lock:
+            existing_op = self._retire_ops.get(uid)
+            already_confirmed = bool(self.retired.get(uid)
+                                     and existing_op
+                                     and existing_op.get("status") == "confirmed")
+        if already_confirmed:
+            payload = self._admin_user_payload(uid)
+            if payload is not None:
+                try:
+                    sess.send(payload)
+                except Exception:
+                    pass
+            return
+
+        # 生成/复用同 UID 的幂等操作号；t0 只做内存状态提交，所有通知、
+        # 连接关闭、资源清理和持久化均留在屏障之外。
+        with self.lock:
+            old = self.retired.get(uid)
+            if old is not None:
+                nick = old["nick"]
+                op_id = old["operation_id"]
+            else:
+                nick = candidate_nick
+                mapped_uid = self.nick_to_uid.get(nick)
+                if mapped_uid is None:
+                    self.nick_to_uid[nick] = uid
+                op_id = secrets.token_hex(16)
+                self.retired[uid] = {"nick": nick, "retired_at": _now(),
+                                     "operation_id": op_id}
+            self._retire_ops[uid] = {
+                "status": "pending", "operation_id": op_id,
+                "target_uid": uid, "target_nick": nick,
+            }
             targets = list(self._uid_clients.get(uid, ()))
             representative = self.sessions.get(uid)
             if representative is not None and representative not in targets:
@@ -3858,28 +4291,73 @@ class Hub:
             for token, token_sess in list(self.web_tokens.items()):
                 if token_sess.uid == uid:
                     del self.web_tokens[token]
-        for target in targets:                               # 3) 全部在线端强制下线
+            for target in targets:
+                target.closed = True
+            self._uid_clients.pop(uid, None)
+            self.sessions.pop(uid, None)
+            self.known.pop(uid, None)
+            self._drafts = {k: v for k, v in self._drafts.items()
+                            if k[0] != uid}
+            self.scheds.pop(uid, None)
+            self.blocks.pop(uid, None)
+            for key, readers in list(self.reads.items()):
+                readers.pop(uid, None)
+                if not readers:
+                    self.reads.pop(key, None)
+            self._offline_notice_records.pop(uid, None)
+            self._typing_ts.pop(uid, None)
+            self._nudge_ts.pop(uid, None)
+            self._shake_ts.pop(uid, None)
+            self.sticker_subs.pop(uid, None)
+            for bseq, burn in list(self._burn.items()):
+                if burn.get("uid") == uid:
+                    self._burn.pop(bseq, None)
+            dissolved = self._admin_del_remove_groups(uid)
+            removed = self.bus.clear_uid(uid)
+        for target in targets:
             try:
                 target.send({"t": MsgType.ERROR.value, "code": "deleted",
-                             "text": "你的账号已被管理员删除"})
+                             "text": "你的账号已被管理员退役"})
             except Exception:
                 pass
-            self.unregister(target, "admin_del")
             try:
                 target.close_conn()
             except Exception:
                 pass
-        with self.lock:
-            # unregister 会重建 known 条目记录 last_online，故须在其后再删除账号
-            self.known.pop(uid, None)                       # 4) 删除账号
-        self._persist(force=True)
-        self._broadcast({"t": MsgType.CLEARED.value, "uid": uid})
+        for other, payload in self._drop_xfers_of(uid):
+            self._send_to(other, payload)
+        self._drop_voice_rooms(uid)
+        self._disconnect_rooms_of(uid)
+        self._broadcast_roster()
         self._broadcast_group_list()
-        self._broadcast_system(f"系统管理员已清除用户 {nick} 的账号")
+        pending = self._admin_user_payload(uid)
+        if pending is not None:
+            try:
+                sess.send(pending)
+            except Exception:
+                pass
+        ok = self._persist(force=True)
+        with self.lock:
+            op = self._retire_ops.setdefault(uid, {"operation_id": op_id})
+            op.update({"status": "confirmed" if ok else "failed",
+                       "target_uid": uid, "target_nick": nick,
+                       "retryable": not ok,
+                       "failed_stage": None if ok else "store.save",
+                       "error_code": None if ok else "persist_failed"})
+        final = self._admin_user_payload(uid)
+        if final is not None:
+            try:
+                sess.send(final)
+            except Exception:
+                pass
+        if ok:
+            self._broadcast({"t": MsgType.CLEARED.value, "uid": uid})
+            self._broadcast_system(f"系统管理员已退役用户 {nick}（UID 保留，不可重新认领）")
         self.audit.log(type="admin_user_del", uid=sess.uid, target=uid,
-                       target_nick=nick, removed=removed, dissolved=dissolved)
-        print(f"[admin][删除账号] {sess.nick} 清除 @{nick}(uid={uid})："
-              f"清消息 {removed} 条，解散群 {dissolved} 个，已从 known 移除")
+                       target_nick=nick, removed=removed, dissolved=dissolved,
+                       operation_id=op_id, status="confirmed" if ok else "failed")
+        print(f"[admin][退役账号] {sess.nick} 处理 @{nick}(uid={uid})："
+              f"清消息 {removed} 条，状态={'confirmed' if ok else 'failed'}")
 
     def _on_reaction(self, sess: Session, header: dict) -> None:
         """R13 表情回应：对 seq 消息加/摘 emoji，广播全网 reactions 状态。"""
@@ -3929,6 +4407,8 @@ class Hub:
 
     def _on_read(self, sess: Session, header: dict) -> None:
         """R13 已读回执：记录 uid 在某会话读到的最远 seq，广播给会话参与者。"""
+        if self._retire_error(sess):
+            return
         try:
             seq = int(header.get("seq"))
         except (TypeError, ValueError):
@@ -3937,25 +4417,37 @@ class Hub:
         channel = header.get("channel") or "public"
         to = header.get("to")
         key = self._conv_key(channel, sess.uid, to)
-        # 锁内修改共享 reads/_burn：多连接线程并发回执需串行化，防丢失更新
+        # 只在 Hub 锁内更新 reads，并收集锁外通知计划；发送、审计、
+        # burn 清理与持久化都不得阻塞 Hub 锁。
         with self.lock:
-            reads = self.reads.setdefault(key, {})
-            if reads.get(sess.uid, 0) >= seq:      # 幂等：只前进不回退
-                return
-            reads[sess.uid] = seq
-            for _u, s in self._chan_recipients(channel, sess.uid, to):
-                try:
-                    s.send({"t": MsgType.READ.value, "channel": channel, "key": key,
-                            "uid": sess.uid, "to": to, "seq": seq})
-                except Exception:
-                    pass
-            # R14 阅后即焚：本会话所有 burn 消息若所有待读目标方已读到其 seq → 服务器删除并广播 del
-            for bseq, br in list(self._burn.items()):
-                if br["channel"] != channel or not self._burn_same_convo(br, sess.uid, to):
-                    continue
-                if bseq <= seq and self._burn_ready(br, reads, bseq):
-                    self._burn_finish(bseq, br)
-            self._burn_ttl_sweep()
+            if self._uid_retired_locked(sess.uid):
+                rejected = True
+            else:
+                rejected = False
+                reads = self.reads.setdefault(key, {})
+                if reads.get(sess.uid, 0) >= seq:
+                    return
+                reads[sess.uid] = seq
+                read_targets = list(self._chan_recipients(channel, sess.uid, to))
+                burn_ready = [
+                    bseq for bseq, br in list(self._burn.items())
+                    if br["channel"] == channel
+                    and self._burn_same_convo(br, sess.uid, to)
+                    and bseq <= seq and self._burn_ready(br, reads, bseq)
+                ]
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
+        payload = {"t": MsgType.READ.value, "channel": channel, "key": key,
+                   "uid": sess.uid, "to": to, "seq": seq}
+        for _u, target in read_targets:
+            try:
+                target.send(payload)
+            except Exception:
+                pass
+        for bseq in burn_ready:
+            self._burn_finish(bseq)
+        self._burn_ttl_sweep()
         self._persist()                              # R16：reads/burn 变化落盘
 
     def _readers_for(self, key: str, uid: int):
@@ -4270,30 +4762,37 @@ class Hub:
             return True
         return all(reads.get(u, 0) >= burn_seq for u in br["pend"])
 
-    def _burn_finish(self, seq: int, br: dict) -> None:
-        """广播 del 并清理服务器历史/内存（阅后即焚删除）。"""
-        with self.lock:                               # 锁内操纵共享 _burn/bus
-            self._burn.pop(seq, None)
-            with self.bus._lock:
-                _key, msg = self.bus.find(seq)
-            for _u, s in self._chan_recipients(br["channel"], br["uid"], br["to"]):
-                try:
-                    s.send({"t": MsgType.MSG_DEL.value, "seq": seq,
-                            "channel": br["channel"], "uid": br["uid"], "to": br["to"],
-                            "burn": True})
-                except Exception:
-                    pass
+    def _burn_finish(self, seq: int, br: dict | None = None) -> None:
+        """锁内只提交 burn/bus 内存清理，通知和审计均在锁外。"""
+        with self.lock:
+            current = self._burn.pop(seq, None)
+            if br is None:
+                br = current
+            if br is None:
+                return
+            _key, msg = self.bus.find(seq)
             if msg is not None:
                 self.bus.discard(seq)
-            self.audit.log(type="burn", uid=br["uid"], seq=seq)
+            recipients = self._chan_recipients(br["channel"], br["uid"], br["to"])
+        payload = {"t": MsgType.MSG_DEL.value, "seq": seq,
+                   "channel": br["channel"], "uid": br["uid"],
+                   "to": br["to"], "burn": True}
+        for _u, target in recipients:
+            try:
+                target.send(payload)
+            except Exception:
+                pass
+        self.audit.log(type="burn", uid=br["uid"], seq=seq)
         self._persist()                              # R16：阅后即焚删除落盘
 
     def _burn_ttl_sweep(self) -> None:
         """阅后即焚兜底：长期没人读到也删除，防删不掉堆积（惰性触发）。"""
         now = _now()
-        for bseq, br in list(self._burn.items()):
-            if now - br.get("ts", now) > self.cfg.burn_ttl:
-                self._burn_finish(bseq, br)
+        with self.lock:
+            expired = [bseq for bseq, br in self._burn.items()
+                       if now - br.get("ts", now) > self.cfg.burn_ttl]
+        for bseq in expired:
+            self._burn_finish(bseq)
 
     def _on_purge(self, sess: Session, header: dict) -> None:
         """R14 会话清理：丢弃该频道 seq<=until_seq 的消息并广播，供客户端删历史。"""
@@ -4336,16 +4835,24 @@ class Hub:
     def _on_draft_set(self, sess: Session, header: dict) -> None:
         """R29B 草稿同步：按 (uid,key) 存服务器内存（空文本=清除）。
         单 uid 单会话（防双开顶号）→ 无需中继广播；换端登录时随 welcome 带回。"""
+        if self._retire_error(sess):
+            return
         channel = header.get("channel") or "public"
         if channel not in ("public", "private", "group"):
             return
         text = str(header.get("text") or "").strip()[:4000]
         key = self._conv_key(channel, sess.uid, header.get("to"))
+        rejected = False
         with self.lock:
-            if text:
-                self._drafts[(sess.uid, key)] = {"text": text, "ts": _now()}
-            else:
-                self._drafts.pop((sess.uid, key), None)
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                if text:
+                    self._drafts[(sess.uid, key)] = {"text": text, "ts": _now()}
+                else:
+                    self._drafts.pop((sess.uid, key), None)
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()                              # R16：草稿变化也落盘（服务器重启不丢）
 
     def _drafts_for(self, uid: int) -> list:

@@ -542,6 +542,9 @@ def test_admin_delete_invalidates_all_web_tokens_and_reboot_tokens(
     assert hub.session_by_token(token_b) is None
     assert victim_web.closed and victim_web_2.closed and victim_tcp.closed
     assert victim_web.uid not in hub.known
+    assert victim_web.uid in hub.retired
+    assert hub.retired[victim_web.uid]["nick"] == "delete-me"
+    assert set(hub.retired[victim_web.uid]) == {"nick", "retired_at", "operation_id"}
     hub._persist(force=True)
 
     restored = _new_hub(tmp_path / "after", admin_password,
@@ -550,6 +553,8 @@ def test_admin_delete_invalidates_all_web_tokens_and_reboot_tokens(
     assert restored.session_by_token(token_b) is None
     assert token_a not in restored.web_tokens
     assert token_b not in restored.web_tokens
+    assert restored.retired[victim_web.uid]["nick"] == "delete-me"
+    assert restored.nick_to_uid["delete-me"] == victim_web.uid
 
 
 def test_secret_absent_from_errors_audit_snapshot_and_repr(running, capsys):

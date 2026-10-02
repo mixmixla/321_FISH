@@ -33,8 +33,13 @@ class ServerStore:
             except (OSError, ValueError, TypeError):
                 return {}
 
-    def save(self, state: dict) -> None:
-        """原子写快照：先写同目录 .tmp，再 os.replace 覆盖。state 为已可序列化 dict。"""
+    def save(self, state: dict) -> bool:
+        """原子写快照并报告真实结果。
+
+        ``True`` 只表示 JSON 编码、flush、fsync 和 replace 全部完成；任一
+        阶段失败都返回 ``False``，保留旧的 state.json。调用方据此推进
+        fingerprint/确认状态，不能把临时文件存在误当成持久成功。
+        """
         tmp = self._path + ".tmp"
         with self._lock:
             try:
@@ -42,12 +47,13 @@ class ServerStore:
                     json.dump(state, fh, ensure_ascii=False, separators=(",", ":"))
                     fh.flush()
                     os.fsync(fh.fileno())
-            except OSError:
-                return                       # 写失败静默（下次变更再试，不崩服务）
-            try:
                 os.replace(tmp, self._path)
-            except OSError:
+                return True
+            except Exception:
+                # encode/open/write/flush/fsync/replace 任一阶段失败时，旧
+                # 快照仍是唯一可确认内容；临时文件仅作失败清理对象。
                 try:
                     os.remove(tmp)           # replace 失败则清残留，保留旧快照
                 except OSError:
                     pass
+                return False

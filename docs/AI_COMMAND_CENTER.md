@@ -64,7 +64,7 @@ CORE仅改server.py/最少量server_store.py/tests，Task v1.1已独立终审ACC
 ### 上轮整理与当前 Goal
 
 用户本次请求下一提示词及可交付时提交PR；[PR-DELIVERY-04 v1](task-packages/PR-DELIVERY-04.md)已冻结，Goal active。
-STORE已独立ACCEPTED/原Goal complete；本轮已保持308源96e62366/116文件1483/0/2并实际追加现有PR5（code971d7b6/docs7be5015），标题/正文/attach完成，纯flow终核后结束Goal，不启动RESOURCE。
+STORE已独立ACCEPTED/原Goal complete；本轮已保持308源96e62366/116文件1483/0/2并实际追加现有PR5（code971d7b6/docs7be5015），标题/正文/attach完成，独立flow/remote终核已通过，Goal工具complete，不启动RESOURCE。
 
 
 用户于2026-10-02本聊天批准按[最新Pro意见](decisions/CC-02B-STORE_设计审查决定_v1.md)进行有限[CC-02B-STORE v1.1](task-packages/CC-02B-STORE.md)实施，现已独立正式ACCEPTED，Goal complete。
@@ -180,7 +180,7 @@ Android、完整云账号、47款全面美术和大规模重写维持Backlog，�
 
 | ID | 状态 | 批次/依赖 | 执行者 / 审查者 | 下一动作与证据 |
 | --- | --- | --- | --- | --- |
-| PR-DELIVERY-04 | ACCEPTED | 独立6code+12docs树与原始证据通过/push/PR更新/attach满足，Goal收尾 | 主控唯一Git/資料 / pr04_tree_review独立 | code971d7b6/docs7be5015，PR5open/draft；最终flow/remote核验后结束，[Review](review-packages/PR-DELIVERY-04-r1.md) |
+| PR-DELIVERY-04 | ACCEPTED | 独立6code+12docs树与原始证据通过/push/PR更新/attach满足，Goal complete | 主控唯一Git/資料 / pr04_tree_review独立 | code971d7b6/docs7be5015，PR5open/draft；独立最终核验已通过，Goal complete，[Review](review-packages/PR-DELIVERY-04-r1.md) |
 | CC-02B-STORE | ACCEPTED | Task v1.1/同版full+领域+real+正式独立终验无must；Goal complete，已追加Draft PR #5 | store_backend / 主控 / store_code_review独立 | 116文件1483/0/2、188专项/277域/real35/source30896e62366…；[Review](review-packages/CC-02B-STORE-r1.md)，不等完整RETIRE/R1/Git交付 |
 | PR-DELIVERY-03 | ACCEPTED | 用户Git补充授权，代码/资料/独立树/push/PR更新/attach/提示词及终核已满足；Goal complete | 主控唯一Git/资料 / pr03_tree_review独立只读 | code e91c1be/docs13ad592/flow df487cf已push，三文档补录不改source307，PR5open/draft；[Task](task-packages/PR-DELIVERY-03.md) / [Review](review-packages/PR-DELIVERY-03-r1.md) |
 | CC-02A-RETIRE-CORE | ACCEPTED | Task v1.1/Goal complete，最终同版full/域/实通道/独立终审/边界满足 | retire_core_backend / 主控 / retire_core_review独立终审 | 115文件1392/0/2，307源c647d65c…，101资料链接/原body保持，无must；[Task](task-packages/CC-02A-RETIRE-CORE.md) / [Review](review-packages/CC-02A-RETIRE-CORE-r1.md) |
@@ -265,12 +265,12 @@ Android、完整云账号、全面游戏美术、大规模模块拆分仍为暂�
 
 ## 当前检查点 PR04-CP-03（独立两树与实际PR更新交付）
 
-- PR-DELIVERY-04 v1两层actualtree独立可接受/无must，正常push与PR更新/attach满足，Goal待最终flow/remote终核后结束；本批只Git与接续提示词不下一产品。
+- PR-DELIVERY-04 v1两层actualtree独立可接受/无must，正常push与PR更新/attach满足，Goal工具已确认complete（1342秒，约22分钟）；本批只Git与接续提示词不下一产品。
 - code971d7b6(parentdf487cf/treed412ae)、docs7be5015(parent971d7b6/tree5ab11ece)，精确6code+12docs。raw30896e62366…/normalizedc40e1357…/hash-object/blob0 mismatch，source门禁1483/0/2原116logs独立重算保持。
 - 当前PR5 open/draft/未merge/head7be5015/base maincc7e295，push成功/lsremote一致。connector PATCH403 integration权限不足后，用用户授权Git身份仅内存PATCH完成；title与STORE范围已更新，bodySHA042cc321…，attach成功，无凭据输出/保存。
-- 159相对链接/投影/索引空/diff-check/无runtime私密树及未授权原字节通过；后续纯flow三文档会产生新head，以Git/remote真实值为准，不内容自引用。
+- 两层时159/最终flow158相对链接/投影/索引空/diff-check/无runtime私密树及未授权原字节通过；后续纯flow三文档会产生新head，以Git/remote真实值为准，不内容自引用。
 - 原STORE/CORE/资料Goal结束，所有应用/tests/依赖不变，没有应用/pytest需恢复；旧heartbeat PAUSED。后续CC-02C-RESOURCE-SCOPE仅可复制prompt/PROPOSED，本次没开始资料/代码。
-- 下一当前flow提交/push、实际HEAD/remote/PR独立核验、Goal工具结束到终点；不main直push/force/merge/release/真实data/外部消息/资源代码或UI。
+- 本轮独立最终flow/remote/PR已核验，Goal工具complete约22分钟；结束元数据仅三docs提交/push后停止，当前head真实读取不自引用；不main直push/force/merge/release/真实data/外部消息/资源代码或UI。
 
 ## 历史检查点 PR04-CP-02（code层真实提交与308blob核验）
 

@@ -4,7 +4,7 @@
 
 - 用途：Windows 局域网聊天、文件/媒体、网页端与桌游；Tkinter 桌面客户端。
 - 栈与入口：Python 3.14.5，`dev.ps1` / `run.py`；Hub 加密 TCP，网页 HTTP(S)/SSE。
-- 最近源码核对：2026-10-02；只读核对CC-02A同raw源候选，实施/验证证据见CC-02A Review，不能推导RETIRE已实现或R1通过。
+- 最近源码核对：2026-10-02；有限STORE实施源码已核对，版本和验收见STORE Review；完整RETIRE资源/UI及R1仍未关闭。
   当前任务、版本和测试结果统一见 [AI_COMMAND_CENTER](docs/AI_COMMAND_CENTER.md)。
 - 当前机器路径 `D:\Project\321_FISH`，迁移后以任务工作区为准。
 - 个人开发技能：`$fish-assistant-dev`；源码事实优先于技能旧索引。
@@ -48,8 +48,8 @@
   t0前已接受操作不追溯取消；Core/Tk/Web收到失效后回手动登录，普通暂断重连与单端logout隔离保持。
 - 当前CORE使用独立retired UID→nick/retired_at/operation_id JSON字段，保留昵称映射并阻止旧身份重登/UID复用；
   t0清活跃known/本人draft/sched/blocks/reads、撤全旧端/token，CHAT/burn、due、PROFILE等核心C与t0在Hub→bus纯内存边界内排序。
-- 最小持久确认采用ServerStore.save显式True/False，实际writer取顺序锁后fresh capture，运行态请求代次保留捕获后的dirty；
-  没有持久revision/hash-proof/marker，当前有效JSON重启恢复退役；完整证据与未提交版本绑定见[CORE Review](docs/review-packages/CC-02A-RETIRE-CORE-r1.md)。
+- 持久确认保留ServerStore.save bool兼容外形，实际writer在cutoff前后固定Hub→bus的state/op捕获，严格一次UTF8 bytes/SHA、阶段typed结果及统一ack，运行态请求代次保留后到dirty；
+  运行态receipt/unknown及known前后序对账不增持久revision/hash-proof/marker；confirmed来源written/reconciled_current_json/restored_valid_json分开，旧合法JSON恢复无历史SHA。证据与版本见[STORE Review](docs/review-packages/CC-02B-STORE-r1.md)。
 
 ## Conventions and constraints
 
@@ -133,12 +133,12 @@
 - CORE的sched最终发布复查退役并取消本人队列/已摘due；正常离线定时仍按原群/屏蔽规则，不将KICK改成封禁。
 - `_restore`的groups/reads字符串UID缺口已按白名单补正并有真实JSON后权限/禁言/已读证据；
   未因此宣称全部快照格式、物理文件/索引或旧服务回滚可靠性已验证。
-- CORE save只有真实dump/flush/fsync/replace成功才确认；失败不推进fp或解除退役，actual writer fresh capture与请求代次保护旧snapshot和后到dirty。
+- STORE只有严格候选预校验及真实bytes写入/flush/fsync/close/replace成功才确认；post-write ACK/回执异常先unknown再对账，不假称旧file。实际writer/fresh capture与请求代次保护旧snapshot和后到dirty。
   普通凭据CAS仍未实现；首次退役提交从未成功时不保证旧有效JSON重启后阻断，禁止用内存成功或未经审查降级/旧备份回滚替代持久确认。
 - snapshot核心一致捕获/deep remarks及burn.pend→既有恢复UID列表的必要适配已纳CORE；不等于全面JSON格式重写。
   ServerStore.load仍将坏JSON/读取失败返回{}，整体loader/初始化marker/丢失状态恢复与durable intent明确延期CC-05存储加固。
-- CLOUD启动扫描在restore前，PUT先写内存/直接覆盖文件且吞IO错误仍回CLOUD_DONE；bot_say/已取due/preview及Webpasswd/upload/SSE旁路需单独最终屏障。
-  管理员UID不是固定号，实际bot保护按BOT_BY_UID；普通分配器当前未跳过botUID，同名bot登录字符串/历史管理员角色不能猜测迁移。
+- CLOUD启动扫描在restore前，PUT先写内存/直接覆盖文件且吞IO错误仍回CLOUD_DONE；bot_say/Agent/已摘bot提醒、preview及Web upload资源旁路仍需最终屏障。CORE服务端sched已摘due最终C已修，不能与bot提醒混淆。
+  管理员UID不是固定号，实际bot保护按BOT_BY_UID；普通分配器已跳过retired/known/实际botUID，同名bot登录字符串/历史管理员角色不能猜测迁移。
 - 现有ClientCore.send_admin_user_del在发送前乐观pop known/roster；RETIRE管理结果需要区分已提交、运行阻断、失败/未知与真正JSON确认。
   UI仍未改，不能从服务端四态回执推导当前客户端已支持失败/重试或停止deleted自动重连；完整设计与延期边界见[RETIRE材料](docs/CC02-RETIRE_Pro审查材料.md)及CORE Task。
 - `optional.has_lottie` 探测 rlottie、renderer 导入 rlottie_python；涉及该扩展先核对。
@@ -150,6 +150,10 @@
 - `.spec` 含旧机器绝对 icon 路径且缺 build.py 的 Vosk 模型逻辑；打包入口不等价。
 - docs/优化清单.md 属于另一个 Ollama IDE 项目；旧 UI 文档可能只记录早期状态。
 - 链接预览目前拒绝 3xx，部分跳转网页没有卡片；正文与链接正常可用。
+
+- STORE fingerprint与真正写入使用同一严格编码bytes SHA，拒绝键冲突/非有限值/非法字符串，不使用default=str/repr。
+  sync/worker/flush及活动Hub兼容save/save_bytes都进同一writer；pending/inflight纯结果不误等unknown，unknown全入口先对账，known前后序/实际操作清理绑定，错expected-op纯内存拒绝无IO。
+  正式冻结与版本化实施证据见[STORE Task](docs/task-packages/CC-02B-STORE.md)/[Review](docs/review-packages/CC-02B-STORE-r1.md)，历史[Pro材料](docs/CC-02B-STORE_Pro审查材料.md)/[草案](docs/task-packages/CC-02B-STORE-DRAFT.md)仍保留，状态只看指挥中心。
 
 ## Evidence index
 

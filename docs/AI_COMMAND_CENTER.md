@@ -20,7 +20,7 @@ PR-DELIVERY-02新Draft PR交付已独立验收ACCEPTED，Git交付Goal已由工�
 后续用户于2026-10-02直接批准按[Pro最新结论](decisions/CC02-RETIRE_核心实施审查决定_v1.md)实施收窄核心；本次执行依据为[CC-02A-RETIRE-CORE v1](task-packages/CC-02A-RETIRE-CORE.md)。
 CORE仅改server.py/最少量server_store.py/tests，Task v1.1已独立终审ACCEPTED，115文件1392/0/2；实施Goal工具已确认complete（6929秒，约1小时55分钟）。代码e91c1be与资料13ad592已追加推送至Draft PR #5；UI/资源/完整119/marker/loader迁移仍延期。
 用户进一步批准可交付时提交PR，[PR-DELIVERY-03 v1](task-packages/PR-DELIVERY-03.md)本次只做Git交付与下一提示词。
-实际PR5仍open/draft/未merge，base main cc7e295；代码/资料交付head13ad592已推送核对，标题/说明已更新并attach本聊天，后续仅三文档实际结果补录。独立实际树审查通过；本次有限Goal到终核后结束，不合并/发布或开始下一产品。
+实际PR5已终核open/draft/未merge，base main cc7e295，最终交付head df487cf；代码e91c1be/资料13ad592/三文档flow df487cf已push，原PR交付Goal complete。STORE-SCOPE资料已结束；用户本次批准按新Pro意见实施有限STORE，不合并/发布或开始RESOURCE。
 已完成首批：**CC-02A：PROFILE → RESTORE → KICK**，独立验收ACCEPTED，Goal已由工具确认complete（9741秒，约2小时42分钟）。
 [架构决定](decisions/CC-02_架构审查决定_v1.md)选择M1，先做基础三片；[冻结Task](task-packages/CC-02A.md)限定首批，
 [修订草案](task-packages/CC-02-IMPLEMENTATION-DRAFT.md)中的RETIRE/STORE-COMMIT、CREDENTIAL、LOCAL/CLOUD尚未获本批实施授权。
@@ -51,8 +51,10 @@ CORE仅改server.py/最少量server_store.py/tests，Task v1.1已独立终审ACC
 | 6B · CC02-RETIRE-DESIGN | M1/完整C写入面/可靠提交/数据表/Pro问题/实施草案与验收矩阵 | ACCEPTED（资料）；Goal complete，已Draft PR #5 | 主控唯一七文档 / retire_docs_review独立只读 | 无资料级必须项，119/119与42未来矩阵、源/文档/边界满足；[Task](task-packages/CC02-RETIRE-DESIGN.md) / [Review](review-packages/CC02-RETIRE-DESIGN-r1.md) |
 | 6C · CC-02A-RETIRE-CORE | M1退役核心/登录与核心C/必要save真假成功及写顺序/真实重启 | ACCEPTED；v1.1，实施Goal complete，已Draft PR #5 | retire_core_backend / 主控调度 / retire_core_review独立终审 | 115文件1392/0/2、37专项/276域/14真实通道、307版本与边界，无must；[Task](task-packages/CC-02A-RETIRE-CORE.md) / [Review](review-packages/CC-02A-RETIRE-CORE-r1.md) |
 | 6D · PR-DELIVERY-03 | CORE/设计6code+13docs实际树审查与既有PR追加交付、下一提示词 | ACCEPTED；已push并更新Draft PR #5 | 主控唯一Git/资料 / pr03_tree_review独立只读 | code e91c1be/docs13ad592；307raw/clean/blob、1392原日志、132链接与边界独立通过；[Review](review-packages/PR-DELIVERY-03-r1.md) |
-| 下一建议 · CC-02B-STORE-SCOPE | 核对已修最小前置，冻结receipt/阶段IO/unknown最小剩余Task | PROPOSED；仅已交付提示词，未启动资料或代码 | Codex资料/独立审查 → Pro必要决定 → 用户批准有限实施 | bool/fresh capture/request_seq已完成；先证明必要性，禁止直接扩成Store V2；marker/整体loader/durable intent归CC-05 |
-| 后续 · CC-02B-STORE / CC-02C-RESOURCE | 必要STORE剩余/资源迟到写与UI | PROPOSED；未进入当前实现队列 | Codex冻结 / 用户批准有限批次 | 按最新Pro拆分；不以CORE等同完整RETIRE/R1通过，CLOUD/upload/bot/preview资源另批 |
+| 当前资料完成 · CC-02B-STORE-SCOPE | 核对已修前置，冻结strict bytes/阶段IO/op receipt/unknown最小草案 | ACCEPTED（资料）；独立终审无must，Goal complete | 主控七Markdown / store_docs_review独立审查 | [Pro v1](CC-02B-STORE_Pro审查材料.md)/[draft-v1](task-packages/CC-02B-STORE-DRAFT.md)/[Review](review-packages/CC-02B-STORE-SCOPE-r1.md)，原资料终点未取得；本次Pro决定与用户STORE实施批准已取得 |
+| 已完成实施 · CC-02B-STORE | 严格一次bytes/阶段IO/统一ack/全writer unknown/原子候选/op查询/三来源 | ACCEPTED；v1.1，Goal complete，本地未提交 | store_backend / 主控 / store_code_review独立正式终审 | [Task](task-packages/CC-02B-STORE.md)/[Review](review-packages/CC-02B-STORE-r1.md)，116文件1483/0/2、188专项/277域/real35，未merge/release |
+| 下一建议 · CC-02C-RESOURCE-SCOPE | 只读资源owner/C/独立IO/t0/保留访问与有限Task草案 | PROPOSED；提示词已准备，本轮未启动资料或代码 | 后续资料主控 / 独立审查 → Pro必要决定 → 用户实施批准 | [可复制提示词](review-packages/PR-DELIVERY-04-r1.md)，CLOUD/upload/bot/Agent/reminder/preview，禁止扩全119/UI/GC/loader |
+| 后续 · CC-02C-RESOURCE | CLOUD/upload/bot回复/Agent/提醒/preview资源晚到C与独立IO | PROPOSED；只列剩余，未入实现队列 | Codex另冻结 / 用户有限批准 | CORE的bot用户CHAT输入/sched due已修；UI/其它119/物理GC不自动纳入 |
 | 7 · CC-03-SCREEN | 47项游戏入口/主要操作矩阵；稳定与实验分类依据 | PROPOSED；公共生命周期已完成，筛查未开始 | Codex核验，Pro审分类决策 | 每项给出入口与行为证据；不以注册/画面存在等同可玩 |
 | 并行 · VB-01（CC-05基线） | 正式逐文件入口、同版本续跑、超时清理、真实退出/日志报告 | PROPOSED；未入实现队列 | Codex / 独立审查 | 批次范围批准，runner专项与最终门禁通过；不重做已修R26 |
 | 后续 · GAME-UI-01（CC-04） | 两款棋类Game UI Brief；回合/观战/胜线/规则提示；Excel和低打扰状态设计 | PROPOSED；设计/代码均未开始 | GPT设计 → Pro审查 → Codex | R1前置明确；先审设计，再实现与真实交互验收 |
@@ -61,9 +63,21 @@ CORE仅改server.py/最少量server_store.py/tests，Task v1.1已独立终审ACC
 
 ### 上轮整理与当前 Goal
 
+用户本次请求下一提示词及可交付时提交PR；[PR-DELIVERY-04 v1](task-packages/PR-DELIVERY-04.md)已冻结，Goal active。
+STORE已独立ACCEPTED/原Goal complete；本轮保持308源96e62366和116文件1483/0/2，追加现有PR5，不启动RESOURCE。
+
+
+用户于2026-10-02本聊天批准按[最新Pro意见](decisions/CC-02B-STORE_设计审查决定_v1.md)进行有限[CC-02B-STORE v1.1](task-packages/CC-02B-STORE.md)实施，现已独立正式ACCEPTED，Goal complete。
+S1→S2→S3已顺序完成，Pro M01–M05及独立必须项全部关闭。最终116文件1483/0/2、188专项/277领域/35真实观察，source30896e62366…，只有本地未提交交付，不自动开始RESOURCE/发布。
+
+
+用户于2026-10-02批准[CC-02B-STORE-SCOPE v1](task-packages/CC-02B-STORE-SCOPE.md)，本聊天资料已独立ACCEPTED，Goal工具已确认complete（1067秒，约18分钟）；仅只读源码与七Markdown。
+实际接续HEAD df487cf/clean/index空，旧主控idle且原Goal complete；PR5open/draft/未merge。这条为原资料终点历史；后续本次Pro决定与用户直接实施批准已取得，见上方当前Goal。
+
+
 PR-DELIVERY-03有限目标已交付：6code e91c1be、13docs13ad592精确提交并推送当前分支，PR5标题/范围已更新/attach，保持open/draft/maincc7e295。
-pr03_tree_review独立实际树/307raw与规范化/原115日志通过，无必须项。当前仅三文档最终补录与远端终核，Goal在终核后结束；不启动下一候选。
-下一建议为CC-02B-STORE-SCOPE资料与Task冻结，复制提示词见[本轮Review](review-packages/PR-DELIVERY-03-r1.md)；本轮用户请求提示词不构成下一批实施授权。
+pr03_tree_review独立实际树/307raw与规范化/原115日志通过，无必须项。原PR交付Goal已完成，实际最终HEAD df487cf，三文档补录已push；本次只批准STORE-SCOPE资料。
+原下一建议CC-02B-STORE-SCOPE资料本次已获用户批准；实施代码仍未批准，原提示词见[PR交付Review](review-packages/PR-DELIVERY-03-r1.md)。
 
 用户批准按最新Pro结论实施收窄CC-02A-RETIRE-CORE，Task v1.1独立终审可接受/无must，现已ACCEPTED，Goal工具complete（6929秒，约1小时55分钟）。
 retire_core_backend唯一server.py/server_store.py/核心tests；主控只资料/原字节边界/隔离导出与唯一验证调度，retire_core_review独立只读。
@@ -99,9 +113,24 @@ Android、完整云账号、47款全面美术和大规模重写维持Backlog，�
 
 ## 批次、角色与权限
 
+- 当前交付：[PR-DELIVERY-04 v1](task-packages/PR-DELIVERY-04.md)，用户直接批准可提交时提交PR，Goal active。
+  主控唯一Git/index/资料；精确6code+12docs，独立实际树审查只读。STORE应用/tests/依赖保持，引用同版1483，不重复门禁。
+  只正常push既有codex/cc02a-consistency并更新Draft PR5/attach；不merge/release/真实data/外部消息/heartbeat或下一产品。
+
+
+- 最近完成实施：[CC-02B-STORE v1.1](task-packages/CC-02B-STORE.md)，用户直接批准按最新Pro意见，现已独立ACCEPTED/Goal complete。
+  主控唯一资料/隔离验证调度，唯一backend仅server.py/server_store.py与冻结tests，store_impl_review独立只读；旧七资料入场镜像保留。
+  允许合成隔离测试与实TCP/HTTP/新JSON重启、最终同版full；不真实data/依赖/正式门禁/资源/UI/Git交付/外部消息/heartbeat。
+
+
+- 当前资料批次：[CC-02B-STORE-SCOPE v1](task-packages/CC-02B-STORE-SCOPE.md)，用户本聊天明确批准，资料独立ACCEPTED/Goal complete。
+  主控唯一七Markdown，两个事实代理及独立审查只读；不改应用测试依赖、不运行应用pytest、不真实数据/Git交付/外部消息/heartbeat。
+  Pro必要决定和下一有限实施批准另取得；marker/loader/durable intent归CC-05，RESOURCE/UI等后续。
+
+
 - 最近完成Git交付：[PR-DELIVERY-03 v1](task-packages/PR-DELIVERY-03.md)，用户直接请求若可提交就提交PR；CORE/设计资料已追加至现有Draft PR5，最终标题/说明已更新。
   主控唯一Git refs/index/资料写入，独立提交审查只读；6code+13docs明确清单，不改应用/测试/依赖，不真实data/merge/release/外部消息/下一code/heartbeat。
-  实际树独立通过、代码/资料push及PR更新/attach满足；三文档终核后结束有限Goal，不重复同版1392应用门禁。下一提示词仅建议，未批准下一代码。
+  实际树独立通过、代码/资料push及PR更新/attach/三文档终核满足；原有限Goal已complete，实际交付HEAD df487cf。不重复同版1392应用门禁，下一代码未批准。
 
 - 最近完成实施：[CC-02A-RETIRE-CORE v1.1](task-packages/CC-02A-RETIRE-CORE.md)。用户在本聊天直接批准按所给最新Pro结论实施；Task先冻结，以新的有限Goal完成，现已ACCEPTED/Goal complete。
   当前该有限批次已独立ACCEPTED，v1.1/1392全量通过；到终点停止，不扩为整个RETIRE或R1里程碑。
@@ -151,10 +180,12 @@ Android、完整云账号、47款全面美术和大规模重写维持Backlog，�
 
 | ID | 状态 | 批次/依赖 | 执行者 / 审查者 | 下一动作与证据 |
 | --- | --- | --- | --- | --- |
-| PR-DELIVERY-03 | ACCEPTED | 用户Git补充授权，代码/资料/独立树/push/PR更新/attach/提示词已满足；终核后结束Goal | 主控唯一Git/资料 / pr03_tree_review独立只读 | code e91c1be/docs13ad592已push，三文档实际状态补录不改source307，PR5open/draft；[Task](task-packages/PR-DELIVERY-03.md) / [Review](review-packages/PR-DELIVERY-03-r1.md) |
+| PR-DELIVERY-04 | IMPLEMENTING | 用户本次Git交付授权/Goal active，精确六code+十二docs | 主控唯一Git/资料 / 独立tree审查 | 提交code→docs/实际树审查/push现有Draft PR5/元数据/attach/下一提示词，[Task](task-packages/PR-DELIVERY-04.md)/[Review](review-packages/PR-DELIVERY-04-r1.md) |
+| CC-02B-STORE | ACCEPTED | Task v1.1/同版full+领域+real+正式独立终验无must；Goal complete，本地未提交 | store_backend / 主控 / store_code_review独立 | 116文件1483/0/2、188专项/277域/real35/source30896e62366…；[Review](review-packages/CC-02B-STORE-r1.md)，不等完整RETIRE/R1/Git交付 |
+| PR-DELIVERY-03 | ACCEPTED | 用户Git补充授权，代码/资料/独立树/push/PR更新/attach/提示词及终核已满足；Goal complete | 主控唯一Git/资料 / pr03_tree_review独立只读 | code e91c1be/docs13ad592/flow df487cf已push，三文档补录不改source307，PR5open/draft；[Task](task-packages/PR-DELIVERY-03.md) / [Review](review-packages/PR-DELIVERY-03-r1.md) |
 | CC-02A-RETIRE-CORE | ACCEPTED | Task v1.1/Goal complete，最终同版full/域/实通道/独立终审/边界满足 | retire_core_backend / 主控 / retire_core_review独立终审 | 115文件1392/0/2，307源c647d65c…，101资料链接/原body保持，无must；[Task](task-packages/CC-02A-RETIRE-CORE.md) / [Review](review-packages/CC-02A-RETIRE-CORE-r1.md) |
 | CC02-RETIRE-DESIGN | ACCEPTED | 资料目标/独立终核/机械边界满足，Goal complete；已Draft PR #5 | 主控 / retire_docs_review独立只读 | 正文IDc45e7f27…独立一致，无资料级必须项；[Task](task-packages/CC02-RETIRE-DESIGN.md) / [Review](review-packages/CC02-RETIRE-DESIGN-r1.md) |
-| CC-02B-STORE-SCOPE | PROPOSED | 下一建议的资料与有限Task冻结；本轮仅交付可复制提示词 | 后续获准主控 / 独立资料审查 | 核对bool/freshcapture/request_seq已完成；receipt/阶段IO/unknown必要剩余，Pro重大取舍与下一实施授权另取得 |
+| CC-02B-STORE-SCOPE | ACCEPTED（资料） | 原资料批准/独立终审无must；资料Goal complete，后续STORE已另获实施批准 | 主控唯一七Markdown / store_docs_review独立资料审查 | 原正文42a59b58…；307raw/378边界/132链接/投影通过，[Review](review-packages/CC-02B-STORE-SCOPE-r1.md)；Q1–Q4后续已由新决定输入 |
 | PR-DELIVERY-02 | ACCEPTED | 新Draft PR #5实际交付/独立终核满足，Goal complete（3076秒） | 主控 / cc02_docs_review只读 | [PR #5](https://github.com/mixmixla/321_FISH/pull/5)，code e065591/docs f48a833/实际补录15a4510，base cc7e295；[Task](task-packages/PR-DELIVERY-02.md) / [Review](review-packages/PR-DELIVERY-02-r1.md) |
 | CC-02A | ACCEPTED | 用户批准首批已完成，已Draft PR #5；实施Goal complete | cc02a_backend/主控 / cc02_docs_review只读 | [Task](task-packages/CC-02A.md) / [Review](review-packages/CC-02A-r1.md)，113文件1355/0/2，source305一致，未merge/release |
 | CC02-PROFILE | ACCEPTED | 统一最终候选/全量/独立终审满足 | cc02a_backend唯一server / cc02_docs_review只读 | 空值/False及资料保持、真实JSON/重登、原红2/修绿2，范围不扩退群规则 |
@@ -232,7 +263,145 @@ Android、完整云账号、全面游戏美术、大规模模块拆分仍为暂�
 本次连续授权覆盖BATCH-R1三个生命周期任务，已自动推进至本批验收终点，不因单项结束而等待用户。
 其它Roadmap未转为执行授权；后续产品范围/批次由用户确认，普通批次内整改继续无需逐项推动。
 
-## 当前检查点 PR03-CP-03（独立树审查与实际PR交付）
+## 当前检查点 PR04-CP-02（code层真实提交与308blob核验）
+
+- PR-DELIVERY-04 v1/Goal active，code6实际head971d7b653df262a29068cc887cc54eab887819b6/parent df487cf/treed412ae769…，branch未变、index空；doc12待提交，尚未push/更新PR。
+- 原验收raw30896e62366…保持，normalized c40e1357…；308raw/hash-object/blob0 mismatch，code实际增量6精确/未授权文件原字节/157links/投影/diff-check PASS。原116门禁不重复。
+- 主控唯一Git/资料；pr04_tree_review独立code/tree，resource_next_prompt只读后续建议，不启动资料/代码。无应用/pytest其它Git活动需恢复。
+- 下一doc12冻结提交→独立两层tree通过→正常push同head分支→PR5标题/正文覆盖STORE保Draft/attach→实际结果flow终核/Goal结束。未授权force/main直push/merge/release/真实data/外部消息/heartbeat。
+
+## 历史检查点 PR04-CP-01（Git授权与入场保护）
+
+- PR-DELIVERY-04 v1/Goal active，用户直接请求如果可以就提交PR及下一具体提示词；允许code/docs正常commit/push/更新既有Draft PR5/attach，不下一code/merge/release。
+- HEAD/base df487cf18a0829fc0428a4ab640bcb0e24cc8866/tree0db5ddaa/branch codex/cc02a-consistency/index空；386非ignored原字节与原index/16dirty入场镜像_tmp_gui/pr04/entry.json/entry-files/entry-index保护。
+- PR5 GitHub+ls-remote核对open/draft/未merge/head df487cf/base maincc7e295；当前无项目Python/pytest/Git其它活动，旧主控非active，原Goal complete，本轮get_goal null后新有限交付Goal。
+- 已验收STORE v1.1/source30896e62366…/116files1483p0f2skip真实原证据保持；本轮不改应用/测试/依赖，不重复同版门禁，只有Git与必要docs。
+- 主控唯一Git/index/资料，resource_next_prompt只读后续实际剩余，独立tree reviewer不参与编写。精确code6/docs12；ignored raw证据/私有全文/运行data/凭据不入树。
+- 下一code→docs逻辑提交/原字节与Git clean/blob一致/独立tree通过后正常push现有head，更新PR5描述包含STORE、保Draft、attach，flow补录后终核结束Goal；下一CC02C仅提示词无本轮实现。
+
+## 历史检查点 STORE-CP-11（独立正式ACCEPTED与Goal终点）
+
+- CC-02B-STORE v1.1已ACCEPTED（Task），store_code_review正式独立终审无未关闭must；Goal工具已确认complete（6713秒，约1小时52分钟），本批终点，不自动next。
+- 最终116文件1483p0f2既有hardware/visual optin skips、exit0、440.51sec，每文件一次无retry/warning/xfail；summarySHAd4a39ff8…，原116log/命令/环境/skip/source由独立复算一致。
+- source30896e62366ff150364bf9cf77ecd8d19ab4369a84e9973b3c8987086192c8eb628/current/export逐0mismatch，final exportead5e355…；same源188专项/277域（18新216+server61）/real-v4 35观察；原红80/中间失败保持。
+- HEAD/base df487cf18a0829fc0428a4ab640bcb0e24cc8866/tree0db5ddaa/branch codex/cc02a-consistency/index原样，sixcode+必要docs本地未提交；旧资料624b9283…/原CORE/PR交付保持，最终flow135相对链接/投影/diff-check/允许边界通过（正式终审前历史136）。
+- 全量/所有专项/real进程真实结束，源码/tests/依赖停写，只有当前主控资料终点，旧守护PAUSED。独立flow终核无must；Goal工具complete，6713秒（约1小时52分钟），未设预算。
+- 下一审批仅有限Git交付或另CC-02C-RESOURCE Task资料/实施批准；不从候选写资源/UI/完整119/CC05 loader/marker/intent，不等R1里程碑/merge/release，不真实data/外部消息/heartbeat。
+
+## 历史检查点 STORE-CP-10（最终full完成，独立正式终审交接）
+
+- CC-02B-STORE v1.1/Goal active，full权威结束尚非ACCEPTED。唯一session80551/116文件1483p0f2原optin skips/exit0，440.51sec，无retry/warning/xfail，新代码没有用CORE1392冒充。
+- source30896e62366…候选/current/final-full-source逐0mismatch，原旧资料624b9283…/HEAD df487cf/tree/branch/index保持；sixcode+必要docs未提交，136相对链接/投影/边界/diff-check通过。
+- R4同源专项188、18新增域216+引用server61、real-v4 35观察true/exit0、同最终new80 tests入场负例80f/exit1，全部版本与原始失败完整；不是80生产竞态各已原红。
+- full-verification.json从原116log/summary/exit/skip独立重计一致，环境/summarySHA/代码raw内容ID可追；全量期间仅Memory/CC/Review流转，源tests/依赖未动，无应用/pytest需恢复。
+- 主控唯一资料/验证已结束，backend停写，独立store_code_review现从Task/actualdiff/raw全证据正式终审。下一must若有就普通修复并重绑必要门禁，无must则ACCEPTED/资料终点/Goalcomplete。
+- 不资源/UI/loader/首次失败跨重启扩大保证，不真实data/Git交付/Pro或其它消息/heartbeat；STORE通过也不等整个RETIRE/R1/merge/release。
+
+## 历史检查点 STORE-CP-09（域通过与唯一final full冻结开始）
+
+- CC-02B-STORE v1.1/Goal active，独立R4 stage无must允许full，未ACCEPTED。最终source30896e62366ff150364bf9cf77ecd8d19ab4369a84e9973b3c8987086192c8eb628固定candidate.json/current/final-full-source逐项0mismatch，六code/tests与依赖冻结停写。
+- 四文件188p、18新增域216p/exit0/71.84s+引用同版server61组成19域277；real-v4同代码35true/exit0，first fail真实旧JSON重启负例与sameop retry重启闭环清楚。最终same receipt80原源码对照80f/exit1是新功能缺失及行为负例，不冒称全部独立生产竞态。
+- 将由主控唯一执行final-full116文件逐独立pytest，项目venv/原字节source/cwd/profile环境隔离/UTF8/每文件独立basetemp/真实exit及原optin skip。不沿旧1392报告冒新結果，不重复同版full。
+- HEAD/base df487cf/tree0db5ddaa/branch/index原样，旧资料624b9283…保持；当前只有有限sixcode+必要docs未提交，无真实user数据/凭据。原C1/T2/V4/V5/diag/helper失败皆保label。
+- 下一动作权威full结束→原始日志/manifest/exit/environment/skip独立终审→允许ACCEPTED/资料边界/交付/Goal结束。守护PAUSED，无Git交付/资源/UI/CC05 loader/发布/外部消息权限。
+
+## 历史检查点 STORE-CP-08（R4阶段must关闭，相关领域运行）
+
+- CC-02B-STORE v1.1/Goal active；独立R4 code stage无剩余must，允许domain/full，不等于final ACCEPT。源30896e62366…/exportd70b3483…，六源码/tests冻结停写，旧资料/HEAD/index保持。
+- 同R4四文件receipt80/min27/core20/server61总188p0f0skip；real-v4同源35true/exit0，包含真实IO失败/有效旧JSON重启负例/sameop retry成功重启。R3 real-v2/c6be只历史，不误写同R4。
+- real-v3仅helper teardown drain/wake失败已分label保留，helper普通修复后real-v4通过，未改应用或抹掉错误；IO/并发/旧源码负例与所有真实失败保持。
+- 当前唯一domain-v1 18新增受影响文件在原字节positive-v7-source/项目venv隔离运行，server同源61可引用构成19领域，不重复。主控唯一调度，backend停写，独立CodeReview后续核验raw命令/日志。
+- 下一域通过后冻结candidate/source+final-full-source原字节、独立阶段允许后唯一116文件逐进程full，再正式终审/边界/资料/Goal结束。本批不资源/UI/loader/依赖/Git交付/真实data/外部消息/heartbeat。
+
+## 历史检查点 STORE-CP-07（R3独立两窗口must，R4有限整改）
+
+- CC-02B-STORE v1.1/Goal active，不ACCEPTED/不领域/full。独立R3复核原五must闭合、186专项/real27有效，但M01 snapshot→op选择窗口和O02 wrong expected-op先IO再拒仍must。
+- backend R4仅同Hub state+op capture原子、pure runtime expected-op拒绝及新Event/unknown GET DEL 0read0replace/no状态变化回归；ACK同captured集合保持，HTTP/协议不改，无新writer/gate/loader。
+- R3 source308 c6be6243…已完整冻结留证；修改归属backend六文件，旧382 entry/资料/HEAD/index保持。后续label重绑，不拿R3绿代R4；原红/各中间失败全部保留。
+- 目前所有应用/pytest验证真实结束，主控唯一调度/文档，backend修复中、CodeReview独立；下一先受影响receipt/min/core专项与独立must复核，再相关域/full/终验。
+- 用户已批本有限实施，普通整改自主；不真实data/依赖/正式门禁/资源/UI/Git交付/外部消息/其它聊天/Pro/heartbeat，到有限验收终点结束。
+
+## 历史检查点 STORE-CP-06（R3同版专项/实通道修绿，独立阶段交接）
+
+- CC-02B-STORE v1.1/Goal active；R3 source308 c6be6243…/export924ed7ed…已冻结停写。允许六应用/tests边界，旧资料624b9283…/HEAD df487cf/branch/index保持；不ACCEPTED，独立store_code_review阶段复核中。
+- Captured ops与快照同内存捕获/ACK和unknown保同集合，不吸postcapture t0；pending/inflight与unknown分开；Event只暂停真实含targetop的IO。V5诊断first IO/main已retry印证后到op误改，原失败/堆栈保留。
+- 同R3四文件core19/receipt79/min27/server61合186p0f0skip，core6.76s、rest56.88s，各只一次；real-v2 encryptedTCP/双HTTP/actualbytes/validJSON重启27true/exit0。
+- 同最终receipt79 tests在入场raw original-v2：79f/0p/exit1、11.55s，主要new API/类型功能缺失，不冒称79竞态逐复现；C1 9f、T2 75p2f/V4/V5均保原证据。
+- 当前所有验证均真实结束，无应用/pytest需恢复；主控唯一调度/资料，backend停写，独立CodeReview不实现。下一动作stage must闭合/矩阵充分后18新增相关域（server同源已过引用）→冻结唯一final full→独立终验交付。
+- 不改loader/marker/intent/资源/UI/依赖/正式门禁/真实data/Git交付，不外部或其它聊天/Pro消息/heartbeat；STORE不等于整个RETIRE/R1通过，首次失败重启限制仍在。
+
+## 历史检查点 STORE-CP-05（R1补确认通过，pending/inflight实际竞态整改R2）
+
+- CC-02B-STORE v1.1/Goal active，不ACCEPTED。R1 positive-v4四文件184p/1f/exit1、69.98sec；receipt79/min26/server61绿，core18p1f。T2原ACK/wrapper两缺口已修绿，旧失败原始保持。
+- 当前must为同UID第二pending DEL/共享payload先等writer，把IO前保存的inflight候选当unknown，首save Event超时导致failed。不能延长等待掩盖；backend R2仅分清inflight/unknown/pending纯payload返回，真unknown门禁及IO前候选记录保持。
+- R1冻结source30898f56315…/export0230d901…，旧entry/资料/HEAD/index不变；R2变化另label，独立CodeReview尚未放行领域/full。当前全部验证已真实结束，无应用/pytest需恢复。
+- 主控唯一验证/资料，backend唯一六文件修复，独立store_code_review复核同版must；下一先复测受影响core/必要query，余IO/矩阵同代码版本再重绑，最终领域/full不可沿旧源绿。
+- 不扩大loader/资源/UI/119/依赖/Git交付/真实data/其它聊天或Pro消息/heartbeat。恢复只bytes来源资格，legacy身份fence保持，missing/bad/unexplained即使显式重试仍不盲写。
+
+## 历史检查点 STORE-CP-04（T2故障原红与独立五must整改R1）
+
+- CC-02B-STORE v1.1/Goal active，不ACCEPTED、不领域/full放行。独立store_code_review确认5must：post-write ACK/wrapper异常、多候选对账、pending重复t0、boundtyped旧result、恢复来源strict资格；详细见本Review。
+- C2四文件115p/real27已分离；T1仅tests扩展60p/exit0；T2 positive-v3唯一receipt75p/2f/exit1，9.35sec。已真replace后ACK异常query pending、外层wrapper异常query failed，两断言实际JSON已有op，原始失败保留不抹绿。
+- T2 source308 00a6c071…/exportd0197e2e…，仍C2应用源；原entry382/旧资料/HEAD/index保持。后续R1应用变化另冻结，不沿旧版115/60/27作为新候选验收。
+- 主控唯一测试调度/资料，验证进程均权威结束；store_backend已收到R1源码must与对应补回归、六文件所有权保持，不自pytest；store_code_review独立只读复核。
+- 下一动作R1稳定语法/差异声明→新冻结四文件复测→处理剩余Event/IO/实通道/领域→唯一同版full，独立阶段must关闭前不跳门禁。第五项只源元数据资格、不loader/marker/初始化扩域。
+- 未变权限：不真实data/依赖/正式门禁/资源/UI/Git交付/其它聊天或Pro消息/heartbeat，不pull/切分支；本有限Goal至验收交付终点停止。
+
+## 历史检查点 STORE-CP-03（C2专项/真实通道通过，独立代码审查与T1覆盖）
+
+- CC-02B-STORE v1.1/Goal active，尚未ACCEPTED。首版冻结positive-v1 raw386/source308 a07fb303…/exportdc9a7759…，允许六文件/无框外差异，旧资料与HEAD/index保持。
+- C1接口原红9f/exit1已经分离归档；C2四文件receipt12/min25/core17/server61，总115p/0f/0skip，51.07sec，各一次exit0；real-v1同代码加密TCP/双HTTP/validJSON重启27观察true/exit0。不是全部ST矩阵或final full。
+- store_code_review独立读Task/Pro/冻结真实diff/日志/覆盖；backend已收到仅补T1预校验/unknown全入口/known前后序测试，应用源暂保持C2，测试增加需新冻结版本，不沿旧测试结果。
+- 主控唯一pytest/实通道/资料；原两个验证进程已经结束，无待恢复应用/pytest。本机原日志/command/summary/proof均按label保留，helper只namespace，不改正式门禁/依赖。
+- 下一动作T1稳定通知后隔离新测试（可能先红）+处理独立真实must，S2/S3/Event/IO/矩阵满足后才领域与唯一同版full。资源/UI/loader/首次失败跨重启/发布仍无扩大保证，不Git交付/真实data/外部消息/heartbeat。
+
+## 历史检查点 STORE-CP-02（v1.1预审关闭与唯一backend放行）
+
+- CC-02B-STORE v1.1/Goal active；store_impl_review独立预审四契约must已关闭，允许S1→S2→S3。用户本次直接批准已满足，不重复要求子任务批准。
+- M01–M05/ST01–12/24原矩阵与全部snapshot字段已冻结；compat活动Hub.save绑定同writer，已知前后序真实bytes证据，origin confirmed三种/其它None，普通persist仅trigger。前序无op允许尚未t0清理的合法私有记录，不能错当已提交op清理残留。
+- HEAD/base df487cf/tree0db5ddaa/branch/index原样，原382 entry源镜像/七旧资料保留；入场源码307 c647d65c。旧Goal已结束/主控idle/heartbeat PAUSED，无待恢复应用或测试。
+- 主控唯一资料/entry/导出/helper/pytest调度；store_backend已GO唯一server.py/server_store.py+新receipt测试/旧min/core/server hooks共六文件；store_impl_review不参与编写/实现。
+- 下一动作backend新专项稳定输入通知→主控入场raw叠同测试原红→S1/S2/S3实现与新候选修绿；代码稳定/py_compile后才取正例导出，不重复同版测试/不导出WIP。
+- backend阶段检查点已停写，六文件语法/diff-check通过；C1原红9failed已归档，positive-v1原字节候选冻结，将唯一运行四文件初绿。源308/旧资料/HEAD-index边界通过，不冒称完整矩阵或行为验收；不pull/切分支/真实data/Git交付/依赖/正式门禁/资源/UI/外部消息/heartbeat。
+
+## 历史检查点 STORE-CP-01（用户批准与正式Task预审）
+
+- CC-02B-STORE v1，用户本聊天直接批准按Pro审查意见实施；Q1–Q4/S1选定有技术决定，M01–M05补入Task和12补正组/24矩阵，新Goal active。
+- 分享网页仅登录页，但只读对应最新Pro回答已取得，输入附件9120aa…与本Pro材料逐字节一致；选定回答本机SHA de107ad9…，未复制公开私有全文/聊天ID或发消息。
+- HEAD/base df487cf18a0829fc0428a4ab640bcb0e24cc8866/tree0db5ddaa/branch codex/cc02a-consistency/index空，七旧资料dirty原字节382文件与原index已镜像_tmp_gui/cc02b-store-implementation/entry.json/entry-source/entry-index。
+- source307仍CORE c647d65c…；新应用变化必须另原红/修绿/领域/真实JSON/实通道/最终同版全量，1392仅历史。本轮目前无应用/pytest/Git进程，旧主控idle/原Goal结束，heartbeat PAUSED。
+- 主控唯一资料/调度；store_impl_map只读定位完成，store_impl_review独立预审中；backend尚未写代码/tests。
+- 独立Task预审四契约must已补入v1.1（绑定兼容writer、已知前后序、origin、trigger唯一编码/全部snapshot字段），待独立确认关闭后唯一backend按S1→S2→S3实施；主控沿用已有隔离helper仅新namespace，不改正式run.py/dev.ps1或依赖，不pull/切分支/Git交付/真实data/外部消息/资源代码。
+
+## 历史检查点 STORE-SCOPE-CP-03（独立资料验收与交付收口）
+
+- CC-02B-STORE-SCOPE v1已ACCEPTED（资料）；store_docs_review独立正式终审当前clarified2无未关闭资料must。Goal工具已确认complete（1067秒，约18分钟），实施draft-v1仍非READY。
+- Pro材料v1/Q1–Q4与有限草案24项未来矩阵已冻结；正文ID42a59b58911432c839e4737192e04cd6835d28ab1e42c0568298ad6b11c35006（Task/Pro/DRAFT/PROJECT_MEMORY）；CC/Review/投影仅流转不入正文ID。
+- HEAD/base df487cf18a0829fc0428a4ab640bcb0e24cc8866/tree0db5ddaa/branch codex/cc02a-consistency/index原9ee16b3e…保持；仅七Markdown未提交，307源/tests/依赖与CORE c647d65c…逐项0mismatch。
+- 历史候选checker clarified2 PASS：378旧→382当前，仅3M+4新doc，当时125相对链接/投影/diff-check/原旧设计和版本边界通过；最终accepted/pre-complete及resource_facts独立机械复算PASS/132链接/七doc边界/正文一致，无must；不应用/pytest。
+- 原CORE115文件1392/0/2证据保持，本批所有24未来矩阵未运行，不重复同版门禁。PR5此前只读核对head df487cf/open/draft/未merge；无Git交付。
+- 主控唯一七文档；存储/资源事实只读完成，独立资料审查完成；活动仅文档边界终核，无应用/测试/旧进程需恢复，旧Goal complete/heartbeat PAUSED。
+- 本批已完成独立资料和机械终核，流转小must也已独立关闭；七文档最终hash另捕获，Goal工具complete。本批到终点停止；下一动作仅Pro Q1–Q4必要决定和用户下一有限Task批准，不能自动开代码或发消息。
+
+## 历史检查点 STORE-SCOPE-CP-02（正文候选与独立资料审查）
+
+- CC-02B-STORE-SCOPE v1/Goal active，资料候选Pro v1与实施draft-v1已落盘；不是代码READY。Q1–Q4必要Pro决定与用户下一有限实施批准另取得。
+- HEAD/base df487cf/tree0db5ddaa/branch codex/cc02a-consistency/index原hash保持；当前仅批准七Markdown dirty。原CORE应用/tests/依赖307须与c647d65c门禁manifest逐项核对，不复跑同版应用门禁。
+- 主控唯一文档；store_facts存储事实/resource_facts资源事实只读；store_docs_review未参与编写，独立从Task/实际diff/源码/边界证据审查。
+- 已完成已修前置区分、S1最小bytes/阶段IO/单调ack/有限unknown方案、文件接口锁序失败重启边界及24项未来矩阵；RESOURCE四类静态锚点已记录，未来矩阵均未运行。
+- 当前活动仅文档checker/独立资料审查，没有应用/pytest需恢复；旧主控idle/旧Goal complete，heartbeat PAUSED。
+- 下一动作处理普通资料必须项，完成相对链接/投影/HEAD-index/378边界与307原字节核验，独立终审通过后交付并结束本Goal。不Git交付/真实data/外部消息/代码实施。
+
+## 历史检查点 STORE-SCOPE-CP-01（资料接管与只读核对）
+
+- CC-02B-STORE-SCOPE v1，用户本聊天明确批准资料与有限Task冻结；Goal active，主控为“准备 CC-02B-STORE-SCOPE”。
+- HEAD/base df487cf18a0829fc0428a4ab640bcb0e24cc8866，tree0db5ddaa…，branch codex/cc02a-consistency；入场clean/index空，378原字节清单已保存_tmp_gui/cc02b-store-scope/entry.json。
+- 旧主控“整理身份退役设计审查材料”idle/最近轮completed，原Goal complete；PR5只读核对open/draft/未merge/head df487cf/base maincc7e295，本聊天入场get_goal null后新建资料Goal。
+- 无项目应用/pytest/Git进程需恢复；检查命令自身pwsh不算应用；旧321-fish只读核对PAUSED。未pull/fetch/切分支/重复门禁。
+- 主控唯一七Markdown；store_facts/resource_facts只读。已完成启动恢复/版本边界；尚未完成最小方案/Pro问题/草案/独立审查/文档检查。
+- 下一动作核对实际save与退役链，整理版本化最小候选；普通资料整改自主推进。不改应用测试依赖、不应用/pytest/真实data/Git交付/外部消息/heartbeat。
+
+## 历史检查点 PR03-CP-03（独立树审查与实际PR交付）
 
 - PR-DELIVERY-03 v1已ACCEPTED；本次Goal到三文档/远端终核后结束。主控唯一Git/资料，下一STORE-SCOPE仅提示词未开工。
 - code e91c1be（parent fc9c991/tree edfa04b3）、docs13ad592（parent e91c1be/tree f3983f65）；6code+13docs精确。后续flow仅指挥中心/本Review/生成清单，实际HEAD从Git/PR读取，不构造自引用SHA。

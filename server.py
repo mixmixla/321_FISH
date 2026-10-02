@@ -18,6 +18,7 @@ import math
 import http.client
 import ssl
 from collections import defaultdict, deque
+from dataclasses import dataclass
 from html.parser import HTMLParser
 from urllib.parse import urlparse
 import json
@@ -35,6 +36,7 @@ import auth
 import stickers
 import bots as _bots
 import cloud_history as cloud_history_mod
+import server_store as server_store_mod
 
 
 def _now() -> float:
@@ -47,6 +49,48 @@ PWD_MAX = 64                 # R47：昵称密码最大长度（明文，PBKDF2 
 # 不属于该清单；字段即使是空字符串或 False 也要保持其原有值。
 _KNOWN_PROFILE_FIELDS = ("pwd", "sign", "avatar", "invisible", "status",
                          "remarks")
+
+
+@dataclass(frozen=True)
+class CommitReceipt:
+    """运行态真实 bytes receipt；不包含第二份快照正文，也不落盘。"""
+
+    length: int | None
+    sha256: str | None
+    capture_request_seq: int | None
+    origin: str
+    operation_ids: tuple[str, ...] = ()
+
+    @property
+    def content_sha256(self) -> str | None:
+        return self.sha256
+
+    @property
+    def digest(self) -> str | None:
+        return self.sha256
+
+    @property
+    def ops(self) -> tuple[str, ...]:
+        return self.operation_ids
+
+    def __getitem__(self, key):
+        if key == "length":
+            return self.length
+        if key in ("sha256", "content_sha256", "digest"):
+            return self.sha256
+        if key == "capture_request_seq":
+            return self.capture_request_seq
+        if key == "origin":
+            return self.origin
+        if key in ("operation_ids", "ops"):
+            return self.operation_ids
+        raise KeyError(key)
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
 
 # ---------- R26D 链接预览（服务器出网抓取，自动；SSRF 防护 + 大小/时长上限） ----------
@@ -547,7 +591,7 @@ class Hub:
         self._persist_dirty = False
         # R65：以"内容指纹"替代常驻的第二份全量快照做无变更判定。
         # 旧实现把整份 _snapshot_state() 再深拷贝常驻、并用递归 dict 比较判定相等：
-        # 内存翻倍、大状态下比较慢。改为只保留一次 md5(json) 摘要（32 字节字符串），
+        # 内存翻倍、大状态下比较慢。改为只保留一次严格 JSON bytes SHA-256 摘要，
         # 比较退化为字符串比对。指纹仅在 worker / flush 真正 save 成功后推进，
         # 失败则留旧值（避免把失败写当已落盘而漏掉兜底重写）。
         self._persist_fp = None
@@ -563,10 +607,89 @@ class Hub:
         self._persist_wake = threading.Event()
         self._persist_closing = False
         self._persist_worker_thread = None
+        # CC-02B：运行态 receipt/未决候选；不写入 state.json，不保存第二份
+        # 全量快照。未决候选只保留真实 bytes 标识和有限退役上下文，直到
+        # strict read 能够解释或下一次受控提交完成。
+        self._persist_receipt = None
+        self._persist_unresolved = None
+        self._persist_inflight = None
+        self._persist_last_result = None
+        self._persist_success_evidence = {}
+        self._persist_known_shas = set()
         if store_dir:
             from server_store import ServerStore
             self.store = ServerStore(os.path.join(store_dir, "state.json"))
+            self.store._bind_hub_writer(self._bound_store_save)
         self._restore(self.store.load() if self.store else {})
+        if self.store is not None:
+            try:
+                loaded = self.store.read_bytes_result()
+                if (getattr(loaded, "status", None) == "bytes"
+                        and isinstance(getattr(loaded, "payload", None), bytes)
+                        and isinstance(getattr(loaded, "sha256", None), str)):
+                    strict_state = self._strict_state_from_bytes(loaded.payload)
+                    strict_retired = strict_state.get("retired") or {}
+                    source_valid = (isinstance(strict_retired, dict)
+                                    and not self._retired_schema_invalid)
+                    if source_valid and self.retired:
+                        for uid, record in self.retired.items():
+                            raw = strict_retired.get(str(uid))
+                            if raw != record:
+                                source_valid = False
+                                break
+                    if source_valid:
+                        self._persist_known_shas.add(loaded.sha256)
+                        if self.retired:
+                            for uid in self.retired:
+                                op = self._retire_ops.get(uid)
+                                if isinstance(op, dict):
+                                    op["origin"] = "restored_valid_json"
+                            self._persist_receipt = CommitReceipt(
+                                origin="restored_valid_json", sha256=None,
+                                length=None, capture_request_seq=None,
+                                operation_ids=tuple(
+                                    str(record.get("operation_id"))
+                                    for record in self.retired.values()
+                                    if isinstance(record, dict)
+                                    and isinstance(record.get("operation_id"), str)))
+                    elif self.retired:
+                        for uid in self.retired:
+                            op = self._retire_ops.get(uid)
+                            if isinstance(op, dict):
+                                op.update({
+                                    "status": "unknown",
+                                    "origin": None,
+                                    "content_sha256": None,
+                                    "content_length": None,
+                                    "failed_stage": "restore",
+                                    "error_code": "strict_source_invalid",
+                                    "retryable": False,
+                                })
+                else:
+                    for uid in self.retired:
+                        op = self._retire_ops.get(uid)
+                        if isinstance(op, dict):
+                            op.update({
+                                "status": "unknown", "origin": None,
+                                "content_sha256": None,
+                                "content_length": None,
+                                "failed_stage": "restore",
+                                "error_code": "strict_source_invalid",
+                                "retryable": False,
+                            })
+            except Exception:
+                if self.retired:
+                    for uid in self.retired:
+                        op = self._retire_ops.get(uid)
+                        if isinstance(op, dict):
+                            op.update({
+                                "status": "unknown", "origin": None,
+                                "content_sha256": None,
+                                "content_length": None,
+                                "failed_stage": "restore",
+                                "error_code": "strict_source_invalid",
+                                "retryable": False,
+                            })
         # R35 内置 Bots：注册进 known（type=bot，永远在线；uid 900+ 高位段）。
         # 必须在 _restore 之后（restore 会整体替换 known，注册放前面会被抹掉）
         for _b in _bots.BOTS:
@@ -604,7 +727,7 @@ class Hub:
             def _copy_member_val(v):
                 return {kk: (dict(vv) if isinstance(vv, dict) else vv)
                         for kk, vv in v.items()}
-            return {
+            return copy.deepcopy({
                 "bus": {"seq": seq, "channels": channels},
                 "uid_seq": self._uid_seq,
                 "gid_seq": self._gid_seq,
@@ -654,7 +777,7 @@ class Hub:
                             for pid, post in self.moments.items()},
                 "moment_covers": {str(u): dict(v) for u, v in self.moment_covers.items()},
                 "pid_seq": self._pid_seq,
-            }
+            })
 
     @staticmethod
     def _restore_identity_int(value) -> int:
@@ -901,7 +1024,10 @@ class Hub:
             self.retired = restored_retired
             self._retire_ops = {
                 uid: {"status": "confirmed", "operation_id": rec["operation_id"],
-                      "target_uid": uid, "target_nick": rec["nick"]}
+                      "target_uid": uid, "target_nick": rec["nick"],
+                      "origin": None,
+                      "content_sha256": None, "content_length": None,
+                      "retryable": False}
                 for uid, rec in restored_retired.items()
             }
         except Exception:
@@ -1134,14 +1260,10 @@ class Hub:
 
     @staticmethod
     def _state_fingerprint(state: dict) -> str:
-        """状态内容指纹（md5(规范化 JSON)）：替代常驻快照做"无变更"判定。
-        state 由 _snapshot_state() 产出，已保证可 JSON 序列化（default=str 兜底）。"""
-        try:
-            blob = json.dumps(state, sort_keys=True, ensure_ascii=False,
-                              default=str)
-        except (TypeError, ValueError):
-            blob = repr(state)
-        return hashlib.md5(blob.encode("utf-8", "replace")).hexdigest()
+        """状态内容指纹取严格 JSON bytes SHA-256，替代常驻快照做无变更判定。
+        state 由 _snapshot_state() 产出；严格编码失败直接传播。"""
+        encoded = server_store_mod.encode_state(state)
+        return encoded.sha256
 
     def _persist_request(self) -> int:
         with self._persist_lock:
@@ -1152,46 +1274,699 @@ class Hub:
         self._ensure_persist_worker()
         with self._persist_lock:
             self._persist_slot = None
-            self._persist_slot_fp = fp
+            self._persist_slot_fp = None
             self._persist_pending = True
             self._persist_wake.set()
+
+    @staticmethod
+    def _normalize_save_result(result, encoded):
+        """把 typed seam 或历史 bool hook 统一成显式 SaveResult。"""
+        if isinstance(result, server_store_mod.SaveResult):
+            return result
+        length = encoded.length
+        digest = encoded.sha256
+        if type(result) is bool:
+            return server_store_mod.SaveResult(
+                "committed" if result else "not_committed",
+                "compat_save", None if result else "save_failed",
+                not result, length, digest)
+        return server_store_mod.SaveResult(
+            "not_committed", "compat_save", "invalid_save_result",
+            False, length, digest)
+
+    def _bound_store_save(self, kind, _state):
+        """活动 Hub 的兼容 Store.save/save_bytes 入口。
+
+        外部旧调用只触发同一 writer 的 fresh capture；传入的旧 snapshot 或
+        bytes 不会成为第二条写入路径。``save_bytes`` 调用返回本次 typed
+        result，旧 ``save`` 调用仍返回 bool。
+        """
+        if self.store is None:
+            if kind == "bytes":
+                return server_store_mod.SaveResult(
+                    "not_committed", "hub", "store_disabled", False, 0, None)
+            return False
+        self._persist_request()
+        before_result = self._persist_last_result
+        with self._persist_writer_lock:
+            with self._persist_lock:
+                capture_seq = self._persist_request_seq
+            try:
+                ok = self._commit_current_snapshot(capture_seq, force=True)
+            except Exception as exc:
+                ok = False
+                self._persist_inflight = None
+                with self._persist_lock:
+                    self._persist_dirty = True
+                self._persist_last_result = server_store_mod.SaveResult(
+                    "not_committed", "capture", type(exc).__name__,
+                    False, 0, None)
+        if kind == "bytes":
+            result = self._persist_last_result
+            if (not isinstance(result, server_store_mod.SaveResult)
+                    or result is before_result
+                    or (ok and result.effect != "committed")
+                    or (not ok and result.effect == "committed")):
+                receipt = self._persist_receipt
+                if ok:
+                    result = server_store_mod.SaveResult(
+                        "committed", "hub", None, False,
+                        receipt.length if isinstance(receipt, CommitReceipt) else 0,
+                        receipt.sha256 if isinstance(receipt, CommitReceipt) else None)
+                else:
+                    result = server_store_mod.SaveResult(
+                        "uncertain" if self._persist_unresolved else "not_committed",
+                        "hub", "unknown_pending" if self._persist_unresolved
+                        else "commit_not_confirmed", False, 0, None)
+                self._persist_last_result = result
+            return server_store_mod.SaveResult(
+                result.effect, result.stage, result.error_code,
+                result.retryable, result.length, result.sha256)
+        return bool(ok)
+
+    def _store_commit(self, encoded):
+        """通过现有 Store private bytes seam 绑定唯一 writer。"""
+        try:
+            permit = getattr(self.store, "_hub_write_permit", None)
+            save_fn = getattr(self.store, "save")
+            native_save = (getattr(save_fn, "__func__", None)
+                           is server_store_mod.ServerStore.save)
+            save_generation = getattr(self.store, "_save_generation", None)
+            if permit is None:
+                result = save_fn(encoded)
+            else:
+                with permit():
+                    result = save_fn(encoded)
+        except Exception:
+            return server_store_mod.SaveResult(
+                "uncertain", "compat_save", "save_exception",
+                False, encoded.length, encoded.sha256)
+        if (native_save
+                and save_generation is not None
+                and getattr(self.store, "_save_generation", None) != save_generation
+                and isinstance(getattr(self.store, "_last_save_result", None),
+                               server_store_mod.SaveResult)):
+            return self.store._last_save_result
+        return self._normalize_save_result(result, encoded)
+
+    @staticmethod
+    def _uid_key_present(mapping, uid: int) -> bool:
+        if not isinstance(mapping, dict):
+            return False
+        return any(key == uid or key == str(uid) for key in mapping)
+
+    @staticmethod
+    def _uid_value(value, uid: int) -> bool:
+        return value == uid or value == str(uid)
+
+    def _retire_candidates_for_state(self, state: dict) -> list[dict]:
+        """只从 captured state 取得 operation 来源，live state 仅用于选 op。"""
+        with self.lock:
+            pending = [
+                (int(uid), dict(op))
+                for uid, op in self._retire_ops.items()
+                if isinstance(op, dict)
+                and op.get("status") in ("pending", "failed")
+            ]
+        records = state.get("retired") if isinstance(state, dict) else None
+        records = records if isinstance(records, dict) else {}
+        out = []
+        for uid, op in pending:
+            record = records.get(str(uid), records.get(uid))
+            out.append({
+                "uid": uid,
+                "operation_id": op.get("operation_id"),
+                "target_nick": op.get("target_nick"),
+                "record": record,
+            })
+        return out
+
+    def _capture_persist_state(self) -> tuple[dict, list[dict]]:
+        """Capture state and its op metadata under one Hub→bus boundary."""
+        with self.lock:
+            state = self._snapshot_state()
+            candidates = self._retire_candidates_for_state(state)
+            return state, candidates
+
+    def _retirement_retry_waiting(self) -> bool:
+        """unknown 退役状态在对账前暂停全部 writer。"""
+        with self.lock:
+            for uid, op in self._retire_ops.items():
+                if not isinstance(op, dict) or op.get("status") != "unknown":
+                    continue
+                record = self.retired.get(uid)
+                if (isinstance(record, dict)
+                        and record.get("operation_id") == op.get("operation_id")):
+                    return True
+        return False
+
+    def _failed_retry_preflight(self, candidates: list[dict]) -> bool:
+        """失败 op 仅在权威盘面可证为本进程已知合法前序时重试。"""
+        failed = []
+        with self.lock:
+            for candidate in candidates:
+                op = self._retire_ops.get(candidate.get("uid"))
+                if isinstance(op, dict) and op.get("status") == "failed":
+                    failed.append(candidate)
+        if not failed:
+            return True
+        try:
+            read = self.store.read_bytes_result()
+            if getattr(read, "status", None) != "bytes":
+                return False
+            payload = getattr(read, "payload", None)
+            actual_sha = getattr(read, "sha256", None)
+            if not isinstance(payload, bytes) or actual_sha not in self._persist_known_shas:
+                return False
+            state = self._strict_state_from_bytes(payload)
+            if not self._verify_reconcile_state(state):
+                return False
+        except (OSError, UnicodeError, TypeError, ValueError, OverflowError):
+            return False
+        return all(self._predecessor_status(state, candidate) == "predecessor"
+                   for candidate in failed)
+
+    def _validate_retirement_candidate(self, state: dict,
+                                       candidate: dict) -> tuple[bool, str | None]:
+        """验证 captured state 的有限 CORE 清理，不读取 live 状态。"""
+        uid = candidate.get("uid")
+        operation_id = candidate.get("operation_id")
+        nick = candidate.get("target_nick")
+        records = state.get("retired") if isinstance(state, dict) else None
+        record = records.get(str(uid), records.get(uid)) if isinstance(records, dict) else None
+        if (not isinstance(record, dict)
+                or set(record) != {"nick", "retired_at", "operation_id"}
+                or record.get("nick") != nick
+                or record.get("operation_id") != operation_id):
+            return False, "retirement_record"
+        if isinstance(records, dict):
+            for raw_uid, other in records.items():
+                if (not isinstance(other, dict)
+                        or (other.get("nick") == nick
+                            and not self._uid_value(raw_uid, uid))):
+                    return False, "retirement_conflict"
+        nick_map = state.get("nick_to_uid")
+        if not isinstance(nick_map, dict) or not self._uid_value(nick_map.get(nick), uid):
+            return False, "nick_mapping"
+        for name, mapped in nick_map.items():
+            if name != nick and self._uid_value(mapped, uid):
+                return False, "nick_mapping_conflict"
+
+        known = state.get("known") or {}
+        if self._uid_key_present(known, uid):
+            return False, "known_residual"
+        drafts = state.get("drafts") or {}
+        if isinstance(drafts, dict) and any(
+                isinstance(key, str) and key.startswith(f"{uid}|")
+                for key in drafts):
+            return False, "draft_residual"
+        scheds = state.get("scheds") or {}
+        if self._uid_key_present(scheds, uid):
+            return False, "sched_residual"
+        blocks = state.get("blocks") or {}
+        if self._uid_key_present(blocks, uid):
+            return False, "block_residual"
+        reads = state.get("reads") or {}
+        if isinstance(reads, dict):
+            for readers in reads.values():
+                if self._uid_key_present(readers, uid):
+                    return False, "read_residual"
+
+        groups = state.get("groups") or {}
+        if isinstance(groups, dict):
+            for group in groups.values():
+                if not isinstance(group, dict):
+                    return False, "group_invalid"
+                if self._uid_value(group.get("owner"), uid):
+                    return False, "group_owner_residual"
+                admins = group.get("admins") or []
+                if uid in admins or str(uid) in admins:
+                    return False, "group_admin_residual"
+                if self._uid_key_present(group.get("members"), uid):
+                    return False, "group_member_residual"
+                if self._uid_key_present(group.get("mutes"), uid):
+                    return False, "group_mute_residual"
+
+        bus = state.get("bus") or {}
+        channels = bus.get("channels") if isinstance(bus, dict) else {}
+        if isinstance(channels, dict):
+            for messages in channels.values():
+                for message in messages or ():
+                    if isinstance(message, dict) and self._uid_value(message.get("uid"), uid):
+                        return False, "bus_message_residual"
+        burn = state.get("burn") or {}
+        if isinstance(burn, dict):
+            for burn_record in burn.values():
+                if isinstance(burn_record, dict) and self._uid_value(burn_record.get("uid"), uid):
+                    return False, "burn_residual"
+        return True, None
+
+    @staticmethod
+    def _strict_state_from_bytes(payload: bytes) -> dict:
+        """严格解析权威 bytes；重复键和 NaN 常量均拒绝。"""
+        def reject_constant(value):
+            raise ValueError(f"invalid JSON constant: {value}")
+
+        def reject_duplicate(pairs):
+            out = {}
+            for key, value in pairs:
+                if key in out:
+                    raise ValueError("duplicate JSON object key")
+                out[key] = value
+            return out
+
+        text = payload.decode("utf-8")
+        value = json.loads(text, parse_constant=reject_constant,
+                           object_pairs_hook=reject_duplicate)
+        if not isinstance(value, dict):
+            raise ValueError("state root must be object")
+        # Parsed JSON escapes can contain a Python surrogate even though the
+        # raw file bytes were valid UTF-8.  Reject that value without
+        # re-encoding it or replacing the actual file digest.
+        server_store_mod._validate_json_value(value, set())
+        return value
+
+    def _verify_reconcile_state(self, state: dict) -> bool:
+        """校验对账所需的现有身份/核心容器结构，宁可保守 unknown。"""
+        dict_fields = (
+            "nick_to_uid", "known", "retired", "groups", "reads", "pins",
+            "burn", "blocks", "polls", "drafts", "scheds",
+            "custom_stickers", "sticker_pack_meta", "group_files", "tasks",
+            "fish_board", "moments", "moment_covers",
+        )
+        for field in dict_fields:
+            if field in state and not isinstance(state[field], dict):
+                return False
+        nick_map = state.get("nick_to_uid") or {}
+        for name, uid in nick_map.items():
+            if not isinstance(name, str):
+                return False
+            try:
+                self._restore_identity_int(uid)
+            except (TypeError, ValueError):
+                return False
+        known = state.get("known") or {}
+        for raw_uid, value in known.items():
+            try:
+                self._restore_identity_int(raw_uid)
+            except (TypeError, ValueError):
+                return False
+            if not isinstance(value, dict):
+                return False
+        retired = state.get("retired") or {}
+        for raw_uid, record in retired.items():
+            try:
+                retired_uid = self._restore_identity_int(raw_uid)
+            except (TypeError, ValueError):
+                return False
+            if retired_uid in _bots.BOT_BY_UID:
+                return False
+            if (not isinstance(record, dict)
+                    or set(record) != {"nick", "retired_at", "operation_id"}
+                    or not isinstance(record.get("nick"), str)
+                    or not record.get("nick", "").strip()
+                    or not isinstance(record.get("operation_id"), str)
+                    or not record.get("operation_id", "").strip()
+                    or isinstance(record.get("retired_at"), bool)
+                    or not isinstance(record.get("retired_at"), (int, float))):
+                return False
+            try:
+                if not math.isfinite(float(record.get("retired_at"))):
+                    return False
+            except (TypeError, ValueError, OverflowError):
+                return False
+            if (not self._uid_value(nick_map.get(record.get("nick")), retired_uid)
+                    or self._uid_key_present(known, retired_uid)):
+                return False
+        groups = state.get("groups") or {}
+        for raw_gid, group in groups.items():
+            try:
+                self._restore_group(raw_gid, group)
+            except (TypeError, ValueError, KeyError):
+                return False
+        reads = state.get("reads") or {}
+        for readers in reads.values():
+            if not isinstance(readers, dict):
+                return False
+            for raw_uid, seq in readers.items():
+                try:
+                    self._restore_identity_int(raw_uid)
+                    self._restore_read_seq(seq)
+                except (TypeError, ValueError):
+                    return False
+        blocks = state.get("blocks") or {}
+        for raw_uid, targets in blocks.items():
+            try:
+                self._restore_identity_int(raw_uid)
+            except (TypeError, ValueError):
+                return False
+            if not isinstance(targets, list):
+                return False
+            try:
+                for target in targets:
+                    self._restore_identity_int(target)
+            except (TypeError, ValueError):
+                return False
+        bus = state.get("bus") or {}
+        if not isinstance(bus, dict):
+            return False
+        channels = bus.get("channels", {})
+        if not isinstance(channels, dict):
+            return False
+        if any(not isinstance(messages, list) for messages in channels.values()):
+            return False
+        if any(not isinstance(message, dict)
+               for messages in channels.values() for message in messages):
+            return False
+        burn = state.get("burn") or {}
+        if any(not isinstance(record, dict) for record in burn.values()):
+            return False
+        return True
+
+    def _predecessor_status(self, state: dict, candidate: dict) -> str:
+        """区分可解释的无 op 前序与同 op/异 op 冲突。"""
+        uid = candidate.get("uid")
+        nick = candidate.get("target_nick")
+        op_id = candidate.get("operation_id")
+        records = state.get("retired") or {}
+        record = records.get(str(uid), records.get(uid)) if isinstance(records, dict) else None
+        if isinstance(record, dict):
+            if (record.get("operation_id") == op_id
+                    and record.get("nick") == nick):
+                return "same_op"
+            return "conflict"
+        if isinstance(records, dict):
+            for raw_uid, value in records.items():
+                if isinstance(value, dict) and value.get("nick") == nick:
+                    return "conflict"
+                if self._uid_value(raw_uid, uid):
+                    return "conflict"
+        nick_map = state.get("nick_to_uid") or {}
+        if not self._uid_value(nick_map.get(nick), uid):
+            return "conflict"
+        for name, mapped in nick_map.items():
+            if name != nick and self._uid_value(mapped, uid):
+                return "conflict"
+        return "predecessor"
+
+    def _update_retirement_result(self, candidate: dict, *, status: str,
+                                  origin: str | None = None,
+                                  sha256: str | None = None,
+                                  length: int | None = None,
+                                  failed_stage: str | None = None,
+                                  error_code: str | None = None,
+                                  retryable: bool = False) -> None:
+        uid = candidate.get("uid")
+        operation_id = candidate.get("operation_id")
+        with self.lock:
+            op = self._retire_ops.get(uid)
+            if not isinstance(op, dict) or op.get("operation_id") != operation_id:
+                return
+            if op.get("status") == "confirmed" and status != "confirmed":
+                return
+            op.update({
+                "status": status,
+                "target_uid": uid,
+                "target_nick": candidate.get("target_nick"),
+                "origin": origin if status == "confirmed" else None,
+                "content_sha256": sha256 if status == "confirmed" else None,
+                "content_length": length if status == "confirmed" else None,
+                "failed_stage": failed_stage,
+                "error_code": error_code,
+                "retryable": bool(retryable) if status == "failed" else False,
+            })
+
+    def _ack_commit(self, state: dict, encoded, result,
+                    capture_seq: int,
+                    captured_candidates: list[dict] | None = None) -> bool:
+        """统一处理 writer/flush/worker receipt，confirmed 单调。"""
+        candidates = (list(captured_candidates)
+                      if captured_candidates is not None
+                      else self._retire_candidates_for_state(state))
+        if result.effect == "committed":
+            for candidate in candidates:
+                valid, reason = self._validate_retirement_candidate(state, candidate)
+                if not valid:
+                    self._update_retirement_result(
+                        candidate, status="failed", failed_stage="verify",
+                        error_code=reason or "retirement_verify_failed",
+                        retryable=False)
+                else:
+                    self._update_retirement_result(
+                        candidate, status="confirmed", origin="written",
+                        sha256=encoded.sha256, length=encoded.length)
+                    self._persist_success_evidence.setdefault(
+                        candidate["operation_id"], set()).add(encoded.sha256)
+        elif result.effect == "uncertain":
+            for candidate in candidates:
+                self._update_retirement_result(
+                    candidate, status="unknown", failed_stage=result.stage,
+                    error_code=result.error_code, retryable=False)
+            self._persist_unresolved = {
+                "sha256": encoded.sha256,
+                "length": encoded.length,
+                "capture_request_seq": capture_seq,
+                "candidates": [dict(candidate) for candidate in candidates],
+            }
+        else:
+            for candidate in candidates:
+                self._update_retirement_result(
+                    candidate, status="failed", failed_stage=result.stage,
+                    error_code=result.error_code,
+                    retryable=(result.retryable is True))
+        self._persist_last_result = result
+        return result.effect == "committed"
+
+    def _reconcile_persist_unknown(self) -> str:
+        """对账未决候选；返回 confirmed/failed/blocked/none。"""
+        unresolved = self._persist_unresolved
+        if not unresolved:
+            return "none"
+        try:
+            read = self.store.read_bytes_result()
+        except Exception:
+            return "blocked"
+        if getattr(read, "status", None) != "bytes":
+            return "blocked"
+        payload = getattr(read, "payload", None)
+        if not isinstance(payload, bytes):
+            return "blocked"
+        try:
+            state = self._strict_state_from_bytes(payload)
+        except (UnicodeError, TypeError, ValueError, OverflowError, RecursionError):
+            return "blocked"
+        if not self._verify_reconcile_state(state):
+            return "blocked"
+        candidates = unresolved.get("candidates") or []
+        actual_sha = getattr(read, "sha256", None)
+        if not candidates:
+            if actual_sha == unresolved.get("sha256"):
+                length = getattr(read, "length", len(payload))
+                self._persist_receipt = CommitReceipt(
+                    origin="reconciled_current_json", sha256=actual_sha,
+                    length=length,
+                    capture_request_seq=unresolved.get("capture_request_seq"))
+                with self._persist_lock:
+                    self._persist_fp = actual_sha
+                self._persist_known_shas.add(actual_sha)
+                self._persist_unresolved = None
+                self._persist_last_result = server_store_mod.SaveResult(
+                    "committed", "reconcile", None, False, length, actual_sha)
+                return "confirmed"
+            if actual_sha in self._persist_known_shas:
+                self._persist_unresolved = None
+                self._persist_last_result = server_store_mod.SaveResult(
+                    "not_committed", "reconcile", "known_predecessor",
+                    True, getattr(read, "length", len(payload)), actual_sha)
+                return "failed"
+            return "blocked"
+        validity = [
+            (candidate, self._validate_retirement_candidate(state, candidate))
+            for candidate in candidates
+        ]
+        length = getattr(read, "length", len(payload))
+        operation_ids = tuple(
+            candidate.get("operation_id") for candidate, _ in validity
+            if isinstance(candidate.get("operation_id"), str))
+        all_valid = all(valid for _candidate, (valid, _reason) in validity)
+        current_candidate = (all_valid
+                             and actual_sha == unresolved.get("sha256"))
+        known_successor = (all_valid and all(
+            actual_sha in self._persist_success_evidence.get(
+                candidate.get("operation_id"), set())
+            for candidate, _ in validity))
+        if current_candidate or known_successor:
+            for candidate, _ in validity:
+                self._update_retirement_result(
+                    candidate, status="confirmed", origin="reconciled_current_json",
+                    sha256=actual_sha, length=length)
+            self._persist_receipt = CommitReceipt(
+                origin="reconciled_current_json", sha256=actual_sha,
+                length=length,
+                capture_request_seq=unresolved.get("capture_request_seq"),
+                operation_ids=operation_ids)
+            with self._persist_lock:
+                self._persist_fp = actual_sha
+            self._persist_known_shas.add(actual_sha)
+            self._persist_unresolved = None
+            self._persist_last_result = server_store_mod.SaveResult(
+                "committed", "reconcile", None, False, length, actual_sha)
+            return "confirmed"
+        known_predecessor = (actual_sha in self._persist_known_shas and all(
+            self._predecessor_status(state, candidate) == "predecessor"
+            for candidate, _ in validity))
+        if known_predecessor:
+            for candidate, _ in validity:
+                self._update_retirement_result(
+                    candidate, status="failed", failed_stage="reconcile",
+                    error_code="known_predecessor", retryable=True)
+            self._persist_unresolved = None
+            self._persist_last_result = server_store_mod.SaveResult(
+                "not_committed", "reconcile", "known_predecessor",
+                True, length, actual_sha)
+            return "failed"
+        return "blocked"
+
+    def _commit_current_snapshot(self, capture_seq: int,
+                                 *, force: bool = False) -> bool:
+        """writer lock 内 fresh capture → verify/encode → single Store seam。"""
+        unresolved = self._persist_unresolved
+        unresolved_has_retirement = bool(
+            unresolved and unresolved.get("candidates"))
+        reconciled = self._reconcile_persist_unknown()
+        if reconciled == "blocked":
+            with self._persist_lock:
+                self._persist_dirty = True
+            return False
+        if unresolved_has_retirement and reconciled in ("failed", "confirmed"):
+            # A known predecessor makes the old retirement attempt retryable,
+            # but must not let this same ordinary/flush writer publish the
+            # still-live tombstone.  Only the explicit same-op retry may set
+            # it pending again; a confirmed current JSON is already durable.
+            with self._persist_lock:
+                changed = self._persist_request_seq != capture_seq
+                self._persist_dirty = changed or reconciled == "failed"
+            return reconciled == "confirmed"
+        if self._retirement_retry_waiting():
+            with self._persist_lock:
+                self._persist_dirty = True
+            return False
+        state, candidates = self._capture_persist_state()
+        if not self._failed_retry_preflight(candidates):
+            with self._persist_lock:
+                self._persist_dirty = True
+            return False
+        for candidate in candidates:
+            valid, reason = self._validate_retirement_candidate(state, candidate)
+            if not valid:
+                self._persist_last_result = server_store_mod.SaveResult(
+                    "not_committed", "verify", reason or "retirement_verify_failed",
+                    False, 0, None)
+                self._update_retirement_result(
+                    candidate, status="failed", failed_stage="verify",
+                    error_code=reason or "retirement_verify_failed",
+                    retryable=False)
+                with self._persist_lock:
+                    self._persist_dirty = True
+                return False
+        try:
+            encoded = server_store_mod.encode_state(state)
+        except (TypeError, ValueError, OverflowError, UnicodeError, RecursionError) as exc:
+            self._persist_last_result = server_store_mod.SaveResult(
+                "not_committed", "encode", type(exc).__name__,
+                False, 0, None)
+            for candidate in candidates:
+                self._update_retirement_result(
+                    candidate, status="failed", failed_stage="encode",
+                    error_code=type(exc).__name__, retryable=False)
+            with self._persist_lock:
+                self._persist_dirty = True
+            return False
+        with self._persist_lock:
+            known_fp = self._persist_fp
+        if (not force and known_fp is not None
+                and encoded.sha256 == known_fp):
+            with self._persist_lock:
+                changed = self._persist_request_seq != capture_seq
+                self._persist_dirty = changed
+            if changed and not self._persist_closing:
+                self._persist_queue_trigger()
+            return True
+        self._persist_inflight = {
+            "sha256": encoded.sha256,
+            "length": encoded.length,
+            "capture_request_seq": capture_seq,
+            "candidates": [dict(candidate) for candidate in candidates],
+        }
+        result = self._store_commit(encoded)
+        ack_candidates = list(candidates)
+        try:
+            committed = self._ack_commit(
+                state, encoded, result, capture_seq, ack_candidates)
+        except Exception:
+            # The bytes may already have been replaced even when receipt/ack
+            # construction failed.  Preserve the captured candidates as
+            # unknown so the next query can reconcile the authority.
+            for candidate in ack_candidates:
+                self._update_retirement_result(
+                    candidate, status="unknown", failed_stage="ack",
+                    error_code="ack_exception", retryable=False)
+            self._persist_unresolved = {
+                "sha256": encoded.sha256,
+                "length": encoded.length,
+                "capture_request_seq": capture_seq,
+                "candidates": [dict(candidate) for candidate in ack_candidates],
+            }
+            self._persist_inflight = None
+            result = server_store_mod.SaveResult(
+                "uncertain", "ack", "ack_exception", False,
+                encoded.length, encoded.sha256)
+            self._persist_last_result = result
+            with self._persist_lock:
+                self._persist_dirty = True
+            return False
+        if committed:
+            self._persist_inflight = None
+            with self._persist_lock:
+                self._persist_fp = encoded.sha256
+                changed = self._persist_request_seq != capture_seq
+                self._persist_dirty = changed
+            self._persist_receipt = CommitReceipt(
+                origin="written", sha256=encoded.sha256,
+                length=encoded.length, capture_request_seq=capture_seq,
+                operation_ids=tuple(candidate.get("operation_id")
+                                    for candidate in candidates
+                                    if isinstance(candidate.get("operation_id"), str)))
+            self._persist_known_shas.add(encoded.sha256)
+            self._persist_unresolved = None
+            if changed and not self._persist_closing:
+                self._persist_queue_trigger()
+            return True
+        self._persist_inflight = None
+        with self._persist_lock:
+            self._persist_dirty = True
+        return False
 
     def _persist(self, force: bool = False) -> bool | None:
         """节流写盘：窗口内合并突发变更，dump+写盘交给后台 worker（latest-wins）。
         无 store 时为空操作；force=True 恒写（关键变更同步落盘，返回即已持久）。
 
-        R65：以内容指纹（md5(json)）判定无变更——不再常驻第二份全量快照、
+        R65：以严格 bytes 内容指纹判定无变更——不再常驻第二份全量快照、
         不做递归 dict 深比较。指纹仅在真正 save 成功后推进（失败留旧值，供 flush 兜底）。"""
         if self.store is None:
             return None
         request_seq = self._persist_request()
         if force:
-            # 关键变更（清空/解散/删号/Tombstone 等）：actual writer 取得
-            # writer lock 后才重新捕获当前状态；调用返回才表示真成功。
             return self._persist_sync(_request_seq=request_seq)
         now = time.time()
         if now - self._persist_last < self._persist_interval:
-            self._persist_dirty = True        # 仍在窗口内，稍后 sweeper 兜底
-            return None
-        # 在捕获前打代际标记；snapshot/fingerprint期间的请求必须保留 dirty。
-        capture_seq = request_seq
-        state = self._snapshot_state()            # 昂贵的全量私有快照——锁外构建
-        fp = self._state_fingerprint(state)
-        # 无新变更：指纹与最近一次"成功落盘"一致 → 不重建写盘（协调重复调用场景）
-        if self._persist_fp is not None and fp == self._persist_fp:
-            # R66：推进节流时钟，否则下一次 _persist() 会再次重建全量快照
-            # （如 _on_group_invite_get 等"无实际变更也调用"的路径）
-            self._persist_last = time.time()
             with self._persist_lock:
-                changed_during_capture = self._persist_request_seq != capture_seq
-                self._persist_dirty = changed_during_capture
-            if changed_during_capture:
-                self._persist_queue_trigger(fp)
-            return True
+                self._persist_dirty = True
+            return None
         self._persist_last = time.time()
         with self._persist_lock:
-            self._persist_dirty = self._persist_request_seq != capture_seq
-        self._persist_queue_trigger(fp)
+            self._persist_dirty = True
+        self._persist_queue_trigger()
         return None
 
     def _persist_sync(self, _old_state=None, _old_fp=None,
@@ -1213,30 +1988,15 @@ class Hub:
             with self._persist_lock:
                 capture_seq = self._persist_request_seq
             try:
-                state = self._snapshot_state()
-                fp = self._state_fingerprint(state)
-                ok = bool(self.store.save(state))
-            except Exception as e:
-                ok = False
-                exc = e
-            else:
-                exc = None
-            if ok:
+                return self._commit_current_snapshot(capture_seq, force=True)
+            except Exception as exc:
+                self._persist_inflight = None
                 with self._persist_lock:
-                    self._persist_fp = fp
-                    changed_during_io = self._persist_request_seq != capture_seq
-                    self._persist_dirty = changed_during_io
-                if changed_during_io and not self._persist_closing:
-                    self._persist_queue_trigger(fp)
-                return True
-            self._persist_dirty = True
-            try:
-                self.audit.log(type="persist_error",
-                               reason=f"同步落盘失败: {exc!r}")
-            except Exception:
-                pass
-            print(f"[persist] 同步落盘失败: {exc!r}", file=sys.stderr)
-            return False
+                    self._persist_dirty = True
+                self._persist_last_result = server_store_mod.SaveResult(
+                    "not_committed", "capture", type(exc).__name__,
+                    False, 0, None)
+                return False
 
     def _ensure_persist_worker(self) -> None:
         """懒启动后台落盘线程（daemon）。"""
@@ -1261,39 +2021,17 @@ class Hub:
                 self._persist_pending = False
                 self._persist_slot = None
             with self._persist_writer_lock:
-                # 只把槽当触发器；真正写盘前重新捕获最新完整状态。
                 with self._persist_lock:
                     capture_seq = self._persist_request_seq
                 try:
-                    state = self._snapshot_state()
-                    fp = self._state_fingerprint(state)
+                    self._commit_current_snapshot(capture_seq)
+                except Exception as exc:
+                    self._persist_inflight = None
                     with self._persist_lock:
-                        if self._persist_fp is not None and fp == self._persist_fp:
-                            changed_during_capture = self._persist_request_seq != capture_seq
-                            self._persist_dirty = changed_during_capture
-                            if changed_during_capture:
-                                self._persist_pending = True
-                                self._persist_wake.set()
-                            continue
-                    ok = bool(self.store.save(state))
-                except Exception as e:
-                    ok = False
-                if ok:
-                    with self._persist_lock:
-                        self._persist_fp = fp
-                        changed_during_io = self._persist_request_seq != capture_seq
-                        self._persist_dirty = changed_during_io
-                        if changed_during_io:
-                            self._persist_pending = True
-                            self._persist_wake.set()
-                    continue
-                try:
-                    self.audit.log(type="persist_error",
-                                   reason="后台落盘失败")
-                except Exception:
-                    pass
-                self._persist_dirty = True
-                print("[persist] 后台落盘失败", file=sys.stderr)
+                        self._persist_dirty = True
+                    self._persist_last_result = server_store_mod.SaveResult(
+                        "not_committed", "capture", type(exc).__name__,
+                        False, 0, None)
 
     def _persist_flush(self) -> None:
         """强制立即写盘（关停兜底 / sweeper 兜底）：合并为一次同步构建+落盘，
@@ -1855,16 +2593,37 @@ class Hub:
                 nick = op.get("target_nick", "")
                 op_id = op.get("operation_id", "")
             status = (op or {}).get("status") or ("confirmed" if rec else "unknown")
+            origin = (op or {}).get("origin")
+            if origin not in {"written", "reconciled_current_json",
+                              "restored_valid_json"}:
+                origin = None
+            content_sha256 = (op or {}).get("content_sha256")
+            content_length = (op or {}).get("content_length")
             out = {"status": status, "operation_id": op_id,
                    "target_uid": uid, "target_nick": nick,
                    "target_revision": None, "committed_revision": None,
-                   "content_sha256": None, "failed_stage": None,
-                   "error_code": None, "retryable": status in ("failed", "unknown")}
+                   "content_sha256": content_sha256 if status == "confirmed" else None,
+                   "content_length": content_length if status == "confirmed" else None,
+                   "origin": origin if status == "confirmed" else None,
+                   "failed_stage": None,
+                   "error_code": None,
+                   "retryable": False}
             if op:
                 for key in ("failed_stage", "error_code", "retryable"):
                     if key in op:
                         out[key] = op[key]
             return out
+
+    def _retirement_operation_id(self, uid: int) -> str | None:
+        """Read the runtime operation id without triggering disk reconcile."""
+        with self.lock:
+            op = self._retire_ops.get(uid)
+            if isinstance(op, dict) and isinstance(op.get("operation_id"), str):
+                return op["operation_id"]
+            record = self.retired.get(uid)
+            if isinstance(record, dict) and isinstance(record.get("operation_id"), str):
+                return record["operation_id"]
+        return None
 
     def _sched_still_valid(self, uid: int, r: dict) -> bool:
         """到点校验：私聊目标是否已拉黑我；群聊我是否仍是成员。"""
@@ -4113,6 +4872,12 @@ class Hub:
     def _admin_user_payload(self, target) -> dict | None:
         """系统管理员：构建某人信息+所属群载荷（target 为 uid 或已知昵称）。
         目标无效返回 None。"""
+        if (self.store is not None and self._persist_unresolved
+                and not self._persist_inflight):
+            # 查询路径先在 writer 边界内做一次只读 reconcile；不持 Hub
+            # 锁等待磁盘，也不因查询隐式创建新 operation/写入。
+            with self._persist_writer_lock:
+                self._reconcile_persist_unknown()
         uid = self._resolve_uid_for_admin(target)
         if uid is None:
             return None
@@ -4142,6 +4907,16 @@ class Hub:
         if not sess.is_admin:
             self._error(sess, "forbid", "仅系统管理员可执行")
             return
+        expected = header.get("operation_id")
+        if expected is not None:
+            target_uid = self._resolve_uid_for_admin(header.get("uid"))
+            if target_uid is None:
+                self._error(sess, "uid", "目标 uid/昵称 无效")
+                return
+            actual = self._retirement_operation_id(target_uid)
+            if not isinstance(expected, str) or expected != actual:
+                self._error(sess, "operation_id", "退役操作号不匹配")
+                return
         payload = self._admin_user_payload(header.get("uid"))
         if payload is None:
             self._error(sess, "uid", "目标 uid/昵称 无效")
@@ -4211,6 +4986,51 @@ class Hub:
                     g["owner"] = next(iter(g["members"]))
         return dissolved
 
+    def _retry_retirement_persistence(self, sess: Session, uid: int,
+                                      nick: str, op_id: str) -> None:
+        """Retry a failed same-op commit without repeating t0 cleanup."""
+        pending = self._admin_user_payload(uid)
+        if pending is not None:
+            try:
+                sess.send(pending)
+            except Exception:
+                pass
+        ok = self._persist(force=True)
+        with self.lock:
+            op = self._retire_ops.setdefault(uid, {"operation_id": op_id})
+            if op.get("status") == "pending":
+                last = self._persist_last_result
+                committed_sha = (last.sha256
+                                 if isinstance(last, server_store_mod.SaveResult)
+                                 and last.effect == "committed" else None)
+                committed_len = (last.length
+                                 if isinstance(last, server_store_mod.SaveResult)
+                                 and last.effect == "committed" else None)
+                op.update({"status": "confirmed" if ok else "failed",
+                           "target_uid": uid, "target_nick": nick,
+                           "origin": "written" if ok else None,
+                           "content_sha256": committed_sha if ok else None,
+                           "content_length": committed_len if ok else None,
+                           "retryable": False if ok else True,
+                           "failed_stage": None if ok else "store.save",
+                           "error_code": None if ok else "persist_failed"})
+            status = op.get("status")
+        final = self._admin_user_payload(uid)
+        if final is not None:
+            try:
+                sess.send(final)
+            except Exception:
+                pass
+        with self.lock:
+            status = (self._retire_ops.get(uid) or {}).get("status", status)
+        if status == "confirmed":
+            self._broadcast({"t": MsgType.CLEARED.value, "uid": uid})
+            self._broadcast_system(f"系统管理员已退役用户 {nick}（UID 保留，不可重新认领）")
+        self.audit.log(type="admin_user_del", uid=sess.uid, target=uid,
+                       target_nick=nick, removed=0, dissolved=0,
+                       operation_id=op_id, status=status)
+        print(f"[admin][退役账号] {sess.nick} 重试 @{nick}(uid={uid})：状态={status}")
+
     def _on_admin_user_del(self, sess: Session, header: dict) -> None:
         """管理员清除用户（删除账号）：
         1) 从全部群移除成员（群主自动转让，移空即解散）；
@@ -4225,6 +5045,12 @@ class Hub:
         if uid is None:
             self._error(sess, "uid", "目标 uid/昵称 无效")
             return
+        expected = header.get("operation_id")
+        if expected is not None:
+            actual = self._retirement_operation_id(uid)
+            if not isinstance(expected, str) or expected != actual:
+                self._error(sess, "operation_id", "退役操作号不匹配")
+                return
         if uid == sess.uid:
             self._error(sess, "uid", "不能清除自己")
             return
@@ -4251,6 +5077,19 @@ class Hub:
         if mapped_uid not in (None, uid):
             self._error(sess, "uid", "昵称映射与目标 UID 冲突")
             return
+        # unknown 的显式重试必须先做只读对账；读失败/坏结构/冲突时
+        # 保持 unknown，不得先把运行态改成 pending 再尝试新写。
+        if self._persist_unresolved and not self._persist_inflight:
+            with self._persist_writer_lock:
+                self._reconcile_persist_unknown()
+            if self._persist_unresolved:
+                payload = self._admin_user_payload(uid)
+                if payload is not None:
+                    try:
+                        sess.send(payload)
+                    except Exception:
+                        pass
+                return
         with self.lock:
             existing_op = self._retire_ops.get(uid)
             already_confirmed = bool(self.retired.get(uid)
@@ -4264,6 +5103,26 @@ class Hub:
                 except Exception:
                     pass
             return
+        if existing_op and self.retired.get(uid):
+            existing_status = existing_op.get("status")
+            if existing_status in ("pending", "unknown"):
+                payload = self._admin_user_payload(uid)
+                if payload is not None:
+                    try:
+                        sess.send(payload)
+                    except Exception:
+                        pass
+                return
+            if existing_status == "failed":
+                retry_nick = self.retired[uid]["nick"]
+                retry_op_id = self.retired[uid]["operation_id"]
+                self._retire_ops[uid] = {
+                    "status": "pending", "operation_id": retry_op_id,
+                    "target_uid": uid, "target_nick": retry_nick,
+                }
+                self._retry_retirement_persistence(
+                    sess, uid, retry_nick, retry_op_id)
+                return
 
         # 生成/复用同 UID 的幂等操作号；t0 只做内存状态提交，所有通知、
         # 连接关闭、资源清理和持久化均留在屏障之外。
@@ -4339,25 +5198,43 @@ class Hub:
         ok = self._persist(force=True)
         with self.lock:
             op = self._retire_ops.setdefault(uid, {"operation_id": op_id})
-            op.update({"status": "confirmed" if ok else "failed",
-                       "target_uid": uid, "target_nick": nick,
-                       "retryable": not ok,
-                       "failed_stage": None if ok else "store.save",
-                       "error_code": None if ok else "persist_failed"})
+            # _commit_current_snapshot/_ack_commit 已按 typed effect 写入
+            # pending/failed/unknown/confirmed；这里只补旧 hook 没有候选时
+            # 的兼容状态，不能把 unknown 或 confirmed 降级成 failed。
+            if op.get("status") == "pending":
+                last = self._persist_last_result
+                committed_sha = (last.sha256
+                                 if isinstance(last, server_store_mod.SaveResult)
+                                 and last.effect == "committed" else None)
+                committed_len = (last.length
+                                 if isinstance(last, server_store_mod.SaveResult)
+                                 and last.effect == "committed" else None)
+                op.update({"status": "confirmed" if ok else "failed",
+                           "target_uid": uid, "target_nick": nick,
+                           "origin": "written" if ok else None,
+                           "content_sha256": committed_sha if ok else None,
+                           "content_length": committed_len if ok else None,
+                           "retryable": False if ok else True,
+                           "failed_stage": None if ok else "store.save",
+                           "error_code": None if ok else "persist_failed"})
+            retire_status = op.get("status")
         final = self._admin_user_payload(uid)
         if final is not None:
             try:
                 sess.send(final)
             except Exception:
                 pass
-        if ok:
+        with self.lock:
+            retire_status = (self._retire_ops.get(uid) or {}).get("status",
+                             retire_status)
+        if retire_status == "confirmed":
             self._broadcast({"t": MsgType.CLEARED.value, "uid": uid})
             self._broadcast_system(f"系统管理员已退役用户 {nick}（UID 保留，不可重新认领）")
         self.audit.log(type="admin_user_del", uid=sess.uid, target=uid,
                        target_nick=nick, removed=removed, dissolved=dissolved,
-                       operation_id=op_id, status="confirmed" if ok else "failed")
+                       operation_id=op_id, status=retire_status)
         print(f"[admin][退役账号] {sess.nick} 处理 @{nick}(uid={uid})："
-              f"清消息 {removed} 条，状态={'confirmed' if ok else 'failed'}")
+              f"清消息 {removed} 条，状态={retire_status}")
 
     def _on_reaction(self, sess: Session, header: dict) -> None:
         """R13 表情回应：对 seq 消息加/摘 emoji，广播全网 reactions 状态。"""

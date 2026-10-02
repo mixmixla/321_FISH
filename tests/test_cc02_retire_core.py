@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """CC-02A-RETIRE-CORE: M1 退役屏障与核心内存提交回归。"""
 import json
+import os
 import secrets
 import threading
 import time
@@ -13,6 +14,7 @@ import auth
 from config import CFG
 from protocol import MsgType
 from server import Hub, Session
+from server_store import SaveResult
 
 
 class _Rec:
@@ -187,6 +189,157 @@ def test_admin_user_info_exposes_retirement_state_and_same_uid_retry(tmp_path):
     assert len([x for x in h.retired if x == uid]) == 1
     assert any(f.get("retirement", {}).get("operation_id") == op_id
                for f in admin_rec.frames if f.get("t") == MsgType.ADMIN_USER_INFO.value)
+
+
+def test_wrong_expected_operation_id_has_no_retirement_side_effect(tmp_path):
+    h, admin, admin_rec, victim, _victim_rec = _admin_and_user(tmp_path)
+    h._persist_flush()
+    before = h.store.read_bytes_result().sha256
+    h.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value,
+                       "uid": victim.uid, "operation_id": "wrong-op"})
+    assert victim.uid in h.known
+    assert victim.uid not in h.retired
+    assert h.store.read_bytes_result().sha256 == before
+    assert any(f.get("code") == "operation_id" for f in admin_rec.frames)
+
+
+def test_same_uid_pending_request_does_not_repeat_t0_cleanup(tmp_path,
+                                                            monkeypatch):
+    h, admin, _admin_rec, victim, _victim_rec = _admin_and_user(tmp_path)
+    counts = {name: 0 for name in (
+        "_drop_xfers_of", "_drop_voice_rooms", "_disconnect_rooms_of",
+        "_broadcast_roster", "_broadcast_group_list")}
+    originals = {name: getattr(h, name) for name in counts}
+    for name, original in originals.items():
+        def wrapped(*args, _name=name, _original=original, **kwargs):
+            counts[_name] += 1
+            return _original(*args, **kwargs)
+
+        monkeypatch.setattr(h, name, wrapped)
+    original_clear_uid = h.bus.clear_uid
+
+    def wrapped_clear_uid(uid):
+        counts["clear_uid"] = counts.get("clear_uid", 0) + 1
+        return original_clear_uid(uid)
+
+    monkeypatch.setattr(h.bus, "clear_uid", wrapped_clear_uid)
+    started = threading.Event()
+    release = threading.Event()
+    errors = []
+    original_save = h.store._save_encoded
+
+    def blocked_save(encoded):
+        state = json.loads(encoded.payload.decode("utf-8"))
+        record = (state.get("retired") or {}).get(str(victim.uid))
+        if isinstance(record, dict) and record.get("nick") == "retire-me":
+            started.set()
+            assert release.wait(5)
+        return original_save(encoded)
+
+    monkeypatch.setattr(h.store, "_save_encoded", blocked_save)
+
+    def first_delete():
+        try:
+            h.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value,
+                               "uid": victim.uid})
+        except BaseException as exc:
+            errors.append(exc)
+
+    thread = threading.Thread(target=first_delete, name="cc02-pending-t0")
+    thread.start()
+    try:
+        assert started.wait(5)
+        h.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value,
+                           "uid": victim.uid})
+        assert h._retire_ops[victim.uid]["status"] == "pending"
+        assert counts["_drop_xfers_of"] == 1
+        assert counts["_drop_voice_rooms"] == 1
+        assert counts["_disconnect_rooms_of"] == 1
+        assert counts["_broadcast_roster"] == 1
+        assert counts["_broadcast_group_list"] == 1
+        assert counts["clear_uid"] == 1
+    finally:
+        release.set()
+        thread.join(5)
+    assert not thread.is_alive()
+    assert not errors
+    assert h._retire_ops[victim.uid]["status"] == "confirmed"
+
+
+def test_failed_same_uid_retry_does_not_repeat_t0_cleanup(tmp_path,
+                                                         monkeypatch):
+    h, admin, _admin_rec, victim, _victim_rec = _admin_and_user(tmp_path)
+    counts = {name: 0 for name in (
+        "_drop_xfers_of", "_drop_voice_rooms", "_disconnect_rooms_of",
+        "_broadcast_roster", "_broadcast_group_list")}
+    originals = {name: getattr(h, name) for name in counts}
+    for name, original in originals.items():
+        def wrapped(*args, _name=name, _original=original, **kwargs):
+            counts[_name] += 1
+            return _original(*args, **kwargs)
+
+        monkeypatch.setattr(h, name, wrapped)
+    original_clear_uid = h.bus.clear_uid
+
+    def wrapped_clear_uid(uid):
+        counts["clear_uid"] = counts.get("clear_uid", 0) + 1
+        return original_clear_uid(uid)
+
+    monkeypatch.setattr(h.bus, "clear_uid", wrapped_clear_uid)
+    original_save = h.store._save_encoded
+
+    def fail_save(encoded):
+        return SaveResult("not_committed", "write", "first_failure", True,
+                          encoded.length, encoded.sha256)
+
+    monkeypatch.setattr(h.store, "_save_encoded", fail_save)
+    h.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value, "uid": victim.uid})
+    assert h._retire_ops[victim.uid]["status"] == "failed"
+    first_counts = dict(counts)
+    monkeypatch.setattr(h.store, "_save_encoded", original_save)
+    h.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value, "uid": victim.uid})
+    assert h._retire_ops[victim.uid]["status"] == "confirmed"
+    assert counts == first_counts
+
+
+def test_wrong_expected_operation_id_unknown_target_is_pure_runtime_check(tmp_path,
+                                                                          monkeypatch):
+    h, admin, admin_rec, victim, _victim_rec = _admin_and_user(tmp_path)
+    uid = victim.uid
+    op_id = "op-unknown-check"
+    with h.lock:
+        h.retired[uid] = {"nick": "retire-me", "retired_at": 2.0,
+                          "operation_id": op_id}
+        h.known.pop(uid, None)
+        h._retire_ops[uid] = {
+            "status": "unknown", "operation_id": op_id,
+            "target_uid": uid, "target_nick": "retire-me",
+        }
+    unresolved = {"sha256": "unknown", "length": 1,
+                  "capture_request_seq": 1, "candidates": []}
+    h._persist_unresolved = unresolved
+    read_calls = []
+    replace_calls = []
+    original_read = h.store.read_bytes_result
+    monkeypatch.setattr(
+        h.store, "read_bytes_result",
+        lambda: read_calls.append(1) or original_read(),
+    )
+    real_replace = os.replace
+    monkeypatch.setattr(
+        os, "replace",
+        lambda source, target: replace_calls.append(1)
+        or real_replace(source, target),
+    )
+    h.dispatch(admin, {"t": MsgType.ADMIN_USER_GET.value,
+                       "uid": uid, "operation_id": "wrong-op"})
+    h.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value,
+                       "uid": uid, "operation_id": "wrong-op"})
+    assert read_calls == []
+    assert replace_calls == []
+    assert h._retire_ops[uid]["status"] == "unknown"
+    assert h._persist_unresolved is unresolved
+    assert sum(f.get("code") == "operation_id" for f in admin_rec.frames) >= 2
 
 
 def test_retire_requires_store_before_t0(tmp_path):
@@ -367,8 +520,10 @@ def test_web_attach_before_token_publish_then_retire_returns_no_token(tmp_path, 
 
 def test_failed_retire_keeps_fence_and_same_operation_retries_to_confirmed(tmp_path):
     h, admin, admin_rec, victim, _victim_rec = _admin_and_user(tmp_path)
-    original_save = h.store.save
-    h.store.save = lambda _state: False
+    original_save = h.store._save_encoded
+    h.store._save_encoded = lambda encoded: SaveResult(
+        "not_committed", "write", "injected_failure", True,
+        encoded.length, encoded.sha256)
     uid = victim.uid
     h.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value, "uid": uid})
     op_id = h.retired[uid]["operation_id"]
@@ -376,7 +531,7 @@ def test_failed_retire_keeps_fence_and_same_operation_retries_to_confirmed(tmp_p
     assert h._retire_ops[uid]["status"] == "failed"
     assert any(f.get("retirement", {}).get("status") == "failed"
                for f in admin_rec.frames if f.get("t") == MsgType.ADMIN_USER_INFO.value)
-    h.store.save = original_save
+    h.store._save_encoded = original_save
     h.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value, "uid": uid})
     assert h._retire_ops[uid]["status"] == "confirmed"
     assert h.retired[uid]["operation_id"] == op_id

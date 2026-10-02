@@ -13,7 +13,7 @@ import pytest
 import bots
 from config import CFG
 from server import Hub
-from server_store import ServerStore
+from server_store import ReadResult, SaveResult, ServerStore
 
 
 def _cfg(tmp_path, password=None):
@@ -108,7 +108,9 @@ def test_failed_force_save_does_not_advance_fingerprint_or_claim_confirmation(tm
     old_fp = h._persist_fp
     h.nick_to_uid["changed"] = 999
 
-    h.store.save = lambda _state: False
+    h.store._save_encoded = lambda encoded: SaveResult(
+        "not_committed", "write", "injected_failure", True,
+        encoded.length, encoded.sha256)
     assert h._persist(force=True) is False
     assert h._persist_fp == old_fp
     assert h._persist_dirty is True
@@ -221,7 +223,7 @@ def test_new_request_during_blocked_actual_writer_is_not_cleared(tmp_path):
     h = _hub(tmp_path)
     h._persist_flush()
     h._persist_interval = 3600.0
-    original_save = h.store.save
+    original_save = h.store._save_encoded
     started = threading.Event()
     release = threading.Event()
     followup_started = threading.Event()
@@ -238,7 +240,7 @@ def test_new_request_during_blocked_actual_writer_is_not_cleared(tmp_path):
             assert followup_release.wait(5)
         return original_save(state)
 
-    h.store.save = blocked_save
+    h.store._save_encoded = blocked_save
     done = []
     worker = threading.Thread(target=lambda: done.append(h._persist(force=True)))
     worker.start()
@@ -262,32 +264,32 @@ def test_new_request_during_blocked_actual_writer_is_not_cleared(tmp_path):
     assert h.store.load()["nick_to_uid"]["during-io"] == 4321
 
 
-def test_request_between_snapshot_and_fingerprint_stays_dirty(tmp_path, monkeypatch):
+def test_request_during_capture_stays_dirty(tmp_path, monkeypatch):
     h = _hub(tmp_path)
     h._persist_flush()
-    original_fp = h._state_fingerprint
+    original_snapshot = h._snapshot_state
     started = threading.Event()
     release = threading.Event()
     writer_started = threading.Event()
     writer_release = threading.Event()
     calls = [0]
 
-    def paused_fp(state):
+    def paused_snapshot():
         calls[0] += 1
         if calls[0] == 1:
             started.set()
             assert release.wait(5)
-        return original_fp(state)
+        return original_snapshot()
 
-    monkeypatch.setattr(h, "_state_fingerprint", paused_fp)
-    original_save = h.store.save
+    monkeypatch.setattr(h, "_snapshot_state", paused_snapshot)
+    original_save = h.store._save_encoded
 
-    def blocked_followup_save(state):
+    def blocked_followup_save(encoded):
         writer_started.set()
         assert writer_release.wait(5)
-        return original_save(state)
+        return original_save(encoded)
 
-    h.store.save = blocked_followup_save
+    h.store._save_encoded = blocked_followup_save
     h._persist_last -= h._persist_interval + 1
     thread = threading.Thread(target=h._persist)
     thread.start()
@@ -314,20 +316,20 @@ def test_request_between_snapshot_and_fingerprint_stays_dirty(tmp_path, monkeypa
 def test_old_worker_candidate_cannot_overwrite_force_retire_json(tmp_path, force_method):
     h = _hub(tmp_path)
     h._persist_flush()
-    original_save = h.store.save
+    original_save = h.store._save_encoded
     old_started = threading.Event()
     release_old = threading.Event()
     force_called = threading.Event()
     writes = []
 
-    def ordered_save(state):
-        writes.append(json.loads(json.dumps(state, ensure_ascii=False)))
+    def ordered_save(encoded):
+        writes.append(json.loads(encoded.payload.decode("utf-8")))
         if len(writes) == 1:
             old_started.set()
             assert release_old.wait(5)
-        return original_save(state)
+        return original_save(encoded)
 
-    h.store.save = ordered_save
+    h.store._save_encoded = ordered_save
     h.nick_to_uid["worker-old"] = 123
     h._persist()
     assert old_started.wait(5)
@@ -360,19 +362,20 @@ def test_old_normal_snapshot_queues_after_force_retire_without_overwrite(tmp_pat
     h = _hub(tmp_path)
     h._persist_flush()
     h._persist_interval = 0.0
-    original_fp = h._state_fingerprint
+    original_snapshot = h._snapshot_state
     old_captured = threading.Event()
     release_old = threading.Event()
-    fp_calls = [0]
+    snapshot_calls = [0]
 
-    def pause_old_fp(state):
-        fp_calls[0] += 1
-        if fp_calls[0] == 1:
+    def pause_old_snapshot():
+        snapshot_calls[0] += 1
+        state = original_snapshot()
+        if snapshot_calls[0] == 1:
             old_captured.set()
             assert release_old.wait(5)
-        return original_fp(state)
+        return state
 
-    monkeypatch.setattr(h, "_state_fingerprint", pause_old_fp)
+    monkeypatch.setattr(h, "_snapshot_state", pause_old_snapshot)
     h.nick_to_uid["old-normal"] = 123
     old_thread = threading.Thread(target=h._persist)
     old_thread.start()
@@ -382,18 +385,25 @@ def test_old_normal_snapshot_queues_after_force_retire_without_overwrite(tmp_pat
     h.retired[456] = {"nick": "confirmed-retired", "retired_at": 1.0,
                       "operation_id": "op-confirmed"}
     force_result = []
-    force_thread = threading.Thread(target=lambda: force_result.append(
-        h._persist(force=True)))
+    force_entered = threading.Event()
+
+    def run_force():
+        force_entered.set()
+        force_result.append(h._persist(force=True))
+
+    force_thread = threading.Thread(target=run_force)
     force_thread.start()
+    assert force_entered.wait(5)
+    assert force_thread.is_alive()
+    # The old worker owns the writer ordering lock while its captured state is
+    # paused; force waits, then fresh-captures the retirement state.
+    release_old.set()
     force_thread.join(5)
     assert not force_thread.is_alive() and force_result == [True]
     confirmed = h.store.load()
     assert confirmed["retired"]["456"]["operation_id"] == "op-confirmed"
     assert confirmed["nick_to_uid"]["confirmed-retired"] == 456
 
-    # The old normal thread is released only after the force save has completed;
-    # its late queue trigger must cause a fresh capture, never an old overwrite.
-    release_old.set()
     old_thread.join(5)
     assert not old_thread.is_alive()
     if h._persist_worker_thread is not None:
@@ -402,3 +412,160 @@ def test_old_normal_snapshot_queues_after_force_retire_without_overwrite(tmp_pat
     assert final_state["retired"]["456"]["operation_id"] == "op-confirmed"
     assert final_state["nick_to_uid"]["confirmed-retired"] == 456
     assert h._persist_fp == Hub._state_fingerprint(final_state)
+
+
+def test_old_snapshot_ack_does_not_consume_new_pending_retirement(tmp_path,
+                                                                  monkeypatch):
+    h = _hub(tmp_path)
+    h.nick_to_uid["victim"] = 7
+    h.known[7] = {"nick": "victim", "last_online": 1.0}
+    h._persist_flush()
+    h._persist_interval = 0.0
+    h.nick_to_uid["old-worker"] = 123
+    original_save = h.store._save_encoded
+    old_io_started = threading.Event()
+    release_old = threading.Event()
+    writes = []
+
+    def ordered_save(encoded):
+        state = json.loads(encoded.payload.decode("utf-8"))
+        writes.append(state)
+        if len(writes) == 1:
+            assert state.get("retired", {}).get("7") is None
+            old_io_started.set()
+            assert release_old.wait(5)
+        return original_save(encoded)
+
+    monkeypatch.setattr(h.store, "_save_encoded", ordered_save)
+    status_events = []
+    original_update = h._update_retirement_result
+
+    def record_update(candidate, **kwargs):
+        status_events.append(kwargs.get("status"))
+        return original_update(candidate, **kwargs)
+
+    monkeypatch.setattr(h, "_update_retirement_result", record_update)
+    h._persist()
+    assert old_io_started.wait(5)
+    h.retired[7] = {"nick": "victim", "retired_at": 2.0,
+                    "operation_id": "op-new"}
+    h.known.pop(7, None)
+    h._retire_ops[7] = {
+        "status": "pending", "operation_id": "op-new",
+        "target_uid": 7, "target_nick": "victim",
+    }
+    force_entered = threading.Event()
+    force_result = []
+    errors = []
+
+    def run_force():
+        force_entered.set()
+        try:
+            force_result.append(h._persist(force=True))
+        except BaseException as exc:
+            errors.append(exc)
+
+    force_thread = threading.Thread(target=run_force, name="cc02-old-ack")
+    force_thread.start()
+    try:
+        assert force_entered.wait(5)
+        assert force_thread.is_alive()
+        release_old.set()
+        force_thread.join(5)
+    finally:
+        release_old.set()
+        force_thread.join(5)
+        h._persist_closing = True
+        h._persist_wake.set()
+        if h._persist_worker_thread is not None:
+            h._persist_worker_thread.join(5)
+    assert not force_thread.is_alive()
+    assert not errors
+    assert force_result == [True]
+    assert "failed" not in status_events
+    assert h._retire_ops[7]["status"] == "confirmed"
+    assert h.store.load()["retired"]["7"]["operation_id"] == "op-new"
+
+
+def test_written_commit_receipt_uses_actual_state_bytes(tmp_path):
+    h = _hub(tmp_path)
+    h._persist_flush()
+    receipt = h._persist_receipt
+    raw = h.store.read_bytes_result()
+    assert receipt.origin == "written"
+    assert receipt.sha256 == raw.sha256
+    assert receipt.length == raw.length
+    assert receipt.capture_request_seq is not None
+
+
+def test_restored_retirement_origin_has_no_historical_sha(tmp_path):
+    store = tmp_path / "store"
+    h1 = _hub(tmp_path, store)
+    h1.nick_to_uid["old"] = 7
+    h1.retired[7] = {"nick": "old", "retired_at": 1.0,
+                     "operation_id": "op-7"}
+    h1._persist_flush()
+    h2 = _hub(tmp_path / "restart", store)
+    payload = h2._retirement_payload(7)
+    assert payload["status"] == "confirmed"
+    assert payload["origin"] == "restored_valid_json"
+    assert payload["content_sha256"] is None
+    assert payload["content_length"] is None
+    assert h2._persist_receipt.origin == "restored_valid_json"
+    assert h2._persist_receipt.sha256 is None
+
+
+def test_invalid_strict_source_does_not_claim_restored_origin(tmp_path):
+    store_dir = tmp_path / "store"
+    store_dir.mkdir()
+    raw = (
+        b'{"nick_to_uid":{"old":7},"known":{},'
+        b'"retired":{"7":{"nick":"old","retired_at":1.0,'
+        b'"operation_id":"op-7"}},"invalid":NaN}'
+    )
+    (store_dir / "state.json").write_bytes(raw)
+    h = _hub(tmp_path, store_dir)
+    payload = h._retirement_payload(7)
+    assert payload["status"] == "unknown"
+    assert payload["origin"] is None
+    assert payload["content_sha256"] is None
+    assert h._persist_receipt is None
+    assert h._persist_known_shas == set()
+
+
+def test_active_store_save_is_bound_to_fresh_hub_capture(tmp_path):
+    h = _hub(tmp_path)
+    h._persist_flush()
+    h.nick_to_uid["fresh"] = 321
+    assert h.store.save({"stale": True}) is True
+    saved = h.store.load()
+    assert saved["nick_to_uid"]["fresh"] == 321
+    assert saved.get("stale") is None
+
+
+def test_unknown_read_error_blocks_all_writer_paths(tmp_path, monkeypatch):
+    h = _hub(tmp_path)
+    h._persist_flush()
+    original_save_bytes = h.store.save_bytes
+    original_read = h.store.read_bytes_result
+    calls = []
+
+    def uncertain(payload):
+        calls.append("io")
+        return SaveResult("uncertain", "replace", "replace_unknown",
+                          False, len(payload), "candidate-sha")
+
+    monkeypatch.setattr(h.store, "save_bytes", uncertain)
+    h.nick_to_uid["unknown"] = 654
+    assert h._persist(force=True) is False
+    assert h._persist_unresolved is not None
+    calls.clear()
+    monkeypatch.setattr(
+        h.store, "read_bytes_result",
+        lambda: ReadResult("read_error", error_code="read_failed"),
+    )
+    assert h._persist(force=True) is False
+    assert calls == []
+    assert h._persist_unresolved is not None
+    monkeypatch.setattr(h.store, "save_bytes", original_save_bytes)
+    monkeypatch.setattr(h.store, "read_bytes_result", original_read)

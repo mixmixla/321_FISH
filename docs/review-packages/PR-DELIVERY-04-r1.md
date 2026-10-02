@@ -79,3 +79,15 @@ marker/InitializeNew/整体loader/durable intent仍归CC-05。
 普通资料整改自主完成。Pro必要决定落实、用户批准下一有限实施Task后，
 才进入资源代码实现；资料通过不等资源代码完成或Pro R1里程碑通过。
 ```
+
+## 两层独立审查与实际PR交付
+
+资料层7be5015708397e5b5ac7d4b12c2d8ab93de94705，parent971d7b6/tree5ab11ece1623ea86988dc219170345313bb3763c，精确12paths；实际入场delta18=6code+12docs。
+pr04_tree_review独立actualtree/code/docs/raw308/clean/blob/原116log/全部exit/optin skip/summarySHA/159links/投影/边界通过，无must，允许正常push，不靠提交者自验。
+正常push origin HEAD:refs/heads/codex/cc02a-consistency真实成功df487cf→7be5015，ls-remote核对main仍cc7e295。
+GitHub connector PATCH返回403 Resource not accessible by integration；按用户本轮Git授权以现有Git身份只在内存PATCH PR5成功，未输出或保存凭据。
+实际标题为“fix: 实现身份一致性、M1退役与严格持久确认”，bodySHA `042cc32146e34959b0c7fef17e20ed4ab8751ebe11bd5b5699b3c112b1107588`。
+实际PR5 open/draft/merged=false/head7be5015/base maincc7e295，attach本聊天成功。
+状态补录首个PowerShell命令因标题智能引号触发ParserError，整条未执行，无文件/Git变动；改用apply_patch与literal here-string补录，未重复推送。
+此后仅CC/本Review/生成清单flow补录，会产生最终真实HEAD，以Git/远端为准，不构造内容自引用SHA；原source308/门禁不变。
+当前有限Git交付已满足，最后flow/remote独立终核后结束Goal，不merge/release/下一产品。

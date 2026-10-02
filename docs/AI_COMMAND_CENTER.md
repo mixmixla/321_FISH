@@ -52,7 +52,7 @@ CORE仅改server.py/最少量server_store.py/tests，Task v1.1已独立终审ACC
 | 6C · CC-02A-RETIRE-CORE | M1退役核心/登录与核心C/必要save真假成功及写顺序/真实重启 | ACCEPTED；v1.1，实施Goal complete，已Draft PR #5 | retire_core_backend / 主控调度 / retire_core_review独立终审 | 115文件1392/0/2、37专项/276域/14真实通道、307版本与边界，无must；[Task](task-packages/CC-02A-RETIRE-CORE.md) / [Review](review-packages/CC-02A-RETIRE-CORE-r1.md) |
 | 6D · PR-DELIVERY-03 | CORE/设计6code+13docs实际树审查与既有PR追加交付、下一提示词 | ACCEPTED；已push并更新Draft PR #5 | 主控唯一Git/资料 / pr03_tree_review独立只读 | code e91c1be/docs13ad592；307raw/clean/blob、1392原日志、132链接与边界独立通过；[Review](review-packages/PR-DELIVERY-03-r1.md) |
 | 当前资料完成 · CC-02B-STORE-SCOPE | 核对已修前置，冻结strict bytes/阶段IO/op receipt/unknown最小草案 | ACCEPTED（资料）；独立终审无must，Goal complete | 主控七Markdown / store_docs_review独立审查 | [Pro v1](CC-02B-STORE_Pro审查材料.md)/[draft-v1](task-packages/CC-02B-STORE-DRAFT.md)/[Review](review-packages/CC-02B-STORE-SCOPE-r1.md)，原资料终点未取得；本次Pro决定与用户STORE实施批准已取得 |
-| 已完成实施 · CC-02B-STORE | 严格一次bytes/阶段IO/统一ack/全writer unknown/原子候选/op查询/三来源 | ACCEPTED；v1.1，Goal complete，本地未提交 | store_backend / 主控 / store_code_review独立正式终审 | [Task](task-packages/CC-02B-STORE.md)/[Review](review-packages/CC-02B-STORE-r1.md)，116文件1483/0/2、188专项/277域/real35，未merge/release |
+| 已完成实施 · CC-02B-STORE | 严格一次bytes/阶段IO/统一ack/全writer unknown/原子候选/op查询/三来源 | ACCEPTED；v1.1，Goal complete，已追加Draft PR #5 | store_backend / 主控 / store_code_review独立正式终审 | [Task](task-packages/CC-02B-STORE.md)/[Review](review-packages/CC-02B-STORE-r1.md)，116文件1483/0/2、188专项/277域/real35，未merge/release |
 | 下一建议 · CC-02C-RESOURCE-SCOPE | 只读资源owner/C/独立IO/t0/保留访问与有限Task草案 | PROPOSED；提示词已准备，本轮未启动资料或代码 | 后续资料主控 / 独立审查 → Pro必要决定 → 用户实施批准 | [可复制提示词](review-packages/PR-DELIVERY-04-r1.md)，CLOUD/upload/bot/Agent/reminder/preview，禁止扩全119/UI/GC/loader |
 | 后续 · CC-02C-RESOURCE | CLOUD/upload/bot回复/Agent/提醒/preview资源晚到C与独立IO | PROPOSED；只列剩余，未入实现队列 | Codex另冻结 / 用户有限批准 | CORE的bot用户CHAT输入/sched due已修；UI/其它119/物理GC不自动纳入 |
 | 7 · CC-03-SCREEN | 47项游戏入口/主要操作矩阵；稳定与实验分类依据 | PROPOSED；公共生命周期已完成，筛查未开始 | Codex核验，Pro审分类决策 | 每项给出入口与行为证据；不以注册/画面存在等同可玩 |
@@ -64,11 +64,11 @@ CORE仅改server.py/最少量server_store.py/tests，Task v1.1已独立终审ACC
 ### 上轮整理与当前 Goal
 
 用户本次请求下一提示词及可交付时提交PR；[PR-DELIVERY-04 v1](task-packages/PR-DELIVERY-04.md)已冻结，Goal active。
-STORE已独立ACCEPTED/原Goal complete；本轮保持308源96e62366和116文件1483/0/2，追加现有PR5，不启动RESOURCE。
+STORE已独立ACCEPTED/原Goal complete；本轮已保持308源96e62366/116文件1483/0/2并实际追加现有PR5（code971d7b6/docs7be5015），标题/正文/attach完成，纯flow终核后结束Goal，不启动RESOURCE。
 
 
 用户于2026-10-02本聊天批准按[最新Pro意见](decisions/CC-02B-STORE_设计审查决定_v1.md)进行有限[CC-02B-STORE v1.1](task-packages/CC-02B-STORE.md)实施，现已独立正式ACCEPTED，Goal complete。
-S1→S2→S3已顺序完成，Pro M01–M05及独立必须项全部关闭。最终116文件1483/0/2、188专项/277领域/35真实观察，source30896e62366…，只有本地未提交交付，不自动开始RESOURCE/发布。
+S1→S2→S3已顺序完成，Pro M01–M05及独立必须项全部关闭。最终116文件1483/0/2、188专项/277领域/35真实观察，source30896e62366…，成果本次经PR-DELIVERY-04 code971d7b6/docs7be5015追加到Draft PR5；原STORE Goal完成，不自动开始RESOURCE/发布。
 
 
 用户于2026-10-02批准[CC-02B-STORE-SCOPE v1](task-packages/CC-02B-STORE-SCOPE.md)，本聊天资料已独立ACCEPTED，Goal工具已确认complete（1067秒，约18分钟）；仅只读源码与七Markdown。
@@ -180,8 +180,8 @@ Android、完整云账号、47款全面美术和大规模重写维持Backlog，�
 
 | ID | 状态 | 批次/依赖 | 执行者 / 审查者 | 下一动作与证据 |
 | --- | --- | --- | --- | --- |
-| PR-DELIVERY-04 | IMPLEMENTING | 用户本次Git交付授权/Goal active，精确六code+十二docs | 主控唯一Git/资料 / 独立tree审查 | 提交code→docs/实际树审查/push现有Draft PR5/元数据/attach/下一提示词，[Task](task-packages/PR-DELIVERY-04.md)/[Review](review-packages/PR-DELIVERY-04-r1.md) |
-| CC-02B-STORE | ACCEPTED | Task v1.1/同版full+领域+real+正式独立终验无must；Goal complete，本地未提交 | store_backend / 主控 / store_code_review独立 | 116文件1483/0/2、188专项/277域/real35/source30896e62366…；[Review](review-packages/CC-02B-STORE-r1.md)，不等完整RETIRE/R1/Git交付 |
+| PR-DELIVERY-04 | ACCEPTED | 独立6code+12docs树与原始证据通过/push/PR更新/attach满足，Goal收尾 | 主控唯一Git/資料 / pr04_tree_review独立 | code971d7b6/docs7be5015，PR5open/draft；最终flow/remote核验后结束，[Review](review-packages/PR-DELIVERY-04-r1.md) |
+| CC-02B-STORE | ACCEPTED | Task v1.1/同版full+领域+real+正式独立终验无must；Goal complete，已追加Draft PR #5 | store_backend / 主控 / store_code_review独立 | 116文件1483/0/2、188专项/277域/real35/source30896e62366…；[Review](review-packages/CC-02B-STORE-r1.md)，不等完整RETIRE/R1/Git交付 |
 | PR-DELIVERY-03 | ACCEPTED | 用户Git补充授权，代码/资料/独立树/push/PR更新/attach/提示词及终核已满足；Goal complete | 主控唯一Git/资料 / pr03_tree_review独立只读 | code e91c1be/docs13ad592/flow df487cf已push，三文档补录不改source307，PR5open/draft；[Task](task-packages/PR-DELIVERY-03.md) / [Review](review-packages/PR-DELIVERY-03-r1.md) |
 | CC-02A-RETIRE-CORE | ACCEPTED | Task v1.1/Goal complete，最终同版full/域/实通道/独立终审/边界满足 | retire_core_backend / 主控 / retire_core_review独立终审 | 115文件1392/0/2，307源c647d65c…，101资料链接/原body保持，无must；[Task](task-packages/CC-02A-RETIRE-CORE.md) / [Review](review-packages/CC-02A-RETIRE-CORE-r1.md) |
 | CC02-RETIRE-DESIGN | ACCEPTED | 资料目标/独立终核/机械边界满足，Goal complete；已Draft PR #5 | 主控 / retire_docs_review独立只读 | 正文IDc45e7f27…独立一致，无资料级必须项；[Task](task-packages/CC02-RETIRE-DESIGN.md) / [Review](review-packages/CC02-RETIRE-DESIGN-r1.md) |
@@ -263,7 +263,16 @@ Android、完整云账号、全面游戏美术、大规模模块拆分仍为暂�
 本次连续授权覆盖BATCH-R1三个生命周期任务，已自动推进至本批验收终点，不因单项结束而等待用户。
 其它Roadmap未转为执行授权；后续产品范围/批次由用户确认，普通批次内整改继续无需逐项推动。
 
-## 当前检查点 PR04-CP-02（code层真实提交与308blob核验）
+## 当前检查点 PR04-CP-03（独立两树与实际PR更新交付）
+
+- PR-DELIVERY-04 v1两层actualtree独立可接受/无must，正常push与PR更新/attach满足，Goal待最终flow/remote终核后结束；本批只Git与接续提示词不下一产品。
+- code971d7b6(parentdf487cf/treed412ae)、docs7be5015(parent971d7b6/tree5ab11ece)，精确6code+12docs。raw30896e62366…/normalizedc40e1357…/hash-object/blob0 mismatch，source门禁1483/0/2原116logs独立重算保持。
+- 当前PR5 open/draft/未merge/head7be5015/base maincc7e295，push成功/lsremote一致。connector PATCH403 integration权限不足后，用用户授权Git身份仅内存PATCH完成；title与STORE范围已更新，bodySHA042cc321…，attach成功，无凭据输出/保存。
+- 159相对链接/投影/索引空/diff-check/无runtime私密树及未授权原字节通过；后续纯flow三文档会产生新head，以Git/remote真实值为准，不内容自引用。
+- 原STORE/CORE/资料Goal结束，所有应用/tests/依赖不变，没有应用/pytest需恢复；旧heartbeat PAUSED。后续CC-02C-RESOURCE-SCOPE仅可复制prompt/PROPOSED，本次没开始资料/代码。
+- 下一当前flow提交/push、实际HEAD/remote/PR独立核验、Goal工具结束到终点；不main直push/force/merge/release/真实data/外部消息/资源代码或UI。
+
+## 历史检查点 PR04-CP-02（code层真实提交与308blob核验）
 
 - PR-DELIVERY-04 v1/Goal active，code6实际head971d7b653df262a29068cc887cc54eab887819b6/parent df487cf/treed412ae769…，branch未变、index空；doc12待提交，尚未push/更新PR。
 - 原验收raw30896e62366…保持，normalized c40e1357…；308raw/hash-object/blob0 mismatch，code实际增量6精确/未授权文件原字节/157links/投影/diff-check PASS。原116门禁不重复。

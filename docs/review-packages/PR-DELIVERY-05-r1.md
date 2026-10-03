@@ -25,3 +25,11 @@ git push origin HEAD:refs/heads/codex/cc02a-consistency真实成功0bf1d26→4d2
 GitHub connector更新返回403 Resource not accessible by integration；按本次用户Git授权用已有Git身份仅内存PATCH完成，无凭据输出/保存。
 实际标题“fix: 完成身份退役、持久确认与有限资源提交”，正文覆盖最终四范围/1191550/0/2/清楚重启与权限限制，body SHA256 `aa9ff640bfa3aea4e1fe9fd188df068ce45c91a226467d9d0ffd5894c6641f0f`。attach PR5到本聊天成功。
 随后仅本Review/中心/生成视图flow精确补录提交push，真实最终HEAD以Git/remote实读为准，不构造内容自引用SHA。RESOURCE应用/tests/依赖保持raw02947728…，同版不重复门禁；最后独立remote/PR/flow核验后结束Goal，不下一产品/合并/发布。
+
+## 独立最终flow核验与交付验收
+
+pr05_tree_review最终只读actualremote/PR/flow终核通过，无must。审查时本地/远端/PR实际head16bdc7ed522293938f8ea96a2901b0018a043bef，tree82842539…/parent4d2；资料之后精确三flow文件，workspace clean/index空。
+199相对链接无断链/源投影逐字与SHA一致/raw311及blob证明保持；GitHubREST独立确认PR5open/draft/mergedfalse/maincc7e295，标题/正文SHAaa9ff640…与请求一致，head/base仅PR5无重复，PR69文件与本地main..HEAD一致。
+本Task Git交付可ACCEPTED，目标已满足；原1191550/0/2证据/全部源字节不变，不merge/release/新产品。接下来只本Review/中心/生成视图记录Goal工具终态并精确commit/push，最新真实SHA在本机final-delivery.json与Git/remote，不让文档自引用。
+
+结束补录首轮只改变中心queue/checkpoint与本Review，路线源未变导致生成视图无diff，helper精确三文件检查正确拒commit（只stage本批两个docs），push显示up-to-date，未产生新提交/远端变更。随后只撤本批两docs的stage，补路线源ACCEPTED/Goal收尾并重新生成视图，再按精确三docs提交；不改应用或回退用户内容，原失败记录不冒称已提交。

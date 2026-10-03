@@ -108,6 +108,13 @@ def gf_kind(name: str) -> str:
     return "other"
 
 
+def _start_global_hotkey(manager) -> bool:
+    """Start one global hotkey only when the process gate allows it."""
+    if not CFG.global_hotkeys_enabled:
+        return False
+    return bool(manager.start())
+
+
 # ---------- 剪贴板/截图 → 临时 PNG（Ctrl+V 粘贴、Alt+A 截图共用） ----------
 def _save_image_temp(img) -> str:
     """把 PIL.Image 落到临时 PNG，返回路径；Pillow 缺失/写盘失败返回空串。"""
@@ -384,7 +391,8 @@ class ChatWindow:
         self._chat_alpha = float(self._prefs.get("chat_alpha", 0.95))
         self._skin = get_skin(self._skin_name)
         self._dp = dialog_pal(self._skin)   # R57：对话框/独立面板派生配色
-        ui_fx.set_sound(self._prefs.get("ui_sound", False))   # 界面反馈音（默认关，prefs 可开）
+        ui_fx.set_sound(CFG.hardware_enabled and
+                        self._prefs.get("ui_sound", False))  # 界面反馈音（默认关，prefs 可开）
         # R29D 表情回应：最近使用（去重前置，最多 REACT_RECENT_MAX 个），驱动悬浮条快捷集
         self._recent_reacts = [str(e) for e in (self._prefs.get("react_recent") or [])
                                if str(e)][:REACT_RECENT_MAX]
@@ -465,14 +473,21 @@ class ChatWindow:
         self._bind_shortcuts()
         self._bind_autocomplete()            # B5 @提及/emoji 补全
         # 阶段3 自动发现 + 阶段5 快速隐藏（热键 + 假 Excel 窗）
-        self._disco = DiscoveryClient(CFG)
-        self._disco.start()
+        # REL-01：发现是可关闭的进程级能力。保留显式 host/port 的
+        # ClientCore 配置，不在关闭时以任何候选覆盖它。
+        self._disco = None
+        if CFG.discovery_enabled:
+            try:
+                self._disco = DiscoveryClient(CFG)
+                self._disco.start()
+            except Exception:
+                self._disco = None
         self._hotkey = HotkeyManager()
-        self._hotkey_ok = self._hotkey.start()
+        self._hotkey_ok = _start_global_hotkey(self._hotkey)
         # Alt+A 区域截图即发（修饰键不同，与 Ctrl+Alt+H 不冲突；失败静默降级）
         self._shot_hotkey = HotkeyManager(mods=MOD_ALT, vk=0x41,
                                           hotkey_id=0x1338, desc_text="Alt+A")
-        self._shot_hotkey_ok = self._shot_hotkey.start()
+        self._shot_hotkey_ok = _start_global_hotkey(self._shot_hotkey)
         self._snip = None                  # 进行中的截图选框（防重入）
         # R69A：多套伪装皮肤（记住上次所选；右键菜单/F2 轮换后持久化）
         self._boss = BossWindow(
@@ -485,16 +500,17 @@ class ChatWindow:
         from widgets.stealth_toast import StealthToast
         self._toast = StealthToast(self.root)
         self._tray = None
-        try:
-            from widgets.tray import Tray
-            _stop_early_tray()                 # 登录完毕：移除早期占位托盘，换正式托盘
-            self._tray = Tray(self.root, on_show=self.show_main,
-                              on_boss=self._toggle_boss,
-                              on_ghost=self.toggle_ghost,
-                              on_quit=self.quit_app,
-                              tip=self._camo_title())     # R46：托盘跟随伪装
-        except Exception:
-            self._tray = None
+        if CFG.tray_enabled:
+            try:
+                from widgets.tray import Tray
+                _stop_early_tray()             # 登录完毕：移除早期占位托盘，换正式托盘
+                self._tray = Tray(self.root, on_show=self.show_main,
+                                  on_boss=self._toggle_boss,
+                                  on_ghost=self.toggle_ghost,
+                                  on_quit=self.quit_app,
+                                  tip=self._camo_title()) # R46：托盘跟随伪装
+            except Exception:
+                self._tray = None
         self._apply_camo()                   # R46：伪装标题启动即生效
         self._sys_theme_after = None         # R41D 系统深浅轮询定时器
         self.root.after(120, self._poll)
@@ -1052,22 +1068,24 @@ class ChatWindow:
         except queue.Empty:
             pass
         # 热键 → 切换假工作窗
-        try:
-            while True:
-                self._hotkey.q.get_nowait()
-                self._toggle_boss()
-        except queue.Empty:
-            pass
+        if CFG.global_hotkeys_enabled:
+            try:
+                while True:
+                    self._hotkey.q.get_nowait()
+                    self._toggle_boss()
+            except queue.Empty:
+                pass
         # Alt+A → 区域截图即发
-        try:
-            while True:
-                self._shot_hotkey.q.get_nowait()
-                self._start_snip()
-        except queue.Empty:
-            pass
+        if CFG.global_hotkeys_enabled:
+            try:
+                while True:
+                    self._shot_hotkey.q.get_nowait()
+                    self._start_snip()
+            except queue.Empty:
+                pass
         # 自动发现 → 未连上时自动切到最新候选服务器（约 1.2s 一次）
         self._disco_ticks += 1
-        if self._disco_ticks % 10 == 0:
+        if CFG.discovery_enabled and self._disco is not None and self._disco_ticks % 10 == 0:
             self._disco_ticks = 0
             self._auto_target()
         # C5：未读/置顶/搜索变化后统一重绘名单与群（批量，避免逐条刷新）
@@ -3980,6 +3998,8 @@ class ChatWindow:
         """R67 新消息提示音：读 prefs['notify_sound']（off/soft/default/ding，与网页端语义一致）。"""
         if getattr(self, "_boss_active", False):
             return                                    # R69A2：伪装态一律静音
+        if not CFG.hardware_enabled:
+            return                                    # REL-01：硬件禁用不播放系统声音
         if winsound is None:
             return
         s = str(self._prefs.get("notify_sound", "default") or "default")
@@ -4803,6 +4823,9 @@ class ChatWindow:
         """
         if not os.path.exists(path):
             self.show_toast("本地语音文件不存在（可能是历史缓存已清理）", warn=True)
+            return
+        if not CFG.hardware_enabled:
+            self.show_toast("本地试用已禁用音频设备", warn=True)
             return
         if winsound is None:
             self.show_toast("当前系统无音频播放支持", warn=True)
@@ -10486,14 +10509,16 @@ class ChatWindow:
 
     def _refill_disco_box(self, box) -> None:
         box.delete(0, "end")
-        for ip, name, port in self._disco.candidates():
+        for ip, name, port in (self._disco.candidates()
+                               if CFG.discovery_enabled and self._disco else []):
             box.insert("end", f"{name}  {ip}:{port}")
 
     def _connect_to(self, box, dlg) -> None:
         sel = box.curselection()
         if not sel:
             return
-        cands = self._disco.candidates()
+        cands = (self._disco.candidates()
+                 if CFG.discovery_enabled and self._disco else [])
         if sel[0] >= len(cands):
             return
         ip, name, port = cands[sel[0]]
@@ -10504,6 +10529,8 @@ class ChatWindow:
 
     def _auto_target(self) -> None:
         """未连上时自动切到最新发现的服务器（只切一次，防抖动）"""
+        if not CFG.discovery_enabled or self._disco is None:
+            return
         if self.core.connected or self.core.state == "idle":
             return
         cands = self._disco.candidates()
@@ -11010,6 +11037,11 @@ class ChatWindow:
             self._boss.close()
         self._hotkey.stop()
         self._shot_hotkey.stop()
+        if self._disco is not None:
+            try:
+                self._disco.stop.set()
+            except Exception:
+                pass
         if getattr(self, "_tray", None) is not None:
             self._tray.stop()              # R31D：退出前移除托盘图标
         self._persist_drafts()             # R12：退出前把内存草稿写盘
@@ -13327,6 +13359,10 @@ def _start_early_tray() -> None:
     会顺带驱动本 root 的 after——因此**绝不另起线程去 update()，避免与弹窗
     抢 Tcl 事件循环导致弹窗不弹/进程闪退**。"""
     global _early_tray, _early_root
+    if not CFG.tray_enabled:
+        _early_tray = None
+        _early_root = None
+        return
     try:
         from widgets.tray import Tray
         root = tk.Tk()
@@ -13382,7 +13418,8 @@ def main() -> int:
     if not _acquire_single_instance():       # 已有实例且已唤醒其可见窗 → 退出
         bootlog("client single-instance exit")
         return 0
-    _start_early_tray()                      # 进程一启动就放托盘图标，随时可见"在跑"
+    if CFG.tray_enabled:
+        _start_early_tray()                  # 进程一启动就放托盘图标，随时可见"在跑"
     out = getattr(sys, "stdout", None)
     if out is not None:
         try:

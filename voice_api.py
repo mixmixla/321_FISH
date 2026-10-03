@@ -14,6 +14,8 @@ import os
 import queue
 import threading
 
+from config import CFG
+
 SAMPLE_RATE = 8000
 CHANNELS = 1
 BITS = 16
@@ -59,6 +61,11 @@ class _AsyncErrorReporter:
 def available() -> bool:
     """本机是否具备音频采集能力（非 Windows / 无输入设备 → False）。"""
     global _AVAILABLE
+    # REL-01 hardware=0 is a hard gate: do not even load/query winmm device
+    # counts.  Existing callers receive the same unavailable result used on a
+    # machine without an input device.
+    if not getattr(CFG, "hardware_enabled", True):
+        return False
     if _AVAILABLE is None:
         if os.name != "nt":
             _AVAILABLE = False

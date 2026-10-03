@@ -319,6 +319,12 @@ class LoginDialog:
             self._fill_cands(force=True)
 
     def _start_disco(self):
+        if not CFG.discovery_enabled:
+            # Explicit/manual host remains the sole target when discovery is
+            # disabled; do not create a listener or replace ``self.cur``.
+            self._disco = None
+            self._poll()
+            return
         try:
             self._disco = DiscoveryClient(CFG)
             self._disco.start()

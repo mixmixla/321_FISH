@@ -6,6 +6,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 <!-- BEGIN_ROADMAP_VIEW -->
 ## 开发路线与当前位置
 
+**当前自治轮：LOCAL-TRIAL-20261003，Goal active。** 用户已授权主控在本轮范围内自主冻结任务、
+实施、独立审查和技术验收；[详细决定](decisions/LOCAL-AUTONOMY-20261003.md)替换一般审批分工。
+本地基线 `452417e`，集成分支 `codex/local-trial-20261003`；不继承旧任务 push/PR 权限。
+RESOURCE 四条件主体独立窄核查已确认；发现损坏manifest数值溢出，已冻结 RESOURCE-FIX-01 待门禁后修复。
+不重做已闭合项。当前实施 **VB-01 v1**：
+正式隔离逐文件门禁；之后按依赖冻结可靠性补正/游戏筛查/旗舰设计与实现/本地构建候选。
+本轮终点为合成数据验证的 Windows 本地试用候选、真实完成度地图、验证记录和已知/未验证事项。
+不等于 Pro/用户验收、远端合并或发布。以下旧交付记录与历史限制仅属于相应旧批次。
+
 **现在处于 Pro 路线的 R1：核心状态一致性。** 管理员安全、文件鉴权、会话退出和公共游戏生命周期已交付，
 [PR #4](https://github.com/mixmixla/321_FISH/pull/4)已合并；CC-02A已交付[Draft PR #5](https://github.com/mixmixla/321_FISH/pull/5)，RETIRE和CC-03入口筛查尚未闭合。
 已完成的`BATCH-R1`是有限实现批次，不能据此宣布整个Pro R1里程碑通过。
@@ -57,13 +66,18 @@ CORE仅改server.py/最少量server_store.py/tests，Task v1.1已独立终审ACC
 | 已完成实施 · CC-02B-STORE | 严格一次bytes/阶段IO/统一ack/全writer unknown/原子候选/op查询/三来源 | ACCEPTED；v1.1，Goal complete，已追加Draft PR #5 | store_backend / 主控 / store_code_review独立正式终审 | [Task](task-packages/CC-02B-STORE.md)/[Review](review-packages/CC-02B-STORE-r1.md)，116文件1483/0/2、188专项/277域/real35，未merge/release |
 | 资料完成 · CC-02C-RESOURCE-SCOPE | 只读资源owner/C/独立IO/t0/保留访问与有限Task草案 | ACCEPTED（资料）；Goal complete，已随PR-DELIVERY-05追加Draft PR #5 | 主控七Markdown / 两事实代理 / resource_docs_review独立终核 | [Task](task-packages/CC-02C-RESOURCE-SCOPE.md)/[Review](review-packages/CC-02C-RESOURCE-SCOPE-r1.md)，原资料19矩阵当时未执行/173链接/308源历史保持；后续正式Task另获批准 |
 | 已完成实施 · CC-02C-RESOURCE | 文件attempt许可/统一manifest资格/独立结果查询/异步bus C/preview窄桥接 | ACCEPTED；Goal complete，已追加Draft PR #5 | resource_backend / 主控 / resource_code_review独立正式终审 | [Task](task-packages/CC-02C-RESOURCE.md)/[Review](review-packages/CC-02C-RESOURCE-r1.md)，1191550/0/2、67专项/19域356/311源保持；不等完整RETIRE/R1/merge/release |
-| 7 · CC-03-SCREEN | 47项游戏入口/主要操作矩阵；稳定与实验分类依据 | PROPOSED；公共生命周期已完成，筛查未开始 | Codex核验，Pro审分类决策 | 每项给出入口与行为证据；不以注册/画面存在等同可玩 |
-| 并行 · VB-01（CC-05基线） | 正式逐文件入口、同版本续跑、超时清理、真实退出/日志报告 | PROPOSED；未入实现队列 | Codex / 独立审查 | 批次范围批准，runner专项与最终门禁通过；不重做已修R26 |
-| 后续 · GAME-UI-01（CC-04） | 两款棋类Game UI Brief；回合/观战/胜线/规则提示；Excel和低打扰状态设计 | PROPOSED；设计/代码均未开始 | GPT设计 → Pro审查 → Codex | R1前置明确；先审设计，再实现与真实交互验收 |
-| 后续 · REL-01（CC-05交付） | 统一构建入口、EXE/机器/网络验收 | PROPOSED；尚无当前发布验收 | Codex准备，开发者真机，Pro验收 | 明确模型/扩展降级，产物hash/日志/试用条件与权限齐备 |
+| 7 · CC-03-SCREEN | 47项游戏入口/主要操作矩阵；稳定/实验/未验证/端不支持 | 待内部冻结；属于本轮范围，尚未实施 | 主控核验 / 独立审查 | 每项入口与行为证据；注册/画面存在不等于可玩 |
+| 当前 · VB-01（CC-05基线） | 正式逐文件入口、同版本续跑、超时清理、真实退出/日志报告 | IMPLEMENTING；v1内部批准 | gate_impl唯一代码 / 独立审查 | [Task](task-packages/VB-01.md)；隔离路径/网络/桌面，runner专项与最终门禁 |
+| 后续 · GAME-UI-01（CC-04） | 两款棋类状态/布局/操作/观战/胜线；必要办公收起恢复 | 待内部设计/冻结；属于本轮范围 | 内部设计 → 独立设计审查 → 实现 | 前置明确；先设计审查，再真实交互验收 |
+| 后续 · REL-01（CC-05交付） | 构建、合成数据Windows本地试用候选/已知事项 | 待内部冻结；仅本地试用范围 | 主控 / 独立审查 | 产物hash/日志；真实机器/物理网络未测须明确，不自动发布 |
 | Backlog · SEC-01 | Git历史敏感信息与旧部署凭据评估 | PROPOSED；不阻塞当前交付 | 独立安全评估 / 用户决定 | 先评估；不自动重写Git历史或改真实凭据 |
 
 ### 上轮整理与当前 Goal
+
+2026-10-03 自治接管：旧主控最近一轮 completed，工作区入场 clean/index 空，无 Python 应用/测试，
+唯一 worktree。当前聊天 Goal 已用工具创建并确认 active，无预算、未设置 heartbeat。
+主控唯一治理/队列/Task/Review/Git 写入；gate_impl 唯一门禁代码 writer；resource_review 只读窄核查。
+当前任务 VB-01 v1，内部批次验收后自动衔接本轮范围内下一项；不需用户逐批回复。
 
 用户于2026-10-03直接要求“请提交pr”，[PR-DELIVERY-05 v1](task-packages/PR-DELIVERY-05.md)code7=2087af8/docs12=4d2a49b已正常push至PR5；独立实际树/原119证据/最终actualremote-flow终核无must，PR新title/body/attach满足，open/draft/base maincc7e295，本交付ACCEPTED。Goal complete，仅结束元数据机械补录；source31102947728…/1550保持，不复跑应用或扩权限。
 
@@ -120,6 +134,11 @@ Android、完整云账号、47款全面美术和大规模重写维持Backlog，�
 <!-- END_ROADMAP_VIEW -->
 
 ## 批次、角色与权限
+
+- 当前授权：[LOCAL-TRIAL-20261003](decisions/LOCAL-AUTONOMY-20261003.md)。主控可制定有限 Task、
+  本地实现/合成验证/独立技术验收及本地提交。高风险保留必要设计审查与独立代码审查。
+  真实数据、远端写入/PR/merge/发布、外部消息、付费/系统/设备/鼠标键盘操作未授权。
+  下列“最近完成”均为历史批次，旧权限不向本轮继承；旧只读/等 Pro 不阻塞新范围内 Task。
 
 - 最近完成交付：[PR-DELIVERY-05 v1](task-packages/PR-DELIVERY-05.md)，用户直接“请提交pr”授权已验收RESOURCE与资料commit/push/PR5更新，已ACCEPTED/Goal complete。
   主控唯一Git/index/资料，独立actualtree审查只读；精确code7/docs12，不改app/tests/依赖、不复跑1550同版。正常push当前branch并更新Draft PR5/attach，不重复PR/merge/release/真实data/外部消息/heartbeat/下一代码。
@@ -195,6 +214,9 @@ Android、完整云账号、47款全面美术和大规模重写维持Backlog，�
 
 ## 当前队列
 
+本轮调度优先于下表历史任务：VB-01 v1 IMPLEMENTING；RESOURCE-FIX-01 v1 READY（依赖门禁隔离）；
+CC-03-SCREEN v1 正在只读筛查，GAME-UI-01 v1 draft 内部设计审查中；其余方向逐项冻结。
+
 | ID | 状态 | 批次/依赖 | 执行者 / 审查者 | 下一动作与证据 |
 | --- | --- | --- | --- | --- |
 | PR-DELIVERY-05 | ACCEPTED | code7/docs12/push/PR5更新attach/最终actualremote-flow独立无must；Goal complete | 主控唯一Git/资料 / pr05_tree_review独立actualtree | 2087af8/4d2a49b已PR5open/draft，flow16bdc7e实际终核通过；结束元数据精确补录后停止，[Task](task-packages/PR-DELIVERY-05.md)/[Review](review-packages/PR-DELIVERY-05-r1.md) |
@@ -224,10 +246,11 @@ Android、完整云账号、47款全面美术和大规模重写维持Backlog，�
 | CC-01A | MERGED | PR #4，用户PASS | 原实现者 / 用户确认 | 历史失败/版本保持，未发布；[r2](review-packages/CC-01A-r2.md) / [r1](review-packages/CC-01A-r1.md) / [基线](review-packages/CC-01A-baseline.md) |
 | CC-01A-FIX-01 | MERGED | PR #4 | 原主控 + `admin_tests` / `auth_path_review`只读 | 原R26单独提交与补正验收保持；[Task](task-packages/CC-01A-FIX-01.md) / [r2](review-packages/CC-01A-r2.md) |
 
-状态流转：PROPOSED → READY → IMPLEMENTING → REVIEWING → ACCEPTED → MERGED。
+状态流转：PROPOSED → READY → IMPLEMENTING → REVIEWING → AI_ACCEPTED → MERGED → RELEASED。
+历史 ACCEPTED 原样保留。AI_ACCEPTED 是主控根据独立审查与真实门禁作出的有限技术验收。
 审查必须修复项使 REVIEWING 回到 IMPLEMENTING；需要决定时使用 WAITING_FOR_DECISION 并写具体问题。
 ACCEPTED 要求冻结目标满足、必测通过、独立审查无未关闭必须修复项、版本可识别。
-MERGED 只在实际合并后记录；里程碑 Pro 验收/发布另记，不能由单项通过推出。
+MERGED/RELEASED 只在实际获准操作完成后记录；里程碑、历史 Pro 验收与发布另记，不能由单项通过推出。
 
 ## CC-01A 管理员凭据安全整改
 
@@ -283,7 +306,19 @@ Android、完整云账号、全面游戏美术、大规模模块拆分仍为暂�
 本次连续授权覆盖BATCH-R1三个生命周期任务，已自动推进至本批验收终点，不因单项结束而等待用户。
 其它Roadmap未转为执行授权；后续产品范围/批次由用户确认，普通批次内整改继续无需逐项推动。
 
-## 当前检查点 PR05-CP-04（actualremote/PR/flow独立验收与终点）
+## 当前检查点 LOCAL-CP-01（自治接管与正式门禁）
+
+- Task VB-01 v1；授权与本轮终点见上，Goal active。入场 HEAD `452417e20a8fe35c3ac641b1f2da488352dd6317`，
+  clean/index空；从旧分支创建本地 `codex/local-trial-20261003`，未远端操作。
+- 已完成：最低现场核对、适用指令/最新RESOURCE证据读取、治理替换/有限Task冻结；
+  旧主控最后一轮completed，无Python测试/应用，不终止任何未知进程。
+- 正在做：gate_impl唯一runner代码/测试；resource_review独立只读四条件；主控治理/状态与边界。
+- 验证前发现：config/prefs有源码旁默认数据路径；TCP/Web默认0.0.0.0；测试需隔离副本+loopback+
+  独立Windows桌面，不直接在真实数据目录启动全量。尚未运行应用/pytest。
+- 下一动作：runner实现/安全探针 → 独立代码审查/专项 → 冻结候选完整门禁 → 本地验收提交，
+  再冻结游戏筛查等范围内下一项。当前无用户待决问题，未启用旧heartbeat。
+
+## 历史检查点 PR05-CP-04（actualremote/PR/flow独立验收与终点）
 
 - PR-DELIVERY-05 v1已ACCEPTED，pr05_tree_review最终只读核验16bdc7e实际flow/remote/PR无must，Goal complete；code2087af8/docs4d2a49b精确7+12、raw31102947728…/blob规范化与原1191550/0/2保持。
 - 审查实际PR5open/draft/未merge/head16bdc7e/base maincc7e295，title/bodySHAaa9ff640…/无重复PR/PR69file与main..head一致，attach已成功；199links/无断链/投影/clean/index空/flow仅3md PASS。

@@ -187,7 +187,7 @@ def _etch_cell(cv, x0, y0, x1, y1, fill, outline):
     ch = y1 - y0
     # 内嵌木纹细线（随格高自适应间距）
     gap = max(5, int(ch / 6))
-    for yy in range(y0 + gap, y1 - 1, gap):
+    for yy in range(int(y0) + gap, int(y1) - 1, gap):
         cv.create_line(x0 + 1, yy, x1 - 1, yy, fill=_shade(fill, 0.05),
                        width=1, stipple="gray50")
     # 上沿高光 + 下沿暗纹（立体）
@@ -406,6 +406,9 @@ def _turn_banner(cv, w, header_h, text, accent, ypad=8):
 
 def _hover_overlay(cv, ui):
     """按 ui['_hover'] 给当前悬停格画淡白高亮（render 收尾统一调用）。"""
+    if ui.get("game") in ("gomoku", "connect4"):
+        _flagship_hover(cv, ui)
+        return
     h = ui.get("_hover")
     if not h:
         return
@@ -559,6 +562,10 @@ def handle_click(ui, x, y):
 
 
 def _cell_of(ui, x, y):
+    if ui.get("game") == "gomoku":
+        return _intersection_of(ui, x, y)
+    if ui.get("game") == "connect4":
+        return _connect4_column_of(ui, x, y)
     ox, oy, cell = ui.get("ox"), ui.get("oy"), ui.get("cell")
     n = ui.get("n")
     if None in (ox, oy, cell, n):
@@ -572,19 +579,175 @@ def _cell_of(ui, x, y):
     return int(cx), int(cy)
 
 
+def _connect4_column_of(ui, x, y):
+    """Shared Connect Four column hit geometry for board and prompt strip.
+
+    The strip immediately above the board is part of the same column hit box;
+    it returns ``(column, -1)`` so hover and click use identical bounds while
+    the painter resolves the preview to the actual lowest empty row.
+    """
+    ox, oy, cell = ui.get("ox"), ui.get("oy"), ui.get("cell")
+    cols, rows = ui.get("cols", ui.get("n")), ui.get("rows")
+    if None in (ox, oy, cell, cols, rows) or cell <= 0:
+        return None
+    if not (ox <= x < ox + cols * cell and oy - cell <= y < oy + rows * cell):
+        return None
+    col = int((x - ox) // cell)
+    row = -1 if y < oy else int((y - oy) // cell)
+    return col, row
+
+
+def _intersection_of(ui, x, y):
+    """Five-in-a-row uses intersections, including half a cell at each edge."""
+    ox, oy, cell, n = (ui.get(k) for k in ("ox", "oy", "cell", "n"))
+    if None in (ox, oy, cell, n) or cell <= 0:
+        return None
+    cx, cy = (x - ox) / cell, (y - oy) / cell
+    if not (-0.5 <= cx < n - 0.5 and -0.5 <= cy < n - 0.5):
+        return None
+    return math.floor(cx + 0.5), math.floor(cy + 0.5)
+
+
+def flagship_status(game, st, me, nick):
+    """Player colour is fixed by seat, independently of whose turn it is."""
+    players = st.get("players") or []
+    colours = ("黑", "白") if game == "gomoku" else ("红", "黄")
+    seat = players.index(me) if me in players else -1
+    identity = f"你执{colours[seat]}" if 0 <= seat < 2 else "观战"
+    def _status_nick(uid):
+        value = str(nick(uid))
+        return value if len(value) <= 8 else value[:7] + "…"
+    winner = st.get("winner_uid")
+    if winner is not None:
+        status = f"{_status_nick(winner)} 获胜"
+    elif st.get("draw"):
+        status = "平局"
+    elif st.get("turn_uid") == me and seat >= 0:
+        status = "轮到你"
+    else:
+        status = f"等待 {_status_nick(st.get('turn_uid'))} 落子"
+    return f"{identity} · {status}"
+
+
+def flagship_can_move(room, st, me, connected):
+    room, st = room or {}, st or {}
+    return bool(connected and room.get("status") == "playing"
+                and me in (room.get("players") or [])
+                and me not in (room.get("spectators") or [])
+                and st.get("turn_uid") == me
+                and st.get("winner_uid") is None and not st.get("draw"))
+
+
+def _flagship_hover(cv, ui):
+    hover = ui.get("_hover")
+    board = (ui.get("state") or {}).get("board") or []
+    if not ui.get("can_move") or not hover or not board:
+        return
+    x, y = hover
+    if ui["game"] == "connect4":
+        if not 0 <= x < len(board[0]) or board[0][x]:
+            return
+        y = next(row for row in range(len(board) - 1, -1, -1) if not board[row][x])
+        offset = 0.5
+    else:
+        if not (0 <= y < len(board) and 0 <= x < len(board[y])) or board[y][x]:
+            return
+        offset = 0.0
+    cell = ui["cell"]
+    cx, cy = ui["ox"] + (x + offset) * cell, ui["oy"] + (y + offset) * cell
+    r = cell * 0.35
+    cv.create_oval(cx - r, cy - r, cx + r, cy + r, outline="#4b7c72",
+                   width=2, dash=(3, 2), tags="_hover")
+
+
+def _flagship_feedback(cv, ui, st, needed, now, lastpx):
+    """A fixed last-move marker, finite pulse and static winning line."""
+    last = st.get("last_move")
+    key = (ui.get("_room_context"), tuple(last) if last else None)
+    if key != ui.get("_flagship_move"):
+        ui["_flagship_move"] = key
+        ui["_flagship_t0"] = now
+    age = now - ui.get("_flagship_t0", now)
+    ui["_flagship_animate"] = bool(lastpx and 0 <= age < 0.9)
+    if lastpx:
+        cx, cy = lastpx
+        r = max(3, ui["cell"] * 0.12)
+        cv.create_oval(cx - r, cy - r, cx + r, cy + r, outline="#c45e32",
+                       width=2, tags="flagship-last")
+        if ui["_flagship_animate"]:
+            pulse = ui["cell"] * (0.42 + 0.2 * age / 0.9)
+            cv.create_oval(cx - pulse, cy - pulse, cx + pulse, cy + pulse,
+                           outline="#aa9d75", width=1, tags="flagship-pulse")
+    line = flagship_win_line(st, needed)
+    if line:
+        offset = 0.0 if ui["game"] == "gomoku" else 0.5
+        start, end = line[0], line[-1]
+        cv.create_line(ui["ox"] + (start[0] + offset) * ui["cell"],
+                       ui["oy"] + (start[1] + offset) * ui["cell"],
+                       ui["ox"] + (end[0] + offset) * ui["cell"],
+                       ui["oy"] + (end[1] + offset) * ui["cell"],
+                       fill="#c45e32", width=3, tags="flagship-win")
+    # Flagship feedback is finite.  The owning window supplies a cancellable
+    # after scheduler; no global timer or idle breathing loop is introduced.
+    if ui.get("_flagship_animate") and ui.get("_schedule_repaint"):
+        ui["_schedule_repaint"](40)
+
+
+def flagship_win_line(st, needed):
+    """First winning direction's full contiguous run through the final move."""
+    board, last = st.get("board") or [], st.get("last_move")
+    players, winner = st.get("players") or [], st.get("winner_uid")
+    if st.get("draw") or winner is None or winner not in players or not last or len(last) != 2:
+        return []
+    x, y = last
+    if type(x) is not int or type(y) is not int:
+        return []
+    stone = players.index(winner) + 1
+
+    def matches(px, py):
+        return (0 <= py < len(board) and 0 <= px < len(board[py])
+                and board[py][px] == stone)
+
+    if not matches(x, y):
+        return []
+    for dx, dy in ((1, 0), (0, 1), (1, 1), (1, -1)):
+        before, after = [], []
+        px, py = x - dx, y - dy
+        while matches(px, py):
+            before.append((px, py))
+            px, py = px - dx, py - dy
+        px, py = x + dx, y + dy
+        while matches(px, py):
+            after.append((px, py))
+            px, py = px + dx, py + dy
+        line = list(reversed(before)) + [(x, y)] + after
+        if len(line) >= needed:
+            return line
+    return []
+
+
 def _click_xy(ui, x, y):
     c = _cell_of(ui, x, y)
     if not c:
         return
+    if ui.get("game") == "gomoku":
+        board = (ui.get("state") or {}).get("board") or []
+        if (not ui.get("can_move") or c[1] >= len(board)
+                or c[0] >= len(board[c[1]]) or board[c[1]][c[0]]):
+            return
     ui["submit"]({"x": c[0], "y": c[1]})
 
 
 def _click_col(ui, x, y):
     n = ui.get("n")
-    if n is None:
+    if n is None or not ui.get("can_move"):
         return
-    col = int((x - ui.get("ox", 0)) // ui.get("cell", 1))
-    if 0 <= col < n:
+    board = (ui.get("state") or {}).get("board") or []
+    c = _connect4_column_of(ui, x, y)
+    if not board or c is None:
+        return
+    col = c[0]
+    if 0 <= col < n and col < len(board[0]) and not board[0][col]:
         ui["submit"]({"col": col})
 
 
@@ -1070,22 +1233,15 @@ def _g_kalah_board_fx(cv, ui, now, cells, a_holes, b_holes, holeR, breathing,
 def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["gomoku"][1]
     n = st.get("size") or 15
-    title = "⚫ 五子棋 · 先连五子胜"
-    _tone = st.get("turn_uid")
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 获胜"
-    elif st.get("draw"):
-        title = "平局"
-    elif _tone:
-        title += f"　轮到 {nick(_tone)}{'（你执黑）' if _tone == me else ''}"
+    title = flagship_status("gomoku", st, me, nick)
     _turn_banner(cv, w, 46, title, accent)
     ox, oy, cell = _fit(n, w, h, header=46)
-    ui.update(ox=ox, oy=oy, cell=cell, n=n, game="gomoku")
+    ui.update(ox=ox, oy=oy, cell=cell, n=n, rows=n, cols=n, game="gomoku")
     # 棋盘（纸面木纹底）加柔和投影
     _soft_shadow(cv, ox - 12, oy - 8, ox + n * cell + 8, oy + n * cell + 8,
                  6, 5)
     _paper_board(cv, ox - 10, oy - 10, ox + n * cell + 10, oy + n * cell + 10,
-                 base="#c89b5f", edge="#8a5a2b")
+                 base="#f6f3e9", edge="#c8c2b0")
     for i in range(n):
         cv.create_line(ox, oy + i * cell, ox + (n - 1) * cell, oy + i * cell,
                        fill="#8a5a2b")
@@ -1096,7 +1252,7 @@ def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     if isinstance(last, list) and len(last) == 2:
         last = tuple(last)                # 服务端可能是 list，统一成 tuple 便于比较
     now = time.monotonic()
-    breathing = _g_breath(now)             # 辉光呼吸强度（纯时间推导，唯一 idle 增量）
+    breathing = 0.0
     lastpx = None
     stone_anchors = []                     # 所有棋子中心，作胜利星点锚点
     if last and last[0] >= 0 and last[1] >= 0 and last[0] < n and last[1] < n:
@@ -1111,13 +1267,8 @@ def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             stone_anchors.append((cx, cy))
             _stone(cv, cx, cy, cell * 0.42,
                    "#111" if v == 1 else "#fff", "#888",
-                   last == (x, y), glow=True, gint=breathing)
-    # ---- 动效：落子光晕/微粒子 + 胜利星点（全部纯时间推导，数量封顶）----
-    on_win = st.get("winner_uid") is not None
-    _g_draw_last(cv, ui, now, lastpx, cell)
-    _g_draw_win(cv, ui, now, w, stone_anchors, breathing, on_win)
-    # 续帧泵：辉光呼吸（idle 唯一视觉增量）与胜利星点持续驱动帧，直到离开不画
-    _anim_need(ui, repaint, gap=0.04, cap=180)
+                   last == (x, y), glow=False, gint=breathing)
+    _flagship_feedback(cv, ui, st, 5, now, lastpx)
 
 
 @_register("connect4")
@@ -1126,19 +1277,13 @@ def _p_connect4(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     board = st.get("board") or []
     cols = st.get("cols") or (len(board[0]) if board else 7)
     rows = len(board)
-    title = "🔴 四子棋 · 点击列落子"
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 获胜"
-    elif st.get("draw"):
-        title = "平局"
-    elif st.get("turn_uid"):
-        title += f"　轮到 {nick(st['turn_uid'])}"
+    title = flagship_status("connect4", st, me, nick)
     _turn_banner(cv, w, 46, title, accent)
     ox, oy, cell = _fit(cols, w, h, header=46)
-    ui.update(ox=ox, oy=oy, cell=cell, n=cols, game="connect4")
+    ui.update(ox=ox, oy=oy, cell=cell, n=cols, rows=rows, cols=cols, game="connect4")
     pad = cell * 0.08
     now = time.monotonic()
-    breathing = _g_breath(now)             # 呼吸辉光强度（纯时间推导）
+    breathing = 0.0
     last = st.get("last_move")             # (col, row)，board[y][x]
     lastpx = None
     stone_anchors = []                     # 棋子中心，作胜利星点锚点
@@ -1147,27 +1292,25 @@ def _p_connect4(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         if 0 <= c0 < cols and 0 <= r0 < rows:
             lastpx = (ox + c0 * cell + cell / 2, oy + r0 * cell + cell / 2)
     for x in range(cols):
+        _text(cv, ox + (x + 0.5) * cell, oy - 8, str(x),
+              "#45635b" if ui.get("can_move") and board and not board[0][x] else _MUTED)
         for y in range(rows):
             cx0, cy0 = ox + x * cell + pad, oy + y * cell + pad
             _etch_cell(cv, cx0, cy0, ox + (x + 1) * cell - pad,
                        oy + (y + 1) * cell - pad,
-                       THEME["connect4"][0], THEME["connect4"][1])
+                       "#708798", "#596f80")
             v = board[y][x]
             rr = (cell - pad * 2) / 2 - 1
             cxc, cyc = cx0 + (cell - pad * 2) / 2, cy0 + (cell - pad * 2) / 2
             if v == 1:
                 stone_anchors.append((cxc, cyc))
                 _stone(cv, cxc, cyc, rr, "#e05555", "#a02f2f",
-                       glow=True, gint=breathing)
+                       glow=False, gint=breathing)
             elif v == 2:
                 stone_anchors.append((cxc, cyc))
                 _stone(cv, cxc, cyc, rr, "#f2c844", "#b08a14",
-                       glow=True, gint=breathing)
-    # ---- 动效：落子光晕/微粒子 + 胜利星点（同 gomoku 范式，数量封顶）----
-    on_win = st.get("winner_uid") is not None
-    _g_draw_last(cv, ui, now, lastpx, cell)
-    _g_draw_win(cv, ui, now, w, stone_anchors, breathing, on_win)
-    _anim_need(ui, repaint, gap=0.04, cap=180)
+                       glow=False, gint=breathing)
+    _flagship_feedback(cv, ui, st, 4, now, lastpx)
 
 
 @_register("othello")

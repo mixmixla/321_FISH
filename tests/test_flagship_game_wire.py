@@ -71,14 +71,20 @@ class _TcpClient:
 
     def close(self):
         try:
+            self.sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        try:
             self.sock.close()
         except OSError:
             pass
+        self.reader.join(timeout=2.0)
 
 
 @pytest.fixture()
 def tcp_hub(tmp_path):
-    cfg = replace(CFG, audit_dir=str(tmp_path / "audit"), web_files_dir=str(tmp_path / "web"))
+    cfg = replace(CFG, bind_host="127.0.0.1", discovery_enabled=False,
+                  audit_dir=str(tmp_path / "audit"), web_files_dir=str(tmp_path / "web"))
     hub = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"))
     port = _free_port()
     stop = threading.Event()
@@ -92,13 +98,40 @@ def tcp_hub(tmp_path):
     hub.audit.close()
 
 
-def _state_for(client, rid, status=None, timeout=5.0):
+def _state_for(client, rid, status=None, timeout=5.0, *, round_no=None, stones=None):
+    def matches(event):
+        room = event.get("room", {})
+        if event.get("room_id") != rid or (status is not None and room.get("status") != status):
+            return False
+        if round_no is not None and room.get("round") != round_no:
+            return False
+        if stones is not None:
+            board = (event.get("state") or {}).get("board", [])
+            if not board or sum(bool(cell) for row in board for cell in row) != stones:
+                return False
+        return True
+
     return client.wait(
         "game_state",
-        predicate=lambda event: event.get("room_id") == rid and (
-            status is None or event.get("room", {}).get("status") == status),
+        predicate=matches,
         timeout=timeout,
     )
+
+
+def test_state_wait_ignores_queued_previous_move_and_round():
+    """A matching status alone is not an acknowledgement of the last move."""
+    client = object.__new__(_TcpClient)
+    client.lock = threading.Lock()
+    def snapshot(round_no, board):
+        return {"t": "game_state", "room_id": 7,
+                "room": {"status": "playing", "round": round_no},
+                "state": {"board": board}}
+    previous_move = snapshot(2, [[1, 0]])
+    previous_round = snapshot(1, [[1, 2]])
+    current = snapshot(2, [[1, 2]])
+    client.events = [previous_move, previous_round, current]
+    assert _state_for(client, 7, "playing", round_no=2, stones=2) is current
+    assert client.events == [previous_move, previous_round]
 
 
 @pytest.mark.parametrize(
@@ -129,24 +162,31 @@ def test_flagship_tcp_finish_reset_and_restart(tcp_hub, game, moves):
         b.send({"t": "game_join", "room_id": rid})
         assert _state_for(b, rid)
         a.send({"t": "game_start", "room_id": rid})
-        started = _state_for(a, rid, status="playing")
+        started = _state_for(a, rid, status="playing", stones=0)
         assert started and started["room"]["status"] == "playing"
+        round_no = started["room"]["round"]
+        assert _state_for(b, rid, "playing", round_no=round_no, stones=0)
 
         for index, action in enumerate(moves):
             actor = a if index % 2 == 0 else b
             actor.send({"t": "game_action", "room_id": rid, "action": action})
-            if index < len(moves) - 1:
-                assert _state_for(actor, rid, status="playing")
+            final = index == len(moves) - 1
+            for peer in (a, b):
+                confirmed = _state_for(peer, rid, "ended" if final else "playing",
+                                       round_no=round_no, stones=index + 1)
+                assert confirmed, (game, index, peer.nick)
+                state = confirmed["state"]
+                if final:
+                    assert state["winner_uid"] == a.uid
+                else:
+                    assert state["winner_uid"] is None
+                    assert state["turn_uid"] == (b.uid if actor is a else a.uid)
 
-        ended = _state_for(a, rid, status="ended")
-        assert ended and ended["state"]["winner_uid"] == a.uid
-        assert ended["room"]["round"] == started["room"]["round"]
-
-        reset = _state_for(a, rid, status="created", timeout=6.0)
+        reset = _state_for(a, rid, status="created", timeout=6.0, round_no=round_no)
         assert reset and reset["state"] is None
         round_before = reset["room"]["round"]
         a.send({"t": "game_start", "room_id": rid})
-        restarted = _state_for(a, rid, status="playing")
+        restarted = _state_for(a, rid, status="playing", round_no=round_before + 1, stones=0)
         assert restarted and restarted["room"]["round"] == round_before + 1
         assert restarted["state"]["winner_uid"] is None
     finally:

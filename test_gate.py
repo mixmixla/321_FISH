@@ -211,7 +211,7 @@ def _allowed_relative(path: Path) -> bool:
         return True
     if len(lowered) != 1:
         return False
-    if path.name.lower() in {".python-version", "dev.ps1", "app.ico"}:
+    if path.name.lower() in {".python-version", "dev.ps1", "trial_start.ps1", "app.ico"}:
         return True
     return path.suffix.lower() in {".py", ".pyw", ".spec", ".txt", ".json", ".toml", ".ini"}
 

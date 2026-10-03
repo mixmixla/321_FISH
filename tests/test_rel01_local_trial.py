@@ -322,3 +322,27 @@ def test_rel01_audit_and_owned_inventory_are_scoped(tmp_path):
     assert digest and count == len(inventory)
     assert local_trial._image_matches(str(owned / "nested" / "result.log"),
                                       owned / "nested" / "result.log")
+
+
+def test_build_snapshot_and_source_fingerprint_exclude_private_non_source(tmp_path):
+    import local_trial
+
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "config.py").write_text("VALUE = 1\n", encoding="utf-8")
+    for name in (".env", "boot.log", ".vscode/settings.json", "prefs.json"):
+        path = source / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("synthetic-private-sentinel", encoding="utf-8")
+    target = tmp_path / "snapshot"
+    local_trial._safe_copy_tree(source, target)
+    assert (target / "config.py").is_file()
+    assert not (target / ".env").exists()
+    assert not (target / "boot.log").exists()
+    assert not (target / ".vscode").exists()
+    assert not (target / "prefs.json").exists()
+    before = local_trial._source_fingerprint(source)
+    (source / ".env").write_text("changed-private-sentinel", encoding="utf-8")
+    assert local_trial._source_fingerprint(source) == before
+    (source / "config.py").write_text("VALUE = 2\n", encoding="utf-8")
+    assert local_trial._source_fingerprint(source) != before

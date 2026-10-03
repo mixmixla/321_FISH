@@ -39,6 +39,7 @@ from test_sandbox import (
     process_image_path,
     process_state,
 )
+from test_gate import source_manifest, _safe_source_path
 
 
 ROOT = Path(__file__).resolve().parent
@@ -136,6 +137,12 @@ def _tree_fingerprint(root: Path) -> tuple[str, int]:
     return hashlib.sha256(data).hexdigest(), len(entries)
 
 
+def _source_fingerprint(root: Path) -> tuple[str, int]:
+    """Read approved source inputs only, never runtime/IDE/credential files."""
+    entries, digest = source_manifest(root)
+    return digest, len(entries)
+
+
 def _executable_inventory(source_copy: Path) -> tuple[dict, list[str]]:
     """Require two non-empty executable files before a build can pass."""
     exes = {}
@@ -151,31 +158,20 @@ def _executable_inventory(source_copy: Path) -> tuple[dict, list[str]]:
 
 
 def _safe_copy_tree(source: Path, target: Path) -> None:
-    """Copy the candidate without following symlinks/reparse-like entries."""
+    """Copy only reviewed source inputs, including current uncommitted code."""
     source = source.resolve()
+    entries, _digest = source_manifest(source)
     target.mkdir(parents=True, exist_ok=False)
-    for current, dirnames, filenames in os.walk(source, topdown=True,
-                                                 followlinks=False):
-        current_path = Path(current)
-        rel = current_path.relative_to(source)
-        kept_dirs = []
-        for name in dirnames:
-            entry = current_path / name
-            if name.lower() in {x.lower() for x in EXCLUDED_DIRS}:
-                continue
-            if entry.is_symlink() or getattr(entry, "is_junction", lambda: False)():
-                raise RuntimeError(f"source contains symlink/junction: {entry}")
-            kept_dirs.append(name)
-        dirnames[:] = kept_dirs
-        out_dir = target / rel
-        out_dir.mkdir(parents=True, exist_ok=True)
-        for name in filenames:
-            entry = current_path / name
-            if name.lower() in {x.lower() for x in EXCLUDED_NAMES}:
-                continue
-            if entry.is_symlink():
-                raise RuntimeError(f"source contains symlink: {entry}")
-            shutil.copy2(entry, out_dir / name)
+    for entry in entries:
+        path = source / entry["path"]
+        if not _safe_source_path(path, source):
+            raise RuntimeError(f"unsafe source path: {entry['path']}")
+        data = path.read_bytes()
+        if hashlib.sha256(data).hexdigest() != entry["sha256"]:
+            raise RuntimeError(f"source changed during copy: {entry['path']}")
+        output = target / entry["path"]
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(data)
 
 
 def _clean_env(*, profile: Path | None = None, flags: dict[str, str] | None = None,
@@ -198,7 +194,7 @@ def _clean_env(*, profile: Path | None = None, flags: dict[str, str] | None = No
         env.update({
             "USERPROFILE": str(profile),
             "HOMEDRIVE": profile.anchor.rstrip("\\/"),
-            "HOMEPATH": str(profile)[len(profile.anchor):] or "\\",
+            "HOMEPATH": str(profile)[len(profile.drive):] or "\\",
             "APPDATA": str(appdata),
             "LOCALAPPDATA": str(local),
             "TEMP": str(temp),
@@ -237,8 +233,8 @@ def _ports() -> tuple[int, int]:
     return first, second
 
 
-def _build_env() -> dict[str, str]:
-    env = _clean_env(flags={})
+def _build_env(profile: Path | None = None) -> dict[str, str]:
+    env = _clean_env(profile=profile, flags={})
     # Build subprocesses must not inherit a gate runtime hook or an arbitrary
     # PYTHONPATH/tool integration from the calling desktop session.
     env.pop("PYTHONPATH", None)
@@ -253,9 +249,10 @@ def build_candidate(source: Path, output_root: Path) -> tuple[int, Path, dict]:
     command = [sys.executable, "build.py"]
     started = time.time()
     with log_path.open("wb") as log:
-        result = subprocess.run(command, cwd=str(source_copy), env=_build_env(),
+        result = subprocess.run(command, cwd=str(source_copy), env=_build_env(run_dir / "build-profile"),
                                 stdin=subprocess.DEVNULL, stdout=log,
-                                stderr=subprocess.STDOUT, check=False)
+                                stderr=subprocess.STDOUT, check=False,
+                                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
     exes, missing = _executable_inventory(source_copy)
     build_ok = result.returncode == 0 and not missing
     exit_code = int(result.returncode) if result.returncode else (0 if build_ok else 5)
@@ -376,7 +373,7 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
     server_exe = (server_exe or source / "dist" / "server.exe").resolve()
     client_exe = (client_exe or source / "dist" / "client.exe").resolve()
     try:
-        source_fingerprint_before, source_entry_count = _tree_fingerprint(source)
+        source_fingerprint_before, source_entry_count = _source_fingerprint(source)
     except Exception as exc:
         summary = {"schema_version": "REL-01.v1.run", "run_id": run_dir.name,
                    "source": str(source), "exit_code": 5,
@@ -434,6 +431,7 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
         "private_desktop_probe": probe, "processes": {}, "probes": {},
         "cleanup_ok": False, "logs": {key: str(value) for key, value in logs.items()},
         "source_fingerprint_before": source_fingerprint_before,
+        "source_fingerprint_scope": "approved source manifest; not a whole-system IO trace",
         "source_entry_count": source_entry_count,
         "profiles": {role: {"root": str(path), "inventory_before": profile_before[role]}
                      for role, path in profiles.items()},
@@ -504,7 +502,7 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
         try:
             for role, path in profiles.items():
                 result["profiles"][role]["inventory_after"] = _owned_inventory(path)
-            source_fingerprint_after, source_after_count = _tree_fingerprint(source)
+            source_fingerprint_after, source_after_count = _source_fingerprint(source)
             result["source_fingerprint_after"] = source_fingerprint_after
             result["source_entry_count_after"] = source_after_count
             result["source_unchanged"] = (

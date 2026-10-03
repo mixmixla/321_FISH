@@ -6,10 +6,12 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 <!-- BEGIN_ROADMAP_VIEW -->
 ## 开发路线与当前位置
 
-**当前Git交付：PR-DELIVERY-06，Goal active。** 用户在本轮验收后明确要求“请推送pr”，
+**Git交付：PR-DELIVERY-06已完成。** 用户在本轮验收后明确要求“请推送pr”，
 新增本次分支push/新PR权限；[Task](task-packages/PR-DELIVERY-06.md)。原本地开发Goal已完成，
 不合并/发布、不上传EXE或运行数据。入场clean/HEAD d2d67a0；PR #5已实际合并，main fc13a64与452417e同树，
-330源码身份保持，复用1669/0/2与既有独立验收。下一动作：普通push当前分支、创建新PR、核实并附聊天。
+330源码身份保持，复用1669/0/2与既有独立验收。[PR #6](https://github.com/mixmixla/321_FISH/pull/6)
+已创建并附当前聊天，open/非draft/base main、未merge/release；[交付记录](review-packages/PR-DELIVERY-06-r1.md)。
+普通push保留逻辑历史，最终head与远端/PR核对；本轮停止，Goal终态以聊天工具收口为准。
 
 **本轮自治：LOCAL-TRIAL-20261003，AI_ACCEPTED；Goal complete。** 用户已授权主控在本轮范围内自主冻结任务、
 实施、独立审查和技术验收；[详细决定](decisions/LOCAL-AUTONOMY-20261003.md)替换一般审批分工。

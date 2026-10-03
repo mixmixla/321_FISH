@@ -23,6 +23,8 @@ from html.parser import HTMLParser
 from urllib.parse import urlparse
 import json
 import copy
+import uuid
+import tempfile
 
 from config import ADMIN_NICK, CFG, DRAFT_TTL, MAX_NICK_LEN, enable_crashlog
 from crypto import HandshakeError, server_handshake
@@ -91,6 +93,27 @@ class CommitReceipt:
             return self[key]
         except KeyError:
             return default
+
+
+class _ResourceError(RuntimeError):
+    """有限资源接口的可报告错误；不包含正文、路径或凭据。"""
+
+    def __init__(self, code: str, result: dict | None = None,
+                 message: str = "资源操作未完成") -> None:
+        super().__init__(message)
+        self.code = code
+        self.result = result
+
+
+_RESOURCE_NEW_FIELDS = {
+    "resource_manifest_version", "resource_owner_uid",
+    "resource_operation_id", "content_length", "content_sha256",
+}
+_RESOURCE_MANIFEST_FIELDS = {
+    "fid", "name", "size", "kind", "ts", *_RESOURCE_NEW_FIELDS,
+}
+_RESOURCE_KINDS = {"cloud", "web_file"}
+_RESOURCE_OP_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}")
 
 
 # ---------- R26D 链接预览（服务器出网抓取，自动；SSRF 防护 + 大小/时长上限） ----------
@@ -500,11 +523,25 @@ class Hub:
         self.sticker_subs: dict = {}
         # R35 内置 Bots：提醒待发队列（sweeper 到期推送）
         self.bot_reminders: list = []
+        # CC-02C：bot/Agent/提醒来源上下文，仅运行态，不进入聊天正文或 Store。
+        self._bot_contexts: dict = {}
         # R37 加密云历史：uid -> {"blob": bytes, "ts": float}（服务器只存密文；
         # 落盘 web_files_dir/cloud/{uid}.bin，重启保留，服务器无法解密）
         self.cloud: dict = {}
         self.cloud_dir = os.path.join(self.cfg.web_files_dir, "cloud")
         os.makedirs(self.cloud_dir, exist_ok=True)
+        # CC-02C RESOURCE：运行态资源 registry。它不是 Store 快照，也不保存
+        # 正文/路径；latest_permit 与 current_readable_index 必须分开，后续
+        # C 可以阻止旧 failed op 重试，但 pending/failed/unknown 不能遮掉
+        # 尚未被新已证版本替换的旧可读内容。
+        self._resource_lock = threading.RLock()
+        self._resource_ops: dict[str, dict] = {}
+        self._resource_keys: dict[tuple[str, str], dict] = {}
+        self._resource_fid_ops: dict[str, str] = {}
+        self._resource_order_seq = 0
+        self._resource_max_active = 16
+        self._resource_max_terminal = 64
+        self._resource_manifest_version = 1
         self._cloud_load_disk()
         self.xfers = {}             # file_id -> 传输记录（中转/直连状态权威）
         self.rooms = RoomManager(GAME_TYPES)   # 游戏房间（服务器权威）
@@ -546,6 +583,8 @@ class Hub:
         # R23 网页端文件存储（fid = uuid4().hex；<fid> 二进制 + <fid>.json 元数据）
         self.web_files = os.path.join(self.cfg.web_files_dir)
         os.makedirs(self.web_files, exist_ok=True)
+        self._resource_stage_dir = os.path.join(self.web_files, ".resource_stage")
+        os.makedirs(self._resource_stage_dir, exist_ok=True)
         # R30C 自定义贴纸：code -> {code,label,ext}（图片落盘 stickers/ 目录，随 R16 持久化）
         self.custom_stickers: dict = {}
         self.sticker_dir = os.path.join(self.cfg.web_files_dir, "stickers")
@@ -621,6 +660,9 @@ class Hub:
             self.store = ServerStore(os.path.join(store_dir, "state.json"))
             self.store._bind_hub_writer(self._bound_store_save)
         self._restore(self.store.load() if self.store else {})
+        # CLOUD 扫描早于身份恢复是启动顺序既有事实；只有在 _restore 完成
+        # 后才把非退役 UID 放入当前可读 index，合法退役 JSON 过滤私有访问。
+        self._resource_filter_cloud_after_restore()
         if self.store is not None:
             try:
                 loaded = self.store.read_bytes_result()
@@ -2174,36 +2216,978 @@ class Hub:
                                  "unread": unread}
         return sorted(convos.values(), key=lambda c: -c["last_ts"])
 
+    # ---------- CC-02C RESOURCE：运行态结果/attempt/文件资格 ----------
+    @staticmethod
+    def _resource_public_result(ctx: dict) -> dict:
+        """只导出有限资源结果字段，不携带正文、路径或凭据。"""
+        keys = ("resource_operation_id", "resource_owner_uid", "kind",
+                "resource_key", "status", "io_effect", "visibility",
+                "stage", "error_code", "length", "sha256", "origin",
+                "retryable")
+        return {k: copy.deepcopy(ctx.get(k)) for k in keys}
+
+    def _resource_visibility_locked(self, ctx: dict) -> str:
+        if (ctx.get("owner_uid") in self.retired
+                and ctx.get("kind") == "cloud"):
+            return "withdrawn"
+        key = (ctx.get("kind"), str(ctx.get("resource_key")))
+        rec = self._resource_keys.get(key) or {}
+        current = rec.get("current_readable_index")
+        if ctx.get("status") == "confirmed":
+            if current is not None and current.get("operation_id") == ctx.get(
+                    "resource_operation_id"):
+                return "available"
+            if current is not None and current.get("operation_id") is not None:
+                return "superseded"
+            if ctx.get("visibility") == "withdrawn":
+                return "withdrawn"
+        if ctx.get("status") == "pending":
+            return "pending"
+        if ctx.get("status") == "unknown":
+            # A pending/unknown replacement does not erase the last confirmed
+            # readable index.  Its own result remains unresolved.
+            return "pending"
+        if rec.get("latest_permit", {}).get("operation_id") not in (
+                None, ctx.get("resource_operation_id")):
+            if current is not None and current.get("operation_id") is not None:
+                return "superseded"
+        return ctx.get("visibility") or "unavailable"
+
+    def _resource_finalize_locked(self, ctx: dict, *, status: str,
+                                  io_effect: str, stage: str | None = None,
+                                  error_code: str | None = None,
+                                  origin: str | None = None,
+                                  length: int | None = None,
+                                  sha256: str | None = None,
+                                  retryable: bool | None = None,
+                                  current_index: dict | None = None) -> dict:
+        """Update one attempt under Hub + resource registry locks."""
+        ctx["status"] = status
+        ctx["io_effect"] = io_effect
+        ctx["stage"] = stage
+        ctx["error_code"] = error_code
+        ctx["origin"] = origin
+        if length is not None:
+            ctx["length"] = length
+        if sha256 is not None:
+            ctx["sha256"] = sha256
+        if retryable is not None:
+            ctx["retryable"] = bool(retryable)
+        if status == "failed":
+            self._resource_order_seq += 1
+            ctx["_failed_order"] = self._resource_order_seq
+        if status == "pending":
+            ctx["visibility"] = "pending"
+        elif status in ("failed", "unknown"):
+            ctx["visibility"] = "pending" if status == "unknown" else "unavailable"
+        if status != "pending":
+            ctx["_executing"] = False
+        if current_index is not None:
+            key = (ctx["kind"], str(ctx["resource_key"]))
+            rec = self._resource_keys.setdefault(key, {})
+            old = rec.get("current_readable_index")
+            if old is not None and old.get("operation_id") != ctx.get(
+                    "resource_operation_id"):
+                old_ctx = self._resource_ops.get(old.get("operation_id"))
+                if old_ctx is not None and old_ctx.get("status") == "confirmed":
+                    old_ctx["visibility"] = "superseded"
+            rec["current_readable_index"] = copy.deepcopy(current_index)
+        ctx["visibility"] = self._resource_visibility_locked(ctx)
+        self._resource_trim_terminal_locked(ctx.get("owner_uid"),
+                                            protected={ctx.get(
+                                                "resource_operation_id")})
+        return self._resource_public_result(ctx)
+
+    def _resource_trim_terminal_locked(self, owner_uid: int | None,
+                                       protected: set[str] | None = None) -> None:
+        """有界淘汰终态结果；pending/unknown 与 latest/current 不得淘汰。"""
+        if owner_uid is None:
+            return
+        protected = protected or set()
+        terminal = [ctx for ctx in self._resource_ops.values()
+                    if ctx.get("owner_uid") == owner_uid
+                    and ctx.get("status") in ("confirmed", "failed")
+                    and ctx.get("resource_operation_id") not in protected]
+        excess = len(terminal) - int(self._resource_max_terminal)
+        if excess <= 0:
+            return
+        for ctx in terminal[:excess]:
+            op = ctx.get("resource_operation_id")
+            pair = (ctx.get("kind"), str(ctx.get("resource_key")))
+            rec = self._resource_keys.get(pair) or {}
+            latest = (rec.get("latest_permit") or {}).get("operation_id")
+            current = (rec.get("current_readable_index") or {}).get(
+                "operation_id")
+            cloud_pin = (ctx.get("kind") == "cloud"
+                         and op in {latest, current})
+            if op in protected or cloud_pin:
+                continue
+            self._resource_ops.pop(op, None)
+            if ctx.get("kind") == "web_file":
+                if self._resource_fid_ops.get(str(ctx.get("resource_key"))) == op:
+                    self._resource_fid_ops.pop(str(ctx.get("resource_key")), None)
+
+    def _resource_validate_identity(self, kind: str, key, identity: dict) -> tuple[str, dict]:
+        if kind not in _RESOURCE_KINDS:
+            raise ValueError("未知资源类型")
+        if kind == "cloud":
+            if isinstance(key, bool):
+                raise ValueError("cloud UID 无效")
+            key = int(key)
+            if key <= 0:
+                raise ValueError("cloud UID 无效")
+        else:
+            if not (isinstance(key, str) and re.fullmatch(r"[0-9a-f]{32}", key)):
+                raise ValueError("fid 无效")
+        if not isinstance(identity, dict):
+            raise ValueError("资源输入身份无效")
+        identity = copy.deepcopy(identity)
+        sha = identity.get("payload_sha256")
+        length = identity.get("content_length")
+        if not (isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{64}", sha)):
+            raise ValueError("资源摘要无效")
+        if isinstance(length, bool) or not isinstance(length, int) or length < 0:
+            raise ValueError("资源长度无效")
+        return str(key), identity
+
+    def _resource_begin(self, sess: Session, kind: str, key,
+                        payload_identity: dict, *,
+                        resource_operation_id: str | None = None) -> dict:
+        """原子绑定 owner/kind/op/key/输入身份并预留 quota。
+
+        返回的 dict 本身就是当前 attempt context；重复 pending 调用返回同一
+        对象，confirmed/unknown 只可查询，failed 仅在仍是 latest permit 时重开
+        attempt。磁盘/网络 IO 一律由调用方在锁外完成。
+        """
+        key_s, identity = self._resource_validate_identity(kind, key,
+                                                            payload_identity)
+        provided_op = resource_operation_id is not None
+        op = resource_operation_id
+        if op is None:
+            op = secrets.token_hex(16)
+        if not (isinstance(op, str) and _RESOURCE_OP_RE.fullmatch(op)):
+            raise ValueError("resource_operation_id 无效")
+        owner = int(getattr(sess, "uid", 0) or 0)
+        if owner <= 0:
+            raise PermissionError("资源 owner 无效")
+        pair = (kind, key_s)
+        with self.lock:
+            with self._resource_lock:
+                if self._retired_schema_invalid or owner in self.retired:
+                    raise PermissionError("资源 owner 已退役")
+                existing = self._resource_ops.get(op)
+                if existing is None and provided_op:
+                    # An explicit id is a retry/query handle, never a way to
+                    # invent an old operation.  New logical requests omit it
+                    # and receive one atomically here.
+                    raise _ResourceError("unknown_operation", None,
+                                         "未知资源操作号")
+                if existing is not None:
+                    same = (existing.get("owner_uid") == owner
+                            and existing.get("kind") == kind
+                            and str(existing.get("resource_key")) == key_s
+                            and existing.get("payload_identity") == identity)
+                    if not same:
+                        raise PermissionError("resource_operation_id 输入不匹配")
+                    if existing.get("status") in ("pending", "unknown",
+                                                    "confirmed"):
+                        return existing
+                    permit = (self._resource_keys.get(pair) or {}).get(
+                        "latest_permit") or {}
+                    if not existing.get("retryable", False):
+                        raise _ResourceError(
+                            "retry_forbidden",
+                            self._resource_public_result(existing),
+                            "该失败资源操作不可重试")
+                    permit_ctx = self._resource_ops.get(permit.get(
+                        "operation_id")) if permit.get("operation_id") else None
+                    failed_order = int(existing.get("_begin_order") or 0)
+                    newer_confirmed = (permit_ctx is not None
+                                       and permit_ctx.get("status") in (
+                                           "pending", "unknown", "confirmed")
+                                       and int(permit_ctx.get("_begin_order") or 0)
+                                       > failed_order)
+                    if permit.get("operation_id") != op and newer_confirmed:
+                        latest_ctx = self._resource_ops.get(
+                            permit.get("operation_id"))
+                        if latest_ctx is not None and latest_ctx.get("status") in (
+                                "pending", "unknown", "confirmed"):
+                            existing["visibility"] = "superseded"
+                            raise _ResourceError(
+                                "superseded",
+                                self._resource_public_result(existing),
+                                "旧资源操作已被后续许可取代")
+                    # failed + same latest permit = explicit retry.  Claim
+                    # quota before replacing the context so an older callback
+                    # keeps an immutable attempt snapshot.
+                    active = sum(1 for item in self._resource_ops.values()
+                                 if item.get("owner_uid") == owner
+                                 and item.get("status") in ("pending", "unknown"))
+                    if active >= int(self._resource_max_active):
+                        raise PermissionError("资源操作配额已满")
+                    attempt = int(existing.get("attempt") or 0) + 1
+                    retry_ctx = copy.deepcopy(existing)
+                    self._resource_order_seq += 1
+                    retry_ctx.update({
+                        "attempt": attempt,
+                        "attempt_id": f"{op}:{attempt}",
+                        "status": "pending", "io_effect": "uncertain",
+                        "visibility": "pending", "stage": "begin",
+                        "error_code": None, "origin": None,
+                        "retryable": True, "_executing": False,
+                        "_executor_token": None,
+                        "_query_count": 0, "_fenced": False,
+                        "_begin_order": self._resource_order_seq,
+                        "_failed_order": None,
+                    })
+                    self._resource_ops[op] = retry_ctx
+                    return retry_ctx
+                rec = self._resource_keys.setdefault(pair, {})
+                active = sum(1 for item in self._resource_ops.values()
+                             if item.get("owner_uid") == owner
+                             and item.get("status") in ("pending", "unknown"))
+                if active >= int(self._resource_max_active):
+                    raise PermissionError("资源操作配额已满")
+                attempt = 1
+                self._resource_order_seq += 1
+                ctx = {
+                    "resource_operation_id": op,
+                    "resource_owner_uid": owner,
+                    "owner_uid": owner,
+                    "kind": kind,
+                    "resource_key": key_s,
+                    "payload_identity": identity,
+                    "attempt": attempt,
+                    "attempt_id": f"{op}:{attempt}",
+                    "status": "pending",
+                    "io_effect": "uncertain",
+                    "visibility": "pending",
+                    "stage": "begin",
+                    "error_code": None,
+                    "length": identity.get("content_length"),
+                    "sha256": identity.get("payload_sha256"),
+                    "origin": None,
+                    "retryable": True,
+                    "_executing": False,
+                    "_executor_token": None,
+                    "_query_count": 0,
+                    "_fenced": False,
+                    "_begin_order": self._resource_order_seq,
+                    "_failed_order": None,
+                }
+                self._resource_ops[op] = ctx
+                if kind == "web_file":
+                    self._resource_fid_ops[key_s] = op
+                return ctx
+
+    def _resource_claim_executor(self, ctx: dict) -> bool:
+        """Claim the sole executor for a pending attempt before staging IO."""
+        with self.lock:
+            with self._resource_lock:
+                current = self._resource_ops.get(ctx.get(
+                    "resource_operation_id"))
+                if (current is not ctx or current.get("status") != "pending"
+                        or current.get("_executing")):
+                    return False
+                current["_executing"] = True
+                current["_executor_token"] = secrets.token_hex(16)
+                return True
+
+    def _resource_filter_cloud_after_restore(self) -> None:
+        """把启动扫描的 opaque bytes 变成有限访问事实，不伪造旧 op 回执。"""
+        with self.lock:
+            with self._resource_lock:
+                for uid, rec in list(self.cloud.items()):
+                    if uid <= 0 or uid in self.retired or self._retired_schema_invalid:
+                        self.cloud.pop(uid, None)
+                        continue
+                    blob = bytes(rec.get("blob") or b"")
+                    if not blob:
+                        self.cloud.pop(uid, None)
+                        continue
+                    key = ("cloud", str(uid))
+                    self._resource_keys[key] = {
+                        "current_readable_index": {
+                            "operation_id": None,
+                            "owner_uid": uid,
+                            "kind": "cloud",
+                            "resource_key": str(uid),
+                            "length": len(blob),
+                            "sha256": hashlib.sha256(blob).hexdigest(),
+                            "origin": "restored_resource",
+                        }
+                    }
+
+    def _resource_withdraw_owner(self, uid: int) -> None:
+        """t0 资源屏障：撤私有 cloud 可见 index、取消提醒，不删物理 bytes。"""
+        with self.lock:
+            with self._resource_lock:
+                self._resource_withdraw_owner_locked(uid)
+
+    def _resource_withdraw_owner_locked(self, uid: int) -> None:
+        self.cloud.pop(uid, None)
+        for key, rec in self._resource_keys.items():
+            if key[0] != "cloud" and not any(
+                    ctx.get("owner_uid") == uid and
+                    (ctx.get("kind"), str(ctx.get("resource_key"))) == key
+                    for ctx in self._resource_ops.values()):
+                continue
+            current = rec.get("current_readable_index")
+            if current is not None and current.get("owner_uid") == uid:
+                current["visibility"] = "withdrawn"
+                rec["current_readable_index"] = current
+            for ctx in self._resource_ops.values():
+                if ctx.get("owner_uid") != uid:
+                    continue
+                ctx["_fenced"] = True
+                if ctx.get("status") == "confirmed":
+                    ctx["visibility"] = "withdrawn"
+                elif ctx.get("status") in ("pending", "unknown"):
+                    ctx["visibility"] = "withdrawn"
+
+    def _resource_stage_bytes(self, data: bytes, suffix: str) -> str:
+        os.makedirs(self._resource_stage_dir, exist_ok=True)
+        fd, path = tempfile.mkstemp(prefix="resource-", suffix=suffix,
+                                    dir=self._resource_stage_dir)
+        raw_fd = fd
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                raw_fd = None
+                view = memoryview(bytes(data))
+                total = 0
+                while total < len(view):
+                    n = stream.write(view[total:])
+                    if n is None or n <= 0:
+                        raise OSError("resource short write")
+                    total += n
+                stream.flush()
+                os.fsync(stream.fileno())
+        except Exception:
+            if raw_fd is not None:
+                try:
+                    os.close(raw_fd)
+                except OSError:
+                    pass
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
+            raise
+        return path
+
+    def _resource_reconcile(self, ctx: dict) -> dict:
+        """锁外严格读未知候选，再以当前 attempt 身份补结果。"""
+        kind = ctx.get("kind")
+        key = str(ctx.get("resource_key"))
+        expected = ctx.get("sha256")
+        expected_len = ctx.get("length")
+        attempt_id = ctx.get("attempt_id")
+        matched = False
+        reconciled_blob = None
+        observed_len = None
+        observed_sha = None
+        try:
+            if kind == "cloud":
+                path = os.path.join(self.cloud_dir, f"{int(key)}.bin")
+                with open(path, "rb") as stream:
+                    raw = stream.read()
+                reconciled_blob = bytes(raw)
+                observed_len = len(raw)
+                observed_sha = hashlib.sha256(raw).hexdigest()
+                matched = (len(raw) == expected_len
+                           and observed_sha == expected)
+            elif kind == "web_file":
+                meta, raw = self._read_web_resource(key)
+                if raw is not None:
+                    observed_len = len(raw)
+                    observed_sha = hashlib.sha256(raw).hexdigest()
+                matched = bool(meta and raw is not None
+                               and meta.get("resource_operation_id") ==
+                               ctx.get("resource_operation_id")
+                               and meta.get("resource_owner_uid") ==
+                               ctx.get("owner_uid")
+                               and meta.get("content_length") == expected_len
+                               and meta.get("content_sha256") == expected
+                               and len(raw) == expected_len
+                               and hashlib.sha256(raw).hexdigest() == expected)
+        except (OSError, ValueError, TypeError, OverflowError):
+            matched = False
+        with self.lock:
+            with self._resource_lock:
+                current = self._resource_ops.get(
+                    ctx.get("resource_operation_id"))
+                if current is None:
+                    raise LookupError("resource result unavailable")
+                if current is not ctx or current.get("attempt_id") != attempt_id:
+                    return self._resource_public_result(current)
+                if current.get("status") != "unknown":
+                    return self._resource_public_result(current)
+                if matched:
+                    idx = {"operation_id": current["resource_operation_id"],
+                           "owner_uid": current["owner_uid"],
+                           "kind": current["kind"],
+                           "resource_key": current["resource_key"],
+                           "length": current.get("length"),
+                           "sha256": current.get("sha256"),
+                           "origin": "reconciled_current_resource"}
+                    if kind == "cloud" and not current.get("_fenced") \
+                            and current.get("owner_uid") not in self.retired:
+                        if reconciled_blob is not None:
+                            self.cloud[int(key)] = {
+                                "blob": reconciled_blob, "ts": _now(),
+                            }
+                    if current.get("_fenced"):
+                        current["visibility"] = "withdrawn"
+                    return self._resource_finalize_locked(
+                        current, status="confirmed", io_effect="uncertain",
+                        stage="reconcile", origin="reconciled_current_resource",
+                        current_index=idx)
+                rec = self._resource_keys.get(
+                    (current.get("kind"), str(current.get("resource_key")))) or {}
+                predecessor = rec.get("current_readable_index") or {}
+                if (observed_len is not None
+                        and observed_len == predecessor.get("length")
+                        and observed_sha == predecessor.get("sha256")
+                        and predecessor.get("operation_id") !=
+                        current.get("resource_operation_id")):
+                    return self._resource_finalize_locked(
+                        current, status="failed", io_effect="not_committed",
+                        stage="reconcile", error_code="known_predecessor",
+                        retryable=True)
+                # A missing/invalid read is deliberately still unknown.  A
+                # later explicit query may explain it; it never auto-writes.
+                current["_query_count"] = int(current.get("_query_count") or 0) + 1
+                return self._resource_public_result(current)
+
+    def _resource_query(self, sess: Session, resource_operation_id: str,
+                        *, explicit_owner: int | None = None) -> dict:
+        if not (isinstance(resource_operation_id, str)
+                and _RESOURCE_OP_RE.fullmatch(resource_operation_id)):
+            raise LookupError("resource result unavailable")
+        with self.lock:
+            with self._resource_lock:
+                ctx = self._resource_ops.get(resource_operation_id)
+                if ctx is None:
+                    raise LookupError("resource result unavailable")
+                owner = int(explicit_owner) if explicit_owner is not None else int(
+                    getattr(sess, "uid", 0) or 0)
+                if not getattr(sess, "is_admin", False) and owner != int(
+                        getattr(sess, "uid", 0) or 0):
+                    raise PermissionError("无资源查询权限")
+                if ctx.get("owner_uid") != owner:
+                    raise PermissionError("无资源查询权限")
+                if ctx.get("owner_uid") in self.retired and not getattr(
+                        sess, "is_admin", False):
+                    raise PermissionError("资源 owner 已退役")
+                if ctx.get("status") == "unknown":
+                    snapshot = ctx
+                else:
+                    ctx["visibility"] = self._resource_visibility_locked(ctx)
+                    return self._resource_public_result(ctx)
+        return self._resource_reconcile(snapshot)
+
+    def _resource_summary(self, owner_uid: int) -> dict:
+        with self._resource_lock:
+            ops = [self._resource_public_result(ctx)
+                   for ctx in self._resource_ops.values()
+                   if ctx.get("owner_uid") == owner_uid]
+        limit = int(self._resource_max_terminal)
+        ops = ops[-limit:] if limit else []
+        return {"resource_owner_uid": owner_uid, "scope": "runtime",
+                "operations": ops}
+
+    def _resource_file_commit(self, ctx: dict, payload: bytes,
+                              meta: dict | None = None) -> dict:
+        """Stage bytes/manifest, C, publish, then record D_resource."""
+        kind = ctx.get("kind")
+        if kind not in _RESOURCE_KINDS:
+            raise ValueError("未知资源类型")
+        if ctx.get("status") != "pending":
+            raise _ResourceError("resource_pending",
+                                 self._resource_public_result(ctx))
+        if not ctx.get("_executing") and not self._resource_claim_executor(ctx):
+            raise _ResourceError("resource_pending",
+                                 self._resource_public_result(ctx))
+        attempt_id = ctx.get("attempt_id")
+        executor_token = ctx.get("_executor_token")
+        if not isinstance(attempt_id, str) or not isinstance(executor_token, str):
+            raise _ResourceError("stale_attempt",
+                                 self._resource_public_result(ctx))
+        raw = bytes(payload or b"")
+        length = len(raw)
+        digest = hashlib.sha256(raw).hexdigest()
+        if length != ctx.get("length") or digest != ctx.get("sha256"):
+            with self.lock:
+                with self._resource_lock:
+                    self._resource_finalize_locked(
+                        ctx, status="failed", io_effect="not_committed",
+                        stage="identity", error_code="payload_mismatch",
+                        retryable=True)
+            raise _ResourceError("payload_mismatch",
+                                 self._resource_public_result(ctx))
+        if kind == "web_file":
+            fid = str(ctx["resource_key"])
+            own_fid = self._resource_fid_ops.get(fid) == ctx.get(
+                "resource_operation_id") and not ctx.get("_fid_conflict")
+            if ((os.path.exists(os.path.join(self.web_files, fid))
+                 or os.path.exists(os.path.join(self.web_files, fid + ".json")))
+                    and not own_fid):
+                with self.lock:
+                    with self._resource_lock:
+                        self._resource_finalize_locked(
+                            ctx, status="failed", io_effect="not_committed",
+                            stage="begin", error_code="fid_conflict",
+                            retryable=False)
+                        ctx["_fid_conflict"] = True
+                raise _ResourceError("fid_conflict",
+                                     self._resource_public_result(ctx))
+        body_stage = None
+        meta_stage = None
+        target_body = None
+        target_meta = None
+        replace_attempted = False
+        meta_replace_attempted = False
+        pre_body_same = False
+        pre_meta_same = False
+        pre_body_identity = None
+        try:
+            body_stage = self._resource_stage_bytes(raw, ".body")
+            if kind == "cloud":
+                target_body = os.path.join(self.cloud_dir,
+                                           f"{int(ctx['resource_key'])}.bin")
+            else:
+                fid = str(ctx["resource_key"])
+                target_body = os.path.join(self.web_files, fid)
+                safe = {"fid": fid, "name": str((meta or {}).get("name")
+                                                  or "未命名")[:128],
+                        "size": length, "kind": (meta or {}).get("kind") or "file",
+                        "ts": round(_now(), 3),
+                        "resource_manifest_version": self._resource_manifest_version,
+                        "resource_owner_uid": ctx["owner_uid"],
+                        "resource_operation_id": ctx["resource_operation_id"],
+                        "content_length": length,
+                        "content_sha256": digest}
+                encoded = json.dumps(safe, ensure_ascii=False, allow_nan=False,
+                                     separators=(",", ":")).encode("utf-8")
+                meta_stage = self._resource_stage_bytes(encoded, ".json")
+                target_meta = os.path.join(self.web_files, fid + ".json")
+            try:
+                if target_body and os.path.isfile(target_body):
+                    stat = os.stat(target_body)
+                    pre_body_identity = (getattr(stat, "st_ino", None),
+                                         getattr(stat, "st_mtime_ns", None),
+                                         getattr(stat, "st_size", None))
+                    with open(target_body, "rb") as stream:
+                        pre_body_same = (hashlib.sha256(stream.read()).hexdigest()
+                                         == digest)
+                if target_meta and os.path.isfile(target_meta):
+                    with open(target_meta, "rb") as stream:
+                        pre_meta_same = bool(stream.read())
+            except OSError:
+                pre_body_same = False
+                pre_meta_same = False
+            # Final C is ordered with t0 by the same Hub memory boundary.
+            with self.lock:
+                with self._resource_lock:
+                    current = self._resource_ops.get(
+                        ctx.get("resource_operation_id"))
+                    permit = (self._resource_keys.get(
+                        (kind, str(ctx["resource_key"]))) or {}).get(
+                            "latest_permit") or {}
+                    permit_op = permit.get("operation_id")
+                    permit_ctx = self._resource_ops.get(permit_op) \
+                        if permit_op else None
+                    permit_is_newer_confirmed = (
+                        permit_op not in (None, ctx.get("resource_operation_id"))
+                        and permit_ctx is not None
+                        and permit_ctx.get("status") == "confirmed"
+                        and int(permit_ctx.get("_begin_order") or 0)
+                        > int(ctx.get("_begin_order") or 0))
+                    newer_in_flight = (
+                        permit_op not in (None, ctx.get(
+                            "resource_operation_id"))
+                        and permit_ctx is not None
+                        and (permit_ctx.get("status") in ("pending", "unknown")
+                             or permit_is_newer_confirmed))
+                    if newer_in_flight:
+                        if permit_is_newer_confirmed:
+                            self._resource_finalize_locked(
+                                ctx, status="failed", io_effect="not_committed",
+                                stage="permit", error_code="superseded",
+                                retryable=False)
+                            raise _ResourceError(
+                                "superseded", self._resource_public_result(ctx),
+                                "旧资源发布许可已被后续 C 取代")
+                        self._resource_finalize_locked(
+                            ctx, status="failed", io_effect="not_committed",
+                            stage="permit", error_code="resource_busy",
+                            retryable=True)
+                        raise _ResourceError(
+                            "resource_busy", self._resource_public_result(ctx),
+                            "同一资源仍有较早发布在途")
+                    if current is not ctx:
+                        ctx.update({"status": "failed",
+                                    "io_effect": "not_committed",
+                                    "stage": "permit",
+                                    "error_code": "stale_attempt",
+                                    "retryable": False,
+                                    "_executing": False})
+                        raise _ResourceError(
+                            "stale_attempt", self._resource_public_result(ctx),
+                            "迟到资源执行结果已丢弃")
+                    if (current.get("status") != "pending"
+                            or current.get("_fenced")
+                            or ctx.get("owner_uid") in self.retired):
+                        ctx["_fenced"] = True
+                        self._resource_finalize_locked(
+                            ctx, status="failed", io_effect="not_committed",
+                            stage="permit", error_code="owner_fenced",
+                            retryable=False)
+                        raise _ResourceError("owner_fenced",
+                                             self._resource_public_result(ctx))
+                    # This is the actual C point.  A later C supersedes the
+                    # previous readable index; merely beginning/staging an op
+                    # does not steal the permit from an earlier stage.
+                    self._resource_keys.setdefault(
+                        (kind, str(ctx["resource_key"])), {})[
+                            "latest_permit"] = {
+                                "operation_id": ctx["resource_operation_id"],
+                                "attempt": ctx["attempt"]}
+            # Publish body first, manifest last.  No Hub/registry lock is held.
+            replace_attempted = True
+            os.replace(body_stage, target_body)
+            body_stage = None
+            if meta_stage is not None:
+                meta_replace_attempted = True
+                replace_attempted = True
+                os.replace(meta_stage, target_meta)
+                meta_stage = None
+        except _ResourceError:
+            raise
+        except Exception as exc:
+            # If replace may have happened before an injected acknowledgement
+            # error, classify as unknown and require a later strict query.
+            uncertain = False
+            try:
+                if replace_attempted and target_body and os.path.isfile(target_body):
+                    post_stat = os.stat(target_body)
+                    post_body_identity = (getattr(post_stat, "st_ino", None),
+                                          getattr(post_stat, "st_mtime_ns", None),
+                                          getattr(post_stat, "st_size", None))
+                    with open(target_body, "rb") as stream:
+                        observed = stream.read()
+                    body_matches = (len(observed) == length
+                                    and hashlib.sha256(observed).hexdigest() == digest)
+                    changed_after_attempt = (pre_body_identity is None
+                                             or pre_body_identity !=
+                                             post_body_identity)
+                    uncertain = body_matches and (
+                        not pre_body_same or changed_after_attempt)
+                    if kind == "web_file" and not meta_replace_attempted:
+                        # Body publication without a manifest attempt is a
+                        # known partial effect: failed/not_committed, with an
+                        # orphan body that remains unservable.
+                        uncertain = False
+                    elif kind == "web_file" and meta_replace_attempted:
+                        # Metadata replace was attempted; target proof must
+                        # include a valid candidate manifest as well.
+                        try:
+                            with open(target_meta, "rb") as stream:
+                                observed_meta = self._json_load_strict(stream.read())
+                            uncertain = body_matches and isinstance(observed_meta, dict) \
+                                and observed_meta.get("resource_manifest_version") == \
+                                self._resource_manifest_version \
+                                and observed_meta.get("fid") == str(
+                                    ctx.get("resource_key")) \
+                                and observed_meta.get("resource_owner_uid") == \
+                                ctx.get("owner_uid") \
+                                and observed_meta.get("resource_operation_id") == \
+                                ctx.get("resource_operation_id") \
+                                and observed_meta.get("content_length") == length \
+                                and observed_meta.get("content_sha256") == digest
+                        except (OSError, ValueError, TypeError, UnicodeDecodeError):
+                            uncertain = False
+                    elif kind == "web_file" and pre_meta_same:
+                        uncertain = False
+            except OSError:
+                pass
+            with self.lock:
+                with self._resource_lock:
+                    self._resource_finalize_locked(
+                        ctx, status="unknown" if uncertain else "failed",
+                        io_effect="uncertain" if uncertain else "not_committed",
+                        stage="manifest" if meta_stage is not None and
+                        target_meta else "body",
+                        error_code=type(exc).__name__.lower(),
+                        retryable=not uncertain)
+            raise _ResourceError("resource_unknown" if uncertain else "resource_io",
+                                 self._resource_public_result(ctx), str(exc))
+        finally:
+            for staged in (body_stage, meta_stage):
+                if staged:
+                    try:
+                        os.unlink(staged)
+                    except OSError:
+                        pass
+        index = {"operation_id": ctx["resource_operation_id"],
+                 "owner_uid": ctx["owner_uid"], "kind": kind,
+                 "resource_key": str(ctx["resource_key"]), "length": length,
+                 "sha256": digest, "origin": "written"}
+        with self.lock:
+            with self._resource_lock:
+                current = self._resource_ops.get(ctx["resource_operation_id"])
+                permit = (self._resource_keys.get(
+                    (kind, str(ctx["resource_key"]))) or {}).get(
+                        "latest_permit") or {}
+                valid_executor = (
+                    current is ctx
+                    and current.get("status") == "pending"
+                    and current.get("attempt_id") == attempt_id
+                    and current.get("_executor_token") == executor_token
+                    and current.get("_executing")
+                    and permit.get("operation_id") ==
+                    ctx.get("resource_operation_id")
+                    and permit.get("attempt") == ctx.get("attempt"))
+                if not valid_executor:
+                    if current is not ctx:
+                        ctx["status"] = "failed"
+                        ctx["io_effect"] = "not_committed"
+                        ctx["stage"] = "finalize"
+                        ctx["error_code"] = "stale_attempt"
+                        ctx["retryable"] = False
+                        raise _ResourceError(
+                            "stale_attempt", self._resource_public_result(ctx),
+                            "迟到资源执行结果已丢弃")
+                    self._resource_finalize_locked(
+                        ctx, status="failed", io_effect="not_committed",
+                        stage="finalize", error_code="stale_executor",
+                        retryable=False)
+                    raise _ResourceError(
+                        "stale_attempt", self._resource_public_result(ctx),
+                        "资源执行者已失效")
+                result = self._resource_finalize_locked(
+                    current, status="confirmed", io_effect="committed",
+                    stage="finalize", origin="written", length=length,
+                    sha256=digest, retryable=False, current_index=index)
+                if kind == "cloud" and not current.get("_fenced") \
+                        and current.get("owner_uid") not in self.retired:
+                    self.cloud[int(current["resource_key"])] = {
+                        "blob": bytes(raw), "ts": _now(),
+                    }
+                if current.get("_fenced") or current.get("owner_uid") in self.retired:
+                    current["visibility"] = "withdrawn"
+                    result = self._resource_public_result(current)
+        return result
+
     # ---------- R23 网页端文件存储 ----------
-    def _save_web_file(self, name: str, data: bytes, kind: str) -> dict:
-        """保存网页端上传文件：fid = uuid4().hex（不可猜测），返回消息用 file 元数据。"""
-        import uuid
-        fid = uuid.uuid4().hex
-        meta = {"fid": fid, "name": (name or "未命名")[:128],
-                "size": len(data), "kind": kind, "ts": round(_now(), 3)}
-        with open(os.path.join(self.web_files, fid), "wb") as f:
-            f.write(data)
-        with open(os.path.join(self.web_files, fid + ".json"), "w",
-                  encoding="utf-8") as f:
-            json.dump(meta, f, ensure_ascii=False)
-        return {k: meta[k] for k in ("fid", "name", "size", "kind")}
+    def _save_web_file(self, name: str, data: bytes, kind: str,
+                       *, sess: Session | None = None,
+                       resource_operation_id: str | None = None) -> dict:
+        """保存 Web 文件；带 Session 时走 RESOURCE 双文件发布。"""
+        safe_name = (name or "未命名").replace("\\", "/").split("/")[-1][:128]
+        if sess is None:
+            # 既有内部调用兼容路径；新 Web 上传总是带认证 Session，避免
+            # legacy helper 伪造新 owner/op manifest。
+            fid = uuid.uuid4().hex
+            meta = {"fid": fid, "name": safe_name, "size": len(data),
+                    "kind": kind, "ts": round(_now(), 3)}
+            with open(os.path.join(self.web_files, fid), "wb") as stream:
+                stream.write(bytes(data))
+            with open(os.path.join(self.web_files, fid + ".json"), "w",
+                       encoding="utf-8") as stream:
+                json.dump(meta, stream, ensure_ascii=False)
+            return {k: meta[k] for k in ("fid", "name", "size", "kind")}
+        payload = bytes(data or b"")
+        op = resource_operation_id
+        if op is not None and not _RESOURCE_OP_RE.fullmatch(str(op)):
+            raise _ResourceError("invalid_operation")
+        if op is not None:
+            with self.lock:
+                with self._resource_lock:
+                    if str(op) not in self._resource_ops:
+                        raise _ResourceError("unknown_operation", None,
+                                             "未知资源操作号")
+        # Exact known-op retry reuses its original fid; a new op gets a new fid.
+        if op and op in self._resource_ops:
+            old = self._resource_ops[op]
+            fid = str(old.get("resource_key"))
+        else:
+            fid = uuid.uuid4().hex
+        identity = {"payload_sha256": hashlib.sha256(payload).hexdigest(),
+                    "content_length": len(payload), "name": safe_name,
+                    "kind": kind}
+        ctx = self._resource_begin(sess, "web_file", fid, identity,
+                                   resource_operation_id=op)
+        if ctx.get("status") == "confirmed":
+            with self.lock:
+                with self._resource_lock:
+                    ctx["visibility"] = self._resource_visibility_locked(ctx)
+                    result = self._resource_public_result(ctx)
+            if result.get("visibility") != "available":
+                raise _ResourceError("superseded", result,
+                                     "旧 Web 资源操作已被后续版本取代")
+            return {"fid": fid, "name": safe_name, "size": len(payload),
+                    "kind": kind, "resource": result}
+        if ctx.get("status") in ("unknown", "pending"):
+            if ctx.get("status") == "unknown":
+                raise _ResourceError("resource_unknown",
+                                     self._resource_public_result(ctx))
+            if not self._resource_claim_executor(ctx):
+                raise _ResourceError("resource_pending",
+                                     self._resource_public_result(ctx))
+        result = self._resource_file_commit(
+            ctx, payload, {"name": safe_name, "kind": kind})
+        return {"fid": fid, "name": safe_name, "size": len(payload),
+                "kind": kind, "resource": result}
+
+    @staticmethod
+    def _json_load_strict(raw: bytes | str):
+        seen = set()
+
+        def pairs(items):
+            out = {}
+            for key, value in items:
+                if key in seen:
+                    raise ValueError("duplicate JSON key")
+                seen.add(key)
+                out[key] = value
+            return out
+
+        if isinstance(raw, bytes):
+            text = raw.decode("utf-8")
+        elif isinstance(raw, str):
+            text = raw
+        else:
+            raise ValueError("manifest is not text")
+        return json.loads(text, object_pairs_hook=pairs,
+                          parse_constant=lambda value: (_ for _ in ()).throw(
+                              ValueError(f"non-finite JSON: {value}")))
+
+    def _read_web_resource(self, fid: str) -> tuple[dict | None, bytes | None]:
+        if not (isinstance(fid, str) and re.fullmatch(r"[0-9a-f]{32}", fid)):
+            return None, None
+        meta_path = os.path.join(self.web_files, fid + ".json")
+        body_path = os.path.join(self.web_files, fid)
+        try:
+            with open(meta_path, "rb") as stream:
+                raw_meta = stream.read()
+            meta = self._json_load_strict(raw_meta)
+            if not isinstance(meta, dict):
+                return None, None
+            if not os.path.isfile(body_path):
+                return None, None
+            with open(body_path, "rb") as stream:
+                raw_body = stream.read()
+        except (OSError, ValueError, UnicodeDecodeError, TypeError):
+            return None, None
+        if set(meta).intersection(_RESOURCE_NEW_FIELDS):
+            if (set(meta) != _RESOURCE_MANIFEST_FIELDS
+                    or isinstance(meta.get("resource_manifest_version"), bool)
+                    or meta.get("resource_manifest_version") !=
+                    self._resource_manifest_version
+                    or not isinstance(meta.get("fid"), str)
+                    or meta.get("fid") != fid
+                    or not isinstance(meta.get("name"), str)
+                    or meta.get("kind") not in ("image", "file")
+                    or isinstance(meta.get("size"), bool)
+                    or not isinstance(meta.get("size"), int)
+                    or meta.get("size") < 0
+                    or isinstance(meta.get("ts"), bool)
+                    or not isinstance(meta.get("ts"), (int, float))
+                    or not math.isfinite(float(meta.get("ts")))
+                    or isinstance(meta.get("resource_owner_uid"), bool)
+                    or not isinstance(meta.get("resource_owner_uid"), int)
+                    or meta.get("resource_owner_uid") <= 0
+                    or not (isinstance(meta.get("resource_operation_id"), str)
+                            and _RESOURCE_OP_RE.fullmatch(
+                                meta.get("resource_operation_id")))
+                    or meta.get("content_length") != len(raw_body)
+                    or isinstance(meta.get("content_length"), bool)
+                    or not isinstance(meta.get("content_length"), int)
+                    or meta.get("size") != len(raw_body)
+                    or not (isinstance(meta.get("content_sha256"), str)
+                            and re.fullmatch(r"[0-9a-f]{64}",
+                                             meta.get("content_sha256")))
+                    or meta.get("content_sha256") !=
+                    hashlib.sha256(raw_body).hexdigest()):
+                return None, None
+        else:
+            if (set(meta) != {"fid", "name", "size", "kind", "ts"}
+                    or meta.get("fid") != fid
+                    or not isinstance(meta.get("name"), str)
+                    or meta.get("kind") not in ("image", "file")
+                    or isinstance(meta.get("size"), bool)
+                    or not isinstance(meta.get("size"), int)
+                    or meta.get("size") < 0
+                    or isinstance(meta.get("ts"), bool)
+                    or not isinstance(meta.get("ts"), (int, float))
+                    or not math.isfinite(float(meta.get("ts")))
+                    or meta.get("size") != len(raw_body)):
+                return None, None
+        return meta, raw_body
 
     def _web_file_meta(self, fid: str) -> dict | None:
-        """按 fid 读元数据；fid 需为 32 位 hex，防路径穿越。"""
-        if not (isinstance(fid, str) and re.fullmatch(r"[0-9a-f]{32}", fid)):
+        """读取并验证 legacy/new manifest 及实际 body；坏新格式不降级。"""
+        meta, raw = self._read_web_resource(fid)
+        if meta is None or raw is None:
             return None
-        path = os.path.join(self.web_files, fid + ".json")
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except (OSError, ValueError):
-            return None
+        if set(meta).intersection(_RESOURCE_NEW_FIELDS):
+            # 完整 manifest 可在新进程恢复访问事实，但不重建旧 op receipt。
+            with self.lock:
+                with self._resource_lock:
+                    runtime_op = self._resource_fid_ops.get(str(fid))
+                    runtime_ctx = (self._resource_ops.get(runtime_op)
+                                   if runtime_op else None)
+                    if runtime_ctx is not None:
+                        if (runtime_ctx.get("status") != "confirmed"
+                                or runtime_ctx.get("resource_operation_id") !=
+                                meta.get("resource_operation_id")
+                                or runtime_ctx.get("owner_uid") !=
+                                meta.get("resource_owner_uid")
+                                or (runtime_ctx.get("payload_identity") or {}).get(
+                                    "name") != meta.get("name")
+                                or (runtime_ctx.get("payload_identity") or {}).get(
+                                    "kind") != meta.get("kind")
+                                or runtime_ctx.get("length") !=
+                                meta.get("content_length")
+                                or runtime_ctx.get("sha256") !=
+                                meta.get("content_sha256")):
+                            return None
+                    key = ("web_file", str(fid))
+                    rec = self._resource_keys.setdefault(key, {})
+                    rec.setdefault("current_readable_index", {
+                        "operation_id": meta["resource_operation_id"],
+                        "owner_uid": meta["resource_owner_uid"],
+                        "kind": "web_file", "resource_key": fid,
+                        "length": len(raw),
+                        "sha256": meta["content_sha256"],
+                        "origin": "restored_resource",
+                    })
+        return meta
 
     def _web_file_path(self, fid: str) -> str | None:
         if not (isinstance(fid, str) and re.fullmatch(r"[0-9a-f]{32}", fid)):
             return None
         path = os.path.join(self.web_files, fid)
         return path if os.path.isfile(path) else None
+
+    def _web_file_read(self, sess: Session, fid: str, meta: dict) -> bytes:
+        """C_read：先捕获身份/资格，再锁外读取不可变响应 bytes。"""
+        with self.lock:
+            if getattr(sess, "uid", 0) in self.retired \
+                    or self._retired_schema_invalid:
+                raise PermissionError("resource owner retired")
+            path = self._web_file_path(fid)
+        if not path:
+            raise OSError("file missing")
+        with open(path, "rb") as stream:
+            data = stream.read()
+        if len(data) != meta.get("size"):
+            raise OSError("file length changed")
+        if set(meta).intersection(_RESOURCE_NEW_FIELDS):
+            if hashlib.sha256(data).hexdigest() != meta.get("content_sha256"):
+                raise OSError("file digest changed")
+        return bytes(data)
 
     def group_detail(self, gid: int, viewer_uid: int):
         """网页端用的群详情：成员 + 各自角色/禁言状态 + 当前用户角色。
@@ -2236,9 +3220,13 @@ class Hub:
                 "member": viewer_uid in g["members"],
                 "members": members}
 
-    def _error(self, sess: Session, code: str, text: str) -> None:
+    def _error(self, sess: Session, code: str, text: str, **extra) -> None:
         try:
-            sess.send({"t": "error", "code": code, "text": text})
+            payload = {"t": "error", "code": code, "text": text}
+            resource = extra.get("resource")
+            if isinstance(resource, dict):
+                payload["resource"] = self._resource_public_result(resource)
+            sess.send(payload)
         except Exception:
             pass
 
@@ -2534,6 +3522,44 @@ class Hub:
             self.audit.log(type="sched_fire", uid=uid, seq=msg["seq"],
                            channel=r["channel"], to=msg.get("to"))
             self._persist()
+
+    # ---------- CC-02C RESOURCE：提醒队列最终 bot C ----------
+    def _bot_reminder_enqueue(self, owner_uid: int, due: float, text: str,
+                              bot_uid: int) -> bool:
+        """在 Hub 短锁内入队；提醒仍为运行态，不进入 Store。"""
+        try:
+            owner_uid = int(owner_uid)
+            due = float(due)
+        except (TypeError, ValueError, OverflowError):
+            return False
+        if owner_uid <= 0 or not isinstance(text, str) or not text:
+            return False
+        with self.lock:
+            if self._retired_schema_invalid or self._uid_retired_locked(owner_uid):
+                return False
+            self.bot_reminders.append({"uid": owner_uid, "due": due,
+                                       "text": text[:self.cfg.chat_text_max],
+                                       "bot_uid": int(bot_uid)})
+        return True
+
+    def _bot_reminder_take_due(self, now: float | None = None) -> list[dict]:
+        now = _now() if now is None else float(now)
+        with self.lock:
+            due = [dict(r) for r in self.bot_reminders
+                   if float(r.get("due", 0)) <= now]
+            if due:
+                self.bot_reminders = [r for r in self.bot_reminders
+                                      if float(r.get("due", 0)) > now]
+            return due
+
+    def _bot_reminder_cancel_owner(self, owner_uid: int) -> None:
+        with self.lock:
+            self.bot_reminders = [r for r in self.bot_reminders
+                                  if r.get("uid") != owner_uid]
+
+    def _bot_reminder_cancel_owner_locked(self, owner_uid: int) -> None:
+        self.bot_reminders = [r for r in self.bot_reminders
+                              if r.get("uid") != owner_uid]
 
     def _known_uid(self, uid: int) -> bool:
         """该 uid 是否已知用户（注册过/在会话中）。"""
@@ -3467,7 +4493,7 @@ class Hub:
         elif t == MsgType.CLOUD_PUT.value:
             self._on_cloud_put(sess, header, body)            # R37 云历史上传
         elif t == MsgType.CLOUD_GET.value:
-            self._on_cloud_get(sess)                          # R37 云历史拉取
+            self._on_cloud_get(sess, header)                   # R37 云历史拉取
         elif t == MsgType.FILE_OFFER.value:
             self._on_file_offer(sess, header)
         elif t == MsgType.FILE_ACCEPT.value:
@@ -3939,22 +4965,49 @@ class Hub:
         for r in replies:
             # R46：bot 回复可为 str 或 (text, kb) 元组（kb=inline 键盘）
             if isinstance(r, tuple) and len(r) == 2:
-                self.bot_say(bot, sess.uid, r[0], kb=r[1])
+                self.bot_say(bot, sess.uid, r[0], kb=r[1],
+                            owner_uid=sess.uid, source_kind="bot_command",
+                            request_seq=msg.get("seq"))
             else:
-                self.bot_say(bot, sess.uid, r)
+                self.bot_say(bot, sess.uid, r, owner_uid=sess.uid,
+                            source_kind="bot_command",
+                            request_seq=msg.get("seq"))
 
-    def bot_say(self, bot, to_uid: int, text: str, kb=None) -> None:
+    def bot_say(self, bot, to_uid: int, text: str, kb=None, *,
+                owner_uid: int | None = None, source_kind: str | None = None,
+                request_seq: int | None = None) -> bool:
         """R35：bot 以私聊身份回复（bus.publish 入历史 + 正常路由，
         对客户端就是一条普通 CHAT 私聊，无需感知 bot 协议）。
-        R46：kb=inline 键盘（[[{t,c}],...]），仅是消息上的可选字段。"""
+        R46：kb=inline 键盘（[[{t,c}],...]），仅是消息上的可选字段。
+        RESOURCE：owner/target 在最终 bus C 复查；迟到 worker 不能越过
+        t0 产生新的 BOT 作者历史。"""
+        try:
+            to_uid = int(to_uid)
+            owner_uid = to_uid if owner_uid is None else int(owner_uid)
+        except (TypeError, ValueError):
+            return False
         msg = {"t": "chat", "channel": "private", "uid": bot.uid,
                "nick": bot.nick, "ts": round(_now(), 3),
                "to": to_uid, "text": text}
         if kb:                                        # R46：键盘随消息走（历史/快照天然保留）
             msg["kb"] = kb
-        msg = self.bus.publish(msg)
+        with self.lock:
+            if (self._retired_schema_invalid
+                    or self._uid_retired_locked(owner_uid)
+                    or self._uid_retired_locked(to_uid)):
+                return False
+            msg = self.bus.publish(msg)
+            self._bot_contexts[msg["seq"]] = {
+                "owner_uid": owner_uid, "actor_uid": int(bot.uid),
+                "target_uid": to_uid, "source_kind": source_kind,
+                "request_seq": request_seq,
+            }
         self._route(msg)
-        self._persist()
+        try:
+            self._persist()
+        except Exception:
+            pass
+        return True
 
     def _on_typing(self, sess: Session, header: dict) -> None:
         """R25A 正在输入：校验频道成员后广播给应收方（不落历史、不入审计）。
@@ -4303,15 +5356,29 @@ class Hub:
         """缓存命中（TTL 内）直接补发；否则登记 in-flight 并起后台线程抓取。
         单条消息只预览首个 URL；失败/SSRF 静默降级，不出错误事件。"""
         now = _now()
+        cached = None
+        cache_hit = False
         with self._preview_lock:
             hit = self._preview_cache.get(url)
             if hit is not None and now - hit[0] <= self.cfg.preview_ttl:
-                if hit[1] is not None:
-                    self._preview_ready(msg["seq"], url, hit[1])
+                cache_hit = True
+                cached = hit[1]
+            elif url in self._preview_inflight:
                 return
-            if url in self._preview_inflight:
+            else:
+                self._preview_inflight.add(url)
+        # Cache callback must not run while _preview_lock is held: it may take
+        # Hub/bus locks and route/persist outside those locks.
+        if cache_hit:
+            if cached is None:
                 return
-            self._preview_inflight.add(url)
+            self._preview_ready(msg["seq"], url, cached,
+                                expected={"seq": msg.get("seq"),
+                                          "url": url,
+                                          "channel": msg.get("channel"),
+                                          "uid": msg.get("uid"),
+                                          "to": msg.get("to")})
+            return
         threading.Thread(target=self._fetch_preview_worker,
                          args=(url, msg["seq"], msg.get("channel"),
                                msg.get("uid"), msg.get("to")),
@@ -4328,19 +5395,59 @@ class Hub:
             self._preview_inflight.discard(url)
             self._preview_cache[url] = (_now(), meta)
         if meta is not None:
-            self._preview_ready(seq, url, meta)
+            self._preview_ready(seq, url, meta,
+                                expected={"seq": seq, "url": url,
+                                          "channel": channel, "uid": uid,
+                                          "to": to})
 
-    def _preview_ready(self, seq: int, url: str, meta: dict) -> None:
-        """抓取完成：原地附到原消息（历史/两端渲染一致），并广播 preview 事件。"""
-        with self.bus._lock:
-            _key, msg = self.bus.find(seq)
-            if msg is None or "preview" in msg:
+    def _preview_ready(self, seq: int, url: str, meta: dict,
+                       *, expected: dict | None = None) -> None:
+        """最终 Hub→bus C：只补当前仍匹配的原消息并捕获事件副本。"""
+        expected = expected if isinstance(expected, dict) else {}
+        route_ev = None
+        with self.lock:
+            if self._retired_schema_invalid:
                 return
-            msg["preview"] = meta
-            ch, muid, mto = msg["channel"], msg["uid"], msg.get("to")
-        self._route({"t": MsgType.PREVIEW.value, "seq": seq, "preview": meta,
-                     "channel": ch, "uid": muid, "to": mto})
-        self._persist()                              # 预览元数据入快照（无正文隐私风险）
+            expected_uid = expected.get("uid")
+            expected_to = expected.get("to")
+            if expected_uid is not None and self._uid_retired_locked(int(expected_uid)):
+                return
+            if expected.get("channel") == "private" and expected_to is not None \
+                    and self._uid_retired_locked(int(expected_to)):
+                return
+            with self.bus._lock:
+                _key, msg = self.bus.find(seq)
+                if msg is None or "preview" in msg or msg.get("deleted"):
+                    return
+                if expected.get("seq") not in (None, seq):
+                    return
+                if expected.get("url") not in (None, url):
+                    return
+                if expected_uid is not None and msg.get("uid") != expected_uid:
+                    return
+                if expected.get("channel") is not None \
+                        and msg.get("channel") != expected.get("channel"):
+                    return
+                if expected_to is not None and msg.get("to") != expected_to:
+                    return
+                current_text = str(msg.get("text") or "")
+                match = _URL_RE.search(current_text)
+                current_url = (match.group(0).rstrip(".,;:!?）)]}")
+                              if match else "")
+                if current_url != url:
+                    return
+                msg["preview"] = copy.deepcopy(meta)
+                ch, muid, mto = msg["channel"], msg["uid"], msg.get("to")
+                route_ev = {"t": MsgType.PREVIEW.value, "seq": seq,
+                            "preview": copy.deepcopy(meta),
+                            "channel": ch, "uid": muid, "to": mto}
+        if route_ev is None:
+            return
+        self._route(route_ev)
+        try:
+            self._persist()                          # 预览元数据入快照（无正文隐私风险）
+        except Exception:
+            pass
 
     def _on_voice(self, sess: Session, header: dict, body: bytes) -> None:
         """语音消息：复用文本聊天的频道校验/禁言/成员归属，二进制 WAV 体随广播透传。
@@ -4601,49 +5708,56 @@ class Hub:
         if len(text) > self.cfg.chat_text_max:
             self._error(sess, "long", "消息过长")
             return
+        # The find, permission/state check, mutation and event snapshot share
+        # one short bus lock.  Routing/audit/persist stay outside it.
         with self.bus._lock:
             _key, msg = self.bus.find(seq)
-        if msg is None:
-            self._error(sess, "expired", "消息已不在服务器历史中")
+            if msg is None:
+                reason = ("expired", "消息已不在服务器历史中")
+                route_ev = None
+            elif msg.get("uid") != sess.uid:
+                reason = ("forbid", "只能编辑自己的消息")
+                route_ev = None
+            elif isinstance(msg.get("poll"), dict):
+                reason = ("poll", "投票消息不可编辑")
+                route_ev = None
+            elif msg.get("deleted"):
+                reason = ("dup", "消息已撤回，无法编辑")
+                route_ev = None
+            elif msg.get("file") or msg.get("sticker") or msg.get("fp"):
+                reason = ("forbid", "只能编辑文本消息")
+                route_ev = None
+            else:
+                reason = None
+                old_snap = {"ts": round(_now(), 3),
+                            "text": str(msg.get("text") or "")[
+                                :self.cfg.edit_history_len]}
+                if isinstance(msg.get("rich"), list):
+                    old_snap["rich"] = copy.deepcopy(msg["rich"])
+                edits = msg.get("edits")
+                if not isinstance(edits, list):
+                    edits = []
+                edits = list(edits)
+                edits.append(old_snap)
+                if len(edits) > self.cfg.edit_history_max:
+                    del edits[:len(edits) - self.cfg.edit_history_max]
+                msg["edits"] = edits
+                msg["text"] = text
+                r59 = self._san_rich(header.get("rich"), text)
+                if r59:
+                    msg["rich"] = r59
+                else:
+                    msg.pop("rich", None)
+                msg["edited"] = True
+                route_ev = {"t": MsgType.MSG_EDIT.value, "seq": seq,
+                            "channel": msg["channel"], "uid": msg["uid"],
+                            "to": msg.get("to"), "nick": msg["nick"],
+                            "text": text, "edits": copy.deepcopy(edits)}
+                if r59:
+                    route_ev["rich"] = copy.deepcopy(r59)
+        if reason is not None:
+            self._error(sess, *reason)
             return
-        if msg.get("uid") != sess.uid:
-            self._error(sess, "forbid", "只能编辑自己的消息")
-            return
-        if isinstance(msg.get("poll"), dict):      # R26A：投票消息结构固定，禁编辑
-            self._error(sess, "poll", "投票消息不可编辑")
-            return
-        if msg.get("deleted"):
-            self._error(sess, "dup", "消息已撤回，无法编辑")
-            return
-        if msg.get("file") or msg.get("sticker") or msg.get("fp"):
-            self._error(sess, "forbid", "只能编辑文本消息")
-            return
-        # R70B：编辑前把旧版本快照入 edits（旧正文 + 旧富文本），
-        # 单条截断 edit_history_len、最多 edit_history_max 条（超出丢最旧）。
-        old_snap = {"ts": round(_now(), 3),
-                    "text": str(msg.get("text") or "")[:self.cfg.edit_history_len]}
-        if isinstance(msg.get("rich"), list):
-            old_snap["rich"] = msg["rich"]
-        edits = msg.get("edits")
-        if not isinstance(edits, list):
-            edits = []
-        edits.append(old_snap)
-        if len(edits) > self.cfg.edit_history_max:
-            del edits[:len(edits) - self.cfg.edit_history_max]
-        msg["edits"] = edits
-        msg["text"] = text                     # 原地改（存储与后续历史加载一致）
-        r59 = self._san_rich(header.get("rich"), text)     # R59：编辑同步富文本
-        if r59:
-            msg["rich"] = r59
-        else:
-            msg.pop("rich", None)                 # 编辑为纯文本 → 清掉旧富文本
-        msg["edited"] = True
-        route_ev = {"t": MsgType.MSG_EDIT.value, "seq": seq,
-                    "channel": msg["channel"], "uid": msg["uid"],
-                    "to": msg.get("to"), "nick": msg["nick"], "text": text,
-                    "edits": edits}                # R70B：随事件下发历史版本
-        if r59:
-            route_ev["rich"] = r59
         self._route(route_ev)
         self.audit.log(type="msg_edit", uid=sess.uid, seq=seq, length=len(text))
         self._persist()                              # R16：编辑后的权威消息落盘
@@ -4667,24 +5781,33 @@ class Hub:
             return
         with self.bus._lock:
             _key, msg = self.bus.find(seq)
-        if msg is None:
-            self._error(sess, "expired", "消息已不在服务器历史中")
+            if msg is None:
+                reason = ("expired", "消息已不在服务器历史中")
+                route_ev = None
+            else:
+                is_owner = msg.get("uid") == sess.uid
+                allowed = is_owner or sess.is_admin
+                if not allowed:
+                    is_private = msg.get("channel") == "private"
+                    is_peer = msg.get("to") == sess.uid
+                    allowed = scope == "both" and is_private and is_peer
+                if not allowed:
+                    reason = ("forbid", "只能撤回自己的消息")
+                    route_ev = None
+                elif msg.get("deleted"):
+                    reason = ("dup", "消息已撤回")
+                    route_ev = None
+                else:
+                    reason = None
+                    msg["deleted"] = True
+                    msg["text"] = ""
+                    route_ev = {"t": MsgType.MSG_DEL.value, "seq": seq,
+                                "channel": msg["channel"], "uid": msg["uid"],
+                                "to": msg.get("to"), "nick": msg["nick"]}
+        if reason is not None:
+            self._error(sess, *reason)
             return
-        is_owner = msg.get("uid") == sess.uid
-        if not is_owner and not sess.is_admin:      # R53：管理员可撤任何人消息
-            is_private = msg.get("channel") == "private"
-            is_peer = msg.get("to") == sess.uid
-            if not (scope == "both" and is_private and is_peer):
-                self._error(sess, "forbid", "只能撤回自己的消息")
-                return
-        if msg.get("deleted"):
-            self._error(sess, "dup", "消息已撤回")
-            return
-        msg["deleted"] = True                  # 墓碑保留 seq，历史/seq 连续
-        msg["text"] = ""
-        self._route({"t": MsgType.MSG_DEL.value, "seq": seq,
-                     "channel": msg["channel"], "uid": msg["uid"],
-                     "to": msg.get("to"), "nick": msg["nick"]})
+        self._route(route_ev)
         self.audit.log(type="msg_del", uid=sess.uid, seq=seq, scope=scope)
         self._persist()                              # R16：撤回 tombstone 落盘
 
@@ -4900,6 +6023,9 @@ class Hub:
         retirement = self._retirement_payload(uid)
         if retirement is not None:
             payload["retirement"] = retirement
+        resources = self._resource_summary(uid)
+        if resources.get("operations"):
+            payload["resources"] = resources
         return payload
 
     def _on_admin_user_get(self, sess: Session, header: dict) -> None:
@@ -5168,11 +6294,17 @@ class Hub:
             self._nudge_ts.pop(uid, None)
             self._shake_ts.pop(uid, None)
             self.sticker_subs.pop(uid, None)
+            self._resource_withdraw_owner_locked(uid)
+            self._bot_reminder_cancel_owner_locked(uid)
             for bseq, burn in list(self._burn.items()):
                 if burn.get("uid") == uid:
                     self._burn.pop(bseq, None)
             dissolved = self._admin_del_remove_groups(uid)
             removed = self.bus.clear_uid(uid)
+            self._bot_contexts = {
+                seq: ctx for seq, ctx in self._bot_contexts.items()
+                if ctx.get("owner_uid") != uid and ctx.get("target_uid") != uid
+            }
         for target in targets:
             try:
                 target.send({"t": MsgType.ERROR.value, "code": "deleted",
@@ -5594,29 +6726,107 @@ class Hub:
             pass
 
     def _on_cloud_put(self, sess: Session, header: dict, body: bytes) -> None:
-        """上传：body=客户端 AES-GCM 密文 blob（服务器不解析）。按 uid 存最新一份。"""
+        """上传 opaque cloud bytes；C 与实际 replace/receipt 分离。"""
         blob = bytes(body or b"")
         if not blob or len(blob) > cloud_history_mod.CLOUD_BLOB_MAX:
             self._error(sess, "cloud",
                         f"备份大小无效（上限 {cloud_history_mod.CLOUD_BLOB_MAX} 字节）")
             return
-        ts = _now()
-        self.cloud[sess.uid] = {"blob": blob, "ts": ts}
-        path = os.path.join(self.cloud_dir, f"{sess.uid}.bin")
+        announced = header.get("size")
+        if announced is not None and (
+                isinstance(announced, bool) or not isinstance(announced, int)
+                or announced != len(blob)):
+            self._error(sess, "cloud", "备份长度与声明不一致")
+            return
+        op = header.get("resource_operation_id")
+        identity = {"payload_sha256": hashlib.sha256(blob).hexdigest(),
+                    "content_length": len(blob)}
         try:
-            with open(path, "wb") as f:
-                f.write(blob)
-        except OSError:
-            pass                                  # 落盘失败仍保留内存份
-        try:
-            sess.send({"t": MsgType.CLOUD_DONE.value, "size": len(blob), "ts": ts})
-        except Exception:
-            pass
-        self.audit.log(type="cloud_put", uid=sess.uid, size=len(blob))
+            ctx = self._resource_begin(
+                sess, "cloud", sess.uid, identity,
+                resource_operation_id=op if op is not None else None)
+            if ctx.get("status") == "confirmed":
+                with self.lock:
+                    with self._resource_lock:
+                        ctx["visibility"] = self._resource_visibility_locked(ctx)
+                        result = self._resource_public_result(ctx)
+                if result.get("visibility") != "available":
+                    raise _ResourceError("superseded", result,
+                                         "旧 cloud 操作已被后续版本取代")
+                try:
+                    sess.send({"t": MsgType.CLOUD_DONE.value, "size": len(blob),
+                               "ts": _now(), "resource": result})
+                except Exception:
+                    pass
+                return
+            if ctx.get("status") in ("unknown", "pending"):
+                if ctx.get("status") == "unknown":
+                    raise _ResourceError("resource_unknown",
+                                         self._resource_public_result(ctx))
+                if not self._resource_claim_executor(ctx):
+                    raise _ResourceError("resource_pending",
+                                         self._resource_public_result(ctx))
+            result = self._resource_file_commit(ctx, blob)
+            if result.get("status") != "confirmed":
+                raise _ResourceError("resource_pending", result)
+            try:
+                sess.send({"t": MsgType.CLOUD_DONE.value, "size": len(blob),
+                           "ts": _now(), "resource": result})
+            except Exception:
+                # A confirmed resource remains confirmed; response failure is
+                # deliberately not folded back into the resource result.
+                pass
+            try:
+                self.audit.log(type="cloud_put", uid=sess.uid, size=len(blob),
+                               resource_operation_id=result.get(
+                                   "resource_operation_id"))
+            except Exception:
+                pass
+        except _ResourceError as exc:
+            result = exc.result or {}
+            self._error(sess, exc.code, "云资源未完成", resource=result)
+        except (PermissionError, ValueError) as exc:
+            self._error(sess, "cloud", str(exc))
 
-    def _on_cloud_get(self, sess: Session) -> None:
-        """拉取：回本账号密文 blob（无备份时 size=0 空 body）。"""
-        rec = self.cloud.get(sess.uid)
+    def _on_cloud_get(self, sess: Session, header: dict | None = None) -> None:
+        """拉取当前已证 cloud bytes；resource query 只回有限结果。"""
+        header = header if isinstance(header, dict) else {}
+        query = header.get("resource_query") or header.get(
+            "resource_operation_id")
+        if query:
+            explicit_owner = header.get("resource_owner_uid")
+            if explicit_owner is not None:
+                if not sess.is_admin or isinstance(explicit_owner, bool):
+                    self._error(sess, "resource_forbid", "无资源查询权限")
+                    return
+                try:
+                    explicit_owner = int(explicit_owner)
+                except (TypeError, ValueError):
+                    self._error(sess, "resource_unavailable", "资源 owner 无效")
+                    return
+            try:
+                result = self._resource_query(
+                    sess, str(query), explicit_owner=explicit_owner)
+            except (LookupError, PermissionError, ValueError):
+                self._error(sess, "resource_unavailable", "资源结果不可用")
+                return
+            if result.get("status") != "confirmed" \
+                    or result.get("visibility") != "available":
+                self._error(sess, "resource_pending", "资源结果尚未可读",
+                            resource=result)
+                return
+            try:
+                sess.send({"t": MsgType.CLOUD_DONE.value,
+                           "size": result.get("length") or 0,
+                           "resource": result})
+            except Exception:
+                pass
+            return
+        with self.lock:
+            if self._retired_schema_invalid or self._uid_retired_locked(sess.uid):
+                rec = None
+            else:
+                rec = self.cloud.get(sess.uid)
         blob = rec["blob"] if rec else b""
         try:
             sess.send({"t": MsgType.CLOUD_DATA.value,

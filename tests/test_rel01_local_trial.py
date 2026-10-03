@@ -346,3 +346,45 @@ def test_build_snapshot_and_source_fingerprint_exclude_private_non_source(tmp_pa
     assert local_trial._source_fingerprint(source) == before
     (source / "config.py").write_text("VALUE = 2\n", encoding="utf-8")
     assert local_trial._source_fingerprint(source) != before
+
+
+def test_synthetic_profiles_have_distinct_instance_mutex_names(tmp_path, monkeypatch):
+    import local_trial
+
+    monkeypatch.setenv("USERNAME", "synthetic-inherited-name")
+    a = local_trial._clean_env(profile=tmp_path / "alpha")
+    b = local_trial._clean_env(profile=tmp_path / "beta")
+    # client._INSTANCE_LOCK_NAME is keyed by USERNAME.  Distinct profiles must
+    # never share that key or try to raise another client's visible window.
+    assert a["USERNAME"].startswith("trial_")
+    assert b["USERNAME"].startswith("trial_")
+    assert a["USERNAME"] != b["USERNAME"]
+    assert os.environ["USERNAME"] == "synthetic-inherited-name"
+
+
+def test_powershell_trial_profiles_have_distinct_instance_mutex_names(tmp_path):
+    script = tmp_path / "environment-probe.ps1"
+    script.write_text(r'''
+param([string]$Launcher, [string]$ProfileRoot)
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$tokens = $null; $errors = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile($Launcher, [ref]$tokens, [ref]$errors)
+if ($errors.Count) { throw 'parse failure' }
+$fn = $ast.Find({param($n) $n -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'New-TrialEnvironment'}, $true)
+Invoke-Expression $fn.Extent.Text
+$Flags = @{}
+$a = New-TrialEnvironment -Profile (Join-Path $ProfileRoot 'alpha') -TcpPort 1 -WebPort 2
+$b = New-TrialEnvironment -Profile (Join-Path $ProfileRoot 'beta') -TcpPort 1 -WebPort 2
+@($a['USERNAME'], $b['USERNAME']) | ConvertTo-Json -Compress
+''', encoding="utf-8")
+    result = subprocess.run(
+        ["pwsh", "-NoProfile", "-File", str(script), "-Launcher",
+         str(ROOT / "trial_start.ps1"), "-ProfileRoot", str(tmp_path / "profiles")],
+        stdin=subprocess.DEVNULL, capture_output=True, text=True, check=False,
+        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+    )
+    assert result.returncode == 0, result.stderr
+    a, b = json.loads(result.stdout)
+    assert a and b and a.startswith("trial_") and b.startswith("trial_")
+    assert a != b

@@ -192,6 +192,9 @@ def _clean_env(*, profile: Path | None = None, flags: dict[str, str] | None = No
         for path in (profile, appdata, local, temp):
             path.mkdir(parents=True, exist_ok=True)
         env.update({
+            # The frozen client singleton is keyed by USERNAME.  A synthetic
+            # profile must not acquire or raise the real user's instance.
+            "USERNAME": "trial_" + hashlib.sha256(str(profile).encode("utf-8")).hexdigest()[:20],
             "USERPROFILE": str(profile),
             "HOMEDRIVE": profile.anchor.rstrip("\\/"),
             "HOMEPATH": str(profile)[len(profile.drive):] or "\\",
@@ -365,7 +368,8 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
                   client_exe: Path | None = None) -> tuple[int, dict]:
     run_dir = _new_run_dir(run_root, "run")
     profiles = {"server": run_dir / "profile-server",
-                "client": run_dir / "profile-client"}
+                "client": run_dir / "profile-client",
+                "client_beta": run_dir / "profile-client-beta"}
     logs = {role: run_dir / f"{role}.log" for role in profiles}
     for profile in profiles.values():
         profile.mkdir(parents=True, exist_ok=True)
@@ -415,14 +419,18 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
 
     server_env = _clean_env(profile=profiles["server"], flags=TRIAL_FLAGS,
                              ports=(tcp_port, web_port))
-    client_env = _clean_env(profile=profiles["client"], flags=TRIAL_FLAGS,
-                             ports=(tcp_port, web_port))
+    client_nicks = {"client": "REL_trial_client", "client_beta": "REL_trial_beta"}
+    client_envs = {role: _clean_env(profile=profiles[role], flags=TRIAL_FLAGS,
+                                  ports=(tcp_port, web_port))
+                   for role in client_nicks}
     profile_before = {role: _owned_inventory(path)
                       for role, path in profiles.items()}
     server_cmd = [str(server_exe)]
-    client_cmd = [str(client_exe), "--host", "127.0.0.1", "--port",
-                  str(tcp_port), "--nick", "REL_trial_client"]
-    server_proc = client_proc = None
+    client_cmds = {role: [str(client_exe), "--host", "127.0.0.1", "--port",
+                          str(tcp_port), "--nick", nick]
+                   for role, nick in client_nicks.items()}
+    server_proc = None
+    client_procs = {}
     result = {
         "schema_version": "REL-01.v1.run", "run_id": run_dir.name,
         "source": str(source), "desktop": desktop,
@@ -448,30 +456,35 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
         result["probes"]["tcp_listen"] = {"ok": ready}
         if ready:
             result["probes"]["web"] = _web_probe(web_port)
-        client_proc = launch_process(client_cmd, cwd=str(source), env=client_env,
-                                     log_path=logs["client"], desktop_name=desktop)
-        result["processes"]["client"] = _process_record(
-            client_proc, desktop=desktop, command=client_cmd,
-            expected_exe=client_exe)
-        result["client_started"] = client_proc.poll() is None
-        result["probes"]["login"] = _wait_login_audit(
-            profiles["server"], "REL_trial_client") if ready else {
-                "ok": False, "source": "client.exe", "error_type": "server_not_ready"}
+        for role, nick in client_nicks.items():
+            proc = launch_process(client_cmds[role], cwd=str(source), env=client_envs[role],
+                                  log_path=logs[role], desktop_name=desktop)
+            # Register immediately so any later launch/probe error cleans it.
+            client_procs[role] = proc
+            result["processes"][role] = _process_record(
+                proc, desktop=desktop, command=client_cmds[role], expected_exe=client_exe)
+            result["probes"]["login" if role == "client" else "login_beta"] = (
+                _wait_login_audit(profiles["server"], nick) if ready else {
+                    "ok": False, "source": "client.exe", "error_type": "server_not_ready"})
+        result["client_started"] = all(proc.poll() is None for proc in client_procs.values())
         # Allow client boot/login to write its crash log without interacting
         # with the private desktop.  A live process is the expected result.
         time.sleep(3.0)
-        result["client_after_wait"] = _process_record(
-            client_proc, desktop=desktop, command=client_cmd,
-            expected_exe=client_exe)
+        for role, proc in client_procs.items():
+            result[f"{role}_after_wait"] = _process_record(
+                proc, desktop=desktop, command=client_cmds[role], expected_exe=client_exe)
         result["server_after_wait"] = _process_record(
             server_proc, desktop=desktop, command=server_cmd,
             expected_exe=server_exe)
-        client_alive = result["client_after_wait"].get("state") == "running"
+        client_alive = all(result[f"{role}_after_wait"].get("state") == "running"
+                           for role in client_nicks)
         server_alive = result["server_after_wait"].get("state") == "running"
-        image_ok = (result["client_after_wait"].get("image_matches_expected") is True
+        image_ok = (all(result[f"{role}_after_wait"].get("image_matches_expected") is True
+                        for role in client_nicks)
                     and result["server_after_wait"].get("image_matches_expected") is True)
         code = 0 if (result["probes"].get("tcp_listen", {}).get("ok")
                      and result["probes"].get("login", {}).get("ok")
+                     and result["probes"].get("login_beta", {}).get("ok")
                      and result["probes"].get("web", {}).get("ok")
                      and result.get("client_started")
                      and client_alive and server_alive and image_ok) else 1
@@ -480,7 +493,7 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
         code = 1
     finally:
         cleanup = {}
-        for role, proc in (("client", client_proc), ("server", server_proc)):
+        for role, proc in [*client_procs.items(), ("server", server_proc)]:
             if proc is None:
                 cleanup[role] = {"attempted": False, "ok": True}
                 continue
@@ -552,7 +565,9 @@ def main(argv: list[str] | None = None) -> int:
     code, summary = run_candidate(
         args.source_dir.resolve(), args.run_root.resolve(),
         server_exe=args.server_exe, client_exe=args.client_exe)
-    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    # Full profile inventories remain in summary.json, not terminal output.
+    print(json.dumps({key: value for key, value in summary.items()
+                      if key != "profiles"}, ensure_ascii=False, indent=2))
     return code
 
 

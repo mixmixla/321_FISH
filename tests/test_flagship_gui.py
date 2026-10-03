@@ -128,9 +128,13 @@ def _fake_game_core(game="gomoku"):
     return core
 
 
-def test_real_game_window_bindings_focus_gate_and_collapse_restore():
+def test_real_game_window_bindings_focus_gate_and_collapse_restore(monkeypatch):
     """Synthetic app/core, real GameWindow/BoardFocusWindow and Tk events."""
     import client as client_module
+
+    clock = [100.0]
+    monkeypatch.setattr(
+        client_gameui, "time", SimpleNamespace(monotonic=lambda: clock[0]))
 
     try:
         root = tk.Tk()
@@ -212,8 +216,21 @@ def test_real_game_window_bindings_focus_gate_and_collapse_restore():
         core.game_room = {**core.game_room, "round": 3, "spectators": []}
         core.game_state = {**core.game_state, "winner_uid": 7,
                            "last_move": [0, 0]}
-        gw._sync(); root.update()
+        clock[0] = 200.0
+        gw._sync(); root.update_idletasks()
         assert board._cv_ui.get("_after_id") is not None
+        board.hide(reason="collapse")
+        assert board._cv_ui.get("_after_id") is None
+        board.show(reason="collapse")
+        board.redraw(force=True)
+        clock[0] = 201.0
+        expiry_job = board._cv_ui.get("_after_id")
+        assert expiry_job is not None
+        expiry_script = root.tk.call("after", "info", expiry_job)[0]
+        root.tk.call("after", "cancel", expiry_job)
+        root.tk.call(expiry_script)
+        root.update_idletasks()
+        assert board._cv_ui.get("_after_id") is None
         gw.game_cv.event_generate("<Button-1>", x=int(ui["ox"]),
                                   y=int(ui["oy"]), when="tail")
         root.update()
@@ -292,9 +309,13 @@ def test_real_game_window_bindings_focus_gate_and_collapse_restore():
         root.destroy()
 
 
-def test_collapse_visibility_manual_hide_unsupported_guard_and_after_cleanup():
+def test_collapse_visibility_manual_hide_unsupported_guard_and_after_cleanup(monkeypatch):
     """Real Tk regressions for nested mini/boss and stale desktop game state."""
     import client as client_module
+
+    clock = [100.0]
+    monkeypatch.setattr(
+        client_gameui, "time", SimpleNamespace(monotonic=lambda: clock[0]))
 
     try:
         root = tk.Tk()
@@ -471,4 +492,146 @@ def test_collapse_visibility_manual_hide_unsupported_guard_and_after_cleanup():
                 mini.win.destroy()
             except tk.TclError:
                 pass
+        root.destroy()
+
+
+def test_disabled_tray_hotkey_boss_protocol_recovers_real_windows(monkeypatch):
+    """The real Boss WM_DELETE Tcl protocol must recover the captured UI."""
+    import client as client_module
+
+    try:
+        root = tk.Tk()
+    except tk.TclError as exc:
+        pytest.skip(f"Tk unavailable: {exc}")
+    root.geometry("1100x760+60+60")
+    root.deiconify()
+    core = _fake_game_core("gomoku")
+    core.files = SimpleNamespace(_lock=threading.Lock(), xfers={})
+    core.me = {}
+    statuses = []
+    core.send_status = lambda status: statuses.append(status)
+    app = SimpleNamespace(
+        root=root, core=core, _dp=client_module._DEFAULT_PAL,
+        _frameless=False, _skin={}, _camo_title=lambda: "synthetic",
+        _prefs=SimpleNamespace(get=lambda *_a, **_k: True),
+        _unread={}, _boss_active=False,
+    )
+    gw = mini = boss = None
+    try:
+        monkeypatch.setattr(client_module.CFG, "tray_enabled", False)
+        monkeypatch.setattr(client_module.CFG, "global_hotkeys_enabled", False)
+        gw = client_module.GameWindow(app, pal=client_module._DEFAULT_PAL)
+        app._game_win = gw
+        mini = client_module.MiniBar(app, pal=client_module._DEFAULT_PAL)
+        app._mini = mini
+        boss = client_module.BossWindow(root, skin="excel")
+        app._boss = boss
+        app._collapse_snapshot = None
+        app._visible_window = client_module.ChatWindow._visible_window
+        app._capture_collapse_snapshot = (
+            lambda: client_module.ChatWindow._capture_collapse_snapshot(app))
+        app._restore_collapse_snapshot = (
+            lambda: client_module.ChatWindow._restore_collapse_snapshot(app))
+        app._boss_enter_silent = (
+            lambda: client_module.ChatWindow._boss_enter_silent(app))
+        app._boss_exit_silent = (
+            lambda: client_module.ChatWindow._boss_exit_silent(app))
+        app._toggle_boss = (
+            lambda: client_module.ChatWindow._toggle_boss(app))
+        messages = []
+        app._append_sys = lambda text, *_a, **_k: messages.append(text)
+        gw._spawn_board_win()
+        board = gw._board_win
+        board.redraw(force=True)
+        root.update()
+
+        client_module.ChatWindow._toggle_boss(app)
+        root.update()
+        assert boss.visible() and root.state() == "withdrawn"
+        assert statuses == ["busy"]
+        assert any("关闭伪装工作窗即可恢复原界面" in text for text in messages)
+        protocol_command = boss.win.protocol("WM_DELETE_WINDOW")
+        assert protocol_command
+        # Invoke the actual Tcl command registered for WM_DELETE_WINDOW.
+        root.tk.call(protocol_command)
+        root.update()
+        assert root.state() == "normal"
+        assert client_module.ChatWindow._visible_window(gw.win)
+        assert board.active()
+        assert app._boss_active is False
+    finally:
+        if gw is not None:
+            gw.close()
+        if boss is not None:
+            boss.close()
+        if mini is not None:
+            try:
+                mini.win.destroy()
+            except tk.TclError:
+                pass
+        root.destroy()
+
+
+def test_default_boss_protocol_keeps_hide_only_and_external_toggle_recovers(monkeypatch):
+    """Default flags preserve Boss WM_DELETE hide-only semantics."""
+    import client as client_module
+
+    try:
+        root = tk.Tk()
+    except tk.TclError as exc:
+        pytest.skip(f"Tk unavailable: {exc}")
+    root.geometry("900x600+60+60")
+    root.deiconify()
+    core = _fake_game_core("gomoku")
+    core.files = SimpleNamespace(_lock=threading.Lock(), xfers={})
+    core.me = {}
+    statuses = []
+    core.send_status = lambda status: statuses.append(status)
+    app = SimpleNamespace(
+        root=root, core=core, _dp=client_module._DEFAULT_PAL,
+        _frameless=False, _skin={}, _camo_title=lambda: "synthetic",
+        _prefs=SimpleNamespace(get=lambda *_a, **_k: True),
+        _unread={}, _boss_active=False, _mini=None, _game_win=None,
+        _collapse_snapshot=None,
+    )
+    boss = None
+    try:
+        monkeypatch.setattr(client_module.CFG, "tray_enabled", True)
+        monkeypatch.setattr(client_module.CFG, "global_hotkeys_enabled", False)
+        boss = client_module.BossWindow(root, skin="excel")
+        app._boss = boss
+        app._visible_window = client_module.ChatWindow._visible_window
+        app._capture_collapse_snapshot = (
+            lambda: client_module.ChatWindow._capture_collapse_snapshot(app))
+        app._restore_collapse_snapshot = (
+            lambda: client_module.ChatWindow._restore_collapse_snapshot(app))
+        app._boss_enter_silent = (
+            lambda: client_module.ChatWindow._boss_enter_silent(app))
+        app._boss_exit_silent = (
+            lambda: client_module.ChatWindow._boss_exit_silent(app))
+        app._toggle_boss = (
+            lambda: client_module.ChatWindow._toggle_boss(app))
+        app._append_sys = lambda *_a, **_k: None
+
+        client_module.ChatWindow._toggle_boss(app)
+        root.update()
+        assert statuses == ["busy"]
+        protocol_command = boss.win.protocol("WM_DELETE_WINDOW")
+        root.tk.call(protocol_command)
+        root.update()
+        assert not boss.visible()
+        assert root.state() == "withdrawn"
+        assert app._boss_active is True
+
+        # Existing external toggle path remains the recovery route when the
+        # default hide-only protocol has been used.
+        boss.show()
+        client_module.ChatWindow._toggle_boss(app)
+        root.update()
+        assert root.state() == "normal"
+        assert app._boss_active is False
+        assert statuses[-1] == "online"
+    finally:
+        if boss is not None:
+            boss.close()
         root.destroy()

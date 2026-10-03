@@ -79,7 +79,8 @@ def test_poll_returns_immediately_when_kick_closes_window():
     assert events.qsize() == 1
 
 
-def test_quit_cancels_pending_callbacks_before_destroying_root():
+@pytest.mark.parametrize("discovery_enabled", [False, True])
+def test_quit_cancels_pending_callbacks_before_destroying_root(discovery_enabled):
     events = []
     def tcl_call(*args):
         if args == ("after", "info"):
@@ -91,10 +92,14 @@ def test_quit_cancels_pending_callbacks_before_destroying_root():
                            after_cancel=lambda job: pytest.fail("must preserve child-owned command bookkeeping"),
                            destroy=lambda: events.append("destroy"))
     app = SimpleNamespace(_closed=False, root=root, _mini=None,
+                          _disco=(SimpleNamespace(stop=SimpleNamespace(
+                              set=lambda: events.append("discovery-stop")))
+                              if discovery_enabled else None),
                           _hotkey=SimpleNamespace(stop=lambda: None),
                           _shot_hotkey=SimpleNamespace(stop=lambda: None),
                           _persist_drafts=lambda: None,
                           core=SimpleNamespace(stop=lambda: events.append("core-stop")))
     ChatWindow.quit_app(app)
     assert app._closed is True
-    assert events == ["after#1", "after#2", "destroy", "core-stop"]
+    assert events == (["discovery-stop"] if discovery_enabled else []) + [
+        "after#1", "after#2", "destroy", "core-stop"]

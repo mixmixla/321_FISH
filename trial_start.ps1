@@ -81,6 +81,11 @@ function New-TrialEnvironment {
         if ($null -ne $pair.Value) { $envMap[$pair.Key] = [string]$pair.Value }
     }
     $envMap["PATH"] = "$systemRoot\System32;$systemRoot"
+    # client.exe keys its singleton mutex by USERNAME.  Use one synthetic key
+    # per owned profile so two clients cannot wake/replace each other.
+    $profileHash = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData(
+        [System.Text.Encoding]::UTF8.GetBytes($profilePath))).ToLowerInvariant()
+    $envMap["USERNAME"] = "trial_" + $profileHash.Substring(0, 20)
     $envMap["USERPROFILE"] = $profilePath
     $envMap["HOMEDRIVE"] = $profilePath.Substring(0, 2)
     $envMap["HOMEPATH"] = $profilePath.Substring(2)

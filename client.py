@@ -10614,12 +10614,20 @@ class ChatWindow:
         R69A2：进入伪装态时静默联动（静音/停音效/冻结弹窗与任务栏闪烁/切忙碌），
         退出时自动复原；R69A4：伪装态下新消息只累积未读，绝不打断。
         """
+        recovery_only_close = (not CFG.tray_enabled
+                               and not CFG.global_hotkeys_enabled)
         if self._boss.visible():
+            if recovery_only_close:
+                self._boss.win.protocol("WM_DELETE_WINDOW", self._boss.hide)
             self._boss.hide()
             self._boss_exit_silent()
             self._restore_collapse_snapshot()
             return
         self._capture_collapse_snapshot()
+        if recovery_only_close:
+            # With tray and global hotkeys disabled, the Boss window's native
+            # close button is the only visible recovery affordance.
+            self._boss.win.protocol("WM_DELETE_WINDOW", self._toggle_boss)
         self._boss_enter_silent()
         self.root.withdraw()
         if self._mini is not None:
@@ -10643,8 +10651,12 @@ class ChatWindow:
                 self.core.send_status("busy")
             except Exception:
                 pass
-        self._append_sys("🕶 已进入伪装态：静音、停音效、冻结弹窗与任务栏闪烁"
-                         "（新消息只记未读，再按热键恢复）")
+        if not CFG.tray_enabled and not CFG.global_hotkeys_enabled:
+            self._append_sys("🕶 已进入伪装态：静音、停音效、冻结弹窗与任务栏闪烁"
+                             "（关闭伪装工作窗即可恢复原界面）")
+        else:
+            self._append_sys("🕶 已进入伪装态：静音、停音效、冻结弹窗与任务栏闪烁"
+                             "（新消息只记未读，再按热键恢复）")
 
     def _boss_exit_silent(self) -> None:
         """退出伪装态：恢复进入前的在线状态。"""

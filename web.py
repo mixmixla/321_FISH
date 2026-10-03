@@ -7683,7 +7683,12 @@ def serve(hub, port: int | None = None, stop: threading.Event | None = None,
     """
     port = hub.cfg.web_port if port is None else port
     _Handler.hub = hub
-    httpd = _QuietServer(("0.0.0.0", port), _Handler)
+    # REL-01: the web listener follows the same literal IPv4 bind address as
+    # the TCP listener.  getattr keeps embedded/legacy test doubles that
+    # predate Cfg.bind_host compatible while real Cfg instances always carry
+    # the validated value.
+    bind_host = getattr(hub.cfg, "bind_host", "0.0.0.0")
+    httpd = _QuietServer((bind_host, port), _Handler)
     httpd.daemon_threads = True
     httpd.allow_reuse_address = True
     if https is None:

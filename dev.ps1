@@ -1,7 +1,7 @@
 # 使用项目虚拟环境，避免系统旧版 Python 或 PATH 顺序影响运行。
 param(
-    [ValidateSet('test', 'server', 'client', 'build')]
-    [string] $Command = 'test'
+    [ValidateSet('test', 'test-all', 'server', 'client', 'build')]
+    [string] $Command = 'test-all'
 )
 
 # 普通参数绑定保留剩余原始参数，避免 -o 等 pytest 参数与 PowerShell

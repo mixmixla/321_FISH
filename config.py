@@ -3,10 +3,48 @@
 import os
 import sys
 import traceback
+import ipaddress
 from dataclasses import dataclass, field
 
 APP_NAME = "内部办公助手"          # 对外显示的"无害"名称，绝不出现"摸鱼/聊天"字样
 PROTOCOL_VERSION = 1
+
+
+def _env_flag(name: str, default: bool = True) -> bool:
+    """Read a process gate; only the literal ``0`` disables it.
+
+    Keeping the parser deliberately small preserves the existing default
+    behavior while making a local trial fail closed only for the explicit
+    opt-out requested by REL-01.
+    """
+    return os.environ.get(name, "1" if default else "0") != "0"
+
+
+def _env_ipv4(name: str, default: str = "0.0.0.0") -> str:
+    """Return an explicit IPv4 literal or reject the process configuration.
+
+    Host names and IPv6 literals are intentionally not accepted: the bind
+    address is also used by the web listener and must be unambiguous in the
+    local trial harness.
+    """
+    value = os.environ.get(name, default)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{name} must be a non-empty IPv4 literal")
+    value = value.strip()
+    try:
+        address = ipaddress.ip_address(value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an IPv4 literal: {value!r}") from exc
+    if not isinstance(address, ipaddress.IPv4Address):
+        raise ValueError(f"{name} must be an IPv4 literal: {value!r}")
+    return str(address)
+
+
+BIND_HOST = _env_ipv4("MOYU_BIND_HOST")
+DISCOVERY_ENABLED = _env_flag("MOYU_DISCOVERY")
+TRAY_ENABLED = _env_flag("MOYU_TRAY")
+GLOBAL_HOTKEYS_ENABLED = _env_flag("MOYU_GLOBAL_HOTKEYS")
+HARDWARE_ENABLED = _env_flag("MOYU_HARDWARE")
 
 # ---- 网络 ----
 TCP_PORT = int(os.environ.get("MOYU_TCP_PORT", "9527"))     # 可改高位非常规端口，减少指纹
@@ -251,6 +289,14 @@ def enable_crashlog() -> None:
 @dataclass
 class Cfg:
     """全局配置单例"""
+    # REL-01：process-level local-trial gates.  The four feature flags keep
+    # their historical enabled defaults; bind_host is validated at import
+    # time so a typo cannot silently widen or redirect a listener.
+    bind_host: str = BIND_HOST
+    discovery_enabled: bool = DISCOVERY_ENABLED
+    tray_enabled: bool = TRAY_ENABLED
+    global_hotkeys_enabled: bool = GLOBAL_HOTKEYS_ENABLED
+    hardware_enabled: bool = HARDWARE_ENABLED
     tcp_port: int = TCP_PORT
     udp_port: int = UDP_PORT
     udp_broadcast_interval: float = UDP_BROADCAST_INTERVAL

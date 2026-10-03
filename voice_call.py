@@ -29,6 +29,7 @@ import time
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from protocol import MsgType as M
+from config import CFG
 import video_api
 import voice_api
 
@@ -61,9 +62,11 @@ class CallManager:
         self._ptt = False               # PTT 按住态（仅半双工模式有意义）
         self._mic_up = False            # 麦克风期望开启态（_apply_mic 同步）
         self._started_at = 0.0
-        # R45 视频：能力探测后台预热（避免接听时现场枚举卡顿）
-        threading.Thread(target=video_api.available, daemon=True,
-                         name="cam-probe").start()
+        # R45 视频：能力探测后台预热（避免接听时现场枚举卡顿）。
+        # REL-01 hardware=0 forbids even this Media Foundation preheat.
+        if CFG.hardware_enabled:
+            threading.Thread(target=video_api.available, daemon=True,
+                             name="cam-probe").start()
         self._has_cam = False           # 本机摄像头可用（惰性探测缓存）
         self._peer_vcap = False         # 对端声明支持视频（ACCEPT/READY 协商）
         self._video_on = False          # 本端视频开关
@@ -113,7 +116,8 @@ class CallManager:
         with self._lock:
             self._key = key
             self._aead = AESGCM(bytes(key))
-            self._has_cam = video_api.available()   # 惰性探测（已预热则瞬时）
+            self._has_cam = (video_api.available() if CFG.hardware_enabled
+                             else False)            # 惰性探测（已预热则瞬时）
         self.core._send_frame({"t": M.CALL_ACCEPT.value, "to": int(peer),
                                "vcap": 1 if self._has_cam else 0})
         self._push("connecting", peer=peer, nick=nick, text="已接听，建立直连…")
@@ -310,7 +314,8 @@ class CallManager:
             self.state = "connecting"
             peer = self.peer
             self._peer_vcap = bool(h.get("vcap"))   # 对端视频能力（R45）
-            self._has_cam = video_api.available()
+            self._has_cam = (video_api.available() if CFG.hardware_enabled
+                             else False)
         # 绑随机 UDP 端口并上报（服务器回填 ip 转给被叫）
         udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp.bind(("0.0.0.0", 0))

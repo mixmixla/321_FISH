@@ -76,11 +76,8 @@ def fake_voice(monkeypatch):
 
 @pytest.fixture()
 def root():
-    """Tk 根窗（无显示环境自动跳过），供 MsgList 渲染级测试。"""
-    try:
-        r = __import__("tkinter").Tk()
-    except Exception as exc:                     # noqa：无显示环境
-        pytest.skip(f"无可用 Tk 显示环境: {exc}")
+    """Required Tk root: initialization/package errors must fail the gate."""
+    r = __import__("tkinter").Tk()
     r.withdraw()
     yield r
     try:

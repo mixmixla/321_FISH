@@ -108,6 +108,13 @@ def gf_kind(name: str) -> str:
     return "other"
 
 
+def _start_global_hotkey(manager) -> bool:
+    """Start one global hotkey only when the process gate allows it."""
+    if not CFG.global_hotkeys_enabled:
+        return False
+    return bool(manager.start())
+
+
 # ---------- 剪贴板/截图 → 临时 PNG（Ctrl+V 粘贴、Alt+A 截图共用） ----------
 def _save_image_temp(img) -> str:
     """把 PIL.Image 落到临时 PNG，返回路径；Pillow 缺失/写盘失败返回空串。"""
@@ -317,6 +324,9 @@ class ChatWindow:
         self._closed = False
         self._exit_reason = "quit"          # R8 launcher 退出语义："quit"|"switch"
         self._mini = None
+        # GAME-UI-01：收起/伪装事务的窗口身份快照。只在最外层进入时捕获，
+        # 迷你条与老板键嵌套不能覆盖；恢复只还原仍存在且此前可见的对象。
+        self._collapse_snapshot = None
         self._sticker_row = None
         self._sticker_on = False
         # C5/C6：未读计数 + 本地偏好（置顶）+ 搜索过滤
@@ -384,7 +394,8 @@ class ChatWindow:
         self._chat_alpha = float(self._prefs.get("chat_alpha", 0.95))
         self._skin = get_skin(self._skin_name)
         self._dp = dialog_pal(self._skin)   # R57：对话框/独立面板派生配色
-        ui_fx.set_sound(self._prefs.get("ui_sound", False))   # 界面反馈音（默认关，prefs 可开）
+        ui_fx.set_sound(CFG.hardware_enabled and
+                        self._prefs.get("ui_sound", False))  # 界面反馈音（默认关，prefs 可开）
         # R29D 表情回应：最近使用（去重前置，最多 REACT_RECENT_MAX 个），驱动悬浮条快捷集
         self._recent_reacts = [str(e) for e in (self._prefs.get("react_recent") or [])
                                if str(e)][:REACT_RECENT_MAX]
@@ -465,14 +476,21 @@ class ChatWindow:
         self._bind_shortcuts()
         self._bind_autocomplete()            # B5 @提及/emoji 补全
         # 阶段3 自动发现 + 阶段5 快速隐藏（热键 + 假 Excel 窗）
-        self._disco = DiscoveryClient(CFG)
-        self._disco.start()
+        # REL-01：发现是可关闭的进程级能力。保留显式 host/port 的
+        # ClientCore 配置，不在关闭时以任何候选覆盖它。
+        self._disco = None
+        if CFG.discovery_enabled:
+            try:
+                self._disco = DiscoveryClient(CFG)
+                self._disco.start()
+            except Exception:
+                self._disco = None
         self._hotkey = HotkeyManager()
-        self._hotkey_ok = self._hotkey.start()
+        self._hotkey_ok = _start_global_hotkey(self._hotkey)
         # Alt+A 区域截图即发（修饰键不同，与 Ctrl+Alt+H 不冲突；失败静默降级）
         self._shot_hotkey = HotkeyManager(mods=MOD_ALT, vk=0x41,
                                           hotkey_id=0x1338, desc_text="Alt+A")
-        self._shot_hotkey_ok = self._shot_hotkey.start()
+        self._shot_hotkey_ok = _start_global_hotkey(self._shot_hotkey)
         self._snip = None                  # 进行中的截图选框（防重入）
         # R69A：多套伪装皮肤（记住上次所选；右键菜单/F2 轮换后持久化）
         self._boss = BossWindow(
@@ -485,16 +503,17 @@ class ChatWindow:
         from widgets.stealth_toast import StealthToast
         self._toast = StealthToast(self.root)
         self._tray = None
-        try:
-            from widgets.tray import Tray
-            _stop_early_tray()                 # 登录完毕：移除早期占位托盘，换正式托盘
-            self._tray = Tray(self.root, on_show=self.show_main,
-                              on_boss=self._toggle_boss,
-                              on_ghost=self.toggle_ghost,
-                              on_quit=self.quit_app,
-                              tip=self._camo_title())     # R46：托盘跟随伪装
-        except Exception:
-            self._tray = None
+        if CFG.tray_enabled:
+            try:
+                from widgets.tray import Tray
+                _stop_early_tray()             # 登录完毕：移除早期占位托盘，换正式托盘
+                self._tray = Tray(self.root, on_show=self.show_main,
+                                  on_boss=self._toggle_boss,
+                                  on_ghost=self.toggle_ghost,
+                                  on_quit=self.quit_app,
+                                  tip=self._camo_title()) # R46：托盘跟随伪装
+            except Exception:
+                self._tray = None
         self._apply_camo()                   # R46：伪装标题启动即生效
         self._sys_theme_after = None         # R41D 系统深浅轮询定时器
         self.root.after(120, self._poll)
@@ -1052,22 +1071,24 @@ class ChatWindow:
         except queue.Empty:
             pass
         # 热键 → 切换假工作窗
-        try:
-            while True:
-                self._hotkey.q.get_nowait()
-                self._toggle_boss()
-        except queue.Empty:
-            pass
+        if CFG.global_hotkeys_enabled:
+            try:
+                while True:
+                    self._hotkey.q.get_nowait()
+                    self._toggle_boss()
+            except queue.Empty:
+                pass
         # Alt+A → 区域截图即发
-        try:
-            while True:
-                self._shot_hotkey.q.get_nowait()
-                self._start_snip()
-        except queue.Empty:
-            pass
+        if CFG.global_hotkeys_enabled:
+            try:
+                while True:
+                    self._shot_hotkey.q.get_nowait()
+                    self._start_snip()
+            except queue.Empty:
+                pass
         # 自动发现 → 未连上时自动切到最新候选服务器（约 1.2s 一次）
         self._disco_ticks += 1
-        if self._disco_ticks % 10 == 0:
+        if CFG.discovery_enabled and self._disco is not None and self._disco_ticks % 10 == 0:
             self._disco_ticks = 0
             self._auto_target()
         # C5：未读/置顶/搜索变化后统一重绘名单与群（批量，避免逐条刷新）
@@ -3980,6 +4001,8 @@ class ChatWindow:
         """R67 新消息提示音：读 prefs['notify_sound']（off/soft/default/ding，与网页端语义一致）。"""
         if getattr(self, "_boss_active", False):
             return                                    # R69A2：伪装态一律静音
+        if not CFG.hardware_enabled:
+            return                                    # REL-01：硬件禁用不播放系统声音
         if winsound is None:
             return
         s = str(self._prefs.get("notify_sound", "default") or "default")
@@ -4803,6 +4826,9 @@ class ChatWindow:
         """
         if not os.path.exists(path):
             self.show_toast("本地语音文件不存在（可能是历史缓存已清理）", warn=True)
+            return
+        if not CFG.hardware_enabled:
+            self.show_toast("本地试用已禁用音频设备", warn=True)
             return
         if winsound is None:
             self.show_toast("当前系统无音频播放支持", warn=True)
@@ -10486,14 +10512,16 @@ class ChatWindow:
 
     def _refill_disco_box(self, box) -> None:
         box.delete(0, "end")
-        for ip, name, port in self._disco.candidates():
+        for ip, name, port in (self._disco.candidates()
+                               if CFG.discovery_enabled and self._disco else []):
             box.insert("end", f"{name}  {ip}:{port}")
 
     def _connect_to(self, box, dlg) -> None:
         sel = box.curselection()
         if not sel:
             return
-        cands = self._disco.candidates()
+        cands = (self._disco.candidates()
+                 if CFG.discovery_enabled and self._disco else [])
         if sel[0] >= len(cands):
             return
         ip, name, port = cands[sel[0]]
@@ -10504,6 +10532,8 @@ class ChatWindow:
 
     def _auto_target(self) -> None:
         """未连上时自动切到最新发现的服务器（只切一次，防抖动）"""
+        if not CFG.discovery_enabled or self._disco is None:
+            return
         if self.core.connected or self.core.state == "idle":
             return
         cands = self._disco.candidates()
@@ -10520,24 +10550,91 @@ class ChatWindow:
         self._append_sys(f"自动连接服务器 {name}（{ip}:{port}）")
 
     # ---------- 快速隐藏（热键/按钮 → 假工作窗） ----------
+    @staticmethod
+    def _visible_window(win) -> bool:
+        try:
+            return bool(win is not None and win.winfo_exists()
+                        and win.state() not in ("withdrawn", "iconic"))
+        except (tk.TclError, AttributeError):
+            return False
+
+    def _capture_collapse_snapshot(self) -> None:
+        """Capture object identity/visibility once for mini or boss nesting."""
+        if self._collapse_snapshot is not None:
+            return
+        gw = getattr(self, "_game_win", None)
+        board = getattr(gw, "_board_win", None) if gw is not None else None
+        self._collapse_snapshot = {
+            "root_visible": self._visible_window(getattr(self, "root", None)),
+            "mini_visible": self._visible_window(
+                getattr(getattr(self, "_mini", None), "win", None)),
+            "game": gw if self._visible_window(getattr(gw, "win", None)) else None,
+            "board": board if board is not None and board.active() else None,
+        }
+
+    def _restore_collapse_snapshot(self, force_root: bool = False) -> None:
+        snap = self._collapse_snapshot
+        self._collapse_snapshot = None
+        if self._mini is not None:
+            self._mini.hide()
+        if getattr(self, "_boss", None) is not None and self._boss.visible():
+            self._boss.hide()
+        if not snap:
+            self.root.deiconify()
+            self.root.lift()
+            self.root.focus_force()
+            return
+        if force_root or snap.get("root_visible", True):
+            self.root.deiconify()
+            self.root.lift()
+            self.root.focus_force()
+        else:
+            self.root.withdraw()
+        if (not force_root and self._mini is not None
+                and snap.get("mini_visible", False)):
+            self._mini.show()
+        gw = snap.get("game")
+        if (gw is not None and not getattr(gw, "_closed", False)
+                and getattr(gw, "_restore_allowed", True)):
+            try:
+                gw.show()
+            except Exception:
+                pass
+        board = snap.get("board")
+        if (board is not None and not getattr(board, "_closed", False)
+                and getattr(board, "_restore_allowed", True)):
+            try:
+                board.show(reason="collapse")
+            except Exception:
+                pass
+
     def _toggle_boss(self) -> None:
         """藏起全部摸鱼窗（主窗/迷你条/游戏窗），弹出假工作窗；再按切回。
 
         R69A2：进入伪装态时静默联动（静音/停音效/冻结弹窗与任务栏闪烁/切忙碌），
         退出时自动复原；R69A4：伪装态下新消息只累积未读，绝不打断。
         """
+        recovery_only_close = (not CFG.tray_enabled
+                               and not CFG.global_hotkeys_enabled)
         if self._boss.visible():
+            if recovery_only_close:
+                self._boss.win.protocol("WM_DELETE_WINDOW", self._boss.hide)
             self._boss.hide()
             self._boss_exit_silent()
-            self.show_main()
+            self._restore_collapse_snapshot()
             return
+        self._capture_collapse_snapshot()
+        if recovery_only_close:
+            # With tray and global hotkeys disabled, the Boss window's native
+            # close button is the only visible recovery affordance.
+            self._boss.win.protocol("WM_DELETE_WINDOW", self._toggle_boss)
         self._boss_enter_silent()
         self.root.withdraw()
         if self._mini is not None:
             self._mini.hide()
         gw = getattr(self, "_game_win", None)
         if gw is not None:
-            gw.hide()
+            gw.hide(reason="collapse")
         self._boss.show()
 
     # ---------- R69A2/A4：伪装态静默联动 ----------
@@ -10554,8 +10651,12 @@ class ChatWindow:
                 self.core.send_status("busy")
             except Exception:
                 pass
-        self._append_sys("🕶 已进入伪装态：静音、停音效、冻结弹窗与任务栏闪烁"
-                         "（新消息只记未读，再按热键恢复）")
+        if not CFG.tray_enabled and not CFG.global_hotkeys_enabled:
+            self._append_sys("🕶 已进入伪装态：静音、停音效、冻结弹窗与任务栏闪烁"
+                             "（关闭伪装工作窗即可恢复原界面）")
+        else:
+            self._append_sys("🕶 已进入伪装态：静音、停音效、冻结弹窗与任务栏闪烁"
+                             "（新消息只记未读，再按热键恢复）")
 
     def _boss_exit_silent(self) -> None:
         """退出伪装态：恢复进入前的在线状态。"""
@@ -10971,18 +11072,28 @@ class ChatWindow:
 
     # ---------- 迷你条 / 隐藏 ----------
     def hide_to_mini(self) -> None:
+        self._capture_collapse_snapshot()
         if self._mini is None:
             self._mini = MiniBar(self, pal=self._dp)
         first = not getattr(self, "_mini_hint_shown", False)
         self._mini_hint_shown = True
         self.root.withdraw()
         self._mini.show()
+        gw = getattr(self, "_game_win", None)
+        if gw is not None:
+            gw.hide(reason="collapse")
         if first:
             self._toast.show("已最小化到右下角托盘/迷你条。\n"
                              "点击图标可恢复窗口，右键菜单可退出程序。",
                              dur=4.5)
 
     def show_main(self) -> None:
+        if self._collapse_snapshot is not None:
+            # A user selecting “显示主窗” from the mini bar explicitly wants
+            # the main window back, even when the captured state was mini-only
+            # (root withdrawn). Boss-mode exit still uses the exact snapshot.
+            self._restore_collapse_snapshot(force_root=True)
+            return
         self.root.deiconify()
         self.root.lift()
         self.root.focus_force()
@@ -11010,6 +11121,11 @@ class ChatWindow:
             self._boss.close()
         self._hotkey.stop()
         self._shot_hotkey.stop()
+        if self._disco is not None:
+            try:
+                self._disco.stop.set()
+            except Exception:
+                pass
         if getattr(self, "_tray", None) is not None:
             self._tray.stop()              # R31D：退出前移除托盘图标
         self._persist_drafts()             # R12：退出前把内存草稿写盘
@@ -11238,6 +11354,25 @@ _GAME_GRAD = {
 
 _GAME_GRAD_DEF = ("#4a4f5a", "#333842")     # 未知游戏兜底渐变
 
+# CC-03 desktop completion map: these entries remain registered/server
+# capable, but their desktop action path is known to be incomplete.  The
+# lobby explains the boundary and blocks accidental creation/join; the other
+# games remain available with an explicit "unverified" notice.
+_DESKTOP_UNSUPPORTED_GAMES = {
+    "azul", "bolan", "chengzhu", "gemcity", "gongfang", "kaituo",
+    "lingdi", "nimmt", "siji", "tielu", "yahtzee", "go", "rummikub", "coc",
+}
+
+
+def _desktop_game_status(name: str) -> tuple[str, str]:
+    if name in _DESKTOP_UNSUPPORTED_GAMES:
+        return "unsupported", "桌面端当前不支持主要操作"
+    if name in ("gomoku", "connect4"):
+        return "flagship", "Windows 旗舰桌面流程"
+    if name in ("balatro", "balatro_solo"):
+        return "unverified", "桌面端未验证（私有信息显示有已知缺陷）"
+    return "unverified", "桌面端流程未验证"
+
 
 def _nick_of(core, uid: int) -> str:
     u = core.roster.get(uid)
@@ -11421,6 +11556,7 @@ class _GameCard(_CardBase):
     def __init__(self, parent, name, meta, on_click, on_double,
                  pal: dict | None = None):
         self.meta = meta
+        self._desktop_status, self._desktop_note = _desktop_game_status(name)
         self._grad = _GAME_GRAD.get(name, _GAME_GRAD_DEF)
         self._pal = pal or _DEFAULT_PAL
         super().__init__(parent, name, on_click=on_click, on_double=on_double,
@@ -11436,7 +11572,9 @@ class _GameCard(_CardBase):
         self.cover.bind("<Configure>", lambda e: self._paint_cover())
 
         # 封面底部居中的「创建」药丸按钮：白色底 + 深色字，干净不抢眼
-        self.create_btn = tk.Button(self.cover, text="＋ 创建", relief="flat",
+        self.create_btn = tk.Button(self.cover,
+                                    text=("桌面端暂不支持" if self._desktop_status == "unsupported"
+                                          else "＋ 创建"), relief="flat",
                                     bg="#ffffff", fg="#1f2a33",
                                     activebackground="#eef2f7", activeforeground="#1f2a33",
                                     font=(FONT_FAMILY, FONT_SIZE - 1, "bold"),
@@ -11444,6 +11582,8 @@ class _GameCard(_CardBase):
                                     highlightthickness=0)
         self.create_btn._no_card_bind = True
         self.create_btn.configure(command=lambda: on_double(name))
+        if self._desktop_status == "unsupported":
+            self.create_btn.configure(state="disabled", disabledforeground="#8b8b8b")
         self.create_btn.place(relx=0.5, rely=1.0, y=-6, anchor="s")
 
         # 标题 + 副标题（名称 / 人数 · 一句话玩法）
@@ -11459,7 +11599,7 @@ class _GameCard(_CardBase):
         self.sub.pack(fill="x", padx=8, pady=(1, 8))
         self.configure(height=self._CARD_H)
         self.pack_propagate(False)
-        self._set_sub_text(f"{need} · {meta.get('desc', '')}")
+        self._set_sub_text(f"{need} · {meta.get('desc', '')} · {self._desktop_note}")
         self.bind("<Configure>", lambda e: self._fit_text())
 
     def _fit_text(self):
@@ -11606,6 +11746,8 @@ class GameWindow:
         self.core = app.core
         self._pal = pal or _DEFAULT_PAL
         self._closed = False
+        self._hide_reason = None
+        self._restore_allowed = True
         self._chat_open = False
         self._last_list = None
         self._last_room = None
@@ -11894,19 +12036,20 @@ class GameWindow:
         act.pack(fill="x", pady=(2, 0))
         tool = tk.Frame(act, bg=self._pal["win"])
         tool.pack(fill="x")
-        tk.Button(tool, text="📖 游戏规则", command=self._show_rules_popup,
-                  font=f, relief="flat", fg=self._pal["warn_fg"]).pack(side="left")
-        tk.Button(tool, text="🎮 进入棋盘", command=self._focus_board,
-                  font=f, relief="flat", padx=8, cursor="hand2",
+        tk.Button(tool, text="规则", command=self._show_rules_popup,
+                  font=f, relief="flat", fg=self._pal["warn_fg"]).pack(
+                      side="left", fill="x", expand=True, padx=2)
+        tk.Button(tool, text="棋盘", command=self._focus_board,
+                  font=f, relief="flat", padx=2, cursor="hand2",
                   bg=self._pal.get("accent", "#4f6ef2"),
                   fg=self._pal.get("accent_fg", "#ffffff"),
                   activebackground=self._pal.get("accent_hover", "#3d5be0"))\
-            .pack(side="left", padx=(8, 0))
-        tk.Button(tool, text="🖥 弹出专注窗", command=self._spawn_board_win,
-                  font=f, relief="flat", padx=6, cursor="hand2",
+            .pack(side="left", fill="x", expand=True, padx=2)
+        tk.Button(tool, text="专注窗", command=self._spawn_board_win,
+                  font=f, relief="flat", padx=0, cursor="hand2",
                   fg=self._pal["fg"], bg=self._pal.get("soft_bg", "#eef0f5"),
                   activebackground=self._pal.get("accent_hover", "#3d5be0"))\
-            .pack(side="left", padx=(8, 0))
+            .pack(side="left", fill="x", expand=True, padx=2)
         self.act_btns = tk.Frame(act, bg=self._pal["win"])
         self.act_btns.pack(fill="x")
         self.act_hint = tk.Label(act, text="", fg=self._pal["sub"], font=f, anchor="w",
@@ -11955,7 +12098,7 @@ class GameWindow:
             self._render_state()
             self._events_shown = 0  # 文本区重建后按本轮 core 记录重画，不能按旧长度跳过。
             if left_room:
-                self.hide()
+                self.hide(reason="state")
         if core.game_private != self._last_private:
             self._last_private = core.game_private
             self._render_private()
@@ -12105,6 +12248,10 @@ class GameWindow:
         self._render_state()
 
     def _on_create_game(self, name: str) -> None:
+        status, note = _desktop_game_status(name)
+        if status == "unsupported":
+            self._append_state(f"{name}：{note}，保留服务器/Web入口；本端不创建房间", "warn")
+            return
         self._sel_game = name
         self._highlight_game()
         self._render_rules()
@@ -12112,8 +12259,11 @@ class GameWindow:
 
     def _render_rules(self) -> None:
         m = self.core.game_meta.get(self._sel_game or "")
+        status, note = _desktop_game_status(self._sel_game or "")
+        suffix = f"\n\n桌面入口：{note}" if status != "flagship" else ""
         self.rules_label.config(
-            text=m.get("rules", "") if m else "点选桌游卡片查看规则；双击卡片直接创建房间")
+            text=((m.get("rules", "") + suffix) if m
+                  else "点选桌游卡片查看规则；双击卡片直接创建房间"))
 
     def _show_rules_popup(self) -> None:
         """游戏内规则弹窗：入房取当前房间游戏，未入房取选中桌游；规则来自 GAME_META"""
@@ -12152,15 +12302,26 @@ class GameWindow:
         r = self._room_by_id(rid)
         if not r:
             return
+        status, note = _desktop_game_status(r.get("game", ""))
+        if status == "unsupported":
+            self._append_state(f"{r.get('game', '')}：{note}，本端不加入/观战", "warn")
+            return
         if r["status"] != "playing" and not self._room_full(r):
             self.core.game_join(rid)
         else:
             self.core.game_spectate(rid)
 
+    def _spectate_room(self, rid: str) -> None:
+        r = self._room_by_id(rid)
+        if r is not None and _desktop_game_status(r.get("game", ""))[0] == "unsupported":
+            self._append_state(f"{r.get('game', '')}：桌面端当前不支持主要操作，本端不观战", "warn")
+            return
+        self.core.game_spectate(rid)
+
     def _on_room_menu(self, ev, rid: str) -> None:
         menu = tk.Menu(self.win, tearoff=0)
         menu.add_command(label="加入", command=lambda: self._on_double_room(rid))
-        menu.add_command(label="观战", command=lambda: self.core.game_spectate(rid))
+        menu.add_command(label="观战", command=lambda: self._spectate_room(rid))
         menu.add_command(label="刷新", command=lambda: self.core.game_list())
         menu.tk_popup(ev.x_root, ev.y_root)
         menu.grab_release()
@@ -12227,24 +12388,83 @@ class GameWindow:
         if getattr(self, "_board_win", None) and self._board_win.active():
             self._board_win.redraw(force=force)
             return
+        self._cv_ui["_after_owner"] = self.win
         self._render_to(self.game_cv, self._cv_ui)
+
+    def _cancel_repaint(self, ui) -> None:
+        job = ui.pop("_after_id", None)
+        if job is None:
+            return
+        owner = ui.get("_after_owner") or self.win
+        try:
+            owner.after_cancel(job)
+        except (tk.TclError, AttributeError):
+            pass
+
+    def _schedule_repaint(self, cv, ui, delay=40) -> None:
+        """Queue one finite flagship animation frame on the owning window."""
+        if ui.get("_after_id") is not None:
+            return
+        owner = ui.get("_after_owner") or self.win
+        context = ui.get("_room_context")
+        try:
+            if owner.state() in ("withdrawn", "iconic") or not cv.winfo_exists():
+                return
+        except (tk.TclError, AttributeError):
+            return
+
+        def _tick():
+            ui["_after_id"] = None
+            try:
+                if (self._closed or owner.state() in ("withdrawn", "iconic")
+                        or not cv.winfo_exists()
+                        or ui.get("_room_context") != context):
+                    return
+            except (tk.TclError, AttributeError):
+                return
+            self._render_to(cv, ui)
+
+        try:
+            ui["_after_id"] = owner.after(max(1, int(delay)), _tick)
+        except (tk.TclError, AttributeError):
+            ui.pop("_after_id", None)
 
     def _render_to(self, cv, ui) -> None:
         """通用棋盘渲染核心：把当前对局快照画到指定 canvas
         （大厅内嵌 game_cv 与独立专注窗 BoardFocusWindow 共用）。"""
         room = self.core.game_room
         st = self.core.game_state
+        context = ((room or {}).get("room_id"), (room or {}).get("round"))
+        if ui.get("_room_context") != context:
+            self._cancel_repaint(ui)
+        ui["_room_context"] = context
+        ui["room"] = room
+        ui["state"] = st
+        ui["connected"] = bool(getattr(self.core, "connected", False))
+        ui["_cancel_repaint"] = lambda target_ui=ui: self._cancel_repaint(target_ui)
+        ui["_schedule_repaint"] = (
+            lambda delay=40, target_cv=cv, target_ui=ui:
+            self._schedule_repaint(target_cv, target_ui, delay))
         if not room or not st or room.get("status") not in ("playing", "ended"):
+            self._cancel_repaint(ui)
+            ui["can_move"] = False
+            ui["game"] = None
             cv.delete("all")
             return
         game = room.get("game")
         ui["game"] = game
-        ui["submit"] = self._do_action
-        ui["repaint"] = lambda: self._render_to(cv, ui)
+        ui["can_move"] = (
+            client_gameui.flagship_can_move(room, st, self.core.uid,
+                                             getattr(self.core, "connected", False))
+            if game in ("gomoku", "connect4") else False
+        )
+        ui["submit"] = lambda action, target_ui=ui: self._do_action(action, target_ui)
+        ui["repaint"] = lambda target_cv=cv, target_ui=ui: self._render_to(
+            target_cv, target_ui)
         ui["nick"] = self._nick
         ui["me"] = self.core.uid
         client_gameui.render(cv, game, st, self.core.uid, self._nick,
-                             self._do_action, ui["repaint"], ui,
+                             ui["submit"], ui["repaint"], ui,
                              self.core.game_private,
                              cv.winfo_width(), cv.winfo_height())
 
@@ -12692,6 +12912,10 @@ class GameWindow:
         self.act_hint.config(text="")
         if not game or (self.core.game_room or {}).get("status") != "playing":
             return
+        desktop_status, desktop_note = _desktop_game_status(game)
+        if desktop_status == "unsupported":
+            self.act_hint.config(text=f"{desktop_note}；本端只读")
+            return
         acc = self._pal.get("accent", "#4f6ef2")
         acc_hover = self._pal.get("accent_hover", "#3d5be0")
         acc_fg = self._pal.get("accent_fg", "#ffffff")
@@ -12713,13 +12937,20 @@ class GameWindow:
                 b.bind("<Enter>", lambda e, w=b: w.config(
                     bg=client_gameui._shade(soft, -0.10)))
                 b.bind("<Leave>", lambda e, w=b: w.config(bg=soft))
+            # Keyboard users can focus the action row and press Enter; this
+            # follows the same _set_pending/_do_action gate as mouse clicks.
+            b.bind("<Return>", lambda _e, w=b: (w.invoke(), "break")[1])
+            b.bind("<KP_Enter>", lambda _e, w=b: (w.invoke(), "break")[1])
             b.pack(side="left", padx=(0, 2))
 
     def _set_pending(self, spec: dict, hint: str) -> None:
         """按钮动作：fixed=直接发；否则按 kind 弹友好参数窗（不再用底部输入框）。"""
+        source_ui = (self._board_win._cv_ui
+                     if getattr(self, "_board_win", None)
+                     and self._board_win.active() else self._cv_ui)
         if "fixed" in spec:
             self.act_hint.config(text="")
-            self._do_action(spec["fixed"])
+            self._do_action(spec["fixed"], source_ui)
             return
         self._ask_params(spec, hint)
 
@@ -12745,7 +12976,10 @@ class GameWindow:
             action = dict(action)
             action["op"] = op
         self.act_hint.config(text="")
-        self._do_action(action)
+        source_ui = (self._board_win._cv_ui
+                     if getattr(self, "_board_win", None)
+                     and self._board_win.active() else self._cv_ui)
+        self._do_action(action, source_ui)
 
     def _cur_game(self) -> str:
         return (self.core.game_room or {}).get("game") or self._sel_game or ""
@@ -12808,9 +13042,22 @@ class GameWindow:
             return None
         return None
 
-    def _do_action(self, action: dict) -> None:
+    def _do_action(self, action: dict, source_ui=None) -> None:
         room = self.core.game_room or {}
+        st = self.core.game_state or {}
         rid = room.get("room_id")
+        game = room.get("game")
+        if _desktop_game_status(game or "")[0] == "unsupported":
+            self._append_state("桌面端当前不支持主要操作，本端只读", "warn")
+            return
+        if game in ("gomoku", "connect4"):
+            context = (room.get("room_id"), room.get("round"))
+            if source_ui is not None and source_ui.get("_room_context") != context:
+                return
+            if not client_gameui.flagship_can_move(
+                    room, st, self.core.uid,
+                    getattr(self.core, "connected", False)):
+                return
         if rid and room.get("status") == "playing":
             self.core.game_action(rid, action)
 
@@ -12830,7 +13077,7 @@ class GameWindow:
         if op == "join":
             self._on_double_room(rid)
         else:
-            self.core.game_spectate(rid)
+            self._spectate_room(rid)
 
     def _on_leave(self) -> None:
         rid = (self.core.game_room or {}).get("room_id")
@@ -12881,18 +13128,36 @@ class GameWindow:
         return u["nick"] if u else f"玩家{uid}"
 
     def show(self) -> None:
+        self._restore_allowed = True
+        self._hide_reason = None
         self.win.deiconify()
         self.win.lift()
         self.core.game_list()
+        try:
+            self._render_state()
+        except Exception:
+            pass
 
-    def hide(self) -> None:
+    def hide(self, reason="manual") -> None:
+        if reason != "collapse":
+            self._restore_allowed = False
+        self._hide_reason = reason
+        try:
+            self._cancel_repaint(self._cv_ui)
+        except Exception:
+            pass
         self.win.withdraw()
         bwin = getattr(self, "_board_win", None)
         if bwin is not None:
-            bwin.hide()
+            bwin.hide(reason=reason)
 
     def close(self) -> None:
         self._closed = True
+        self._restore_allowed = False
+        try:
+            self._cancel_repaint(self._cv_ui)
+        except Exception:
+            pass
         bwin = getattr(self, "_board_win", None)
         if bwin is not None:
             try:
@@ -12926,6 +13191,7 @@ class BoardFocusWindow:
         self.core = host.core
         self._pal = pal or host._pal
         self._closed = False
+        self._restore_allowed = True
         self._cv_ui = {"sel": {}}
         self._build()
 
@@ -12973,6 +13239,7 @@ class BoardFocusWindow:
     # ---------- 渲染（复用大厅渲染核心，独立画布 + 独立动效状态） ----------
     def redraw(self, force: bool = False) -> None:
         try:
+            self._cv_ui["_after_owner"] = self.win
             self.host._render_to(self.game_cv, self._cv_ui)
         except Exception:
             pass
@@ -13022,12 +13289,15 @@ class BoardFocusWindow:
         if self._closed:
             return False
         try:
-            return bool(self.win.winfo_exists()) and self.win.state() == "normal"
+            return bool(self.win.winfo_exists()) and self.win.state() not in (
+                "withdrawn", "iconic")
         except tk.TclError:
             return False
 
-    def show(self) -> None:
+    def show(self, reason="manual") -> None:
         try:
+            if reason != "collapse":
+                self._restore_allowed = True
             self.win.deiconify()
             self.win.lift()
             self.win.attributes("-topmost", True)
@@ -13036,14 +13306,31 @@ class BoardFocusWindow:
         except tk.TclError:
             pass
 
-    def hide(self) -> None:
+    def hide(self, reason="manual") -> None:
+        if reason != "collapse":
+            self._restore_allowed = False
+        try:
+            self._cv_ui.get("_cancel_repaint", lambda: None)()
+        except Exception:
+            pass
         try:
             self.win.withdraw()
         except tk.TclError:
             pass
+        try:
+            # The embedded canvas may not have been painted while focus owned
+            # the latest state; reveal the current snapshot when focus closes.
+            self.host._render_canvas(force=True)
+        except Exception:
+            pass
 
     def destroy(self) -> None:
         self._closed = True
+        self._restore_allowed = False
+        try:
+            self._cv_ui.get("_cancel_repaint", lambda: None)()
+        except Exception:
+            pass
         try:
             self.win.destroy()
         except tk.TclError:
@@ -13327,6 +13614,10 @@ def _start_early_tray() -> None:
     会顺带驱动本 root 的 after——因此**绝不另起线程去 update()，避免与弹窗
     抢 Tcl 事件循环导致弹窗不弹/进程闪退**。"""
     global _early_tray, _early_root
+    if not CFG.tray_enabled:
+        _early_tray = None
+        _early_root = None
+        return
     try:
         from widgets.tray import Tray
         root = tk.Tk()
@@ -13382,7 +13673,8 @@ def main() -> int:
     if not _acquire_single_instance():       # 已有实例且已唤醒其可见窗 → 退出
         bootlog("client single-instance exit")
         return 0
-    _start_early_tray()                      # 进程一启动就放托盘图标，随时可见"在跑"
+    if CFG.tray_enabled:
+        _start_early_tray()                  # 进程一启动就放托盘图标，随时可见"在跑"
     out = getattr(sys, "stdout", None)
     if out is not None:
         try:

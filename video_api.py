@@ -37,6 +37,8 @@ import threading
 import time
 import zlib
 
+from config import CFG
+
 VID_W, VID_H = 320, 240
 TARGET_FPS = 10
 PNG_LEVEL = 6                 # 实测 ~31KB/帧 @3.4ms；L1 体积翻倍不值
@@ -345,6 +347,11 @@ if os.name == "nt":
 def available() -> bool:
     """本机是否有摄像头（真实 MF 枚举一次并缓存；非 Windows → False）。"""
     global _AVAILABLE
+    # REL-01 hardware=0 forbids Media Foundation startup/enumeration.  Keep
+    # the normal unavailable result so UI callers degrade without touching a
+    # camera or device registry.
+    if not getattr(CFG, "hardware_enabled", True):
+        return False
     if _AVAILABLE is None:
         if os.name != "nt":
             _AVAILABLE = False

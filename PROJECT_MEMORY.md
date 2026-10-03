@@ -4,7 +4,8 @@
 
 - 用途：Windows 局域网聊天、文件/媒体、网页端与桌游；Tkinter 桌面客户端。
 - 栈与入口：Python 3.14.5，`dev.ps1` / `run.py`；Hub 加密 TCP，网页 HTTP(S)/SSE。
-- 最近源码核对：2026-10-03；有限RESOURCE候选已按新Pro决定实现/阶段审查，版本及最终验收见RESOURCE Review；完整RETIRE其它资源/UI及R1仍未关闭。
+- 最近源码核对：2026-10-03；有限RESOURCE数值资格补正、Windows旗舰与本地试用配置已整合，
+  版本及实际验收见本轮Review/指挥中心；完整RETIRE其它资源/UI及R1仍未关闭。
   Web legacy metadata不含owner/target，完成附件GET沿有效认证+已知fid；新增owner/op字段是归属/结果证据，不是私聊/群ACL。
   当前任务、版本和测试结果统一见 [AI_COMMAND_CENTER](docs/AI_COMMAND_CENTER.md)。
 - 当前机器路径 `D:\Project\321_FISH`，迁移后以任务工作区为准。
@@ -25,6 +26,10 @@
 - `games_pkg` 注册 47 个当前游戏类，`RoomManager` 管房间，`BaseGame` 的
   snapshot/private/act/tick/ended 管公开、私有与规则；桌面 painter/点击/按钮
   分别在 `client_gameui`、`client._GAME_ACTIONS`，注册不等于 UI 完整可玩。
+- 两旗舰桌面输入以最新Core的connected/player/turn/winner和room-round上下文复查，
+  五子棋交点、四子棋列输入与hover共用几何；胜线以最终board/last_move计算。GameWindow/BoardFocus
+  各自持有有限after；mini/boss保存窗口对象与可见性，手动隐藏/离房可取消恢复资格。
+  14项已确认无完整桌面操作的游戏被标识并阻止误入；精确分类与证据见[游戏完成度地图](docs/游戏完成度地图.md)。
 - 公共房间只允许CREATED开始；leave/最后UID端断线承接既有player_left，观战退出不触发玩家规则。
   finish/reset与action/tick公开snapshot以room/gs/round身份校验，ENDED保留公开结果但不再分发private，
   复位保留房间成员供房主再开。人数不足且无native结果时公共层中止，不新增winner/奖励。
@@ -68,8 +73,8 @@
   当前仓库已公开；管理员密码只来自部署配置，不复制实际口令值。
 - 门禁：`.\dev.ps1`；专项 `.\dev.ps1 test -k 关键词`；可加
   `-o faulthandler_timeout=60`。默认合成媒体，真机/截图需显式选项。
-  按 COLLABORATION 的日常/领域/最终全量分层；入口的默认整套 pytest 与
-  历史逐文件进程验证须区分，不把后续固定门禁入口当成已有能力。
+  按 COLLABORATION 的日常/领域/最终全量分层；VB-01已提供默认/test-all隔离逐文件候选入口，
+  精确验收见指挥中心及VB Review。显式test仍为旧单进程调试，未启用源码/profile/网络/desktop隔离。
 - 一对一文件权限取认证 `Session.uid` 与 `TransferMeta.sender_uid/receiver_uid`；
   `file_id` 与请求头身份字段不能授权。REJECT/VERIFY 只允许接收者，CANCEL 允许双方，
   身份校验与删除记录在同一锁内完成，拒绝请求不改状态/不通知合法双方；
@@ -79,9 +84,20 @@
   本端退出清SSE/重连和登录/游戏视图，旧ES对象与旧回调不能恢复已退出认证。
 - `run.py` 用独立项目临时目录和 pytest 子进程，父进程清理/透传退出码；
   conftest 通过 sessionfinish 保留真实退出状态，再避开 Tcl 关闭阶段。
+- `test_gate.py/test_sandbox.py`将源码快照、每文件副本/profile/日志/真实exit、候选fingerprint、
+  private desktop和loopback映射证据绑定；同候选resume保留失败，进程退出不确定/路径reparse拒绝，
+  清理失败停止后续文件。它是受控测试防护，不是对恶意代码的OS安全沙箱，不能证明产品默认绑定loopback。
+- 门禁拒绝非原visual/hardware opt-in的意外skip；GUI文件使用sys捕获，parent仍保存原生stdout/stderr，
+  非GUI保留fd捕获。source manifest包括未提交Python输入、排除docs/runtime，driver另有独立hash。
+- `local_trial.py`复用批准source manifest构建独立副本并核对双EXE，使用新profile/private desktop验证
+  实际client.exe登录及清理；`trial_start.ps1`供用户手动同机双客户端试用。进程级
+  MOYU_BIND_HOST/DISCOVERY/TRAY/GLOBAL_HOTKEYS/HARDWARE可禁用相关行为，默认仍兼容原应用。
+  试用脚本设loopback/禁设备和发现；source指纹不是全系统IO审计，EXE启动不等于真机/LAN/GUI全对局验收。
 
 ## Decisions
 
+- 2026-10-03 — 用户将本轮本地试用目标内的任务冻结/技术决策/独立验收授权主控，Pro不再默认审批；
+  真实数据、远端写入/发布、资金/系统级权限不继承 — [自治决定](docs/decisions/LOCAL-AUTONOMY-20261003.md)。
 - 2026-09-30 — 统一运行环境与依赖清单，保留系统旧 Python — 避免 PATH 冲突 —
   证据：`.python-version`, `requirements*.txt`, `dev.ps1`, `docs/开发环境.md`。
 - 2026-09-30 — 本地可编辑工作表与服务器聊天记录分开；Enter 保存、Ctrl+Enter
@@ -117,6 +133,9 @@
 - 当前管理员工作树使用部署环境变量、未配置 fail closed、保留管理员昵称；
   Web token 绑定认证会话并逐会话撤销。行为/未提交版本边界见 CC-01A Task/Review。
 - 发布 EXE、全部游戏 UI 可达性、完整可选扩展、真实音频长期稳定性仍需后续专门证据。
+- REL-01以白名单源码副本实际构建双EXE，private desktop下两个合成client.exe同时登录/存活，
+  harness停止owned进程树并确认退出；这不是EXE界面操作、物理LAN或真实数据验收。
+  版本/边界见[REL Review](docs/review-packages/REL-01-r1.md)，源代码单测不替代实际产物证据。
 
 ## Risks and follow-ups
 

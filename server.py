@@ -3080,9 +3080,20 @@ class Hub:
                 raw_body = stream.read()
         except (OSError, ValueError, UnicodeDecodeError, TypeError):
             return None, None
+        timestamp = meta.get("ts")
+        try:
+            valid_timestamp = (not isinstance(timestamp, bool)
+                               and isinstance(timestamp, (int, float))
+                               and math.isfinite(float(timestamp)))
+        except OverflowError:
+            # JSON integers are unbounded; an unreadable timestamp makes the
+            # manifest ineligible, rather than aborting CHAT or HTTP readers.
+            valid_timestamp = False
+        if not valid_timestamp:
+            return None, None
         if set(meta).intersection(_RESOURCE_NEW_FIELDS):
             if (set(meta) != _RESOURCE_MANIFEST_FIELDS
-                    or isinstance(meta.get("resource_manifest_version"), bool)
+                    or type(meta.get("resource_manifest_version")) is not int
                     or meta.get("resource_manifest_version") !=
                     self._resource_manifest_version
                     or not isinstance(meta.get("fid"), str)
@@ -3092,9 +3103,6 @@ class Hub:
                     or isinstance(meta.get("size"), bool)
                     or not isinstance(meta.get("size"), int)
                     or meta.get("size") < 0
-                    or isinstance(meta.get("ts"), bool)
-                    or not isinstance(meta.get("ts"), (int, float))
-                    or not math.isfinite(float(meta.get("ts")))
                     or isinstance(meta.get("resource_owner_uid"), bool)
                     or not isinstance(meta.get("resource_owner_uid"), int)
                     or meta.get("resource_owner_uid") <= 0
@@ -3119,9 +3127,6 @@ class Hub:
                     or isinstance(meta.get("size"), bool)
                     or not isinstance(meta.get("size"), int)
                     or meta.get("size") < 0
-                    or isinstance(meta.get("ts"), bool)
-                    or not isinstance(meta.get("ts"), (int, float))
-                    or not math.isfinite(float(meta.get("ts")))
                     or meta.get("size") != len(raw_body)):
                 return None, None
         return meta, raw_body
@@ -9472,12 +9477,23 @@ def _handle_tcp(hub: Hub, conn: socket.socket, addr) -> None:
             pass
 
 
-def _lan_ip() -> str:
+def _lan_ip(bind_host: str | None = None) -> str:
     """探测本机局域网出口 IP（UDP connect 仅查路由表不发包）。
 
     用于启动提示：0.0.0.0 只是监听通配符，浏览器访问不了，
     必须打印 127.0.0.1 / 局域网 IP 才能直接点。完全断网回落 127.0.0.1。
+
+    REL-01：显式 loopback（以及其它显式 bind 地址）直接回显，不做
+    8.8.8.8 路由探测。只有历史默认的 wildcard bind 需要推导一个可访问
+    的提示地址。
     """
+    host = str(bind_host or "0.0.0.0").strip()
+    try:
+        parsed = ipaddress.ip_address(host)
+    except ValueError:
+        parsed = None
+    if parsed is not None and (parsed.is_loopback or not parsed.is_unspecified):
+        return host
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(("8.8.8.8", 80))
@@ -9495,7 +9511,8 @@ def serve(hub: Hub, port: int | None = None, stop: threading.Event | None = None
     port = port if port is not None else hub.cfg.tcp_port
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    srv.bind(("0.0.0.0", port))
+    bind_host = getattr(hub.cfg, "bind_host", "0.0.0.0")
+    srv.bind((bind_host, port))
     srv.listen(128)
     srv.settimeout(0.5)
     hub.audit.log(type="server_start", port=port)
@@ -9513,18 +9530,19 @@ def serve(hub: Hub, port: int | None = None, stop: threading.Event | None = None
     game_ticker = threading.Thread(target=_game_tick_loop, args=(hub, stop), daemon=True)
     game_ticker.start()
 
-    try:
-        import discovery
-        from config import APP_NAME
-        _bcast = discovery.DiscoveryBroadcaster(hub.cfg, name=APP_NAME, stop=stop)
-        _bcast.start()
-    except Exception:
-        pass          # UDP 广播失败不影响 TCP 主服务
+    if getattr(hub.cfg, "discovery_enabled", True):
+        try:
+            import discovery
+            from config import APP_NAME
+            _bcast = discovery.DiscoveryBroadcaster(hub.cfg, name=APP_NAME, stop=stop)
+            _bcast.start()
+        except Exception:
+            pass          # UDP 广播失败不影响 TCP 主服务
 
     scheme = "https" if web_https else "http"
     tip = "（自签证书，浏览器首次访问点「继续前往」即可）" if web_https else ""
-    lan = _lan_ip()
-    print(f"[服务器] TCP 监听 0.0.0.0:{port}，网页端 {scheme}://{lan}:{hub.cfg.web_port}/{tip}")
+    lan = _lan_ip(bind_host)
+    print(f"[服务器] TCP 监听 {bind_host}:{port}，网页端 {scheme}://{lan}:{hub.cfg.web_port}/{tip}")
     print(f"        本机访问可用 {scheme}://127.0.0.1:{hub.cfg.web_port}/，"
           f"局域网其他机器用 {scheme}://{lan}:{hub.cfg.web_port}/")
     if not hub._admin_pwd_hash:
@@ -9629,19 +9647,20 @@ def main() -> int:
     def _server_quit():
         _tray_stop.set()
         stop_set()
-    try:
-        from widgets.server_tray import start_server_tray, _console_hwnd, _set_console_visible
-        scheme = "https" if os.environ.get("MOYU_WEB_HTTPS", "1") != "0" else "http"
-        home = f"{scheme}://127.0.0.1:{hub.cfg.web_port}/"
-        tray = start_server_tray(_server_quit, home_url=home)
-        if tray is not None:
-            # 常驻后台：默认隐藏控制台，任务栏不再被服务器独占，杜绝误点关闭。
-            # 服务器仍在后台运行；需查看/退出请用右下角托盘（左键图标或右键菜单）。
-            print("[服务器] 已常驻右下角托盘（控制台自动隐藏，以免误关）"
-                  "；如需管理可从托盘菜单操作。")
-            _set_console_visible(False)
-    except Exception:
-        tray = None
+    if CFG.tray_enabled:
+        try:
+            from widgets.server_tray import start_server_tray, _console_hwnd, _set_console_visible
+            scheme = "https" if os.environ.get("MOYU_WEB_HTTPS", "1") != "0" else "http"
+            home = f"{scheme}://127.0.0.1:{hub.cfg.web_port}/"
+            tray = start_server_tray(_server_quit, home_url=home)
+            if tray is not None:
+                # 常驻后台：默认隐藏控制台，任务栏不再被服务器独占，杜绝误点关闭。
+                # 服务器仍在后台运行；需查看/退出请用右下角托盘（左键图标或右键菜单）。
+                print("[服务器] 已常驻右下角托盘（控制台自动隐藏，以免误关）"
+                      "；如需管理可从托盘菜单操作。")
+                _set_console_visible(False)
+        except Exception:
+            tray = None
 
     try:
         serve(hub, stop=stop)

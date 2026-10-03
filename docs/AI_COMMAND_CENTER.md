@@ -10,7 +10,7 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 [PR #4](https://github.com/mixmixla/321_FISH/pull/4)已合并；CC-02A已交付[Draft PR #5](https://github.com/mixmixla/321_FISH/pull/5)，RETIRE和CC-03入口筛查尚未闭合。
 已完成的`BATCH-R1`是有限实现批次，不能据此宣布整个Pro R1里程碑通过。
 
-当前已提交交付HEAD仍`0bf1d2684d0b975603fb3ce7505459a9f282fc3a`，分支codex/cc02a-consistency；CORE/STORE已追加Draft PR #5。用户本次按新审核意见批准的[CC-02C-RESOURCE v1.1](task-packages/CC-02C-RESOURCE.md)已独立ACCEPTED，119文件1550/0/2、source31102947728…；成果只在本地未提交，Goal complete，不等完整RETIRE/R1或Git交付。下列早期HEAD/计数仅历史。
+当前RESOURCE代码2087af8/资料4d2a49b已正常push追加[Draft PR #5](https://github.com/mixmixla/321_FISH/pull/5)，分支codex/cc02a-consistency；两层actualtree独立无must，PR标题/正文/attach更新成功，仍open/draft/未merge。CC-02C-RESOURCE v1.1独立ACCEPTED/1191550/0/2/source31102947728…保持。当前PR-DELIVERY-05 Goalactive，最后flow实读HEAD终核后结束，不等完整RETIRE/R1/发布；下列早期HEAD/计数仅历史。
 
 已合并基线：远端main `cc7e2951695041face3ea2451ef98a02d469d15b`（PR #4），与原本地基线 `d07b29577a48367f887cc0c2dbf1671ed13bb326`文件树相同。
 已显式fetch main cc7e295，新分支codex/cc02a-consistency的代码e065591/资料f48a833已推送并创建Draft PR #5。
@@ -55,8 +55,8 @@ CORE仅改server.py/最少量server_store.py/tests，Task v1.1已独立终审ACC
 | 6D · PR-DELIVERY-03 | CORE/设计6code+13docs实际树审查与既有PR追加交付、下一提示词 | ACCEPTED；已push并更新Draft PR #5 | 主控唯一Git/资料 / pr03_tree_review独立只读 | code e91c1be/docs13ad592；307raw/clean/blob、1392原日志、132链接与边界独立通过；[Review](review-packages/PR-DELIVERY-03-r1.md) |
 | 当前资料完成 · CC-02B-STORE-SCOPE | 核对已修前置，冻结strict bytes/阶段IO/op receipt/unknown最小草案 | ACCEPTED（资料）；独立终审无must，Goal complete | 主控七Markdown / store_docs_review独立审查 | [Pro v1](CC-02B-STORE_Pro审查材料.md)/[draft-v1](task-packages/CC-02B-STORE-DRAFT.md)/[Review](review-packages/CC-02B-STORE-SCOPE-r1.md)，原资料终点未取得；本次Pro决定与用户STORE实施批准已取得 |
 | 已完成实施 · CC-02B-STORE | 严格一次bytes/阶段IO/统一ack/全writer unknown/原子候选/op查询/三来源 | ACCEPTED；v1.1，Goal complete，已追加Draft PR #5 | store_backend / 主控 / store_code_review独立正式终审 | [Task](task-packages/CC-02B-STORE.md)/[Review](review-packages/CC-02B-STORE-r1.md)，116文件1483/0/2、188专项/277域/real35，未merge/release |
-| 资料完成 · CC-02C-RESOURCE-SCOPE | 只读资源owner/C/独立IO/t0/保留访问与有限Task草案 | ACCEPTED（资料）；v1.1独立无must，Goal complete，本地未提交 | 主控唯一七Markdown / 两事实代理完成 / resource_docs_review独立终核 | [Task v1.1](task-packages/CC-02C-RESOURCE-SCOPE.md)/[Review](review-packages/CC-02C-RESOURCE-SCOPE-r1.md)，19矩阵未执行/173链接/308源与原交付保持；代码另批准 |
-| 已完成实施 · CC-02C-RESOURCE | 文件attempt许可/统一manifest资格/独立结果查询/异步bus C/preview窄桥接 | ACCEPTED；v1.1独立无must，Goal complete，本地未提交 | resource_backend / 主控验证与文档 / resource_code_review独立正式终审 | [Task v1.1](task-packages/CC-02C-RESOURCE.md)/[Review](review-packages/CC-02C-RESOURCE-r1.md)，119files1550/0/2、67新专项/19域356/311源与边界；不等完整RETIRE/R1/Git交付 |
+| 资料完成 · CC-02C-RESOURCE-SCOPE | 只读资源owner/C/独立IO/t0/保留访问与有限Task草案 | ACCEPTED（资料）；Goal complete，已随PR-DELIVERY-05追加Draft PR #5 | 主控七Markdown / 两事实代理 / resource_docs_review独立终核 | [Task](task-packages/CC-02C-RESOURCE-SCOPE.md)/[Review](review-packages/CC-02C-RESOURCE-SCOPE-r1.md)，原资料19矩阵当时未执行/173链接/308源历史保持；后续正式Task另获批准 |
+| 已完成实施 · CC-02C-RESOURCE | 文件attempt许可/统一manifest资格/独立结果查询/异步bus C/preview窄桥接 | ACCEPTED；Goal complete，已追加Draft PR #5 | resource_backend / 主控 / resource_code_review独立正式终审 | [Task](task-packages/CC-02C-RESOURCE.md)/[Review](review-packages/CC-02C-RESOURCE-r1.md)，1191550/0/2、67专项/19域356/311源保持；不等完整RETIRE/R1/merge/release |
 | 7 · CC-03-SCREEN | 47项游戏入口/主要操作矩阵；稳定与实验分类依据 | PROPOSED；公共生命周期已完成，筛查未开始 | Codex核验，Pro审分类决策 | 每项给出入口与行为证据；不以注册/画面存在等同可玩 |
 | 并行 · VB-01（CC-05基线） | 正式逐文件入口、同版本续跑、超时清理、真实退出/日志报告 | PROPOSED；未入实现队列 | Codex / 独立审查 | 批次范围批准，runner专项与最终门禁通过；不重做已修R26 |
 | 后续 · GAME-UI-01（CC-04） | 两款棋类Game UI Brief；回合/观战/胜线/规则提示；Excel和低打扰状态设计 | PROPOSED；设计/代码均未开始 | GPT设计 → Pro审查 → Codex | R1前置明确；先审设计，再实现与真实交互验收 |
@@ -65,7 +65,7 @@ CORE仅改server.py/最少量server_store.py/tests，Task v1.1已独立终审ACC
 
 ### 上轮整理与当前 Goal
 
-用户于2026-10-03直接要求“请提交pr”，[PR-DELIVERY-05 v1](task-packages/PR-DELIVERY-05.md)冻结code7/docs12追加既有Draft PR5，Goal active。主控唯一Git/index/必要docs，pr05_tree_review独立实际树只读；原RESOURCE Goal complete/source31102947728…/119files1550/0/2保持，不复跑应用门禁。已实核Gitremote/PR5open/draft/head0bf1d26/base maincc7e295，index空，无应用/pytest需恢复，不pull/切分支/force/main直push/merge/release/真实data/外部消息/heartbeat或新产品。
+用户于2026-10-03直接要求“请提交pr”，[PR-DELIVERY-05 v1](task-packages/PR-DELIVERY-05.md)code7=2087af8/docs12=4d2a49b已正常push至PR5；独立实际树/原119证据通过，PR新title/body/attach满足，open/draft/base maincc7e295。Goal active，仅最后flow/实际远端终核；source31102947728…/1550保持，不复跑应用或扩权限。
 
 用户于2026-10-02在本聊天直接要求按[最新Pro审查](decisions/CC-02C-RESOURCE_设计审查决定_v1.md)进行；[CC-02C-RESOURCE v1.1](task-packages/CC-02C-RESOURCE.md)现独立正式ACCEPTED，Goal complete。R1/Q1–Q4/M01–M04/阶段must与19矩阵满足，119文件1550/0/2、source31102947728…；root唯一验证、backend停写、resource_code_review正式无must。应用与tests/必要文档本地未提交，HEAD0bf1d26/index原空、旧四正文保持；到终点停止，不真实data/Git交付/外部消息/heartbeat或候选推进。
 
@@ -197,9 +197,9 @@ Android、完整云账号、47款全面美术和大规模重写维持Backlog，�
 
 | ID | 状态 | 批次/依赖 | 执行者 / 审查者 | 下一动作与证据 |
 | --- | --- | --- | --- | --- |
-| PR-DELIVERY-05 | IMPLEMENTING | 用户Git补充授权/RESOURCE独立ACCEPTED，Goal active | 主控唯一Git/资料 / pr05_tree_review独立只读 | code7→docs12真实提交树/raw-clean-blob/原119证据→独立放行→正常push/PR5更新/attach→actualflow终核；[Task](task-packages/PR-DELIVERY-05.md)/[Review](review-packages/PR-DELIVERY-05-r1.md) |
+| PR-DELIVERY-05 | REVIEWING（实际flow终核） | code7/docs12独立通过/正常push/PR5标题正文attach成功，Goal active | 主控唯一Git/资料 / pr05_tree_review独立actualtree | 2087af8/4d2a49b已PR5open/draft，最后flow实际HEAD/remote/边界→Goal结束；[Task](task-packages/PR-DELIVERY-05.md)/[Review](review-packages/PR-DELIVERY-05-r1.md) |
 | CC-02C-RESOURCE-SCOPE | ACCEPTED（资料） | v1.1独立四must关闭/正文9418113e…/173链接/投影/308源边界满足；Goal complete | 主控唯一七Markdown / 两事实代理完成 / resource_docs_review独立终核 | 七文档本地未提交，19矩阵未执行；[Task](task-packages/CC-02C-RESOURCE-SCOPE.md)/[Review](review-packages/CC-02C-RESOURCE-SCOPE-r1.md)，完成后停止，Q1–Q4及下一有限实施另批 |
-| CC-02C-RESOURCE | ACCEPTED | Taskv1.1独立正式无must/119full1550/0/2/19矩阵/311raw及边界满足；Goal complete | resource_backend / 主控唯一验证文档 / resource_code_review独立正式 | [Task](task-packages/CC-02C-RESOURCE.md)/[Review](review-packages/CC-02C-RESOURCE-r1.md)，source02947728…、成果本地未提交，到终点停止；不等完整RETIRE/R1/Git交付 |
+| CC-02C-RESOURCE | ACCEPTED | Taskv1.1独立无must/1191550/0/2/311raw保持，Goal complete，已追加PR #5 | resource_backend / 主控 / resource_code_review独立正式 | [Task](task-packages/CC-02C-RESOURCE.md)/[Review](review-packages/CC-02C-RESOURCE-r1.md)，source02947728…，不等完整RETIRE/R1/merge/release |
 | PR-DELIVERY-04 | ACCEPTED | 独立6code+12docs树与原始证据通过/push/PR更新/attach满足，Goal complete | 主控唯一Git/資料 / pr04_tree_review独立 | code971d7b6/docs7be5015，PR5open/draft；独立最终核验已通过，Goal complete，[Review](review-packages/PR-DELIVERY-04-r1.md) |
 | CC-02B-STORE | ACCEPTED | Task v1.1/同版full+领域+real+正式独立终验无must；Goal complete，已追加Draft PR #5 | store_backend / 主控 / store_code_review独立 | 116文件1483/0/2、188专项/277域/real35/source30896e62366…；[Review](review-packages/CC-02B-STORE-r1.md)，不等完整RETIRE/R1/Git交付 |
 | PR-DELIVERY-03 | ACCEPTED | 用户Git补充授权，代码/资料/独立树/push/PR更新/attach/提示词及终核已满足；Goal complete | 主控唯一Git/资料 / pr03_tree_review独立只读 | code e91c1be/docs13ad592/flow df487cf已push，三文档补录不改source307，PR5open/draft；[Task](task-packages/PR-DELIVERY-03.md) / [Review](review-packages/PR-DELIVERY-03-r1.md) |
@@ -283,7 +283,14 @@ Android、完整云账号、全面游戏美术、大规模模块拆分仍为暂�
 本次连续授权覆盖BATCH-R1三个生命周期任务，已自动推进至本批验收终点，不因单项结束而等待用户。
 其它Roadmap未转为执行授权；后续产品范围/批次由用户确认，普通批次内整改继续无需逐项推动。
 
-## 当前检查点 PR05-CP-02（code7实际提交/raw与Git blob）
+## 当前检查点 PR05-CP-03（两层独立通过、正常push与PR更新）
+
+- PR-DELIVERY-05 v1/Goalactive；code2087af8(parent0bf1d26/tree7e49822b)及docs4d2a49b(parent2087af8/tree36d26886)，精确7+12路径，独立actualtree/rawcleanblob/原119logs/正文范围无must。
+- 311source raw02947728…/normalized1f31ee9e…保持，Git实际blob0mismatch、无runtime私密树/未授权旧字节/201links投影边界PASS，1191550/0/2历史不重复。正常push当前branch0bf→4d2匹配lsremote，main仍cc7e295。
+- PR5open/draft/未merge/head4d2/base main；GitHubconnector PATCH403后同用户授权Git身份仅内存PATCH成功，title“fix: 完成身份退役、持久确认与有限资源提交”，bodySHAaa9ff640…，attach成功，无凭据保存/输出。
+- 现只有本Review/中心/生成视图flow元数据待精确commit/push，真实最终HEAD以Gitremote实读，不自引用；下一独立actualflow/remote/PR/范围终核→Goal结束，无app/pytest/真实data/外部消息/heartbeat/下一产品或merge/release。
+
+## 历史检查点 PR05-CP-02（code7实际提交/raw与Git blob）
 
 - PR-DELIVERY-05 v1/Goalactive，code7已真实commit2087af888b128f557d1f0732819993b6c3638926(parent0bf1d26/tree7e49822b)，branch未变/index空，docs12待提交，尚未push/PR5更新。
 - source311raw02947728…与RESOURCE最终1191550/0/2保持，raw/gitclean/hash-object/blob0mismatch，normalized1f31ee9e…；code增量精确7、无runtime私密树/旧未授权字节变化、当前201links/投影/diff-checkPASS，不重复应用测试。

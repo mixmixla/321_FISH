@@ -16,3 +16,12 @@ RESOURCE119files1550/0/2/445.66s、source3110294772822b1af196714076500f26fe8db63
 
 代码层commit `2087af888b128f557d1f0732819993b6c3638926`，parent0bf1d2684d0b975603fb3ce7505459a9f282fc3a，tree7e49822b7cfd57888b523138d8a4084d55455297，精确七路径，Git add/commit后源raw311保持，index空。
 verify_commit从311实际raw/Git clean/hash-object/commit blob核验逐0mismatch，raw02947728…/normalized `1f31ee9efb5c06f3a24d1bcee047fbb4a24d3bc1cb4c61fa13a2fcfa0110cb30`，Tree无runtime私密路径、未授权旧文件原字节保持；当前201相对链接/投影/diff-check通过。当前只是code层本地，不提前push或PR更新。
+
+## 两层独立核验与实际PR更新
+
+资料层commit `4d2a49bce22dc1ff8ab2b9bb3bd6e61d24bcfaaf`，parent2087af8，tree36d26886bb8c48619b8ff08352a12645d9041e8a，精确12paths；入场delta19=7code+12docs。
+pr05_tree_review独立actualtree/raw/clean/blob/原119logs/exit/summary/optin/正文范围终核无must：两层父子树与精确增量匹配，原1550/0/2/445.66s/source311保持，workspace当时clean/index空，无禁文件，允许正常push。
+git push origin HEAD:refs/heads/codex/cc02a-consistency真实成功0bf1d26→4d2a49b，lsremote匹配、main仍cc7e295。PR5继续open/draft/未merge，base main。
+GitHub connector更新返回403 Resource not accessible by integration；按本次用户Git授权用已有Git身份仅内存PATCH完成，无凭据输出/保存。
+实际标题“fix: 完成身份退役、持久确认与有限资源提交”，正文覆盖最终四范围/1191550/0/2/清楚重启与权限限制，body SHA256 `aa9ff640bfa3aea4e1fe9fd188df068ce45c91a226467d9d0ffd5894c6641f0f`。attach PR5到本聊天成功。
+随后仅本Review/中心/生成视图flow精确补录提交push，真实最终HEAD以Git/remote实读为准，不构造内容自引用SHA。RESOURCE应用/tests/依赖保持raw02947728…，同版不重复门禁；最后独立remote/PR/flow核验后结束Goal，不下一产品/合并/发布。

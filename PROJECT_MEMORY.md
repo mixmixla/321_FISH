@@ -4,7 +4,8 @@
 
 - 用途：Windows 局域网聊天、文件/媒体、网页端与桌游；Tkinter 桌面客户端。
 - 栈与入口：Python 3.14.5，`dev.ps1` / `run.py`；Hub 加密 TCP，网页 HTTP(S)/SSE。
-- 最近源码核对：2026-10-02；有限STORE实施源码已核对，版本和验收见STORE Review；完整RETIRE资源/UI及R1仍未关闭。
+- 最近源码核对：2026-10-03；有限RESOURCE候选已按新Pro决定实现/阶段审查，版本及最终验收见RESOURCE Review；完整RETIRE其它资源/UI及R1仍未关闭。
+  Web legacy metadata不含owner/target，完成附件GET沿有效认证+已知fid；新增owner/op字段是归属/结果证据，不是私聊/群ACL。
   当前任务、版本和测试结果统一见 [AI_COMMAND_CENTER](docs/AI_COMMAND_CENTER.md)。
 - 当前机器路径 `D:\Project\321_FISH`，迁移后以任务工作区为准。
 - 个人开发技能：`$fish-assistant-dev`；源码事实优先于技能旧索引。
@@ -50,6 +51,9 @@
   t0清活跃known/本人draft/sched/blocks/reads、撤全旧端/token，CHAT/burn、due、PROFILE等核心C与t0在Hub→bus纯内存边界内排序。
 - 持久确认保留ServerStore.save bool兼容外形，实际writer在cutoff前后固定Hub→bus的state/op捕获，严格一次UTF8 bytes/SHA、阶段typed结果及统一ack，运行态请求代次保留后到dirty；
   运行态receipt/unknown及known前后序对账不增持久revision/hash-proof/marker；confirmed来源written/reconciled_current_json/restored_valid_json分开，旧合法JSON恢复无历史SHA。证据与版本见[STORE Review](docs/review-packages/CC-02B-STORE-r1.md)。
+- 有限CLOUD/Web文件资源采用运行态op/不可变attempt、stage前quota、资源锁→短Hub发布许可C→锁外独立IO→匹配attempt完成；t0不等资源锁。latest许可防旧failed重试，current已证index决定GET及superseded/withdrawn；state.json receipt不替代文件结果。
+- 新Webmanifest版本/任一新专属字段必须严格校验body/hash/length/owner/op，body先manifest后；上传/CHAT/GET共用实际资格，读响应为不可变bytes。完成/legacy附件仍有效认证+fid共享，不新增ACL/扫描迁移；部分body孤儿不等完整publication。
+- bot回复/提醒/Agent结果最终Hub→bus复查owner/私聊target退役；提醒enqueue/take/cancel同短锁，仍内存态；外部Agent工具不承诺取消。preview先释放cache锁后最终上下文/URL/deleted/fence匹配，edit/del仅窄bus桥接，不加全handler退休gate/generation，U→V→U最终匹配可接受。
 
 ## Conventions and constraints
 
@@ -126,8 +130,8 @@
   新端已建立的资源不能被旧注销清理，空群回收要复查是否已经有新成员。
 - 一对一 FILE_ACCEPT 合法接收确认后发送者离线的可用性/状态阶段竞态待单独核验，
   不把参与者鉴权修复扩大为整套传输状态机重写。
-- CORE已用retired阻止旧UID/昵称复活，逻辑清本人草稿/定时/活跃私有记录；未由此宣称资源全写入面或UI闭合。
-  云文件/上传/bot回复/preview/媒体及其它已接受旧操作的资源迟到写仍需后续RESOURCE；有效JSON边界和源码证据见CORE Review。
+- CORE已用retired阻止旧UID/昵称复活，逻辑清本人草稿/定时/活跃私有记录；有限RESOURCE只补CLOUD/Web upload-file/bot/提醒/Agent/preview，不据此宣称其它媒体/全部写入面或UI闭合。
+  文件C是最后发布许可，C<t0的在途IO可完成；不保证t0后零物理写/跨文件JSON事务或物理擦除。有效JSON身份边界和源码证据见CORE/RESOURCE Review。
 - 删号清消息只移除目标作者UID的记录，对方私聊消息仍留；正常最后端注销还会退群/转群主/空群解散，
   资料保持与离线退群是两项边界，不由注销修复推导删号完整。
 - CORE的sched最终发布复查退役并取消本人队列/已摘due；正常离线定时仍按原群/屏蔽规则，不将KICK改成封禁。
@@ -137,7 +141,9 @@
   普通凭据CAS仍未实现；首次退役提交从未成功时不保证旧有效JSON重启后阻断，禁止用内存成功或未经审查降级/旧备份回滚替代持久确认。
 - snapshot核心一致捕获/deep remarks及burn.pend→既有恢复UID列表的必要适配已纳CORE；不等于全面JSON格式重写。
   ServerStore.load仍将坏JSON/读取失败返回{}，整体loader/初始化marker/丢失状态恢复与durable intent明确延期CC-05存储加固。
-- CLOUD启动扫描在restore前，PUT先写内存/直接覆盖文件且吞IO错误仍回CLOUD_DONE；bot_say/Agent/已摘bot提醒、preview及Web upload资源旁路仍需最终屏障。CORE服务端sched已摘due最终C已修，不能与bot提醒混淆。
+- 有限资源结果的confirmed是目标结果证据；opaque CLOUD对账同bytes只证明当前目标内容，可以confirmed+uncertain+reconciled_current_resource，不伪造某次replace唯一发生；确定preReplace失败不会因本来相同而改成功。资源IO/send失败/历史成功/当前可见分开。
+  资源op/unknown/fence是当前进程运行态；CLOUD已有身份恢复后过滤retired，重启非retired文件扫描仅访问事实，旧op/unknown屏障丢失，新显式PUT可覆盖。首无op响应全丢/淘汰/重启不自动猜latest、去重或重放；持久intent/整体loader仍CC-05。
+  CORE sched due与bot内存提醒不合并；Agent仅禁止迟到本仓库结果，不推导外部工具取消；Web共享访问与owner操作查询是两套权限，admin只有限结果不blob/不复开retiredcloud。实际候选证据见[RESOURCE Review](docs/review-packages/CC-02C-RESOURCE-r1.md)。
   管理员UID不是固定号，实际bot保护按BOT_BY_UID；普通分配器已跳过retired/known/实际botUID，同名bot登录字符串/历史管理员角色不能猜测迁移。
 - 现有ClientCore.send_admin_user_del在发送前乐观pop known/roster；RETIRE管理结果需要区分已提交、运行阻断、失败/未知与真正JSON确认。
   UI仍未改，不能从服务端四态回执推导当前客户端已支持失败/重试或停止deleted自动重连；完整设计与延期边界见[RETIRE材料](docs/CC02-RETIRE_Pro审查材料.md)及CORE Task。
@@ -156,6 +162,9 @@
   正式冻结与版本化实施证据见[STORE Task](docs/task-packages/CC-02B-STORE.md)/[Review](docs/review-packages/CC-02B-STORE-r1.md)，历史[Pro材料](docs/CC-02B-STORE_Pro审查材料.md)/[草案](docs/task-packages/CC-02B-STORE-DRAFT.md)仍保留，状态只看指挥中心。
 
 ## Evidence index
+
+- [RESOURCE Pro材料](docs/CC-02C-RESOURCE_Pro审查材料.md) / [有限草案](docs/task-packages/CC-02C-RESOURCE-DRAFT.md) — HEAD0bf1d26资源静态事实、独立文件与state.json确认边界、C/t0候选、待决定接口/legacy策略及全部未执行矩阵；不是已实现保证。
+- [RESOURCE新决定](docs/decisions/CC-02C-RESOURCE_设计审查决定_v1.md) / [正式Task](docs/task-packages/CC-02C-RESOURCE.md) / [实施Review](docs/review-packages/CC-02C-RESOURCE-r1.md) — 选定R1/Q1–Q4/M01–M04、有限候选/原红/中间失败/实际IO与网络JSON、阶段及最终独立验收；当前执行状态只看中心。
 
 - `COLLABORATION.md`, `README.md`, `docs/开发环境.md` — 当前约定与启动方式。
 - `AGENTS.md`, `docs/AI_COMMAND_CENTER.md`, `docs/task-packages/`, `docs/review-packages/` —

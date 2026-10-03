@@ -3080,9 +3080,20 @@ class Hub:
                 raw_body = stream.read()
         except (OSError, ValueError, UnicodeDecodeError, TypeError):
             return None, None
+        timestamp = meta.get("ts")
+        try:
+            valid_timestamp = (not isinstance(timestamp, bool)
+                               and isinstance(timestamp, (int, float))
+                               and math.isfinite(float(timestamp)))
+        except OverflowError:
+            # JSON integers are unbounded; an unreadable timestamp makes the
+            # manifest ineligible, rather than aborting CHAT or HTTP readers.
+            valid_timestamp = False
+        if not valid_timestamp:
+            return None, None
         if set(meta).intersection(_RESOURCE_NEW_FIELDS):
             if (set(meta) != _RESOURCE_MANIFEST_FIELDS
-                    or isinstance(meta.get("resource_manifest_version"), bool)
+                    or type(meta.get("resource_manifest_version")) is not int
                     or meta.get("resource_manifest_version") !=
                     self._resource_manifest_version
                     or not isinstance(meta.get("fid"), str)
@@ -3092,9 +3103,6 @@ class Hub:
                     or isinstance(meta.get("size"), bool)
                     or not isinstance(meta.get("size"), int)
                     or meta.get("size") < 0
-                    or isinstance(meta.get("ts"), bool)
-                    or not isinstance(meta.get("ts"), (int, float))
-                    or not math.isfinite(float(meta.get("ts")))
                     or isinstance(meta.get("resource_owner_uid"), bool)
                     or not isinstance(meta.get("resource_owner_uid"), int)
                     or meta.get("resource_owner_uid") <= 0
@@ -3119,9 +3127,6 @@ class Hub:
                     or isinstance(meta.get("size"), bool)
                     or not isinstance(meta.get("size"), int)
                     or meta.get("size") < 0
-                    or isinstance(meta.get("ts"), bool)
-                    or not isinstance(meta.get("ts"), (int, float))
-                    or not math.isfinite(float(meta.get("ts")))
                     or meta.get("size") != len(raw_body)):
                 return None, None
         return meta, raw_body

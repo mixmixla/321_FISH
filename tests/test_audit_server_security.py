@@ -24,7 +24,10 @@ def _hub(tmp_path):
     cfg = replace(CFG, admin_nick="L57", audit_dir=str(tmp_path / "audit"),
                   web_files_dir=str(tmp_path / "web"),
                   admin_pwd=admin_password)
-    hub = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"))
+    # CC-02A-RETIRE-CORE：删号/退役必须在真实隔离 Store 上验证；
+    # 无 Store 的 Hub 应在 t0 前拒绝永久退役。
+    hub = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"),
+              store_dir=str(tmp_path / "store"))
     hub._test_admin_password = admin_password
     return hub
 

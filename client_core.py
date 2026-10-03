@@ -697,6 +697,7 @@ class ClientCore:
         self._reconnector = None
         self._last_pong = 0.0
         self._ever_online = False
+        self._manual_login_required = False
 
     # ---------- 生命周期 ----------
     @property
@@ -708,6 +709,7 @@ class ClientCore:
         if self.state not in ("idle", "offline"):
             raise RuntimeError("client already running")
         self._stop.clear()
+        self._manual_login_required = False  # start is an explicit new login attempt
         self._set_state("connecting")
         self._reconnector = threading.Thread(target=self._run, daemon=True,
                                              name="core-connector")
@@ -866,7 +868,28 @@ class ClientCore:
 
     # ---------- 收帧分发 ----------
     def _dispatch(self, h: dict, body: bytes = b"") -> None:
+        if getattr(self, "_manual_login_required", False):
+            return  # late frames cannot revive the revoked authentication
         t = h.get("t")
+        if t == "error" and h.get("code") == "kicked":
+            with self._lock:
+                self._manual_login_required = True
+                self._stop.set()
+                self._conn_alive.clear()
+                self._chan = None
+            sock = self._sock
+            if sock is not None:
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+                try:
+                    sock.close()
+                except OSError:
+                    pass
+            self._set_state("offline")
+            self._push(h)
+            return
         if t == MsgType.WELCOME.value:
             self._on_welcome(h)
         elif t == MsgType.ROSTER.value:
@@ -2737,12 +2760,16 @@ class ClientCore:
 
     # ---------- 内部 ----------
     def _send_frame(self, header: dict, body: bytes = b"") -> bool:
+        if getattr(self, "_manual_login_required", False):
+            return False
         chan = self._chan
         if chan is None or not self._conn_alive.is_set():
             self._push({"t": "error", "code": "offline", "text": "未连接"})
             return False
         try:
             with self._send_lock:
+                if getattr(self, "_manual_login_required", False):
+                    return False
                 chan.send_frame(header, body)
             return True
         except (OSError, ValueError) as exc:

@@ -17,6 +17,10 @@
   本地乐观行与回显去重；纯 core.history 会漏掉尚未回显的行。
 - 服务器定时消息 `SCHED_*` 是权威持久化；客户端提醒、本地草稿、bot 内存提醒
   是不同对象，不因名字相似合并生命周期。
+- CC-02A-RETIRE-CORE以独立retired字段保留UID/昵称占用，核心t0与CHAT/burn/draft/sched/profile最终C在Hub→bus内存锁内排序。
+  异步prepare不是提交许可；有效JSON持久确认后才报confirmed，失败阻断不自动回开。首次失败无durable intent不保证重启屏障。
+  save显式成功、actual writer fresh capture及运行态请求代次是最小前置；GUI、CLOUD/upload/bot回复/preview资源、整体loader/marker仍延期，
+  不把CORE等同完整RETIRE/R1通过。执行版本与验证只读当前Task/Review，不从本页自动授权真实退役或其它候选。
 - 频道只读、群成员/管理员、消息编辑/撤回权限最终由 Hub 校验。新输入方式
   还需同步 UI 禁用状态。私聊撤回双方范围、论坛 thread_root 等沿用现有语义。
 

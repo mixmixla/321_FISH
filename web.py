@@ -2315,6 +2315,27 @@ function leaveLogin(){
   if(loginBox)loginBox.style.display="";
   $("#pwd").value="";$("#npwd").value="";
 }
+function installSessionFetch(){
+  const nativeFetch=window.fetch.bind(window);
+  window.fetch=(input,options)=>{
+    const currentToken=state.token;
+    let protectedApi=false;
+    try{
+      const raw=typeof input==="string"?input:(input.url||input.href);
+      const url=new URL(raw,window.location.href);
+      protectedApi=url.origin===window.location.origin&&url.pathname.startsWith("/api/")
+        &&!["/api/login","/api/meta"].includes(url.pathname)
+        &&!url.pathname.startsWith("/api/sticker/");
+    }catch(_e){}
+    return nativeFetch(input,options).then(response=>{
+      if(response.status===401&&protectedApi&&currentToken&&state.token===currentToken){
+        leaveLogin();showStatus("登录已失效，请重新登录");
+      }
+      return response;
+    });
+  };
+}
+installSessionFetch();
 function logout(){
   const tok=state.token;
   if(!tok){leaveLogin();return}
@@ -2323,6 +2344,7 @@ function logout(){
     .then(async r=>{let d={};try{d=await r.json()}catch(_e){};
       return {status:r.status,data:d};})
     .then(({status,data})=>{
+      if(state.token!==tok)return;
       if((status===200&&data.ok)||status===401){leaveLogin();return}
       showStatus(data.error||"退出失败");
     })
@@ -3436,6 +3458,7 @@ function openStream(){
   }
   const es=new EventSource("/api/events");
   state.es=es;
+  let checkingAuth=false;
   es.onmessage=e=>{
     if(state.es!==es||!state.token)return;
     let d;try{d=JSON.parse(e.data)}catch(err){return}
@@ -3523,7 +3546,10 @@ function openStream(){
     else if(d.t==="fish_board"){                           // R70H：排行榜实时刷新（广播/单播同形）
       if(d.game){state.fish=Object.assign({},state.fish||{});state.fish[d.game]=d.entries||[];}
       if(state.fishOpen)window.fishRender();}
-    else if(d.t==="error"){showStatus(d.text||d.code||"操作失败")}
+    else if(d.t==="error"){
+      if(d.code==="kicked")leaveLogin();
+      showStatus(d.text||d.code||"操作失败");
+    }
     else if(d.t==="cleared"){onCleared(d)}        // R53：管理员清理广播 → 清空本地界面
     else if(d.t==="system"){addSys(d.text)}
     else if(d.t==="task_state"){                                  // R69B6/B7 群任务清单
@@ -3539,11 +3565,23 @@ function openStream(){
   };
   es.onerror=()=>{
     if(state.es!==es||!state.token)return;
-    if(state.esRetry)return;
-    state.esRetry=setTimeout(()=>{
-      state.esRetry=null;
-      if(state.es===es&&state.token)openStream();
-    },2000);
+    if(checkingAuth||state.esRetry)return;
+    checkingAuth=true;
+    const currentToken=state.token;
+    const retry=()=>{
+      checkingAuth=false;
+      if(state.es!==es||state.token!==currentToken||!currentToken)return;
+      if(state.esRetry)return;
+      state.esRetry=setTimeout(()=>{
+        state.esRetry=null;
+        if(state.es===es&&state.token===currentToken)openStream();
+      },2000);
+    };
+    fetch("/api/whoami").then(response=>{
+      if(state.es!==es||state.token!==currentToken||!currentToken)return;
+      if(response.status===401){leaveLogin();showStatus("登录已失效，请重新登录");return;}
+      retry();
+    }).catch(retry);
   };
 }
 $("#btnLogin").onclick=login;
@@ -5984,6 +6022,8 @@ class _Handler(BaseHTTPRequestHandler):
             self._group_detail(self._query())
         elif path == "/api/convos":
             self._convos(self._query())
+        elif path == "/api/resource_result":
+            self._resource_result(self._query())
         elif path == "/api/file":
             self._file(self._query())
         elif path == "/api/room":
@@ -7137,8 +7177,7 @@ class _Handler(BaseHTTPRequestHandler):
 
     # ---------- R23 网页端图片/文件 ----------
     def _upload(self):
-        """POST /api/upload：JSON {token,name,kind,data(base64)} → {ok,file:{fid,name,size,kind}}。
-        base64 膨胀约 33%，body 上限 = 原始上限 * 4/3 + 头部余量。"""
+        """POST /api/upload：新上传走 RESOURCE body→manifest 发布。"""
         raw = self._read_raw(int(self.hub.cfg.web_file_max * 1.34) + 1024)
         if not raw:     # body 为空或超过上限：_read_raw 直接丢空
             self._json(400, {"ok": False, "error": "请求体为空或过大"})
@@ -7168,8 +7207,33 @@ class _Handler(BaseHTTPRequestHandler):
         name = str(body.get("name") or "未命名").replace("\\", "/").split("/")[-1][:128]
         if kind == "file" and _IMG_EXT_RE.search(name):
             kind = "image"        # 📎 发的是图片扩展名 → 自动按图片消息内联显示
-        meta = self.hub._save_web_file(name, data, kind)
-        self._json(200, {"ok": True, "file": meta})
+        op = body.get("resource_operation_id")
+        try:
+            saved = self.hub._save_web_file(
+                name, data, kind, sess=sess,
+                resource_operation_id=str(op) if op is not None else None)
+        except Exception as exc:
+            result = getattr(exc, "result", None)
+            code = getattr(exc, "code", "resource_io")
+            if code in ("resource_pending", "resource_busy"):
+                self._json(202, {"ok": False, "error": code,
+                                 "resource": result or {}})
+            elif code in ("resource_unknown", "superseded"):
+                self._json(409, {"ok": False, "error": code,
+                                 "resource": result or {}})
+            elif isinstance(exc, (PermissionError, ValueError)) \
+                    or code in ("invalid_operation", "unknown_operation",
+                                "payload_mismatch"):
+                self._json(400, {"ok": False, "error": str(exc)})
+            else:
+                self._json(500, {"ok": False, "error": code,
+                                 "resource": result or {}})
+            return
+        resource = saved.pop("resource", None)
+        payload = {"ok": True, "file": saved}
+        if resource:
+            payload["resource"] = resource
+        self._json(200, payload)
 
     def _file(self, q: dict):
         """GET /api/file?fid=：下载网页端文件（图片原图 / 附件；鉴权走 Cookie）。"""
@@ -7185,10 +7249,12 @@ class _Handler(BaseHTTPRequestHandler):
             self._json(404, {"ok": False, "error": "文件不存在"})
             return
         try:
-            with open(path, "rb") as f:
-                data = f.read()
+            data = self.hub._web_file_read(sess, fid, meta)
         except OSError:
             self._json(404, {"ok": False, "error": "文件读取失败"})
+            return
+        except PermissionError:
+            self._json(404, {"ok": False, "error": "文件不存在"})
             return
         ext = os.path.splitext(meta.get("name", ""))[1].lower()
         ctype = (_IMG_CTYPES.get(ext) or
@@ -7203,6 +7269,37 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
+    def _resource_result(self, q: dict):
+        """GET /api/resource_result：owner 或明确 owner 的认证管理员查询。"""
+        sess = self.hub.session_by_token(self._tok_any(q))
+        if not sess:
+            self._json(401, {"ok": False, "error": "未登录"})
+            return
+        op = q.get("resource_operation_id") or ""
+        explicit = q.get("resource_owner_uid")
+        owner = None
+        if explicit is not None:
+            try:
+                owner = int(explicit)
+            except (TypeError, ValueError):
+                self._json(400, {"ok": False, "error": "resource_owner_uid 无效"})
+                return
+            if not sess.is_admin:
+                self._json(403, {"ok": False, "error": "无资源查询权限"})
+                return
+        try:
+            result = self.hub._resource_query(sess, op, explicit_owner=owner)
+        except PermissionError:
+            self._json(403, {"ok": False, "error": "无资源查询权限"})
+            return
+        except LookupError:
+            self._json(404, {"ok": False, "error": "资源结果不可用"})
+            return
+        except ValueError:
+            self._json(400, {"ok": False, "error": "resource_operation_id 无效"})
+            return
+        self._json(200, {"ok": True, "resource": result})
 
     def _room_api(self, q: dict):
         """R72 GET /api/room?room=：语音房只读名册快照（网页端无法加入 UDP mesh）。"""

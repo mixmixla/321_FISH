@@ -14,13 +14,17 @@ import threading
 import time
 import hashlib
 import ipaddress
+import math
 import http.client
 import ssl
 from collections import defaultdict, deque
+from dataclasses import dataclass
 from html.parser import HTMLParser
 from urllib.parse import urlparse
 import json
 import copy
+import uuid
+import tempfile
 
 from config import ADMIN_NICK, CFG, DRAFT_TTL, MAX_NICK_LEN, enable_crashlog
 from crypto import HandshakeError, server_handshake
@@ -34,6 +38,7 @@ import auth
 import stickers
 import bots as _bots
 import cloud_history as cloud_history_mod
+import server_store as server_store_mod
 
 
 def _now() -> float:
@@ -41,6 +46,74 @@ def _now() -> float:
 
 
 PWD_MAX = 64                 # R47：昵称密码最大长度（明文，PBKDF2 后存储）
+
+# 正常注销/同 UID 换端时需要保留的 known 持久资料。Session、token 等运行态
+# 不属于该清单；字段即使是空字符串或 False 也要保持其原有值。
+_KNOWN_PROFILE_FIELDS = ("pwd", "sign", "avatar", "invisible", "status",
+                         "remarks")
+
+
+@dataclass(frozen=True)
+class CommitReceipt:
+    """运行态真实 bytes receipt；不包含第二份快照正文，也不落盘。"""
+
+    length: int | None
+    sha256: str | None
+    capture_request_seq: int | None
+    origin: str
+    operation_ids: tuple[str, ...] = ()
+
+    @property
+    def content_sha256(self) -> str | None:
+        return self.sha256
+
+    @property
+    def digest(self) -> str | None:
+        return self.sha256
+
+    @property
+    def ops(self) -> tuple[str, ...]:
+        return self.operation_ids
+
+    def __getitem__(self, key):
+        if key == "length":
+            return self.length
+        if key in ("sha256", "content_sha256", "digest"):
+            return self.sha256
+        if key == "capture_request_seq":
+            return self.capture_request_seq
+        if key == "origin":
+            return self.origin
+        if key in ("operation_ids", "ops"):
+            return self.operation_ids
+        raise KeyError(key)
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+
+class _ResourceError(RuntimeError):
+    """有限资源接口的可报告错误；不包含正文、路径或凭据。"""
+
+    def __init__(self, code: str, result: dict | None = None,
+                 message: str = "资源操作未完成") -> None:
+        super().__init__(message)
+        self.code = code
+        self.result = result
+
+
+_RESOURCE_NEW_FIELDS = {
+    "resource_manifest_version", "resource_owner_uid",
+    "resource_operation_id", "content_length", "content_sha256",
+}
+_RESOURCE_MANIFEST_FIELDS = {
+    "fid", "name", "size", "kind", "ts", *_RESOURCE_NEW_FIELDS,
+}
+_RESOURCE_KINDS = {"cloud", "web_file"}
+_RESOURCE_OP_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}")
 
 
 # ---------- R26D 链接预览（服务器出网抓取，自动；SSRF 防护 + 大小/时长上限） ----------
@@ -450,11 +523,25 @@ class Hub:
         self.sticker_subs: dict = {}
         # R35 内置 Bots：提醒待发队列（sweeper 到期推送）
         self.bot_reminders: list = []
+        # CC-02C：bot/Agent/提醒来源上下文，仅运行态，不进入聊天正文或 Store。
+        self._bot_contexts: dict = {}
         # R37 加密云历史：uid -> {"blob": bytes, "ts": float}（服务器只存密文；
         # 落盘 web_files_dir/cloud/{uid}.bin，重启保留，服务器无法解密）
         self.cloud: dict = {}
         self.cloud_dir = os.path.join(self.cfg.web_files_dir, "cloud")
         os.makedirs(self.cloud_dir, exist_ok=True)
+        # CC-02C RESOURCE：运行态资源 registry。它不是 Store 快照，也不保存
+        # 正文/路径；latest_permit 与 current_readable_index 必须分开，后续
+        # C 可以阻止旧 failed op 重试，但 pending/failed/unknown 不能遮掉
+        # 尚未被新已证版本替换的旧可读内容。
+        self._resource_lock = threading.RLock()
+        self._resource_ops: dict[str, dict] = {}
+        self._resource_keys: dict[tuple[str, str], dict] = {}
+        self._resource_fid_ops: dict[str, str] = {}
+        self._resource_order_seq = 0
+        self._resource_max_active = 16
+        self._resource_max_terminal = 64
+        self._resource_manifest_version = 1
         self._cloud_load_disk()
         self.xfers = {}             # file_id -> 传输记录（中转/直连状态权威）
         self.rooms = RoomManager(GAME_TYPES)   # 游戏房间（服务器权威）
@@ -478,6 +565,11 @@ class Hub:
         self._shake_ts = {}
         # R25B 已知用户：uid -> {nick, last_online}（断线保留，供「最后上线」展示）
         self.known = {}
+        # CC-02A-RETIRE-CORE M1：退役 UID 的最小持久占位；活跃 known 中不保留
+        # 退役 UID，nick_to_uid 仍保留以禁止同名/同 UID 重新认领。
+        self.retired: dict = {}
+        self._retire_ops: dict = {}       # uid -> 运行态 status/op_id（不落盘）
+        self._retired_schema_invalid = False
         # R50 屏蔽名单：uid -> set(被屏蔽 uid)（服务器权威，拦截私聊收发与密聊/语音）
         self.blocks: dict = {}
         # R51 服务器权威定时消息：uid -> {rid: {channel,to,text,fire_at,created}}（到点由 sweeper 发出）
@@ -491,6 +583,8 @@ class Hub:
         # R23 网页端文件存储（fid = uuid4().hex；<fid> 二进制 + <fid>.json 元数据）
         self.web_files = os.path.join(self.cfg.web_files_dir)
         os.makedirs(self.web_files, exist_ok=True)
+        self._resource_stage_dir = os.path.join(self.web_files, ".resource_stage")
+        os.makedirs(self._resource_stage_dir, exist_ok=True)
         # R30C 自定义贴纸：code -> {code,label,ext}（图片落盘 stickers/ 目录，随 R16 持久化）
         self.custom_stickers: dict = {}
         self.sticker_dir = os.path.join(self.cfg.web_files_dir, "stickers")
@@ -536,22 +630,108 @@ class Hub:
         self._persist_dirty = False
         # R65：以"内容指纹"替代常驻的第二份全量快照做无变更判定。
         # 旧实现把整份 _snapshot_state() 再深拷贝常驻、并用递归 dict 比较判定相等：
-        # 内存翻倍、大状态下比较慢。改为只保留一次 md5(json) 摘要（32 字节字符串），
+        # 内存翻倍、大状态下比较慢。改为只保留一次严格 JSON bytes SHA-256 摘要，
         # 比较退化为字符串比对。指纹仅在 worker / flush 真正 save 成功后推进，
         # 失败则留旧值（避免把失败写当已落盘而漏掉兜底重写）。
         self._persist_fp = None
+        self._persist_request_seq = 0
         # 异步落盘：dump+写盘挪到后台 worker，连接线程只做浅拷贝快照（latest-wins）
         self._persist_lock = threading.Lock()
+        # actual writer 的唯一顺序锁。槽位只作唤醒，真正写入前必须重新捕获
+        # 当前完整状态，避免旧 worker/force capture 覆盖退役后的新快照。
+        self._persist_writer_lock = threading.Lock()
         self._persist_pending = False
         self._persist_slot = None
         self._persist_slot_fp = None
         self._persist_wake = threading.Event()
         self._persist_closing = False
         self._persist_worker_thread = None
+        # CC-02B：运行态 receipt/未决候选；不写入 state.json，不保存第二份
+        # 全量快照。未决候选只保留真实 bytes 标识和有限退役上下文，直到
+        # strict read 能够解释或下一次受控提交完成。
+        self._persist_receipt = None
+        self._persist_unresolved = None
+        self._persist_inflight = None
+        self._persist_last_result = None
+        self._persist_success_evidence = {}
+        self._persist_known_shas = set()
         if store_dir:
             from server_store import ServerStore
             self.store = ServerStore(os.path.join(store_dir, "state.json"))
+            self.store._bind_hub_writer(self._bound_store_save)
         self._restore(self.store.load() if self.store else {})
+        # CLOUD 扫描早于身份恢复是启动顺序既有事实；只有在 _restore 完成
+        # 后才把非退役 UID 放入当前可读 index，合法退役 JSON 过滤私有访问。
+        self._resource_filter_cloud_after_restore()
+        if self.store is not None:
+            try:
+                loaded = self.store.read_bytes_result()
+                if (getattr(loaded, "status", None) == "bytes"
+                        and isinstance(getattr(loaded, "payload", None), bytes)
+                        and isinstance(getattr(loaded, "sha256", None), str)):
+                    strict_state = self._strict_state_from_bytes(loaded.payload)
+                    strict_retired = strict_state.get("retired") or {}
+                    source_valid = (isinstance(strict_retired, dict)
+                                    and not self._retired_schema_invalid)
+                    if source_valid and self.retired:
+                        for uid, record in self.retired.items():
+                            raw = strict_retired.get(str(uid))
+                            if raw != record:
+                                source_valid = False
+                                break
+                    if source_valid:
+                        self._persist_known_shas.add(loaded.sha256)
+                        if self.retired:
+                            for uid in self.retired:
+                                op = self._retire_ops.get(uid)
+                                if isinstance(op, dict):
+                                    op["origin"] = "restored_valid_json"
+                            self._persist_receipt = CommitReceipt(
+                                origin="restored_valid_json", sha256=None,
+                                length=None, capture_request_seq=None,
+                                operation_ids=tuple(
+                                    str(record.get("operation_id"))
+                                    for record in self.retired.values()
+                                    if isinstance(record, dict)
+                                    and isinstance(record.get("operation_id"), str)))
+                    elif self.retired:
+                        for uid in self.retired:
+                            op = self._retire_ops.get(uid)
+                            if isinstance(op, dict):
+                                op.update({
+                                    "status": "unknown",
+                                    "origin": None,
+                                    "content_sha256": None,
+                                    "content_length": None,
+                                    "failed_stage": "restore",
+                                    "error_code": "strict_source_invalid",
+                                    "retryable": False,
+                                })
+                else:
+                    for uid in self.retired:
+                        op = self._retire_ops.get(uid)
+                        if isinstance(op, dict):
+                            op.update({
+                                "status": "unknown", "origin": None,
+                                "content_sha256": None,
+                                "content_length": None,
+                                "failed_stage": "restore",
+                                "error_code": "strict_source_invalid",
+                                "retryable": False,
+                            })
+            except Exception:
+                if self.retired:
+                    for uid in self.retired:
+                        op = self._retire_ops.get(uid)
+                        if isinstance(op, dict):
+                            op.update({
+                                "status": "unknown", "origin": None,
+                                "content_sha256": None,
+                                "content_length": None,
+                                "failed_stage": "restore",
+                                "error_code": "strict_source_invalid",
+                                "retryable": False,
+                            })
         # R35 内置 Bots：注册进 known（type=bot，永远在线；uid 900+ 高位段）。
         # 必须在 _restore 之后（restore 会整体替换 known，注册放前面会被抹掉）
         for _b in _bots.BOTS:
@@ -581,15 +761,15 @@ class Hub:
             member 值若为 dict 则浅复制（其键为整值替换，无原地子改）。
           - 其余字典型（nick_to_uid/drafts/scheds/…）均按值新建新 dict，无常驻原地改动。
         """
-        with self.bus._lock:
-            seq = self.bus._seq
-            channels = {k: [copy.deepcopy(m) for m in dq]
-                        for k, dq in self.bus._channels.items()}
         with self.lock:
+            with self.bus._lock:
+                seq = self.bus._seq
+                channels = {k: [copy.deepcopy(m) for m in dq]
+                            for k, dq in self.bus._channels.items()}
             def _copy_member_val(v):
                 return {kk: (dict(vv) if isinstance(vv, dict) else vv)
                         for kk, vv in v.items()}
-            return {
+            return copy.deepcopy({
                 "bus": {"seq": seq, "channels": channels},
                 "uid_seq": self._uid_seq,
                 "gid_seq": self._gid_seq,
@@ -601,44 +781,155 @@ class Hub:
                         "members": _copy_member_val(g["members"]),
                         "mutes": dict(g.get("mutes") or {}),
                         "announce": g.get("announce", ""),
-                        "announce_mode": g.get("announce_mode", 0),  # C9①：仅公告说话模式
-                        "invite": g.get("invite", ""),   # R28：邀请码
-                        "kind": g.get("kind", ""),       # R26B：频道标记
-                        "public": g.get("public", 0),    # R54：公开群标记
-                        "slow": int(g.get("slow") or 0),   # R70D：群慢速档位（秒，0=关闭）
+                        "announce_mode": g.get("announce_mode", 0),
+                        "invite": g.get("invite", ""),
+                        "kind": g.get("kind", ""),
+                        "public": g.get("public", 0),
+                        "slow": int(g.get("slow") or 0),
                     } for gid, g in self.groups.items()},
                 "reads": {k: dict(v) for k, v in self.reads.items()},
                 "pins": {k: dict(v) for k, v in self.pins.items()},
-                "burn": {k: dict(v) for k, v in self._burn.items()},
-                "known": {k: dict(v) for k, v in self.known.items()},  # R25B：已知用户
-                "blocks": {str(k): sorted(v) for k, v in self.blocks.items()},  # R50
+                "burn": {k: dict(v, pend=sorted(v.get("pend") or []))
+                         for k, v in self._burn.items()},
+                "known": {k: copy.deepcopy(v) for k, v in self.known.items()},
+                "retired": {str(k): {"nick": str(v["nick"]),
+                                      "retired_at": v["retired_at"],
+                                      "operation_id": str(v["operation_id"])}
+                            for k, v in self.retired.items()},
+                "blocks": {str(k): sorted(v) for k, v in self.blocks.items()},
                 "polls": {k: dict(v, votes=dict(v.get("votes") or {}),
                                   options=list(v.get("options") or []))
-                          for k, v in self._polls.items()},   # R26A：投票权威状态
-                "drafts": {f"{u}|{k}": dict(d) for (u, k), d in self._drafts.items()},  # R29B
+                          for k, v in self._polls.items()},
+                "drafts": {f"{u}|{k}": dict(d)
+                            for (u, k), d in self._drafts.items()},
                 "scheds": {str(u): {rid: dict(r) for rid, r in mine.items()}
-                           for u, mine in self.scheds.items()},  # R51：定时消息队列
+                           for u, mine in self.scheds.items()},
                 "custom_stickers": {k: dict(v) for k, v in self.custom_stickers.items()},
-                "sticker_pack_meta": {k: dict(v) for k, v in self.pack_meta.items()},  # R64
-                "group_files": {str(gid): [dict(r) for r in records]          # 群文件元数据
+                "sticker_pack_meta": {k: dict(v) for k, v in self.pack_meta.items()},
+                "group_files": {str(gid): [dict(r) for r in records]
                                 for gid, records in self.group_files.items()},
                 "gf_seq": self._gf_seq,
-                "tasks": {str(gid): [dict(t, done=dict(t.get("done") or {}))  # R69B6/B7
+                "tasks": {str(gid): [dict(t, done=dict(t.get("done") or {}))
                                      for t in recs]
                           for gid, recs in self.tasks.items()},
                 "task_seq": self._task_seq,
                 "fish_board": {str(g): {str(u): int(v) for u, v in sc.items()}
-                               for g, sc in self._fish.items()},   # R70H 摸鱼排行榜
+                               for g, sc in self._fish.items()},
                 "moments": {pid: copy.deepcopy(post)
-                            for pid, post in self.moments.items()},   # 朋友圈元数据
+                            for pid, post in self.moments.items()},
                 "moment_covers": {str(u): dict(v) for u, v in self.moment_covers.items()},
                 "pid_seq": self._pid_seq,
-            }
+            })
+
+    @staticmethod
+    def _restore_identity_int(value) -> int:
+        """把快照中的 UID/GID 身份值严格规范化为正整数。
+
+        JSON object key 只能是字符串，因此兼容 ``"12"``；布尔值、浮点数、
+        空白/符号形式及其它类型都拒绝，避免把非法身份带入授权判断。
+        """
+        if isinstance(value, bool):
+            raise ValueError("bool is not an identity integer")
+        if isinstance(value, int):
+            result = value
+        elif (isinstance(value, str) and value
+              and all("0" <= ch <= "9" for ch in value)):
+            result = int(value)
+        else:
+            raise ValueError("invalid identity integer")
+        if result <= 0:
+            raise ValueError("identity integer must be positive")
+        return result
+
+    @staticmethod
+    def _restore_uid_map(raw: dict, value_kind: str) -> dict:
+        """严格恢复 UID 键映射；归一化冲突直接拒绝整个映射。"""
+        if not isinstance(raw, dict):
+            raise ValueError("identity map must be an object")
+        out = {}
+        for raw_uid, raw_value in raw.items():
+            uid = Hub._restore_identity_int(raw_uid)
+            if uid in out:
+                raise ValueError("identity key normalization conflict")
+            if value_kind == "nick":
+                if not isinstance(raw_value, str):
+                    raise ValueError("member nick must be a string")
+                value = raw_value
+            elif value_kind == "mute":
+                try:
+                    finite = math.isfinite(float(raw_value))
+                except (TypeError, OverflowError, ValueError):
+                    finite = False
+                if (isinstance(raw_value, bool)
+                        or not isinstance(raw_value, (int, float))
+                        or not finite):
+                    raise ValueError("mute deadline must be finite number")
+                value = raw_value
+            else:
+                raise ValueError("unknown identity map value kind")
+            out[uid] = value
+        return out
+
+    @staticmethod
+    def _restore_uid_list(raw) -> set:
+        """严格恢复 admins 等 UID 集合；重复归一化键按非法处理。"""
+        if not isinstance(raw, list):
+            raise ValueError("identity list must be an array")
+        out = set()
+        for raw_uid in raw:
+            uid = Hub._restore_identity_int(raw_uid)
+            if uid in out:
+                raise ValueError("identity list normalization conflict")
+            out.add(uid)
+        return out
+
+    @staticmethod
+    def _restore_read_seq(value) -> int:
+        """恢复 reads 游标；布尔/浮点/负数都不是有效序号。"""
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise ValueError("invalid read sequence")
+        return value
+
+    def _restore_group(self, raw_gid, raw_group: dict) -> tuple[int, dict]:
+        """恢复一个群；身份/授权结构任一异常即拒绝整个群。"""
+        gid = self._restore_identity_int(raw_gid)
+        if not isinstance(raw_group, dict):
+            raise ValueError("group must be an object")
+        if "gid" in raw_group:
+            embedded_gid = self._restore_identity_int(raw_group["gid"])
+            if embedded_gid != gid:
+                raise ValueError("group gid mismatch")
+        if "owner" not in raw_group:
+            raise ValueError("group owner missing")
+        owner = self._restore_identity_int(raw_group["owner"])
+        if "members" not in raw_group:
+            raise ValueError("group members missing")
+        members = self._restore_uid_map(raw_group["members"], "nick")
+        admins = self._restore_uid_list(raw_group.get("admins", []))
+        mutes = self._restore_uid_map(raw_group.get("mutes", {}), "mute")
+        if owner not in members or not admins.issubset(members):
+            raise ValueError("group role is not a member")
+        if not set(mutes).issubset(members):
+            raise ValueError("group mute target is not a member")
+        group = dict(raw_group)
+        group["gid"] = gid
+        group["owner"] = owner
+        group["admins"] = admins
+        group["members"] = members
+        group["mutes"] = mutes
+        group.setdefault("announce", "")
+        group.setdefault("announce_mode", 0)   # C9①：仅公告说话模式（旧数据缺省关闭）
+        group.setdefault("invite", "")         # R28：邀请码（旧数据缺省）
+        group.setdefault("kind", "")           # R26B：频道标记（旧数据缺省普通群）
+        group.setdefault("public", 0)           # R54：公开标记（旧数据缺省私有）
+        group.setdefault("slow", 0)             # R70D：群慢速档位（旧数据缺省关闭）
+        return gid, group
 
     def _restore(self, state: dict) -> None:
-        """从快照恢复内存态；逐项容错，坏数据跳过该项不崩 Hub。"""
+        """从快照恢复内存态；身份映射严格规范化，坏记录 fail closed。"""
         if not isinstance(state, dict):
             return
+        self._retired_schema_invalid = False
         try:
             b = state.get("bus") or {}
             self.bus._seq = int(b.get("seq", 0))
@@ -660,33 +951,68 @@ class Hub:
         except Exception:
             pass
         try:
-            for gid, g in (state.get("groups") or {}).items():
-                grp = dict(g)
-                grp["gid"] = int(gid)
-                grp["admins"] = set(grp.get("admins") or [])
-                grp["members"] = dict(grp.get("members") or {})
-                grp.setdefault("mutes", {})
-                grp.setdefault("announce", "")
-                grp.setdefault("announce_mode", 0)   # C9①：仅公告说话模式（旧数据缺省关闭）
-                grp.setdefault("invite", "")           # R28：邀请码（旧数据缺省）
-                grp.setdefault("kind", "")           # R26B：频道标记（旧数据缺省普通群）
-                grp.setdefault("public", 0)          # R54：公开标记（旧数据缺省私有）
-                grp.setdefault("slow", 0)            # R70D：群慢速档位（旧数据缺省关闭）
-                self.groups[int(gid)] = grp
+            raw_groups = state.get("groups") or {}
+            if not isinstance(raw_groups, dict):
+                raise ValueError("groups must be an object")
+            # 先记录每个归一化 GID 的唯一来源；"1"/"01" 等冲突会让该
+            # GID 的所有候选一起失效，不能由字典遍历顺序决定授权结果。
+            grouped = {}
+            conflicted = set()
+            for raw_gid, raw_group in raw_groups.items():
+                try:
+                    gid = self._restore_identity_int(raw_gid)
+                except (TypeError, ValueError):
+                    continue
+                if gid in grouped:
+                    grouped[gid] = None
+                    conflicted.add(gid)
+                    continue
+                try:
+                    parsed_gid, parsed_group = self._restore_group(
+                        raw_gid, raw_group)
+                    grouped[parsed_gid] = parsed_group
+                except (TypeError, ValueError):
+                    grouped[gid] = None
+            self.groups = {gid: group for gid, group in grouped.items()
+                           if gid not in conflicted and group is not None}
         except Exception:
-            pass
+            self.groups = {}
         try:
-            self.reads = {str(k): dict(v) for k, v
-                          in (state.get("reads") or {}).items()}
+            raw_reads = state.get("reads") or {}
+            if not isinstance(raw_reads, dict):
+                raise ValueError("reads must be an object")
+            restored_reads = {}
+            for key, raw_map in raw_reads.items():
+                if not isinstance(key, str) or not isinstance(raw_map, dict):
+                    continue
+                try:
+                    read_map = {}
+                    for raw_uid, raw_seq in raw_map.items():
+                        uid = self._restore_identity_int(raw_uid)
+                        if uid in read_map:
+                            raise ValueError("read UID normalization conflict")
+                        read_map[uid] = self._restore_read_seq(raw_seq)
+                except (TypeError, ValueError):
+                    # 一个会话的 UID map 有坏项时整份会话 reads 拒绝，不能
+                    # 选择更大的游标或留下部分状态造成误读/误焚。
+                    continue
+                restored_reads[key] = read_map
+            self.reads = restored_reads
         except Exception:
-            pass
+            self.reads = {}
         try:
             self.pins = dict(state.get("pins") or {})
         except Exception:
             pass
         try:
-            self._burn = {int(k): dict(v) for k, v
-                          in (state.get("burn") or {}).items()}
+            self._burn = {}
+            for k, v in (state.get("burn") or {}).items():
+                if not isinstance(v, dict):
+                    continue
+                rec = dict(v)
+                pend = rec.get("pend") or []
+                rec["pend"] = set(pend) if isinstance(pend, (list, tuple, set)) else set()
+                self._burn[int(k)] = rec
         except Exception:
             pass
         try:
@@ -694,6 +1020,62 @@ class Hub:
                           in (state.get("known") or {}).items()}
         except Exception:
             pass
+        # CC-02A-RETIRE-CORE M1：新字段严格恢复。旧快照没有该字段时保持
+        # “未知”，不能从 known/nick_to_uid 缺失推断退役；新字段非法则本进程
+        # 进入 fail-closed 身份状态，避免宽松恢复后重新授权。
+        try:
+            raw_retired = state.get("retired", {})
+            if raw_retired is None:
+                raw_retired = {}
+            if not isinstance(raw_retired, dict):
+                raise ValueError("retired must be an object")
+            restored_retired = {}
+            for raw_uid, raw_rec in raw_retired.items():
+                uid = self._restore_identity_int(raw_uid)
+                if uid in restored_retired or uid in _bots.BOT_BY_UID:
+                    raise ValueError("retired UID collision")
+                if not isinstance(raw_rec, dict):
+                    raise ValueError("retired record must be an object")
+                if set(raw_rec) != {"nick", "retired_at", "operation_id"}:
+                    raise ValueError("retired record fields are not minimal")
+                nick = raw_rec.get("nick")
+                retired_at = raw_rec.get("retired_at")
+                operation_id = raw_rec.get("operation_id")
+                if (not isinstance(nick, str) or not nick.strip()
+                        or not isinstance(operation_id, str)
+                        or not operation_id.strip()
+                        or isinstance(retired_at, bool)
+                        or not isinstance(retired_at, (int, float))):
+                    raise ValueError("invalid retired record")
+                try:
+                    if not math.isfinite(float(retired_at)):
+                        raise ValueError("retired_at is not finite")
+                except (TypeError, ValueError, OverflowError):
+                    raise ValueError("invalid retired_at")
+                mapped = self.nick_to_uid.get(nick)
+                if mapped != uid or uid in self.known:
+                    raise ValueError("retired identity conflicts with active state")
+                if any(name != nick and mapped_uid == uid
+                       for name, mapped_uid in self.nick_to_uid.items()):
+                    raise ValueError("retired UID has conflicting nick mapping")
+                restored_retired[uid] = {
+                    "nick": nick,
+                    "retired_at": retired_at,
+                    "operation_id": operation_id,
+                }
+            self.retired = restored_retired
+            self._retire_ops = {
+                uid: {"status": "confirmed", "operation_id": rec["operation_id"],
+                      "target_uid": uid, "target_nick": rec["nick"],
+                      "origin": None,
+                      "content_sha256": None, "content_length": None,
+                      "retryable": False}
+                for uid, rec in restored_retired.items()
+            }
+        except Exception:
+            self.retired = {}
+            self._retire_ops = {}
+            self._retired_schema_invalid = True
         try:
             # R50：屏蔽名单恢复（值为 uid 列表）
             self.blocks = {}
@@ -920,71 +1302,743 @@ class Hub:
 
     @staticmethod
     def _state_fingerprint(state: dict) -> str:
-        """状态内容指纹（md5(规范化 JSON)）：替代常驻快照做"无变更"判定。
-        state 由 _snapshot_state() 产出，已保证可 JSON 序列化（default=str 兜底）。"""
-        try:
-            blob = json.dumps(state, sort_keys=True, ensure_ascii=False,
-                              default=str)
-        except (TypeError, ValueError):
-            blob = repr(state)
-        return hashlib.md5(blob.encode("utf-8", "replace")).hexdigest()
+        """状态内容指纹取严格 JSON bytes SHA-256，替代常驻快照做无变更判定。
+        state 由 _snapshot_state() 产出；严格编码失败直接传播。"""
+        encoded = server_store_mod.encode_state(state)
+        return encoded.sha256
 
-    def _persist(self, force: bool = False) -> None:
-        """节流写盘：窗口内合并突发变更，dump+写盘交给后台 worker（latest-wins）。
-        无 store 时为空操作；force=True 恒写（关键变更同步落盘，返回即已持久）。
+    def _persist_request(self) -> int:
+        with self._persist_lock:
+            self._persist_request_seq += 1
+            return self._persist_request_seq
 
-        R65：以内容指纹（md5(json)）判定无变更——不再常驻第二份全量快照、
-        不做递归 dict 深比较。指纹仅在真正 save 成功后推进（失败留旧值，供 flush 兜底）。"""
-        if self.store is None:
-            return
-        if not force:
-            now = time.time()
-            if now - self._persist_last < self._persist_interval:
-                self._persist_dirty = True        # 仍在窗口内，稍后 sweeper 兜底
-                return
-        state = self._snapshot_state()            # 昂贵的全量私有快照——锁外构建
-        fp = self._state_fingerprint(state)
-        # 无新变更：指纹与最近一次"成功落盘"一致 → 不重建写盘（协调重复调用场景）
-        if not force and self._persist_fp is not None and fp == self._persist_fp:
-            # R66：推进节流时钟，否则下一次 _persist() 会再次重建全量快照
-            # （如 _on_group_invite_get 等"无实际变更也调用"的路径）
-            self._persist_last = time.time()
-            self._persist_dirty = False
-            return
-        if force:
-            # 关键变更（清空/解散/删号/Tombstone 等）：同步落盘，调用返回即已持久
-            self._persist_sync(state, fp)
-            return
-        self._persist_last = time.time()
-        self._persist_dirty = False
+    def _persist_queue_trigger(self, fp: str | None = None) -> None:
         self._ensure_persist_worker()
         with self._persist_lock:
-            self._persist_slot = state            # 覆盖旧槽，latest-wins
-            self._persist_slot_fp = fp
+            self._persist_slot = None
+            self._persist_slot_fp = None
             self._persist_pending = True
             self._persist_wake.set()
 
-    def _persist_sync(self, state: dict, fp: str) -> None:
-        """同步落盘（force 关键变更 / 关停兜底）：先丢弃后台未写的旧槽，
-        避免 worker 稍后用旧快照覆盖本次写（latest-wins 不被回退）。
-        调用方须在锁外（避免锁序自锁风险）。"""
+    @staticmethod
+    def _normalize_save_result(result, encoded):
+        """把 typed seam 或历史 bool hook 统一成显式 SaveResult。"""
+        if isinstance(result, server_store_mod.SaveResult):
+            return result
+        length = encoded.length
+        digest = encoded.sha256
+        if type(result) is bool:
+            return server_store_mod.SaveResult(
+                "committed" if result else "not_committed",
+                "compat_save", None if result else "save_failed",
+                not result, length, digest)
+        return server_store_mod.SaveResult(
+            "not_committed", "compat_save", "invalid_save_result",
+            False, length, digest)
+
+    def _bound_store_save(self, kind, _state):
+        """活动 Hub 的兼容 Store.save/save_bytes 入口。
+
+        外部旧调用只触发同一 writer 的 fresh capture；传入的旧 snapshot 或
+        bytes 不会成为第二条写入路径。``save_bytes`` 调用返回本次 typed
+        result，旧 ``save`` 调用仍返回 bool。
+        """
+        if self.store is None:
+            if kind == "bytes":
+                return server_store_mod.SaveResult(
+                    "not_committed", "hub", "store_disabled", False, 0, None)
+            return False
+        self._persist_request()
+        before_result = self._persist_last_result
+        with self._persist_writer_lock:
+            with self._persist_lock:
+                capture_seq = self._persist_request_seq
+            try:
+                ok = self._commit_current_snapshot(capture_seq, force=True)
+            except Exception as exc:
+                ok = False
+                self._persist_inflight = None
+                with self._persist_lock:
+                    self._persist_dirty = True
+                self._persist_last_result = server_store_mod.SaveResult(
+                    "not_committed", "capture", type(exc).__name__,
+                    False, 0, None)
+        if kind == "bytes":
+            result = self._persist_last_result
+            if (not isinstance(result, server_store_mod.SaveResult)
+                    or result is before_result
+                    or (ok and result.effect != "committed")
+                    or (not ok and result.effect == "committed")):
+                receipt = self._persist_receipt
+                if ok:
+                    result = server_store_mod.SaveResult(
+                        "committed", "hub", None, False,
+                        receipt.length if isinstance(receipt, CommitReceipt) else 0,
+                        receipt.sha256 if isinstance(receipt, CommitReceipt) else None)
+                else:
+                    result = server_store_mod.SaveResult(
+                        "uncertain" if self._persist_unresolved else "not_committed",
+                        "hub", "unknown_pending" if self._persist_unresolved
+                        else "commit_not_confirmed", False, 0, None)
+                self._persist_last_result = result
+            return server_store_mod.SaveResult(
+                result.effect, result.stage, result.error_code,
+                result.retryable, result.length, result.sha256)
+        return bool(ok)
+
+    def _store_commit(self, encoded):
+        """通过现有 Store private bytes seam 绑定唯一 writer。"""
+        try:
+            permit = getattr(self.store, "_hub_write_permit", None)
+            save_fn = getattr(self.store, "save")
+            native_save = (getattr(save_fn, "__func__", None)
+                           is server_store_mod.ServerStore.save)
+            save_generation = getattr(self.store, "_save_generation", None)
+            if permit is None:
+                result = save_fn(encoded)
+            else:
+                with permit():
+                    result = save_fn(encoded)
+        except Exception:
+            return server_store_mod.SaveResult(
+                "uncertain", "compat_save", "save_exception",
+                False, encoded.length, encoded.sha256)
+        if (native_save
+                and save_generation is not None
+                and getattr(self.store, "_save_generation", None) != save_generation
+                and isinstance(getattr(self.store, "_last_save_result", None),
+                               server_store_mod.SaveResult)):
+            return self.store._last_save_result
+        return self._normalize_save_result(result, encoded)
+
+    @staticmethod
+    def _uid_key_present(mapping, uid: int) -> bool:
+        if not isinstance(mapping, dict):
+            return False
+        return any(key == uid or key == str(uid) for key in mapping)
+
+    @staticmethod
+    def _uid_value(value, uid: int) -> bool:
+        return value == uid or value == str(uid)
+
+    def _retire_candidates_for_state(self, state: dict) -> list[dict]:
+        """只从 captured state 取得 operation 来源，live state 仅用于选 op。"""
+        with self.lock:
+            pending = [
+                (int(uid), dict(op))
+                for uid, op in self._retire_ops.items()
+                if isinstance(op, dict)
+                and op.get("status") in ("pending", "failed")
+            ]
+        records = state.get("retired") if isinstance(state, dict) else None
+        records = records if isinstance(records, dict) else {}
+        out = []
+        for uid, op in pending:
+            record = records.get(str(uid), records.get(uid))
+            out.append({
+                "uid": uid,
+                "operation_id": op.get("operation_id"),
+                "target_nick": op.get("target_nick"),
+                "record": record,
+            })
+        return out
+
+    def _capture_persist_state(self) -> tuple[dict, list[dict]]:
+        """Capture state and its op metadata under one Hub→bus boundary."""
+        with self.lock:
+            state = self._snapshot_state()
+            candidates = self._retire_candidates_for_state(state)
+            return state, candidates
+
+    def _retirement_retry_waiting(self) -> bool:
+        """unknown 退役状态在对账前暂停全部 writer。"""
+        with self.lock:
+            for uid, op in self._retire_ops.items():
+                if not isinstance(op, dict) or op.get("status") != "unknown":
+                    continue
+                record = self.retired.get(uid)
+                if (isinstance(record, dict)
+                        and record.get("operation_id") == op.get("operation_id")):
+                    return True
+        return False
+
+    def _failed_retry_preflight(self, candidates: list[dict]) -> bool:
+        """失败 op 仅在权威盘面可证为本进程已知合法前序时重试。"""
+        failed = []
+        with self.lock:
+            for candidate in candidates:
+                op = self._retire_ops.get(candidate.get("uid"))
+                if isinstance(op, dict) and op.get("status") == "failed":
+                    failed.append(candidate)
+        if not failed:
+            return True
+        try:
+            read = self.store.read_bytes_result()
+            if getattr(read, "status", None) != "bytes":
+                return False
+            payload = getattr(read, "payload", None)
+            actual_sha = getattr(read, "sha256", None)
+            if not isinstance(payload, bytes) or actual_sha not in self._persist_known_shas:
+                return False
+            state = self._strict_state_from_bytes(payload)
+            if not self._verify_reconcile_state(state):
+                return False
+        except (OSError, UnicodeError, TypeError, ValueError, OverflowError):
+            return False
+        return all(self._predecessor_status(state, candidate) == "predecessor"
+                   for candidate in failed)
+
+    def _validate_retirement_candidate(self, state: dict,
+                                       candidate: dict) -> tuple[bool, str | None]:
+        """验证 captured state 的有限 CORE 清理，不读取 live 状态。"""
+        uid = candidate.get("uid")
+        operation_id = candidate.get("operation_id")
+        nick = candidate.get("target_nick")
+        records = state.get("retired") if isinstance(state, dict) else None
+        record = records.get(str(uid), records.get(uid)) if isinstance(records, dict) else None
+        if (not isinstance(record, dict)
+                or set(record) != {"nick", "retired_at", "operation_id"}
+                or record.get("nick") != nick
+                or record.get("operation_id") != operation_id):
+            return False, "retirement_record"
+        if isinstance(records, dict):
+            for raw_uid, other in records.items():
+                if (not isinstance(other, dict)
+                        or (other.get("nick") == nick
+                            and not self._uid_value(raw_uid, uid))):
+                    return False, "retirement_conflict"
+        nick_map = state.get("nick_to_uid")
+        if not isinstance(nick_map, dict) or not self._uid_value(nick_map.get(nick), uid):
+            return False, "nick_mapping"
+        for name, mapped in nick_map.items():
+            if name != nick and self._uid_value(mapped, uid):
+                return False, "nick_mapping_conflict"
+
+        known = state.get("known") or {}
+        if self._uid_key_present(known, uid):
+            return False, "known_residual"
+        drafts = state.get("drafts") or {}
+        if isinstance(drafts, dict) and any(
+                isinstance(key, str) and key.startswith(f"{uid}|")
+                for key in drafts):
+            return False, "draft_residual"
+        scheds = state.get("scheds") or {}
+        if self._uid_key_present(scheds, uid):
+            return False, "sched_residual"
+        blocks = state.get("blocks") or {}
+        if self._uid_key_present(blocks, uid):
+            return False, "block_residual"
+        reads = state.get("reads") or {}
+        if isinstance(reads, dict):
+            for readers in reads.values():
+                if self._uid_key_present(readers, uid):
+                    return False, "read_residual"
+
+        groups = state.get("groups") or {}
+        if isinstance(groups, dict):
+            for group in groups.values():
+                if not isinstance(group, dict):
+                    return False, "group_invalid"
+                if self._uid_value(group.get("owner"), uid):
+                    return False, "group_owner_residual"
+                admins = group.get("admins") or []
+                if uid in admins or str(uid) in admins:
+                    return False, "group_admin_residual"
+                if self._uid_key_present(group.get("members"), uid):
+                    return False, "group_member_residual"
+                if self._uid_key_present(group.get("mutes"), uid):
+                    return False, "group_mute_residual"
+
+        bus = state.get("bus") or {}
+        channels = bus.get("channels") if isinstance(bus, dict) else {}
+        if isinstance(channels, dict):
+            for messages in channels.values():
+                for message in messages or ():
+                    if isinstance(message, dict) and self._uid_value(message.get("uid"), uid):
+                        return False, "bus_message_residual"
+        burn = state.get("burn") or {}
+        if isinstance(burn, dict):
+            for burn_record in burn.values():
+                if isinstance(burn_record, dict) and self._uid_value(burn_record.get("uid"), uid):
+                    return False, "burn_residual"
+        return True, None
+
+    @staticmethod
+    def _strict_state_from_bytes(payload: bytes) -> dict:
+        """严格解析权威 bytes；重复键和 NaN 常量均拒绝。"""
+        def reject_constant(value):
+            raise ValueError(f"invalid JSON constant: {value}")
+
+        def reject_duplicate(pairs):
+            out = {}
+            for key, value in pairs:
+                if key in out:
+                    raise ValueError("duplicate JSON object key")
+                out[key] = value
+            return out
+
+        text = payload.decode("utf-8")
+        value = json.loads(text, parse_constant=reject_constant,
+                           object_pairs_hook=reject_duplicate)
+        if not isinstance(value, dict):
+            raise ValueError("state root must be object")
+        # Parsed JSON escapes can contain a Python surrogate even though the
+        # raw file bytes were valid UTF-8.  Reject that value without
+        # re-encoding it or replacing the actual file digest.
+        server_store_mod._validate_json_value(value, set())
+        return value
+
+    def _verify_reconcile_state(self, state: dict) -> bool:
+        """校验对账所需的现有身份/核心容器结构，宁可保守 unknown。"""
+        dict_fields = (
+            "nick_to_uid", "known", "retired", "groups", "reads", "pins",
+            "burn", "blocks", "polls", "drafts", "scheds",
+            "custom_stickers", "sticker_pack_meta", "group_files", "tasks",
+            "fish_board", "moments", "moment_covers",
+        )
+        for field in dict_fields:
+            if field in state and not isinstance(state[field], dict):
+                return False
+        nick_map = state.get("nick_to_uid") or {}
+        for name, uid in nick_map.items():
+            if not isinstance(name, str):
+                return False
+            try:
+                self._restore_identity_int(uid)
+            except (TypeError, ValueError):
+                return False
+        known = state.get("known") or {}
+        for raw_uid, value in known.items():
+            try:
+                self._restore_identity_int(raw_uid)
+            except (TypeError, ValueError):
+                return False
+            if not isinstance(value, dict):
+                return False
+        retired = state.get("retired") or {}
+        for raw_uid, record in retired.items():
+            try:
+                retired_uid = self._restore_identity_int(raw_uid)
+            except (TypeError, ValueError):
+                return False
+            if retired_uid in _bots.BOT_BY_UID:
+                return False
+            if (not isinstance(record, dict)
+                    or set(record) != {"nick", "retired_at", "operation_id"}
+                    or not isinstance(record.get("nick"), str)
+                    or not record.get("nick", "").strip()
+                    or not isinstance(record.get("operation_id"), str)
+                    or not record.get("operation_id", "").strip()
+                    or isinstance(record.get("retired_at"), bool)
+                    or not isinstance(record.get("retired_at"), (int, float))):
+                return False
+            try:
+                if not math.isfinite(float(record.get("retired_at"))):
+                    return False
+            except (TypeError, ValueError, OverflowError):
+                return False
+            if (not self._uid_value(nick_map.get(record.get("nick")), retired_uid)
+                    or self._uid_key_present(known, retired_uid)):
+                return False
+        groups = state.get("groups") or {}
+        for raw_gid, group in groups.items():
+            try:
+                self._restore_group(raw_gid, group)
+            except (TypeError, ValueError, KeyError):
+                return False
+        reads = state.get("reads") or {}
+        for readers in reads.values():
+            if not isinstance(readers, dict):
+                return False
+            for raw_uid, seq in readers.items():
+                try:
+                    self._restore_identity_int(raw_uid)
+                    self._restore_read_seq(seq)
+                except (TypeError, ValueError):
+                    return False
+        blocks = state.get("blocks") or {}
+        for raw_uid, targets in blocks.items():
+            try:
+                self._restore_identity_int(raw_uid)
+            except (TypeError, ValueError):
+                return False
+            if not isinstance(targets, list):
+                return False
+            try:
+                for target in targets:
+                    self._restore_identity_int(target)
+            except (TypeError, ValueError):
+                return False
+        bus = state.get("bus") or {}
+        if not isinstance(bus, dict):
+            return False
+        channels = bus.get("channels", {})
+        if not isinstance(channels, dict):
+            return False
+        if any(not isinstance(messages, list) for messages in channels.values()):
+            return False
+        if any(not isinstance(message, dict)
+               for messages in channels.values() for message in messages):
+            return False
+        burn = state.get("burn") or {}
+        if any(not isinstance(record, dict) for record in burn.values()):
+            return False
+        return True
+
+    def _predecessor_status(self, state: dict, candidate: dict) -> str:
+        """区分可解释的无 op 前序与同 op/异 op 冲突。"""
+        uid = candidate.get("uid")
+        nick = candidate.get("target_nick")
+        op_id = candidate.get("operation_id")
+        records = state.get("retired") or {}
+        record = records.get(str(uid), records.get(uid)) if isinstance(records, dict) else None
+        if isinstance(record, dict):
+            if (record.get("operation_id") == op_id
+                    and record.get("nick") == nick):
+                return "same_op"
+            return "conflict"
+        if isinstance(records, dict):
+            for raw_uid, value in records.items():
+                if isinstance(value, dict) and value.get("nick") == nick:
+                    return "conflict"
+                if self._uid_value(raw_uid, uid):
+                    return "conflict"
+        nick_map = state.get("nick_to_uid") or {}
+        if not self._uid_value(nick_map.get(nick), uid):
+            return "conflict"
+        for name, mapped in nick_map.items():
+            if name != nick and self._uid_value(mapped, uid):
+                return "conflict"
+        return "predecessor"
+
+    def _update_retirement_result(self, candidate: dict, *, status: str,
+                                  origin: str | None = None,
+                                  sha256: str | None = None,
+                                  length: int | None = None,
+                                  failed_stage: str | None = None,
+                                  error_code: str | None = None,
+                                  retryable: bool = False) -> None:
+        uid = candidate.get("uid")
+        operation_id = candidate.get("operation_id")
+        with self.lock:
+            op = self._retire_ops.get(uid)
+            if not isinstance(op, dict) or op.get("operation_id") != operation_id:
+                return
+            if op.get("status") == "confirmed" and status != "confirmed":
+                return
+            op.update({
+                "status": status,
+                "target_uid": uid,
+                "target_nick": candidate.get("target_nick"),
+                "origin": origin if status == "confirmed" else None,
+                "content_sha256": sha256 if status == "confirmed" else None,
+                "content_length": length if status == "confirmed" else None,
+                "failed_stage": failed_stage,
+                "error_code": error_code,
+                "retryable": bool(retryable) if status == "failed" else False,
+            })
+
+    def _ack_commit(self, state: dict, encoded, result,
+                    capture_seq: int,
+                    captured_candidates: list[dict] | None = None) -> bool:
+        """统一处理 writer/flush/worker receipt，confirmed 单调。"""
+        candidates = (list(captured_candidates)
+                      if captured_candidates is not None
+                      else self._retire_candidates_for_state(state))
+        if result.effect == "committed":
+            for candidate in candidates:
+                valid, reason = self._validate_retirement_candidate(state, candidate)
+                if not valid:
+                    self._update_retirement_result(
+                        candidate, status="failed", failed_stage="verify",
+                        error_code=reason or "retirement_verify_failed",
+                        retryable=False)
+                else:
+                    self._update_retirement_result(
+                        candidate, status="confirmed", origin="written",
+                        sha256=encoded.sha256, length=encoded.length)
+                    self._persist_success_evidence.setdefault(
+                        candidate["operation_id"], set()).add(encoded.sha256)
+        elif result.effect == "uncertain":
+            for candidate in candidates:
+                self._update_retirement_result(
+                    candidate, status="unknown", failed_stage=result.stage,
+                    error_code=result.error_code, retryable=False)
+            self._persist_unresolved = {
+                "sha256": encoded.sha256,
+                "length": encoded.length,
+                "capture_request_seq": capture_seq,
+                "candidates": [dict(candidate) for candidate in candidates],
+            }
+        else:
+            for candidate in candidates:
+                self._update_retirement_result(
+                    candidate, status="failed", failed_stage=result.stage,
+                    error_code=result.error_code,
+                    retryable=(result.retryable is True))
+        self._persist_last_result = result
+        return result.effect == "committed"
+
+    def _reconcile_persist_unknown(self) -> str:
+        """对账未决候选；返回 confirmed/failed/blocked/none。"""
+        unresolved = self._persist_unresolved
+        if not unresolved:
+            return "none"
+        try:
+            read = self.store.read_bytes_result()
+        except Exception:
+            return "blocked"
+        if getattr(read, "status", None) != "bytes":
+            return "blocked"
+        payload = getattr(read, "payload", None)
+        if not isinstance(payload, bytes):
+            return "blocked"
+        try:
+            state = self._strict_state_from_bytes(payload)
+        except (UnicodeError, TypeError, ValueError, OverflowError, RecursionError):
+            return "blocked"
+        if not self._verify_reconcile_state(state):
+            return "blocked"
+        candidates = unresolved.get("candidates") or []
+        actual_sha = getattr(read, "sha256", None)
+        if not candidates:
+            if actual_sha == unresolved.get("sha256"):
+                length = getattr(read, "length", len(payload))
+                self._persist_receipt = CommitReceipt(
+                    origin="reconciled_current_json", sha256=actual_sha,
+                    length=length,
+                    capture_request_seq=unresolved.get("capture_request_seq"))
+                with self._persist_lock:
+                    self._persist_fp = actual_sha
+                self._persist_known_shas.add(actual_sha)
+                self._persist_unresolved = None
+                self._persist_last_result = server_store_mod.SaveResult(
+                    "committed", "reconcile", None, False, length, actual_sha)
+                return "confirmed"
+            if actual_sha in self._persist_known_shas:
+                self._persist_unresolved = None
+                self._persist_last_result = server_store_mod.SaveResult(
+                    "not_committed", "reconcile", "known_predecessor",
+                    True, getattr(read, "length", len(payload)), actual_sha)
+                return "failed"
+            return "blocked"
+        validity = [
+            (candidate, self._validate_retirement_candidate(state, candidate))
+            for candidate in candidates
+        ]
+        length = getattr(read, "length", len(payload))
+        operation_ids = tuple(
+            candidate.get("operation_id") for candidate, _ in validity
+            if isinstance(candidate.get("operation_id"), str))
+        all_valid = all(valid for _candidate, (valid, _reason) in validity)
+        current_candidate = (all_valid
+                             and actual_sha == unresolved.get("sha256"))
+        known_successor = (all_valid and all(
+            actual_sha in self._persist_success_evidence.get(
+                candidate.get("operation_id"), set())
+            for candidate, _ in validity))
+        if current_candidate or known_successor:
+            for candidate, _ in validity:
+                self._update_retirement_result(
+                    candidate, status="confirmed", origin="reconciled_current_json",
+                    sha256=actual_sha, length=length)
+            self._persist_receipt = CommitReceipt(
+                origin="reconciled_current_json", sha256=actual_sha,
+                length=length,
+                capture_request_seq=unresolved.get("capture_request_seq"),
+                operation_ids=operation_ids)
+            with self._persist_lock:
+                self._persist_fp = actual_sha
+            self._persist_known_shas.add(actual_sha)
+            self._persist_unresolved = None
+            self._persist_last_result = server_store_mod.SaveResult(
+                "committed", "reconcile", None, False, length, actual_sha)
+            return "confirmed"
+        known_predecessor = (actual_sha in self._persist_known_shas and all(
+            self._predecessor_status(state, candidate) == "predecessor"
+            for candidate, _ in validity))
+        if known_predecessor:
+            for candidate, _ in validity:
+                self._update_retirement_result(
+                    candidate, status="failed", failed_stage="reconcile",
+                    error_code="known_predecessor", retryable=True)
+            self._persist_unresolved = None
+            self._persist_last_result = server_store_mod.SaveResult(
+                "not_committed", "reconcile", "known_predecessor",
+                True, length, actual_sha)
+            return "failed"
+        return "blocked"
+
+    def _commit_current_snapshot(self, capture_seq: int,
+                                 *, force: bool = False) -> bool:
+        """writer lock 内 fresh capture → verify/encode → single Store seam。"""
+        unresolved = self._persist_unresolved
+        unresolved_has_retirement = bool(
+            unresolved and unresolved.get("candidates"))
+        reconciled = self._reconcile_persist_unknown()
+        if reconciled == "blocked":
+            with self._persist_lock:
+                self._persist_dirty = True
+            return False
+        if unresolved_has_retirement and reconciled in ("failed", "confirmed"):
+            # A known predecessor makes the old retirement attempt retryable,
+            # but must not let this same ordinary/flush writer publish the
+            # still-live tombstone.  Only the explicit same-op retry may set
+            # it pending again; a confirmed current JSON is already durable.
+            with self._persist_lock:
+                changed = self._persist_request_seq != capture_seq
+                self._persist_dirty = changed or reconciled == "failed"
+            return reconciled == "confirmed"
+        if self._retirement_retry_waiting():
+            with self._persist_lock:
+                self._persist_dirty = True
+            return False
+        state, candidates = self._capture_persist_state()
+        if not self._failed_retry_preflight(candidates):
+            with self._persist_lock:
+                self._persist_dirty = True
+            return False
+        for candidate in candidates:
+            valid, reason = self._validate_retirement_candidate(state, candidate)
+            if not valid:
+                self._persist_last_result = server_store_mod.SaveResult(
+                    "not_committed", "verify", reason or "retirement_verify_failed",
+                    False, 0, None)
+                self._update_retirement_result(
+                    candidate, status="failed", failed_stage="verify",
+                    error_code=reason or "retirement_verify_failed",
+                    retryable=False)
+                with self._persist_lock:
+                    self._persist_dirty = True
+                return False
+        try:
+            encoded = server_store_mod.encode_state(state)
+        except (TypeError, ValueError, OverflowError, UnicodeError, RecursionError) as exc:
+            self._persist_last_result = server_store_mod.SaveResult(
+                "not_committed", "encode", type(exc).__name__,
+                False, 0, None)
+            for candidate in candidates:
+                self._update_retirement_result(
+                    candidate, status="failed", failed_stage="encode",
+                    error_code=type(exc).__name__, retryable=False)
+            with self._persist_lock:
+                self._persist_dirty = True
+            return False
+        with self._persist_lock:
+            known_fp = self._persist_fp
+        if (not force and known_fp is not None
+                and encoded.sha256 == known_fp):
+            with self._persist_lock:
+                changed = self._persist_request_seq != capture_seq
+                self._persist_dirty = changed
+            if changed and not self._persist_closing:
+                self._persist_queue_trigger()
+            return True
+        self._persist_inflight = {
+            "sha256": encoded.sha256,
+            "length": encoded.length,
+            "capture_request_seq": capture_seq,
+            "candidates": [dict(candidate) for candidate in candidates],
+        }
+        result = self._store_commit(encoded)
+        ack_candidates = list(candidates)
+        try:
+            committed = self._ack_commit(
+                state, encoded, result, capture_seq, ack_candidates)
+        except Exception:
+            # The bytes may already have been replaced even when receipt/ack
+            # construction failed.  Preserve the captured candidates as
+            # unknown so the next query can reconcile the authority.
+            for candidate in ack_candidates:
+                self._update_retirement_result(
+                    candidate, status="unknown", failed_stage="ack",
+                    error_code="ack_exception", retryable=False)
+            self._persist_unresolved = {
+                "sha256": encoded.sha256,
+                "length": encoded.length,
+                "capture_request_seq": capture_seq,
+                "candidates": [dict(candidate) for candidate in ack_candidates],
+            }
+            self._persist_inflight = None
+            result = server_store_mod.SaveResult(
+                "uncertain", "ack", "ack_exception", False,
+                encoded.length, encoded.sha256)
+            self._persist_last_result = result
+            with self._persist_lock:
+                self._persist_dirty = True
+            return False
+        if committed:
+            self._persist_inflight = None
+            with self._persist_lock:
+                self._persist_fp = encoded.sha256
+                changed = self._persist_request_seq != capture_seq
+                self._persist_dirty = changed
+            self._persist_receipt = CommitReceipt(
+                origin="written", sha256=encoded.sha256,
+                length=encoded.length, capture_request_seq=capture_seq,
+                operation_ids=tuple(candidate.get("operation_id")
+                                    for candidate in candidates
+                                    if isinstance(candidate.get("operation_id"), str)))
+            self._persist_known_shas.add(encoded.sha256)
+            self._persist_unresolved = None
+            if changed and not self._persist_closing:
+                self._persist_queue_trigger()
+            return True
+        self._persist_inflight = None
+        with self._persist_lock:
+            self._persist_dirty = True
+        return False
+
+    def _persist(self, force: bool = False) -> bool | None:
+        """节流写盘：窗口内合并突发变更，dump+写盘交给后台 worker（latest-wins）。
+        无 store 时为空操作；force=True 恒写（关键变更同步落盘，返回即已持久）。
+
+        R65：以严格 bytes 内容指纹判定无变更——不再常驻第二份全量快照、
+        不做递归 dict 深比较。指纹仅在真正 save 成功后推进（失败留旧值，供 flush 兜底）。"""
+        if self.store is None:
+            return None
+        request_seq = self._persist_request()
+        if force:
+            return self._persist_sync(_request_seq=request_seq)
+        now = time.time()
+        if now - self._persist_last < self._persist_interval:
+            with self._persist_lock:
+                self._persist_dirty = True
+            return None
         self._persist_last = time.time()
-        self._persist_dirty = False
+        with self._persist_lock:
+            self._persist_dirty = True
+        self._persist_queue_trigger()
+        return None
+
+    def _persist_sync(self, _old_state=None, _old_fp=None,
+                      _request_seq: int | None = None) -> bool:
+        """同步 actual writer（force/关停兜底）。
+
+        旧参数仅保留兼容调用形状，永不直接写入；拿到唯一 writer lock 后
+        重新捕获当前状态，再进行 dump/flush/fsync/replace。调用方必须在
+        Hub 锁外进入本方法。
+        """
+        self._persist_last = time.time()
+        if _request_seq is None:
+            _request_seq = self._persist_request()
         with self._persist_lock:
             self._persist_slot = None
             self._persist_slot_fp = None
             self._persist_pending = False
-        try:
-            self.store.save(state)
+        with self._persist_writer_lock:
             with self._persist_lock:
-                self._persist_fp = fp
-        except Exception as e:            # 落盘失败：记审计告警 + stderr，避免静默丢数据
+                capture_seq = self._persist_request_seq
             try:
-                self.audit.log(type="persist_error",
-                               reason=f"同步落盘失败: {e!r}")
-            except Exception:
-                pass
-            print(f"[persist] 同步落盘失败: {e!r}", file=sys.stderr)
+                return self._commit_current_snapshot(capture_seq, force=True)
+            except Exception as exc:
+                self._persist_inflight = None
+                with self._persist_lock:
+                    self._persist_dirty = True
+                self._persist_last_result = server_store_mod.SaveResult(
+                    "not_committed", "capture", type(exc).__name__,
+                    False, 0, None)
+                return False
 
     def _ensure_persist_worker(self) -> None:
         """懒启动后台落盘线程（daemon）。"""
@@ -1006,21 +2060,20 @@ class Hub:
             with self._persist_lock:
                 if not self._persist_pending:
                     continue                     # 空唤醒，继续等
-                state = self._persist_slot
-                fp = self._persist_slot_fp
                 self._persist_pending = False
                 self._persist_slot = None
-            try:
-                self.store.save(state)
+            with self._persist_writer_lock:
                 with self._persist_lock:
-                    self._persist_fp = fp
-            except Exception as e:            # 落盘失败：记审计告警，避免静默丢数据
+                    capture_seq = self._persist_request_seq
                 try:
-                    self.audit.log(type="persist_error",
-                                   reason=f"后台落盘失败: {e!r}")
-                except Exception:
-                    pass
-                print(f"[persist] 后台落盘失败: {e!r}", file=sys.stderr)
+                    self._commit_current_snapshot(capture_seq)
+                except Exception as exc:
+                    self._persist_inflight = None
+                    with self._persist_lock:
+                        self._persist_dirty = True
+                    self._persist_last_result = server_store_mod.SaveResult(
+                        "not_committed", "capture", type(exc).__name__,
+                        False, 0, None)
 
     def _persist_flush(self) -> None:
         """强制立即写盘（关停兜底 / sweeper 兜底）：合并为一次同步构建+落盘，
@@ -1029,8 +2082,7 @@ class Hub:
         仅当无 store 时空操作。"""
         if self.store is None:
             return
-        state = self._snapshot_state()          # 锁外构建私有快照
-        self._persist_sync(state, self._state_fingerprint(state))
+        return self._persist_sync()
 
     # ---------- 基础 ----------
     def _snapshot_sessions(self) -> list:
@@ -1164,36 +2216,978 @@ class Hub:
                                  "unread": unread}
         return sorted(convos.values(), key=lambda c: -c["last_ts"])
 
+    # ---------- CC-02C RESOURCE：运行态结果/attempt/文件资格 ----------
+    @staticmethod
+    def _resource_public_result(ctx: dict) -> dict:
+        """只导出有限资源结果字段，不携带正文、路径或凭据。"""
+        keys = ("resource_operation_id", "resource_owner_uid", "kind",
+                "resource_key", "status", "io_effect", "visibility",
+                "stage", "error_code", "length", "sha256", "origin",
+                "retryable")
+        return {k: copy.deepcopy(ctx.get(k)) for k in keys}
+
+    def _resource_visibility_locked(self, ctx: dict) -> str:
+        if (ctx.get("owner_uid") in self.retired
+                and ctx.get("kind") == "cloud"):
+            return "withdrawn"
+        key = (ctx.get("kind"), str(ctx.get("resource_key")))
+        rec = self._resource_keys.get(key) or {}
+        current = rec.get("current_readable_index")
+        if ctx.get("status") == "confirmed":
+            if current is not None and current.get("operation_id") == ctx.get(
+                    "resource_operation_id"):
+                return "available"
+            if current is not None and current.get("operation_id") is not None:
+                return "superseded"
+            if ctx.get("visibility") == "withdrawn":
+                return "withdrawn"
+        if ctx.get("status") == "pending":
+            return "pending"
+        if ctx.get("status") == "unknown":
+            # A pending/unknown replacement does not erase the last confirmed
+            # readable index.  Its own result remains unresolved.
+            return "pending"
+        if rec.get("latest_permit", {}).get("operation_id") not in (
+                None, ctx.get("resource_operation_id")):
+            if current is not None and current.get("operation_id") is not None:
+                return "superseded"
+        return ctx.get("visibility") or "unavailable"
+
+    def _resource_finalize_locked(self, ctx: dict, *, status: str,
+                                  io_effect: str, stage: str | None = None,
+                                  error_code: str | None = None,
+                                  origin: str | None = None,
+                                  length: int | None = None,
+                                  sha256: str | None = None,
+                                  retryable: bool | None = None,
+                                  current_index: dict | None = None) -> dict:
+        """Update one attempt under Hub + resource registry locks."""
+        ctx["status"] = status
+        ctx["io_effect"] = io_effect
+        ctx["stage"] = stage
+        ctx["error_code"] = error_code
+        ctx["origin"] = origin
+        if length is not None:
+            ctx["length"] = length
+        if sha256 is not None:
+            ctx["sha256"] = sha256
+        if retryable is not None:
+            ctx["retryable"] = bool(retryable)
+        if status == "failed":
+            self._resource_order_seq += 1
+            ctx["_failed_order"] = self._resource_order_seq
+        if status == "pending":
+            ctx["visibility"] = "pending"
+        elif status in ("failed", "unknown"):
+            ctx["visibility"] = "pending" if status == "unknown" else "unavailable"
+        if status != "pending":
+            ctx["_executing"] = False
+        if current_index is not None:
+            key = (ctx["kind"], str(ctx["resource_key"]))
+            rec = self._resource_keys.setdefault(key, {})
+            old = rec.get("current_readable_index")
+            if old is not None and old.get("operation_id") != ctx.get(
+                    "resource_operation_id"):
+                old_ctx = self._resource_ops.get(old.get("operation_id"))
+                if old_ctx is not None and old_ctx.get("status") == "confirmed":
+                    old_ctx["visibility"] = "superseded"
+            rec["current_readable_index"] = copy.deepcopy(current_index)
+        ctx["visibility"] = self._resource_visibility_locked(ctx)
+        self._resource_trim_terminal_locked(ctx.get("owner_uid"),
+                                            protected={ctx.get(
+                                                "resource_operation_id")})
+        return self._resource_public_result(ctx)
+
+    def _resource_trim_terminal_locked(self, owner_uid: int | None,
+                                       protected: set[str] | None = None) -> None:
+        """有界淘汰终态结果；pending/unknown 与 latest/current 不得淘汰。"""
+        if owner_uid is None:
+            return
+        protected = protected or set()
+        terminal = [ctx for ctx in self._resource_ops.values()
+                    if ctx.get("owner_uid") == owner_uid
+                    and ctx.get("status") in ("confirmed", "failed")
+                    and ctx.get("resource_operation_id") not in protected]
+        excess = len(terminal) - int(self._resource_max_terminal)
+        if excess <= 0:
+            return
+        for ctx in terminal[:excess]:
+            op = ctx.get("resource_operation_id")
+            pair = (ctx.get("kind"), str(ctx.get("resource_key")))
+            rec = self._resource_keys.get(pair) or {}
+            latest = (rec.get("latest_permit") or {}).get("operation_id")
+            current = (rec.get("current_readable_index") or {}).get(
+                "operation_id")
+            cloud_pin = (ctx.get("kind") == "cloud"
+                         and op in {latest, current})
+            if op in protected or cloud_pin:
+                continue
+            self._resource_ops.pop(op, None)
+            if ctx.get("kind") == "web_file":
+                if self._resource_fid_ops.get(str(ctx.get("resource_key"))) == op:
+                    self._resource_fid_ops.pop(str(ctx.get("resource_key")), None)
+
+    def _resource_validate_identity(self, kind: str, key, identity: dict) -> tuple[str, dict]:
+        if kind not in _RESOURCE_KINDS:
+            raise ValueError("未知资源类型")
+        if kind == "cloud":
+            if isinstance(key, bool):
+                raise ValueError("cloud UID 无效")
+            key = int(key)
+            if key <= 0:
+                raise ValueError("cloud UID 无效")
+        else:
+            if not (isinstance(key, str) and re.fullmatch(r"[0-9a-f]{32}", key)):
+                raise ValueError("fid 无效")
+        if not isinstance(identity, dict):
+            raise ValueError("资源输入身份无效")
+        identity = copy.deepcopy(identity)
+        sha = identity.get("payload_sha256")
+        length = identity.get("content_length")
+        if not (isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{64}", sha)):
+            raise ValueError("资源摘要无效")
+        if isinstance(length, bool) or not isinstance(length, int) or length < 0:
+            raise ValueError("资源长度无效")
+        return str(key), identity
+
+    def _resource_begin(self, sess: Session, kind: str, key,
+                        payload_identity: dict, *,
+                        resource_operation_id: str | None = None) -> dict:
+        """原子绑定 owner/kind/op/key/输入身份并预留 quota。
+
+        返回的 dict 本身就是当前 attempt context；重复 pending 调用返回同一
+        对象，confirmed/unknown 只可查询，failed 仅在仍是 latest permit 时重开
+        attempt。磁盘/网络 IO 一律由调用方在锁外完成。
+        """
+        key_s, identity = self._resource_validate_identity(kind, key,
+                                                            payload_identity)
+        provided_op = resource_operation_id is not None
+        op = resource_operation_id
+        if op is None:
+            op = secrets.token_hex(16)
+        if not (isinstance(op, str) and _RESOURCE_OP_RE.fullmatch(op)):
+            raise ValueError("resource_operation_id 无效")
+        owner = int(getattr(sess, "uid", 0) or 0)
+        if owner <= 0:
+            raise PermissionError("资源 owner 无效")
+        pair = (kind, key_s)
+        with self.lock:
+            with self._resource_lock:
+                if self._retired_schema_invalid or owner in self.retired:
+                    raise PermissionError("资源 owner 已退役")
+                existing = self._resource_ops.get(op)
+                if existing is None and provided_op:
+                    # An explicit id is a retry/query handle, never a way to
+                    # invent an old operation.  New logical requests omit it
+                    # and receive one atomically here.
+                    raise _ResourceError("unknown_operation", None,
+                                         "未知资源操作号")
+                if existing is not None:
+                    same = (existing.get("owner_uid") == owner
+                            and existing.get("kind") == kind
+                            and str(existing.get("resource_key")) == key_s
+                            and existing.get("payload_identity") == identity)
+                    if not same:
+                        raise PermissionError("resource_operation_id 输入不匹配")
+                    if existing.get("status") in ("pending", "unknown",
+                                                    "confirmed"):
+                        return existing
+                    permit = (self._resource_keys.get(pair) or {}).get(
+                        "latest_permit") or {}
+                    if not existing.get("retryable", False):
+                        raise _ResourceError(
+                            "retry_forbidden",
+                            self._resource_public_result(existing),
+                            "该失败资源操作不可重试")
+                    permit_ctx = self._resource_ops.get(permit.get(
+                        "operation_id")) if permit.get("operation_id") else None
+                    failed_order = int(existing.get("_begin_order") or 0)
+                    newer_confirmed = (permit_ctx is not None
+                                       and permit_ctx.get("status") in (
+                                           "pending", "unknown", "confirmed")
+                                       and int(permit_ctx.get("_begin_order") or 0)
+                                       > failed_order)
+                    if permit.get("operation_id") != op and newer_confirmed:
+                        latest_ctx = self._resource_ops.get(
+                            permit.get("operation_id"))
+                        if latest_ctx is not None and latest_ctx.get("status") in (
+                                "pending", "unknown", "confirmed"):
+                            existing["visibility"] = "superseded"
+                            raise _ResourceError(
+                                "superseded",
+                                self._resource_public_result(existing),
+                                "旧资源操作已被后续许可取代")
+                    # failed + same latest permit = explicit retry.  Claim
+                    # quota before replacing the context so an older callback
+                    # keeps an immutable attempt snapshot.
+                    active = sum(1 for item in self._resource_ops.values()
+                                 if item.get("owner_uid") == owner
+                                 and item.get("status") in ("pending", "unknown"))
+                    if active >= int(self._resource_max_active):
+                        raise PermissionError("资源操作配额已满")
+                    attempt = int(existing.get("attempt") or 0) + 1
+                    retry_ctx = copy.deepcopy(existing)
+                    self._resource_order_seq += 1
+                    retry_ctx.update({
+                        "attempt": attempt,
+                        "attempt_id": f"{op}:{attempt}",
+                        "status": "pending", "io_effect": "uncertain",
+                        "visibility": "pending", "stage": "begin",
+                        "error_code": None, "origin": None,
+                        "retryable": True, "_executing": False,
+                        "_executor_token": None,
+                        "_query_count": 0, "_fenced": False,
+                        "_begin_order": self._resource_order_seq,
+                        "_failed_order": None,
+                    })
+                    self._resource_ops[op] = retry_ctx
+                    return retry_ctx
+                rec = self._resource_keys.setdefault(pair, {})
+                active = sum(1 for item in self._resource_ops.values()
+                             if item.get("owner_uid") == owner
+                             and item.get("status") in ("pending", "unknown"))
+                if active >= int(self._resource_max_active):
+                    raise PermissionError("资源操作配额已满")
+                attempt = 1
+                self._resource_order_seq += 1
+                ctx = {
+                    "resource_operation_id": op,
+                    "resource_owner_uid": owner,
+                    "owner_uid": owner,
+                    "kind": kind,
+                    "resource_key": key_s,
+                    "payload_identity": identity,
+                    "attempt": attempt,
+                    "attempt_id": f"{op}:{attempt}",
+                    "status": "pending",
+                    "io_effect": "uncertain",
+                    "visibility": "pending",
+                    "stage": "begin",
+                    "error_code": None,
+                    "length": identity.get("content_length"),
+                    "sha256": identity.get("payload_sha256"),
+                    "origin": None,
+                    "retryable": True,
+                    "_executing": False,
+                    "_executor_token": None,
+                    "_query_count": 0,
+                    "_fenced": False,
+                    "_begin_order": self._resource_order_seq,
+                    "_failed_order": None,
+                }
+                self._resource_ops[op] = ctx
+                if kind == "web_file":
+                    self._resource_fid_ops[key_s] = op
+                return ctx
+
+    def _resource_claim_executor(self, ctx: dict) -> bool:
+        """Claim the sole executor for a pending attempt before staging IO."""
+        with self.lock:
+            with self._resource_lock:
+                current = self._resource_ops.get(ctx.get(
+                    "resource_operation_id"))
+                if (current is not ctx or current.get("status") != "pending"
+                        or current.get("_executing")):
+                    return False
+                current["_executing"] = True
+                current["_executor_token"] = secrets.token_hex(16)
+                return True
+
+    def _resource_filter_cloud_after_restore(self) -> None:
+        """把启动扫描的 opaque bytes 变成有限访问事实，不伪造旧 op 回执。"""
+        with self.lock:
+            with self._resource_lock:
+                for uid, rec in list(self.cloud.items()):
+                    if uid <= 0 or uid in self.retired or self._retired_schema_invalid:
+                        self.cloud.pop(uid, None)
+                        continue
+                    blob = bytes(rec.get("blob") or b"")
+                    if not blob:
+                        self.cloud.pop(uid, None)
+                        continue
+                    key = ("cloud", str(uid))
+                    self._resource_keys[key] = {
+                        "current_readable_index": {
+                            "operation_id": None,
+                            "owner_uid": uid,
+                            "kind": "cloud",
+                            "resource_key": str(uid),
+                            "length": len(blob),
+                            "sha256": hashlib.sha256(blob).hexdigest(),
+                            "origin": "restored_resource",
+                        }
+                    }
+
+    def _resource_withdraw_owner(self, uid: int) -> None:
+        """t0 资源屏障：撤私有 cloud 可见 index、取消提醒，不删物理 bytes。"""
+        with self.lock:
+            with self._resource_lock:
+                self._resource_withdraw_owner_locked(uid)
+
+    def _resource_withdraw_owner_locked(self, uid: int) -> None:
+        self.cloud.pop(uid, None)
+        for key, rec in self._resource_keys.items():
+            if key[0] != "cloud" and not any(
+                    ctx.get("owner_uid") == uid and
+                    (ctx.get("kind"), str(ctx.get("resource_key"))) == key
+                    for ctx in self._resource_ops.values()):
+                continue
+            current = rec.get("current_readable_index")
+            if current is not None and current.get("owner_uid") == uid:
+                current["visibility"] = "withdrawn"
+                rec["current_readable_index"] = current
+            for ctx in self._resource_ops.values():
+                if ctx.get("owner_uid") != uid:
+                    continue
+                ctx["_fenced"] = True
+                if ctx.get("status") == "confirmed":
+                    ctx["visibility"] = "withdrawn"
+                elif ctx.get("status") in ("pending", "unknown"):
+                    ctx["visibility"] = "withdrawn"
+
+    def _resource_stage_bytes(self, data: bytes, suffix: str) -> str:
+        os.makedirs(self._resource_stage_dir, exist_ok=True)
+        fd, path = tempfile.mkstemp(prefix="resource-", suffix=suffix,
+                                    dir=self._resource_stage_dir)
+        raw_fd = fd
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                raw_fd = None
+                view = memoryview(bytes(data))
+                total = 0
+                while total < len(view):
+                    n = stream.write(view[total:])
+                    if n is None or n <= 0:
+                        raise OSError("resource short write")
+                    total += n
+                stream.flush()
+                os.fsync(stream.fileno())
+        except Exception:
+            if raw_fd is not None:
+                try:
+                    os.close(raw_fd)
+                except OSError:
+                    pass
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
+            raise
+        return path
+
+    def _resource_reconcile(self, ctx: dict) -> dict:
+        """锁外严格读未知候选，再以当前 attempt 身份补结果。"""
+        kind = ctx.get("kind")
+        key = str(ctx.get("resource_key"))
+        expected = ctx.get("sha256")
+        expected_len = ctx.get("length")
+        attempt_id = ctx.get("attempt_id")
+        matched = False
+        reconciled_blob = None
+        observed_len = None
+        observed_sha = None
+        try:
+            if kind == "cloud":
+                path = os.path.join(self.cloud_dir, f"{int(key)}.bin")
+                with open(path, "rb") as stream:
+                    raw = stream.read()
+                reconciled_blob = bytes(raw)
+                observed_len = len(raw)
+                observed_sha = hashlib.sha256(raw).hexdigest()
+                matched = (len(raw) == expected_len
+                           and observed_sha == expected)
+            elif kind == "web_file":
+                meta, raw = self._read_web_resource(key)
+                if raw is not None:
+                    observed_len = len(raw)
+                    observed_sha = hashlib.sha256(raw).hexdigest()
+                matched = bool(meta and raw is not None
+                               and meta.get("resource_operation_id") ==
+                               ctx.get("resource_operation_id")
+                               and meta.get("resource_owner_uid") ==
+                               ctx.get("owner_uid")
+                               and meta.get("content_length") == expected_len
+                               and meta.get("content_sha256") == expected
+                               and len(raw) == expected_len
+                               and hashlib.sha256(raw).hexdigest() == expected)
+        except (OSError, ValueError, TypeError, OverflowError):
+            matched = False
+        with self.lock:
+            with self._resource_lock:
+                current = self._resource_ops.get(
+                    ctx.get("resource_operation_id"))
+                if current is None:
+                    raise LookupError("resource result unavailable")
+                if current is not ctx or current.get("attempt_id") != attempt_id:
+                    return self._resource_public_result(current)
+                if current.get("status") != "unknown":
+                    return self._resource_public_result(current)
+                if matched:
+                    idx = {"operation_id": current["resource_operation_id"],
+                           "owner_uid": current["owner_uid"],
+                           "kind": current["kind"],
+                           "resource_key": current["resource_key"],
+                           "length": current.get("length"),
+                           "sha256": current.get("sha256"),
+                           "origin": "reconciled_current_resource"}
+                    if kind == "cloud" and not current.get("_fenced") \
+                            and current.get("owner_uid") not in self.retired:
+                        if reconciled_blob is not None:
+                            self.cloud[int(key)] = {
+                                "blob": reconciled_blob, "ts": _now(),
+                            }
+                    if current.get("_fenced"):
+                        current["visibility"] = "withdrawn"
+                    return self._resource_finalize_locked(
+                        current, status="confirmed", io_effect="uncertain",
+                        stage="reconcile", origin="reconciled_current_resource",
+                        current_index=idx)
+                rec = self._resource_keys.get(
+                    (current.get("kind"), str(current.get("resource_key")))) or {}
+                predecessor = rec.get("current_readable_index") or {}
+                if (observed_len is not None
+                        and observed_len == predecessor.get("length")
+                        and observed_sha == predecessor.get("sha256")
+                        and predecessor.get("operation_id") !=
+                        current.get("resource_operation_id")):
+                    return self._resource_finalize_locked(
+                        current, status="failed", io_effect="not_committed",
+                        stage="reconcile", error_code="known_predecessor",
+                        retryable=True)
+                # A missing/invalid read is deliberately still unknown.  A
+                # later explicit query may explain it; it never auto-writes.
+                current["_query_count"] = int(current.get("_query_count") or 0) + 1
+                return self._resource_public_result(current)
+
+    def _resource_query(self, sess: Session, resource_operation_id: str,
+                        *, explicit_owner: int | None = None) -> dict:
+        if not (isinstance(resource_operation_id, str)
+                and _RESOURCE_OP_RE.fullmatch(resource_operation_id)):
+            raise LookupError("resource result unavailable")
+        with self.lock:
+            with self._resource_lock:
+                ctx = self._resource_ops.get(resource_operation_id)
+                if ctx is None:
+                    raise LookupError("resource result unavailable")
+                owner = int(explicit_owner) if explicit_owner is not None else int(
+                    getattr(sess, "uid", 0) or 0)
+                if not getattr(sess, "is_admin", False) and owner != int(
+                        getattr(sess, "uid", 0) or 0):
+                    raise PermissionError("无资源查询权限")
+                if ctx.get("owner_uid") != owner:
+                    raise PermissionError("无资源查询权限")
+                if ctx.get("owner_uid") in self.retired and not getattr(
+                        sess, "is_admin", False):
+                    raise PermissionError("资源 owner 已退役")
+                if ctx.get("status") == "unknown":
+                    snapshot = ctx
+                else:
+                    ctx["visibility"] = self._resource_visibility_locked(ctx)
+                    return self._resource_public_result(ctx)
+        return self._resource_reconcile(snapshot)
+
+    def _resource_summary(self, owner_uid: int) -> dict:
+        with self._resource_lock:
+            ops = [self._resource_public_result(ctx)
+                   for ctx in self._resource_ops.values()
+                   if ctx.get("owner_uid") == owner_uid]
+        limit = int(self._resource_max_terminal)
+        ops = ops[-limit:] if limit else []
+        return {"resource_owner_uid": owner_uid, "scope": "runtime",
+                "operations": ops}
+
+    def _resource_file_commit(self, ctx: dict, payload: bytes,
+                              meta: dict | None = None) -> dict:
+        """Stage bytes/manifest, C, publish, then record D_resource."""
+        kind = ctx.get("kind")
+        if kind not in _RESOURCE_KINDS:
+            raise ValueError("未知资源类型")
+        if ctx.get("status") != "pending":
+            raise _ResourceError("resource_pending",
+                                 self._resource_public_result(ctx))
+        if not ctx.get("_executing") and not self._resource_claim_executor(ctx):
+            raise _ResourceError("resource_pending",
+                                 self._resource_public_result(ctx))
+        attempt_id = ctx.get("attempt_id")
+        executor_token = ctx.get("_executor_token")
+        if not isinstance(attempt_id, str) or not isinstance(executor_token, str):
+            raise _ResourceError("stale_attempt",
+                                 self._resource_public_result(ctx))
+        raw = bytes(payload or b"")
+        length = len(raw)
+        digest = hashlib.sha256(raw).hexdigest()
+        if length != ctx.get("length") or digest != ctx.get("sha256"):
+            with self.lock:
+                with self._resource_lock:
+                    self._resource_finalize_locked(
+                        ctx, status="failed", io_effect="not_committed",
+                        stage="identity", error_code="payload_mismatch",
+                        retryable=True)
+            raise _ResourceError("payload_mismatch",
+                                 self._resource_public_result(ctx))
+        if kind == "web_file":
+            fid = str(ctx["resource_key"])
+            own_fid = self._resource_fid_ops.get(fid) == ctx.get(
+                "resource_operation_id") and not ctx.get("_fid_conflict")
+            if ((os.path.exists(os.path.join(self.web_files, fid))
+                 or os.path.exists(os.path.join(self.web_files, fid + ".json")))
+                    and not own_fid):
+                with self.lock:
+                    with self._resource_lock:
+                        self._resource_finalize_locked(
+                            ctx, status="failed", io_effect="not_committed",
+                            stage="begin", error_code="fid_conflict",
+                            retryable=False)
+                        ctx["_fid_conflict"] = True
+                raise _ResourceError("fid_conflict",
+                                     self._resource_public_result(ctx))
+        body_stage = None
+        meta_stage = None
+        target_body = None
+        target_meta = None
+        replace_attempted = False
+        meta_replace_attempted = False
+        pre_body_same = False
+        pre_meta_same = False
+        pre_body_identity = None
+        try:
+            body_stage = self._resource_stage_bytes(raw, ".body")
+            if kind == "cloud":
+                target_body = os.path.join(self.cloud_dir,
+                                           f"{int(ctx['resource_key'])}.bin")
+            else:
+                fid = str(ctx["resource_key"])
+                target_body = os.path.join(self.web_files, fid)
+                safe = {"fid": fid, "name": str((meta or {}).get("name")
+                                                  or "未命名")[:128],
+                        "size": length, "kind": (meta or {}).get("kind") or "file",
+                        "ts": round(_now(), 3),
+                        "resource_manifest_version": self._resource_manifest_version,
+                        "resource_owner_uid": ctx["owner_uid"],
+                        "resource_operation_id": ctx["resource_operation_id"],
+                        "content_length": length,
+                        "content_sha256": digest}
+                encoded = json.dumps(safe, ensure_ascii=False, allow_nan=False,
+                                     separators=(",", ":")).encode("utf-8")
+                meta_stage = self._resource_stage_bytes(encoded, ".json")
+                target_meta = os.path.join(self.web_files, fid + ".json")
+            try:
+                if target_body and os.path.isfile(target_body):
+                    stat = os.stat(target_body)
+                    pre_body_identity = (getattr(stat, "st_ino", None),
+                                         getattr(stat, "st_mtime_ns", None),
+                                         getattr(stat, "st_size", None))
+                    with open(target_body, "rb") as stream:
+                        pre_body_same = (hashlib.sha256(stream.read()).hexdigest()
+                                         == digest)
+                if target_meta and os.path.isfile(target_meta):
+                    with open(target_meta, "rb") as stream:
+                        pre_meta_same = bool(stream.read())
+            except OSError:
+                pre_body_same = False
+                pre_meta_same = False
+            # Final C is ordered with t0 by the same Hub memory boundary.
+            with self.lock:
+                with self._resource_lock:
+                    current = self._resource_ops.get(
+                        ctx.get("resource_operation_id"))
+                    permit = (self._resource_keys.get(
+                        (kind, str(ctx["resource_key"]))) or {}).get(
+                            "latest_permit") or {}
+                    permit_op = permit.get("operation_id")
+                    permit_ctx = self._resource_ops.get(permit_op) \
+                        if permit_op else None
+                    permit_is_newer_confirmed = (
+                        permit_op not in (None, ctx.get("resource_operation_id"))
+                        and permit_ctx is not None
+                        and permit_ctx.get("status") == "confirmed"
+                        and int(permit_ctx.get("_begin_order") or 0)
+                        > int(ctx.get("_begin_order") or 0))
+                    newer_in_flight = (
+                        permit_op not in (None, ctx.get(
+                            "resource_operation_id"))
+                        and permit_ctx is not None
+                        and (permit_ctx.get("status") in ("pending", "unknown")
+                             or permit_is_newer_confirmed))
+                    if newer_in_flight:
+                        if permit_is_newer_confirmed:
+                            self._resource_finalize_locked(
+                                ctx, status="failed", io_effect="not_committed",
+                                stage="permit", error_code="superseded",
+                                retryable=False)
+                            raise _ResourceError(
+                                "superseded", self._resource_public_result(ctx),
+                                "旧资源发布许可已被后续 C 取代")
+                        self._resource_finalize_locked(
+                            ctx, status="failed", io_effect="not_committed",
+                            stage="permit", error_code="resource_busy",
+                            retryable=True)
+                        raise _ResourceError(
+                            "resource_busy", self._resource_public_result(ctx),
+                            "同一资源仍有较早发布在途")
+                    if current is not ctx:
+                        ctx.update({"status": "failed",
+                                    "io_effect": "not_committed",
+                                    "stage": "permit",
+                                    "error_code": "stale_attempt",
+                                    "retryable": False,
+                                    "_executing": False})
+                        raise _ResourceError(
+                            "stale_attempt", self._resource_public_result(ctx),
+                            "迟到资源执行结果已丢弃")
+                    if (current.get("status") != "pending"
+                            or current.get("_fenced")
+                            or ctx.get("owner_uid") in self.retired):
+                        ctx["_fenced"] = True
+                        self._resource_finalize_locked(
+                            ctx, status="failed", io_effect="not_committed",
+                            stage="permit", error_code="owner_fenced",
+                            retryable=False)
+                        raise _ResourceError("owner_fenced",
+                                             self._resource_public_result(ctx))
+                    # This is the actual C point.  A later C supersedes the
+                    # previous readable index; merely beginning/staging an op
+                    # does not steal the permit from an earlier stage.
+                    self._resource_keys.setdefault(
+                        (kind, str(ctx["resource_key"])), {})[
+                            "latest_permit"] = {
+                                "operation_id": ctx["resource_operation_id"],
+                                "attempt": ctx["attempt"]}
+            # Publish body first, manifest last.  No Hub/registry lock is held.
+            replace_attempted = True
+            os.replace(body_stage, target_body)
+            body_stage = None
+            if meta_stage is not None:
+                meta_replace_attempted = True
+                replace_attempted = True
+                os.replace(meta_stage, target_meta)
+                meta_stage = None
+        except _ResourceError:
+            raise
+        except Exception as exc:
+            # If replace may have happened before an injected acknowledgement
+            # error, classify as unknown and require a later strict query.
+            uncertain = False
+            try:
+                if replace_attempted and target_body and os.path.isfile(target_body):
+                    post_stat = os.stat(target_body)
+                    post_body_identity = (getattr(post_stat, "st_ino", None),
+                                          getattr(post_stat, "st_mtime_ns", None),
+                                          getattr(post_stat, "st_size", None))
+                    with open(target_body, "rb") as stream:
+                        observed = stream.read()
+                    body_matches = (len(observed) == length
+                                    and hashlib.sha256(observed).hexdigest() == digest)
+                    changed_after_attempt = (pre_body_identity is None
+                                             or pre_body_identity !=
+                                             post_body_identity)
+                    uncertain = body_matches and (
+                        not pre_body_same or changed_after_attempt)
+                    if kind == "web_file" and not meta_replace_attempted:
+                        # Body publication without a manifest attempt is a
+                        # known partial effect: failed/not_committed, with an
+                        # orphan body that remains unservable.
+                        uncertain = False
+                    elif kind == "web_file" and meta_replace_attempted:
+                        # Metadata replace was attempted; target proof must
+                        # include a valid candidate manifest as well.
+                        try:
+                            with open(target_meta, "rb") as stream:
+                                observed_meta = self._json_load_strict(stream.read())
+                            uncertain = body_matches and isinstance(observed_meta, dict) \
+                                and observed_meta.get("resource_manifest_version") == \
+                                self._resource_manifest_version \
+                                and observed_meta.get("fid") == str(
+                                    ctx.get("resource_key")) \
+                                and observed_meta.get("resource_owner_uid") == \
+                                ctx.get("owner_uid") \
+                                and observed_meta.get("resource_operation_id") == \
+                                ctx.get("resource_operation_id") \
+                                and observed_meta.get("content_length") == length \
+                                and observed_meta.get("content_sha256") == digest
+                        except (OSError, ValueError, TypeError, UnicodeDecodeError):
+                            uncertain = False
+                    elif kind == "web_file" and pre_meta_same:
+                        uncertain = False
+            except OSError:
+                pass
+            with self.lock:
+                with self._resource_lock:
+                    self._resource_finalize_locked(
+                        ctx, status="unknown" if uncertain else "failed",
+                        io_effect="uncertain" if uncertain else "not_committed",
+                        stage="manifest" if meta_stage is not None and
+                        target_meta else "body",
+                        error_code=type(exc).__name__.lower(),
+                        retryable=not uncertain)
+            raise _ResourceError("resource_unknown" if uncertain else "resource_io",
+                                 self._resource_public_result(ctx), str(exc))
+        finally:
+            for staged in (body_stage, meta_stage):
+                if staged:
+                    try:
+                        os.unlink(staged)
+                    except OSError:
+                        pass
+        index = {"operation_id": ctx["resource_operation_id"],
+                 "owner_uid": ctx["owner_uid"], "kind": kind,
+                 "resource_key": str(ctx["resource_key"]), "length": length,
+                 "sha256": digest, "origin": "written"}
+        with self.lock:
+            with self._resource_lock:
+                current = self._resource_ops.get(ctx["resource_operation_id"])
+                permit = (self._resource_keys.get(
+                    (kind, str(ctx["resource_key"]))) or {}).get(
+                        "latest_permit") or {}
+                valid_executor = (
+                    current is ctx
+                    and current.get("status") == "pending"
+                    and current.get("attempt_id") == attempt_id
+                    and current.get("_executor_token") == executor_token
+                    and current.get("_executing")
+                    and permit.get("operation_id") ==
+                    ctx.get("resource_operation_id")
+                    and permit.get("attempt") == ctx.get("attempt"))
+                if not valid_executor:
+                    if current is not ctx:
+                        ctx["status"] = "failed"
+                        ctx["io_effect"] = "not_committed"
+                        ctx["stage"] = "finalize"
+                        ctx["error_code"] = "stale_attempt"
+                        ctx["retryable"] = False
+                        raise _ResourceError(
+                            "stale_attempt", self._resource_public_result(ctx),
+                            "迟到资源执行结果已丢弃")
+                    self._resource_finalize_locked(
+                        ctx, status="failed", io_effect="not_committed",
+                        stage="finalize", error_code="stale_executor",
+                        retryable=False)
+                    raise _ResourceError(
+                        "stale_attempt", self._resource_public_result(ctx),
+                        "资源执行者已失效")
+                result = self._resource_finalize_locked(
+                    current, status="confirmed", io_effect="committed",
+                    stage="finalize", origin="written", length=length,
+                    sha256=digest, retryable=False, current_index=index)
+                if kind == "cloud" and not current.get("_fenced") \
+                        and current.get("owner_uid") not in self.retired:
+                    self.cloud[int(current["resource_key"])] = {
+                        "blob": bytes(raw), "ts": _now(),
+                    }
+                if current.get("_fenced") or current.get("owner_uid") in self.retired:
+                    current["visibility"] = "withdrawn"
+                    result = self._resource_public_result(current)
+        return result
+
     # ---------- R23 网页端文件存储 ----------
-    def _save_web_file(self, name: str, data: bytes, kind: str) -> dict:
-        """保存网页端上传文件：fid = uuid4().hex（不可猜测），返回消息用 file 元数据。"""
-        import uuid
-        fid = uuid.uuid4().hex
-        meta = {"fid": fid, "name": (name or "未命名")[:128],
-                "size": len(data), "kind": kind, "ts": round(_now(), 3)}
-        with open(os.path.join(self.web_files, fid), "wb") as f:
-            f.write(data)
-        with open(os.path.join(self.web_files, fid + ".json"), "w",
-                  encoding="utf-8") as f:
-            json.dump(meta, f, ensure_ascii=False)
-        return {k: meta[k] for k in ("fid", "name", "size", "kind")}
+    def _save_web_file(self, name: str, data: bytes, kind: str,
+                       *, sess: Session | None = None,
+                       resource_operation_id: str | None = None) -> dict:
+        """保存 Web 文件；带 Session 时走 RESOURCE 双文件发布。"""
+        safe_name = (name or "未命名").replace("\\", "/").split("/")[-1][:128]
+        if sess is None:
+            # 既有内部调用兼容路径；新 Web 上传总是带认证 Session，避免
+            # legacy helper 伪造新 owner/op manifest。
+            fid = uuid.uuid4().hex
+            meta = {"fid": fid, "name": safe_name, "size": len(data),
+                    "kind": kind, "ts": round(_now(), 3)}
+            with open(os.path.join(self.web_files, fid), "wb") as stream:
+                stream.write(bytes(data))
+            with open(os.path.join(self.web_files, fid + ".json"), "w",
+                       encoding="utf-8") as stream:
+                json.dump(meta, stream, ensure_ascii=False)
+            return {k: meta[k] for k in ("fid", "name", "size", "kind")}
+        payload = bytes(data or b"")
+        op = resource_operation_id
+        if op is not None and not _RESOURCE_OP_RE.fullmatch(str(op)):
+            raise _ResourceError("invalid_operation")
+        if op is not None:
+            with self.lock:
+                with self._resource_lock:
+                    if str(op) not in self._resource_ops:
+                        raise _ResourceError("unknown_operation", None,
+                                             "未知资源操作号")
+        # Exact known-op retry reuses its original fid; a new op gets a new fid.
+        if op and op in self._resource_ops:
+            old = self._resource_ops[op]
+            fid = str(old.get("resource_key"))
+        else:
+            fid = uuid.uuid4().hex
+        identity = {"payload_sha256": hashlib.sha256(payload).hexdigest(),
+                    "content_length": len(payload), "name": safe_name,
+                    "kind": kind}
+        ctx = self._resource_begin(sess, "web_file", fid, identity,
+                                   resource_operation_id=op)
+        if ctx.get("status") == "confirmed":
+            with self.lock:
+                with self._resource_lock:
+                    ctx["visibility"] = self._resource_visibility_locked(ctx)
+                    result = self._resource_public_result(ctx)
+            if result.get("visibility") != "available":
+                raise _ResourceError("superseded", result,
+                                     "旧 Web 资源操作已被后续版本取代")
+            return {"fid": fid, "name": safe_name, "size": len(payload),
+                    "kind": kind, "resource": result}
+        if ctx.get("status") in ("unknown", "pending"):
+            if ctx.get("status") == "unknown":
+                raise _ResourceError("resource_unknown",
+                                     self._resource_public_result(ctx))
+            if not self._resource_claim_executor(ctx):
+                raise _ResourceError("resource_pending",
+                                     self._resource_public_result(ctx))
+        result = self._resource_file_commit(
+            ctx, payload, {"name": safe_name, "kind": kind})
+        return {"fid": fid, "name": safe_name, "size": len(payload),
+                "kind": kind, "resource": result}
+
+    @staticmethod
+    def _json_load_strict(raw: bytes | str):
+        seen = set()
+
+        def pairs(items):
+            out = {}
+            for key, value in items:
+                if key in seen:
+                    raise ValueError("duplicate JSON key")
+                seen.add(key)
+                out[key] = value
+            return out
+
+        if isinstance(raw, bytes):
+            text = raw.decode("utf-8")
+        elif isinstance(raw, str):
+            text = raw
+        else:
+            raise ValueError("manifest is not text")
+        return json.loads(text, object_pairs_hook=pairs,
+                          parse_constant=lambda value: (_ for _ in ()).throw(
+                              ValueError(f"non-finite JSON: {value}")))
+
+    def _read_web_resource(self, fid: str) -> tuple[dict | None, bytes | None]:
+        if not (isinstance(fid, str) and re.fullmatch(r"[0-9a-f]{32}", fid)):
+            return None, None
+        meta_path = os.path.join(self.web_files, fid + ".json")
+        body_path = os.path.join(self.web_files, fid)
+        try:
+            with open(meta_path, "rb") as stream:
+                raw_meta = stream.read()
+            meta = self._json_load_strict(raw_meta)
+            if not isinstance(meta, dict):
+                return None, None
+            if not os.path.isfile(body_path):
+                return None, None
+            with open(body_path, "rb") as stream:
+                raw_body = stream.read()
+        except (OSError, ValueError, UnicodeDecodeError, TypeError):
+            return None, None
+        if set(meta).intersection(_RESOURCE_NEW_FIELDS):
+            if (set(meta) != _RESOURCE_MANIFEST_FIELDS
+                    or isinstance(meta.get("resource_manifest_version"), bool)
+                    or meta.get("resource_manifest_version") !=
+                    self._resource_manifest_version
+                    or not isinstance(meta.get("fid"), str)
+                    or meta.get("fid") != fid
+                    or not isinstance(meta.get("name"), str)
+                    or meta.get("kind") not in ("image", "file")
+                    or isinstance(meta.get("size"), bool)
+                    or not isinstance(meta.get("size"), int)
+                    or meta.get("size") < 0
+                    or isinstance(meta.get("ts"), bool)
+                    or not isinstance(meta.get("ts"), (int, float))
+                    or not math.isfinite(float(meta.get("ts")))
+                    or isinstance(meta.get("resource_owner_uid"), bool)
+                    or not isinstance(meta.get("resource_owner_uid"), int)
+                    or meta.get("resource_owner_uid") <= 0
+                    or not (isinstance(meta.get("resource_operation_id"), str)
+                            and _RESOURCE_OP_RE.fullmatch(
+                                meta.get("resource_operation_id")))
+                    or meta.get("content_length") != len(raw_body)
+                    or isinstance(meta.get("content_length"), bool)
+                    or not isinstance(meta.get("content_length"), int)
+                    or meta.get("size") != len(raw_body)
+                    or not (isinstance(meta.get("content_sha256"), str)
+                            and re.fullmatch(r"[0-9a-f]{64}",
+                                             meta.get("content_sha256")))
+                    or meta.get("content_sha256") !=
+                    hashlib.sha256(raw_body).hexdigest()):
+                return None, None
+        else:
+            if (set(meta) != {"fid", "name", "size", "kind", "ts"}
+                    or meta.get("fid") != fid
+                    or not isinstance(meta.get("name"), str)
+                    or meta.get("kind") not in ("image", "file")
+                    or isinstance(meta.get("size"), bool)
+                    or not isinstance(meta.get("size"), int)
+                    or meta.get("size") < 0
+                    or isinstance(meta.get("ts"), bool)
+                    or not isinstance(meta.get("ts"), (int, float))
+                    or not math.isfinite(float(meta.get("ts")))
+                    or meta.get("size") != len(raw_body)):
+                return None, None
+        return meta, raw_body
 
     def _web_file_meta(self, fid: str) -> dict | None:
-        """按 fid 读元数据；fid 需为 32 位 hex，防路径穿越。"""
-        if not (isinstance(fid, str) and re.fullmatch(r"[0-9a-f]{32}", fid)):
+        """读取并验证 legacy/new manifest 及实际 body；坏新格式不降级。"""
+        meta, raw = self._read_web_resource(fid)
+        if meta is None or raw is None:
             return None
-        path = os.path.join(self.web_files, fid + ".json")
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except (OSError, ValueError):
-            return None
+        if set(meta).intersection(_RESOURCE_NEW_FIELDS):
+            # 完整 manifest 可在新进程恢复访问事实，但不重建旧 op receipt。
+            with self.lock:
+                with self._resource_lock:
+                    runtime_op = self._resource_fid_ops.get(str(fid))
+                    runtime_ctx = (self._resource_ops.get(runtime_op)
+                                   if runtime_op else None)
+                    if runtime_ctx is not None:
+                        if (runtime_ctx.get("status") != "confirmed"
+                                or runtime_ctx.get("resource_operation_id") !=
+                                meta.get("resource_operation_id")
+                                or runtime_ctx.get("owner_uid") !=
+                                meta.get("resource_owner_uid")
+                                or (runtime_ctx.get("payload_identity") or {}).get(
+                                    "name") != meta.get("name")
+                                or (runtime_ctx.get("payload_identity") or {}).get(
+                                    "kind") != meta.get("kind")
+                                or runtime_ctx.get("length") !=
+                                meta.get("content_length")
+                                or runtime_ctx.get("sha256") !=
+                                meta.get("content_sha256")):
+                            return None
+                    key = ("web_file", str(fid))
+                    rec = self._resource_keys.setdefault(key, {})
+                    rec.setdefault("current_readable_index", {
+                        "operation_id": meta["resource_operation_id"],
+                        "owner_uid": meta["resource_owner_uid"],
+                        "kind": "web_file", "resource_key": fid,
+                        "length": len(raw),
+                        "sha256": meta["content_sha256"],
+                        "origin": "restored_resource",
+                    })
+        return meta
 
     def _web_file_path(self, fid: str) -> str | None:
         if not (isinstance(fid, str) and re.fullmatch(r"[0-9a-f]{32}", fid)):
             return None
         path = os.path.join(self.web_files, fid)
         return path if os.path.isfile(path) else None
+
+    def _web_file_read(self, sess: Session, fid: str, meta: dict) -> bytes:
+        """C_read：先捕获身份/资格，再锁外读取不可变响应 bytes。"""
+        with self.lock:
+            if getattr(sess, "uid", 0) in self.retired \
+                    or self._retired_schema_invalid:
+                raise PermissionError("resource owner retired")
+            path = self._web_file_path(fid)
+        if not path:
+            raise OSError("file missing")
+        with open(path, "rb") as stream:
+            data = stream.read()
+        if len(data) != meta.get("size"):
+            raise OSError("file length changed")
+        if set(meta).intersection(_RESOURCE_NEW_FIELDS):
+            if hashlib.sha256(data).hexdigest() != meta.get("content_sha256"):
+                raise OSError("file digest changed")
+        return bytes(data)
 
     def group_detail(self, gid: int, viewer_uid: int):
         """网页端用的群详情：成员 + 各自角色/禁言状态 + 当前用户角色。
@@ -1226,9 +3220,13 @@ class Hub:
                 "member": viewer_uid in g["members"],
                 "members": members}
 
-    def _error(self, sess: Session, code: str, text: str) -> None:
+    def _error(self, sess: Session, code: str, text: str, **extra) -> None:
         try:
-            sess.send({"t": "error", "code": code, "text": text})
+            payload = {"t": "error", "code": code, "text": text}
+            resource = extra.get("resource")
+            if isinstance(resource, dict):
+                payload["resource"] = self._resource_public_result(resource)
+            sess.send(payload)
         except Exception:
             pass
 
@@ -1317,6 +3315,8 @@ class Hub:
 
     def _on_block_set(self, sess: Session, header: dict) -> None:
         """设置/取消屏蔽：on=True 屏蔽 target / False 解除。防自屏蔽与 bot。"""
+        if self._retire_error(sess):
+            return
         try:
             target = int(header.get("target"))
         except (TypeError, ValueError):
@@ -1329,14 +3329,21 @@ class Hub:
         if on and _bots.is_bot(target):
             self._error(sess, "bot", "机器人无需屏蔽")
             return
+        rejected = False
         with self.lock:
-            cur = self.blocks.setdefault(sess.uid, set())
-            if on:
-                cur.add(target)
-            else:
-                cur.discard(target)
-                if not cur:
-                    self.blocks.pop(sess.uid, None)
+            rejected = (self._uid_retired_locked(sess.uid)
+                        or self._uid_retired_locked(target))
+            if not rejected:
+                cur = self.blocks.setdefault(sess.uid, set())
+                if on:
+                    cur.add(target)
+                else:
+                    cur.discard(target)
+                    if not cur:
+                        self.blocks.pop(sess.uid, None)
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         self._broadcast_block_list(sess.uid)
         self.audit.log(type="block_set" if on else "block_unset",
                        uid=sess.uid, target=target)
@@ -1375,6 +3382,8 @@ class Hub:
 
         服务器权威：客户端离线也会到点发出（sweeper 每轮扫到期项）。
         """
+        if self._retire_error(sess):
+            return
         channel = header.get("channel") or "public"
         if channel not in ("public", "private", "group"):
             self._error(sess, "channel", "未知频道")
@@ -1410,6 +3419,11 @@ class Hub:
             if not self._known_uid(to):
                 self._error(sess, "offline", "对方不存在或从未上线")
                 return
+            with self.lock:
+                target_retired = self._uid_retired_locked(to)
+            if target_retired:
+                self._error(sess, "retired", "目标账号已退役")
+                return
             if self._is_blocked_by(sess.uid, to):
                 self._error(sess, "blocked", "你已被对方屏蔽，定时消息不会送达")
                 return
@@ -1421,8 +3435,16 @@ class Hub:
         rid = os.urandom(4).hex()
         rec = {"channel": channel, "to": to, "text": text,
                "fire_at": fire_at, "created": _now()}
+        rejected = False
         with self.lock:
-            self.scheds.setdefault(sess.uid, {})[rid] = rec
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected and channel == "private":
+                rejected = self._uid_retired_locked(int(to))
+            if not rejected:
+                self.scheds.setdefault(sess.uid, {})[rid] = rec
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         self._send_sched_list(sess, sess.uid)
         self.audit.log(type="sched_set", uid=sess.uid, channel=channel,
                        to=to, fire_at=fire_at)
@@ -1434,10 +3456,17 @@ class Hub:
         if not rid:
             self._error(sess, "rid", "缺少 rid")
             return
+        if self._retire_error(sess):
+            return
         with self.lock:
-            mine = self.scheds.get(sess.uid)
-            if mine and rid in mine:
-                del mine[rid]
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                mine = self.scheds.get(sess.uid)
+                if mine and rid in mine:
+                    del mine[rid]
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._send_sched_list(sess, sess.uid)
         self.audit.log(type="sched_cancel", uid=sess.uid, rid=rid)
         self._persist()
@@ -1449,7 +3478,7 @@ class Hub:
     def _sweep_scheds(self, now: float | None = None) -> None:
         """sweeper 每轮调用：到点的定时消息以创建者身份入频道历史并广播。
 
-        在 Hub.lock 之外收集到期项（防锁内发帧阻塞），逐个以服务器身份投递。
+        Hub.lock 内只收集/最终提交内存，逐个以服务器身份的网络投递在锁外。
         """
         now = _now() if now is None else now
         due = []
@@ -1480,19 +3509,156 @@ class Hub:
                 if g:
                     msg["to"] = r["to"]
                     msg["group_name"] = g["name"]
-            msg = self.bus.publish(msg)
+            # 已摘出的 due 也必须在最终 publish C 重新检查退役；t0 与此
+            # 短内存边界互斥，发送/审计/持久化仍在锁外。
+            with self.lock:
+                target_uid = r.get("to") if r.get("channel") == "private" else None
+                if (self._uid_retired_locked(uid)
+                        or (target_uid is not None
+                            and self._uid_retired_locked(int(target_uid)))):
+                    continue
+                msg = self.bus.publish(msg)
             self._route(msg)
             self.audit.log(type="sched_fire", uid=uid, seq=msg["seq"],
                            channel=r["channel"], to=msg.get("to"))
             self._persist()
+
+    # ---------- CC-02C RESOURCE：提醒队列最终 bot C ----------
+    def _bot_reminder_enqueue(self, owner_uid: int, due: float, text: str,
+                              bot_uid: int) -> bool:
+        """在 Hub 短锁内入队；提醒仍为运行态，不进入 Store。"""
+        try:
+            owner_uid = int(owner_uid)
+            due = float(due)
+        except (TypeError, ValueError, OverflowError):
+            return False
+        if owner_uid <= 0 or not isinstance(text, str) or not text:
+            return False
+        with self.lock:
+            if self._retired_schema_invalid or self._uid_retired_locked(owner_uid):
+                return False
+            self.bot_reminders.append({"uid": owner_uid, "due": due,
+                                       "text": text[:self.cfg.chat_text_max],
+                                       "bot_uid": int(bot_uid)})
+        return True
+
+    def _bot_reminder_take_due(self, now: float | None = None) -> list[dict]:
+        now = _now() if now is None else float(now)
+        with self.lock:
+            due = [dict(r) for r in self.bot_reminders
+                   if float(r.get("due", 0)) <= now]
+            if due:
+                self.bot_reminders = [r for r in self.bot_reminders
+                                      if float(r.get("due", 0)) > now]
+            return due
+
+    def _bot_reminder_cancel_owner(self, owner_uid: int) -> None:
+        with self.lock:
+            self.bot_reminders = [r for r in self.bot_reminders
+                                  if r.get("uid") != owner_uid]
+
+    def _bot_reminder_cancel_owner_locked(self, owner_uid: int) -> None:
+        self.bot_reminders = [r for r in self.bot_reminders
+                              if r.get("uid") != owner_uid]
 
     def _known_uid(self, uid: int) -> bool:
         """该 uid 是否已知用户（注册过/在会话中）。"""
         with self.lock:
             return uid in self.sessions or uid in self.known
 
+    # ---------- CC-02A-RETIRE-CORE：M1 身份屏障 ----------
+    def _uid_retired_locked(self, uid: int) -> bool:
+        """调用方已持有 Hub.lock 时判断 UID 是否永久退役/被 fence。"""
+        return uid in self.retired
+
+    def _retire_error(self, sess: Session, *, target_uid: int | None = None) -> bool:
+        """锁外向调用方报告退役/损坏身份屏障；返回是否应拒绝本次写入。"""
+        with self.lock:
+            blocked = self._retired_schema_invalid
+            if target_uid is not None:
+                blocked = blocked or self._uid_retired_locked(int(target_uid))
+            blocked = blocked or self._uid_retired_locked(int(getattr(sess, "uid", 0)))
+        if blocked:
+            self._error(sess, "retired", "账号已退役或身份状态不可用")
+        return blocked
+
+    def _resolve_uid_for_admin(self, raw) -> int | None:
+        """管理员目标解析：保留 retired 的 nick→UID 查询能力。"""
+        try:
+            if isinstance(raw, bool):
+                raise ValueError
+            uid = int(raw)
+            return uid if uid > 0 else None
+        except (TypeError, ValueError, OverflowError):
+            pass
+        if not isinstance(raw, str):
+            return None
+        with self.lock:
+            mapped = self.nick_to_uid.get(raw.strip())
+            if mapped is not None:
+                return int(mapped)
+            for uid, info in self.known.items():
+                if info.get("nick") == raw:
+                    return uid
+            for uid, info in self.retired.items():
+                if info.get("nick") == raw:
+                    return uid
+        return None
+
+    def _retirement_payload(self, uid: int) -> dict | None:
+        """ADMIN_USER_INFO 的最小退役状态；不暴露密码/session/token。"""
+        with self.lock:
+            rec = self.retired.get(uid)
+            op = self._retire_ops.get(uid)
+            if rec is None and op is None:
+                return None
+            if rec is not None:
+                nick = rec.get("nick", "")
+                op_id = rec.get("operation_id", "")
+            else:
+                nick = op.get("target_nick", "")
+                op_id = op.get("operation_id", "")
+            status = (op or {}).get("status") or ("confirmed" if rec else "unknown")
+            origin = (op or {}).get("origin")
+            if origin not in {"written", "reconciled_current_json",
+                              "restored_valid_json"}:
+                origin = None
+            content_sha256 = (op or {}).get("content_sha256")
+            content_length = (op or {}).get("content_length")
+            out = {"status": status, "operation_id": op_id,
+                   "target_uid": uid, "target_nick": nick,
+                   "target_revision": None, "committed_revision": None,
+                   "content_sha256": content_sha256 if status == "confirmed" else None,
+                   "content_length": content_length if status == "confirmed" else None,
+                   "origin": origin if status == "confirmed" else None,
+                   "failed_stage": None,
+                   "error_code": None,
+                   "retryable": False}
+            if op:
+                for key in ("failed_stage", "error_code", "retryable"):
+                    if key in op:
+                        out[key] = op[key]
+            return out
+
+    def _retirement_operation_id(self, uid: int) -> str | None:
+        """Read the runtime operation id without triggering disk reconcile."""
+        with self.lock:
+            op = self._retire_ops.get(uid)
+            if isinstance(op, dict) and isinstance(op.get("operation_id"), str):
+                return op["operation_id"]
+            record = self.retired.get(uid)
+            if isinstance(record, dict) and isinstance(record.get("operation_id"), str):
+                return record["operation_id"]
+        return None
+
     def _sched_still_valid(self, uid: int, r: dict) -> bool:
         """到点校验：私聊目标是否已拉黑我；群聊我是否仍是成员。"""
+        with self.lock:
+            if self._uid_retired_locked(uid):
+                return False
+            target_uid = r.get("to") if r.get("channel") == "private" else None
+            if target_uid is not None and self._uid_retired_locked(int(target_uid)):
+                return False
         if r["channel"] == "private" and r.get("to") is not None:
             if self._is_blocked_by(uid, r["to"]):
                 return False
@@ -1533,29 +3699,39 @@ class Hub:
         R47-A1：同名但为僵尸会话（断线未及清扫）先释放再放行。
         """
         self._release_zombie(sess.nick)      # R47-A1：先做僵尸释放（锁外）
+        reject = None
         with self.lock:
+            if self._retired_schema_invalid:
+                reject = "身份状态不可用，拒绝登录"
             old_uid = self.nick_to_uid.get(sess.nick)
-            if old_uid is not None:
-                sess.uid = old_uid                # 复用历史 uid（跨重连稳定）
-            else:
+            if reject is None and (old_uid in self.retired or any(
+                    rec.get("nick") == sess.nick for rec in self.retired.values())):
+                reject = "该昵称对应的 UID 已永久退役"
+            if reject is None and old_uid is not None:
+                sess.uid = old_uid
+            elif reject is None:
+                while (self._uid_seq in self.retired
+                       or self._uid_seq in self.known
+                       or self._uid_seq in _bots.BOT_BY_UID):
+                    self._uid_seq += 1
                 sess.uid = self._uid_seq
                 self._uid_seq += 1
-            was_online = sess.uid in self.sessions   # 是否已有其它端在线
+            was_online = sess.uid in self.sessions
             self._uid_clients.setdefault(sess.uid, set()).add(sess)
-            self.sessions[sess.uid] = sess            # 最近会话作代表（在线集仍按 uid 唯一）
+            self.sessions[sess.uid] = sess
             self.nick_to_uid[sess.nick] = sess.uid
             notice = self._offline_notice_records.get(sess.uid)
             if notice is not None and notice.get("state") == "pending":
                 notice["state"] = "cancelled"
-            # R25B：登记已知用户（保留旧 last_online，跨重连/断线不丢）
-            # R47-B：pwd 同样保留（登录校验依赖，重建字典不得丢）
-            # R52：sign/avatar 同样保留（换端重登不得丢资料）
             prev = self.known.get(sess.uid)
             self.known[sess.uid] = {"nick": sess.nick,
                                     "last_online": (prev or {}).get("last_online", 0)}
-            for _k in ("pwd", "sign", "avatar", "invisible", "status", "remarks"):  # R56 含隐身持久；R68 含在线状态；R69C9 含备注名
-                if (prev or {}).get(_k):
-                    self.known[sess.uid][_k] = prev[_k]
+            for _k in _KNOWN_PROFILE_FIELDS:
+                if prev is not None and _k in prev:
+                    self.known[sess.uid][_k] = copy.deepcopy(prev[_k])
+        if reject is not None:
+            self._error(sess, "retired", reject)
+            return False
         sess.send({
             "t": "welcome", "uid": sess.uid, "nick": sess.nick,
             "is_admin": sess.is_admin,                       # R53：管理员标识
@@ -1582,6 +3758,10 @@ class Hub:
         if not was_online:                           # 仅当首个端上线时才广播「已上线」
             self._broadcast_system(f"{sess.nick} 已上线"
                                    + ("（网页端）" if sess.type == "web" else ""))
+        with self.lock:
+            if self._retired_schema_invalid or self._uid_retired_locked(sess.uid):
+                sess.closed = True
+                return False
         return True
 
     def login_web(self, nick: str, peer_ip: str,
@@ -1601,12 +3781,22 @@ class Hub:
         # 只有通过部署凭据校验才能到达这里。
         # 须在 _attach（发送 welcome 帧）之前赋值，否则 welcome 的 is_admin 恒为 False。
         sess.is_admin = (nick == self._admin_nick)
-        self._attach(sess)                  # 同账号多端并存：登记不再失败
+        if not self._attach(sess):           # t0 可能在最终 attach 前建立 fence
+            return None, "该昵称对应的 UID 已永久退役"
         if password and not sess.is_admin:
-            self._pwd_claim(sess.uid, password)
+            if not self._pwd_claim(sess.uid, password):
+                return None, "该账号已退役或登录已失效"
         token = secrets.token_hex(16)
         with self.lock:
+            if (self._retired_schema_invalid
+                    or self._uid_retired_locked(sess.uid)
+                    or sess.closed):
+                return None, "该账号已退役或登录已失效"
             self.web_tokens[token] = sess
+        with self.lock:
+            if not self._session_is_active(sess):
+                self.web_tokens.pop(token, None)
+                return None, "该账号已退役或登录已失效"
         return sess, token
 
     # ---------- R47-B：昵称可选密码 ----------
@@ -1616,6 +3806,14 @@ class Hub:
         已设密码：password 必须匹配（PBKDF2 校验在锁外做，避免占 Hub 锁）；
         未设密码：放行（带密码时由调用方在 attach 成功后 claim 绑定）。
         管理员标识始终保留；未配置部署凭据时不降级为普通账号。"""
+        with self.lock:
+            if self._retired_schema_invalid:
+                return "身份状态不可用，拒绝登录"
+            if (nick in self.nick_to_uid
+                    and self.nick_to_uid.get(nick) in self.retired):
+                return "该昵称对应的 UID 已永久退役"
+            if any(rec.get("nick") == nick for rec in self.retired.values()):
+                return "该昵称对应的 UID 已永久退役"
         if nick in self._reserved_admin_nicks:
             if nick != self._admin_nick or not self._admin_pwd_hash:
                 return "管理员登录未启用，请联系服务器部署者"
@@ -1633,26 +3831,35 @@ class Hub:
                 return "密码错误"
         return None
 
-    def _pwd_store(self, uid: int, stored: str | None) -> None:
+    def _pwd_store(self, uid: int, stored: str | None) -> bool:
         """known[uid]['pwd'] 写入/清除（R16 落盘随 _persist）。"""
         with self.lock:
+            if self._uid_retired_locked(uid):
+                return False
             info = self.known.get(uid)
             if info is None:
-                return
+                return False
             if stored:
                 info["pwd"] = stored
             else:
                 info.pop("pwd", None)
         self._persist()
+        return True
 
-    def _pwd_claim(self, uid: int, password: str) -> None:
+    def _pwd_claim(self, uid: int, password: str) -> bool:
         """登录时带了密码且该昵称未设密码 → 绑定（先到先得）。"""
         with self.lock:
+            if self._uid_retired_locked(uid):
+                return False
             info = self.known.get(uid)
-            if not info or info.get("pwd"):
-                return
-        self._pwd_store(uid, auth.make(password))
+            if not info:
+                return False
+            if info.get("pwd"):
+                return True
+        if not self._pwd_store(uid, auth.make(password)):
+            return False
         self.audit.log(type="pwd_claim", uid=uid)
+        return True
 
     def set_password(self, uid: int, old: str, new: str) -> str | None:
         """R47-B：设置/修改/清除昵称密码（需已登录身份）。返回错误文案或 None。
@@ -1661,6 +3868,8 @@ class Hub:
         - 已设密码：old 必须匹配；new 空=清除。
         管理员凭据由部署侧管理，拒绝通过普通账号接口修改/清除。"""
         with self.lock:
+            if self._retired_schema_invalid or self._uid_retired_locked(uid):
+                return "账号已退役或身份状态不可用"
             info = self.known.get(uid)
             if info is None:
                 return "用户不存在"
@@ -1672,12 +3881,14 @@ class Hub:
         if not new:
             if not stored:
                 return "尚未设置密码"
-            self._pwd_store(uid, None)
+            if not self._pwd_store(uid, None):
+                return "账号已退役或身份状态不可用"
             self.audit.log(type="pwd_change", uid=uid, action="clear")
             return None
         if len(new) > PWD_MAX:
             return f"密码过长（≤{PWD_MAX} 字符）"
-        self._pwd_store(uid, auth.make(new))
+        if not self._pwd_store(uid, auth.make(new)):
+            return "账号已退役或身份状态不可用"
         self.audit.log(type="pwd_change", uid=uid,
                        action="change" if stored else "set")
         return None
@@ -1719,6 +3930,8 @@ class Hub:
 
     def _on_avatar_set(self, sess: Session, header: dict, body: bytes) -> None:
         """R52：上传/更换头像（header: ext；body=图片字节 ≤1MB）。"""
+        if self._retire_error(sess):
+            return
         ext = str(header.get("ext") or "").lower().lstrip(".")
         if ext not in self.cfg.avatar_exts:
             self._error(sess, "avatar", "不支持的图片格式")
@@ -1744,13 +3957,24 @@ class Hub:
             except OSError:
                 pass
         with self.lock:
-            self.known.setdefault(uid, {})["avatar"] = ext
+            rejected = self._uid_retired_locked(uid)
+            if not rejected:
+                self.known.setdefault(uid, {})["avatar"] = ext
+        if rejected:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()
         self._broadcast_roster()
         sess.send({"t": MsgType.AVATAR_DATA.value, "uid": uid, "ext": ext}, body)
 
     def _on_avatar_del(self, sess: Session) -> None:
         """R52：删除头像。"""
+        if self._retire_error(sess):
+            return
         uid = sess.uid
         old_ext = self._avatar_known(uid)
         if old_ext:
@@ -1759,7 +3983,12 @@ class Hub:
             except OSError:
                 pass
         with self.lock:
-            (self.known.get(uid) or {}).pop("avatar", None)
+            rejected = self._uid_retired_locked(uid)
+            if not rejected:
+                (self.known.get(uid) or {}).pop("avatar", None)
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()
         self._broadcast_roster()
         sess.send({"t": MsgType.AVATAR_DATA.value, "uid": uid, "ext": ""})
@@ -1785,21 +4014,35 @@ class Hub:
 
     def _on_sign_set(self, sess: Session, header: dict) -> None:
         """R52：设置个性签名（服务器权威，广播 roster 全员同步）。"""
+        if self._retire_error(sess):
+            return
         sign = str(header.get("sign") or "").strip()[:self.cfg.sign_max_len]
         with self.lock:
-            self.known.setdefault(sess.uid, {})["sign"] = sign
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                self.known.setdefault(sess.uid, {})["sign"] = sign
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()
         self._broadcast_roster()
 
     def _on_status_set(self, sess: Session, header: dict) -> None:
         """R68：在线状态（online/away/busy）。服务器权威持久，广播 roster 全员同步；
         与隐身为正交维度（隐身控制「是否出现在名单」，状态控制「出现在名单时的点色」）。"""
+        if self._retire_error(sess):
+            return
         status = str(header.get("status") or "").strip().lower()
         if status not in ("online", "away", "busy"):
             self._error(sess, "status", "状态无效")
             return
         with self.lock:
-            self.known.setdefault(sess.uid, {})["status"] = status
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                self.known.setdefault(sess.uid, {})["status"] = status
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()
         self._broadcast_roster()
         try:
@@ -1811,6 +4054,8 @@ class Hub:
         """R69C9：设置/清除好友备注名（本人视角，按 owner 持久化，remark 空=清除）。
         备注只对本人生效：写入 known[sess.uid]["remarks"][uid] 后重播 roster，
         各会话按查看者视角拿到自己的备注，互不串号。"""
+        if self._retire_error(sess):
+            return
         try:
             target = int(header.get("uid"))
         except (TypeError, ValueError):
@@ -1818,18 +4063,24 @@ class Hub:
             return
         remark = str(header.get("remark") or "").strip()[:24]
         with self.lock:
-            info = self.known.setdefault(sess.uid, {})
-            rems = info.get("remarks")
-            if not isinstance(rems, dict):
-                rems = {}
-            if remark:
-                rems[str(target)] = remark
-            else:
-                rems.pop(str(target), None)
-            if rems:
-                info["remarks"] = rems
-            else:
-                info.pop("remarks", None)
+            rejected = (self._uid_retired_locked(sess.uid)
+                        or self._uid_retired_locked(target))
+            if not rejected:
+                info = self.known.setdefault(sess.uid, {})
+                rems = info.get("remarks")
+                if not isinstance(rems, dict):
+                    rems = {}
+                if remark:
+                    rems[str(target)] = remark
+                else:
+                    rems.pop(str(target), None)
+                if rems:
+                    info["remarks"] = rems
+                else:
+                    info.pop("remarks", None)
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         self._persist()
         self._broadcast_roster()
         try:
@@ -1841,9 +4092,16 @@ class Hub:
     def _on_invis_set(self, sess: Session, header: dict) -> None:
         """R56：隐身上线开关。服务器权威持久；回帧 invis_ack 让本人确认，
         并重放 `_broadcast_roster` 让各会话按查看者视角刷新名单。"""
+        if self._retire_error(sess):
+            return
         on = bool(header.get("on"))
         with self.lock:
-            self.known.setdefault(sess.uid, {})["invisible"] = on
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                self.known.setdefault(sess.uid, {})["invisible"] = on
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()
         self._broadcast_roster()
         try:
@@ -1863,11 +4121,17 @@ class Hub:
             return
         on = bool(header.get("on"))
         with self.lock:
-            self.known.setdefault(uid, {})["invisible"] = on
+            rejected = (self._retired_schema_invalid
+                        or self._uid_retired_locked(uid))
+            if not rejected:
+                self.known.setdefault(uid, {})["invisible"] = on
+                nick = (self.known.get(uid) or {}).get(
+                    "nick") or self.nick_to_uid.get(uid) or f"用户{uid}"
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         self._persist()
         self._broadcast_roster()
-        nick = (self.known.get(uid) or {}).get(
-            "nick") or self.nick_to_uid.get(uid) or f"用户{uid}"
         # 通知目标本人（若在线）以校准其 UI 开关
         tgt = self.sessions.get(uid)
         if tgt is not None:
@@ -1978,32 +4242,35 @@ class Hub:
                     del self.sessions[sess.uid]
                 else:                        # 代表是别的会话（异常兜底）
                     self.sessions.pop(sess.uid, None)
-                # R25B：断线记录最后上线时间（known 保留 nick，供离线展示）
-                # R47-B：pwd 必须随 known 保留，否则注销一次后密码丢失
-                prev = self.known.get(sess.uid) or {}
-                self.known[sess.uid] = {"nick": sess.nick,
-                                        "last_online": _now()}
-                if prev.get("pwd"):
-                    self.known[sess.uid]["pwd"] = prev["pwd"]
+                # R25B：断线记录最后上线时间（known 保留 nick，供离线展示）。
+                # 既有资料字段与 pwd 一并保留；Session/token 等运行对象不落盘。
+                if not self._uid_retired_locked(sess.uid):
+                    prev = self.known.get(sess.uid) or {}
+                    self.known[sess.uid] = {"nick": sess.nick,
+                                            "last_online": _now()}
+                    for _k in _KNOWN_PROFILE_FIELDS:
+                        if _k in prev:
+                            self.known[sess.uid][_k] = copy.deepcopy(prev[_k])
                 # R12fix：保留 nick→uid 映射（断线不删），同名重连复用同一 uid
                 for tok, token_sess in list(self.web_tokens.items()):
                     if token_sess.uid == sess.uid:
                         del self.web_tokens[tok]
-                for gid, g in list(self.groups.items()):
-                    if sess.uid in g["members"]:
-                        del g["members"][sess.uid]
-                        g["admins"].discard(sess.uid)
-                        g["mutes"].pop(sess.uid, None)
-                        if not g["members"]:
-                            dissolved.append(gid)
-                        elif g["owner"] == sess.uid:
-                            # 转让群主：优先管理员，其次最早成员；前群主不当管理员
-                            cands = [u for u in g["members"] if u in g["admins"]]
-                            if not cands:
-                                cands = list(g["members"])
-                            new_owner = cands[0]
-                            g["owner"] = new_owner
-                            g["admins"].discard(new_owner)
+                if not self._uid_retired_locked(sess.uid):
+                    for gid, g in list(self.groups.items()):
+                        if sess.uid in g["members"]:
+                            del g["members"][sess.uid]
+                            g["admins"].discard(sess.uid)
+                            g["mutes"].pop(sess.uid, None)
+                            if not g["members"]:
+                                dissolved.append(gid)
+                            elif g["owner"] == sess.uid:
+                                # 转让群主：优先管理员，其次最早成员；前群主不当管理员
+                                cands = [u for u in g["members"] if u in g["admins"]]
+                                if not cands:
+                                    cands = list(g["members"])
+                                new_owner = cands[0]
+                                g["owner"] = new_owner
+                                g["admins"].discard(new_owner)
             elif self.sessions.get(sess.uid) is sess:
                 # 仍有其它端在线但本会话是代表 → 换一个仍在线者作代表
                 self.sessions[sess.uid] = next(iter(clients))
@@ -2035,6 +4302,8 @@ class Hub:
         """
         with self.lock:
             if getattr(sess, "closed", False):
+                return False
+            if self._retired_schema_invalid or self._uid_retired_locked(sess.uid):
                 return False
             clients = self._uid_clients.get(sess.uid)
             return ((clients is not None and sess in clients)
@@ -2224,7 +4493,7 @@ class Hub:
         elif t == MsgType.CLOUD_PUT.value:
             self._on_cloud_put(sess, header, body)            # R37 云历史上传
         elif t == MsgType.CLOUD_GET.value:
-            self._on_cloud_get(sess)                          # R37 云历史拉取
+            self._on_cloud_get(sess, header)                   # R37 云历史拉取
         elif t == MsgType.FILE_OFFER.value:
             self._on_file_offer(sess, header)
         elif t == MsgType.FILE_ACCEPT.value:
@@ -2332,10 +4601,15 @@ class Hub:
         # 只有通过部署凭据校验才能到达这里。
         # 须在 _attach（发送 welcome 帧）之前赋值，否则 welcome 的 is_admin 恒为 False。
         sess.is_admin = (nick == self._admin_nick)
-        self._attach(sess)                  # 同账号多端并存：登记不再失败
+        if not self._attach(sess):           # 同账号多端并存；退役 fence 仍拒绝
+            return False
         if pwd and not sess.is_admin:
-            self._pwd_claim(sess.uid, pwd)
-        return True
+            if not self._pwd_claim(sess.uid, pwd):
+                return False
+        with self.lock:
+            if self._retired_schema_invalid or self._uid_retired_locked(sess.uid):
+                return False
+            return self._session_is_active(sess)
 
     # ---------- R59 富文本：白名单清洗（只透传有限种类，防 UI 注入） ----------
     _RICH_KINDS = ("plain", "mention", "link", "hashtag", "bold", "italic",
@@ -2396,6 +4670,8 @@ class Hub:
         return geo
 
     def _on_chat(self, sess: Session, header: dict) -> None:
+        if self._retire_error(sess):
+            return
         channel = header.get("channel") or "public"
         if channel not in ("public", "private", "group"):
             self._error(sess, "channel", "未知频道")
@@ -2505,6 +4781,11 @@ class Hub:
             # R35 Bots：私聊发往 bot → 拦截处理（bot 不在 sessions，正常路径会误报 offline）
             if to is not None and _bots.is_bot(to):
                 self._bot_dispatch(sess, header, to)
+                return
+            with self.lock:
+                target_retired = self._uid_retired_locked(to)
+            if target_retired:
+                self._error(sess, "retired", "目标账号已退役")
                 return
             # R50 屏蔽：目标把我拉黑 → 拒收（仅私聊；群内发言不受个人屏蔽影响）
             if to is not None and to != sess.uid and self._is_blocked_by(sess.uid, to):
@@ -2621,7 +4902,25 @@ class Hub:
                 self._error(sess, "thread", "不支持在话题回复内再开话题")
                 return
             msg["thread_root"] = tr_i
-        msg = self.bus.publish(msg)
+        rejected = False
+        with self.lock:
+            rejected = self._uid_retired_locked(sess.uid)
+            target_uid = msg.get("to") if msg.get("channel") == "private" else None
+            if target_uid is not None:
+                rejected = rejected or self._uid_retired_locked(int(target_uid))
+            if not rejected:
+                msg = self.bus.publish(msg)
+                if header.get("burn") and msg.get("channel") in ("public", "private", "group"):
+                    recp = {u for u, _s in self._chan_recipients(
+                        msg["channel"], msg.get("uid"), msg.get("to"))}
+                    recp.discard(sess.uid)
+                    self._burn[msg["seq"]] = {
+                        "channel": msg["channel"], "uid": msg.get("uid"),
+                        "to": msg.get("to"), "ts": msg.get("ts", _now()),
+                        "pend": recp}
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         self._route(msg)
         # R26D 链接预览：先投递 chat，再补发 preview（缓存命中时同步、否则后台抓取），
         # 保证客户端按 chat → preview 顺序收帧，本地历史/渲染一致。
@@ -2629,16 +4928,6 @@ class Hub:
             m = _URL_RE.search(text)
             if m:
                 self._maybe_fetch_preview(m.group(0).rstrip(".,;:!?）)]}"), msg)
-        # R14 阅后即焚：全部收件方读到后由服务器删除（含发送方，发送方视为已读）
-        if header.get("burn") and msg.get("channel") in ("public", "private", "group"):
-            # 锁内修改共享 _burn：多连接线程并发发 burn，防丢失
-            with self.lock:
-                recp = {u for u, _s in self._chan_recipients(
-                    msg["channel"], msg.get("uid"), msg.get("to"))}
-                recp.discard(sess.uid)
-                self._burn[msg["seq"]] = {"channel": msg["channel"], "uid": msg.get("uid"),
-                                          "to": msg.get("to"), "ts": msg.get("ts", _now()),
-                                          "pend": recp}
         self.audit.log(type="chat", uid=sess.uid, nick=sess.nick, channel=channel,
                        to=msg.get("to"), seq=msg["seq"], length=len(text))
         self._persist()                              # R16：消息/阅后即焚落盘
@@ -2647,13 +4936,25 @@ class Hub:
     def _bot_dispatch(self, sess: Session, header: dict, bot_uid: int) -> None:
         """R35 Bots：私聊发往 bot → 用户消息正常入历史/路由（发送方看到回显），
         再由 bot 解析命令并经 bot_say 回复；不走 offline 校验、无阅后即焚/话题。"""
+        with self.lock:
+            rejected = (self._uid_retired_locked(sess.uid)
+                        or self._uid_retired_locked(bot_uid))
+        if rejected:
+            self._error(sess, "retired", "账号已退役或目标已退役")
+            return
         bot = _bots.BOT_BY_UID.get(bot_uid)
         if bot is None:
             return
         text = (header.get("text") or "").strip()
-        msg = self.bus.publish({"t": "chat", "channel": "private", "uid": sess.uid,
-                                "nick": sess.nick, "ts": round(_now(), 3),
-                                "to": bot_uid, "text": text})
+        with self.lock:
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                msg = self.bus.publish({"t": "chat", "channel": "private", "uid": sess.uid,
+                                        "nick": sess.nick, "ts": round(_now(), 3),
+                                        "to": bot_uid, "text": text})
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._route(msg)
         self.audit.log(type="bot", uid=sess.uid, nick=sess.nick, to=bot_uid,
                        seq=msg["seq"], length=len(text))
@@ -2664,22 +4965,49 @@ class Hub:
         for r in replies:
             # R46：bot 回复可为 str 或 (text, kb) 元组（kb=inline 键盘）
             if isinstance(r, tuple) and len(r) == 2:
-                self.bot_say(bot, sess.uid, r[0], kb=r[1])
+                self.bot_say(bot, sess.uid, r[0], kb=r[1],
+                            owner_uid=sess.uid, source_kind="bot_command",
+                            request_seq=msg.get("seq"))
             else:
-                self.bot_say(bot, sess.uid, r)
+                self.bot_say(bot, sess.uid, r, owner_uid=sess.uid,
+                            source_kind="bot_command",
+                            request_seq=msg.get("seq"))
 
-    def bot_say(self, bot, to_uid: int, text: str, kb=None) -> None:
+    def bot_say(self, bot, to_uid: int, text: str, kb=None, *,
+                owner_uid: int | None = None, source_kind: str | None = None,
+                request_seq: int | None = None) -> bool:
         """R35：bot 以私聊身份回复（bus.publish 入历史 + 正常路由，
         对客户端就是一条普通 CHAT 私聊，无需感知 bot 协议）。
-        R46：kb=inline 键盘（[[{t,c}],...]），仅是消息上的可选字段。"""
+        R46：kb=inline 键盘（[[{t,c}],...]），仅是消息上的可选字段。
+        RESOURCE：owner/target 在最终 bus C 复查；迟到 worker 不能越过
+        t0 产生新的 BOT 作者历史。"""
+        try:
+            to_uid = int(to_uid)
+            owner_uid = to_uid if owner_uid is None else int(owner_uid)
+        except (TypeError, ValueError):
+            return False
         msg = {"t": "chat", "channel": "private", "uid": bot.uid,
                "nick": bot.nick, "ts": round(_now(), 3),
                "to": to_uid, "text": text}
         if kb:                                        # R46：键盘随消息走（历史/快照天然保留）
             msg["kb"] = kb
-        msg = self.bus.publish(msg)
+        with self.lock:
+            if (self._retired_schema_invalid
+                    or self._uid_retired_locked(owner_uid)
+                    or self._uid_retired_locked(to_uid)):
+                return False
+            msg = self.bus.publish(msg)
+            self._bot_contexts[msg["seq"]] = {
+                "owner_uid": owner_uid, "actor_uid": int(bot.uid),
+                "target_uid": to_uid, "source_kind": source_kind,
+                "request_seq": request_seq,
+            }
         self._route(msg)
-        self._persist()
+        try:
+            self._persist()
+        except Exception:
+            pass
+        return True
 
     def _on_typing(self, sess: Session, header: dict) -> None:
         """R25A 正在输入：校验频道成员后广播给应收方（不落历史、不入审计）。
@@ -3028,15 +5356,29 @@ class Hub:
         """缓存命中（TTL 内）直接补发；否则登记 in-flight 并起后台线程抓取。
         单条消息只预览首个 URL；失败/SSRF 静默降级，不出错误事件。"""
         now = _now()
+        cached = None
+        cache_hit = False
         with self._preview_lock:
             hit = self._preview_cache.get(url)
             if hit is not None and now - hit[0] <= self.cfg.preview_ttl:
-                if hit[1] is not None:
-                    self._preview_ready(msg["seq"], url, hit[1])
+                cache_hit = True
+                cached = hit[1]
+            elif url in self._preview_inflight:
                 return
-            if url in self._preview_inflight:
+            else:
+                self._preview_inflight.add(url)
+        # Cache callback must not run while _preview_lock is held: it may take
+        # Hub/bus locks and route/persist outside those locks.
+        if cache_hit:
+            if cached is None:
                 return
-            self._preview_inflight.add(url)
+            self._preview_ready(msg["seq"], url, cached,
+                                expected={"seq": msg.get("seq"),
+                                          "url": url,
+                                          "channel": msg.get("channel"),
+                                          "uid": msg.get("uid"),
+                                          "to": msg.get("to")})
+            return
         threading.Thread(target=self._fetch_preview_worker,
                          args=(url, msg["seq"], msg.get("channel"),
                                msg.get("uid"), msg.get("to")),
@@ -3053,19 +5395,59 @@ class Hub:
             self._preview_inflight.discard(url)
             self._preview_cache[url] = (_now(), meta)
         if meta is not None:
-            self._preview_ready(seq, url, meta)
+            self._preview_ready(seq, url, meta,
+                                expected={"seq": seq, "url": url,
+                                          "channel": channel, "uid": uid,
+                                          "to": to})
 
-    def _preview_ready(self, seq: int, url: str, meta: dict) -> None:
-        """抓取完成：原地附到原消息（历史/两端渲染一致），并广播 preview 事件。"""
-        with self.bus._lock:
-            _key, msg = self.bus.find(seq)
-            if msg is None or "preview" in msg:
+    def _preview_ready(self, seq: int, url: str, meta: dict,
+                       *, expected: dict | None = None) -> None:
+        """最终 Hub→bus C：只补当前仍匹配的原消息并捕获事件副本。"""
+        expected = expected if isinstance(expected, dict) else {}
+        route_ev = None
+        with self.lock:
+            if self._retired_schema_invalid:
                 return
-            msg["preview"] = meta
-            ch, muid, mto = msg["channel"], msg["uid"], msg.get("to")
-        self._route({"t": MsgType.PREVIEW.value, "seq": seq, "preview": meta,
-                     "channel": ch, "uid": muid, "to": mto})
-        self._persist()                              # 预览元数据入快照（无正文隐私风险）
+            expected_uid = expected.get("uid")
+            expected_to = expected.get("to")
+            if expected_uid is not None and self._uid_retired_locked(int(expected_uid)):
+                return
+            if expected.get("channel") == "private" and expected_to is not None \
+                    and self._uid_retired_locked(int(expected_to)):
+                return
+            with self.bus._lock:
+                _key, msg = self.bus.find(seq)
+                if msg is None or "preview" in msg or msg.get("deleted"):
+                    return
+                if expected.get("seq") not in (None, seq):
+                    return
+                if expected.get("url") not in (None, url):
+                    return
+                if expected_uid is not None and msg.get("uid") != expected_uid:
+                    return
+                if expected.get("channel") is not None \
+                        and msg.get("channel") != expected.get("channel"):
+                    return
+                if expected_to is not None and msg.get("to") != expected_to:
+                    return
+                current_text = str(msg.get("text") or "")
+                match = _URL_RE.search(current_text)
+                current_url = (match.group(0).rstrip(".,;:!?）)]}")
+                              if match else "")
+                if current_url != url:
+                    return
+                msg["preview"] = copy.deepcopy(meta)
+                ch, muid, mto = msg["channel"], msg["uid"], msg.get("to")
+                route_ev = {"t": MsgType.PREVIEW.value, "seq": seq,
+                            "preview": copy.deepcopy(meta),
+                            "channel": ch, "uid": muid, "to": mto}
+        if route_ev is None:
+            return
+        self._route(route_ev)
+        try:
+            self._persist()                          # 预览元数据入快照（无正文隐私风险）
+        except Exception:
+            pass
 
     def _on_voice(self, sess: Session, header: dict, body: bytes) -> None:
         """语音消息：复用文本聊天的频道校验/禁言/成员归属，二进制 WAV 体随广播透传。
@@ -3326,49 +5708,56 @@ class Hub:
         if len(text) > self.cfg.chat_text_max:
             self._error(sess, "long", "消息过长")
             return
+        # The find, permission/state check, mutation and event snapshot share
+        # one short bus lock.  Routing/audit/persist stay outside it.
         with self.bus._lock:
             _key, msg = self.bus.find(seq)
-        if msg is None:
-            self._error(sess, "expired", "消息已不在服务器历史中")
+            if msg is None:
+                reason = ("expired", "消息已不在服务器历史中")
+                route_ev = None
+            elif msg.get("uid") != sess.uid:
+                reason = ("forbid", "只能编辑自己的消息")
+                route_ev = None
+            elif isinstance(msg.get("poll"), dict):
+                reason = ("poll", "投票消息不可编辑")
+                route_ev = None
+            elif msg.get("deleted"):
+                reason = ("dup", "消息已撤回，无法编辑")
+                route_ev = None
+            elif msg.get("file") or msg.get("sticker") or msg.get("fp"):
+                reason = ("forbid", "只能编辑文本消息")
+                route_ev = None
+            else:
+                reason = None
+                old_snap = {"ts": round(_now(), 3),
+                            "text": str(msg.get("text") or "")[
+                                :self.cfg.edit_history_len]}
+                if isinstance(msg.get("rich"), list):
+                    old_snap["rich"] = copy.deepcopy(msg["rich"])
+                edits = msg.get("edits")
+                if not isinstance(edits, list):
+                    edits = []
+                edits = list(edits)
+                edits.append(old_snap)
+                if len(edits) > self.cfg.edit_history_max:
+                    del edits[:len(edits) - self.cfg.edit_history_max]
+                msg["edits"] = edits
+                msg["text"] = text
+                r59 = self._san_rich(header.get("rich"), text)
+                if r59:
+                    msg["rich"] = r59
+                else:
+                    msg.pop("rich", None)
+                msg["edited"] = True
+                route_ev = {"t": MsgType.MSG_EDIT.value, "seq": seq,
+                            "channel": msg["channel"], "uid": msg["uid"],
+                            "to": msg.get("to"), "nick": msg["nick"],
+                            "text": text, "edits": copy.deepcopy(edits)}
+                if r59:
+                    route_ev["rich"] = copy.deepcopy(r59)
+        if reason is not None:
+            self._error(sess, *reason)
             return
-        if msg.get("uid") != sess.uid:
-            self._error(sess, "forbid", "只能编辑自己的消息")
-            return
-        if isinstance(msg.get("poll"), dict):      # R26A：投票消息结构固定，禁编辑
-            self._error(sess, "poll", "投票消息不可编辑")
-            return
-        if msg.get("deleted"):
-            self._error(sess, "dup", "消息已撤回，无法编辑")
-            return
-        if msg.get("file") or msg.get("sticker") or msg.get("fp"):
-            self._error(sess, "forbid", "只能编辑文本消息")
-            return
-        # R70B：编辑前把旧版本快照入 edits（旧正文 + 旧富文本），
-        # 单条截断 edit_history_len、最多 edit_history_max 条（超出丢最旧）。
-        old_snap = {"ts": round(_now(), 3),
-                    "text": str(msg.get("text") or "")[:self.cfg.edit_history_len]}
-        if isinstance(msg.get("rich"), list):
-            old_snap["rich"] = msg["rich"]
-        edits = msg.get("edits")
-        if not isinstance(edits, list):
-            edits = []
-        edits.append(old_snap)
-        if len(edits) > self.cfg.edit_history_max:
-            del edits[:len(edits) - self.cfg.edit_history_max]
-        msg["edits"] = edits
-        msg["text"] = text                     # 原地改（存储与后续历史加载一致）
-        r59 = self._san_rich(header.get("rich"), text)     # R59：编辑同步富文本
-        if r59:
-            msg["rich"] = r59
-        else:
-            msg.pop("rich", None)                 # 编辑为纯文本 → 清掉旧富文本
-        msg["edited"] = True
-        route_ev = {"t": MsgType.MSG_EDIT.value, "seq": seq,
-                    "channel": msg["channel"], "uid": msg["uid"],
-                    "to": msg.get("to"), "nick": msg["nick"], "text": text,
-                    "edits": edits}                # R70B：随事件下发历史版本
-        if r59:
-            route_ev["rich"] = r59
         self._route(route_ev)
         self.audit.log(type="msg_edit", uid=sess.uid, seq=seq, length=len(text))
         self._persist()                              # R16：编辑后的权威消息落盘
@@ -3392,31 +5781,61 @@ class Hub:
             return
         with self.bus._lock:
             _key, msg = self.bus.find(seq)
-        if msg is None:
-            self._error(sess, "expired", "消息已不在服务器历史中")
+            if msg is None:
+                reason = ("expired", "消息已不在服务器历史中")
+                route_ev = None
+            else:
+                is_owner = msg.get("uid") == sess.uid
+                allowed = is_owner or sess.is_admin
+                if not allowed:
+                    is_private = msg.get("channel") == "private"
+                    is_peer = msg.get("to") == sess.uid
+                    allowed = scope == "both" and is_private and is_peer
+                if not allowed:
+                    reason = ("forbid", "只能撤回自己的消息")
+                    route_ev = None
+                elif msg.get("deleted"):
+                    reason = ("dup", "消息已撤回")
+                    route_ev = None
+                else:
+                    reason = None
+                    msg["deleted"] = True
+                    msg["text"] = ""
+                    route_ev = {"t": MsgType.MSG_DEL.value, "seq": seq,
+                                "channel": msg["channel"], "uid": msg["uid"],
+                                "to": msg.get("to"), "nick": msg["nick"]}
+        if reason is not None:
+            self._error(sess, *reason)
             return
-        is_owner = msg.get("uid") == sess.uid
-        if not is_owner and not sess.is_admin:      # R53：管理员可撤任何人消息
-            is_private = msg.get("channel") == "private"
-            is_peer = msg.get("to") == sess.uid
-            if not (scope == "both" and is_private and is_peer):
-                self._error(sess, "forbid", "只能撤回自己的消息")
-                return
-        if msg.get("deleted"):
-            self._error(sess, "dup", "消息已撤回")
-            return
-        msg["deleted"] = True                  # 墓碑保留 seq，历史/seq 连续
-        msg["text"] = ""
-        self._route({"t": MsgType.MSG_DEL.value, "seq": seq,
-                     "channel": msg["channel"], "uid": msg["uid"],
-                     "to": msg.get("to"), "nick": msg["nick"]})
+        self._route(route_ev)
         self.audit.log(type="msg_del", uid=sess.uid, seq=seq, scope=scope)
         self._persist()                              # R16：撤回 tombstone 落盘
 
     # ---------- R53 服务器管理员（最高清理权限） ----------
+    def _kick_targets(self, uid: int) -> list[Session]:
+        """在同一锁内提交 UID 全端撤权，返回锁外通知/清理目标。
+
+        ``sessions`` 只是代表端；撤权集合必须来自 ``_uid_clients``，并以
+        代表端作异常兜底。closed 标记和 Web token 删除与集合抓取同属 t0，
+        使 t0 后的 dispatch/token 解析立即失效；网络通知、连接关闭和
+        unregister 留在锁外，且 unregister 的 UID 资源复查保护后续重登。
+        """
+        with self.lock:
+            targets = list(self._uid_clients.get(uid, ()))
+            representative = self.sessions.get(uid)
+            if representative is not None and representative not in targets:
+                targets.append(representative)
+            if not targets:
+                return []
+            for target in targets:
+                target.closed = True
+            for token, token_sess in list(self.web_tokens.items()):
+                if token_sess.uid == uid:
+                    del self.web_tokens[token]
+            return targets
+
     def _on_admin_kick(self, sess: Session, header: dict) -> None:
-        """管理员踢人下线：unregister 目标会话并关闭其连接（桌面端断线重连除外，
-        密码类操作靠登录校验兜底）。"""
+        """管理员踢目标 UID 当前全部端下线；允许之后重新认证。"""
         if not sess.is_admin:
             self._error(sess, "forbid", "仅管理员可执行")
             return
@@ -3432,19 +5851,22 @@ class Hub:
         if uid == sess.uid:
             self._error(sess, "uid", "不能踢自己")
             return
-        with self.lock:
-            tsess = self.sessions.get(uid)
-        if tsess is None:
+        targets = self._kick_targets(uid)
+        if not targets:
             self._error(sess, "offline", "该用户不在线")
             return
-        nick = tsess.nick
-        try:
-            tsess.send({"t": MsgType.ERROR.value, "code": "kicked",
-                        "text": "已被管理员强制下线"})
-        except Exception:
-            pass
-        self.unregister(tsess, "admin_kick")
-        tsess.close_conn()
+        nick = targets[0].nick
+        for target in targets:
+            try:
+                target.send({"t": MsgType.ERROR.value, "code": "kicked",
+                             "text": "已被管理员强制下线"})
+            except Exception:
+                pass
+            self.unregister(target, "admin_kick")
+            try:
+                target.close_conn()
+            except Exception:
+                pass
         self._broadcast_system(f"管理员已将 {nick} 强制下线")
         self.audit.log(type="admin_kick", uid=sess.uid, target=uid,
                        target_nick=nick)
@@ -3573,27 +5995,54 @@ class Hub:
     def _admin_user_payload(self, target) -> dict | None:
         """系统管理员：构建某人信息+所属群载荷（target 为 uid 或已知昵称）。
         目标无效返回 None。"""
-        uid = self._alias_to_uid(self._known_names(), target)
+        if (self.store is not None and self._persist_unresolved
+                and not self._persist_inflight):
+            # 查询路径先在 writer 边界内做一次只读 reconcile；不持 Hub
+            # 锁等待磁盘，也不因查询隐式创建新 operation/写入。
+            with self._persist_writer_lock:
+                self._reconcile_persist_unknown()
+        uid = self._resolve_uid_for_admin(target)
         if uid is None:
             return None
-        nick = self._append_nick_for_uid(uid, None)
-        online = uid in self.sessions
         with self.lock:
+            retired = self.retired.get(uid)
+            nick = ((retired or {}).get("nick")
+                    or (self.known.get(uid) or {}).get("nick")
+                    or self._append_nick_for_uid(uid, None))
+            online = uid in self.sessions and uid not in self.retired
             groups = []
             for g in sorted(self.groups.values(), key=lambda x: x["gid"]):
                 if uid in g["members"]:
                     role = "owner" if g["owner"] == uid else \
                         ("admin" if uid in g["admins"] else "member")
                     groups.append({"gid": g["gid"], "name": g["name"], "role": role})
-        return {"t": MsgType.ADMIN_USER_INFO.value, "uid": uid, "nick": nick,
-                "online": online, "groups": groups,
-                "invisible": self._is_invisible(uid)}  # R57：管理员可见隐身态
+            invisible = self._is_invisible(uid) if not retired else False
+        payload = {"t": MsgType.ADMIN_USER_INFO.value, "uid": uid, "nick": nick,
+                   "online": online, "groups": groups,
+                   "invisible": invisible}  # R57：管理员可见隐身态
+        retirement = self._retirement_payload(uid)
+        if retirement is not None:
+            payload["retirement"] = retirement
+        resources = self._resource_summary(uid)
+        if resources.get("operations"):
+            payload["resources"] = resources
+        return payload
 
     def _on_admin_user_get(self, sess: Session, header: dict) -> None:
         """系统管理员：查某人信息+所属全部群（uid 或已知昵称均可）。"""
         if not sess.is_admin:
             self._error(sess, "forbid", "仅系统管理员可执行")
             return
+        expected = header.get("operation_id")
+        if expected is not None:
+            target_uid = self._resolve_uid_for_admin(header.get("uid"))
+            if target_uid is None:
+                self._error(sess, "uid", "目标 uid/昵称 无效")
+                return
+            actual = self._retirement_operation_id(target_uid)
+            if not isinstance(expected, str) or expected != actual:
+                self._error(sess, "operation_id", "退役操作号不匹配")
+                return
         payload = self._admin_user_payload(header.get("uid"))
         if payload is None:
             self._error(sess, "uid", "目标 uid/昵称 无效")
@@ -3663,6 +6112,51 @@ class Hub:
                     g["owner"] = next(iter(g["members"]))
         return dissolved
 
+    def _retry_retirement_persistence(self, sess: Session, uid: int,
+                                      nick: str, op_id: str) -> None:
+        """Retry a failed same-op commit without repeating t0 cleanup."""
+        pending = self._admin_user_payload(uid)
+        if pending is not None:
+            try:
+                sess.send(pending)
+            except Exception:
+                pass
+        ok = self._persist(force=True)
+        with self.lock:
+            op = self._retire_ops.setdefault(uid, {"operation_id": op_id})
+            if op.get("status") == "pending":
+                last = self._persist_last_result
+                committed_sha = (last.sha256
+                                 if isinstance(last, server_store_mod.SaveResult)
+                                 and last.effect == "committed" else None)
+                committed_len = (last.length
+                                 if isinstance(last, server_store_mod.SaveResult)
+                                 and last.effect == "committed" else None)
+                op.update({"status": "confirmed" if ok else "failed",
+                           "target_uid": uid, "target_nick": nick,
+                           "origin": "written" if ok else None,
+                           "content_sha256": committed_sha if ok else None,
+                           "content_length": committed_len if ok else None,
+                           "retryable": False if ok else True,
+                           "failed_stage": None if ok else "store.save",
+                           "error_code": None if ok else "persist_failed"})
+            status = op.get("status")
+        final = self._admin_user_payload(uid)
+        if final is not None:
+            try:
+                sess.send(final)
+            except Exception:
+                pass
+        with self.lock:
+            status = (self._retire_ops.get(uid) or {}).get("status", status)
+        if status == "confirmed":
+            self._broadcast({"t": MsgType.CLEARED.value, "uid": uid})
+            self._broadcast_system(f"系统管理员已退役用户 {nick}（UID 保留，不可重新认领）")
+        self.audit.log(type="admin_user_del", uid=sess.uid, target=uid,
+                       target_nick=nick, removed=0, dissolved=0,
+                       operation_id=op_id, status=status)
+        print(f"[admin][退役账号] {sess.nick} 重试 @{nick}(uid={uid})：状态={status}")
+
     def _on_admin_user_del(self, sess: Session, header: dict) -> None:
         """管理员清除用户（删除账号）：
         1) 从全部群移除成员（群主自动转让，移空即解散）；
@@ -3673,20 +6167,108 @@ class Hub:
         if not sess.is_admin:
             self._error(sess, "forbid", "仅系统管理员可执行")
             return
-        uid = self._alias_to_uid(self._known_names(), header.get("uid"))
+        uid = self._resolve_uid_for_admin(header.get("uid"))
         if uid is None:
             self._error(sess, "uid", "目标 uid/昵称 无效")
             return
+        expected = header.get("operation_id")
+        if expected is not None:
+            actual = self._retirement_operation_id(uid)
+            if not isinstance(expected, str) or expected != actual:
+                self._error(sess, "operation_id", "退役操作号不匹配")
+                return
         if uid == sess.uid:
             self._error(sess, "uid", "不能清除自己")
             return
-        nick = self._append_nick_for_uid(uid, None)
-        dissolved = self._admin_del_remove_groups(uid)      # 1) 移出全部群
-        removed = self.bus.clear_uid(uid)                   # 2) 清空消息
-        # 同一 uid 可以同时有桌面端、网页端和多个网页标签。只下线
-        # sessions 中的代表会话会留下其它端，须撤销所有端及其 token。
-        # 先在锁内拍快照并撤销全部 token，再逐个注销，避免遍历时修改在线集。
+        if self.store is None:
+            self._error(sess, "store_required", "退役需要已启用的持久化 Store")
+            return
         with self.lock:
+            protected_bot = uid in _bots.BOT_BY_UID
+            protected_admin = any(s.is_admin and s.uid == uid
+                                  for s in self._snapshot_sessions())
+        if protected_bot:
+            self._error(sess, "uid", "系统机器人身份不可退役")
+            return
+        if protected_admin:
+            self._error(sess, "uid", "当前认证管理员身份不可退役")
+            return
+        with self.lock:
+            existing_rec = self.retired.get(uid)
+            candidate_nick = ((existing_rec or {}).get("nick")
+                              or (self.known.get(uid) or {}).get("nick")
+                              or self.nick_to_uid.get(uid)
+                              or f"用户{uid}")
+            mapped_uid = self.nick_to_uid.get(candidate_nick)
+        if mapped_uid not in (None, uid):
+            self._error(sess, "uid", "昵称映射与目标 UID 冲突")
+            return
+        # unknown 的显式重试必须先做只读对账；读失败/坏结构/冲突时
+        # 保持 unknown，不得先把运行态改成 pending 再尝试新写。
+        if self._persist_unresolved and not self._persist_inflight:
+            with self._persist_writer_lock:
+                self._reconcile_persist_unknown()
+            if self._persist_unresolved:
+                payload = self._admin_user_payload(uid)
+                if payload is not None:
+                    try:
+                        sess.send(payload)
+                    except Exception:
+                        pass
+                return
+        with self.lock:
+            existing_op = self._retire_ops.get(uid)
+            already_confirmed = bool(self.retired.get(uid)
+                                     and existing_op
+                                     and existing_op.get("status") == "confirmed")
+        if already_confirmed:
+            payload = self._admin_user_payload(uid)
+            if payload is not None:
+                try:
+                    sess.send(payload)
+                except Exception:
+                    pass
+            return
+        if existing_op and self.retired.get(uid):
+            existing_status = existing_op.get("status")
+            if existing_status in ("pending", "unknown"):
+                payload = self._admin_user_payload(uid)
+                if payload is not None:
+                    try:
+                        sess.send(payload)
+                    except Exception:
+                        pass
+                return
+            if existing_status == "failed":
+                retry_nick = self.retired[uid]["nick"]
+                retry_op_id = self.retired[uid]["operation_id"]
+                self._retire_ops[uid] = {
+                    "status": "pending", "operation_id": retry_op_id,
+                    "target_uid": uid, "target_nick": retry_nick,
+                }
+                self._retry_retirement_persistence(
+                    sess, uid, retry_nick, retry_op_id)
+                return
+
+        # 生成/复用同 UID 的幂等操作号；t0 只做内存状态提交，所有通知、
+        # 连接关闭、资源清理和持久化均留在屏障之外。
+        with self.lock:
+            old = self.retired.get(uid)
+            if old is not None:
+                nick = old["nick"]
+                op_id = old["operation_id"]
+            else:
+                nick = candidate_nick
+                mapped_uid = self.nick_to_uid.get(nick)
+                if mapped_uid is None:
+                    self.nick_to_uid[nick] = uid
+                op_id = secrets.token_hex(16)
+                self.retired[uid] = {"nick": nick, "retired_at": _now(),
+                                     "operation_id": op_id}
+            self._retire_ops[uid] = {
+                "status": "pending", "operation_id": op_id,
+                "target_uid": uid, "target_nick": nick,
+            }
             targets = list(self._uid_clients.get(uid, ()))
             representative = self.sessions.get(uid)
             if representative is not None and representative not in targets:
@@ -3694,28 +6276,97 @@ class Hub:
             for token, token_sess in list(self.web_tokens.items()):
                 if token_sess.uid == uid:
                     del self.web_tokens[token]
-        for target in targets:                               # 3) 全部在线端强制下线
+            for target in targets:
+                target.closed = True
+            self._uid_clients.pop(uid, None)
+            self.sessions.pop(uid, None)
+            self.known.pop(uid, None)
+            self._drafts = {k: v for k, v in self._drafts.items()
+                            if k[0] != uid}
+            self.scheds.pop(uid, None)
+            self.blocks.pop(uid, None)
+            for key, readers in list(self.reads.items()):
+                readers.pop(uid, None)
+                if not readers:
+                    self.reads.pop(key, None)
+            self._offline_notice_records.pop(uid, None)
+            self._typing_ts.pop(uid, None)
+            self._nudge_ts.pop(uid, None)
+            self._shake_ts.pop(uid, None)
+            self.sticker_subs.pop(uid, None)
+            self._resource_withdraw_owner_locked(uid)
+            self._bot_reminder_cancel_owner_locked(uid)
+            for bseq, burn in list(self._burn.items()):
+                if burn.get("uid") == uid:
+                    self._burn.pop(bseq, None)
+            dissolved = self._admin_del_remove_groups(uid)
+            removed = self.bus.clear_uid(uid)
+            self._bot_contexts = {
+                seq: ctx for seq, ctx in self._bot_contexts.items()
+                if ctx.get("owner_uid") != uid and ctx.get("target_uid") != uid
+            }
+        for target in targets:
             try:
                 target.send({"t": MsgType.ERROR.value, "code": "deleted",
-                             "text": "你的账号已被管理员删除"})
+                             "text": "你的账号已被管理员退役"})
             except Exception:
                 pass
-            self.unregister(target, "admin_del")
             try:
                 target.close_conn()
             except Exception:
                 pass
-        with self.lock:
-            # unregister 会重建 known 条目记录 last_online，故须在其后再删除账号
-            self.known.pop(uid, None)                       # 4) 删除账号
-        self._persist(force=True)
-        self._broadcast({"t": MsgType.CLEARED.value, "uid": uid})
+        for other, payload in self._drop_xfers_of(uid):
+            self._send_to(other, payload)
+        self._drop_voice_rooms(uid)
+        self._disconnect_rooms_of(uid)
+        self._broadcast_roster()
         self._broadcast_group_list()
-        self._broadcast_system(f"系统管理员已清除用户 {nick} 的账号")
+        pending = self._admin_user_payload(uid)
+        if pending is not None:
+            try:
+                sess.send(pending)
+            except Exception:
+                pass
+        ok = self._persist(force=True)
+        with self.lock:
+            op = self._retire_ops.setdefault(uid, {"operation_id": op_id})
+            # _commit_current_snapshot/_ack_commit 已按 typed effect 写入
+            # pending/failed/unknown/confirmed；这里只补旧 hook 没有候选时
+            # 的兼容状态，不能把 unknown 或 confirmed 降级成 failed。
+            if op.get("status") == "pending":
+                last = self._persist_last_result
+                committed_sha = (last.sha256
+                                 if isinstance(last, server_store_mod.SaveResult)
+                                 and last.effect == "committed" else None)
+                committed_len = (last.length
+                                 if isinstance(last, server_store_mod.SaveResult)
+                                 and last.effect == "committed" else None)
+                op.update({"status": "confirmed" if ok else "failed",
+                           "target_uid": uid, "target_nick": nick,
+                           "origin": "written" if ok else None,
+                           "content_sha256": committed_sha if ok else None,
+                           "content_length": committed_len if ok else None,
+                           "retryable": False if ok else True,
+                           "failed_stage": None if ok else "store.save",
+                           "error_code": None if ok else "persist_failed"})
+            retire_status = op.get("status")
+        final = self._admin_user_payload(uid)
+        if final is not None:
+            try:
+                sess.send(final)
+            except Exception:
+                pass
+        with self.lock:
+            retire_status = (self._retire_ops.get(uid) or {}).get("status",
+                             retire_status)
+        if retire_status == "confirmed":
+            self._broadcast({"t": MsgType.CLEARED.value, "uid": uid})
+            self._broadcast_system(f"系统管理员已退役用户 {nick}（UID 保留，不可重新认领）")
         self.audit.log(type="admin_user_del", uid=sess.uid, target=uid,
-                       target_nick=nick, removed=removed, dissolved=dissolved)
-        print(f"[admin][删除账号] {sess.nick} 清除 @{nick}(uid={uid})："
-              f"清消息 {removed} 条，解散群 {dissolved} 个，已从 known 移除")
+                       target_nick=nick, removed=removed, dissolved=dissolved,
+                       operation_id=op_id, status=retire_status)
+        print(f"[admin][退役账号] {sess.nick} 处理 @{nick}(uid={uid})："
+              f"清消息 {removed} 条，状态={retire_status}")
 
     def _on_reaction(self, sess: Session, header: dict) -> None:
         """R13 表情回应：对 seq 消息加/摘 emoji，广播全网 reactions 状态。"""
@@ -3765,6 +6416,8 @@ class Hub:
 
     def _on_read(self, sess: Session, header: dict) -> None:
         """R13 已读回执：记录 uid 在某会话读到的最远 seq，广播给会话参与者。"""
+        if self._retire_error(sess):
+            return
         try:
             seq = int(header.get("seq"))
         except (TypeError, ValueError):
@@ -3773,25 +6426,37 @@ class Hub:
         channel = header.get("channel") or "public"
         to = header.get("to")
         key = self._conv_key(channel, sess.uid, to)
-        # 锁内修改共享 reads/_burn：多连接线程并发回执需串行化，防丢失更新
+        # 只在 Hub 锁内更新 reads，并收集锁外通知计划；发送、审计、
+        # burn 清理与持久化都不得阻塞 Hub 锁。
         with self.lock:
-            reads = self.reads.setdefault(key, {})
-            if reads.get(sess.uid, 0) >= seq:      # 幂等：只前进不回退
-                return
-            reads[sess.uid] = seq
-            for _u, s in self._chan_recipients(channel, sess.uid, to):
-                try:
-                    s.send({"t": MsgType.READ.value, "channel": channel, "key": key,
-                            "uid": sess.uid, "to": to, "seq": seq})
-                except Exception:
-                    pass
-            # R14 阅后即焚：本会话所有 burn 消息若所有待读目标方已读到其 seq → 服务器删除并广播 del
-            for bseq, br in list(self._burn.items()):
-                if br["channel"] != channel or not self._burn_same_convo(br, sess.uid, to):
-                    continue
-                if bseq <= seq and self._burn_ready(br, reads, bseq):
-                    self._burn_finish(bseq, br)
-            self._burn_ttl_sweep()
+            if self._uid_retired_locked(sess.uid):
+                rejected = True
+            else:
+                rejected = False
+                reads = self.reads.setdefault(key, {})
+                if reads.get(sess.uid, 0) >= seq:
+                    return
+                reads[sess.uid] = seq
+                read_targets = list(self._chan_recipients(channel, sess.uid, to))
+                burn_ready = [
+                    bseq for bseq, br in list(self._burn.items())
+                    if br["channel"] == channel
+                    and self._burn_same_convo(br, sess.uid, to)
+                    and bseq <= seq and self._burn_ready(br, reads, bseq)
+                ]
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
+        payload = {"t": MsgType.READ.value, "channel": channel, "key": key,
+                   "uid": sess.uid, "to": to, "seq": seq}
+        for _u, target in read_targets:
+            try:
+                target.send(payload)
+            except Exception:
+                pass
+        for bseq in burn_ready:
+            self._burn_finish(bseq)
+        self._burn_ttl_sweep()
         self._persist()                              # R16：reads/burn 变化落盘
 
     def _readers_for(self, key: str, uid: int):
@@ -4061,29 +6726,107 @@ class Hub:
             pass
 
     def _on_cloud_put(self, sess: Session, header: dict, body: bytes) -> None:
-        """上传：body=客户端 AES-GCM 密文 blob（服务器不解析）。按 uid 存最新一份。"""
+        """上传 opaque cloud bytes；C 与实际 replace/receipt 分离。"""
         blob = bytes(body or b"")
         if not blob or len(blob) > cloud_history_mod.CLOUD_BLOB_MAX:
             self._error(sess, "cloud",
                         f"备份大小无效（上限 {cloud_history_mod.CLOUD_BLOB_MAX} 字节）")
             return
-        ts = _now()
-        self.cloud[sess.uid] = {"blob": blob, "ts": ts}
-        path = os.path.join(self.cloud_dir, f"{sess.uid}.bin")
+        announced = header.get("size")
+        if announced is not None and (
+                isinstance(announced, bool) or not isinstance(announced, int)
+                or announced != len(blob)):
+            self._error(sess, "cloud", "备份长度与声明不一致")
+            return
+        op = header.get("resource_operation_id")
+        identity = {"payload_sha256": hashlib.sha256(blob).hexdigest(),
+                    "content_length": len(blob)}
         try:
-            with open(path, "wb") as f:
-                f.write(blob)
-        except OSError:
-            pass                                  # 落盘失败仍保留内存份
-        try:
-            sess.send({"t": MsgType.CLOUD_DONE.value, "size": len(blob), "ts": ts})
-        except Exception:
-            pass
-        self.audit.log(type="cloud_put", uid=sess.uid, size=len(blob))
+            ctx = self._resource_begin(
+                sess, "cloud", sess.uid, identity,
+                resource_operation_id=op if op is not None else None)
+            if ctx.get("status") == "confirmed":
+                with self.lock:
+                    with self._resource_lock:
+                        ctx["visibility"] = self._resource_visibility_locked(ctx)
+                        result = self._resource_public_result(ctx)
+                if result.get("visibility") != "available":
+                    raise _ResourceError("superseded", result,
+                                         "旧 cloud 操作已被后续版本取代")
+                try:
+                    sess.send({"t": MsgType.CLOUD_DONE.value, "size": len(blob),
+                               "ts": _now(), "resource": result})
+                except Exception:
+                    pass
+                return
+            if ctx.get("status") in ("unknown", "pending"):
+                if ctx.get("status") == "unknown":
+                    raise _ResourceError("resource_unknown",
+                                         self._resource_public_result(ctx))
+                if not self._resource_claim_executor(ctx):
+                    raise _ResourceError("resource_pending",
+                                         self._resource_public_result(ctx))
+            result = self._resource_file_commit(ctx, blob)
+            if result.get("status") != "confirmed":
+                raise _ResourceError("resource_pending", result)
+            try:
+                sess.send({"t": MsgType.CLOUD_DONE.value, "size": len(blob),
+                           "ts": _now(), "resource": result})
+            except Exception:
+                # A confirmed resource remains confirmed; response failure is
+                # deliberately not folded back into the resource result.
+                pass
+            try:
+                self.audit.log(type="cloud_put", uid=sess.uid, size=len(blob),
+                               resource_operation_id=result.get(
+                                   "resource_operation_id"))
+            except Exception:
+                pass
+        except _ResourceError as exc:
+            result = exc.result or {}
+            self._error(sess, exc.code, "云资源未完成", resource=result)
+        except (PermissionError, ValueError) as exc:
+            self._error(sess, "cloud", str(exc))
 
-    def _on_cloud_get(self, sess: Session) -> None:
-        """拉取：回本账号密文 blob（无备份时 size=0 空 body）。"""
-        rec = self.cloud.get(sess.uid)
+    def _on_cloud_get(self, sess: Session, header: dict | None = None) -> None:
+        """拉取当前已证 cloud bytes；resource query 只回有限结果。"""
+        header = header if isinstance(header, dict) else {}
+        query = header.get("resource_query") or header.get(
+            "resource_operation_id")
+        if query:
+            explicit_owner = header.get("resource_owner_uid")
+            if explicit_owner is not None:
+                if not sess.is_admin or isinstance(explicit_owner, bool):
+                    self._error(sess, "resource_forbid", "无资源查询权限")
+                    return
+                try:
+                    explicit_owner = int(explicit_owner)
+                except (TypeError, ValueError):
+                    self._error(sess, "resource_unavailable", "资源 owner 无效")
+                    return
+            try:
+                result = self._resource_query(
+                    sess, str(query), explicit_owner=explicit_owner)
+            except (LookupError, PermissionError, ValueError):
+                self._error(sess, "resource_unavailable", "资源结果不可用")
+                return
+            if result.get("status") != "confirmed" \
+                    or result.get("visibility") != "available":
+                self._error(sess, "resource_pending", "资源结果尚未可读",
+                            resource=result)
+                return
+            try:
+                sess.send({"t": MsgType.CLOUD_DONE.value,
+                           "size": result.get("length") or 0,
+                           "resource": result})
+            except Exception:
+                pass
+            return
+        with self.lock:
+            if self._retired_schema_invalid or self._uid_retired_locked(sess.uid):
+                rec = None
+            else:
+                rec = self.cloud.get(sess.uid)
         blob = rec["blob"] if rec else b""
         try:
             sess.send({"t": MsgType.CLOUD_DATA.value,
@@ -4106,30 +6849,37 @@ class Hub:
             return True
         return all(reads.get(u, 0) >= burn_seq for u in br["pend"])
 
-    def _burn_finish(self, seq: int, br: dict) -> None:
-        """广播 del 并清理服务器历史/内存（阅后即焚删除）。"""
-        with self.lock:                               # 锁内操纵共享 _burn/bus
-            self._burn.pop(seq, None)
-            with self.bus._lock:
-                _key, msg = self.bus.find(seq)
-            for _u, s in self._chan_recipients(br["channel"], br["uid"], br["to"]):
-                try:
-                    s.send({"t": MsgType.MSG_DEL.value, "seq": seq,
-                            "channel": br["channel"], "uid": br["uid"], "to": br["to"],
-                            "burn": True})
-                except Exception:
-                    pass
+    def _burn_finish(self, seq: int, br: dict | None = None) -> None:
+        """锁内只提交 burn/bus 内存清理，通知和审计均在锁外。"""
+        with self.lock:
+            current = self._burn.pop(seq, None)
+            if br is None:
+                br = current
+            if br is None:
+                return
+            _key, msg = self.bus.find(seq)
             if msg is not None:
                 self.bus.discard(seq)
-            self.audit.log(type="burn", uid=br["uid"], seq=seq)
+            recipients = self._chan_recipients(br["channel"], br["uid"], br["to"])
+        payload = {"t": MsgType.MSG_DEL.value, "seq": seq,
+                   "channel": br["channel"], "uid": br["uid"],
+                   "to": br["to"], "burn": True}
+        for _u, target in recipients:
+            try:
+                target.send(payload)
+            except Exception:
+                pass
+        self.audit.log(type="burn", uid=br["uid"], seq=seq)
         self._persist()                              # R16：阅后即焚删除落盘
 
     def _burn_ttl_sweep(self) -> None:
         """阅后即焚兜底：长期没人读到也删除，防删不掉堆积（惰性触发）。"""
         now = _now()
-        for bseq, br in list(self._burn.items()):
-            if now - br.get("ts", now) > self.cfg.burn_ttl:
-                self._burn_finish(bseq, br)
+        with self.lock:
+            expired = [bseq for bseq, br in self._burn.items()
+                       if now - br.get("ts", now) > self.cfg.burn_ttl]
+        for bseq in expired:
+            self._burn_finish(bseq)
 
     def _on_purge(self, sess: Session, header: dict) -> None:
         """R14 会话清理：丢弃该频道 seq<=until_seq 的消息并广播，供客户端删历史。"""
@@ -4172,16 +6922,24 @@ class Hub:
     def _on_draft_set(self, sess: Session, header: dict) -> None:
         """R29B 草稿同步：按 (uid,key) 存服务器内存（空文本=清除）。
         单 uid 单会话（防双开顶号）→ 无需中继广播；换端登录时随 welcome 带回。"""
+        if self._retire_error(sess):
+            return
         channel = header.get("channel") or "public"
         if channel not in ("public", "private", "group"):
             return
         text = str(header.get("text") or "").strip()[:4000]
         key = self._conv_key(channel, sess.uid, header.get("to"))
+        rejected = False
         with self.lock:
-            if text:
-                self._drafts[(sess.uid, key)] = {"text": text, "ts": _now()}
-            else:
-                self._drafts.pop((sess.uid, key), None)
+            rejected = self._uid_retired_locked(sess.uid)
+            if not rejected:
+                if text:
+                    self._drafts[(sess.uid, key)] = {"text": text, "ts": _now()}
+                else:
+                    self._drafts.pop((sess.uid, key), None)
+        if rejected:
+            self._error(sess, "retired", "账号已退役")
+            return
         self._persist()                              # R16：草稿变化也落盘（服务器重启不丢）
 
     def _drafts_for(self, uid: int) -> list:

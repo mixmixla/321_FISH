@@ -87,8 +87,12 @@ def _handle_remind(hub, msg: dict) -> list:
     due = time.mktime((now.tm_year, now.tm_mon, now.tm_mday, hh, mm, 0, 0, 0, -1))
     if due <= time.time():
         due += 86400                     # 已过 → 明天同一时间
-    hub.bot_reminders.append({"uid": msg["uid"], "due": due, "text": note,
-                              "bot_uid": BOT_REMIND.uid})
+    enqueue = getattr(hub, "_bot_reminder_enqueue", None)
+    if enqueue is not None:
+        enqueue(msg["uid"], due, note, BOT_REMIND.uid)
+    else:
+        hub.bot_reminders.append({"uid": msg["uid"], "due": due, "text": note,
+                                  "bot_uid": BOT_REMIND.uid})
     return [f"⏰ 已设置提醒：{time.strftime('%H:%M', time.localtime(due))} {note}"]
 
 
@@ -126,11 +130,18 @@ def is_bot(uid) -> bool:
 def sweep_reminders(hub) -> None:
     """由 Hub sweeper 周期调用：到点提醒 → bot 经 bus.publish 推给用户。"""
     now = time.time()
-    due = [r for r in hub.bot_reminders if r["due"] <= now]
+    take_due = getattr(hub, "_bot_reminder_take_due", None)
+    if take_due is not None:
+        due = take_due(now)
+    else:
+        due = [r for r in hub.bot_reminders if r["due"] <= now]
+        if not due:
+            return
+        hub.bot_reminders = [r for r in hub.bot_reminders if r["due"] > now]
     if not due:
         return
-    hub.bot_reminders = [r for r in hub.bot_reminders if r["due"] > now]
     for r in due:
         bot = BOT_BY_UID.get(r["bot_uid"])
         if bot:
-            hub.bot_say(bot, r["uid"], f"⏰ 提醒：{r['text']}")
+            hub.bot_say(bot, r["uid"], f"⏰ 提醒：{r['text']}",
+                        owner_uid=r["uid"], source_kind="reminder")

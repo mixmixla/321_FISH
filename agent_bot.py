@@ -61,20 +61,29 @@ def _dispatch(hub, msg: dict) -> list:
 
     # 立即回一条"开工中"，真实 LLM 执行放后台线程
     threading.Thread(target=_run_async,
-                     args=(hub, msg.get("text", ""), msg.get("uid")),
+                     kwargs={"hub": hub, "text": msg.get("text", ""),
+                             "to_uid": msg.get("uid"),
+                             "owner_uid": msg.get("uid"),
+                             "source_kind": "agent",
+                             "request_seq": msg.get("seq")},
                      daemon=True).start()
     return [f"🤖 收到，正在 {_label(text)}…（结果稍后以消息回传）"]
 
 
-def _run_async(hub, text: str, to_uid) -> None:
+def _run_async(hub, text: str, to_uid, *, owner_uid=None,
+               source_kind="agent", request_seq=None) -> None:
     """后台线程：调 04 的 MCP 工具，结果经 bot_say 回传给发送者。"""
     try:
         result = _adapter_answer(text or "写代码：演示一个加法脚本", _MOCK)
         out = result or "（Agent 返回为空）"
-        hub.bot_say(get_agent_bot(), to_uid, out)
+        hub.bot_say(get_agent_bot(), to_uid, out,
+                    owner_uid=owner_uid if owner_uid is not None else to_uid,
+                    source_kind=source_kind, request_seq=request_seq)
     except Exception:
         hub.bot_say(get_agent_bot(), to_uid,
-                    f"🤖 Agent 执行失败：\n{traceback.format_exc()[-600:]}")
+                    f"🤖 Agent 执行失败：\n{traceback.format_exc()[-600:]}",
+                    owner_uid=owner_uid if owner_uid is not None else to_uid,
+                    source_kind=source_kind, request_seq=request_seq)
 
 
 def get_agent_bot():

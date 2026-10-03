@@ -13,6 +13,7 @@ import pytest
 from config import CFG
 from crypto import client_handshake
 from server import Hub, serve as serve_tcp, ChatBus
+from server_store import SaveResult
 from web import serve as serve_web
 
 
@@ -940,10 +941,10 @@ def test_persist_group_reads_pins_restore(tmp_path):
 
     h2 = _hub_with_store(tmp_path, str(store_dir))
     assert gid in h2.groups and h2.groups[gid]["name"] == "持久群"
-    assert h2.groups[gid]["members"].get(str(a.uid)) is not None
+    assert h2.groups[gid]["members"].get(a.uid) is not None
     assert h2.pins.get("public", {}).get("seq") == m["seq"]
     key = "public"
-    assert h2.reads.get(key, {}).get(str(b.uid)) == m["seq"]
+    assert h2.reads.get(key, {}).get(b.uid) == m["seq"]
 
 
 # ---------- R16 阶段一：落盘优化（无变更跳过重建 / 单次写 / 快照独立性） ----------
@@ -951,14 +952,14 @@ def _wrap_persist(hub):
     """包一层 save / _snapshot_state，返回 (writes, builds) 两个计数器。"""
     writes, builds = [], []
     os_ = hub._snapshot_state
-    ow = hub.store.save
+    ow = hub.store._save_encoded
     hub._snapshot_state = lambda: builds.append(1) or os_()
-    hub.store.save = lambda *a: writes.append(1) or ow(*a)
+    hub.store._save_encoded = lambda *a: writes.append(1) or ow(*a)
     return writes, builds
 
 
 def test_persist_skips_when_unchanged(tmp_path):
-    """连续多次 _persist() 间无状态变更 → 只构建一次快照、不重复写盘。"""
+    """普通 persist 只排触发器；writer 对已确认 bytes 跳过重复写盘。"""
     store_dir = tmp_path / "r16_skip"
     h = _hub_with_store(tmp_path, str(store_dir))
     writes, builds = _wrap_persist(h)
@@ -970,9 +971,18 @@ def test_persist_skips_when_unchanged(tmp_path):
     h._persist(); h._persist(); h._persist()
     assert len(builds) == 0, "无变更不应反复重建快照"
     assert len(writes) == 0, "无变更不应反复写盘"
-    # 走出窗口后再次 _persist：构建后经内容对比判定无变更 → 仍不写盘
+    built = threading.Event()
+    old_snapshot = h._snapshot_state
+
+    def observe_snapshot():
+        state = old_snapshot()
+        built.set()
+        return state
+
+    h._snapshot_state = observe_snapshot
     h._persist_last -= h._persist_interval + 1
-    h._persist()
+    h._persist()                     # 仅排触发器，writer 异步 capture
+    assert built.wait(5)
     assert len(writes) == 0, "无变更走出窗口也不应写盘"
 
 
@@ -1005,7 +1015,9 @@ def test_persist_flush_single_write_and_no_loss(tmp_path):
     assert len(writes) == 1, f"flush 应只写一次: {len(writes)}"
     assert h.store.load()["reads"].get("all") == {"1": 5}
     # 空闲关停兜底：不再有变更，盘上仍是最新、不覆盖为旧
-    h.store.save = (lambda *a: writes.append(1))  # 停止真正落盘，仅计数
+    h.store._save_encoded = (lambda encoded: (
+        writes.append(1) or SaveResult("not_committed", "write", "test_stop",
+                                       False, encoded.length, encoded.sha256)))
     h._persist_flush()
     assert h.store.load()["reads"].get("all") == {"1": 5}, "关停兜底不丢最后状态"
 
@@ -1034,18 +1046,89 @@ def test_snapshot_isolation(tmp_path):
     assert "rich" not in snap2, "快照不出现 live 后续新增字段"
 
 
+def test_snapshot_deep_isolation_across_persisted_containers(tmp_path):
+    """M01：所有实际快照容器在 capture 后与 live 嵌套值独立。"""
+    store_dir = tmp_path / "r16_deep_iso"
+    h = _hub_with_store(tmp_path, str(store_dir))
+    h.known[1] = {"nick": "alice", "remarks": {"2": "before"}}
+    h.groups[1] = {"gid": 1, "name": "g", "owner": 1,
+                   "admins": {1}, "members": {1: "alice"}, "mutes": {},
+                   "announce": "", "announce_mode": 0, "invite": "",
+                   "kind": "", "public": 0, "slow": 0}
+    h.reads["public"] = {1: 2}
+    h.pins["public"] = {"seq": 2, "nick": "before"}
+    h._burn[2] = {"channel": "public", "uid": 1, "to": None,
+                  "ts": 1.0, "pend": {2}}
+    h._polls[3] = {"question": "q", "options": ["a"],
+                   "votes": {1: 0}}
+    h._drafts[(1, "public")] = {"text": "d"}
+    h.scheds[1] = {"rid": {"channel": "public", "text": "s"}}
+    h.custom_stickers["x"] = {"code": "x", "label": "before"}
+    h.pack_meta["p"] = {"cover": "png"}
+    h.group_files[1] = [{"fid": "f", "name": "before"}]
+    h.tasks[1] = [{"tid": "t", "text": "before", "done": {1: 1}}]
+    h._fish["g"] = {1: 4}
+    h.moments["p"] = {"comments": [{"meta": {"tags": []}}]}
+    h.moment_covers[1] = {"mode": "preset"}
+
+    snap = h._snapshot_state()
+    h.known[1]["remarks"]["2"] = "after"
+    h.groups[1]["admins"].add(2)
+    h.reads["public"][1] = 9
+    h.pins["public"]["nick"] = "after"
+    h._burn[2]["pend"].add(3)
+    h._polls[3]["votes"][2] = 1
+    h._polls[3]["options"].append("b")
+    h._drafts[(1, "public")]["text"] = "after"
+    h.scheds[1]["rid"]["text"] = "after"
+    h.custom_stickers["x"]["label"] = "after"
+    h.pack_meta["p"]["cover"] = "jpg"
+    h.group_files[1][0]["name"] = "after"
+    h.tasks[1][0]["done"][2] = 2
+    h.tasks[1][0]["text"] = "after"
+    h._fish["g"][2] = 8
+    h.moments["p"]["comments"].append({"live": True})
+
+    assert snap["known"][1]["remarks"]["2"] == "before"
+    assert snap["groups"]["1"]["admins"] == [1]
+    assert snap["reads"]["public"][1] == 2
+    assert snap["pins"]["public"]["nick"] == "before"
+    assert snap["burn"][2]["pend"] == [2]
+    assert snap["polls"][3]["votes"] == {1: 0}
+    assert snap["polls"][3]["options"] == ["a"]
+    assert snap["drafts"]["1|public"]["text"] == "d"
+    assert snap["scheds"]["1"]["rid"]["text"] == "s"
+    assert snap["custom_stickers"]["x"]["label"] == "before"
+    assert snap["sticker_pack_meta"]["p"]["cover"] == "png"
+    assert snap["group_files"]["1"][0]["name"] == "before"
+    assert snap["tasks"]["1"][0]["done"] == {1: 1}
+    assert snap["tasks"]["1"][0]["text"] == "before"
+    assert snap["fish_board"]["g"] == {"1": 4}
+    assert snap["moments"]["p"]["comments"] == [{"meta": {"tags": []}}]
+    assert snap["moment_covers"]["1"]["mode"] == "preset"
+
+
 # ---------- R65：内容指纹替代常驻第二份快照 ----------
 def test_persist_unchanged_skip_by_fingerprint(tmp_path):
-    """R65：无变更判定改用内容指纹（md5(json)），不再常驻第二份全量快照。
-    走出窗口后重建快照做指纹比对 → 无变更仍不写盘。"""
+    """R65：无变更判定改用严格 bytes 指纹，不常驻第二份全量快照。"""
     store_dir = tmp_path / "r65_fp"
     h = _hub_with_store(tmp_path, str(store_dir))
     assert not hasattr(h, "_last_saved_state"), "不应再常驻第二份全量快照"
     writes, builds = _wrap_persist(h)
     h._persist_flush()
     builds.clear(); writes.clear()
+    built = threading.Event()
+    old_snapshot = h._snapshot_state
+
+    def observe_snapshot():
+        state = old_snapshot()
+        built.set()
+        return state
+
+    h._snapshot_state = observe_snapshot
     h._persist_last -= h._persist_interval + 1
-    h._persist()                     # 建一次快照 → 指纹一致 → 不写
+    h._persist()                     # 排触发器 → writer 建一次快照 → 不写
+    assert built.wait(5)
     assert len(builds) == 1 and len(writes) == 0
     # 真实变更 → 指纹变化 → 落盘
     h.reads["public"] = {"1": 3}
@@ -1079,8 +1162,18 @@ def test_persist_no_change_advances_throttle_clock(tmp_path):
     writes, builds = _wrap_persist(h)
     h._persist_flush()
     builds.clear(); writes.clear()
+    built = threading.Event()
+    old_snapshot = h._snapshot_state
+
+    def observe_snapshot():
+        state = old_snapshot()
+        built.set()
+        return state
+
+    h._snapshot_state = observe_snapshot
     h._persist_last -= h._persist_interval + 1
-    h._persist()                     # 建快照 → 指纹一致 → 不写盘，但推进时钟
+    h._persist()                     # 排触发器 → writer 建快照 → 不写盘
+    assert built.wait(5)
     assert len(builds) == 1 and len(writes) == 0
     h._persist(); h._persist()       # 时钟已推进 → 窗口内直接返回，不再重建
     assert len(builds) == 1, "无变更已推进节流时钟，不应反复重建快照"

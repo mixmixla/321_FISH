@@ -1047,6 +1047,8 @@ class ChatWindow:
             while True:
                 ev = self.core.events.get_nowait()
                 self._handle(ev)
+                if self._closed:
+                    return
         except queue.Empty:
             pass
         # 热键 → 切换假工作窗
@@ -1833,7 +1835,10 @@ class ChatWindow:
 
     def _on_error(self, ev: dict) -> None:
         code = ev.get("code")
-        if code in ("conn", "offline"):
+        if code == "kicked":
+            if not self._closed:
+                self.request_switch_account()
+        elif code in ("conn", "offline"):
             self.status_text.config(text=ev.get("text", "连接异常"))
         elif code == "pwd":
             # 输完密码 drop 重连的窗口期内，旧错误帧/未带密码的 hello 可能再触发
@@ -11008,6 +11013,14 @@ class ChatWindow:
         if getattr(self, "_tray", None) is not None:
             self._tray.stop()              # R31D：退出前移除托盘图标
         self._persist_drafts()             # R12：退出前把内存草稿写盘
+        # Stop this interpreter's timers without deleting child-owned Python
+        # callback commands through root.after_cancel. Widget.destroy owns that
+        # command bookkeeping and removes each command from its proper owner.
+        try:
+            for job in self.root.tk.splitlist(self.root.tk.call("after", "info")):
+                self.root.tk.call("after", "cancel", job)
+        except tk.TclError:
+            pass
         self.root.destroy()
         self.core.stop()
 

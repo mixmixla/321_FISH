@@ -6,20 +6,20 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 <!-- BEGIN_ROADMAP_VIEW -->
 ## 开发路线与当前位置
 
-**当前自治轮：LOCAL-TRIAL-20261003，Goal active。** 用户已授权主控在本轮范围内自主冻结任务、
+**本轮自治：LOCAL-TRIAL-20261003，AI_ACCEPTED；Goal active（仅资料与工具收口）。** 用户已授权主控在本轮范围内自主冻结任务、
 实施、独立审查和技术验收；[详细决定](decisions/LOCAL-AUTONOMY-20261003.md)替换一般审批分工。
 本地基线 `452417e`，集成分支 `codex/local-trial-20261003`；不继承旧任务 push/PR 权限。
-RESOURCE 四条件主体独立窄核查已确认；发现损坏manifest数值溢出，已冻结 RESOURCE-FIX-01 待门禁后修复。
-不重做已闭合项。当前实施 **VB-01 v1**：
-正式隔离逐文件门禁；之后按依赖冻结可靠性补正/游戏筛查/旗舰设计与实现/本地构建候选。
+RESOURCE 四条件主体独立窄核查已确认；损坏manifest数值溢出与版本类型补正已本地整合。
+本轮已完成 **VB-01 / RESOURCE-FIX-01 / CC-03-SCREEN / GAME-UI-01 / REL-01**：
+最终代码1daea66：127文件1669通过/0失败/2原opt-in，双EXE构建与合成双客户端登录/存活/清理通过，独立最终审查无must。已生成8文件本地试用包，使用说明与真实地图齐全；两旗舰列实验，其余不虚标稳定。
 本轮终点为合成数据验证的 Windows 本地试用候选、真实完成度地图、验证记录和已知/未验证事项。
 不等于 Pro/用户验收、远端合并或发布。以下旧交付记录与历史限制仅属于相应旧批次。
 
 **现在处于 Pro 路线的 R1：核心状态一致性。** 管理员安全、文件鉴权、会话退出和公共游戏生命周期已交付，
-[PR #4](https://github.com/mixmixla/321_FISH/pull/4)已合并；CC-02A已交付[Draft PR #5](https://github.com/mixmixla/321_FISH/pull/5)，RETIRE和CC-03入口筛查尚未闭合。
+[PR #4](https://github.com/mixmixla/321_FISH/pull/4)已合并；CC-02A已交付[Draft PR #5](https://github.com/mixmixla/321_FISH/pull/5)，完整RETIRE/R1仍未闭合；本轮CC-03入口筛查已完成有限真实分类。
 已完成的`BATCH-R1`是有限实现批次，不能据此宣布整个Pro R1里程碑通过。
 
-当前RESOURCE代码2087af8/资料4d2a49b已正常push追加[Draft PR #5](https://github.com/mixmixla/321_FISH/pull/5)，分支codex/cc02a-consistency；两层actualtree独立无must，PR标题/正文/attach更新成功，仍open/draft/未merge。CC-02C-RESOURCE v1.1独立ACCEPTED/1191550/0/2/source31102947728…保持。PR-DELIVERY-05已独立ACCEPTED，Goal工具complete（1264秒，约21分钟），actualflow/remote/PR终核通过，不等完整RETIRE/R1/发布；下列早期HEAD/计数仅历史。
+入场前历史交付：RESOURCE代码2087af8/资料4d2a49b已正常push追加[Draft PR #5](https://github.com/mixmixla/321_FISH/pull/5)，分支codex/cc02a-consistency；两层actualtree独立无must，PR标题/正文/attach更新成功，仍open/draft/未merge。CC-02C-RESOURCE v1.1独立ACCEPTED/1191550/0/2/source31102947728…保持。PR-DELIVERY-05已独立ACCEPTED，Goal工具complete（1264秒，约21分钟），actualflow/remote/PR终核通过，不等完整RETIRE/R1/发布；下列早期HEAD/计数仅历史。
 
 已合并基线：远端main `cc7e2951695041face3ea2451ef98a02d469d15b`（PR #4），与原本地基线 `d07b29577a48367f887cc0c2dbf1671ed13bb326`文件树相同。
 已显式fetch main cc7e295，新分支codex/cc02a-consistency的代码e065591/资料f48a833已推送并创建Draft PR #5。
@@ -41,10 +41,10 @@ CORE仅改server.py/最少量server_store.py/tests，Task v1.1已独立终审ACC
 
 | 阶段 | 目标 | 当前进度 | 进入下一阶段的检查点 |
 | --- | --- | --- | --- |
-| R0 公开安全与验证基线 | 管理员配置、权限、公开文档、可核验测试与构建状态 | CC-01A已获Pro/用户验收；最新候选隔离全量1355/0/2；正式门禁入口及构建基线仍需补齐 | 默认凭据问题关闭，报告绑定版本/环境，未测项目明确 |
-| R1 核心状态一致性 ← 当前 | 用户/会话/数据归属、文件权限、游戏公共流程 | CC-02A三片已独立验收；M1退役/可靠提交与CC-03入口矩阵仍未完成 | 退出不误伤其它端、非法请求无副作用、游戏可终局再开；持久数据边界明确 |
-| R2 特色体验与两款旗舰 | Excel主流程、收起恢复、五子棋/四子棋完整体验 | 未开始；等待R1前置与CC-04设计审查 | 操作/等待/观战/异常/恢复/结算可验证，设计与实现一致 |
-| R3 Windows可交付试用版 | EXE、非开发机器、实际网络、小范围试用 | 未开始；构建核验可提前准备，真机/发布另行批准 | 启动/重启/文件/游戏/退出通过，产物、日志、已知问题齐全 |
+| R0 公开安全与验证基线 | 管理员配置、权限、公开文档、可核验测试与构建状态 | CC-01A已获Pro/用户验收；本轮正式隔离门禁1669/0/2；本地构建与双EXE smoke通过，未发布 | 默认凭据问题关闭，报告绑定版本/环境，未测项目明确 |
+| R1 核心状态一致性 ← 当前 | 用户/会话/数据归属、文件权限、游戏公共流程 | CC-02A三片已独立验收；有限CORE/STORE/RESOURCE已验收、CC-03矩阵完成；完整M1退役/客户端/重启异常边界仍延期 | 退出不误伤其它端、非法请求无副作用、游戏可终局再开；持久数据边界明确 |
+| R2 特色体验与两款旗舰 | Excel主流程、收起恢复、五子棋/四子棋完整体验 | 本轮Windows两旗舰/收起恢复AI_ACCEPTED；分层验证列实验，非完整EXE UI或整个R1验收 | 操作/等待/观战/异常/恢复/结算可验证，设计与实现一致 |
+| R3 Windows可交付试用版 | EXE、非开发机器、实际网络、小范围试用 | 本地合成试用候选已构建/双EXE验证并独立AI_ACCEPTED；真机/物理LAN/发布仍未验证 | 启动/重启/文件/游戏/退出通过，产物、日志、已知问题齐全 |
 | R4 按反馈扩展 | 第三款社交游戏、必要Web能力、针对性重构 | 暂缓，等待试用证据 | 有实际需求支持，保留既有稳定能力 |
 
 ### 任务清单：已完成、下一项与后续
@@ -66,18 +66,19 @@ CORE仅改server.py/最少量server_store.py/tests，Task v1.1已独立终审ACC
 | 已完成实施 · CC-02B-STORE | 严格一次bytes/阶段IO/统一ack/全writer unknown/原子候选/op查询/三来源 | ACCEPTED；v1.1，Goal complete，已追加Draft PR #5 | store_backend / 主控 / store_code_review独立正式终审 | [Task](task-packages/CC-02B-STORE.md)/[Review](review-packages/CC-02B-STORE-r1.md)，116文件1483/0/2、188专项/277域/real35，未merge/release |
 | 资料完成 · CC-02C-RESOURCE-SCOPE | 只读资源owner/C/独立IO/t0/保留访问与有限Task草案 | ACCEPTED（资料）；Goal complete，已随PR-DELIVERY-05追加Draft PR #5 | 主控七Markdown / 两事实代理 / resource_docs_review独立终核 | [Task](task-packages/CC-02C-RESOURCE-SCOPE.md)/[Review](review-packages/CC-02C-RESOURCE-SCOPE-r1.md)，原资料19矩阵当时未执行/173链接/308源历史保持；后续正式Task另获批准 |
 | 已完成实施 · CC-02C-RESOURCE | 文件attempt许可/统一manifest资格/独立结果查询/异步bus C/preview窄桥接 | ACCEPTED；Goal complete，已追加Draft PR #5 | resource_backend / 主控 / resource_code_review独立正式终审 | [Task](task-packages/CC-02C-RESOURCE.md)/[Review](review-packages/CC-02C-RESOURCE-r1.md)，1191550/0/2、67专项/19域356/311源保持；不等完整RETIRE/R1/merge/release |
-| 7 · CC-03-SCREEN | 47项游戏入口/主要操作矩阵；稳定/实验/未验证/端不支持 | 待内部冻结；属于本轮范围，尚未实施 | 主控核验 / 独立审查 | 每项入口与行为证据；注册/画面存在不等于可玩 |
-| 当前 · VB-01（CC-05基线） | 正式逐文件入口、同版本续跑、超时清理、真实退出/日志报告 | IMPLEMENTING；v1内部批准 | gate_impl唯一代码 / 独立审查 | [Task](task-packages/VB-01.md)；隔离路径/网络/桌面，runner专项与最终门禁 |
-| 后续 · GAME-UI-01（CC-04） | 两款棋类状态/布局/操作/观战/胜线；必要办公收起恢复 | 待内部设计/冻结；属于本轮范围 | 内部设计 → 独立设计审查 → 实现 | 前置明确；先设计审查，再真实交互验收 |
-| 后续 · REL-01（CC-05交付） | 构建、合成数据Windows本地试用候选/已知事项 | 待内部冻结；仅本地试用范围 | 主控 / 独立审查 | 产物hash/日志；真实机器/物理网络未测须明确，不自动发布 |
+| 7 · CC-03-SCREEN | 47项双端主要操作与真实分类 | AI_ACCEPTED；本地有限筛查 | 主控裁决 / resource_review独立 | [地图](游戏完成度地图.md)/[Review](review-packages/CC-03-SCREEN-r1.md)；桌面2实验/31未验证/14不支持，Web45未验证/2不支持 |
+| 完成 · VB-01（CC-05基线） | 正式隔离门禁、同版恢复、超时清理、真实exit/日志/skip | AI_ACCEPTED；C3与最终整合全量 | root / resource_review独立 | [Task](task-packages/VB-01.md)/[Review](review-packages/VB-01-r1.md)；127文件1669/0/2，原失败保留 |
+| 完成 · RESOURCE-FIX-01 | 损坏manifest数值/严格version资格拒绝 | AI_ACCEPTED；已整合 | root实现 / resource_review独立 | [Task](task-packages/RESOURCE-FIX-01.md)/[Review](review-packages/RESOURCE-FIX-01-r1.md)；原9失败→35通过及最终全量 |
+| 完成 · GAME-UI-01（CC-04） | Windows两棋状态/输入/胜线、有限动画、办公收起恢复 | AI_ACCEPTED；v1.2有限桌面候选 | root / gate_impl / resource_review独立 | [Task](task-packages/GAME-UI-01.md)/[Review](review-packages/GAME-UI-01-r1.md)；board36/Tk5/wire3及全量；EXE UI完整对局仍未测 |
+| 完成 · REL-01（CC-05交付） | 白名单构建、合成双客户端、本地试用包与已知事项 | AI_ACCEPTED；v1.1本地范围 | root / gate_impl / resource_review独立 | [Task](task-packages/REL-01.md)/[Review](review-packages/REL-01-r1.md)/[使用说明](本地试用说明_2026-10-03.md)；不等真机/LAN/发布 |
 | Backlog · SEC-01 | Git历史敏感信息与旧部署凭据评估 | PROPOSED；不阻塞当前交付 | 独立安全评估 / 用户决定 | 先评估；不自动重写Git历史或改真实凭据 |
 
 ### 上轮整理与当前 Goal
 
 2026-10-03 自治接管：旧主控最近一轮 completed，工作区入场 clean/index 空，无 Python 应用/测试，
 唯一 worktree。当前聊天 Goal 已用工具创建并确认 active，无预算、未设置 heartbeat。
-主控唯一治理/队列/Task/Review/Git 写入；gate_impl 唯一门禁代码 writer；resource_review 只读窄核查。
-当前任务 VB-01 v1，内部批次验收后自动衔接本轮范围内下一项；不需用户逐批回复。
+本轮主控负责治理/整合/验证，gate_impl在独立worktree实施，resource_review独立只读审查；所有实现与测试现已结束。
+本轮已达本地试用终点，只余资料提交与Goal工具收口；下一代码范围或远端/真实数据权限由用户另定，不自动扩张。
 
 用户于2026-10-03直接要求“请提交pr”，[PR-DELIVERY-05 v1](task-packages/PR-DELIVERY-05.md)code7=2087af8/docs12=4d2a49b已正常push至PR5；独立实际树/原119证据/最终actualremote-flow终核无must，PR新title/body/attach满足，open/draft/base maincc7e295，本交付ACCEPTED。Goal complete，仅结束元数据机械补录；source31102947728…/1550保持，不复跑应用或扩权限。
 
@@ -214,8 +215,8 @@ Android、完整云账号、47款全面美术和大规模重写维持Backlog，�
 
 ## 当前队列
 
-本轮调度优先于下表历史任务：VB-01 v1 IMPLEMENTING；RESOURCE-FIX-01 v1 READY（依赖门禁隔离）；
-CC-03-SCREEN v1 正在只读筛查，GAME-UI-01 v1 draft 内部设计审查中；其余方向逐项冻结。
+本轮调度优先于下表历史任务：VB-01 v1 REVIEWING；RESOURCE-FIX-01 v1.1 REVIEWING（独立代码/专项通过，9baffbb未整合）；
+CC-03-SCREEN v1 静态初筛已独立复核、动态分类待补；GAME-UI-01 v1.2 IMPLEMENTING（独立worktree）；其余方向逐项冻结。
 
 | ID | 状态 | 批次/依赖 | 执行者 / 审查者 | 下一动作与证据 |
 | --- | --- | --- | --- | --- |
@@ -292,7 +293,7 @@ PASS
 验收来源：用户在本聊天明确确认“通过了”。证据见 [最终报告 r2](review-packages/CC-01A-r2.md)；
 本次确认对应已验证候选内容 ID，不将历史失败改写为通过，也不表示已经合并或发布。
 
-## 候选方向（均非本批 READY）
+## 历史候选方向（原BATCH-R1状态；现行自治范围见顶部）
 
 | 候选 | 状态 | 进入可执行队列的条件 |
 | --- | --- | --- |
@@ -306,7 +307,198 @@ Android、完整云账号、全面游戏美术、大规模模块拆分仍为暂�
 本次连续授权覆盖BATCH-R1三个生命周期任务，已自动推进至本批验收终点，不因单项结束而等待用户。
 其它Roadmap未转为执行授权；后续产品范围/批次由用户确认，普通批次内整改继续无需逐项推动。
 
-## 当前检查点 LOCAL-CP-01（自治接管与正式门禁）
+## 当前检查点 LOCAL-CP-11（本轮AI技术验收与交付终点）
+
+- 主树`codex/local-trial-20261003`，最终代码HEAD`1daea66556c3fc6b5b7cbc8c8432378088cc3ed9`。
+  root唯一资料/Git收口；代码/测试/依赖/PS1停写，当前仅本轮资料dirty，未push/远端PR/merge/tag/Release/部署。
+- 本轮及VB-01、RESOURCE-FIX-01、CC-03-SCREEN、GAME-UI-01、REL-01登记AI_ACCEPTED，
+  来源为resource_review未参与实现的独立最终交付审查无must，主控依据用户自治授权作技术裁决。
+  不是Pro/用户验收，不等整个R1/RETIRE、47游戏、完整Web/EXE UI、真实设备/LAN或发布验收。
+- 最终全量session86557已结束exit0：127文件1669passed/0failed/2原opt-in，827.261秒；
+  每文件单次attempt/exit0，没有意外skip、cleanup/artifact/policy failure。
+  run`local-trial-final-1daea66-20261003-133443-9daa84f0e4`，source
+  `f224f73b20e72ee1494f7fff096d7751c20fb6757d8c5b41434964431b4867f6`，fingerprint
+  `5b132d42f5945c8a3685dd73e37fa7cb84383635dc1d9ba9359da4814dbcc93d`；所有历史失败单列保留。
+- 最终build115.158秒/exit0、双EXE实际运行exit0（两个合成uid登录/同时存活/HTTP200/映像/私有desktop/清理），
+  精确run与hash见[REL Review](review-packages/REL-01-r1.md)。主树330输入映射到构建除生成spec外无差异；
+  run期source不变只覆盖其326项子集，不说成全330或全系统IO追踪。
+- 实际包`_tmp_gui/321_FISH-local-trial-20261003-1daea66.zip`，51,326,407 bytes，8个允许文件，
+  SHA256`74b543e8cc391e99671a326330155301f1b8fd105aa02252d6cc93f221968c89`；CRC/哈希/名单及独立终核通过。
+  [使用说明](本地试用说明_2026-10-03.md)/[47项地图](游戏完成度地图.md)/[总记录](review-packages/LOCAL-TRIAL-20261003-r1.md)。
+- 活动进程：所有本轮pytest/build/EXE session已结束；按owned `_tmp_gui` 映像查询无遗留EXE。
+  未恢复heartbeat。独立worktree和ignored原始证据保留用于回溯，不重复启动测试。
+- 下一动作：只做本轮资料/投影/边界检查与本地提交、核实Goal complete；此后到终点停止。
+  下一有限开发范围、实际用户试用或远端/真实数据操作需用户另定；无本轮技术待决。
+
+## 历史检查点 LOCAL-CP-10（补正独立通过、新候选最终验证）
+
+- 六文件补正同source784f1d8b…候选，真Tk5p/REL15p/kick6p；Boss原1f、mutex原2f、旧全量2f和
+  时钟seam中间1f均保留。resource_review独立复审无must，root技术批准进入最终验证。
+- 独立提交3e7ef6b已cherry-pick至主树`1daea66556c3fc6b5b7cbc8c8432378088cc3ed9`，
+  branch codex/local-trial-20261003，源码/测试/依赖/PS1冻结，仅root资料dirty。
+  整合后的330输入原字节source为`f224f73b20e72ee1494f7fff096d7751c20fb6757d8c5b41434964431b4867f6`，
+  checkout换行导致与worktree专项原字节ID不同，最终必须用此主树身份，不沿用旧全量结论。
+- 所有上轮主树测试/实际EXE进程已结束。将唯一运行`python run.py test-all --label local-trial-final-1daea66`，
+  同时在新白名单副本运行`python local_trial.py build`；期间不改任何源码输入。
+- 已启动：全量session86557，run`local-trial-final-1daea66-20261003-133443-9daa84f0e4`；
+  构建session11977，run`_tmp_gui/local-trial-runs/build-20261003-053443-b7259b1384/`。
+  复核`git diff 3e7ef6b HEAD`退出0，两提交Git树相同；不同原字节source来自checkout换行，不是未经审查的新逻辑。
+- 最终build session11977已exit0，115.158秒，双EXE非空且hash齐全；仅生成两spec与原输入不同。
+  最终实际EXE session98588/run`run-20261003-053741-15087532a7`已exit0，双client实际TCP登录/同时存活、
+  HTTP200、映像/private desktop/source前后及三个owned进程树清理均通过。GUI退出按钮未自动操作。
+  唯一活动长测仍session86557，当前已过39文件无失败；独立产物证据审查已开始，最终全量未完。
+- 下一动作：完成本候选全量/双EXE构建与私有desktop双客户端smoke，检查产物/说明/分类与独立最终证据，
+  满足本地有限条件后才AI_ACCEPTED并完成Goal。无远端发布、真实数据/设备/LAN验证权限。
+
+## 历史检查点 LOCAL-CP-09（实际EXE通过、恢复与双实例收口）
+
+- 主树仍HEAD1caf9ab、仅root资料dirty；127文件全量session8486继续，已到80文件，不重复启动。
+  当前2失败：kick退出测试fake缺少REL新初始化字段_disco；GUI断言短动画_after_id仍存在，
+  在0.9秒动画已自然结束时失败。原日志完整保留，测试需独立审查修订，不当作应用全绿。
+- 双EXE第一次构建exit0；`run-20261003-051910-298ae0973e`单client实际smoke exit0：
+  TCP/HTTP200/client.exe audit登录、映像与私有desktop、source前后一致和清理均通过。
+  session63114已结束，全部本次owned EXE已退出；原summary/profile清单在local-trial-runs对应run。
+- 独立恢复worktree`_tmp_gui/trial-recovery-fix/` base1caf9ab：gate_impl拥有client.py与flagship_gui测试，
+  正补双禁用Boss关闭恢复、可控时钟动画断言。root仅拥有local_trial.py/PS1/REL测试/kick测试，
+  已给每profile synthetic USERNAME，避免单例碰锁/唤起其它实例；扩smoke为双client，补退出fixture两态。
+  不同文件所有权明确，root代码已停写，由gate_impl调度此候选专项；resource_review独立设计已认可。
+- 单例负例`trial-mutex-negative-20261003-132133-b0d93cc1ad`真实2failed/13deselected；未靠真用户实例复现。
+  双EXE smoke正在用该新harness与已有1caf9ab EXE验证，session72124；它只能验证隔离启动，不冒称新Boss代码已打包。
+- 下一动作：补正专项/独立复审→等主树旧全量结束并保存全结果→整合新候选→最终全量/重新构建/双EXE验证。
+  Goal active，无用户待决；没有可见窗口、真实数据/设备或远端操作。
+- 旧全量session8486现已结束exit1：127文件1662p/2f/2原opt-in，866.122秒；R41全部21p，
+  失败仍仅上述两个测试，原run/候选ID/fingerprint见VB Review。双EXE session72124也结束exit0，三owned进程清理成功。
+
+## 历史检查点 LOCAL-CP-08（最终固定候选验证）
+
+- 主树HEAD`1caf9abeca301920a4092b7e7d34c7e63c5929b3`，branch
+  `codex/local-trial-20261003`；root已本地提交5文件补正作为可回退候选，不提前技术验收。
+  源码/测试/依赖/launcher停止修改，只有主控资料dirty；resource_review独立窄审继续。
+- 实际HEAD：`1caf9abeca301920a4092b7e7d34c7e63c5929b3`。
+  最终330输入source ID：`128ba3eb301f02d6f48a02bb66ef1e9181c7ff18818ea9d2db8ccb388af31732`。
+  PS1进入tracked后首次纳入最终身份；前一8ca1专项身份不冒称含有launcher。
+- 上一wire专项session37098结束exit0：3passed；`wire-state-ack-fix-20261003-131121-46669e23a5`。
+  没有仍在运行的上轮测试/EXE；启动唯一最终全量`python run.py test-all --label local-trial-final-1caf9ab`，
+  与`python local_trial.py build`可并行，后者只在新白名单源码副本/合成build-profile中运行PyInstaller。
+  两项都不启动用户桌面/真实设备或真实数据；具体session/run与结论启动后补，不重复启动。
+- 已启动：全量session8486，run`local-trial-final-1caf9ab-20261003-131538-6df4d173be`；
+  构建session18034，run`_tmp_gui/local-trial-runs/build-20261003-051538-c0ad0d3262/`。
+  resource_review已完成1caf9ab构建边界/wire修订/launcher独立窄审，无阻塞must；允许上述验证，不提前AI_ACCEPTED。
+- 构建session18034已exit0，双EXE齐全，126.312秒。随后只读试用路径核对发现：REL禁托盘/热键时
+  BossWindow关闭仅hide导致失去恢复入口。内部增加Task必要邻接补正，在新worktree
+  `_tmp_gui/trial-recovery-fix/`由gate_impl唯一修改client.py/真Tk回归，主树与已启动全量不变。
+  当前1caf9ab全量继续留作整合证据，不再作为最终交付版本；修正独立通过后将新候选重做最终全量/构建。
+- 下一动作：保留所有实际结果，完成独立审查和实际EXE private-desktop smoke、交付包及最终资料审查。
+  如发现必须项，保留原结果，修正后新身份验证；整个R1/RETIRE、物理LAN与发布仍不等于完成。
+
+## 历史检查点 LOCAL-CP-07（本地整合、构建边界与对局确认补正）
+
+- 主树`codex/local-trial-20261003` HEAD`806c5edcbe8ac7943329551c972d179a9408051b`，
+  C3门禁e39cbc2、REL配置6e23e72、GUI806c5ed均经独立窄审后本地提交整合。当前root唯一主树writer；
+  gate_impl仅在REL独立worktree修trial_start.ps1，resource_review只读审查主树构建边界。Goal active。
+- 原C3专项66p/2原opt-in、GUI布局3p/board36p/wire2p及六截图通过，精确证据见各Review。
+  早期全量1598p/3skip未验收及后续stdio/Tk失败保持；最终整合全量尚未开始。
+- 构建前发现旧harness会遍历ignored文件；仅以合成.env/boot.log/.vscode复现，
+  `rel-source-boundary-negative-20261003-130216-09c9d32d10`真实1f12deselected；未复制/读取真实运行文件。
+  已改为门禁源码白名单复制和hash核对，source前后仅检查此白名单；构建进程也用新synthetic profile。
+- 联合专项`integrated-prebuild-20261003-130541-32a3e6a8fa`，session18489已结束exit1：53p1f，
+  board36p/Tk3p/REL13p，wire五子棋通过、四子棋终局等待失败。保留原始日志，不以重跑覆盖。
+  原测试仅以playing状态确认每手，可能消费队列旧帧；现每手核对双方相同round/准确棋子数/turn，
+  再发下一手，并新增旧帧/旧轮反例。实际应用规则未为此改动；真实wire fixture明确loopback/禁discovery。
+- 下一动作：唯一运行wire修正专项 → 独立审查构建白名单/wire/launcher → 冻结候选代码 →
+  最终全量与独立源码副本构建 → 私有桌面实际EXE登录/退出 → 产物/说明/地图与终审。
+  未启动实际构建或EXE；没有用户待决，不做远端操作或真实数据/设备测试。
+
+## 历史检查点 LOCAL-CP-06（全量意外skip保留、C3与两个产品候选）
+
+- 主树HEAD6543e00，index空；root已完成VB C3有限整改及7领域专项，当前交独立复审。
+  session73331现已结束exit0：7域66p/2原opt-in，精确run与候选ID见VB Review，主树源继续停写等待独立复审。
+  原full session77193已结束（exit0/1598p3skip），因R41额外Tk skip不验收，绝不重复当作绿灯。
+  原122file run源/日志完整保留。C3用例将意外skip转失败，R41初始化错误直接报错。
+- C3对照定位原生stdio不完整（stdin probe真实超时）并修有效NUL/独立三句柄；fd/Tk仍在后续7域复现，
+  不据单次R41绿声称已解决。现GUI sys capture保留parent原生输出/不弱化断言，新增driver独立hash；
+  明确复现/日志/当前限制见[VB Review](review-packages/VB-01-r1.md)，最终全量仍待最终整合版本。
+- GUI候选在`_tmp_gui/game-ui-01/`，base9baffbb，source791c2caca51781d4b98b558d21052a797cd3da3a54f506046cb5e8b7890720f3，
+  独立初审2个root/mini及GameWindow恢复must已整改；原真Tk1f2p，最后3p，board36+wire2p，未提交/未最终验收。
+  gate_impl当前只在ignored目录做自身合成窗口视觉QA，不改两个产品树。
+- REL候选在`_tmp_gui/local-trial-build/`，base6543e00，sourceafbb3a90acaaef64dd94768f6c83101b33f4938ff259367f9c124eccbb0413c5。
+  进程级bind/discovery/tray/hotkey/hardware禁用、外部profile/private desktop harness；专项10+discovery4p，
+  未提交、未构建EXE。主控已冻结[REL Task](task-packages/REL-01.md)，resource_review独立代码/证据审查。
+- 下一动作：C3领域结束/独立复审 → GUI两must复审与视觉QA → REL独立审查 → 本地整合最终候选，
+  最终全量与源码副本内PyInstaller/真实EXE smoke，产物/地图/已知事项齐备才本轮终点。Goal active，无用户待决。
+
+## 历史检查点 LOCAL-CP-05（C2独立放行、门禁与资源整合全量）
+
+- 主树branch codex/local-trial-20261003，门禁代码本地commit6475319，已审资源9baffbb整合为6543e00；
+  HEAD `6543e008da6058eeccab20821a18f7016da1fb13`，index空，仅主控资料dirty。未push/PR/merge/release。
+- resource_review复审C2固定3hash，确认三must关闭、无新确定must，允许最终全量；不提前AI_ACCEPTED。
+  C2安全6原失败→6通过、旧contract8通过且新private desktop证据一致，所有已有进程已结束。
+- 将唯一运行 `python run.py test-all --label vb-resource-final-6543e00`（项目.venv/pwsh）；
+  源/测试/依赖停写，默认loopback guard/合成profile/逐文件独立源副本/private desktop。主树源输入不含ignored worktrees。
+  D盘约90GB可用，未发现旧Python测试/应用，避免重复门禁。实际run目录/进程与结果启动后补。
+- 全量已启动：唯一exec session `77193`，run目录
+  `_tmp_gui/test-gate/vb-resource-final-6543e00-20261003-113808-413c6da585/`，实际122文件。
+  已见前两文件24/14通过，后续进行中；恢复先查询该session/progress，不重复启动完整门禁。
+- GAME-UI在独立worktree继续，未进入本次全量：36纯棋盘+12 Core生命周期阶段绿，不等完整UI；
+  裸Canvas probe不足以验收且不应增加默认skip，已要求真实GameWindow/专注窗事件、after/收起恢复与合成对局。
+- 下一动作：完成此整合候选全量与独立结果核验；失败保留并归因，不重跑覆盖；随后GUI固定候选审查/实际验证。
+  当前Goal active，无用户待决问题，真实数据/设备/用户桌面与外部发布边界保持。
+
+## 历史检查点 LOCAL-CP-04（门禁冻结交审、旗舰独立实现接手）
+
+- 主树HEAD ba748cb / codex/local-trial-20261003，VB-01七实现/测试/开发说明文件未提交，gate_impl已停写，
+  resource_review独立终审C1关闭/真实证据。报告contract8、exit9、discovery4、private Tk5、专项1；精确run/hash待补。
+  未运行最终全量，root唯一测试调度，Goal active。
+- RESOURCE-FIX-01独立worktree/本地commit9baffbb已代码与专项独立通过，主树未整合；详见前检查点/Review。
+- 新独立worktree `_tmp_gui/game-ui-01/` branch codex/game-ui-01/base9baffbb，root纯棋盘32项原24f8p→32p；
+  后续painter修改尚未复测，client窗口/门禁还未接入，明确WIP。root现在停止GUI代码写入，
+  gate_impl接手该checkout全部GUI实施；不修改主树冻结runner，双方无同核心文件竞争。
+- GAME-UI-01 v1.2桌面设计已独立认可，Web移出。精确交接/原失败/未完成见[Review](review-packages/GAME-UI-01-r1.md)。
+  主控仅主树资料/Git/验证；不把当前prototype当完整可用候选。
+- 分类补正：此前16项桌面阻断过强。Balatro两个painter支持dict手牌，_poll捕获私有文本join异常，
+  仅能确认文本缺陷，不能推导全玩法不可操作；现地图14项主流程不支持/33未验证，Web2/45不变。
+  已通知唯一实现者不要据旧16项禁用Balatro，保留缺陷说明，不将撤回推断冒充通过。
+- 下一动作：独立VB终审/必要整改；GUI唯一writer完成Task与受控真Tk；主控整合审核过的本地候选，
+  跑集成/最终全量并构建本地试用候选。没有用户待决事项，无远端/真实数据/系统级操作。
+- 后续C2：独立终审发现cleanup失败不停、显式路径先resolve、PID缺失/查询未知被当已退出，
+  root接手主树窄修，gate_impl仅写GUI独立树。新增安全6项原6f→6p，原contract8p（session34559已exit0），
+  无新增Windows默认skip。固定hash/命令/原失败见VB Review；主树代码再次停写，resource_review复审中。
+
+## 历史检查点 LOCAL-CP-03（独立worktree补正已提交、门禁继续整改）
+
+- 主树HEAD ba748cb / codex/local-trial-20261003，gate_impl唯一门禁代码writer；主控唯一资料/Git。
+  因门禁整改尚在推进，root在独立worktree `_tmp_gui/resource-fix-01/` 从ba748cb实施RESOURCE-FIX-01 v1.1。
+  两代码线文件与checkout隔离，主树server未变。Goal active，未远端操作。
+- RESOURCE-FIX-01已本地提交 `9baffbb`，独立checkout clean：server目标函数+新35测试，
+  相同测试原9f26p/exit1→修35p/exit0，原资源文件领域41p/exit0，均无skip/retry。
+  测试预检为无GUI/设备/外部/Agent，直接loopback HTTP，无discovery，source/profile/数据隔离，
+  无需依赖未完通用runner即可执行此窄范围；具体命令/hash/原失败见[Review](review-packages/RESOURCE-FIX-01-r1.md)。
+- resource_review独立代码/原证据无must、允许本地提交；Task尚REVIEWING，未整合/最终全量，
+  不将局部35+41通过或本地commit等同完整验收。无本任务测试/HTTP进程遗留。
+- VB-01 C1三must已发gate_impl整改；root/独立审查不追逐每次未冻结diff，等最终候选交接。
+  GAME-UI-01 v1.2桌面设计已冻结（Web移出）；CC-03静态地图与当前缺口保存，尚无稳定GUI分类。
+- 下一动作：VB稳定候选/自测/独立复审 → RESOURCE本地集成候选验证 → 两款Windows旗舰实现/真Tk →
+  构建及最终本地试用候选/完整门禁；普通整改自动衔接，用户无待决问题。
+
+## 历史检查点 LOCAL-CP-02（治理已提交、独立发现与门禁实现）
+
+- 本地 HEAD `ba748cb`，branch `codex/local-trial-20261003`；12份治理/有限任务/初步地图资料已本地提交，
+  app/tests仍为入场代码；后续 gate_impl 开始 test_sandbox.py 等门禁实现，index空。Goal active。
+- resource_review独立确认RESOURCE四条件主体与治理边界，治理无必须项；确定manifest极大ts数值
+  溢出，冻结 RESOURCE-FIX-01 v1 READY，依赖安全门禁后合成复现/修复/独立验收。
+- CC-03-SCREEN静态地图47行已保存：13项桌面主要输入缺口（含11项无入口、拉密仅选牌、围棋字段不匹配），
+  独立核查进行中；未称稳定或真GUI已验证。GAME-UI-01 draft送内部独立设计审查，未编码。
+- gate_impl唯一代码writer，主控仅治理/调度/只读调查；resource_review独立设计/13项入口窄核查。
+  不并行启动pytest/应用，无未知进程清理。安全probe/自测以worker后续明确回报为准。
+- 下一动作：门禁最小执行能力/隔离桌面probe → runner自测/独立代码审查；随后RESOURCE补正和领域验证。
+  本轮远端写入/真实数据/设备/系统配置未触及；当前无用户待决问题。
+- 后续增量：门禁已有真实Tk/网络/runner开发探针（5/4/9通过，首exit1保留），但代码仍变更。
+  resource_review C1发现旧PID归属/cleanup失败续跑、输出路径junction、新未提交模块manifest三must，
+  gate_impl整改中，详见[VB Review](review-packages/VB-01-r1.md)；禁止提前全量/验收。
+- CC-03全部47双端主要输入已独立静态初筛：桌面16项阻断/31未验证，Web2项不可操作/45未验证。
+  GAME-UI-01 v1.2收窄Windows，桌面设计已独立认可；动态验证和本地试用尚未完成。
+
+## 历史检查点 LOCAL-CP-01（自治接管与正式门禁）
 
 - Task VB-01 v1；授权与本轮终点见上，Goal active。入场 HEAD `452417e20a8fe35c3ac641b1f2da488352dd6317`，
   clean/index空；从旧分支创建本地 `codex/local-trial-20261003`，未远端操作。

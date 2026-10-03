@@ -158,9 +158,10 @@ Review Package 保存版本/命令/结果/审查，PROJECT_MEMORY 保存稳定�
 对干净基线做对照，缺少对照就标待确认；保留行为断言，不用 skip 或弱化测试藏失败。
 
 本项目 Tk 门禁采用逐文件独立进程验证，并记录 UTF-8 输出、真实退出码、独立 basetemp、
-数量/默认 opt-in 跳过、失败与进度。当前 `dev.ps1`/`run.py` 默认是整套 pytest 子进程，
-没有新增的逐文件选测/恢复入口；已有本机逐文件脚本见对应 Review Package，
-固定入口的改造须单独批准。未提交交付绑定 base + patch/内容标识，审查后版本变化需重新核对。
+数量/默认 opt-in 跳过、失败与进度。VB-01候选已提供 `dev.ps1`/`run.py` 默认与 `test-all`
+逐文件隔离/选文件/恢复入口，源码副本、合成profile、loopback及Windows private desktop证据见
+[VB-01 Review](docs/review-packages/VB-01-r1.md)，验收状态以指挥中心为准。显式 `test` 保留旧单进程调试，
+不启用这些隔离措施，不能当安全门禁使用。未提交交付绑定base+内容标识，审查后版本变化须核对。
 
 批次内连续推进 READY 项；没有 READY 项、越界或必测失败时保存检查点，不擅自放行依赖。
 Goal、heartbeat 与向 Pro 发消息各自需要用户明确启动；同一队列同一时刻只有一个主控写入者，

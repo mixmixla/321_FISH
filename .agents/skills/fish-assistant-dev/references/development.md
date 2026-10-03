@@ -51,9 +51,11 @@ pystray（托盘）；开发还需 pytest、PyInstaller。可选语音转写、�
 目标代码改变后按 `COLLABORATION.md` 跑全量；当前 `docs/任务清单.md` 要求按文件
 分进程跑门禁，避免长生命周期中的 Tk/网络状态串扰，不把多文件合并成一次 pytest。
 完整验证应遍历当前所有 `tests/test_*.py`，汇总各进程真实退出码和计数。
-`dev.ps1 test` 目前仍使用单个 pytest 进程，T1 的 `test-all` 入口尚未实现；
-逐文件验收可分别用 `.venv\Scripts\python.exe -m pytest -q tests/单个文件.py`
-并为每个进程指定独立 `--basetemp`，不要假定未来命令已经存在。
+VB-01已提供默认与`test-all`的隔离逐文件候选入口；正式验收状态见指挥中心/VB Review。
+选文件示例为`dev.ps1 test-all tests/test_excel_sheet.py --label excel`；源码副本、合成profile、
+Windows private desktop、loopback guard及实际remap由报告记录，不能当产品监听语义证明。
+显式`dev.ps1 test`仍是历史单进程调试，不启用这些隔离；执行前另核路径/网络/外部副作用，
+不要用于本轮要求的安全隔离门禁。恢复须绑定同候选及原日志，失败不靠重试覆盖。
 文档/技能更新一般只需核对引用，
 不重复运行整个 GUI/网络门禁。
 
@@ -87,8 +89,9 @@ ExcelSheet/ExcelChrome 通常自动收集，仍需实际打包验证后才能声
 
 语音转写打包还依赖 `vosk_args()`、`stt_data_args()` 和 `models/vosk/am/final.mdl`；
 依赖/模型缺失会警告并继续，成功打包不代表具备转写能力。`.spec` 与 build.py
-可能存在不同资源清单，按实际执行入口核查。当前会话只验证了源码和测试，
-未验证成品 EXE、全部可选扩展或真实设备长期通话。
+可能存在不同资源清单，按实际执行入口核查。REL-01已有实际双EXE构建、private desktop双客户端
+合成登录/存活/owned进程树清理证据；精确候选及当前验收见docs/review-packages/REL-01-r1.md。
+不据此推导EXE界面完整对局、非开发机器、全部可选扩展或真实设备长期通话通过。
 
 ## Git 与文档
 

@@ -1,6 +1,8 @@
 """C2 regressions: uncertain ownership or path safety must stop execution."""
 import os
 from pathlib import Path
+import sys
+import uuid
 
 import pytest
 
@@ -59,3 +61,27 @@ def test_explicit_junction_is_rejected_before_resolution(tmp_path, entry):
     finally:
         # Remove only the junction itself; never recurse into its target.
         os.rmdir(alias)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows native standard handle contract")
+@pytest.mark.parametrize("operation", ["stdin", "stderr_independent"])
+def test_private_child_has_valid_independent_standard_streams(tmp_path, operation):
+    from test_sandbox import launch_process
+
+    script = ("import os; assert os.read(0, 1) == b''; print('stdin-ok')" if operation == "stdin" else
+              "import os; sink=open(os.devnull,'w'); os.dup2(sink.fileno(),1); "
+              "os.write(2,b'stderr-marker\\n')")
+    log = tmp_path / "native-stdio.log"
+    env = {key: os.environ[key] for key in ("SYSTEMROOT", "WINDIR", "PATH", "TEMP", "TMP")
+           if key in os.environ}
+    env["PYTHONIOENCODING"] = "utf-8"
+    process = launch_process([sys.executable, "-c", script], cwd=str(tmp_path),
+                             env=env, log_path=log, desktop_name="MoyuStdio-" + uuid.uuid4().hex[:10])
+    try:
+        assert process.wait(timeout=10) == 0
+    finally:
+        if process.poll() is None:
+            assert process.terminate_tree()
+        process.close()
+    expected = "stdin-ok" if operation == "stdin" else "stderr-marker"
+    assert expected in log.read_text(encoding="utf-8")

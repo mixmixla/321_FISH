@@ -537,19 +537,25 @@ def launch_process(command, *, cwd: str, env: dict[str, str], log_path: Path,
     kernel32, _ = _windows_handles()
     desktop_handle = _create_private_desktop(desktop_name)
     log_file = log_path.open("wb")
+    input_file = None
+    inherited_handles = []
     try:
         import msvcrt
-        handle = msvcrt.get_osfhandle(log_file.fileno())
-        kernel32.SetHandleInformation(
-            wintypes.HANDLE(handle), 1, 1  # HANDLE_FLAG_INHERIT
-        )
+        import _winapi
+        input_file = open(os.devnull, "rb")
+        current_process = _winapi.GetCurrentProcess()
+        # Match subprocess.Popen: valid NUL stdin and separately owned output
+        # handles, even when stderr shares the same destination file. A NULL
+        # stdin corrupts the CRT/capture assumptions of native GUI libraries.
+        for stream in (input_file, log_file, log_file):
+            inherited_handles.append(_winapi.DuplicateHandle(
+                current_process, msvcrt.get_osfhandle(stream.fileno()),
+                current_process, 0, True, _winapi.DUPLICATE_SAME_ACCESS))
         si = _STARTUPINFOW()
         si.cb = ctypes.sizeof(si)
         si.lpDesktop = f"WinSta0\\{desktop_name}"
         si.dwFlags = 0x00000100  # STARTF_USESTDHANDLES
-        si.hStdInput = wintypes.HANDLE(0)
-        si.hStdOutput = wintypes.HANDLE(handle)
-        si.hStdError = wintypes.HANDLE(handle)
+        si.hStdInput, si.hStdOutput, si.hStdError = inherited_handles
         pi = _PROCESS_INFORMATION()
         env_text = "\0".join(f"{k}={v}" for k, v in sorted(env.items())) + "\0\0"
         env_buffer = ctypes.create_unicode_buffer(env_text)
@@ -574,6 +580,11 @@ def launch_process(command, *, cwd: str, env: dict[str, str], log_path: Path,
         finally:
             _windows_handles()[1].CloseDesktop(desktop_handle)
         raise
+    finally:
+        for handle in inherited_handles:
+            _winapi.CloseHandle(handle)
+        if input_file is not None:
+            input_file.close()
 
 
 def private_desktop_probe() -> dict:

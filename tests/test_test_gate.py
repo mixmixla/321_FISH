@@ -208,16 +208,22 @@ def test_gate_runs_tk_on_private_desktop(tmp_path):
     source = _source(tmp_path, **{
         "test_gui.py": (
             "import tkinter as tk\n"
+            "import os\n"
             "def test_gui():\n"
+            "    os.write(1, b'native-stdout-retained\\n')\n"
+            "    os.write(2, b'native-stderr-retained\\n')\n"
             "    root = tk.Tk()\n"
             "    root.withdraw()\n"
             "    root.update()\n"
             "    root.destroy()\n"
         ),
     })
-    result, _, summary = _run(tmp_path, source, "tests/test_gui.py", timeout=30)
+    result, run_dir, summary = _run(tmp_path, source, "tests/test_gui.py", timeout=30)
     assert result.returncode == 0, result.stdout + result.stderr
     attempt = summary["results"][0]["attempts"][0]
     assert attempt["gui"] is True
     assert attempt["desktop"]
     assert attempt["sandbox"]["desktop"] == attempt["desktop"]
+    assert "--capture=sys" in attempt["command"]
+    log = (run_dir / attempt["log"]).read_text(encoding="utf-8")
+    assert "native-stdout-retained" in log and "native-stderr-retained" in log

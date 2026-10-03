@@ -472,6 +472,7 @@ def _run_identity(source_root: Path, test_paths: list[Path], pytest_args: list[s
         "run_visual": bool(run_visual),
         "run_hardware": bool(run_hardware),
         "interpreter": _interpreter_info(),
+        "runner_tool_sha256": _sha256_file(Path(__file__).resolve()),
         "sandbox_tool_sha256": _sha256_file(
             Path(__file__).resolve().with_name("test_sandbox.py")),
         "desktop": desktop,
@@ -479,6 +480,7 @@ def _run_identity(source_root: Path, test_paths: list[Path], pytest_args: list[s
             "{interpreter}", "-m", "pytest", "-q", "-rs", "-p", "test_sandbox",
             "{test_file}", "--basetemp", "{basetemp}",
             "-o", "faulthandler_timeout=60",
+            "{capture_mode}",
             *pytest_args,
         ],
     }
@@ -489,7 +491,7 @@ def _immutable_identity(manifest: dict) -> dict:
         "schema_version", "source_origin", "source_content_id",
         "dependency_content_id", "tests", "tests_content_id", "pytest_args",
         "timeout_seconds", "run_visual", "run_hardware", "interpreter",
-        "sandbox_tool_sha256", "desktop", "command_template",
+        "runner_tool_sha256", "sandbox_tool_sha256", "desktop", "command_template",
     )
     return {key: manifest.get(key) for key in keys}
 
@@ -624,6 +626,28 @@ def _append_log_marker(log_path: Path, text: str) -> None:
         fh.write("\n" + text.rstrip() + "\n")
 
 
+def _unexpected_skips(output: str, counts: dict, *, run_visual=False,
+                      run_hardware=False) -> list[str]:
+    """Require an exact -rs reason for every skip; counts alone aren't proof."""
+    expected = int(counts.get("skipped", 0))
+    if not expected:
+        return []
+    allowed = set()
+    if not run_visual:
+        allowed.add("需显式启用 --run-visual")
+    if not run_hardware:
+        allowed.add("需显式启用 --run-hardware")
+    found, unexpected = 0, []
+    # Collection-time marker skips have no line number; setup skips do.
+    for number, reason in re.findall(r"^SKIPPED \[(\d+)\] .*?: (.*)$", output, re.MULTILINE):
+        found += int(number)
+        if reason.strip() not in allowed:
+            unexpected.append(reason.strip())
+    if found != expected:
+        unexpected.append(f"skip reason count mismatch: {found} != {expected}")
+    return unexpected
+
+
 def _terminal_record_complete(record: dict, run_dir: Path) -> bool:
     if record.get("status") not in TERMINAL_STATUSES:
         return False
@@ -697,6 +721,10 @@ def _execute_one(*, record: dict, test_entry: dict, run_dir: Path,
     command = [
         sys.executable, "-m", "pytest", "-q", "-rs", "-p", "test_sandbox",
         name, "--basetemp", str(base_temp), "-o", "faulthandler_timeout=60",
+        # Native Tk can retain C runtime handles across fixture roots. Keep
+        # pytest from swapping those handles; the parent log still receives
+        # native stdout/stderr, and explicit capfd fixtures keep their behavior.
+        "--capture=sys" if gui else "--capture=fd",
     ]
     if run_visual:
         command.append("--run-visual")
@@ -788,6 +816,11 @@ def _execute_one(*, record: dict, test_entry: dict, run_dir: Path,
     else:
         status = _classify_exit(code, timed_out, output)
     summary, counts = _summary_line(output)
+    unexpected_skips = _unexpected_skips(output, counts, run_visual=run_visual,
+                                         run_hardware=run_hardware)
+    if status == "passed" and unexpected_skips:
+        status = "infrastructure_error"
+        _append_log_marker(log_path, "VB-01 unexpected skip: " + "; ".join(unexpected_skips))
     sandbox_report = (_read_sandbox_report(report_path)
                       if _safe_run_artifact(report_path, run_dir) else None)
     if status == "passed" and (artifact_error
@@ -806,6 +839,7 @@ def _execute_one(*, record: dict, test_entry: dict, run_dir: Path,
         "sandbox": sandbox_report,
         "artifact_error": artifact_error,
         "cleanup_ok": cleanup_ok,
+        "unexpected_skips": unexpected_skips,
     })
     record.update({
         "status": status,
@@ -817,6 +851,7 @@ def _execute_one(*, record: dict, test_entry: dict, run_dir: Path,
         "log": attempt["log"],
         "log_sha256": attempt["log_sha256"],
         "sandbox_report": attempt["sandbox_report"],
+        "unexpected_skips": unexpected_skips,
     })
     _write_progress(run_dir / "progress.json", _CURRENT_PROGRESS)
     print(json.dumps({
@@ -977,6 +1012,8 @@ def _write_summary(run_dir: Path, manifest: dict, progress: dict,
         "dependency_content_id": manifest.get("dependency_content_id"),
         "content_fingerprint": manifest.get("content_fingerprint"),
         "interpreter": manifest.get("interpreter"),
+        "runner_tool_sha256": manifest.get("runner_tool_sha256"),
+        "sandbox_tool_sha256": manifest.get("sandbox_tool_sha256"),
         "desktop": manifest.get("desktop"),
         "command_template": manifest.get("command_template"),
         "environment": manifest.get("environment"),

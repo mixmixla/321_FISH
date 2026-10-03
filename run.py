@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-"""一键编排：默认跑 pytest 门禁；支持 server|client|build 子命令。
+"""一键编排：默认跑隔离逐文件门禁；支持专项 test/server|client|build。
 
 用法:
-    python run.py            # 全量门禁（须全绿）
+    python run.py            # 隔离逐文件全量门禁（须全绿）
+    python run.py test-all   # 同上，可用 --resume/--label 等门禁参数
+    python run.py test -k x # 保留单进程专项 pytest 入口
     python run.py server     # 启动服务器（控制台）
     python run.py client     # 启动客户端（GUI）
     python run.py build      # PyInstaller 打包 server.exe / client.exe
@@ -17,14 +19,21 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 def main() -> int:
-    args = list(sys.argv[1:])
-    cmd = args.pop(0) if args and not args[0].startswith("-") else "test"
+    raw_args = list(sys.argv[1:])
+    explicit_command = bool(raw_args and not raw_args[0].startswith("-"))
+    cmd = raw_args.pop(0) if explicit_command else "test-all"
+    args = raw_args
 
     # 去掉子命令本身，子模块 argparse 只看自己的参数
     # （README 示例：python run.py client --host 192.168.1.10）
     sys.argv = [sys.argv[0]] + args
 
+    if cmd in ("test-all", "gate"):
+        from test_gate import main as gate_main
+        return gate_main(args)
     if cmd == "test":
+        # 保留历史专项入口：显式 `run.py test -k ...` 仍是一次 pytest，
+        # 方便调试单个选择器；默认入口和 test-all 统一走逐文件隔离门禁。
         root = os.path.dirname(os.path.abspath(__file__))
         temp_root = os.path.join(root, "_tmp_gui")
         os.makedirs(temp_root, exist_ok=True)

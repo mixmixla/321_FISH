@@ -17,6 +17,13 @@ import sys
 import pytest
 import tkguard            # noqa: F401  在首个 Tk/Font 创建前安装线程守卫
 
+try:
+    import test_sandbox as _test_sandbox
+except Exception:         # 普通 pytest / 旧导出目录没有门禁模块时保持兼容
+    _test_sandbox = None
+if _test_sandbox is not None:
+    _test_sandbox.install_from_environment()
+
 
 def pytest_addoption(parser):
     parser.addoption("--run-visual", action="store_true", default=False,
@@ -51,6 +58,11 @@ def pytest_sessionfinish(session, exitstatus):
 def pytest_unconfigure(config):
     # 若初始化期间异常导致 sessionfinish 未执行，按内部错误退出，不能误报全绿。
     code = int(getattr(config, "_moyu_exitstatus", 3))
+    if _test_sandbox is not None:
+        try:
+            _test_sandbox.finalize()
+        except Exception:
+            pass
     try:
         sys.stdout.flush()
         sys.stderr.flush()

@@ -1,6 +1,6 @@
 # FRIENDS-TRIAL-PR-01 r1
 
-状态：组合完整门禁与Sol独立终核通过（0 MUST），draft PR交付待完成；仅允许新分支draft PR，不merge/release。本文件只保存公开源hash和结果摘要，不提交本机资料、路径身份、诊断或运行原始日志。
+状态：组合完整门禁与Sol独立终核通过（0 MUST），候选分支已push，draft PR创建被连接器HTTP403阻塞；仅允许新分支draft PR，不merge/release。本文件只保存公开源hash和结果摘要，不提交本机资料、路径身份、诊断或运行原始日志。
 
 来源：core raw ID `bde3743b1674054025aea5789c78e32bce78a61e26ae2866e4390e819f988f75`，358输入/152测试；baseline356/source `f30d38ff51f1d75dbe41ae74ffb67b7dbaecd9087ed61ef2af2e979fd8d02cc7` 中353输入保持、3生产stars保护/launcher拒绝流程替换、2对应测试新增。原全部150测试保持。入口6输入source `eab6cadc4ce0ccdecd320fc00b2e508389a2a326f2f1676d878e859521f264e0`；共享run/test_gate/test_sandbox与核心逐字节相同，PR只新增两入口模块及测试，所以组合361输入/153测试。
 
@@ -25,3 +25,5 @@ Task见[FRIENDS-TRIAL-PR-01 v1](../task-packages/FRIENDS-TRIAL-PR-01.md)，使�
 Git规范化source ID `721644cf6b20a3a7a27585392420001e78715cfcc5d70d3cabc4d17159e15507`；raw→staged/HEAD仅CRLF→LF，297输入规范化，其余内容一致。全部原始门禁日志在本机保留，公开仅源/日志hash与合成结果。新组合PASS不替代开发版历史FAIL或CP4缺陷。
 
 Sol最终只读独审：0 MUST，限定接受本分支commit/push/main draft PR；核过78路径、361源输入、153原始日志hash/cleanup、CRLF→LF唯一Git变换、资料边界和人工待验/CP4限制。原独立报告只留本机，公开保存本结论。
+
+远端交付核对：源码commit `e9ab94aaa34945194ed08799c41c9d001c9b0952` 与remote候选branch一致；main仍 `0c90fd0ecb1d7d38cad1a3082e26fcbe20e23e8d`。创建draft PR返回HTTP403 `Resource not accessible by integration`，再次只读查询该branch的开放PR为0；未创建成功，不虚填PR号。该head CI status context为0、PR触发workflow run为0，本仓没有workflow，CI未运行。修改本段等交付元数据不改变361源输入，复用唯一2247P/0F/2原SKIP门禁。

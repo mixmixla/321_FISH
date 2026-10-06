@@ -7339,5 +7339,19 @@
       }
     ],
     "raw_logs_published": false
+  },
+  "remote_delivery": {
+    "branch": "feature/friends-trial-candidate-20261006",
+    "base_main": "0c90fd0ecb1d7d38cad1a3082e26fcbe20e23e8d",
+    "source_commit": "e9ab94aaa34945194ed08799c41c9d001c9b0952",
+    "branch_url": "https://github.com/mixmixla/321_FISH/tree/feature/friends-trial-candidate-20261006",
+    "remote_head_verified": true,
+    "draft_pr_created": false,
+    "draft_pr_blocker": "GitHub connector HTTP403 Resource not accessible by integration",
+    "status_contexts_observed": 0,
+    "pull_request_triggered_runs_observed": 0,
+    "configured_actions_workflows": 0,
+    "ci_conclusion": "NOT_RUN",
+    "merge_or_release": false
   }
 }

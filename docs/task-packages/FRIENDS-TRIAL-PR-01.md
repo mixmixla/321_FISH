@@ -1,6 +1,6 @@
 # FRIENDS-TRIAL-PR-01 v1
 
-状态：LOCAL_ACCEPTED_DRAFT_DELIVERY_PENDING。目标：把已经本地冻结的少量朋友试用候选必要源码、测试、说明提交新隔离分支，并向 main 创建 draft PR；保持草稿，不合并、不 release、不联系朋友。
+状态：BRANCH_PUSHED_DRAFT_PR_CREATE_BLOCKED_403。目标：把已经本地冻结的少量朋友试用候选必要源码、测试、说明提交新隔离分支，并向 main 创建 draft PR；保持草稿，不合并、不 release、不联系朋友。
 
 基线：已核远端 main `0c90fd0ecb1d7d38cad1a3082e26fcbe20e23e8d`，PR #6 已合并，入场无开放 PR。分支 `feature/friends-trial-candidate-20261006`；原开发 checkout/全部 dirty 保留，不 pull、不切换。
 
@@ -13,3 +13,5 @@
 禁止：真实prefs/聊天/账号/凭据/运行Store或TLS私钥、诊断/原始运行日志、EXE/ZIP大包、ProcMon、改变防火墙/安全设置、恢复Goal。CP4历史WinError5/errno13继续BLOCKED/root cause未定且留在开发范围；本候选不包含该实验链，也不宣称根因修复。
 
 未运行保留：完整EXE窗口对局/自然退出/重复操作、实际console X、非开发机Windows、物理跨机LAN。朋友试用包不等于生产发布。本次交付范围止于remote新branch/push/draft PR，不延伸到merge/release。
+
+实际交付：源码提交 `e9ab94aaa34945194ed08799c41c9d001c9b0952` 已普通push到[候选分支](https://github.com/mixmixla/321_FISH/tree/feature/friends-trial-candidate-20261006)并核远端head；创建draft PR的连接器返回HTTP403 `Resource not accessible by integration`，没有PR编号/链接。必要正文已备，等待具有PR写权限的连接或支持界面完成最后一步。未更改权限设置。CI查到0 status context、0 PR触发run；仓库没有Actions workflow，记未运行，不记PASS。

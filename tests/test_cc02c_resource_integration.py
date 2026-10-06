@@ -19,6 +19,7 @@ from pathlib import Path
 import pytest
 
 from config import CFG
+from server_recovery import StoreCoordinator
 from server import Hub, Session
 
 
@@ -400,18 +401,21 @@ def test_retired_cloud_is_filtered_after_valid_state_restore(tmp_path):
     from server_store import ServerStore
 
     store_dir = tmp_path / "store"
+    StoreCoordinator.initialize_new(store_dir)
     cfg = _cfg(tmp_path, store=True)
     h1 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"),
              store_dir=str(store_dir))
     owner, _frames = _attach(h1, "integration-retired")
     h1._on_cloud_put(owner, {"t": "cloud_put"}, DATA)
-    with h1.lock:
-        h1.nick_to_uid[owner.nick] = owner.uid
-        h1.known.pop(owner.uid, None)
-        h1.retired[owner.uid] = {"nick": owner.nick, "retired_at": time.time(),
-                                 "operation_id": "retire-integration"}
-    h1._persist_flush()
+    record = {"nick": owner.nick, "retired_at": time.time(),
+              "operation_id": "retire-integration"}
+    with h1._persist_writer_lock:
+        assert h1._recovery.accept_intent(owner.uid, record).effect == 'committed'
+        with h1.lock:
+            h1._apply_retirement_core_locked(owner.uid, record)
+    assert h1._persist_flush()
     assert ServerStore(str(store_dir / "state.json")).load()["retired"]
+    assert h1.shutdown(normal=False)
     cfg2 = replace(_cfg(tmp_path, store=True),
                    audit_dir=str(tmp_path / "restart" / "audit"))
     h2 = Hub(cfg=cfg2,
@@ -419,6 +423,7 @@ def test_retired_cloud_is_filtered_after_valid_state_restore(tmp_path):
              store_dir=str(store_dir))
     assert owner.uid not in h2.cloud
     assert (Path(h2.cloud_dir) / f"{owner.uid}.bin").is_file()
+    assert h2.shutdown(normal=False)
 
 
 def test_admin_resource_summary_is_bounded_and_has_no_file_body_or_path(tmp_path):

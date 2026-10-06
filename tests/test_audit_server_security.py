@@ -4,6 +4,7 @@ import secrets
 from dataclasses import replace
 
 from config import CFG
+from server_recovery import StoreCoordinator
 from protocol import MsgType
 from server import Hub, Session
 
@@ -19,15 +20,20 @@ class _Rec:
         self.frames.append(item)
 
 
-def _hub(tmp_path):
+def _hub(tmp_path, request):
     admin_password = secrets.token_urlsafe(24)
     cfg = replace(CFG, admin_nick="L57", audit_dir=str(tmp_path / "audit"),
                   web_files_dir=str(tmp_path / "web"),
                   admin_pwd=admin_password)
     # CC-02A-RETIRE-CORE：删号/退役必须在真实隔离 Store 上验证；
     # 无 Store 的 Hub 应在 t0 前拒绝永久退役。
+    StoreCoordinator.initialize_new(tmp_path / 'store')
     hub = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"),
               store_dir=str(tmp_path / "store"))
+    def close_owned_hub():
+        assert hub.shutdown(normal=False)
+        assert not hub._recovery.owner.held
+    request.addfinalizer(close_owned_hub)
     hub._test_admin_password = admin_password
     return hub
 
@@ -44,6 +50,7 @@ def _session(hub, nick, stype="tcp", pwd=""):
 
 
 def _group(hub, gid, members):
+    hub._gid_seq = max(hub._gid_seq, gid + 1)
     hub.groups[gid] = {
         "gid": gid, "name": "安全回归群", "owner": next(iter(members)),
         "members": dict(members), "admins": set(), "mutes": {},
@@ -52,8 +59,8 @@ def _group(hub, gid, members):
     }
 
 
-def test_group_file_upload_requires_owner_and_serialized_offset(tmp_path):
-    hub = _hub(tmp_path)
+def test_group_file_upload_requires_owner_and_serialized_offset(tmp_path, request):
+    hub = _hub(tmp_path, request)
     owner, owner_rec = _session(hub, "owner")
     member, member_rec = _session(hub, "member")
     outsider, outsider_rec = _session(hub, "outsider")
@@ -91,8 +98,8 @@ def test_group_file_upload_requires_owner_and_serialized_offset(tmp_path):
     assert hub.group_files[7][0]["uid"] == owner.uid
 
 
-def test_admin_delete_invalidates_all_sessions_and_tokens(tmp_path):
-    hub = _hub(tmp_path)
+def test_admin_delete_invalidates_all_sessions_and_tokens(tmp_path, request):
+    hub = _hub(tmp_path, request)
     admin, _ = _session(hub, hub._admin_nick,
                         pwd=hub._test_admin_password)
     assert admin.is_admin
@@ -117,8 +124,8 @@ def test_admin_delete_invalidates_all_sessions_and_tokens(tmp_path):
                                 "channel": "public", "text": "stale"}) is False
 
 
-def test_dispatch_requires_registered_session_even_when_not_closed(tmp_path):
-    hub = _hub(tmp_path)
+def test_dispatch_requires_registered_session_even_when_not_closed(tmp_path, request):
+    hub = _hub(tmp_path, request)
     active, rec = _session(hub, "active")
     assert hub.dispatch(active, {"t": MsgType.PING.value}) is True
     assert any(frame.get("t") == "pong" for frame in rec.frames)
@@ -135,8 +142,8 @@ def test_dispatch_requires_registered_session_even_when_not_closed(tmp_path):
     assert rec.frames[-1].get("t") == MsgType.ERROR.value
 
 
-def test_moment_delete_removes_files_and_orphan_is_unreadable(tmp_path):
-    hub = _hub(tmp_path)
+def test_moment_delete_removes_files_and_orphan_is_unreadable(tmp_path, request):
+    hub = _hub(tmp_path, request)
     owner, rec = _session(hub, "moment-owner")
     image = "12_0.png"
     path = hub._moment_image_path(image)

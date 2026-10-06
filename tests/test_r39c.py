@@ -210,7 +210,8 @@ def test_wrap_lines_matches_direct_measure(ml):
     from widgets import runs
     segs = runs.tag_entities("一段长文本测试换行 @某人 https://example.com/x " * 6)
     inner = 240
-    assert ml._wrap_lines(segs, inner) == runs.wrap_segments(segs, inner, ml._meas)
+    assert ml._wrap_lines(segs, inner) == runs.wrap_segments(
+        segs, inner, ml._meas_kind, preserve_whitespace=True)
 
 
 def test_lazy_load_top_anchor_and_done(ml):

@@ -23,6 +23,7 @@ import sys
 import threading
 import time
 from collections import defaultdict, deque
+from dataclasses import dataclass, field
 
 import cloud_history
 from cloud_history import (CloudHistoryError, CLOUD_BLOB_MAX, pack as _cloud_pack,
@@ -34,6 +35,7 @@ from file_client import FileManager
 from voice_call import CallManager        # R38 1v1 语音对讲
 from voice_room import VoiceRoom          # R72 多人语音房
 from protocol import MsgType, ProtocolError
+from retirement_status import RetirementBook, RetirementError, Scope
 
 _CACHE_KEEP_FILES = 300                   # 语音/贴纸磁盘缓存保留文件数上限（低危配额）
 
@@ -583,6 +585,21 @@ class LocalHistory:
         return None                                     # 未知形态：跳过
 
 
+@dataclass
+class _Connection:
+    epoch: int
+    host: str
+    port: int
+    stop: threading.Event = field(default_factory=threading.Event)
+    sock: object = None
+    chan: object = None
+    reader: object = None
+    heartbeat: object = None
+    last_pong: float = 0.0
+    authenticating: bool = True
+    ever_online: bool = False
+
+
 class ClientCore:
     """局域网摸鱼助手 · 客户端逻辑核心（进程内单实例）"""
 
@@ -698,50 +715,119 @@ class ClientCore:
         self._last_pong = 0.0
         self._ever_online = False
         self._manual_login_required = False
+        self._epoch = 0
+        self._connection: _Connection | None = None
+        self._start_lock = threading.Lock()
+        self.retirement = RetirementBook()
 
     # ---------- 生命周期 ----------
     @property
     def connected(self) -> bool:
         return self.state == "online"
 
+    @property
+    def connection_epoch(self) -> int:
+        return self._epoch
+
+    @property
+    def retirement_scope(self):
+        with self._lock:
+            connection = self._connection
+            if (connection is None or not self._connection_current(connection) or connection.authenticating
+                    or not self.is_admin or (self.host, self.port) != (connection.host, connection.port)):
+                return None
+            return Scope(connection.host, connection.port, self.uid)
+
+    def accepts_ui_event(self, event) -> bool:
+        if event.get("_connection_epoch", self._epoch) != self._epoch:
+            return False
+        connection = self._connection
+        if connection is None:
+            return True
+        unavailable = (not self._connection_current(connection)
+                       or (self.host, self.port) != (connection.host, connection.port))
+        if not unavailable:
+            return True
+        kind = event.get("t")
+        if kind in ("welcome", "admin_user_info", "retirement_status"):
+            return False
+        if kind == "state":
+            return event.get("state") == "offline"
+        if kind == "error" and event.get("code") in ("pwd", "kicked", "deleted", "retired"):
+            return self._manual_login_required and event.get("manual_login_required") is True
+        return True
+
     def start(self) -> "ClientCore":
-        """启动连接/重连主循环（异步，不阻塞）"""
-        if self.state not in ("idle", "offline"):
-            raise RuntimeError("client already running")
-        self._stop.clear()
-        self._manual_login_required = False  # start is an explicit new login attempt
-        self._set_state("connecting")
-        self._reconnector = threading.Thread(target=self._run, daemon=True,
-                                             name="core-connector")
-        self._reconnector.start()
+        """One connector owns all automatic attempts; never revive old workers."""
+        with self._start_lock:
+            if self.state not in ("idle", "offline"):
+                raise RuntimeError("client already running")
+            for thread in (self._reader, self._heartbeat, self._reconnector):
+                if thread is not None and thread.is_alive():
+                    if not self._stop.is_set() or thread is threading.current_thread():
+                        raise RuntimeError("previous connection is still running")
+                    thread.join(timeout=2)  # No Core/send lock while waiting.
+                    if thread.is_alive():
+                        raise RuntimeError("previous connection has not stopped")
+            self._stop.clear()
+            self._manual_login_required = False
+            self._set_state("connecting")
+            self._reconnector = threading.Thread(target=self._run, daemon=True,
+                                                 name="core-connector")
+            self._reconnector.start()
         return self
 
-    def stop(self) -> None:
-        """关闭连接与所有线程"""
-        self._stop.set()
-        sock = self._sock
+    @staticmethod
+    def _close_socket(sock):
         if sock is not None:
             try:
-                sock.close()
-            except OSError:
+                sock.shutdown(socket.SHUT_RDWR)
+            except (OSError, AttributeError):
                 pass
-        self.files.shutdown()               # 终止所有进行中的文件传输
-        self.calls.shutdown()               # R38：终止通话并释放音频/UDP 资源
-        self.voice_room.shutdown()           # R72：退出语音房并释放资源
-        for t in (self._reader, self._heartbeat, self._reconnector):
-            if t is not None and t is not threading.current_thread():
-                t.join(timeout=2)
-        self._history.close()              # 冲刷并关闭历史句柄（正常退出落盘）
+            try:
+                sock.close()
+            except (OSError, AttributeError):
+                pass
+
+    def _connection_current(self, connection) -> bool:
+        return (connection is self._connection and connection.epoch == self._epoch
+                and not connection.stop.is_set() and not self._stop.is_set())
+
+    def _end_connection(self, connection) -> None:
+        connection.stop.set()
+        with self._lock:
+            if connection is self._connection:
+                self._conn_alive.clear()
+                self._chan = None
+                self.retirement.disconnect(connection.epoch)
+        self._close_socket(connection.sock)  # Always the captured socket, outside the lock.
+
+    def stop(self) -> None:
+        """Stop captured workers; an incomplete join prevents subsequent start."""
+        self._stop.set()
+        connection = self._connection
+        if connection is not None:
+            self._end_connection(connection)
+        else:
+            self._close_socket(self._sock)
+            self.retirement.disconnect(self._epoch)
+        self.files.shutdown()
+        self.calls.shutdown()
+        self.voice_room.shutdown()
+        for thread in (self._reader, self._heartbeat, self._reconnector):
+            if thread is not None and thread is not threading.current_thread():
+                thread.join(timeout=2)
+        self._history.close()
         self._set_state("offline")
 
     def drop(self) -> None:
-        """主动断开底层连接（触发自动重连；GUI「重连」按钮/测试用）"""
-        sock = self._sock
-        if sock is not None:
-            try:
-                sock.close()
-            except OSError:
-                pass
+        """Stop this connection; the existing connector alone may reconnect."""
+        connection = self._connection
+        if connection is not None:
+            self._end_connection(connection)
+        else:
+            self._close_socket(self._sock)
+
 
     def set_host(self, host: str, port: int | None = None) -> None:
         """切换目标服务器（自动发现/设置面板用）。
@@ -749,10 +835,17 @@ class ClientCore:
         重连线程每轮都会读取 self.host/self.port，改完调用 drop()
         即可按新目标重试。
         """
-        if host and host.strip():
-            self.host = host.strip()
-        if port:
-            self.port = port
+        with self._lock:
+            previous = (self.host, self.port)
+            if host and host.strip():
+                self.host = host.strip()
+            if port:
+                self.port = port
+            changed = previous != (self.host, self.port)
+            if changed:
+                self.retirement.disconnect(self._epoch)
+        if changed:
+            self._push_retirement_state()
 
     def set_password(self, pwd: str) -> None:
         """R47-B：设置昵称密码（服务器要求时由 UI 弹框后调用），随即 drop()
@@ -801,77 +894,99 @@ class ClientCore:
             if self._stop.wait(backoff):
                 break
             backoff = min(backoff * 2, self._rb_max)
+        self._set_state("offline")
 
     def _connect_once(self) -> bool:
-        """建连 + 握手 + 登录，然后阻塞在 reader 上直到断线；返回是否曾在线"""
-        sock = socket.create_connection((self.host, self.port), timeout=5)
-        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        self._sock = sock
-        try:
-            chan = client_handshake(sock)
-        except (HandshakeError, OSError) as exc:
-            sock.close()
-            self._sock = None
-            raise
-        sock.settimeout(None)               # 握手完成后转入阻塞读（心跳线程负责判死）
+        """Own one socket/channel/epoch until both its workers actually exit."""
+        for thread in (self._reader, self._heartbeat):
+            if thread is not None and thread.is_alive():
+                self._stop.set()
+                raise RuntimeError("旧连接线程尚未退出，已停止自动重连")
         with self._lock:
-            self._chan = chan
-            self._conn_alive.set()
-        self._last_pong = _now()
-        self._heartbeat = threading.Thread(target=self._heartbeat_loop, daemon=True,
-                                           name="core-heartbeat")
-        self._heartbeat.start()
-        self._reader = threading.Thread(target=self._read_loop, daemon=True,
-                                        name="core-reader")
-        self._reader.start()
-        self._send_frame({"t": MsgType.HELLO.value, "nick": self.nick,
-                          **({"pwd": self._pwd} if self._pwd else {})})
-        self._reader.join()                 # 阻塞到断线/stop
-        self._conn_alive.clear()
-        with self._lock:
-            self._chan = None
+            self._epoch += 1
+            connection = _Connection(self._epoch, self.host, self.port)
+            self._connection = connection
+            self.retirement.begin_connection(connection.epoch)
         try:
-            sock.close()
-        except OSError:
-            pass
-        self._sock = None
-        return self._ever_online
+            sock = socket.create_connection((connection.host, connection.port), timeout=5)
+            connection.sock = sock
+            with self._lock:
+                if not self._connection_current(connection):
+                    return False
+                self._sock = sock
+            sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            connection.chan = client_handshake(sock)
+            sock.settimeout(None)
+            with self._lock:
+                if not self._connection_current(connection):
+                    return False
+                self._chan = connection.chan
+                self._conn_alive.set()
+            connection.last_pong = self._last_pong = _now()
+            connection.reader = self._reader = threading.Thread(
+                target=self._read_loop, args=(connection,), daemon=True, name="core-reader")
+            connection.heartbeat = self._heartbeat = threading.Thread(
+                target=self._heartbeat_loop, args=(connection,), daemon=True, name="core-heartbeat")
+            connection.reader.start()
+            connection.heartbeat.start()
+            self._send_on(connection, {"t": MsgType.HELLO.value, "nick": self.nick,
+                                     **({"pwd": self._pwd} if self._pwd else {})})
+            while connection.reader.is_alive() and not connection.stop.wait(.1):
+                pass
+            return connection.ever_online
+        finally:
+            self._end_connection(connection)
+            lingering = False
+            for thread in (connection.reader, connection.heartbeat):
+                if thread is not None and thread is not threading.current_thread():
+                    thread.join(timeout=2)
+                    lingering = lingering or thread.is_alive()
+            with self._lock:
+                if self._connection is connection:
+                    self._sock = None
+            if lingering:
+                self._stop.set()
+                self._push({"t": "error", "code": "conn_stopping",
+                            "text": "旧连接线程尚未退出，已停止自动重连；请退出后重新打开客户端"})
 
-    def _heartbeat_loop(self) -> None:
-        while not self._stop.is_set():
-            if self._stop.wait(self._hb_interval):
+    def _heartbeat_loop(self, connection: _Connection) -> None:
+        while not connection.stop.wait(self._hb_interval):
+            if not self._connection_current(connection):
                 break
-            if not self._conn_alive.is_set():
+            if not self._send_on(connection, {"t": MsgType.PING.value}):
+                self._end_connection(connection)
                 break
-            try:
-                self._send_frame({"t": MsgType.PING.value})
-            except Exception:
-                break
-            if _now() - self._last_pong > self._hb_timeout:
-                # 心跳超时 → 强制关连接（reader 随即退出 → 重连循环接管）
-                sock = self._sock
-                if sock is not None:
-                    try:
-                        sock.close()
-                    except OSError:
-                        pass
+            if _now() - connection.last_pong > self._hb_timeout:
+                self._end_connection(connection)
                 break
 
-    def _read_loop(self) -> None:
+    def _read_loop(self, connection: _Connection) -> None:
         try:
-            while not self._stop.is_set():
-                header, body = self._chan.recv_frame()
-                self._dispatch(header, body)
+            while self._connection_current(connection):
+                header, body = connection.chan.recv_frame()
+                if not self._connection_current(connection):
+                    break
+                self._dispatch(header, body, connection=connection)
         except (ProtocolError, OSError, ValueError, HandshakeError, TimeoutError):
-            if not self._stop.is_set():
+            if self._connection_current(connection):
                 self._push({"t": "error", "code": "conn", "text": "连接断开，正在重连…"})
+        finally:
+            self._end_connection(connection)
 
     # ---------- 收帧分发 ----------
-    def _dispatch(self, h: dict, body: bytes = b"") -> None:
+
+    def _dispatch(self, h: dict, body: bytes = b"", *, connection=None) -> None:
+        if connection is not None and not self._connection_current(connection):
+            return
+        # Local provenance is generated here/_push, never trusted from the wire.
+        h = {key: value for key, value in h.items()
+             if key not in ("_connection_epoch", "manual_login_required")}
         if getattr(self, "_manual_login_required", False):
             return  # late frames cannot revive the revoked authentication
         t = h.get("t")
-        if t == "error" and h.get("code") == "kicked":
+        auth_refused = (h.get("code") == "retired" and connection is not None
+                        and connection.authenticating)
+        if t == "error" and (h.get("code") in ("kicked", "deleted") or auth_refused):
             with self._lock:
                 self._manual_login_required = True
                 self._stop.set()
@@ -887,13 +1002,26 @@ class ClientCore:
                     sock.close()
                 except OSError:
                     pass
+            if self._connection is not None:
+                self._end_connection(self._connection)
+            self.retirement.disconnect(self._epoch)
             self._set_state("offline")
-            self._push(h)
+            self._push({**h, "manual_login_required": True})
             return
+        if t == "error" and getattr(self, "retirement", None) is not None:
+            outcome = self.retirement.receive(h, self._epoch)
+            if outcome.changed:
+                self._push_retirement_state()
+                return
         if t == MsgType.WELCOME.value:
             self._on_welcome(h)
         elif t == MsgType.ROSTER.value:
+            hidden = self.retirement.confirmed_uids(self._epoch)
+            h = {**h, "online": [u for u in h.get("online", []) if u.get("uid") not in hidden],
+                 "known": [u for u in h.get("known", []) if u.get("uid") not in hidden]}
             self.roster = {u["uid"]: u for u in h.get("online", [])}
+            for uid in hidden:
+                self.known.pop(uid, None)
             # R25B：roster 广播同步 known（最后上线实时更新，无需重连）
             # R35：type 字段（bot=内置机器人）随广播同步；R52：sign/avatar 随广播同步
             for u in (h.get("known") or []):
@@ -960,7 +1088,16 @@ class ClientCore:
         elif t == MsgType.ADMIN_GROUPS_ROSTER.value:
             self._push(h)                 # 系统管理员：群目录（含成员花名册）单播回帧
         elif t == MsgType.ADMIN_USER_INFO.value:
-            self._push(h)                 # 系统管理员：某人信息+所属群 单播回帧
+            outcome = self.retirement.receive(h, self._epoch)
+            if outcome.changed:
+                for uid in self.retirement.confirmed_uids(self._epoch):
+                    self.known.pop(uid, None)
+                    self.roster.pop(uid, None)
+                self._push_retirement_state()
+            if outcome.detail is not None:
+                self._push(outcome.detail)
+            for outbound in outcome.outbound:
+                self._send_retirement(outbound)
         elif t == MsgType.INV_ACK.value:
             self.me["invisible"] = bool(h.get("on"))   # R56 记录最新隐身态
             self._push(h)                 # 隐身上线回帧：含最新 {on}
@@ -971,6 +1108,8 @@ class ClientCore:
             self._push(h)
         elif t == MsgType.PONG.value:
             self._last_pong = _now()
+            if connection is not None:
+                connection.last_pong = self._last_pong
             self.pong_count += 1
             self._push(h)
         elif t == MsgType.SYSTEM.value:
@@ -1153,8 +1292,16 @@ class ClientCore:
             if key:
                 self.remote_drafts[key] = {"text": str(d.get("text") or ""),
                                            "ts": float(d.get("ts") or 0)}
+        connection = self._connection
+        if connection is not None:
+            scope = Scope(connection.host, connection.port, self.uid) if self.is_admin else None
+            if not self.retirement.authenticate(scope, connection.epoch):
+                return
+            connection.authenticating = False
+            connection.ever_online = True
         self._set_state("online")
         self._push({"t": "welcome", "uid": self.uid, "nick": self.nick})
+        self._push_retirement_state()
         if self.remote_drafts:
             self._push({"t": "draft",
                         "drafts": [{"key": k, **v} for k, v in self.remote_drafts.items()]})
@@ -2531,28 +2678,62 @@ class ClientCore:
         """R53 管理员：清空指定用户全部消息（跨全部频道，广播 cleared/uid）。"""
         return self._send_frame({"t": MsgType.CLEAR_UID.value, "uid": int(uid)})
 
-    def send_admin_user_del(self, target) -> bool:
-        """系统管理员：清除用户（删除账号）——target 可为 uid 或已知昵称。
-        服务器逐项校验 is_admin；删除账号、清其消息、移出全部群、在线则下线。
-        发送后立即从本地 known/roster 缓存剔除，让管理员面板不再显示该账号。"""
-        if isinstance(target, int):
-            uid = target
-        elif isinstance(target, str) and target.strip().isdigit():
-            uid = int(target)
-        else:
-            uid = None
-            for coll in (self.known, self.roster):
-                for u, info in (coll or {}).items():
-                    if info.get("nick") == target:
-                        uid = u
-                        break
-                if uid is not None:
-                    break
-        if uid is not None:
-            for coll in (self.known, self.roster):
-                if isinstance(coll, dict):
-                    coll.pop(int(uid), None)
-        return self._send_frame({"t": MsgType.ADMIN_USER_DEL.value, "uid": target})
+    def _push_retirement_state(self) -> None:
+        self._push({"t": "retirement_status", "records": self.retirement.snapshot()})
+
+    def retirement_snapshot(self):
+        return self.retirement.snapshot()
+
+    def _retirement_action(self, make_request) -> bool:
+        try:
+            # Snapshot authorization and register the pure-memory request in
+            # one short boundary. Never hold this lock while sending or queuing.
+            with self._lock:
+                if self.retirement_scope is None:
+                    raise RetirementError("请先连接目标服务器并以系统管理员身份登录")
+                outbound = make_request()
+        except RetirementError as exc:
+            self._push({"t": "error", "code": "admin_retirement", "text": str(exc)})
+            self._push_retirement_state()
+            return False
+        self._push_retirement_state()
+        return self._send_retirement(outbound)
+
+    def _send_retirement(self, outbound) -> bool:
+        connection = self._connection
+        ok = (connection is not None and outbound.epoch == connection.epoch
+              and self._send_on(connection, outbound.frame(), expected_scope=outbound.scope))
+        self.retirement.sent(outbound.request_id, outbound.epoch, bool(ok))
+        self._push_retirement_state()
+        return bool(ok)
+
+    def send_admin_user_del(self, target, *, expected_nick=None, expected_scope=None, expected_epoch=None) -> bool:
+        """Start a confirmed preflight; never remove a target before a receipt."""
+        if expected_nick is None:
+            if isinstance(target, int) or (isinstance(target, str) and target.strip().isdigit()):
+                info = self.known.get(int(target)) or self.roster.get(int(target)) or {}
+                expected_nick = info.get("nick")
+            elif isinstance(target, str):
+                expected_nick = target.strip()
+        def confirmed_request():
+            if ((expected_epoch is not None and expected_epoch != self._epoch)
+                    or (expected_scope is not None and expected_scope != self.retirement_scope)):
+                raise RetirementError("确认期间连接或管理员身份已改变，请重新核对目标")
+            return self.retirement.begin(target, nick=expected_nick, purpose="preflight")
+        return self._retirement_action(confirmed_request)
+
+    def query_admin_retirement(self, target=None, *, intent_id=None) -> bool:
+        return self._retirement_action(lambda: self.retirement.query(intent_id) if intent_id is not None
+                                       else self.retirement.begin(target, purpose="query"))
+
+    def retry_admin_retirement(self, intent_id) -> bool:
+        return self._retirement_action(lambda: self.retirement.retry(intent_id))
+
+    def cancel_admin_retirement(self, intent_id) -> bool:
+        result = self.retirement.cancel(intent_id)
+        self._push_retirement_state()
+        return result
+
 
     def send_admin_groups(self) -> bool:
         """系统管理员：拉取全量群目录+成员花名册（回帧事件 t=admin_groups_roster）。"""
@@ -2569,7 +2750,7 @@ class ClientCore:
     def send_admin_user_groups(self, target) -> bool:
         """系统管理员：查某人信息+所属全部群（target 可为 uid 或已知昵称）。
         回帧事件 t=admin_user_info。"""
-        return self._send_frame({"t": MsgType.ADMIN_USER_GET.value, "uid": target})
+        return self._retirement_action(lambda: self.retirement.begin(target, purpose="detail"))
 
     def send_invis_set(self, on: bool) -> bool:
         """隐身上线开关：开启后对自己"隐身"，不出现在他人可见名单里。
@@ -2759,7 +2940,35 @@ class ClientCore:
         self._send_frame({"t": MsgType.BLOCK_LIST.value})
 
     # ---------- 内部 ----------
+    def _send_on(self, connection, header: dict, body: bytes = b"", *, expected_scope=None) -> bool:
+        try:
+            with self._send_lock:
+                with self._lock:
+                    if (not self._connection_current(connection) or self._manual_login_required
+                            or connection.chan is None):
+                        return False
+                    if expected_scope is not None and (
+                            connection.authenticating or not self.is_admin
+                            or Scope(connection.host, connection.port, self.uid) != expected_scope
+                            or (self.host, self.port) != (connection.host, connection.port)):
+                        return False
+                    chan = connection.chan
+                chan.send_frame(header, body)  # No Core/model lock while performing IO.
+            return True
+        except (OSError, ValueError) as exc:
+            if self._connection_current(connection):
+                self._push({"t": "error", "code": "send", "text": f"发送失败: {exc}"})
+            return False
+
     def _send_frame(self, header: dict, body: bytes = b"") -> bool:
+        connection = getattr(self, "_connection", None)
+        if connection is not None:
+            if self._manual_login_required:
+                return False
+            if not self._connection_current(connection) or connection.chan is None or not self._conn_alive.is_set():
+                self._push({"t": "error", "code": "offline", "text": "未连接"})
+                return False
+            return self._send_on(connection, header, body)
         if getattr(self, "_manual_login_required", False):
             return False
         chan = self._chan
@@ -2782,6 +2991,8 @@ class ClientCore:
                             "sticker_pack_cover_data"})
 
     def _push(self, ev: dict) -> None:
+        if ev.get("t") in {"state", "welcome", "error", "retirement_status", "admin_user_info", "roster"}:
+            ev = {**ev, "_connection_epoch": getattr(self, "_epoch", 0)}
         try:
             self.events.put_nowait(ev)
         except queue.Full:

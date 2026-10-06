@@ -53,6 +53,65 @@ def test_kicked_blocks_send_and_late_welcome(core):
     assert core.state == "offline"
 
 
+def test_deleted_blocks_old_session_and_late_welcome(core):
+    core._dispatch({"t": "error", "code": "deleted"})
+    assert core._manual_login_required and core._stop.is_set()
+    core._dispatch({"t": "welcome", "uid": 7, "nick": core.nick,
+                    "roster": [], "groups": [], "history": []})
+    assert core.uid is None and not core.connected
+
+
+@pytest.mark.parametrize("authenticating", [True, False])
+def test_retired_revokes_only_the_current_authentication_attempt(core, authenticating):
+    from client_core import _Connection
+    connection = _Connection(1, core.host, core.port, authenticating=authenticating)
+    core._connection, core._epoch = connection, 1
+    core._dispatch({"t": "error", "code": "retired", "manual_login_required": True,
+                    "_connection_epoch": 999}, connection=connection)
+    assert core._manual_login_required is authenticating
+    error = next(e for e in list(core.events.queue) if e.get("t") == "error")
+    assert error["_connection_epoch"] == 1
+    assert error.get("manual_login_required", False) is authenticating
+
+
+def test_late_revocation_and_welcome_cannot_mutate_a_new_connection(core):
+    from client_core import _Connection
+    old = _Connection(1, core.host, core.port)
+    current = _Connection(2, core.host, core.port)
+    core._connection, core._epoch = current, 2
+    for event in ({"t": "error", "code": "deleted"},
+                  {"t": "welcome", "uid": 77, "nick": "old-login"}):
+        core._dispatch(event, connection=old)
+    assert core.uid is None and not core._manual_login_required
+    assert not current.stop.is_set()
+
+
+def test_start_does_not_clear_stop_or_replace_a_living_connector(core):
+    entered = threading.Event()
+    release = threading.Event()
+    old = threading.Thread(target=lambda: (entered.set(), release.wait(4)))
+    old.start()
+    assert entered.wait(1)
+    core._reconnector = old
+    core._stop.set()
+    try:
+        with pytest.raises(RuntimeError, match="has not stopped"):
+            core.start()
+        assert core._stop.is_set() and core._reconnector is old
+    finally:
+        release.set()
+        old.join(2)
+
+
+def test_closed_connection_keeps_ordinary_offline_feedback(core):
+    from client_core import _Connection
+    connection = _Connection(1, core.host, core.port)
+    core._connection, core._epoch = connection, 1
+    connection.stop.set()
+    assert not core._send_frame({'t': 'chat', 'text': 'synthetic offline'})
+    assert any(e.get('code') == 'offline' for e in list(core.events.queue))
+
+
 def test_kicked_uses_existing_manual_login_exit():
     calls = []
     app = SimpleNamespace(_closed=False, request_switch_account=lambda: calls.append("switch"),

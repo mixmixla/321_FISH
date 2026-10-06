@@ -11,6 +11,13 @@
 - 当前机器路径 `D:\Project\321_FISH`，迁移后以任务工作区为准。
 - 个人开发技能：`$fish-assistant-dev`；源码事实优先于技能旧索引。
 
+## Portable trial boundary
+
+- `friend_trial_start` 是独立便携入口：每次新建分开的合成资料，默认回环，LAN仅接明确RFC1918数字IPv4；不导入已有账号、偏好或历史。
+- `friend_trial_process` 仅把本次新建的suspended子进程赋给unnamed Job后恢复，非继承handle和kill-on-close限制所属子孙；无existing PID接管。
+- 本核心版本包含凭据回执、退役状态及显式Store恢复边界，但未接入独立实验local_owner/auth/session/work链。CP4历史registry WinError5/errno13根因未定，本入口清理证据不替代其修复。
+- 便携构建和私有桌面登录不证明完整EXE对局、自然窗口退出、物理LAN或非开发机可用；确切版本/结果只放Task/Review和指挥中心。
+
 ## Architecture
 
 - `client.py:ChatWindow` 管 Tk UI；`client_core.py:ClientCore` 管网络、状态、API 与

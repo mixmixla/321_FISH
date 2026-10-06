@@ -12,6 +12,7 @@ import pytest
 import bots
 import auth
 from config import CFG
+from server_recovery import StoreCoordinator
 from protocol import MsgType
 from server import Hub, Session
 from server_store import SaveResult
@@ -39,7 +40,23 @@ def _cfg(tmp_path, password=None):
     )
 
 
-def _hub(tmp_path, *, store=True, password=None):
+_test_hubs = []
+
+
+@pytest.fixture(autouse=True)
+def _close_owned_test_hubs():
+    _test_hubs.clear()
+    yield
+    for h in _test_hubs:
+        h.shutdown(normal=False)
+        assert h._recovery is None or not h._recovery.owner.held
+        assert not any(t.is_alive() for t in h._managed_threads)
+    _test_hubs.clear()
+
+
+def _hub(tmp_path, *, store=True, password=None, new=True):
+    if store and new:
+        StoreCoordinator.initialize_new(tmp_path / 'store')
     password = password or secrets.token_urlsafe(24)
     cfg = _cfg(tmp_path, password)
     h = Hub(
@@ -48,6 +65,7 @@ def _hub(tmp_path, *, store=True, password=None):
         store_dir=str(tmp_path / "store") if store else None,
     )
     h._test_admin_password = password
+    _test_hubs.append(h)
     return h
 
 
@@ -85,7 +103,9 @@ def test_retire_keeps_minimal_tombstone_and_rejects_relogin_after_restart(tmp_pa
     assert set(state["retired"][str(uid)]) == {"nick", "retired_at", "operation_id"}
     assert str(uid) not in state.get("known", {})
 
-    restored = _hub(tmp_path)
+    h.shutdown(normal=False)
+    assert not h._recovery.owner.held
+    restored = _hub(tmp_path, new=False)
     # Use the same store directory explicitly; the helper's tmp path is the
     # same isolated directory and therefore models a fresh Hub instance.
     assert restored.retired[uid]["nick"] == "retire-me"
@@ -252,11 +272,10 @@ def test_same_uid_pending_request_does_not_repeat_t0_cleanup(tmp_path,
         h.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value,
                            "uid": victim.uid})
         assert h._retire_ops[victim.uid]["status"] == "pending"
-        assert counts["_drop_xfers_of"] == 1
-        assert counts["_drop_voice_rooms"] == 1
-        assert counts["_disconnect_rooms_of"] == 1
-        assert counts["_broadcast_roster"] == 1
-        assert counts["_broadcast_group_list"] == 1
+        assert victim.closed and victim.uid in h.retired
+        assert victim.uid not in h.known and not h._session_is_active(victim)
+        for name in originals:
+            assert counts[name] == 0  # External effects wait until writer/Hub/G are released.
         assert counts["clear_uid"] == 1
     finally:
         release.set()
@@ -264,6 +283,9 @@ def test_same_uid_pending_request_does_not_repeat_t0_cleanup(tmp_path,
     assert not thread.is_alive()
     assert not errors
     assert h._retire_ops[victim.uid]["status"] == "confirmed"
+    for name in originals:
+        assert counts[name] == 1
+    assert counts['clear_uid'] == 1
 
 
 def test_failed_same_uid_retry_does_not_repeat_t0_cleanup(tmp_path,
@@ -357,7 +379,7 @@ def test_retire_requires_store_before_t0(tmp_path):
     assert any(f.get("code") == "store_required" for f in admin_rec.frames)
 
 
-def test_password_claim_paused_before_hash_cannot_report_success_after_retire(tmp_path, monkeypatch):
+def test_password_set_paused_before_hash_cannot_report_success_after_retire(tmp_path, monkeypatch):
     h, admin, _admin_rec, victim, _victim_rec = _admin_and_user(tmp_path)
     started = threading.Event()
     release = threading.Event()
@@ -371,15 +393,21 @@ def test_password_claim_paused_before_hash_cannot_report_success_after_retire(tm
 
     monkeypatch.setattr(auth, "make", paused_make)
     thread = threading.Thread(target=lambda: result.append(
-        h._pwd_claim(victim.uid, "claim-after-retire")))
-    thread.start()
-    assert started.wait(5)
-    h.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value, "uid": victim.uid})
-    release.set()
-    thread.join(5)
-    assert not thread.is_alive() and result == [False]
-    assert victim.uid not in h.known
-    assert h.retired[victim.uid]["nick"] == "retire-me"
+        h.credential_update(victim, {'credential_v': 1, 'request_id': 'retire_password',
+                                     'old': '', 'new': 'claim-after-retire'})))
+    try:
+        thread.start()
+        assert started.wait(5)
+        h.dispatch(admin, {"t": MsgType.ADMIN_USER_DEL.value, "uid": victim.uid})
+        release.set()
+        thread.join(5)
+        assert not thread.is_alive() and len(result) == 1
+        assert result[0]['status'] == 'failed' and result[0]['reason'] == 'retired'
+        assert 'persisted' not in result[0] and victim.uid not in h.known
+        assert h.retired[victim.uid]["nick"] == "retire-me"
+    finally:
+        release.set()
+        thread.join(5)
 
 
 def test_admin_profile_target_parsed_before_retire_cannot_recreate_known(tmp_path, monkeypatch):
@@ -489,20 +517,19 @@ def test_draft_and_sched_prepare_then_retire_reject_final_c(tmp_path, monkeypatc
     assert owner.uid not in h.scheds
 
 
-def test_web_attach_before_token_publish_then_retire_returns_no_token(tmp_path, monkeypatch):
+def test_web_registered_before_delivery_then_retire_returns_no_token(tmp_path, monkeypatch):
     h, admin, _admin_rec, _victim, _victim_rec = _admin_and_user(tmp_path)
     started = threading.Event()
     release = threading.Event()
-    original_attach = h._attach
+    original_finish = h._finish_login
 
-    def paused_attach(sess):
-        ok = original_attach(sess)
-        if ok and sess.nick == "web-late":
+    def paused_finish(sess, was_online, credential=None):
+        if sess.nick == "web-late":
             started.set()
             assert release.wait(5)
-        return ok
+        return original_finish(sess, was_online, credential)
 
-    monkeypatch.setattr(h, "_attach", paused_attach)
+    monkeypatch.setattr(h, "_finish_login", paused_finish)
     result = []
     thread = threading.Thread(target=lambda: result.append(
         h.login_web("web-late", "127.0.0.1")))

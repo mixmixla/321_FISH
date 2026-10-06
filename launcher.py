@@ -9,11 +9,12 @@
 门禁只在此层，ChatWindow 构造路径不触发，保证直接构造的既有 smoke 零回归。
 """
 import tkinter as tk
+from tkinter import messagebox
 
 import tkguard                       # 跨线程 Tk 守卫（登录门禁在 client 加载前建 Tk，须提前接入）
 
 import auth
-from prefs import Prefs
+from prefs import Prefs, StarsPreservationError
 from config import CFG, bootlog
 from widgets.passcode import PasscodeBox
 from widgets.scrim import Scrim
@@ -69,6 +70,17 @@ def _last_server(prefs: Prefs, host: str, port) -> tuple:
     return host, port or CFG.tcp_port
 
 
+def _prepare_profile(prefs: Prefs, nick: str) -> bool:
+    try:
+        prefs.check_profile_switch(nick)
+        prefs.remember_account(nick)
+        prefs.switch_profile(nick)
+    except StarsPreservationError as exc:
+        messagebox.showerror("本地收藏已保护", str(exc))
+        return False
+    return True
+
+
 def launch(host: str, port=None, prefs: Prefs | None = None) -> int:
     """进程入口：微信式登录门禁（先选服务器→再输账号密码）+ 会话循环。
 
@@ -87,8 +99,9 @@ def launch(host: str, port=None, prefs: Prefs | None = None) -> int:
             if nick and prefs.trusted_nick(nick) and not prefs.has_passcode():
                 h, p = _last_server(prefs, host, port)
                 bootlog(f"launch: auto-login trusted {nick!r} -> {h}:{p}")
-                prefs.remember_account(nick)
-                prefs.switch_profile(nick)
+                if not _prepare_profile(prefs, nick):
+                    switching = True
+                    continue
                 reason = run_chat(h, p, prefs, nick, "")
                 bootlog(f"launch: run_chat returned {reason!r}")
                 if reason != "switch":
@@ -117,8 +130,9 @@ def launch(host: str, port=None, prefs: Prefs | None = None) -> int:
             if not passcode_gate(lambda c, s=stored: auth.verify(c, s)):
                 bootlog("launch: passcode rejected")
                 return 0
-        prefs.remember_account(nick)
-        prefs.switch_profile(nick)
+        if not _prepare_profile(prefs, nick):
+            switching = True
+            continue
         bootlog(f"launch: run_chat start nick={nick!r}")
         reason = run_chat(r["host"], int(r["port"]), prefs, nick, r["pwd"])
         bootlog(f"launch: run_chat returned {reason!r}")

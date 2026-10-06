@@ -89,9 +89,30 @@ def _stable_id(value) -> str:
 def _atomic_json(path: Path, value) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_name(f".{path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp")
-    temp.write_text(json.dumps(value, ensure_ascii=False, indent=2),
-                    encoding="utf-8")
-    os.replace(temp, path)
+    created = False
+    try:
+        with temp.open('x', encoding='utf-8') as stream:
+            created = True
+            json.dump(value, stream, ensure_ascii=False, indent=2)
+        # Windows readers may briefly omit FILE_SHARE_DELETE. Retry only
+        # this metadata replacement, never bypass atomic publication or
+        # reinterpret a test outcome. Permanent/non-sharing errors remain errors.
+        deadline = time.monotonic() + 0.5
+        while True:
+            try:
+                os.replace(temp, path)
+                return
+            except OSError as exc:
+                remaining = deadline - time.monotonic()
+                if getattr(exc, 'winerror', None) not in (5, 32, 33) or remaining <= 0:
+                    raise
+                time.sleep(min(0.01, remaining))
+    finally:
+        if created:
+            try:
+                temp.unlink(missing_ok=True)
+            except OSError:
+                pass  # Cleanup must not mask the actual publication failure.
 
 
 def _inside(path: Path, root: Path) -> bool:

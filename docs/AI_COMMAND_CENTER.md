@@ -1,16 +1,23 @@
 # 321_FISH AI 指挥中心
 
 本文件是当前执行状态与下一任务的唯一权威。需求见 task-packages，证据和审查结论见
-review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-03（Asia/Shanghai）。
+review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-06（Asia/Shanghai）。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+<!-- FRIENDS_TRIAL_PR_BEGIN -->
+## FRIENDS-TRIAL-PR-01 当前朋友候选交付
+
+**LOCAL_ACCEPTED_DRAFT_DELIVERY_PENDING / DRAFT_PR_ONLY**。[Task](task-packages/FRIENDS-TRIAL-PR-01.md) / [Review](review-packages/FRIENDS-TRIAL-PR-01-r1.md) / [试用说明](朋友试用候选_2026-10-06.md)。本次交付范围为repo新分支commit/push/main draft PR；不merge/release或联系朋友。remote main0c90fd0/PR6已合并，无重复open PR；独立feature/friends-trial-candidate-20261006，原开发dirty/实验/全部旧证据保持。
+核心358/152文件2211P0F2原skip、入口36P已本机有限验收。361输入/153测试组合唯一完整门禁2247P0F2原skip、exit0/718.093秒，source cda76204c1e24f6236eb93e4af74058944a21e6a228d2da51f072e65a69b4ad1；153日志hash/单attempt/cleanup和raw→Git规范化已核。完整差异/secret资料检查通过，Sol终核0 MUST，限定接受本分支commit/push/draft PR。私有桌面双EXE与compiled入口双登录/精确owner中断Job清理通过，三binary及ZIP仅本地。完整EXE窗口对局/自然退出/重复操作、console X、非开发机Windows与物理LAN未运行。CP4历史registry WinError5仍BLOCKED/根因未定，六实验模块及13测试未入本核心PR，未被通过结果“修复”。无ProcMon、真实资料、安全设置修改或Goal恢复。以下旧批次状态/计数保留为历史，不覆盖本段。
+<!-- FRIENDS_TRIAL_PR_END -->
+
 ## 开发路线与当前位置
 
 **Git交付：PR-DELIVERY-06已完成。** 用户在本轮验收后明确要求“请推送pr”，
 新增本次分支push/新PR权限；[Task](task-packages/PR-DELIVERY-06.md)。原本地开发Goal已完成，
 不合并/发布、不上传EXE或运行数据。入场clean/HEAD d2d67a0；PR #5已实际合并，main fc13a64与452417e同树，
 330源码身份保持，复用1669/0/2与既有独立验收。[PR #6](https://github.com/mixmixla/321_FISH/pull/6)
-已创建并附当前聊天，open/非draft/base main、未merge/release；[交付记录](review-packages/PR-DELIVERY-06-r1.md)。
+已于2026-10-03实际合并到main（merge 0c90fd0）；未release；[交付记录](review-packages/PR-DELIVERY-06-r1.md)。
 普通push保留逻辑历史，最终head与远端/PR核对；本轮停止，Goal终态以聊天工具收口为准。
 
 **本轮自治：LOCAL-TRIAL-20261003，AI_ACCEPTED；Goal complete。** 用户已授权主控在本轮范围内自主冻结任务、

@@ -18,6 +18,7 @@ import pytest
 
 import auth
 from config import CFG, Cfg
+from server_recovery import StoreCoordinator
 from protocol import MsgType
 from server import Hub, Session, serve as serve_tcp
 from web import COOKIE_NAME, serve as serve_web
@@ -46,12 +47,15 @@ def _new_hub(base: Path, admin_password, site_password: str = "",
                store_dir=str(store_dir) if store_dir is not None else None)
 
 
-def _start_env(base: Path, admin_password: str, site_password: str = ""):
-    hub = _new_hub(base, admin_password, site_password)
+def _start_env(base: Path, admin_password: str, site_password: str = "", *, durable=False):
+    root = base / 'credential-store' if durable else None
+    if root is not None:
+        StoreCoordinator.initialize_new(root)
+    hub = _new_hub(base, admin_password, site_password, store_dir=root)
     tcp_port = _free_port()
     stop = threading.Event()
-    threading.Thread(target=serve_tcp, args=(hub, tcp_port, stop, False),
-                     daemon=True).start()
+    hub._test_serve_thread = threading.Thread(target=serve_tcp, args=(hub, tcp_port, stop, False), daemon=True)
+    hub._test_serve_thread.start()
     web_port = _free_port()
     httpd = serve_web(hub, port=web_port)
     time.sleep(0.15)
@@ -61,6 +65,9 @@ def _start_env(base: Path, admin_password: str, site_password: str = ""):
 def _stop_env(stop, httpd):
     stop.set()
     httpd.shutdown()
+    httpd.hub._test_serve_thread.join(10)
+    assert not httpd.hub._test_serve_thread.is_alive()
+    assert httpd.hub._recovery is None or not httpd.hub._recovery.owner.held
 
 
 class _Rec:
@@ -81,6 +88,13 @@ def _hello(hub: Hub, nick: str, password: str = "", **extra):
     header.update(extra)
     ok = hub.dispatch(sess, header)
     return sess, rec, ok
+
+
+def _claim(hub, nick, password):
+    cap = hub.auth_capabilities()
+    return _hello(hub, nick, password, auth_v=1, claim_password=True,
+                  request_id=secrets.token_hex(16), expected_server_epoch=cap['server_epoch'],
+                  expected_store_scope_id=cap['store_scope_id'])
 
 
 class _Http:
@@ -167,6 +181,13 @@ def admin_password() -> str:
 @pytest.fixture()
 def running(tmp_path, admin_password):
     env = _start_env(tmp_path, admin_password)
+    yield (*env, admin_password)
+    _stop_env(env[3], env[4])
+
+
+@pytest.fixture()
+def running_durable(tmp_path, admin_password):
+    env = _start_env(tmp_path, admin_password, durable=True)
     yield (*env, admin_password)
     _stop_env(env[3], env[4])
 
@@ -314,11 +335,14 @@ def test_config_without_admin_pwd_and_legacy_snapshot_hash_do_not_enable_admin(
     }
     (store_dir / "state.json").write_text(
         json.dumps(state, ensure_ascii=False), encoding="utf-8")
+    StoreCoordinator.adopt_legacy(store_dir)
     unconfigured = _new_hub(tmp_path / "restored-unconfigured", "",
                             store_dir=store_dir)
     legacy_sess, _legacy_rec, legacy_ok = _hello(
         unconfigured, ADMIN_NICK, old_password)
     assert not legacy_ok and legacy_sess.uid == 0
+
+    assert unconfigured.shutdown(normal=False)
 
     restored = _new_hub(tmp_path / "restored", admin_password,
                         store_dir=store_dir)
@@ -326,6 +350,7 @@ def test_config_without_admin_pwd_and_legacy_snapshot_hash_do_not_enable_admin(
     assert not old_ok and old_sess.uid == 0
     new_sess, _new_rec, new_ok = _hello(restored, ADMIN_NICK, admin_password)
     assert new_ok and new_sess.is_admin
+    assert restored.shutdown(normal=False)
 
 
 def test_admin_set_pwd_is_rejected_and_permission_path_stays_live(
@@ -348,8 +373,11 @@ def test_admin_set_pwd_is_rejected_and_permission_path_stays_live(
 
 
 def test_ordinary_registration_chat_and_admin_payload_spoof_do_not_escalate(
-        tmp_path, admin_password):
-    hub = _new_hub(tmp_path, admin_password)
+        tmp_path, admin_password, request):
+    root = tmp_path / 'credential-store'
+    StoreCoordinator.initialize_new(root)
+    hub = _new_hub(tmp_path, admin_password, store_dir=root)
+    request.addfinalizer(lambda: hub.shutdown(normal=False))
     user, user_rec, ok = _hello(hub, "ordinary-user")
     assert ok and user.uid > 0 and not user.is_admin
     assert hub.dispatch(user, {"t": MsgType.CHAT.value,
@@ -365,7 +393,7 @@ def test_ordinary_registration_chat_and_admin_payload_spoof_do_not_escalate(
                f.get("code") == "forbid" for f in user_rec.frames[before:])
     assert not user.is_admin
 
-    claim, _claim_rec, claim_ok = _hello(hub, "claimable", "ordinary-pwd")
+    claim, _claim_rec, claim_ok = _claim(hub, "claimable", "ordinary-pwd")
     assert claim_ok and not claim.is_admin
     assert hub.known[claim.uid].get("pwd")
     # 管理员昵称不能被普通密码首次认领。
@@ -526,6 +554,7 @@ def test_http_cookie_old_token_rejected_after_logout_and_relogin(
 def test_admin_delete_invalidates_all_web_tokens_and_reboot_tokens(
         tmp_path, admin_password):
     store_dir = tmp_path / "store"
+    StoreCoordinator.initialize_new(store_dir)
     hub = _new_hub(tmp_path / "before", admin_password,
                    store_dir=store_dir)
     admin, _admin_rec, admin_ok = _hello(hub, ADMIN_NICK, admin_password)
@@ -547,6 +576,7 @@ def test_admin_delete_invalidates_all_web_tokens_and_reboot_tokens(
     assert set(hub.retired[victim_web.uid]) == {"nick", "retired_at", "operation_id"}
     hub._persist(force=True)
 
+    assert hub.shutdown(normal=False)
     restored = _new_hub(tmp_path / "after", admin_password,
                          store_dir=store_dir)
     assert restored.session_by_token(token_a) is None
@@ -555,23 +585,25 @@ def test_admin_delete_invalidates_all_web_tokens_and_reboot_tokens(
     assert token_b not in restored.web_tokens
     assert restored.retired[victim_web.uid]["nick"] == "delete-me"
     assert restored.nick_to_uid["delete-me"] == victim_web.uid
+    assert restored.shutdown(normal=False)
 
 
-def test_secret_absent_from_errors_audit_snapshot_and_repr(running, capsys):
-    hub, _tcp_port, web_port, _stop, _httpd, admin_password = running
+def test_secret_absent_from_errors_audit_snapshot_and_repr(running_durable, capsys):
+    hub, _tcp_port, web_port, _stop, _httpd, admin_password = running_durable
     good, good_rec, good_ok = _hello(hub, ADMIN_NICK, admin_password)
     assert good_ok and good.is_admin
     bound = secrets.token_urlsafe(24)
-    ordinary, ordinary_rec, ordinary_ok = _hello(hub, "secret-user", bound)
+    ordinary, ordinary_rec, ordinary_ok = _claim(hub, "secret-user", bound)
     assert ordinary_ok and not ordinary.is_admin
     failed_secret = secrets.token_urlsafe(24)
     bad, bad_rec, ok = _hello(hub, "secret-user", failed_secret)
     assert not ok and bad.uid == 0
     before = len(ordinary_rec.frames)
     assert hub.dispatch(ordinary, {"t": MsgType.SET_PWD.value,
+                                   "credential_v": 1, "request_id": "redaction_failure",
                                    "old": failed_secret,
                                    "new": failed_secret})
-    assert any(f.get("t") == MsgType.ERROR.value
+    assert any(f.get("t") == MsgType.CREDENTIAL_RESULT.value and f.get('status') == 'failed'
                for f in ordinary_rec.frames[before:])
 
     web = _Http(web_port)

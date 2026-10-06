@@ -14,6 +14,7 @@ import bots
 from config import CFG
 from server import Hub
 from server_store import ReadResult, SaveResult, ServerStore
+from server_recovery import StoreCoordinator, StoreError
 
 
 def _cfg(tmp_path, password=None):
@@ -22,9 +23,40 @@ def _cfg(tmp_path, password=None):
                    web_files_dir=str(tmp_path / "web"), persist_interval=0.0)
 
 
-def _hub(tmp_path, store=None):
-    return Hub(cfg=_cfg(tmp_path), audit_dir=str(tmp_path / "audit"),
-               store_dir=str(store or (tmp_path / "store")))
+_test_hubs = []
+
+
+@pytest.fixture(autouse=True)
+def _close_owned_hubs():
+    _test_hubs.clear()
+    yield
+    for h in _test_hubs:
+        # Deliberate FAILED cases correctly return False; still require the
+        # actual owner release and every managed worker to have exited.
+        h.shutdown(normal=False)
+        assert not h._recovery.owner.held
+        assert not any(t.is_alive() for t in h._managed_threads)
+    _test_hubs.clear()
+
+
+def _hub(tmp_path, store=None, *, new=True):
+    root = store or (tmp_path / 'store')
+    if new:
+        StoreCoordinator.initialize_new(root)
+    h = Hub(cfg=_cfg(tmp_path), audit_dir=str(tmp_path / "audit"), store_dir=str(root))
+    _test_hubs.append(h)
+    return h
+
+
+def _accepted_t0(h, uid, record):
+    """Explicit legal fixture transition; never fabricate cached control."""
+    with h._persist_writer_lock:
+        assert h._recovery.accept_intent(uid, record).effect == 'committed'
+        with h.lock:
+            h._apply_retirement_core_locked(uid, record)
+            h._retire_ops[uid] = dict(status='pending', operation_id=record['operation_id'],
+                                     target_uid=uid, target_nick=record['nick'],
+                                     persistence_phase='snapshot', identity_effect='revoked')
 
 
 def test_server_store_save_reports_success_and_failures(tmp_path, monkeypatch):
@@ -133,10 +165,10 @@ def test_actual_writer_recaptures_after_waiting_and_never_writes_stale_snapshot(
 def test_real_json_success_restarts_with_retirement_fence(tmp_path):
     store = tmp_path / "store"
     h1 = _hub(tmp_path, store)
-    h1.nick_to_uid["old"] = 7
-    h1.retired[7] = {"nick": "old", "retired_at": 1.0, "operation_id": "op-7"}
-    h1._persist_flush()
-    h2 = _hub(tmp_path / "restart", store)
+    _accepted_t0(h1, 7, {"nick": "old", "retired_at": 1.0, "operation_id": "op-7"})
+    assert h1._persist_flush()
+    assert h1.shutdown(normal=False)
+    h2 = _hub(tmp_path / "restart", store, new=False)
     assert h2.retired[7]["operation_id"] == "op-7"
     assert h2.nick_to_uid["old"] == 7
 
@@ -155,8 +187,10 @@ def _hub_from_state(tmp_path, state):
     store_dir = tmp_path / "store"
     store = ServerStore(str(store_dir / "state.json"))
     assert store.save(state)
-    return Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"),
-               store_dir=str(store_dir))
+    StoreCoordinator.adopt_legacy(store_dir)
+    h = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), store_dir=str(store_dir))
+    _test_hubs.append(h)
+    return h
 
 
 def test_legacy_json_without_retired_does_not_infer_tombstone(tmp_path):
@@ -212,11 +246,12 @@ def test_retired_nick_may_match_bot_name_but_bot_uid_stays_active(tmp_path):
                          "operation_id": "op-2"}}},
 ])
 def test_invalid_retired_json_fails_closed_without_authorizing_new_uid(tmp_path, state):
-    h = _hub_from_state(tmp_path, state)
-    assert h._retired_schema_invalid
-    from server import Session
-    sess = Session(0, "fresh", "tcp", "127.0.0.1", lambda *_: None)
-    assert h._on_hello(sess, {"t": "hello", "nick": "fresh"}) is False
+    # Strict adoption fails before a business Hub can admit any identity.
+    with pytest.raises(StoreError, match='invalid_schema'):
+        _hub_from_state(tmp_path, state)
+    assert ServerStore(str(tmp_path / 'store/state.json')).load() == state
+    assert not (tmp_path / 'store/control.json').exists()
+    assert not _test_hubs
 
 
 def test_new_request_during_blocked_actual_writer_is_not_cleared(tmp_path):
@@ -333,16 +368,15 @@ def test_old_worker_candidate_cannot_overwrite_force_retire_json(tmp_path, force
     h.nick_to_uid["worker-old"] = 123
     h._persist()
     assert old_started.wait(5)
-    h.nick_to_uid["retired-owner"] = 456
-    h.retired[456] = {"nick": "retired-owner", "retired_at": 1.0,
-                      "operation_id": "op-456"}
-
     result = []
 
     def force_writer():
         force_called.set()
-        result.append(h._persist(force=True) if force_method == "force"
-                       else h._persist_flush())
+        with h._persist_writer_lock:
+            _accepted_t0(h, 456, {"nick": "retired-owner", "retired_at": 1.0,
+                                  "operation_id": "op-456"})
+            result.append(h._persist(force=True) if force_method == "force"
+                           else h._persist_flush())
 
     thread = threading.Thread(target=force_writer)
     thread.start()
@@ -381,15 +415,15 @@ def test_old_normal_snapshot_queues_after_force_retire_without_overwrite(tmp_pat
     old_thread.start()
     assert old_captured.wait(5)
 
-    h.nick_to_uid["confirmed-retired"] = 456
-    h.retired[456] = {"nick": "confirmed-retired", "retired_at": 1.0,
-                      "operation_id": "op-confirmed"}
     force_result = []
     force_entered = threading.Event()
 
     def run_force():
         force_entered.set()
-        force_result.append(h._persist(force=True))
+        with h._persist_writer_lock:
+            _accepted_t0(h, 456, {"nick": "confirmed-retired", "retired_at": 1.0,
+                                  "operation_id": "op-confirmed"})
+            force_result.append(h._persist(force=True))
 
     force_thread = threading.Thread(target=run_force)
     force_thread.start()
@@ -447,12 +481,10 @@ def test_old_snapshot_ack_does_not_consume_new_pending_retirement(tmp_path,
     monkeypatch.setattr(h, "_update_retirement_result", record_update)
     h._persist()
     assert old_io_started.wait(5)
-    h.retired[7] = {"nick": "victim", "retired_at": 2.0,
-                    "operation_id": "op-new"}
-    h.known.pop(7, None)
     h._retire_ops[7] = {
         "status": "pending", "operation_id": "op-new",
         "target_uid": 7, "target_nick": "victim",
+        "persistence_phase": "intent", "identity_effect": "not_started",
     }
     force_entered = threading.Event()
     force_result = []
@@ -461,7 +493,10 @@ def test_old_snapshot_ack_does_not_consume_new_pending_retirement(tmp_path,
     def run_force():
         force_entered.set()
         try:
-            force_result.append(h._persist(force=True))
+            with h._persist_writer_lock:
+                _accepted_t0(h, 7, {"nick": "victim", "retired_at": 2.0,
+                                    "operation_id": "op-new"})
+                force_result.append(h._persist(force=True))
         except BaseException as exc:
             errors.append(exc)
 
@@ -501,11 +536,10 @@ def test_written_commit_receipt_uses_actual_state_bytes(tmp_path):
 def test_restored_retirement_origin_has_no_historical_sha(tmp_path):
     store = tmp_path / "store"
     h1 = _hub(tmp_path, store)
-    h1.nick_to_uid["old"] = 7
-    h1.retired[7] = {"nick": "old", "retired_at": 1.0,
-                     "operation_id": "op-7"}
-    h1._persist_flush()
-    h2 = _hub(tmp_path / "restart", store)
+    _accepted_t0(h1, 7, {"nick": "old", "retired_at": 1.0, "operation_id": "op-7"})
+    assert h1._persist_flush()
+    assert h1.shutdown(normal=False)
+    h2 = _hub(tmp_path / "restart", store, new=False)
     payload = h2._retirement_payload(7)
     assert payload["status"] == "confirmed"
     assert payload["origin"] == "restored_valid_json"
@@ -524,13 +558,11 @@ def test_invalid_strict_source_does_not_claim_restored_origin(tmp_path):
         b'"operation_id":"op-7"}},"invalid":NaN}'
     )
     (store_dir / "state.json").write_bytes(raw)
-    h = _hub(tmp_path, store_dir)
-    payload = h._retirement_payload(7)
-    assert payload["status"] == "unknown"
-    assert payload["origin"] is None
-    assert payload["content_sha256"] is None
-    assert h._persist_receipt is None
-    assert h._persist_known_shas == set()
+    with pytest.raises(StoreError):
+        _hub(tmp_path, store_dir, new=False)
+    assert (store_dir / 'state.json').read_bytes() == raw
+    assert not (store_dir / 'control.json').exists()
+    assert not _test_hubs  # No Hub/receipt exists from an invalid source.
 
 
 def test_active_store_save_is_bound_to_fresh_hub_capture(tmp_path):

@@ -25,3 +25,8 @@ Thumbs.db
 Desktop.ini
 .vscode/
 .idea/
+
+# Portable friend-trial private data and generated entry artifacts
+trial_runs/
+StartTrial.exe
+StartTrial.spec

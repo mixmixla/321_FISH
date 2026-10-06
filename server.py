@@ -18,7 +18,8 @@ import math
 import http.client
 import ssl
 from collections import defaultdict, deque
-from dataclasses import dataclass
+from contextlib import contextmanager
+from dataclasses import dataclass, replace
 from html.parser import HTMLParser
 from urllib.parse import urlparse
 import json
@@ -39,6 +40,8 @@ import stickers
 import bots as _bots
 import cloud_history as cloud_history_mod
 import server_store as server_store_mod
+import server_recovery as recovery_mod
+import credential_ops as credential_mod
 
 
 def _now() -> float:
@@ -51,6 +54,27 @@ PWD_MAX = 64                 # R47：昵称密码最大长度（明文，PBKDF2 
 # 不属于该清单；字段即使是空字符串或 False 也要保持其原有值。
 _KNOWN_PROFILE_FIELDS = ("pwd", "sign", "avatar", "invisible", "status",
                          "remarks")
+
+
+@dataclass(frozen=True)
+class RetirementReservation:
+    store_id: str
+    uid: int
+    nick: str
+    operation_id: str
+    retired_at: float
+
+    def record(self):
+        return {'nick': self.nick, 'retired_at': self.retired_at,
+                'operation_id': self.operation_id}
+
+
+@dataclass(frozen=True)
+class WriterLease:
+    kind: str
+    store_id: str | None
+    uid: int | None = None
+    operation_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -475,6 +499,8 @@ class Session:
         self.last_seen = _now()
         self.closed = False
         self.is_admin = False       # 只由服务器凭据校验成功后授予
+        self.session_binding_id = uuid.uuid4().hex if stype == 'web' else None
+        self._auth_capability_seen = False
 
     def touch(self) -> None:
         self.last_seen = _now()
@@ -486,6 +512,53 @@ class Hub:
                  web_idle_timeout: float | None = None,
                  web_password: str | None = None,
                  store_dir: str | None = None) -> None:
+        self._service_ready = False
+        self._service_started = False
+        self._service_stop = threading.Event()
+        self._admission_closed = False
+        self._lifecycle_lock = threading.RLock()
+        self._managed_threads = set()
+        self._managed_sockets = set()
+        self._listener_sockets = set()
+        self._http_servers = []
+        self._http_shutdown_threads = {}
+        self._shutdown_lock = threading.Lock()
+        self._shutdown_result = None
+        self._shutdown_started = False
+        self._shutdown_errors = []
+        self._writer_local = threading.local()
+        self._final_started = False
+        self._final_lease_issued = False
+        self._final_io_started = False
+        self._final_timed_out = False
+        self._final_thread = None
+        self._final_deadline = None
+        self._final_result = None
+        self._final_done = threading.Event()
+        self._recovery_write_thread = None
+        self._final_write_thread = None
+        self._snapshot_retry_thread = None
+        self._recovery = recovery_mod.StoreCoordinator(store_dir) if store_dir else None
+        self._loaded_pair = self._recovery.open() if self._recovery else None
+        try:
+            self._initialize(cfg, audit_dir, heartbeat_timeout, web_idle_timeout,
+                             web_password, store_dir)
+        except BaseException:
+            if self._recovery is not None:
+                self._recovery.fail()
+                self._recovery.close()
+            audit = getattr(self, 'audit', None)
+            if audit is not None:
+                audit.close()
+            raise
+        finally:
+            self._loaded_pair = None
+
+    def _initialize(self, cfg=None, audit_dir: str | None = None,
+                    heartbeat_timeout: float | None = None,
+                    web_idle_timeout: float | None = None,
+                    web_password: str | None = None,
+                    store_dir: str | None = None) -> None:
         self.cfg = cfg or CFG
         self._hb_timeout = (heartbeat_timeout if heartbeat_timeout is not None
                             else self.cfg.heartbeat_timeout)
@@ -507,6 +580,11 @@ class Hub:
                                 else None)
         self._zombie_web_idle = getattr(self.cfg, "zombie_web_idle", 30.0)
         self.lock = threading.RLock()
+        self._server_epoch = uuid.uuid4().hex
+        self._credential_operations = credential_mod.OperationLedger(self._server_epoch)
+        self._credential_claims = credential_mod.ClaimLedger(self._server_epoch)
+        self._uid_credential_revision = {}
+        self._nick_binding_revision = {}
         self.sessions = {}          # uid -> 代表会话（在线集按 uid 唯一；任一端在线即在线）
         self._uid_clients = {}      # uid -> set[Session]（同一 uid 的全部在线会话，多端并存）
         self.nick_to_uid = {}
@@ -529,7 +607,6 @@ class Hub:
         # 落盘 web_files_dir/cloud/{uid}.bin，重启保留，服务器无法解密）
         self.cloud: dict = {}
         self.cloud_dir = os.path.join(self.cfg.web_files_dir, "cloud")
-        os.makedirs(self.cloud_dir, exist_ok=True)
         # CC-02C RESOURCE：运行态资源 registry。它不是 Store 快照，也不保存
         # 正文/路径；latest_permit 与 current_readable_index 必须分开，后续
         # C 可以阻止旧 failed op 重试，但 pending/failed/unknown 不能遮掉
@@ -542,7 +619,6 @@ class Hub:
         self._resource_max_active = 16
         self._resource_max_terminal = 64
         self._resource_manifest_version = 1
-        self._cloud_load_disk()
         self.xfers = {}             # file_id -> 传输记录（中转/直连状态权威）
         self.rooms = RoomManager(GAME_TYPES)   # 游戏房间（服务器权威）
         self.reads = {}             # convo_key -> {uid: max_read_seq}（已读回执）
@@ -569,6 +645,7 @@ class Hub:
         # 退役 UID，nick_to_uid 仍保留以禁止同名/同 UID 重新认领。
         self.retired: dict = {}
         self._retire_ops: dict = {}       # uid -> 运行态 status/op_id（不落盘）
+        self._retire_reservations: dict = {}
         self._retired_schema_invalid = False
         # R50 屏蔽名单：uid -> set(被屏蔽 uid)（服务器权威，拦截私聊收发与密聊/语音）
         self.blocks: dict = {}
@@ -582,41 +659,27 @@ class Hub:
         self._preview_lock = threading.Lock()
         # R23 网页端文件存储（fid = uuid4().hex；<fid> 二进制 + <fid>.json 元数据）
         self.web_files = os.path.join(self.cfg.web_files_dir)
-        os.makedirs(self.web_files, exist_ok=True)
         self._resource_stage_dir = os.path.join(self.web_files, ".resource_stage")
-        os.makedirs(self._resource_stage_dir, exist_ok=True)
         # R30C 自定义贴纸：code -> {code,label,ext}（图片落盘 stickers/ 目录，随 R16 持久化）
         self.custom_stickers: dict = {}
         self.sticker_dir = os.path.join(self.cfg.web_files_dir, "stickers")
-        os.makedirs(self.sticker_dir, exist_ok=True)
         # R64 自定义包元数据：pack -> {"cover": ext|""}（封面本体落盘 stickers/_covers/）
         self.pack_meta: dict = {}
         self.pack_cover_dir = os.path.join(self.sticker_dir, "_covers")
-        try:
-            os.makedirs(self.pack_cover_dir, exist_ok=True)
-        except OSError:
-            pass
         # R52 头像：uid -> ext 记在 known[uid]["avatar"]，图片本体落盘 avatars/{uid}.{ext}
         self.avatar_dir = os.path.join(self.cfg.web_files_dir, "avatars")
-        os.makedirs(self.avatar_dir, exist_ok=True)
         # 朋友圈：pid -> post；图文动态全服时间轴（图片本体落盘 moments/，快照只存元数据）
         self.moments: dict = {}
         self._pid_seq = 0
         self.moment_dir = os.path.join(self.cfg.web_files_dir, "moments")
-        os.makedirs(self.moment_dir, exist_ok=True)
         self.moment_covers: dict = {}      # uid -> {mode:"preset"|"img", preset:int|None, ext:str|None}
         self.cover_dir = os.path.join(self.moment_dir, "covers")
-        try:
-            os.makedirs(self.cover_dir, exist_ok=True)
-        except OSError:
-            pass
         self._COVER_EXTS = ("png", "jpg", "jpeg", "webp", "gif", "bmp")
         self._COVER_MAX = 2 * 1024 * 1024
         self._COVER_PRESETS = 6
         # 群文件库：gid -> [ {fid,name,size,ts,uid,nick} ]（二进制落盘 group_files/{gid}/{fid}）
         self.group_files: dict = {}
         self.group_files_dir = os.path.join(self.cfg.web_files_dir, "group_files")
-        os.makedirs(self.group_files_dir, exist_ok=True)
         self._gf_seq = 0            # 群文件 fd 自增号（分发唯一 fid）
         # R69B6/B7 群待办/接龙/签到：gid -> [ {tid,text,mode,uid,ts,done:{uid:ts},assignee,closed} ]
         self.tasks: dict = {}
@@ -639,7 +702,8 @@ class Hub:
         self._persist_lock = threading.Lock()
         # actual writer 的唯一顺序锁。槽位只作唤醒，真正写入前必须重新捕获
         # 当前完整状态，避免旧 worker/force capture 覆盖退役后的新快照。
-        self._persist_writer_lock = threading.Lock()
+        self._persist_writer_lock = (self._recovery.writer if self._recovery
+                                     else threading.RLock())
         self._persist_pending = False
         self._persist_slot = None
         self._persist_slot_fp = None
@@ -655,90 +719,454 @@ class Hub:
         self._persist_last_result = None
         self._persist_success_evidence = {}
         self._persist_known_shas = set()
-        if store_dir:
-            from server_store import ServerStore
-            self.store = ServerStore(os.path.join(store_dir, "state.json"))
+        if self._recovery is not None:
+            self.store = self._recovery.state_store
             self.store._bind_hub_writer(self._bound_store_save)
-        self._restore(self.store.load() if self.store else {})
-        # CLOUD 扫描早于身份恢复是启动顺序既有事实；只有在 _restore 完成
-        # 后才把非退役 UID 放入当前可读 index，合法退役 JSON 过滤私有访问。
-        self._resource_filter_cloud_after_restore()
-        if self.store is not None:
-            try:
-                loaded = self.store.read_bytes_result()
-                if (getattr(loaded, "status", None) == "bytes"
-                        and isinstance(getattr(loaded, "payload", None), bytes)
-                        and isinstance(getattr(loaded, "sha256", None), str)):
-                    strict_state = self._strict_state_from_bytes(loaded.payload)
-                    strict_retired = strict_state.get("retired") or {}
-                    source_valid = (isinstance(strict_retired, dict)
-                                    and not self._retired_schema_invalid)
-                    if source_valid and self.retired:
-                        for uid, record in self.retired.items():
-                            raw = strict_retired.get(str(uid))
-                            if raw != record:
-                                source_valid = False
-                                break
-                    if source_valid:
-                        self._persist_known_shas.add(loaded.sha256)
-                        if self.retired:
-                            for uid in self.retired:
-                                op = self._retire_ops.get(uid)
-                                if isinstance(op, dict):
-                                    op["origin"] = "restored_valid_json"
-                            self._persist_receipt = CommitReceipt(
-                                origin="restored_valid_json", sha256=None,
-                                length=None, capture_request_seq=None,
-                                operation_ids=tuple(
-                                    str(record.get("operation_id"))
-                                    for record in self.retired.values()
-                                    if isinstance(record, dict)
-                                    and isinstance(record.get("operation_id"), str)))
-                    elif self.retired:
-                        for uid in self.retired:
-                            op = self._retire_ops.get(uid)
-                            if isinstance(op, dict):
-                                op.update({
-                                    "status": "unknown",
-                                    "origin": None,
-                                    "content_sha256": None,
-                                    "content_length": None,
-                                    "failed_stage": "restore",
-                                    "error_code": "strict_source_invalid",
-                                    "retryable": False,
-                                })
-                else:
-                    for uid in self.retired:
-                        op = self._retire_ops.get(uid)
-                        if isinstance(op, dict):
-                            op.update({
-                                "status": "unknown", "origin": None,
-                                "content_sha256": None,
-                                "content_length": None,
-                                "failed_stage": "restore",
-                                "error_code": "strict_source_invalid",
-                                "retryable": False,
-                            })
-            except Exception:
-                if self.retired:
-                    for uid in self.retired:
-                        op = self._retire_ops.get(uid)
-                        if isinstance(op, dict):
-                            op.update({
-                                "status": "unknown", "origin": None,
-                                "content_sha256": None,
-                                "content_length": None,
-                                "failed_stage": "restore",
-                                "error_code": "strict_source_invalid",
-                                "retryable": False,
-                            })
+            self._restore_validated(self._loaded_pair.state)
+            self._recover_accepted_intents(self._loaded_pair)
+        else:
+            self._restore({})
         # R35 内置 Bots：注册进 known（type=bot，永远在线；uid 900+ 高位段）。
         # 必须在 _restore 之后（restore 会整体替换 known，注册放前面会被抹掉）
         for _b in _bots.BOTS:
             self.known[_b.uid] = {"nick": _b.nick, "last_online": _now(),
                                   "type": "bot"}
+        self._initialize_resources()
         self.audit = audit_mod.AuditLog(audit_dir or self.cfg.audit_dir,
                                         self.cfg.audit_keep_days)
+        self._service_ready = True
+
+    def _initialize_resources(self):
+        """Identity recovery has completed; no listener or worker exists yet."""
+        for directory in (self.web_files, self.cloud_dir, self._resource_stage_dir,
+                          self.sticker_dir, self.pack_cover_dir, self.avatar_dir,
+                          self.moment_dir, self.cover_dir, self.group_files_dir):
+            os.makedirs(directory, exist_ok=True)
+        self._cloud_load_disk()
+        self._resource_filter_cloud_after_restore()
+
+    def _restore_validated(self, state):
+        """Restore normalized data without filtering bad records or reading IO."""
+        state = copy.deepcopy(state)
+        self.bus._seq = state['bus']['seq']
+        for key, messages in state['bus']['channels'].items():
+            queue = self.bus._channels[key]
+            if queue.maxlen is not None and len(messages) > queue.maxlen:
+                raise recovery_mod.StoreError('history_capacity', 'state.bus.channels')
+            queue.extend(messages)
+        self.bus.reindex()
+        self._uid_seq, self._gid_seq = state['uid_seq'], state['gid_seq']
+        self._gf_seq, self._task_seq, self._pid_seq = (state[key] for key in
+                                                     ('gf_seq', 'task_seq', 'pid_seq'))
+        self.nick_to_uid = state['nick_to_uid']
+        self.known = {int(uid): value for uid, value in state['known'].items()}
+        self.retired = {int(uid): value for uid, value in state['retired'].items()}
+        self.groups = dict(self._restore_group(gid, group) for gid, group in state['groups'].items())
+        self.reads = {key: {int(uid): seq for uid, seq in readers.items()}
+                      for key, readers in state['reads'].items()}
+        self.blocks = {int(uid): set(values) for uid, values in state['blocks'].items()}
+        self.pins = state['pins']
+        self._burn = {int(seq): dict(record, pend=set(record['pend']))
+                      for seq, record in state['burn'].items()}
+        self._polls = {int(seq): dict(poll, votes={int(uid): value
+                                                 for uid, value in poll['votes'].items()})
+                       for seq, poll in state['polls'].items()}
+        self._drafts = {(int(key.split('|', 1)[0]), key.split('|', 1)[1]): value
+                        for key, value in state['drafts'].items()}
+        cutoff = _now()
+        self._startup_expired_scheds = 0
+        self.scheds = {}
+        for uid, records in state['scheds'].items():
+            future = {rid: record for rid, record in records.items()
+                      if record['fire_at'] > cutoff}
+            self._startup_expired_scheds += len(records) - len(future)
+            if future:
+                self.scheds[int(uid)] = future
+        self.group_files = {int(gid): rows for gid, rows in state['group_files'].items()}
+        self.tasks = {int(gid): [dict(row, done={int(uid): ts for uid, ts in row['done'].items()})
+                                for row in rows] for gid, rows in state['tasks'].items()}
+        self._fish = {game: {int(uid): score for uid, score in scores.items()}
+                      for game, scores in state['fish_board'].items()}
+        self.moments = {int(pid): value for pid, value in state['moments'].items()}
+        self.moment_covers = {int(uid): value for uid, value in state['moment_covers'].items()}
+        self.custom_stickers, self.pack_meta = state['custom_stickers'], state['sticker_pack_meta']
+        # Compare normalized semantics before BOT derived values are refreshed.
+        expected = copy.deepcopy(state)
+        expected['scheds'] = {str(uid): records for uid, records in self.scheds.items()}
+        actual = recovery_mod.validate_state(self._snapshot_state(), store_id=self._recovery.store_id)
+        if actual != expected:
+            raise recovery_mod.StoreError('restore_not_lossless')
+
+    def _all_intents_clean(self, state, intents):
+        return all(self._validate_retirement_candidate(state, {
+            'uid': int(uid), 'operation_id': rec['operation_id'],
+            'target_nick': rec['nick'], 'record': rec})[0]
+            for uid, rec in intents.items())
+
+    def _recover_accepted_intents(self, pair):
+        coordinator = self._recovery
+        self._persist_known_shas.add(hashlib.sha256(pair.state_bytes).hexdigest())
+        needs_recovery = False
+        for raw_uid, record in coordinator.intents.items():
+            uid = int(raw_uid)
+            candidate = {'uid': uid, 'operation_id': record['operation_id'],
+                         'target_nick': record['nick'], 'record': record}
+            clean = self._validate_retirement_candidate(pair.state, candidate)[0]
+            self._retire_ops[uid] = {
+                'status': 'confirmed' if clean else 'pending',
+                'operation_id': record['operation_id'], 'target_uid': uid,
+                'target_nick': record['nick'], 'origin': 'restored_valid_json' if clean else None,
+                'content_sha256': None, 'content_length': None, 'retryable': False,
+                'persistence_phase': 'snapshot', 'identity_effect': 'revoked',
+            }
+            if not clean:
+                needs_recovery = True
+                with self.lock:
+                    self._apply_retirement_core_locked(uid, record)
+        if needs_recovery:
+            self._recovery_write_thread = threading.get_ident()
+            try:
+                if self._persist_sync(_kind='recovery') is not True:
+                    raise recovery_mod.StoreError('recovery_write_failed')
+            finally:
+                self._recovery_write_thread = None
+        elif coordinator.intents:
+            self._persist_receipt = CommitReceipt(
+                origin='restored_valid_json', sha256=None, length=None,
+                capture_request_seq=None,
+                operation_ids=tuple(rec['operation_id'] for rec in coordinator.intents.values()))
+        coordinator.mark_ready(self._snapshot_state(), verify_cleanup=self._all_intents_clean)
+
+    def _service_available(self):
+        return (self._service_ready and not self._admission_closed and not self._service_stop.is_set()
+                and (self._recovery is None or self._recovery.phase == 'READY'))
+
+    def _lease_valid(self, lease):
+        if lease is None or getattr(self._writer_local, 'lease', None) is not lease:
+            return False
+        if self._recovery is not None:
+            if not self._recovery.owner.held or self._recovery.phase in ('FAILED', 'CLOSED'):
+                return False
+            if lease.store_id != self._recovery.store_id:
+                return False
+            phase = self._recovery.phase
+        else:
+            phase = 'QUIESCING' if self._admission_closed else 'READY'
+        if lease.kind == 'final':
+            return phase == 'QUIESCING' and self._final_write_thread == threading.get_ident()
+        if lease.kind == 'recovery':
+            return phase == 'RECOVERING' and self._recovery_write_thread == threading.get_ident()
+        if phase != 'READY' or not self._service_ready:
+            return False
+        if lease.kind == 'retirement':
+            reservation = self._retire_reservations.get(lease.uid)
+            return reservation is not None and reservation.operation_id == lease.operation_id
+        return lease.kind in ('ordinary', 'credential')
+
+    @contextmanager
+    def _writer_scope(self, *, kind='ordinary', lease=None, uid=None, operation_id=None):
+        """One admitted operation; re-entry requires its exact private lease."""
+        with self._persist_writer_lock:
+            parent = getattr(self._writer_local, 'lease', None)
+            granted = None
+            if lease is not None:
+                if lease is parent and self._lease_valid(lease):
+                    granted = lease
+            elif parent is None:
+                if kind in ('ordinary', 'credential', 'retirement'):
+                    allowed = self._service_available()
+                    if kind == 'retirement':
+                        reservation = self._retire_reservations.get(uid)
+                        allowed = allowed and reservation is not None and reservation.operation_id == operation_id
+                elif kind == 'recovery':
+                    allowed = (self._recovery is not None and self._recovery.owner.held
+                               and self._recovery.phase == 'RECOVERING'
+                               and self._recovery_write_thread == threading.get_ident())
+                elif kind == 'final':
+                    allowed = (self._final_started and not self._final_lease_issued
+                               and not self._final_timed_out and time.monotonic() < self._final_deadline
+                               and self._final_write_thread == threading.get_ident()
+                               and (self._recovery is None or self._recovery.phase == 'QUIESCING'))
+                    if allowed:
+                        self._final_lease_issued = True
+                else:
+                    allowed = False
+                if allowed:
+                    granted = WriterLease(kind, self._recovery.store_id if self._recovery else None,
+                                          uid, operation_id)
+            if granted is not None:
+                self._writer_local.lease = granted
+            try:
+                yield granted
+            finally:
+                self._writer_local.lease = parent
+
+    @staticmethod
+    def _close_socket(connection):
+        try:
+            connection.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        try:
+            connection.close()
+        except OSError:
+            pass
+
+    def _start_worker(self, target, *, args=(), kwargs=None, name='hub-worker', connection=None):
+        """Register before start; completed threads are pruned only after exit."""
+        def run():
+            try:
+                target(*args, **(kwargs or {}))
+            except Exception as exc:
+                # Closing sockets deliberately wakes blocked handlers.
+                if not (self._service_stop.is_set() and isinstance(exc, OSError)):
+                    with self._lifecycle_lock:
+                        self._shutdown_errors.append(type(exc).__name__)
+                    self._fail_store()
+            finally:
+                if connection is not None:
+                    self._close_socket(connection)
+                    with self._lifecycle_lock:
+                        self._managed_sockets.discard(connection)
+        with self._lifecycle_lock:
+            if not self._service_available():
+                return None
+            self._managed_threads = {thread for thread in self._managed_threads if thread.is_alive()}
+            thread = threading.Thread(target=run, name=name, daemon=True)
+            self._managed_threads.add(thread)
+            if connection is not None:
+                self._managed_sockets.add(connection)
+            try:
+                thread.start()
+            except BaseException:
+                self._managed_threads.discard(thread)
+                self._managed_sockets.discard(connection)
+                raise
+            return thread
+
+    def _start_http_listener(self, httpd):
+        with self._lifecycle_lock:
+            worker = self._start_worker(httpd.serve_forever,
+                                         kwargs={'poll_interval': 0.1}, name='http-listener')
+            if worker is None:
+                raise recovery_mod.StoreError('service_stopping')
+            self._http_servers.append(httpd)
+            httpd._hub_listener_thread = worker
+            return worker
+
+    def _replace_managed_connection(self, original, replacement):
+        with self._lifecycle_lock:
+            self._managed_sockets.discard(original)
+            self._managed_sockets.add(replacement)
+            return self._service_available()
+
+    def _forget_managed_connection(self, connection):
+        with self._lifecycle_lock:
+            self._managed_sockets.discard(connection)
+
+    def shutdown(self, *, normal=False, timeout=10.0):
+        """Stop admission, quiesce writers, join mutators, then one final save.
+
+        A timeout keeps the owner handle held. A later cleanup call may release
+        it after all workers finish, but a failed process never returns READY.
+        """
+        deadline = time.monotonic() + max(0.0, timeout)
+        remaining = lambda: max(0.0, deadline - time.monotonic())
+        if not self._shutdown_lock.acquire(timeout=remaining()):
+            return False
+        try:
+            if self._shutdown_result is not None:
+                return self._shutdown_result
+            self._shutdown_started = True
+            # A timed-out final writer still owns its already-started IO.
+            # A later cleanup attempt must not revoke that lease by timing
+            # out on the same writer lock, nor start a second final write.
+            if self._final_timed_out and self._final_thread is not None:
+                self._final_thread.join(remaining())
+                if self._final_thread.is_alive():
+                    return False
+            with self._lifecycle_lock:
+                if threading.current_thread() in self._managed_threads:
+                    self._fail_store()
+                    self._shutdown_errors.append('shutdown_from_worker')
+                    return False
+                self._admission_closed = True
+                self._service_stop.set()
+                listeners = tuple(self._listener_sockets)
+                servers = tuple(self._http_servers)
+                connections = tuple(self._managed_sockets)
+            for listener in listeners:
+                self._close_socket(listener)
+            for connection in connections:
+                self._close_socket(connection)
+            for session in self._snapshot_sessions():
+                try:
+                    session.close_conn()
+                except Exception:
+                    pass
+            # HTTP shutdown can wait on a TLS accept. Bound that wait without
+            # pretending its listener has stopped or releasing Store ownership.
+            for server in servers:
+                helper = self._http_shutdown_threads.get(server)
+                if helper is None:
+                    def stop_http(current=server):
+                        try:
+                            listener = getattr(current, '_hub_listener_thread', None)
+                            if listener is not None and not listener.is_alive():
+                                return
+                            current.shutdown()
+                        except Exception as exc:
+                            with self._lifecycle_lock:
+                                self._shutdown_errors.append('http_shutdown_' + type(exc).__name__)
+                            self._fail_store()
+                    helper = threading.Thread(target=stop_http, daemon=True,
+                                              name='http-shutdown')
+                    self._http_shutdown_threads[server] = helper
+                    helper.start()
+            # An already executing retirement keeps its continuous writer
+            # transaction. Closing admission alone does not interrupt that IO.
+            if not self._persist_writer_lock.acquire(timeout=remaining()):
+                self._shutdown_errors.append('writer_timeout')
+                self._fail_store()
+                return False
+            try:
+                if self._recovery is not None and self._recovery.phase == 'READY':
+                    self._recovery.phase = 'QUIESCING'
+                self._persist_closing = True
+                with self._persist_lock:
+                    self._persist_pending = False
+                self._persist_wake.set()
+            finally:
+                self._persist_writer_lock.release()
+            with self._lifecycle_lock:
+                workers = tuple(self._managed_threads)
+            # Legacy/injected persist workers remain subject to the same join.
+            if self._persist_worker_thread is not None and self._persist_worker_thread not in workers:
+                workers += (self._persist_worker_thread,)
+            workers += tuple(self._http_shutdown_threads.values())
+            for worker in workers:
+                worker.join(remaining())
+            if any(worker.is_alive() for worker in workers):
+                self._shutdown_errors.append('worker_timeout')
+                self._fail_store()
+                return False
+            for server in servers:
+                server.server_close()
+            for session in self._snapshot_sessions():
+                self.unregister(session, 'server_stop')
+            if self._final_timed_out:
+                self._fail_store()
+            healthy = self._recovery is None or self._recovery.phase == 'QUIESCING'
+            ok = healthy and not self._shutdown_errors
+            if normal and self._service_started and ok and self.store is not None:
+                if not self._final_started:
+                    if remaining() <= 0:
+                        self._shutdown_errors.append('shutdown_deadline')
+                        self._fail_store()
+                        ok = False
+                    else:
+                        self._final_started = True
+                        self._final_deadline = deadline
+                        self._final_thread = threading.Thread(target=self._run_final_persist,
+                                                              name='final-persist', daemon=True)
+                        with self._lifecycle_lock:
+                            self._managed_threads.add(self._final_thread)
+                            self._final_thread.start()
+                if self._final_thread is not None:
+                    self._final_thread.join(remaining())
+                    if self._final_thread.is_alive():
+                        with self._lifecycle_lock:
+                            self._final_timed_out = True
+                            self._service_ready = False
+                            self._shutdown_errors.append('final_timeout')
+                            # Keep QUIESCING while the already-started IO owns
+                            # its final lease; no new writer can be admitted.
+                            if self._final_done.is_set():
+                                self._fail_store()
+                        return False
+                    ok = self._final_result is True and not self._final_timed_out
+                if not ok:
+                    self._shutdown_errors.append('final_state_unconfirmed')
+                    self._fail_store()
+            self._service_ready = False
+            self.audit.close()
+            if self._recovery is not None:
+                self._recovery.close()
+            self._shutdown_result = bool(ok)
+            return self._shutdown_result
+        finally:
+            self._shutdown_lock.release()
+
+    def _run_final_persist(self):
+        self._final_write_thread = threading.get_ident()
+        try:
+            self._final_result = self._persist_flush() is True
+        except Exception as exc:
+            self._final_result = False
+            with self._lifecycle_lock:
+                self._shutdown_errors.append('final_' + type(exc).__name__)
+            self._fail_store()
+        finally:
+            with self._lifecycle_lock:
+                self._final_write_thread = None
+                self._final_done.set()
+                if self._final_timed_out:
+                    self._fail_store()
+
+    def _write_allowed(self, *, lease=None):
+        if lease is not None:
+            return self._lease_valid(lease)
+        return self._service_available() and (self._recovery is None or self._recovery.owner.held)
+
+    def _fail_store(self):
+        self._service_ready = False
+        if self._recovery is not None:
+            self._recovery.fail()
+        self._service_stop.set()
+
+    def _apply_retirement_core_locked(self, uid, record):
+        """Idempotent Hub/Bus cleanup, shared by online t0 and startup replay.
+
+        Caller holds Hub.lock. No resource lock, disk, socket or audit work.
+        Network side effects are returned for the live path only.
+        """
+        if (self.retired.get(uid) != record or uid in self.known
+                or self.nick_to_uid.get(record['nick']) != uid):
+            self._credential_advance_locked(uid, record['nick'], binding=True)
+        self.retired[uid] = dict(record)
+        self.nick_to_uid[record['nick']] = uid
+        self._uid_seq = max(self._uid_seq, uid + 1)
+        targets = list(self._uid_clients.get(uid, ()))
+        representative = self.sessions.get(uid)
+        if representative is not None and representative not in targets:
+            targets.append(representative)
+        for token, session in list(self.web_tokens.items()):
+            if session.uid == uid:
+                del self.web_tokens[token]
+        for target in targets:
+            target.closed = True
+        self._uid_clients.pop(uid, None)
+        self.sessions.pop(uid, None)
+        self.known.pop(uid, None)
+        self._drafts = {key: value for key, value in self._drafts.items() if key[0] != uid}
+        self.scheds.pop(uid, None)
+        self.blocks.pop(uid, None)
+        for key, readers in list(self.reads.items()):
+            readers.pop(uid, None)
+            if not readers:
+                self.reads.pop(key, None)
+        for values in (self._offline_notice_records, self._typing_ts, self._nudge_ts,
+                       self._shake_ts, self.sticker_subs):
+            values.pop(uid, None)
+        self._bot_reminder_cancel_owner_locked(uid)
+        for seq, burn in list(self._burn.items()):
+            if burn.get('uid') == uid:
+                self._burn.pop(seq, None)
+        dissolved = self._admin_del_remove_groups(uid)
+        removed = self.bus.clear_uid(uid)
+        self._bot_contexts = {seq: ctx for seq, ctx in self._bot_contexts.items()
+                              if ctx.get('owner_uid') != uid and ctx.get('target_uid') != uid}
+        return targets, removed, dissolved
 
     # ---------- R16 全状态持久化 ----------
     def _snapshot_state(self) -> dict:
@@ -769,7 +1197,7 @@ class Hub:
             def _copy_member_val(v):
                 return {kk: (dict(vv) if isinstance(vv, dict) else vv)
                         for kk, vv in v.items()}
-            return copy.deepcopy({
+            state = copy.deepcopy({
                 "bus": {"seq": seq, "channels": channels},
                 "uid_seq": self._uid_seq,
                 "gid_seq": self._gid_seq,
@@ -820,6 +1248,9 @@ class Hub:
                 "moment_covers": {str(u): dict(v) for u, v in self.moment_covers.items()},
                 "pid_seq": self._pid_seq,
             })
+            if self._recovery is not None:
+                state['_store'] = {'format_version': 1, 'store_id': self._recovery.store_id}
+            return state
 
     @staticmethod
     def _restore_identity_int(value) -> int:
@@ -1313,8 +1744,12 @@ class Hub:
             return self._persist_request_seq
 
     def _persist_queue_trigger(self, fp: str | None = None) -> None:
+        if not self._service_available():
+            return
         self._ensure_persist_worker()
         with self._persist_lock:
+            if self._persist_closing or not self._service_available():
+                return
             self._persist_slot = None
             self._persist_slot_fp = None
             self._persist_pending = True
@@ -1343,20 +1778,26 @@ class Hub:
         bytes 不会成为第二条写入路径。``save_bytes`` 调用返回本次 typed
         result，旧 ``save`` 调用仍返回 bool。
         """
-        if self.store is None:
+        if self.store is None or not self._write_allowed():
             if kind == "bytes":
                 return server_store_mod.SaveResult(
-                    "not_committed", "hub", "store_disabled", False, 0, None)
+                    "not_committed", "hub", "store_unavailable", False, 0, None)
             return False
         self._persist_request()
         before_result = self._persist_last_result
-        with self._persist_writer_lock:
+        with self._writer_scope() as lease:
+            if lease is None:
+                if kind == 'bytes':
+                    return server_store_mod.SaveResult('not_committed', 'admission', 'service_stopping', False)
+                return False
             with self._persist_lock:
                 capture_seq = self._persist_request_seq
             try:
                 ok = self._commit_current_snapshot(capture_seq, force=True)
             except Exception as exc:
                 ok = False
+                if self._recovery is not None:
+                    self._fail_store()
                 self._persist_inflight = None
                 with self._persist_lock:
                     self._persist_dirty = True
@@ -1388,6 +1829,13 @@ class Hub:
 
     def _store_commit(self, encoded):
         """通过现有 Store private bytes seam 绑定唯一 writer。"""
+        lease = getattr(self._writer_local, 'lease', None)
+        if not self._lease_valid(lease):
+            return server_store_mod.SaveResult('not_committed', 'gate', 'store_unavailable', False)
+        if lease.kind == 'final' and not self._final_io_started:
+            if time.monotonic() >= self._final_deadline:
+                return server_store_mod.SaveResult('not_committed', 'gate', 'shutdown_deadline', False)
+            self._final_io_started = True
         try:
             permit = getattr(self.store, "_hub_write_permit", None)
             save_fn = getattr(self.store, "save")
@@ -1397,7 +1845,7 @@ class Hub:
             if permit is None:
                 result = save_fn(encoded)
             else:
-                with permit():
+                with permit(deadline=self._final_deadline if lease.kind == 'final' else None):
                     result = save_fn(encoded)
         except Exception:
             return server_store_mod.SaveResult(
@@ -1408,8 +1856,120 @@ class Hub:
                 and getattr(self.store, "_save_generation", None) != save_generation
                 and isinstance(getattr(self.store, "_last_save_result", None),
                                server_store_mod.SaveResult)):
-            return self.store._last_save_result
-        return self._normalize_save_result(result, encoded)
+            result = self.store._last_save_result
+        else:
+            result = self._normalize_save_result(result, encoded)
+        if self._recovery is not None and result.effect == 'committed':
+            try:
+                observed = self.store.read_bytes_result()
+                if observed.status != 'bytes' or observed.payload != encoded.payload:
+                    raise recovery_mod.StoreError('readback_unverified')
+                actual = self._recovery.validate_observed_state(
+                    recovery_mod.strict_json(observed.payload))
+                if not self._all_intents_clean(actual, self._recovery.intents):
+                    raise recovery_mod.StoreError('cleanup_unverified')
+            except Exception:
+                return server_store_mod.SaveResult('uncertain', 'readback', 'state_unverified',
+                                                  False, encoded.length, encoded.sha256)
+            return server_store_mod.SaveResult('committed', 'readback', None, False,
+                                              observed.length, observed.sha256)
+        return result
+
+    def _commit_credential_candidate(self, state, lease):
+        """Publish a projected snapshot, never recapturing uncommitted live pwd.
+
+        The caller holds the credential writer through final live publication.
+        This method proves disk contents only; it must not publish UID, mapping,
+        credentials or Sessions, nor mark the ordinary worker's capture clean.
+        """
+        def result(effect, stage, reason=None, retryable=False, encoded=None):
+            outcome = server_store_mod.SaveResult(
+                effect, stage, reason, retryable,
+                encoded.length if encoded else 0,
+                encoded.sha256 if encoded else None)
+            self._persist_last_result = outcome
+            return outcome
+
+        if self.store is None or self._recovery is None:
+            return result('not_committed', 'admission', 'credential_store_unavailable')
+        if (lease is None or lease.kind != 'credential'
+                or not self._lease_valid(lease)):
+            return result('not_committed', 'admission', 'service_unavailable')
+        with self.lock:
+            retirement_waiting = any(
+                op.get('status') in ('pending', 'failed', 'unknown')
+                and op.get('persistence_phase') != 'intent'
+                for op in self._retire_ops.values())
+        if self._persist_unresolved is not None or retirement_waiting:
+            return result('not_committed', 'preflight', 'credential_store_busy', True)
+        try:
+            self._recovery.check_control()
+            previous = self.store.read_bytes_result()
+            if previous.status != 'bytes' or previous.sha256 not in self._persist_known_shas:
+                raise recovery_mod.StoreError('authority_unverified')
+            self._recovery.validate_observed_state(recovery_mod.strict_json(previous.payload))
+        except Exception:
+            self._fail_store()
+            return result('uncertain', 'preflight', 'credential_authority_unverified')
+        try:
+            candidate = self._recovery.validate_snapshot(state)
+            if not self._all_intents_clean(candidate, self._recovery.intents):
+                raise recovery_mod.StoreError('cleanup_unverified')
+            encoded = server_store_mod.encode_state(candidate)
+        except Exception:
+            self._fail_store()
+            return result('not_committed', 'candidate', 'credential_candidate_invalid')
+
+        # This private seam enters ServerStore's Hub permit; it does not call
+        # _bound_store_save, which deliberately discards caller-supplied state.
+        try:
+            self._store_commit(encoded)
+        except Exception:
+            # The publication seam may raise after replacement; still inspect
+            # the one authority below instead of interpreting the exception.
+            pass
+        try:
+            observed = self.store.read_bytes_result()
+            self._recovery.check_control()
+            if observed.status == 'bytes' and observed.payload == encoded.payload:
+                actual = self._recovery.validate_observed_state(
+                    recovery_mod.strict_json(observed.payload))
+                if not self._all_intents_clean(actual, self._recovery.intents):
+                    raise recovery_mod.StoreError('cleanup_unverified')
+                return result('committed', 'credential_readback', encoded=encoded)
+            if observed.status == 'bytes' and observed.payload == previous.payload:
+                return result('not_committed', 'credential_readback',
+                              'credential_write_failed', True, encoded)
+        except Exception:
+            # A write or callback exception is not rollback evidence. No second
+            # replacement is attempted; restart must inspect the actual Store.
+            pass
+        self._persist_unresolved = {
+            'kind': 'credential', 'sha256': encoded.sha256, 'length': encoded.length,
+            'capture_request_seq': self._persist_request_seq, 'candidates': []}
+        with self._persist_lock:
+            self._persist_dirty = True
+        self._fail_store()
+        return result('uncertain', 'credential_readback', 'credential_unknown', encoded=encoded)
+
+    def _credential_capture_confirmed(self, proof):
+        """After live publication, retain proof and always request fresh capture."""
+        lease = getattr(self._writer_local, 'lease', None)
+        if (lease is None or lease.kind != 'credential' or not self._lease_valid(lease)
+                or proof.effect != 'committed'):
+            raise ValueError('credential publication needs confirmed bytes')
+        self._persist_known_shas.add(proof.sha256)
+        self._persist_receipt = CommitReceipt(
+            origin='credential_readback', sha256=proof.sha256, length=proof.length,
+            capture_request_seq=self._persist_request_seq, operation_ids=())
+        with self._persist_lock:
+            self._persist_fp = proof.sha256
+            self._persist_request_seq += 1
+            self._persist_dirty = True
+        # unregister can change ordinary data during IO without requesting a
+        # save. A fresh capture catches it; stop leaves this work to final.
+        if self._service_available():
+            self._persist_queue_trigger()
 
     @staticmethod
     def _uid_key_present(mapping, uid: int) -> bool:
@@ -1429,6 +1989,7 @@ class Hub:
                 for uid, op in self._retire_ops.items()
                 if isinstance(op, dict)
                 and op.get("status") in ("pending", "failed")
+                and op.get('persistence_phase') != 'intent'
             ]
         records = state.get("retired") if isinstance(state, dict) else None
         records = records if isinstance(records, dict) else {}
@@ -1468,7 +2029,7 @@ class Hub:
         with self.lock:
             for candidate in candidates:
                 op = self._retire_ops.get(candidate.get("uid"))
-                if isinstance(op, dict) and op.get("status") == "failed":
+                if isinstance(op, dict) and (op.get("status") == "failed" or op.get('_retrying_failed')):
                     failed.append(candidate)
         if not failed:
             return True
@@ -1590,6 +2151,12 @@ class Hub:
 
     def _verify_reconcile_state(self, state: dict) -> bool:
         """校验对账所需的现有身份/核心容器结构，宁可保守 unknown。"""
+        if self._recovery is not None:
+            try:
+                self._recovery.validate_observed_state(state)
+                return True
+            except recovery_mod.StoreError:
+                return False
         dict_fields = (
             "nick_to_uid", "known", "retired", "groups", "reads", "pins",
             "burn", "blocks", "polls", "drafts", "scheds",
@@ -1705,7 +2272,10 @@ class Hub:
                     return "conflict"
         nick_map = state.get("nick_to_uid") or {}
         if not self._uid_value(nick_map.get(nick), uid):
-            return "conflict"
+            intent = self._recovery.intents.get(str(uid)) if self._recovery else None
+            if not (nick_map.get(nick) is None and intent
+                    and intent.get('nick') == nick and intent.get('operation_id') == op_id):
+                return "conflict"
         for name, mapped in nick_map.items():
             if name != nick and self._uid_value(mapped, uid):
                 return "conflict"
@@ -1784,6 +2354,12 @@ class Hub:
         unresolved = self._persist_unresolved
         if not unresolved:
             return "none"
+        if self._recovery is not None:
+            try:
+                self._recovery.check_control()
+            except recovery_mod.StoreError:
+                self._fail_store()
+                return 'blocked'
         try:
             read = self.store.read_bytes_result()
         except Exception:
@@ -1872,6 +2448,22 @@ class Hub:
     def _commit_current_snapshot(self, capture_seq: int,
                                  *, force: bool = False) -> bool:
         """writer lock 内 fresh capture → verify/encode → single Store seam。"""
+        if not self._lease_valid(getattr(self._writer_local, 'lease', None)):
+            return False
+        if self._recovery is not None:
+            try:
+                self._recovery.check_control()
+            except recovery_mod.StoreError:
+                self._fail_store()
+                with self._persist_lock:
+                    self._persist_dirty = True
+                return False
+            with self.lock:
+                failed_waiting = any((op.get('status') == 'failed' or op.get('_retrying_failed'))
+                                     and op.get('persistence_phase') != 'intent'
+                                     for op in self._retire_ops.values())
+            if failed_waiting and self._snapshot_retry_thread != threading.get_ident():
+                return False
         unresolved = self._persist_unresolved
         unresolved_has_retirement = bool(
             unresolved and unresolved.get("candidates"))
@@ -1894,7 +2486,32 @@ class Hub:
                 self._persist_dirty = True
             return False
         state, candidates = self._capture_persist_state()
+        if self._recovery is not None:
+            try:
+                state = self._recovery.validate_snapshot(
+                    state, recovery=self._recovery.phase == 'RECOVERING',
+                    final=self._recovery.phase == 'QUIESCING')
+                if not self._all_intents_clean(state, self._recovery.intents):
+                    raise recovery_mod.StoreError('cleanup_unverified')
+            except recovery_mod.StoreError as exc:
+                self._persist_last_result = server_store_mod.SaveResult(
+                    'not_committed', 'verify', exc.code, False)
+                self._fail_store()
+                with self._persist_lock:
+                    self._persist_dirty = True
+                return False
         if not self._failed_retry_preflight(candidates):
+            if self._recovery is not None:
+                encoded = server_store_mod.encode_state(state)
+                self._persist_unresolved = {
+                    'sha256': encoded.sha256, 'length': encoded.length,
+                    'capture_request_seq': capture_seq, 'candidates': [dict(c) for c in candidates]}
+                self._persist_last_result = server_store_mod.SaveResult(
+                    'uncertain', 'reconcile', 'authority_unverified', False,
+                    encoded.length, encoded.sha256)
+                for candidate in candidates:
+                    self._update_retirement_result(candidate, status='unknown',
+                                                    failed_stage='reconcile', error_code='authority_unverified')
             with self._persist_lock:
                 self._persist_dirty = True
             return False
@@ -1997,6 +2614,8 @@ class Hub:
         不做递归 dict 深比较。指纹仅在真正 save 成功后推进（失败留旧值，供 flush 兜底）。"""
         if self.store is None:
             return None
+        if not self._write_allowed():
+            return False
         request_seq = self._persist_request()
         if force:
             return self._persist_sync(_request_seq=request_seq)
@@ -2012,13 +2631,22 @@ class Hub:
         return None
 
     def _persist_sync(self, _old_state=None, _old_fp=None,
-                      _request_seq: int | None = None) -> bool:
+                      _request_seq: int | None = None, *, _kind='ordinary', _lease=None) -> bool:
+        with self._writer_scope(kind=_kind, lease=_lease) as lease:
+            if lease is None:
+                return False
+            return self._persist_sync_under_lease(_old_state, _old_fp, _request_seq)
+
+    def _persist_sync_under_lease(self, _old_state=None, _old_fp=None,
+                                 _request_seq=None) -> bool:
         """同步 actual writer（force/关停兜底）。
 
         旧参数仅保留兼容调用形状，永不直接写入；拿到唯一 writer lock 后
         重新捕获当前状态，再进行 dump/flush/fsync/replace。调用方必须在
         Hub 锁外进入本方法。
         """
+        if not self._lease_valid(getattr(self._writer_local, 'lease', None)):
+            return False
         self._persist_last = time.time()
         if _request_seq is None:
             _request_seq = self._persist_request()
@@ -2033,6 +2661,8 @@ class Hub:
                 return self._commit_current_snapshot(capture_seq, force=True)
             except Exception as exc:
                 self._persist_inflight = None
+                if self._recovery is not None:
+                    self._fail_store()
                 with self._persist_lock:
                     self._persist_dirty = True
                 self._persist_last_result = server_store_mod.SaveResult(
@@ -2042,19 +2672,22 @@ class Hub:
 
     def _ensure_persist_worker(self) -> None:
         """懒启动后台落盘线程（daemon）。"""
+        if not self._service_available() or self._persist_closing:
+            return
         if self._persist_worker_thread is not None and \
                 self._persist_worker_thread.is_alive():
             return
-        self._persist_worker_thread = threading.Thread(
-            target=self._persist_worker, name="persist-worker", daemon=True)
-        self._persist_worker_thread.start()
+        with self._lifecycle_lock:
+            if self._persist_worker_thread is None or not self._persist_worker_thread.is_alive():
+                self._persist_worker_thread = self._start_worker(self._persist_worker,
+                                                               name='persist-worker')
 
     def _persist_worker(self) -> None:
         """后台循环：等唤醒 → 取最新槽 → 锁外 store.save（ServerStore._lock 保证单写），
         成功落盘后才推进 _persist_fp（失败则留旧值，供 flush 兜底重写）。"""
         while True:
             self._persist_wake.wait()
-            if self._persist_closing and not self._persist_pending:
+            if self._persist_closing:
                 break
             self._persist_wake.clear()
             with self._persist_lock:
@@ -2062,13 +2695,17 @@ class Hub:
                     continue                     # 空唤醒，继续等
                 self._persist_pending = False
                 self._persist_slot = None
-            with self._persist_writer_lock:
+            with self._writer_scope() as lease:
+                if lease is None:
+                    continue
                 with self._persist_lock:
                     capture_seq = self._persist_request_seq
                 try:
                     self._commit_current_snapshot(capture_seq)
                 except Exception as exc:
                     self._persist_inflight = None
+                    if self._recovery is not None:
+                        self._fail_store()
                     with self._persist_lock:
                         self._persist_dirty = True
                     self._persist_last_result = server_store_mod.SaveResult(
@@ -2082,7 +2719,8 @@ class Hub:
         仅当无 store 时空操作。"""
         if self.store is None:
             return
-        return self._persist_sync()
+        kind = 'final' if self._final_write_thread == threading.get_ident() else 'ordinary'
+        return self._persist_sync(_kind=kind)
 
     # ---------- 基础 ----------
     def _snapshot_sessions(self) -> list:
@@ -2373,6 +3011,8 @@ class Hub:
         pair = (kind, key_s)
         with self.lock:
             with self._resource_lock:
+                if not self._service_available():
+                    raise _ResourceError('service_stopping', None, '服务器正在停止或存储状态未确认')
                 if self._retired_schema_invalid or owner in self.retired:
                     raise PermissionError("资源 owner 已退役")
                 existing = self._resource_ops.get(op)
@@ -2835,6 +3475,11 @@ class Hub:
                         raise _ResourceError(
                             "stale_attempt", self._resource_public_result(ctx),
                             "迟到资源执行结果已丢弃")
+                    if not self._service_available():
+                        self._resource_finalize_locked(
+                            ctx, status='failed', io_effect='not_committed',
+                            stage='permit', error_code='service_stopping', retryable=True)
+                        raise _ResourceError('service_stopping', self._resource_public_result(ctx))
                     if (current.get("status") != "pending"
                             or current.get("_fenced")
                             or ctx.get("owner_uid") in self.retired):
@@ -3228,6 +3873,9 @@ class Hub:
     def _error(self, sess: Session, code: str, text: str, **extra) -> None:
         try:
             payload = {"t": "error", "code": code, "text": text}
+            request_id = extra.get("request_id")
+            if self._valid_admin_request_id(request_id):
+                payload["request_id"] = request_id
             resource = extra.get("resource")
             if isinstance(resource, dict):
                 payload["resource"] = self._resource_public_result(resource)
@@ -3518,7 +4166,7 @@ class Hub:
             # 短内存边界互斥，发送/审计/持久化仍在锁外。
             with self.lock:
                 target_uid = r.get("to") if r.get("channel") == "private" else None
-                if (self._uid_retired_locked(uid)
+                if (not self._service_available() or self._uid_retired_locked(uid)
                         or (target_uid is not None
                             and self._uid_retired_locked(int(target_uid)))):
                     continue
@@ -3540,7 +4188,7 @@ class Hub:
         if owner_uid <= 0 or not isinstance(text, str) or not text:
             return False
         with self.lock:
-            if self._retired_schema_invalid or self._uid_retired_locked(owner_uid):
+            if not self._service_available() or self._retired_schema_invalid or self._uid_retired_locked(owner_uid):
                 return False
             self.bot_reminders.append({"uid": owner_uid, "due": due,
                                        "text": text[:self.cfg.chat_text_max],
@@ -3608,6 +4256,9 @@ class Hub:
             for uid, info in self.retired.items():
                 if info.get("nick") == raw:
                     return uid
+            for uid, info in self._retire_ops.items():
+                if info.get('target_nick') == raw:
+                    return uid
         return None
 
     def _retirement_payload(self, uid: int) -> dict | None:
@@ -3640,7 +4291,8 @@ class Hub:
                    "error_code": None,
                    "retryable": False}
             if op:
-                for key in ("failed_stage", "error_code", "retryable"):
+                for key in ("failed_stage", "error_code", "retryable",
+                            'persistence_phase', 'identity_effect'):
                     if key in op:
                         out[key] = op[key]
             return out
@@ -3674,6 +4326,33 @@ class Hub:
         return True
 
     # ---------- 注册 / 注销 ----------
+    def auth_capabilities(self):
+        """Public protocol metadata only; no account lookup or disk activity."""
+        with self.lock:
+            if not self._service_available():
+                raise credential_mod.CredentialError('service_unavailable')
+            return {'v': 1, 'server_epoch': self._server_epoch,
+                    'store_scope_id': self._recovery.store_id if self._recovery else None,
+                    'store_mode': 'durable' if self._recovery else 'volatile',
+                    'credential_commit_v': 1, 'web_binding_v': 1}
+
+    def _on_auth_capabilities(self, sess, header):
+        try:
+            rid = credential_mod.request_id(header.get('request_id'))
+            if type(header.get('auth_v')) is not int or header['auth_v'] != 1:
+                raise credential_mod.CredentialError('unsupported_auth_version')
+            with self.lock:
+                if sess.closed or sess.uid != 0 or sess._auth_capability_seen:
+                    raise credential_mod.CredentialError('capability_already_requested')
+                capabilities = self.auth_capabilities()
+                sess._auth_capability_seen = True
+            sess.send({'t': 'auth_capabilities', 'request_id': rid, 'auth': capabilities})
+            return True
+        except credential_mod.CredentialError as exc:
+            sess.send({'t': 'error', 'code': 'auth', 'reason': exc.reason,
+                       'text': '无法取得认证能力，请重新连接并核对客户端版本'})
+            return False
+
     def _release_zombie(self, nick: str) -> None:
         """R47-A1：同名「僵尸会话」活性复查，死亡即释放。
 
@@ -3693,52 +4372,309 @@ class Hub:
         if zombie:
             self.unregister(old, "zombie", min_idle=limit)
 
-    def _attach(self, sess: Session) -> bool:
-        """登记会话并推送 welcome；恒返回 True（同账号允许多端并存，不再拒绝重复昵称）。
+    def _credential_expected_locked(self, nick):
+        uid = self.nick_to_uid.get(nick)
+        info = self.known.get(uid) if uid is not None else None
+        return credential_mod.ExpectedCredential(
+            nick, uid, info is not None, info is not None and 'pwd' in info,
+            info.get('pwd') if info is not None else None,
+            self._uid_credential_revision.get(uid, 0),
+            self._nick_binding_revision.get(nick, 0))
 
-        R12fix：昵称→uid 映射在断线后保留（unregister 不再删除），同名重连
-        复用原 uid——私聊/群/历史/草稿等 uid 对 key 在客户端重启后仍对齐。
-        R批次③：改为「同 uid 多端并存」——同一账号桌面+网页（甚至多标签）
-        不再互顶下线，而是共享同一 uid 的在线集（sessions 存代表会话；
-        _uid_clients 存该 uid 全部在线会话，广播按 uid 命中全部端）。
-        R47-A1：同名但为僵尸会话（断线未及清扫）先释放再放行。
-        """
-        self._release_zombie(sess.nick)      # R47-A1：先做僵尸释放（锁外）
-        reject = None
+    def _credential_advance_locked(self, uid, nick, *, binding=False):
+        self._uid_credential_revision[uid] = self._uid_credential_revision.get(uid, 0) + 1
+        if binding:
+            self._nick_binding_revision[nick] = self._nick_binding_revision.get(nick, 0) + 1
+
+    def _login_fence_locked(self, nick):
+        if not self._service_available():
+            return 'service_unavailable'
+        if self._retired_schema_invalid:
+            return 'retired'
+        uid = self.nick_to_uid.get(nick)
+        if uid in self.retired or any(r.get('nick') == nick for r in self.retired.values()):
+            return 'retired'
+        if uid in _bots.BOT_BY_UID:
+            return 'reserved_identity'
+        return None
+
+    def _next_identity_uid_locked(self):
+        uid = self._uid_seq
+        while uid in self.known or uid in self.retired or uid in _bots.BOT_BY_UID:
+            uid += 1
+        return uid
+
+    def _register_session_locked(self, sess, uid, web_token):
+        """Pure memory authorization, after proof and under the same writer."""
+        sess.uid = uid
+        was_online = uid in self.sessions
+        self._uid_clients.setdefault(uid, set()).add(sess)
+        self.sessions[uid] = sess
+        notice = self._offline_notice_records.get(uid)
+        if notice is not None and notice.get('state') == 'pending':
+            notice['state'] = 'cancelled'
+        if web_token is not None:
+            self.web_tokens[web_token] = sess
+            sess._login_token = web_token
+        return was_online
+
+    def _admit_login(self, sess, expected, *, new_hash=None, claim=None):
+        """Return (failure, was_online, inline claim result); no network here."""
+        def rejected(reason, *, result=claim):
+            if result is not None and result.status == 'pending':
+                result = replace(result, status='failed', reason=reason)
+            return credential_mod.AuthFailure(reason, credential=result), False, result
+
+        web_token = secrets.token_hex(16) if sess.type == 'web' else None
+        with self._writer_scope(kind='credential') as lease:
+            if lease is None:
+                return rejected('service_unavailable')
+            with self.lock:
+                reason = self._login_fence_locked(sess.nick)
+                if reason or getattr(sess, 'closed', False):
+                    return rejected(reason or 'session_inactive')
+                if self._credential_expected_locked(sess.nick) != expected:
+                    return rejected('credential_conflict')
+                is_new = expected.uid is None or not expected.known_present
+                uid = expected.uid if expected.uid is not None else self._next_identity_uid_locked()
+                must_commit = self.store is not None and (is_new or new_hash is not None)
+                if new_hash is not None and self.store is None:
+                    return rejected('credential_store_unavailable')
+                if must_commit:
+                    candidate = self._snapshot_state()
+                    info = candidate['known'].setdefault(uid, {'nick': sess.nick, 'last_online': 0})
+                    if new_hash is not None:
+                        info['pwd'] = new_hash
+                    candidate['nick_to_uid'][sess.nick] = uid
+                    candidate['uid_seq'] = max(candidate['uid_seq'], uid + 1)
+            proof = self._commit_credential_candidate(candidate, lease) if must_commit else None
+            if proof is not None and proof.effect != 'committed':
+                result = (replace(claim, status='unknown' if proof.effect == 'uncertain' else 'failed',
+                                  reason=proof.error_code, retryable=proof.retryable)
+                          if claim is not None else None)
+                return rejected(proof.error_code or 'credential_unknown', result=result)
+            if proof is not None and claim is not None:
+                claim = replace(claim, status='confirmed', uid=uid, login_status='not_attached')
+            try:
+                # No other credential/t0/UID allocator can pass this writer.
+                # Ordinary updates and unregister may have changed other fields.
+                with self.lock:
+                    if self._credential_expected_locked(sess.nick) != expected:
+                        self._fail_store()
+                        return rejected('login_not_attached', result=claim)
+                    if is_new:
+                        self.known[uid] = {'nick': sess.nick, 'last_online': 0}
+                        self.nick_to_uid[sess.nick] = uid
+                        self._uid_seq = max(self._uid_seq, uid + 1)
+                    if new_hash is not None:
+                        self.known[uid]['pwd'] = new_hash
+                    if is_new or new_hash is not None:
+                        self._credential_advance_locked(uid, sess.nick, binding=is_new)
+                    # A confirmed identity survives even if stop/disconnect now
+                    # disallows attaching this particular connection.
+                    reason = self._login_fence_locked(sess.nick)
+                    attached = not reason and not getattr(sess, 'closed', False)
+                    was_online = self._register_session_locked(sess, uid, web_token) if attached else False
+                if proof is not None:
+                    self._credential_capture_confirmed(proof)
+            except Exception:
+                self._fail_store()
+                return rejected('login_not_attached', result=claim)
+            if not attached:
+                return rejected('login_not_attached' if proof is not None else (reason or 'session_inactive'),
+                                result=claim)
+            if claim is not None:
+                claim = replace(claim, login_status='attached')
+            return None, was_online, claim
+
+    def _authenticate_session(self, sess, password, header):
+        """Prepare proof outside both locks; permit one recheck of a claim winner."""
+        intent = None
+        try:
+            intent = credential_mod.LoginIntent.parse(header)
+            if not isinstance(password, str):
+                raise credential_mod.CredentialError('invalid_password_fields')
+            capabilities = self.auth_capabilities()
+            if intent.version is not None and (
+                    intent.server_epoch != capabilities['server_epoch']
+                    or intent.store_scope_id != capabilities['store_scope_id']):
+                raise credential_mod.CredentialError('auth_context_changed')
+            if intent.claim_password and not password:
+                raise credential_mod.CredentialError('invalid_claim')
+            if intent.claim_password and sess.nick in self._reserved_admin_nicks:
+                raise credential_mod.CredentialError('credential_admin_managed')
+            if intent.claim_password and self.store is None:
+                raise credential_mod.CredentialError('credential_store_unavailable')
+        except credential_mod.CredentialError as exc:
+            rejected = (credential_mod.CredentialResult(
+                intent.request_id, None, self._server_epoch, None, status='failed',
+                login_status='not_attached', reason=exc.reason)
+                if intent is not None and intent.version == 1 and intent.claim_password else None)
+            return credential_mod.AuthFailure(exc.reason, credential=rejected), False, rejected
+        claim_operation = None
+        if intent.claim_password:
+            try:
+                claim_operation, fresh = self._credential_claims.begin(sess.nick, password, intent)
+            except credential_mod.CredentialError as exc:
+                return credential_mod.AuthFailure(exc.reason), False, None
+            if not fresh:
+                if claim_operation.status == 'confirmed':
+                    return self._replay_claim_session(sess, password, claim_operation)
+                reason = ('credential_pending' if claim_operation.status == 'pending'
+                          else claim_operation.reason or 'credential_unknown')
+                result = replace(claim_operation, login_status='not_attached')
+                return credential_mod.AuthFailure(reason, credential=result), False, result
+
+        def complete(failure, was_online=False, result=None):
+            if claim_operation is None:
+                return failure, was_online, result
+            if result is None:
+                result = replace(claim_operation, status='failed',
+                                 reason=failure.reason if failure is not None else 'credential_already_bound')
+            elif failure is not None and result.status not in ('confirmed', 'unknown'):
+                result = replace(result, status='failed', reason=failure.reason,
+                                 login_status='not_attached')
+            result = self._credential_claims.finish(sess.nick, result)
+            if failure is not None:
+                failure = credential_mod.AuthFailure(failure.reason, str(failure), credential=result)
+            return failure, was_online, result
+
+        try:
+            self._release_zombie(sess.nick)
+        except Exception:
+            return complete(credential_mod.AuthFailure('login_prepare_failed'))
+        for attempt in range(2):
+            with self.lock:
+                reason = self._login_fence_locked(sess.nick)
+                expected = self._credential_expected_locked(sess.nick)
+            if reason:
+                return complete(credential_mod.AuthFailure(reason))
+            ordinary_admin = sess.nick in self._reserved_admin_nicks
+            if not ordinary_admin and not expected.password_hash and password and not intent.claim_password:
+                return complete(credential_mod.AuthFailure('claim_required'))
+            try:
+                error = self._pwd_check_for_login(sess.nick, password)
+            except Exception:
+                return complete(credential_mod.AuthFailure('credential_derivation_failed'))
+            if error:
+                with self.lock:
+                    reason = self._login_fence_locked(sess.nick)
+                return complete(credential_mod.AuthFailure(reason or 'invalid_password', error))
+            claim_needed = bool(password and not expected.password_hash and not ordinary_admin)
+            if claim_needed and len(password) > PWD_MAX:
+                return complete(credential_mod.AuthFailure('password_too_long'))
+            try:
+                new_hash = auth.make(password) if claim_needed else None
+            except Exception:
+                return complete(credential_mod.AuthFailure('credential_derivation_failed'))
+            claim = (replace(claim_operation, uid=expected.uid) if claim_needed
+                     else replace(claim_operation, uid=expected.uid, status='failed',
+                                  reason='credential_already_bound') if claim_operation is not None else None)
+            sess.is_admin = ordinary_admin and sess.nick == self._admin_nick
+            failure, was_online, result = self._admit_login(
+                sess, expected, new_hash=new_hash, claim=claim)
+            if (failure is not None and failure.reason == 'credential_conflict'
+                    and intent.claim_password and not expected.password_hash and attempt == 0):
+                # The winner's password is checked outside the writer, never
+                # accepted merely because somebody has now installed a hash.
+                continue
+            return complete(failure, was_online, result)
+        return complete(credential_mod.AuthFailure('credential_conflict'))
+
+    def _replay_claim_session(self, sess, password, original):
+        """Return old commit proof only after current authorization; never write."""
         with self.lock:
-            if self._retired_schema_invalid:
-                reject = "身份状态不可用，拒绝登录"
-            old_uid = self.nick_to_uid.get(sess.nick)
-            if reject is None and (old_uid in self.retired or any(
-                    rec.get("nick") == sess.nick for rec in self.retired.values())):
-                reject = "该昵称对应的 UID 已永久退役"
-            if reject is None and old_uid is not None:
-                sess.uid = old_uid
-            elif reject is None:
-                while (self._uid_seq in self.retired
-                       or self._uid_seq in self.known
-                       or self._uid_seq in _bots.BOT_BY_UID):
-                    self._uid_seq += 1
-                sess.uid = self._uid_seq
-                self._uid_seq += 1
-            was_online = sess.uid in self.sessions
-            self._uid_clients.setdefault(sess.uid, set()).add(sess)
-            self.sessions[sess.uid] = sess
-            self.nick_to_uid[sess.nick] = sess.uid
-            notice = self._offline_notice_records.get(sess.uid)
-            if notice is not None and notice.get("state") == "pending":
-                notice["state"] = "cancelled"
-            prev = self.known.get(sess.uid)
-            self.known[sess.uid] = {"nick": sess.nick,
-                                    "last_online": (prev or {}).get("last_online", 0)}
-            for _k in _KNOWN_PROFILE_FIELDS:
-                if prev is not None and _k in prev:
-                    self.known[sess.uid][_k] = copy.deepcopy(prev[_k])
-        if reject is not None:
-            self._error(sess, "retired", reject)
+            reason = self._login_fence_locked(sess.nick)
+            expected = self._credential_expected_locked(sess.nick)
+            if not reason and expected.uid != original.uid:
+                reason = 'credential_conflict'
+            if not reason and not expected.password_hash:
+                reason = 'claim_required'
+        if reason:
+            return credential_mod.AuthFailure(reason), False, None
+        try:
+            error = self._pwd_check_for_login(sess.nick, password)
+        except Exception:
+            return credential_mod.AuthFailure('credential_derivation_failed'), False, None
+        if error:
+            return credential_mod.AuthFailure('invalid_password', error), False, None
+        # No hash is projected on replay. UID and expected proof must still
+        # agree at the writer boundary; failure discloses no old receipt.
+        failure, was_online, result = self._admit_login(
+            sess, expected, claim=replace(original, login_status='not_attached'))
+        if failure is not None:
+            return credential_mod.AuthFailure(failure.reason, str(failure)), False, None
+        sess._claim_replay = True
+        return None, was_online, result
+
+    def _login_error(self, sess, failure):
+        reason = failure.reason
+        code = ('retired' if reason == 'retired' else 'store_unavailable'
+                if reason in ('service_unavailable', 'credential_unknown') else 'pwd')
+        payload = {'t': 'error', 'code': code, 'reason': reason, 'text': str(failure)}
+        if failure.credential is not None:
+            payload['credential'] = failure.credential.payload(server_epoch=self._server_epoch)
+        sess.send(payload)
+
+    def _finish_login(self, sess, was_online, credential):
+        """Only network/audit effects follow the writer's final authorization."""
+        sess._login_credential = credential
+        try:
+            self._announce_login(sess, was_online, credential)
+        except Exception as exc:
+            self.unregister(sess, 'login_delivery_failed')
+            if getattr(sess, '_claim_replay', False):
+                credential = None
+            elif credential is not None:
+                credential = replace(credential, login_status='not_attached')
+            reason = exc.reason if isinstance(exc, credential_mod.CredentialError) else 'login_not_attached'
+            return credential_mod.AuthFailure(reason, credential=credential)
+        if not self._session_is_active(sess):
+            if getattr(sess, '_claim_replay', False):
+                credential = None
+            elif credential is not None:
+                credential = replace(credential, login_status='not_attached')
+            return credential_mod.AuthFailure('login_not_attached', credential=credential)
+        return None
+
+    def _attach(self, sess: Session) -> bool:
+        """Trusted in-process registration adapter; wire uses verified proof.
+
+        It keeps the existing internal fixture/caller API, but UID allocation,
+        durable identity creation and registration still use the same writer.
+        It cannot set or claim a password. No network handler calls this adapter.
+        """
+        self._release_zombie(sess.nick)
+        with self.lock:
+            expected = self._credential_expected_locked(sess.nick)
+        failure, was_online, credential = self._admit_login(sess, expected)
+        if failure is None:
+            failure = self._finish_login(sess, was_online, credential)
+        if failure is not None:
+            self._login_error(sess, failure)
             return False
-        sess.send({
+        return True
+
+    def login_web(self, nick: str, peer_ip: str, password: str = '', *, auth_header=None) -> tuple:
+        """Preserve (session, token)/(None, text) while returning structured errors."""
+        if not isinstance(nick, str) or not nick.strip():
+            return None, credential_mod.AuthFailure('invalid_nick', '昵称不能为空')
+        nick = nick.strip()[:MAX_NICK_LEN]
+        sess = Session(0, nick, 'web', peer_ip, send=self._make_web_send())
+        failure, was_online, credential = self._authenticate_session(sess, password, auth_header or {})
+        if failure is None:
+            failure = self._finish_login(sess, was_online, credential)
+        if failure is not None:
+            return None, failure
+        return sess, sess._login_token
+
+
+    def _announce_login(self, sess, was_online, credential=None):
+        payload = {
             "t": "welcome", "uid": sess.uid, "nick": sess.nick,
+            "auth": self.auth_capabilities(),
+            **({"credential": credential.payload(server_epoch=self._server_epoch)}
+               if credential is not None else {}),
             "is_admin": sess.is_admin,                       # R53：管理员标识
             "invisible": bool(self.known.get(sess.uid, {}).get("invisible")), # R56 隐身
             "status": self.known.get(sess.uid, {}).get("status", "") or "online",  # R68 我的在线状态
@@ -3755,63 +4691,36 @@ class Hub:
             "drafts": self._drafts_for(sess.uid),  # R29B：草稿同步（换端带回全部草稿）
             "blocked": sorted(self._blocked(sess.uid)),  # R50：屏蔽名单（客户端登录对齐）
             "scheds": self._sched_payload(sess.uid),     # R51：我的待发定时消息
-        })
+        }
+        # Delivery admission is separate from registration. A retirement or
+        # logout which wins this short boundary must never get a welcome. Once
+        # admitted, socket IO remains outside Hub/writer locks; bytes already
+        # admitted to delivery cannot be retrospectively recalled by t0.
+        with self.lock:
+            reason = self._credential_session_locked(
+                sess, self.web_auth_context(sess) if sess.type == 'web' else None,
+                getattr(sess, '_login_token', None))
+            if reason:
+                raise credential_mod.CredentialError(reason)
+            sess._welcome_delivery_admitted = True
+        sess.send(payload)
         self.audit.log(type="login", uid=sess.uid, nick=sess.nick,
                        peer=sess.peer_ip, via=sess.type)
-        self._persist()                              # R16：uid/nick_to_uid 变化落盘
         self._broadcast_roster()
         if not was_online:                           # 仅当首个端上线时才广播「已上线」
             self._broadcast_system(f"{sess.nick} 已上线"
                                    + ("（网页端）" if sess.type == "web" else ""))
-        with self.lock:
-            if self._retired_schema_invalid or self._uid_retired_locked(sess.uid):
-                sess.closed = True
-                return False
-        return True
-
-    def login_web(self, nick: str, peer_ip: str,
-                  password: str = "") -> tuple:
-        """网页端登录：建 web 会话 + 发 token；返回 (session, token) 或 (None, err)。
-
-        R47-B：昵称已设密码则校验 password（错/缺一律拒）；未设密码且带了
-        password → 登录成功后绑定（claim，先到先得）。"""
-        nick = (nick or "").strip()[:MAX_NICK_LEN]
-        if not nick:
-            return None, "昵称不能为空"
-        err = self._pwd_check_for_login(nick, password)
-        if err:
-            return None, err
-        sess = Session(0, nick, "web", peer_ip,
-                       send=self._make_web_send())
-        # 只有通过部署凭据校验才能到达这里。
-        # 须在 _attach（发送 welcome 帧）之前赋值，否则 welcome 的 is_admin 恒为 False。
-        sess.is_admin = (nick == self._admin_nick)
-        if not self._attach(sess):           # t0 可能在最终 attach 前建立 fence
-            return None, "该昵称对应的 UID 已永久退役"
-        if password and not sess.is_admin:
-            if not self._pwd_claim(sess.uid, password):
-                return None, "该账号已退役或登录已失效"
-        token = secrets.token_hex(16)
-        with self.lock:
-            if (self._retired_schema_invalid
-                    or self._uid_retired_locked(sess.uid)
-                    or sess.closed):
-                return None, "该账号已退役或登录已失效"
-            self.web_tokens[token] = sess
-        with self.lock:
-            if not self._session_is_active(sess):
-                self.web_tokens.pop(token, None)
-                return None, "该账号已退役或登录已失效"
-        return sess, token
 
     # ---------- R47-B：昵称可选密码 ----------
     def _pwd_check_for_login(self, nick: str, password: str) -> str | None:
         """登录期昵称密码校验。返回错误文案或 None（通过）。
 
         已设密码：password 必须匹配（PBKDF2 校验在锁外做，避免占 Hub 锁）；
-        未设密码：放行（带密码时由调用方在 attach 成功后 claim 绑定）。
+        未设密码：仅作密码证明检查；显式认领由调用方在持久确认后授权。
         管理员标识始终保留；未配置部署凭据时不降级为普通账号。"""
         with self.lock:
+            if not self._service_available():
+                return '服务器正在停止或存储状态未确认'
             if self._retired_schema_invalid:
                 return "身份状态不可用，拒绝登录"
             if (nick in self.nick_to_uid
@@ -3836,84 +4745,167 @@ class Hub:
                 return "密码错误"
         return None
 
-    def _pwd_store(self, uid: int, stored: str | None) -> bool:
-        """known[uid]['pwd'] 写入/清除（R16 落盘随 _persist）。"""
-        with self.lock:
-            if self._uid_retired_locked(uid):
-                return False
-            info = self.known.get(uid)
-            if info is None:
-                return False
-            if stored:
-                info["pwd"] = stored
-            else:
-                info.pop("pwd", None)
-        self._persist()
-        return True
+    def web_auth_context(self, sess):
+        return credential_mod.WebContext(
+            self._server_epoch, self._recovery.store_id if self._recovery else None,
+            sess.uid, sess.session_binding_id)
 
-    def _pwd_claim(self, uid: int, password: str) -> bool:
-        """登录时带了密码且该昵称未设密码 → 绑定（先到先得）。"""
-        with self.lock:
-            if self._uid_retired_locked(uid):
-                return False
-            info = self.known.get(uid)
-            if not info:
-                return False
-            if info.get("pwd"):
-                return True
-        if not self._pwd_store(uid, auth.make(password)):
-            return False
-        self.audit.log(type="pwd_claim", uid=uid)
-        return True
-
-    def set_password(self, uid: int, old: str, new: str) -> str | None:
-        """R47-B：设置/修改/清除昵称密码（需已登录身份）。返回错误文案或 None。
-
-        - 未设密码：new 非空=绑定；new 空=报「尚未设置密码」；
-        - 已设密码：old 必须匹配；new 空=清除。
-        管理员凭据由部署侧管理，拒绝通过普通账号接口修改/清除。"""
-        with self.lock:
-            if self._retired_schema_invalid or self._uid_retired_locked(uid):
-                return "账号已退役或身份状态不可用"
-            info = self.known.get(uid)
-            if info is None:
-                return "用户不存在"
-            if info.get("nick") in self._reserved_admin_nicks:
-                return "管理员凭据由服务器配置管理，不可修改"
-            stored = info.get("pwd")
-        if stored and not auth.verify(old, stored):
-            return "旧密码错误"
-        if not new:
-            if not stored:
-                return "尚未设置密码"
-            if not self._pwd_store(uid, None):
-                return "账号已退役或身份状态不可用"
-            self.audit.log(type="pwd_change", uid=uid, action="clear")
-            return None
-        if len(new) > PWD_MAX:
-            return f"密码过长（≤{PWD_MAX} 字符）"
-        if not self._pwd_store(uid, auth.make(new)):
-            return "账号已退役或身份状态不可用"
-        self.audit.log(type="pwd_change", uid=uid,
-                       action="change" if stored else "set")
+    def _credential_session_locked(self, sess, context=None, token=None):
+        if not self._service_available():
+            return 'service_unavailable'
+        uid = getattr(sess, 'uid', None)
+        if type(uid) is not int or uid <= 0:
+            return 'session_inactive'
+        if self._retired_schema_invalid or self._uid_retired_locked(uid):
+            return 'retired'
+        if (getattr(sess, 'closed', False)
+                or (sess not in self._uid_clients.get(uid, ()) and self.sessions.get(uid) is not sess)):
+            return 'session_inactive'
+        info = self.known.get(uid)
+        if not info or info.get('nick') != sess.nick or self.nick_to_uid.get(sess.nick) != uid:
+            return 'session_inactive'
+        if uid in _bots.BOT_BY_UID:
+            return 'reserved_identity'
+        if sess.type == 'web':
+            if context is None:
+                return 'context_required'
+            if (context != self.web_auth_context(sess)
+                    or not token or self.web_tokens.get(token) is not sess):
+                return 'context_changed'
         return None
 
+    def _credential_failure(self, sess, header, reason):
+        try:
+            rid = credential_mod.request_id(header.get('request_id'))
+        except (credential_mod.CredentialError, AttributeError):
+            return {'t': 'error', 'code': 'pwd_set', 'reason': reason,
+                    'text': str(credential_mod.AuthFailure(reason))}
+        uid = getattr(sess, 'uid', None)
+        uid = uid if type(uid) is int and uid > 0 else None
+        return credential_mod.CredentialResult(
+            rid, None, self._server_epoch, uid, status='failed', reason=reason
+        ).payload(server_epoch=self._server_epoch)
+
+    def credential_update(self, sess, header, *, context=None, token=None):
+        """Authenticated SET: derive outside locks, commit/publish under writer."""
+        try:
+            request = credential_mod.UpdateRequest.parse(header, password_max=PWD_MAX)
+        except credential_mod.CredentialError as exc:
+            return self._credential_failure(sess, header, exc.reason)
+        with self.lock:
+            reason = self._credential_session_locked(sess, context, token)
+            if not reason and (sess.is_admin or sess.nick in self._reserved_admin_nicks):
+                reason = 'credential_admin_managed'
+            if not reason and self.store is None:
+                reason = 'credential_store_unavailable'
+            if reason:
+                return self._credential_failure(sess, header, reason)
+            expected = self._credential_expected_locked(sess.nick)
+            try:
+                operation, fresh = self._credential_operations.begin(sess.uid, request)
+            except credential_mod.CredentialError as exc:
+                return self._credential_failure(sess, header, exc.reason)
+        if not fresh:
+            return operation.payload(server_epoch=self._server_epoch)
+
+        def finish(status, reason=None, retryable=False):
+            result = self._credential_operations.finish(
+                operation, status=status, reason=reason, retryable=retryable)
+            return result.payload(server_epoch=self._server_epoch)
+
+        try:
+            if expected.password_hash and not auth.verify(request.old, expected.password_hash):
+                return finish('failed', 'old_password_invalid')
+            if not expected.password_hash and not request.new:
+                return finish('failed', 'credential_not_set')
+            derived = auth.make(request.new) if request.new else None
+        except Exception:
+            return finish('failed', 'credential_derivation_failed')
+        with self._writer_scope(kind='credential') as lease:
+            if lease is None:
+                return finish('failed', 'service_unavailable')
+            with self.lock:
+                reason = self._credential_session_locked(sess, context, token)
+                if reason:
+                    return finish('failed', reason)
+                if self._credential_expected_locked(sess.nick) != expected:
+                    return finish('failed', 'credential_conflict')
+                candidate = self._snapshot_state()
+                if derived is None:
+                    candidate['known'][sess.uid].pop('pwd', None)
+                else:
+                    candidate['known'][sess.uid]['pwd'] = derived
+            proof = self._commit_credential_candidate(candidate, lease)
+            if proof.effect != 'committed':
+                return finish('unknown' if proof.effect == 'uncertain' else 'failed',
+                              proof.error_code, proof.retryable)
+            try:
+                with self.lock:
+                    if self._credential_expected_locked(sess.nick) != expected:
+                        raise RuntimeError('credential writer invariant violated')
+                    # logout after admission is allowed to drain this one
+                    # operation. Preserve its last_online and other profile data.
+                    if derived is None:
+                        self.known[sess.uid].pop('pwd', None)
+                    else:
+                        self.known[sess.uid]['pwd'] = derived
+                    self._credential_advance_locked(sess.uid, sess.nick)
+                self._credential_capture_confirmed(proof)
+            except Exception:
+                self._fail_store()
+                # The bytes were proved; a runtime publication failure cannot
+                # turn confirmed persistence into a claim of rollback.
+                return finish('confirmed', 'credential_live_unavailable')
+            result = finish('confirmed')
+        self.audit.log(type='pwd_change', uid=sess.uid,
+                       action='clear' if derived is None else 'change' if expected.password_hash else 'set')
+        return result
+
+    def credential_query(self, sess, header, *, context=None, token=None):
+        try:
+            request = credential_mod.QueryRequest.parse(header)
+        except credential_mod.CredentialError as exc:
+            return self._credential_failure(sess, header, exc.reason)
+        with self.lock:
+            reason = self._credential_session_locked(sess, context, token)
+            if reason:
+                return self._credential_failure(sess, header, reason)
+            result = self._credential_operations.query(sess.uid, request)
+        return result.payload(server_epoch=self._server_epoch, query_request_id=request.request_id)
+
+    def _pwd_store(self, uid: int, stored: str | None) -> bool:
+        """Removed unsafe UID-only writer; callers must use credential_update."""
+        return False
+
+    def _pwd_claim(self, uid: int, password: str) -> bool:
+        """Removed implicit post-attach claim. Explicit HELLO commits first."""
+        return False
+
+    def set_password(self, uid: int, old: str, new: str) -> str | None:
+        """Legacy UID-only API refuses updates; retain human-readable diagnostics."""
+        with self.lock:
+            if self._retired_schema_invalid or self._uid_retired_locked(uid):
+                return credential_mod.AuthFailure('retired')
+            info = self.known.get(uid)
+            if not info:
+                return credential_mod.AuthFailure('session_inactive', '用户不存在')
+            if info.get('nick') in self._reserved_admin_nicks:
+                return credential_mod.AuthFailure('credential_admin_managed')
+        return credential_mod.AuthFailure('credential_upgrade_required')
+
     def _on_set_pwd(self, sess: Session, header: dict) -> None:
-        """R47-B：TCP 设置/修改/清除昵称密码（帧头 old/new）。"""
-        old = str(header.get("old") or "")
-        new = str(header.get("new") or "")
-        had = bool((self.known.get(sess.uid) or {}).get("pwd"))
-        err = self.set_password(sess.uid, old, new)
-        if err:
-            self._error(sess, "pwd_set", err)   # R47：区别于登录密码错误码，避免客户端误弹登录框
-            return
-        if not new:
-            text = "✅ 昵称密码已清除，登录不再需要密码"
-        elif had:
-            text = "✅ 昵称密码已修改"
+        payload = self.credential_update(sess, header)
+        if type(header.get('credential_v')) is not int or header.get('credential_v') != 1:
+            # Old clients understand pwd_set and must not show a success toast.
+            sess.send({'t': 'error', 'code': 'pwd_set',
+                       'reason': 'credential_upgrade_required',
+                       'text': str(credential_mod.AuthFailure('credential_upgrade_required'))})
         else:
-            text = "✅ 昵称密码已设置，下次登录需输入"
-        sess.send({"t": "system", "text": text})
+            sess.send(payload)
+
+    def _on_credential_get(self, sess: Session, header: dict) -> None:
+        sess.send(self.credential_query(sess, header))
+
 
     # ---------- R52 头像与个性签名 ----------
     def _avatar_known(self, uid: int) -> str:
@@ -4306,6 +5298,13 @@ class Hub:
         防止已断开的 TCP 读循环在 close_conn 生效前继续提交消息。
         """
         with self.lock:
+            if not self._service_available():
+                return False
+            return self._session_member_locked(sess)
+
+    def _session_member_locked(self, sess):
+        """Identity membership only; an existing writer lease handles stop admission."""
+        with self.lock:
             if getattr(sess, "closed", False):
                 return False
             if self._retired_schema_invalid or self._uid_retired_locked(sess.uid):
@@ -4321,8 +5320,16 @@ class Hub:
     # ---------- 消息分发 ----------
     def dispatch(self, sess: Session, header: dict, body: bytes = b"") -> bool:
         """处理一帧；返回 False 表示应断开连接"""
+        if not self._service_available():
+            self._error(sess, 'store_unavailable', '服务器存储状态未确认，暂不接受请求')
+            return False
         t = header.get("t")
         if sess.uid == 0:
+            if t == MsgType.AUTH_CAPABILITIES.value:
+                if body:
+                    self._error(sess, 'auth', '认证能力请求不接受消息体')
+                    return False
+                return self._on_auth_capabilities(sess, header)
             if t == MsgType.HELLO.value:
                 return self._on_hello(sess, header)
             self._error(sess, "auth", "请先发送 hello 登录")
@@ -4537,6 +5544,8 @@ class Hub:
             self._on_fish_score(sess, header)     # R70H：上报摸鱼积分（opt-in）
         elif t == MsgType.FISH_BOARD.value:
             self._on_fish_board_get(sess, header)  # R70H：拉取排行榜
+        elif t == MsgType.CREDENTIAL_GET.value:
+            self._on_credential_get(sess, header)
         elif t == MsgType.SET_PWD.value:
             self._on_set_pwd(sess, header)            # R47：昵称密码
         elif t == MsgType.AVATAR_SET.value:
@@ -4593,28 +5602,19 @@ class Hub:
         return True
 
     def _on_hello(self, sess: Session, header: dict) -> bool:
-        nick = (header.get("nick") or "").strip()[:MAX_NICK_LEN]
-        if not nick:
-            self._error(sess, "nick", "昵称不能为空")
+        nick = header.get('nick', '')
+        if not isinstance(nick, str) or not nick.strip():
+            self._error(sess, 'nick', '昵称不能为空或格式无效')
             return False
-        pwd = str(header.get("pwd") or "")     # R47-B：可选昵称密码
-        err = self._pwd_check_for_login(nick, pwd)
-        if err:
-            self._error(sess, "pwd", err)      # 客户端据此弹密码框
+        sess.nick = nick.strip()[:MAX_NICK_LEN]
+        failure, was_online, credential = self._authenticate_session(
+            sess, header.get('pwd', ''), header)
+        if failure is None:
+            failure = self._finish_login(sess, was_online, credential)
+        if failure is not None:
+            self._login_error(sess, failure)
             return False
-        sess.nick = nick
-        # 只有通过部署凭据校验才能到达这里。
-        # 须在 _attach（发送 welcome 帧）之前赋值，否则 welcome 的 is_admin 恒为 False。
-        sess.is_admin = (nick == self._admin_nick)
-        if not self._attach(sess):           # 同账号多端并存；退役 fence 仍拒绝
-            return False
-        if pwd and not sess.is_admin:
-            if not self._pwd_claim(sess.uid, pwd):
-                return False
-        with self.lock:
-            if self._retired_schema_invalid or self._uid_retired_locked(sess.uid):
-                return False
-            return self._session_is_active(sess)
+        return True
 
     # ---------- R59 富文本：白名单清洗（只透传有限种类，防 UI 注入） ----------
     _RICH_KINDS = ("plain", "mention", "link", "hashtag", "bold", "italic",
@@ -4997,7 +5997,7 @@ class Hub:
         if kb:                                        # R46：键盘随消息走（历史/快照天然保留）
             msg["kb"] = kb
         with self.lock:
-            if (self._retired_schema_invalid
+            if (not self._service_available() or self._retired_schema_invalid
                     or self._uid_retired_locked(owner_uid)
                     or self._uid_retired_locked(to_uid)):
                 return False
@@ -5384,10 +6384,12 @@ class Hub:
                                           "uid": msg.get("uid"),
                                           "to": msg.get("to")})
             return
-        threading.Thread(target=self._fetch_preview_worker,
-                         args=(url, msg["seq"], msg.get("channel"),
-                               msg.get("uid"), msg.get("to")),
-                         daemon=True, name="preview-fetch").start()
+        worker = self._start_worker(self._fetch_preview_worker,
+                                    args=(url, msg['seq'], msg.get('channel'),
+                                          msg.get('uid'), msg.get('to')), name='preview-fetch')
+        if worker is None:
+            with self._preview_lock:
+                self._preview_inflight.discard(url)
 
     def _fetch_preview_worker(self, url: str, seq: int, channel: str,
                               uid: int, to) -> None:
@@ -5411,7 +6413,7 @@ class Hub:
         expected = expected if isinstance(expected, dict) else {}
         route_ev = None
         with self.lock:
-            if self._retired_schema_invalid:
+            if not self._service_available() or self._retired_schema_invalid:
                 return
             expected_uid = expected.get("uid")
             expected_to = expected.get("to")
@@ -6013,6 +7015,7 @@ class Hub:
             retired = self.retired.get(uid)
             nick = ((retired or {}).get("nick")
                     or (self.known.get(uid) or {}).get("nick")
+                    or (self._retire_ops.get(uid) or {}).get('target_nick')
                     or self._append_nick_for_uid(uid, None))
             online = uid in self.sessions and uid not in self.retired
             groups = []
@@ -6033,26 +7036,40 @@ class Hub:
             payload["resources"] = resources
         return payload
 
+    @staticmethod
+    def _valid_admin_request_id(value) -> bool:
+        return isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_-]{1,64}", value) is not None
+
+    @staticmethod
+    def _admin_correlated(payload: dict, request_id: str | None) -> dict:
+        # Metadata belongs to this request only, never the shared HTTP payload
+        # or persisted retirement record. Missing IDs preserve legacy shape.
+        return {**payload, "request_id": request_id} if request_id is not None else payload
+
     def _on_admin_user_get(self, sess: Session, header: dict) -> None:
         """系统管理员：查某人信息+所属全部群（uid 或已知昵称均可）。"""
+        request_id = header.get("request_id")
+        if "request_id" in header and not self._valid_admin_request_id(request_id):
+            self._error(sess, "request_id", "请求关联号格式无效")
+            return
         if not sess.is_admin:
-            self._error(sess, "forbid", "仅系统管理员可执行")
+            self._error(sess, "forbid", "仅系统管理员可执行", request_id=request_id)
             return
         expected = header.get("operation_id")
         if expected is not None:
             target_uid = self._resolve_uid_for_admin(header.get("uid"))
             if target_uid is None:
-                self._error(sess, "uid", "目标 uid/昵称 无效")
+                self._error(sess, "uid", "目标 uid/昵称 无效", request_id=request_id)
                 return
             actual = self._retirement_operation_id(target_uid)
             if not isinstance(expected, str) or expected != actual:
-                self._error(sess, "operation_id", "退役操作号不匹配")
+                self._error(sess, "operation_id", "退役操作号不匹配", request_id=request_id)
                 return
         payload = self._admin_user_payload(header.get("uid"))
         if payload is None:
-            self._error(sess, "uid", "目标 uid/昵称 无效")
+            self._error(sess, "uid", "目标 uid/昵称 无效", request_id=request_id)
             return
-        sess.send(payload)
+        sess.send(self._admin_correlated(payload, request_id))
         self.audit.log(type="admin_user_get", uid=sess.uid, target=payload["uid"],
                        target_nick=payload["nick"])
 
@@ -6117,261 +7134,241 @@ class Hub:
                     g["owner"] = next(iter(g["members"]))
         return dissolved
 
-    def _retry_retirement_persistence(self, sess: Session, uid: int,
-                                      nick: str, op_id: str) -> None:
-        """Retry a failed same-op commit without repeating t0 cleanup."""
-        pending = self._admin_user_payload(uid)
-        if pending is not None:
+    def _send_retirement_info(self, sess, uid, request_id):
+        if not sess.is_admin or not self._session_is_active(sess):
+            return
+        payload = self._admin_user_payload(uid)
+        if payload is not None and sess.is_admin and self._session_is_active(sess):
             try:
-                sess.send(pending)
+                sess.send(self._admin_correlated(payload, request_id))
             except Exception:
                 pass
-        ok = self._persist(force=True)
+
+    def _retirement_attempt_failed(self, uid, *, unknown=False, accepted=False,
+                                   stage='intent', code='store_unavailable', retryable=False):
         with self.lock:
-            op = self._retire_ops.setdefault(uid, {"operation_id": op_id})
-            if op.get("status") == "pending":
-                last = self._persist_last_result
-                committed_sha = (last.sha256
-                                 if isinstance(last, server_store_mod.SaveResult)
-                                 and last.effect == "committed" else None)
-                committed_len = (last.length
-                                 if isinstance(last, server_store_mod.SaveResult)
-                                 and last.effect == "committed" else None)
-                op.update({"status": "confirmed" if ok else "failed",
-                           "target_uid": uid, "target_nick": nick,
-                           "origin": "written" if ok else None,
-                           "content_sha256": committed_sha if ok else None,
-                           "content_length": committed_len if ok else None,
-                           "retryable": False if ok else True,
-                           "failed_stage": None if ok else "store.save",
-                           "error_code": None if ok else "persist_failed"})
-            status = op.get("status")
-        final = self._admin_user_payload(uid)
-        if final is not None:
-            try:
-                sess.send(final)
-            except Exception:
-                pass
-        with self.lock:
-            status = (self._retire_ops.get(uid) or {}).get("status", status)
-        if status == "confirmed":
-            self._broadcast({"t": MsgType.CLEARED.value, "uid": uid})
-            self._broadcast_system(f"系统管理员已退役用户 {nick}（UID 保留，不可重新认领）")
-        self.audit.log(type="admin_user_del", uid=sess.uid, target=uid,
-                       target_nick=nick, removed=0, dissolved=0,
-                       operation_id=op_id, status=status)
-        print(f"[admin][退役账号] {sess.nick} 重试 @{nick}(uid={uid})：状态={status}")
+            op = self._retire_ops[uid]
+            if op.get('status') == 'confirmed':
+                return
+            op.update(status='unknown' if unknown else 'failed', origin=None,
+                      content_sha256=None, content_length=None, failed_stage=stage,
+                      error_code=code, retryable=retryable and not unknown,
+                      persistence_phase='snapshot' if accepted else 'intent',
+                      identity_effect='revoked' if accepted else 'unverified' if unknown else 'not_started')
 
     def _on_admin_user_del(self, sess: Session, header: dict) -> None:
-        """管理员清除用户（删除账号）：
-        1) 从全部群移除成员（群主自动转让，移空即解散）；
-        2) 清空其跨全部频道的聊天消息；
-        3) 从已知账号 known 删除（离线账号一并移除、不可再登录）；
-        4) 若在线则强制下线。
-        不可清除自己（当前管理员）。"""
-        if not sess.is_admin:
-            self._error(sess, "forbid", "仅系统管理员可执行")
+        """Reserve once, publish intent, t0, then verify a fresh state snapshot."""
+        request_id = header.get('request_id')
+        if 'request_id' in header and not self._valid_admin_request_id(request_id):
+            self._error(sess, 'request_id', '请求关联号格式无效')
             return
-        uid = self._resolve_uid_for_admin(header.get("uid"))
+        if not sess.is_admin or not self._session_is_active(sess):
+            self._error(sess, 'forbid', '仅当前认证系统管理员可执行', request_id=request_id)
+            return
+        uid = self._resolve_uid_for_admin(header.get('uid'))
         if uid is None:
-            self._error(sess, "uid", "目标 uid/昵称 无效")
+            self._error(sess, 'uid', '目标 uid/昵称 无效', request_id=request_id)
             return
-        expected = header.get("operation_id")
-        if expected is not None:
-            actual = self._retirement_operation_id(uid)
-            if not isinstance(expected, str) or expected != actual:
-                self._error(sess, "operation_id", "退役操作号不匹配")
-                return
-        if uid == sess.uid:
-            self._error(sess, "uid", "不能清除自己")
+        expected = header.get('operation_id')
+        if expected is not None and (not isinstance(expected, str)
+                                     or expected != self._retirement_operation_id(uid)):
+            self._error(sess, 'operation_id', '退役操作号不匹配', request_id=request_id)
             return
-        if self.store is None:
-            self._error(sess, "store_required", "退役需要已启用的持久化 Store")
+        if self.store is None or self._recovery is None:
+            self._error(sess, 'store_required', '退役需要已确认的持久化 Store', request_id=request_id)
             return
-        with self.lock:
-            protected_bot = uid in _bots.BOT_BY_UID
-            protected_admin = any(s.is_admin and s.uid == uid
-                                  for s in self._snapshot_sessions())
-        if protected_bot:
-            self._error(sess, "uid", "系统机器人身份不可退役")
+        if not self._service_available():
+            self._error(sess, 'store_unavailable', '服务器存储状态未确认', request_id=request_id)
             return
-        if protected_admin:
-            self._error(sess, "uid", "当前认证管理员身份不可退役")
+        if uid == sess.uid or uid in _bots.BOT_BY_UID:
+            self._error(sess, 'uid', '不能退役自己或系统机器人', request_id=request_id)
             return
-        with self.lock:
-            existing_rec = self.retired.get(uid)
-            candidate_nick = ((existing_rec or {}).get("nick")
-                              or (self.known.get(uid) or {}).get("nick")
-                              or self.nick_to_uid.get(uid)
-                              or f"用户{uid}")
-            mapped_uid = self.nick_to_uid.get(candidate_nick)
-        if mapped_uid not in (None, uid):
-            self._error(sess, "uid", "昵称映射与目标 UID 冲突")
-            return
-        # unknown 的显式重试必须先做只读对账；读失败/坏结构/冲突时
-        # 保持 unknown，不得先把运行态改成 pending 再尝试新写。
         if self._persist_unresolved and not self._persist_inflight:
             with self._persist_writer_lock:
                 self._reconcile_persist_unknown()
-            if self._persist_unresolved:
-                payload = self._admin_user_payload(uid)
-                if payload is not None:
-                    try:
-                        sess.send(payload)
-                    except Exception:
-                        pass
-                return
+        rejection, execute = None, False
         with self.lock:
-            existing_op = self._retire_ops.get(uid)
-            already_confirmed = bool(self.retired.get(uid)
-                                     and existing_op
-                                     and existing_op.get("status") == "confirmed")
-        if already_confirmed:
-            payload = self._admin_user_payload(uid)
-            if payload is not None:
-                try:
-                    sess.send(payload)
-                except Exception:
-                    pass
-            return
-        if existing_op and self.retired.get(uid):
-            existing_status = existing_op.get("status")
-            if existing_status in ("pending", "unknown"):
-                payload = self._admin_user_payload(uid)
-                if payload is not None:
-                    try:
-                        sess.send(payload)
-                    except Exception:
-                        pass
-                return
-            if existing_status == "failed":
-                retry_nick = self.retired[uid]["nick"]
-                retry_op_id = self.retired[uid]["operation_id"]
-                self._retire_ops[uid] = {
-                    "status": "pending", "operation_id": retry_op_id,
-                    "target_uid": uid, "target_nick": retry_nick,
-                }
-                self._retry_retirement_persistence(
-                    sess, uid, retry_nick, retry_op_id)
-                return
-
-        # 生成/复用同 UID 的幂等操作号；t0 只做内存状态提交，所有通知、
-        # 连接关闭、资源清理和持久化均留在屏障之外。
-        with self.lock:
-            old = self.retired.get(uid)
-            if old is not None:
-                nick = old["nick"]
-                op_id = old["operation_id"]
+            op = self._retire_ops.get(uid)
+            if any(s.is_admin and s.uid == uid for s in self._snapshot_sessions()):
+                rejection = ('uid', '当前认证管理员身份不可退役')
+            elif op and (op.get('_executing') or op.get('status') in ('pending', 'unknown', 'confirmed')):
+                pass
+            elif op and (op.get('status') != 'failed' or not op.get('retryable')):
+                pass
             else:
-                nick = candidate_nick
-                mapped_uid = self.nick_to_uid.get(nick)
-                if mapped_uid is None:
-                    self.nick_to_uid[nick] = uid
-                op_id = secrets.token_hex(16)
-                self.retired[uid] = {"nick": nick, "retired_at": _now(),
-                                     "operation_id": op_id}
-            self._retire_ops[uid] = {
-                "status": "pending", "operation_id": op_id,
-                "target_uid": uid, "target_nick": nick,
-            }
-            targets = list(self._uid_clients.get(uid, ()))
-            representative = self.sessions.get(uid)
-            if representative is not None and representative not in targets:
-                targets.append(representative)
-            for token, token_sess in list(self.web_tokens.items()):
-                if token_sess.uid == uid:
-                    del self.web_tokens[token]
-            for target in targets:
-                target.closed = True
-            self._uid_clients.pop(uid, None)
-            self.sessions.pop(uid, None)
-            self.known.pop(uid, None)
-            self._drafts = {k: v for k, v in self._drafts.items()
-                            if k[0] != uid}
-            self.scheds.pop(uid, None)
-            self.blocks.pop(uid, None)
-            for key, readers in list(self.reads.items()):
-                readers.pop(uid, None)
-                if not readers:
-                    self.reads.pop(key, None)
-            self._offline_notice_records.pop(uid, None)
-            self._typing_ts.pop(uid, None)
-            self._nudge_ts.pop(uid, None)
-            self._shake_ts.pop(uid, None)
-            self.sticker_subs.pop(uid, None)
-            self._resource_withdraw_owner_locked(uid)
-            self._bot_reminder_cancel_owner_locked(uid)
-            for bseq, burn in list(self._burn.items()):
-                if burn.get("uid") == uid:
-                    self._burn.pop(bseq, None)
-            dissolved = self._admin_del_remove_groups(uid)
-            removed = self.bus.clear_uid(uid)
-            self._bot_contexts = {
-                seq: ctx for seq, ctx in self._bot_contexts.items()
-                if ctx.get("owner_uid") != uid and ctx.get("target_uid") != uid
-            }
+                record = self.retired.get(uid)
+                nick = ((record or {}).get('nick') or (self.known.get(uid) or {}).get('nick')
+                        or next((name for name, mapped in self.nick_to_uid.items() if mapped == uid), None)
+                        or f'用户{uid}')
+                reservation = self._retire_reservations.get(uid)
+                if reservation is None:
+                    reservation = RetirementReservation(
+                        self._recovery.store_id, uid, nick,
+                        (record or {}).get('operation_id') or secrets.token_hex(16),
+                        (record or {}).get('retired_at', _now()))
+                if (reservation.nick != nick or self.nick_to_uid.get(nick) not in (None, uid)
+                        or any(name != nick and mapped == uid for name, mapped in self.nick_to_uid.items())):
+                    rejection = ('uid', '昵称映射与目标 UID 冲突')
+                else:
+                    self._retire_reservations[uid] = reservation
+                    if op is None:
+                        op = self._retire_ops[uid] = {
+                            'status': 'pending', 'operation_id': reservation.operation_id,
+                            'target_uid': uid, 'target_nick': nick, 'origin': None,
+                            'content_sha256': None, 'content_length': None, 'retryable': False,
+                            'persistence_phase': 'intent', 'identity_effect': 'not_started'}
+                    elif op.get('status') == 'failed':
+                        op.update(_retrying_failed=True, status='pending', retryable=False,
+                                  failed_stage=None, error_code=None)
+                    op['_executing'] = True
+                    execute = True
+        if rejection:
+            self._error(sess, *rejection, request_id=request_id)
+            return
+        self._send_retirement_info(sess, uid, request_id)
+        if not execute:
+            return
+        effects = None
+        try:
+            with self._writer_scope(kind='retirement', uid=uid,
+                                    operation_id=reservation.operation_id) as lease:
+                if lease is None:
+                    self._retirement_attempt_failed(
+                        uid, accepted=uid in self.retired, stage='admission',
+                        code='service_stopping', retryable=True)
+                else:
+                    effects = self._execute_retirement_locked(sess, reservation, lease)
+            # External effects own this attempt until its final response;
+            # they run after the continuous writer and all authority locks.
+            self._finish_retirement_attempt(sess, uid, request_id, reservation, effects)
+        finally:
+            with self.lock:
+                self._retire_ops[uid]['_executing'] = False
+                self._retire_ops[uid].pop('_retrying_failed', None)
+
+    def _finish_retirement_attempt(self, sess, uid, request_id, reservation, effects):
+        targets, removed, dissolved = effects if effects is not None else ([], 0, 0)
         for target in targets:
             try:
-                target.send({"t": MsgType.ERROR.value, "code": "deleted",
-                             "text": "你的账号已被管理员退役"})
+                target.send({'t': MsgType.ERROR.value, 'code': 'deleted',
+                             'text': '你的账号已被管理员退役'})
             except Exception:
                 pass
             try:
                 target.close_conn()
             except Exception:
                 pass
-        for other, payload in self._drop_xfers_of(uid):
-            self._send_to(other, payload)
-        self._drop_voice_rooms(uid)
-        self._disconnect_rooms_of(uid)
-        self._broadcast_roster()
-        self._broadcast_group_list()
-        pending = self._admin_user_payload(uid)
-        if pending is not None:
-            try:
-                sess.send(pending)
-            except Exception:
-                pass
-        ok = self._persist(force=True)
+        if effects is not None:
+            for other, payload in self._drop_xfers_of(uid):
+                self._send_to(other, payload)
+            self._drop_voice_rooms(uid)
+            self._disconnect_rooms_of(uid)
+            self._broadcast_roster()
+            self._broadcast_group_list()
+        self._send_retirement_info(sess, uid, request_id)
         with self.lock:
-            op = self._retire_ops.setdefault(uid, {"operation_id": op_id})
-            # _commit_current_snapshot/_ack_commit 已按 typed effect 写入
-            # pending/failed/unknown/confirmed；这里只补旧 hook 没有候选时
-            # 的兼容状态，不能把 unknown 或 confirmed 降级成 failed。
-            if op.get("status") == "pending":
-                last = self._persist_last_result
-                committed_sha = (last.sha256
-                                 if isinstance(last, server_store_mod.SaveResult)
-                                 and last.effect == "committed" else None)
-                committed_len = (last.length
-                                 if isinstance(last, server_store_mod.SaveResult)
-                                 and last.effect == "committed" else None)
-                op.update({"status": "confirmed" if ok else "failed",
-                           "target_uid": uid, "target_nick": nick,
-                           "origin": "written" if ok else None,
-                           "content_sha256": committed_sha if ok else None,
-                           "content_length": committed_len if ok else None,
-                           "retryable": False if ok else True,
-                           "failed_stage": None if ok else "store.save",
-                           "error_code": None if ok else "persist_failed"})
-            retire_status = op.get("status")
-        final = self._admin_user_payload(uid)
-        if final is not None:
+            status = self._retire_ops[uid]['status']
+        if status == 'confirmed':
+            self._broadcast({'t': MsgType.CLEARED.value, 'uid': uid})
+            self._broadcast_system(f'系统管理员已退役用户 {reservation.nick}（UID 保留，不可重新认领）')
+        self.audit.log(type='admin_user_del', uid=sess.uid, target=uid,
+                       target_nick=reservation.nick, removed=removed, dissolved=dissolved,
+                       operation_id=reservation.operation_id, status=status)
+
+    def _execute_retirement_locked(self, sess, reservation, lease):
+        """The continuous writer boundary; never send, close sockets or audit."""
+        uid = reservation.uid
+        accepted = self._recovery.intents.get(str(uid)) == reservation.record()
+        effects = None
+        try:
+            if not self._lease_valid(lease):
+                self._retirement_attempt_failed(uid, accepted=accepted,
+                                                unknown=self._recovery.phase == 'FAILED')
+                return effects
+            self._recovery.check_control()
+            with self.lock:
+                authorized = (self._session_member_locked(sess) and sess.is_admin
+                              and uid != sess.uid and uid not in _bots.BOT_BY_UID
+                              and not any(s.is_admin and s.uid == uid for s in self._snapshot_sessions())
+                              and self.nick_to_uid.get(reservation.nick) in (None, uid)
+                              and not any(name != reservation.nick and mapped == uid
+                                          for name, mapped in self.nick_to_uid.items())
+                              and reservation.store_id == self._recovery.store_id)
+            if not authorized:
+                self._retirement_attempt_failed(uid, accepted=accepted, stage='authorize',
+                                                code='authorization_changed', retryable=True)
+                return effects
+            self._reconcile_persist_unknown()
+            if not self._lease_valid(lease):
+                raise recovery_mod.StoreError('store_unavailable')
+            if self._persist_unresolved or self._retirement_retry_waiting():
+                self._retirement_attempt_failed(uid, accepted=accepted,
+                                                code='prior_commit_unresolved', retryable=not accepted)
+                return effects
+            with self.lock:
+                other_failed = any(other != uid and (op.get('status') == 'failed' or op.get('_retrying_failed'))
+                                   and op.get('persistence_phase') != 'intent'
+                                   for other, op in self._retire_ops.items())
+                current = self._retire_ops[uid]
+                retrying = current.get('_retrying_failed', False)
+                current_status = current['status']
+            if other_failed:
+                self._retirement_attempt_failed(uid, accepted=accepted,
+                                                code='prior_retry_required', retryable=True)
+                return effects
+            if current_status == 'confirmed':
+                return effects
+            candidate = {'uid': uid, 'operation_id': reservation.operation_id,
+                         'target_nick': reservation.nick, 'record': reservation.record()}
+            if accepted and retrying and not self._failed_retry_preflight([candidate]):
+                state, _ = self._capture_persist_state()
+                encoded = server_store_mod.encode_state(state)
+                self._persist_unresolved = {
+                    'sha256': encoded.sha256, 'length': encoded.length,
+                    'capture_request_seq': self._persist_request_seq, 'candidates': [candidate]}
+                self._retirement_attempt_failed(uid, unknown=True, accepted=True,
+                                                stage='reconcile', code='current_state_unverified')
+                return effects
+            if not accepted:
+                result = self._recovery.accept_intent(uid, reservation.record())
+                if result.effect != 'committed':
+                    unknown = result.effect == 'uncertain'
+                    self._retirement_attempt_failed(uid, unknown=unknown,
+                                                    stage=result.stage, code=result.error_code,
+                                                    retryable=result.retryable)
+                    if unknown:
+                        self._fail_store()
+                    return effects
+                accepted = True
+            with self.lock:
+                if uid not in self.retired:
+                    effects = self._apply_retirement_core_locked(uid, reservation.record())
+                    with self._resource_lock:
+                        self._resource_withdraw_owner_locked(uid)
+                self._retire_ops[uid].update(status='pending', retryable=False,
+                                             persistence_phase='snapshot', identity_effect='revoked')
+            self._snapshot_retry_thread = threading.get_ident()
             try:
-                sess.send(final)
-            except Exception:
-                pass
-        with self.lock:
-            retire_status = (self._retire_ops.get(uid) or {}).get("status",
-                             retire_status)
-        if retire_status == "confirmed":
-            self._broadcast({"t": MsgType.CLEARED.value, "uid": uid})
-            self._broadcast_system(f"系统管理员已退役用户 {nick}（UID 保留，不可重新认领）")
-        self.audit.log(type="admin_user_del", uid=sess.uid, target=uid,
-                       target_nick=nick, removed=removed, dissolved=dissolved,
-                       operation_id=op_id, status=retire_status)
-        print(f"[admin][退役账号] {sess.nick} 处理 @{nick}(uid={uid})："
-              f"清消息 {removed} 条，状态={retire_status}")
+                ok = self._persist_sync(_lease=lease)
+            finally:
+                self._snapshot_retry_thread = None
+            if not ok:
+                with self.lock:
+                    pending = self._retire_ops[uid]['status'] == 'pending'
+                if pending:
+                    last = self._persist_last_result
+                    self._retirement_attempt_failed(
+                        uid, unknown=self._recovery.phase == 'FAILED', accepted=True,
+                        stage=getattr(last, 'stage', 'snapshot'),
+                        code=getattr(last, 'error_code', 'snapshot_unverified'),
+                        retryable=bool(getattr(last, 'retryable', False)))
+            return effects
+        except Exception as exc:
+            self._fail_store()
+            self._retirement_attempt_failed(uid, unknown=True, accepted=accepted,
+                                            stage='retirement', code='retirement_' + type(exc).__name__)
+            return effects
+
 
     def _on_reaction(self, sess: Session, header: dict) -> None:
         """R13 表情回应：对 seq 消息加/摘 emoji，广播全网 reactions 状态。"""
@@ -6717,6 +7714,8 @@ class Hub:
         try:
             for fn in os.listdir(self.cloud_dir):
                 if not fn.endswith(".bin") or not fn[:-4].isdigit():
+                    continue
+                if int(fn[:-4]) in self.retired:
                     continue
                 path = os.path.join(self.cloud_dir, fn)
                 try:
@@ -9270,9 +10269,10 @@ class Hub:
                                   expected_round=captured_round,
                                   expected_status=RoomStatus.CREATED)
 
-        timer = threading.Timer(3.0, _reset)
-        timer.daemon = True
-        timer.start()
+        def delayed_reset():
+            if not self._service_stop.wait(3.0):
+                _reset()
+        self._start_worker(delayed_reset, name='game-reset')
         return True
 
     def _on_game_create(self, sess: Session, header: dict) -> None:
@@ -9506,61 +10506,74 @@ def _lan_ip(bind_host: str | None = None) -> str:
 
 def serve(hub: Hub, port: int | None = None, stop: threading.Event | None = None,
           start_web: bool = True) -> threading.Event:
-    """启动 TCP accept 循环（阻塞，Ctrl+C 退出）；默认同时起网页端线程"""
-    stop = stop or threading.Event()
+    """Serve one Hub lifecycle and close every owned worker before returning."""
+    stop = stop if stop is not None else hub._service_stop
+    hub._service_stop = stop
     port = port if port is not None else hub.cfg.tcp_port
-    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    bind_host = getattr(hub.cfg, "bind_host", "0.0.0.0")
-    srv.bind((bind_host, port))
-    srv.listen(128)
-    srv.settimeout(0.5)
-    hub.audit.log(type="server_start", port=port)
-
-    web_https = os.environ.get("MOYU_WEB_HTTPS", "1") != "0"   # P0：默认自签 HTTPS
-    if start_web:
-        import web
-        web_thread = threading.Thread(target=web.serve,
-                                      args=(hub, None, stop, web_https),
-                                      daemon=True)
-        web_thread.start()
-
-    sweeper = threading.Thread(target=_sweeper_loop, args=(hub, stop), daemon=True)
-    sweeper.start()
-    game_ticker = threading.Thread(target=_game_tick_loop, args=(hub, stop), daemon=True)
-    game_ticker.start()
-
-    if getattr(hub.cfg, "discovery_enabled", True):
-        try:
+    bind_host = getattr(hub.cfg, 'bind_host', '0.0.0.0')
+    normal = False
+    failure = None
+    try:
+        if stop.is_set():
+            return stop
+        if not hub._service_available():
+            raise recovery_mod.StoreError('service_unavailable')
+        srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        with hub._lifecycle_lock:
+            hub._listener_sockets.add(srv)
+        srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        srv.bind((bind_host, port))
+        srv.listen(128)
+        srv.settimeout(0.2)
+        web_https = os.environ.get('MOYU_WEB_HTTPS', '1') != '0'
+        web_port = hub.cfg.web_port
+        if start_web:
+            import web
+            httpd = web.serve(hub, None, stop, web_https)
+            web_port = httpd.server_address[1]
+        hub._service_started = True
+        hub.audit.log(type='server_start', port=srv.getsockname()[1])
+        hub._start_worker(_sweeper_loop, args=(hub, stop), name='sweeper')
+        hub._start_worker(_game_tick_loop, args=(hub, stop), name='game-ticker')
+        if getattr(hub.cfg, 'discovery_enabled', True):
             import discovery
             from config import APP_NAME
-            _bcast = discovery.DiscoveryBroadcaster(hub.cfg, name=APP_NAME, stop=stop)
-            _bcast.start()
-        except Exception:
-            pass          # UDP 广播失败不影响 TCP 主服务
-
-    scheme = "https" if web_https else "http"
-    tip = "（自签证书，浏览器首次访问点「继续前往」即可）" if web_https else ""
-    lan = _lan_ip(bind_host)
-    print(f"[服务器] TCP 监听 {bind_host}:{port}，网页端 {scheme}://{lan}:{hub.cfg.web_port}/{tip}")
-    print(f"        本机访问可用 {scheme}://127.0.0.1:{hub.cfg.web_port}/，"
-          f"局域网其他机器用 {scheme}://{lan}:{hub.cfg.web_port}/")
-    if not hub._admin_pwd_hash:
-        print("[服务器] 管理员登录未启用；请在部署环境设置 MOYU_ADMIN_PASSWORD 后重启。")
-    while not stop.is_set():
-        try:
-            conn, addr = srv.accept()
-        except socket.timeout:
-            continue
-        except OSError:
-            break
-        try:
-            conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        except OSError:
-            pass
-        threading.Thread(target=_handle_tcp, args=(hub, conn, addr), daemon=True).start()
-    srv.close()
-    hub.audit.log(type="server_stop")
+            broadcaster = discovery.DiscoveryBroadcaster(hub.cfg, name=APP_NAME, stop=stop)
+            broadcaster._thread = hub._start_worker(broadcaster._run, name='discovery-broadcast')
+        scheme = 'https' if web_https else 'http'
+        lan = _lan_ip(bind_host)
+        print(f'[服务器] TCP 监听 {bind_host}:{srv.getsockname()[1]}')
+        if start_web:
+            print(f'[服务器] 网页端 {scheme}://{lan}:{web_port}/')
+        if not hub._admin_pwd_hash:
+            print('[服务器] 管理员登录未启用；请在部署环境设置 MOYU_ADMIN_PASSWORD 后重启。')
+        normal = True
+        while not stop.is_set():
+            try:
+                conn, addr = srv.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                if not stop.is_set():
+                    raise
+                break
+            try:
+                conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            except OSError:
+                pass
+            if hub._start_worker(_handle_tcp, args=(hub, conn, addr),
+                                 name='tcp-client', connection=conn) is None:
+                hub._close_socket(conn)
+    except KeyboardInterrupt:
+        normal = hub._service_started
+    except BaseException as exc:
+        failure = exc
+        hub._fail_store()
+        raise
+    finally:
+        stop.set()
+        if not hub.shutdown(normal=normal) and failure is None:
+            raise recovery_mod.StoreError('shutdown_unconfirmed')
     return stop
 
 
@@ -9628,7 +10641,24 @@ def _game_tick_loop(hub: Hub, stop: threading.Event) -> None:
                     pass
 
 
-def main() -> int:
+def main(argv=None) -> int:
+    import argparse
+    parser = argparse.ArgumentParser(description='摸鱼服务器：显式打开或离线维护状态目录')
+    parser.add_argument('action', nargs='?', default='open', choices=(
+        'open', 'initialize-new', 'adopt-legacy', 'resume-bootstrap', 'inspect'))
+    parser.add_argument('--store-dir', help='状态目录；离线维护必须明确指定，不自动覆盖或迁移')
+    args = parser.parse_args(argv)
+    if args.action != 'open':
+        if args.store_dir is None:
+            parser.error('离线维护必须提供 --store-dir；initialize-new 只接受不存在的新目录')
+        try:
+            result = recovery_mod.maintenance(args.action, args.store_dir)
+        except (recovery_mod.StoreError, OSError) as exc:
+            result = {'action': args.action, 'ok': False,
+                      'error': getattr(exc, 'code', type(exc).__name__),
+                      'field': getattr(exc, 'field', 'maintenance')}
+        print(json.dumps(result, ensure_ascii=True))
+        return 0 if result['ok'] else 2
     enable_crashlog()                        # R48：崩溃堆栈常开写 crash.log
     for _s in (sys.stdout, sys.stderr):      # windowed 打包下二者可能为 None（无控制台）
         try:
@@ -9637,8 +10667,13 @@ def main() -> int:
         except (AttributeError, OSError, ValueError):
             pass
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
-    hub = Hub(store_dir=CFG.persistence_dir)   # R16：启用全状态持久化
-    stop = threading.Event()
+    try:
+        hub = Hub(store_dir=args.store_dir or CFG.persistence_dir)
+    except (recovery_mod.StoreError, OSError) as exc:
+        print(f"[服务器] 无法启动：{getattr(exc, 'code', type(exc).__name__)}"
+              f"（{getattr(exc, 'field', 'startup')}）；原有状态不会被空库覆盖。", file=sys.stderr)
+        return 2
+    stop = hub._service_stop
 
     # 服务器常驻托盘：防误关。pystray 缺失时返回 None，照常起服。
     tray = None
@@ -9662,10 +10697,14 @@ def main() -> int:
         except Exception:
             tray = None
 
+    exit_code = 0
     try:
         serve(hub, stop=stop)
     except KeyboardInterrupt:
         pass
+    except (recovery_mod.StoreError, OSError) as exc:
+        exit_code = 2
+        print(f"[服务器] 服务未正常完成：{getattr(exc, 'code', type(exc).__name__)}", file=sys.stderr)
     finally:
         stop.set()
         try:
@@ -9674,14 +10713,12 @@ def main() -> int:
                 tray.stop()
         except Exception:
             pass
-        hub._persist_flush()                    # R16：关停前强制落盘
-        hub._persist_closing = True
-        hub._persist_wake.set()                 # 唤醒后台线程退出（daemon 容错，不卡退出）
-        t = hub._persist_worker_thread
-        if t is not None and t.is_alive():
-            t.join(timeout=1)
-        hub.audit.close()
-    return 0
+        if not hub._shutdown_started:
+            if not hub.shutdown(normal=False):
+                exit_code = 2
+        elif hub._shutdown_result is not True:
+            exit_code = 2
+    return exit_code
 
 
 if __name__ == "__main__":

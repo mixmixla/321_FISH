@@ -78,63 +78,52 @@ def test_rel01_bind_host_rejects_non_literal_or_empty(value):
     assert "MOYU_BIND_HOST" in result.stderr
 
 
-def test_rel01_server_and_web_use_same_literal_bind(monkeypatch):
+def test_rel01_server_and_web_use_same_literal_bind(tmp_path, monkeypatch):
+    from dataclasses import replace
+    from config import CFG
     import server
     import web
 
-    class FakeSocket:
-        def __init__(self):
-            self.bound = None
+    class BindObserved(OSError):
+        pass
 
+    class FakeSocket:
+        bound = None
         def setsockopt(self, *_args):
             pass
-
         def bind(self, address):
             self.bound = address
-
-        def listen(self, _backlog):
+            raise BindObserved('literal TCP bind captured')
+        def shutdown(self, *_args):
             pass
-
-        def settimeout(self, _timeout):
-            pass
-
         def close(self):
             pass
 
+    cfg = replace(CFG, bind_host='127.0.0.1', tcp_port=39127, web_port=39129,
+                  discovery_enabled=False, tray_enabled=False,
+                  audit_dir=str(tmp_path/'audit'), web_files_dir=str(tmp_path/'web'))
+    hub = server.Hub(cfg=cfg, audit_dir=cfg.audit_dir)
     tcp_socket = FakeSocket()
-    monkeypatch.setattr(server.socket, "socket",
-                        lambda *_args, **_kwargs: tcp_socket)
-    stop = threading.Event()
-    stop.set()
-    cfg = SimpleNamespace(
-        bind_host="127.0.0.1", tcp_port=39127, web_port=39129,
-        discovery_enabled=False, sweep_interval=1.0, game_auto_tick=1.0,
-        tcp_idle_seconds=1.0,
-    )
-    logs = []
-    hub = SimpleNamespace(
-        cfg=cfg, audit=SimpleNamespace(log=lambda **kw: logs.append(kw)),
-        _admin_pwd_hash="",
-    )
-    server.serve(hub, port=cfg.tcp_port, stop=stop, start_web=False)
-    assert tcp_socket.bound == ("127.0.0.1", cfg.tcp_port)
+    with monkeypatch.context() as patched:
+        patched.setattr(server.socket, 'socket', lambda *_a, **_kw: tcp_socket)
+        with pytest.raises(BindObserved):
+            server.serve(hub, port=cfg.tcp_port, start_web=False)
+    assert tcp_socket.bound == ('127.0.0.1', cfg.tcp_port)
+    assert hub._shutdown_result is True
 
     web_address = []
-
     class FakeHttpd:
         def __init__(self, address, _handler):
             web_address.append(address)
-            self.server_address = address
-            self.daemon_threads = False
-            self.allow_reuse_address = False
-            self.socket = object()
-
-        def serve_forever(self, **_kwargs):
-            return None
-
-    monkeypatch.setattr(web, "_QuietServer", FakeHttpd)
-    web.serve(hub, port=cfg.web_port, stop=stop, https=False)
-    assert web_address == [("127.0.0.1", cfg.web_port)]
+            raise BindObserved('literal HTTP bind captured')
+    hub2 = server.Hub(cfg=cfg, audit_dir=cfg.audit_dir)
+    try:
+        monkeypatch.setattr(web, '_QuietServer', FakeHttpd)
+        with pytest.raises(BindObserved):
+            web.serve(hub2, port=cfg.web_port, https=False)
+        assert web_address == [('127.0.0.1', cfg.web_port)]
+    finally:
+        assert hub2.shutdown(normal=False)
 
 
 def test_rel01_loopback_lan_hint_does_not_route_probe(monkeypatch):
@@ -147,44 +136,48 @@ def test_rel01_loopback_lan_hint_does_not_route_probe(monkeypatch):
     assert server._lan_ip("127.0.0.1") == "127.0.0.1"
 
 
-def test_rel01_real_loopback_tcp_and_web_bind():
-    """Bind both real listeners on loopback and close them without broadcast."""
+def test_rel01_real_loopback_tcp_and_web_bind(tmp_path, monkeypatch):
+    """Run both real listeners with a real Hub and verify their owned shutdown."""
+    from dataclasses import replace
+    from config import CFG
     import server
-    import web
+    import local_trial
 
-    def free_port():
-        probe = __import__("socket").socket()
-        try:
-            probe.bind(("127.0.0.1", 0))
-            return probe.getsockname()[1]
-        finally:
-            probe.close()
-
-    tcp_port, web_port = free_port(), free_port()
+    tcp_port, web_port = local_trial._ports()
+    cfg = replace(CFG, bind_host='127.0.0.1', tcp_port=tcp_port, web_port=web_port,
+                  discovery_enabled=False, tray_enabled=False,
+                  audit_dir=str(tmp_path/'audit'), web_files_dir=str(tmp_path/'web'))
+    hub = server.Hub(cfg=cfg, audit_dir=cfg.audit_dir)
     stop = threading.Event()
-    stop.set()
-    logs = []
-    cfg = SimpleNamespace(
-        bind_host="127.0.0.1", tcp_port=tcp_port, web_port=web_port,
-        discovery_enabled=False, sweep_interval=1.0, game_auto_tick=1.0,
-        tcp_idle_seconds=1.0,
-    )
-    hub = SimpleNamespace(
-        cfg=cfg, audit=SimpleNamespace(log=lambda **kw: logs.append(kw)),
-        _admin_pwd_hash="",
-    )
-    server.serve(hub, port=tcp_port, stop=stop, start_web=False)
-    assert any(item.get("type") == "server_start" for item in logs)
-
-    httpd = web.serve(hub, port=web_port, stop=stop, https=False)
+    monkeypatch.setenv('MOYU_WEB_HTTPS', '0')
+    logs, errors = [], []
+    original_log = hub.audit.log
+    def record(**event):
+        logs.append(event)
+        return original_log(**event)
+    monkeypatch.setattr(hub.audit, 'log', record)
+    def serve():
+        try:
+            server.serve(hub, stop=stop)
+        except BaseException as exc:
+            errors.append(exc)
+    supervisor = threading.Thread(target=serve, daemon=True)
+    supervisor.start()
     try:
-        assert httpd.server_address[0] == "127.0.0.1"
-        deadline = time.monotonic() + 1.0
-        while httpd._BaseServer__shutdown_request and time.monotonic() < deadline:
-            time.sleep(0.01)
+        assert local_trial._wait_tcp(tcp_port)
+        assert local_trial._wait_tcp(web_port)
+        assert any(item.get('type') == 'server_start' for item in logs)
+        assert any(item.get('type') == 'web_start' for item in logs)
+        assert all(sock.getsockname()[0] == '127.0.0.1' for sock in hub._listener_sockets)
+        assert len(hub._http_servers) == 1
+        assert next(iter(hub._http_servers)).server_address == ('127.0.0.1', web_port)
     finally:
-        httpd.shutdown()
-        httpd.server_close()
+        stop.set()
+        supervisor.join(12)
+        assert not supervisor.is_alive()
+        assert hub._shutdown_result is True
+        assert not any(worker.is_alive() for worker in hub._managed_threads)
+    assert not errors
 
 
 def test_rel01_discovery_hotkey_and_tray_gates(monkeypatch):

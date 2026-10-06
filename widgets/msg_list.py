@@ -1865,7 +1865,7 @@ class MsgList(tk.Canvas):
         键含段落种类（R59 富文本换行/绘制同参一致）。"""
         try:
             key = (self._font_sig,
-                   tuple((s[0], s[1] if len(s) > 1 else "") for s in segs),
+                   tuple(tuple(s) for s in segs),
                    inner)
         except Exception:
             key = (self._font_sig, "".join(str(w) for w, *_ in segs), inner)
@@ -1874,9 +1874,9 @@ class MsgList(tk.Canvas):
             self._wrap_cache[key] = self._wrap_cache.pop(key)   # 命中移到队尾
             return lines
         try:
-            lines = runs.wrap_segments(segs, inner, self._meas_kind)
+            lines = runs.wrap_segments(segs, inner, self._meas_kind, preserve_whitespace=True)
         except Exception:
-            lines = [[("".join(w for w, _k in segs), runs.PLAIN)]]
+            lines = [[("".join(s[0] for s in segs), runs.PLAIN)]]
         if len(self._wrap_cache) >= self._WRAP_CACHE_MAX:
             self._wrap_cache.pop(next(iter(self._wrap_cache)))  # 淘汰最旧
         self._wrap_cache[key] = lines
@@ -2705,6 +2705,7 @@ class MsgList(tk.Canvas):
         sp = self._meas(" ")
         base_x, y0 = bub_x + ph, bub_y + pv
         for li, ln in enumerate(lines):
+            sp = 0 if isinstance(ln, runs.TextLine) else self._meas(" ")
             x = base_x
             yy = y0 + li * self._linespace
             for seg in ln:
@@ -2978,7 +2979,7 @@ class MsgList(tk.Canvas):
         q = str(row.poll.get("question") or "投票")
         try:
             qlines = runs.wrap_segments([(q, runs.PLAIN)], opline,
-                                         lambda s, k: self._meas_bold(s))
+                                         lambda s, k: self._meas_bold(s), preserve_whitespace=True)
         except Exception:
             qlines = [[(q, runs.PLAIN)]]
         opts = row.poll.get("options") or []
@@ -3067,7 +3068,7 @@ class MsgList(tk.Canvas):
                 item = self.create_text(x, yy, anchor="nw", text=w,
                                         font=self._bold_font, fill=color)
                 self._item_ids.append(item)
-                x += self._meas_bold(w) + sp
+                x += self._meas_bold(w) + (0 if isinstance(ln, runs.TextLine) else sp)
             yy += self._linespace
         for txt, suffix, mark, oi, cnt, pct in rows_:  # 选项行
             tag = f"r26poll{i}_{oi}"
@@ -3627,7 +3628,7 @@ class MsgList(tk.Canvas):
             inner = max(self.MIN_BUBBLE_W, int(wrap_w * self.CAP_RATIO))
             try:
                 lines = runs.wrap_segments([(row.caption, runs.PLAIN)],
-                                           inner, lambda s, k: self._meas(s))
+                                           inner, lambda s, k: self._meas(s), preserve_whitespace=True)
             except Exception:
                 lines = [[(row.caption, runs.PLAIN)]]
             cy = iy + img_h

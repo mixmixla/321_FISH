@@ -57,7 +57,41 @@ def _line_w(words: list, measure) -> int:
     if not words:
         return 0
     w = sum(ma(t, k) for t, k in _iter2(words))
-    return w + ma(" ", "") * (len(words) - 1)
+    return w if isinstance(words, TextLine) else w + ma(" ", "") * (len(words) - 1)
+
+
+class TextLine(list):
+    """Runs contain their exact spacing. hard_break identifies source newlines."""
+    hard_break = False
+
+
+def _wrap_exact(segments, width, measure):
+    lines, cur = [], TextLine()
+    used = 0
+
+    def flush(hard=False):
+        nonlocal cur, used
+        cur.hard_break = hard
+        lines.append(cur)
+        cur, used = TextLine(), 0
+
+    for seg in segments:
+        kind = seg[1] if len(seg) > 1 else PLAIN
+        for token in re.findall(r"\n|[^\S\n]+|[^\s]+", seg[0]):
+            if token == "\n":
+                flush(hard=True)
+                continue
+            if cur and used + measure(token, kind) > width:
+                flush()
+            for chunk in _split_word(token, width, measure, kind):
+                size = measure(chunk, kind)
+                if cur and used + size > width:
+                    flush()
+                cur.append((chunk, kind, seg[2]) if len(seg) >= 3 else (chunk, kind))
+                used += size
+    if cur or (lines and lines[-1].hard_break):
+        flush()
+    return lines
 
 
 def _split_word(word: str, width, measure, kind) -> list:
@@ -100,7 +134,7 @@ def _adapted(measure):
     return (lambda t, k, _m=measure: _m(t))
 
 
-def wrap_segments(segments: list, width: int, measure) -> list:
+def wrap_segments(segments: list, width: int, measure, *, preserve_whitespace=False) -> list:
     """按 width 换行。返回 lines：每行是 [[(text, kind)]]（原段结构保留）。
 
     新行（\\n）硬断；空格处单词换行；超宽单块按字符硬拆（CJK 安全）。
@@ -108,6 +142,8 @@ def wrap_segments(segments: list, width: int, measure) -> list:
     """
     lines, cur = [], []
     ma = _adapted(measure)
+    if preserve_whitespace:
+        return _wrap_exact(segments, width, ma)
 
     def flush():
         if cur:
@@ -146,7 +182,7 @@ def wrap_segments(segments: list, width: int, measure) -> list:
                         flush()
                     cur.append((chunk, k) if len(seg) < 3 else (chunk, k, seg[2]))
             else:
-                cur.append(seg if len(seg) >= 3 else (tok, k))
+                cur.append((tok, k, seg[2]) if len(seg) >= 3 else (tok, k))
     flush()
     return lines
 

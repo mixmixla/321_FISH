@@ -7,6 +7,7 @@ from dataclasses import replace
 import pytest
 
 from config import CFG
+from server_recovery import StoreCoordinator
 from server import Hub, Session
 
 
@@ -86,6 +87,7 @@ def test_attach_and_last_unregister_preserve_profile_and_offline_roster(hub):
 
 def test_profile_survives_json_restart_and_relogin(tmp_path):
     store_dir = tmp_path / "store"
+    StoreCoordinator.initialize_new(store_dir)
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit1"),
                   web_files_dir=str(tmp_path / "web1"), admin_pwd="")
     h1 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit1"),
@@ -108,7 +110,7 @@ def test_profile_survives_json_restart_and_relogin(tmp_path):
         h1.unregister(other, "restart_other")
         h1._persist_flush()
     finally:
-        h1.audit.close()
+        assert h1.shutdown(normal=False)
 
     cfg2 = replace(CFG, audit_dir=str(tmp_path / "audit2"),
                    web_files_dir=str(tmp_path / "web2"), admin_pwd="")
@@ -134,4 +136,4 @@ def test_profile_survives_json_restart_and_relogin(tmp_path):
         assert welcome["invisible"] is True
         assert welcome["status"] == "busy"
     finally:
-        h2.audit.close()
+        assert h2.shutdown(normal=False)

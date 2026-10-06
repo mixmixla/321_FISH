@@ -22,6 +22,7 @@ from dataclasses import replace
 import pytest
 
 from config import CFG
+from server_recovery import StoreCoordinator
 from protocol import MsgType
 from server import Hub, serve as serve_tcp
 from web import serve as serve_web
@@ -206,6 +207,7 @@ def test_sched_private_unknown_target_rejected(hub):
 def test_sched_persist_restore(tmp_path):
     """R51 队列随快照持久化；重启恢复后未到点项保留、已到点项丢弃。"""
     store_dir = str(tmp_path / "store")
+    StoreCoordinator.initialize_new(store_dir)
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit"),
                   web_files_dir=str(tmp_path / "web"))
     h1 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), store_dir=store_dir)
@@ -223,10 +225,12 @@ def test_sched_persist_restore(tmp_path):
 
     # 重启恢复：快照中未到点项保留（h1 sweep 已消费到点项，快照只含未到点项）
     h1._persist(force=True)
+    assert h1.shutdown(normal=False)
     h2 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), store_dir=store_dir)
     assert len(h2.scheds.get(a.uid, {})) == 1
     r = next(iter(h2.scheds[a.uid].values()))
     assert r["text"] == "保留我"
+    assert h2.shutdown(normal=False)
 
 
 # ================= P1-2 私聊双向删除 =================

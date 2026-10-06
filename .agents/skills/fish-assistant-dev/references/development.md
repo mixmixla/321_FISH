@@ -93,6 +93,13 @@ ExcelSheet/ExcelChrome 通常自动收集，仍需实际打包验证后才能声
 合成登录/存活/owned进程树清理证据；精确候选及当前验收见docs/review-packages/REL-01-r1.md。
 不据此推导EXE界面完整对局、非开发机器、全部可选扩展或真实设备长期通话通过。
 
+## 少量朋友便携入口
+
+`friend_trial_start.py` 与 `friend_trial_process.py` 可编译为console `StartTrial.exe`，和 `dist/client.exe`、`dist/server.exe` 一起分发。
+朋友运行不需要Python/pwsh；开发构建仍用本项目环境。默认demo每次新资料、回环双客户端；host/join只接受明确可信LAN私网IPv4。
+入口使用自身owned Job，不挂接真实资料或现有进程；新入口专项保留host/demo故障、部分启动及父死亡清理断言。
+构建样例/数据排除/待测窗口与LAN边界见 `docs/朋友试用候选_2026-10-06.md`。
+
 ## Git 与文档
 
 仓库约定 `feature/` / `fix/`，`类型: 一句话说明`，稳定 main 只经 PR 合并。

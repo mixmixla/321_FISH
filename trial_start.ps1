@@ -182,6 +182,8 @@ if ($DryRun) {
         powershell = "pwsh 7+"
         root = $Root
         server = "dist\server.exe"
+        initialize = @("initialize-new", "--store-dir", "<fresh trial-server>\store")
+        open = @("open", "--store-dir", "<fresh trial-server>\store")
         client = "dist\client.exe"
         profiles = @("trial-server", "trial-client-alpha", "trial-client-beta")
         ports = @{ tcp = "random loopback IPv4"; web = "random loopback IPv4" }
@@ -231,7 +233,13 @@ $summary = [ordered]@{
 }
 
 try {
-    $server = Start-TrialProcess -Executable $ServerExe -Arguments @() -Environment $envServer -Hidden $true
+    $storePath = Join-Path $profiles.server "store"
+    $initializer = Start-TrialProcess -Executable $ServerExe -Arguments @("initialize-new", "--store-dir", $storePath) -Environment $envServer -Hidden $true
+    [void]$children.Add($initializer)
+    if (-not $initializer.WaitForExit(15000)) { throw "Store initialization did not finish within 15 seconds" }
+    $summary.processes.initialize = @{ pid = $initializer.Id; exit_code = $initializer.ExitCode; store = "trial-server/store" }
+    if ($initializer.ExitCode -ne 0) { throw "Explicit Store initialization failed; retained the fresh directory for inspection" }
+    $server = Start-TrialProcess -Executable $ServerExe -Arguments @("open", "--store-dir", $storePath) -Environment $envServer -Hidden $true
     [void]$children.Add($server)
     $summary.processes.server = @{ pid = $server.Id; image = "dist\server.exe"; hidden = $true }
     $deadline = (Get-Date).AddSeconds(12)

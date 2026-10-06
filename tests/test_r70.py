@@ -14,6 +14,7 @@ from dataclasses import replace
 import pytest
 
 from config import CFG
+from server_recovery import StoreCoordinator
 from server import Hub, serve as serve_tcp
 from client_core import ClientCore
 from widgets import rich, runs
@@ -351,11 +352,13 @@ def test_poll_old_shape_still_accepted(tmp_path):
 def test_poll_snapshot_keeps_new_fields(tmp_path):
     """快照保留 anonymous/multi/quiz/correct；votes 还原为 int 键 + list 值。"""
     store_dir = tmp_path / "r70_poll"
+    StoreCoordinator.initialize_new(store_dir)
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit"))
     h1 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), store_dir=str(store_dir))
     port = _free_port()
     stop = threading.Event()
-    threading.Thread(target=serve_tcp, args=(h1, port, stop, False), daemon=True).start()
+    supervisor = threading.Thread(target=serve_tcp, args=(h1, port, stop, False), daemon=True)
+    supervisor.start()
     time.sleep(0.1)
     a, ac = _spawn(port, "alice", tmp_path)
     b, bc = _spawn(port, "bob", tmp_path)
@@ -373,13 +376,15 @@ def test_poll_snapshot_keeps_new_fields(tmp_path):
     finally:
         a.stop(); b.stop()
         stop.set()
-        time.sleep(0.2)
+        supervisor.join(12)
+        assert not supervisor.is_alive() and not h1._recovery.owner.held
 
     h2 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), store_dir=str(store_dir))
     p = h2._polls[seq]
     assert p["anonymous"] is True and p["multi"] is True and p["quiz"] is True
     assert p["correct"] == 0
     assert p["votes"].get(bob_uid) == [0]            # int 键 + list 值
+    assert h2.shutdown(normal=False)
 
 
 # ---------- R70E 消息伪装 ----------

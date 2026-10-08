@@ -28,7 +28,7 @@ def hub(tmp_path):
                          web_files_dir=str(tmp_path / "web"), admin_pwd=""),
             audit_dir=str(tmp_path / "audit"))
     yield h
-    h.audit.close()
+    assert h.shutdown(normal=False)
 
 
 def _attach(hub, nick, stype="tcp"):
@@ -57,30 +57,26 @@ def _join_start(hub, owner, other, room_id):
     hub.dispatch(owner, {"t": MsgType.GAME_START.value, "room_id": room_id})
 
 
+def _defer_game_reset(hub, monkeypatch):
+    callbacks = []
+    def defer(callback, *, name):
+        assert name == 'game-reset'
+        callbacks.append(callback)
+    def elapsed(delay):
+        assert delay == 3.0
+        return False
+    monkeypatch.setattr(hub, '_start_worker', defer)
+    monkeypatch.setattr(hub._service_stop, 'wait', elapsed)
+    return callbacks
+
+
 def test_tictactoe_finish_keeps_public_snapshot_and_resets_once(hub, monkeypatch):
     a, a_out = _attach(hub, "ttt-a")
     b, b_out = _attach(hub, "ttt-b")
     rid = _create(hub, a, "tictactoe")
     _join_start(hub, a, b, rid)
     _clear(a_out, b_out)
-    timers = []
-
-    class _Timer:
-        def __init__(self, delay, callback, *args, **kwargs):
-            self.delay = delay
-            self.callback = callback
-            self.args = args
-            self.kwargs = kwargs
-            self.daemon = False
-            timers.append(self)
-
-        def start(self):
-            self.started = True
-
-        def fire(self):
-            return self.callback(*self.args, **self.kwargs)
-
-    monkeypatch.setattr(server_mod.threading, "Timer", _Timer)
+    callbacks = _defer_game_reset(hub, monkeypatch)
     moves = [
         (a, {"x": 0, "y": 0}), (b, {"x": 0, "y": 1}),
         (a, {"x": 1, "y": 0}), (b, {"x": 1, "y": 1}),
@@ -96,25 +92,25 @@ def test_tictactoe_finish_keeps_public_snapshot_and_resets_once(hub, monkeypatch
              if f.get("room", {}).get("status") == "ended"]
     assert ended and ended[-1]["state"] is not None
     assert ended[-1]["state"]["winner_uid"] == a.uid
-    assert len(timers) == 1 and timers[0].daemon is True
+    assert len(callbacks) == 1
 
     # Duplicate finish callback/notification must not schedule a second reset.
     hub._finish_game(room, room.gs.ended())
-    assert len(timers) == 1
-    timers[0].fire()
+    assert len(callbacks) == 1
+    callbacks[0]()
     assert room.status.value == "created" and room.gs is None
     lobby = [f for f in _frames(a_out, MsgType.GAME_LIST.value)
              if any(r["room_id"] == rid and r["status"] == "created"
                     for r in f.get("rooms", []))]
     assert lobby
-    # 旧 Timer 在新一轮已进入 ENDED 后也不能复位新 gs。
+    # 旧延迟回调在新一轮已进入 ENDED 后也不能复位新 gs。
     with hub.rooms.lock:
         new_round = room.round_no + 1
         new_gs = room.game_cls(room.players, seed=hub.rooms._seed_for(room))
         room.round_no = new_round
         room.gs = new_gs
         room.status = type(room.status).ENDED
-    timers[0].fire()
+    callbacks[0]()
     assert room.status.value == "ended" and room.gs is new_gs
 
 
@@ -227,23 +223,12 @@ def test_stale_finish_capture_cannot_end_replaced_round(hub, monkeypatch):
         room.gs = room.game_cls(room.players, seed=hub.rooms._seed_for(room))
         room.status = type(room.status).PLAYING
         new_gs = room.gs
-    timers = []
-
-    class _Timer:
-        def __init__(self, delay, callback, *args, **kwargs):
-            timers.append(self)
-            self.callback = callback
-            self.daemon = False
-
-        def start(self):
-            self.daemon = True
-
-    monkeypatch.setattr(server_mod.threading, "Timer", _Timer)
+    callbacks = _defer_game_reset(hub, monkeypatch)
     hub._finish_game(room, {"winner_uid": old_gs.players[0],
                             "detail": "旧轮"},
                      expected_gs=old_gs, expected_round=old_round)
     assert room.status.value == "playing" and room.gs is new_gs
-    assert timers == []
+    assert callbacks == []
 
 
 def test_stale_tick_capture_cannot_finish_replaced_round(hub, monkeypatch):

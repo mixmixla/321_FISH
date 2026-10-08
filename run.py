@@ -6,6 +6,9 @@
     python run.py test-all   # 同上，可用 --resume/--label 等门禁参数
     python run.py test -k x # 保留单进程专项 pytest 入口
     python run.py server     # 启动服务器（控制台）
+    python run.py server initialize-new --store-dir <全新目录>  # 显式建库后退出
+    python run.py server open --store-dir <状态目录>            # 校验/恢复后启动
+    python run.py server inspect --store-dir <状态目录>         # 只读分类
     python run.py client     # 启动客户端（GUI）
     python run.py build      # PyInstaller 打包 server.exe / client.exe
 """

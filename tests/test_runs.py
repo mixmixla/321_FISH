@@ -2,6 +2,7 @@
 """test_runs.py —— 富文本分段与布局（R11，纯函数无 tk）。"""
 from widgets.runs import (tag_entities, wrap_segments, line_width,
                           normalize_url, MENTION, LINK, PLAIN)
+import pytest
 
 
 def test_tag_entities_mentions():
@@ -69,3 +70,45 @@ def test_line_width_and_normalize():
     assert line_width([("ab", PLAIN), ("cd", PLAIN)], m) == 5   # 2+1+2
     assert normalize_url("www.x.com") == "http://www.x.com"
     assert normalize_url("https://x.com") == "https://x.com"
+
+
+@pytest.mark.parametrize("text", ["UX 中文 😀", "one two three", "甲\n乙 😀", "a  b\tc"])
+@pytest.mark.parametrize("width", [3, 100])
+def test_three_field_runs_match_two_field_text_without_repeating(text, width):
+    two = wrap_segments([(text, LINK)], width, lambda t: len(t))
+    three = wrap_segments([(text, LINK, "https://example.invalid")], width, lambda t: len(t))
+    assert [[s[:2] for s in line] for line in three] == two
+    assert all(s[2] == "https://example.invalid" for line in three for s in line)
+
+
+@pytest.mark.parametrize("text", ["  UX  中文 😀\tend ", "\n甲\n\n乙\n", "中English😀超宽段", "   "])
+@pytest.mark.parametrize("width", [1, 4, 100])
+def test_exact_layout_preserves_every_character_and_blank_line(text, width):
+    lines = wrap_segments([(text, LINK, "https://example.invalid")], width,
+                          lambda t: len(t), preserve_whitespace=True)
+    restored = "".join("".join(s[0] for s in line) + ("\n" if line.hard_break else "")
+                       for line in lines)
+    assert restored == text
+    assert all(line_width(line, lambda t: len(t)) <= width for line in lines)
+    assert all(s[2] == "https://example.invalid" for line in lines for s in line)
+
+
+def test_exact_layout_does_not_insert_spaces_between_adjacent_entities():
+    lines = wrap_segments([("看", PLAIN), ("这里", LINK, "https://example.invalid"), ("。", PLAIN)],
+                          100, lambda t: len(t), preserve_whitespace=True)
+    assert "".join(s[0] for s in lines[0]) == "看这里。"
+    assert line_width(lines[0], lambda t: len(t)) == 4
+
+
+def test_msg_cache_separates_href_and_segment_arity_in_both_orders():
+    from types import SimpleNamespace
+    from widgets.msg_list import MsgList
+    for order in ((None, "https://a.invalid", "https://b.invalid"),
+                  ("https://b.invalid", "https://a.invalid", None)):
+        widget = SimpleNamespace(_font_sig="synthetic", _wrap_cache={},
+                                 _WRAP_CACHE_MAX=10, _meas_kind=lambda t, k: len(t))
+        for href in order:
+            segment = ("same label", LINK, href) if href else ("same label", LINK)
+            lines = MsgList._wrap_lines(widget, [segment], 100)
+            assert "".join(s[0] for s in lines[0]) == "same label"
+            assert all((s[2] if len(s) > 2 else None) == href for line in lines for s in line)

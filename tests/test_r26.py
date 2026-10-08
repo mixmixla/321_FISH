@@ -13,6 +13,7 @@ from dataclasses import replace
 import pytest
 
 from config import CFG
+from server_recovery import StoreCoordinator
 from server import Hub, serve as serve_tcp, fetch_preview, _parse_meta
 from client_core import ClientCore
 
@@ -223,11 +224,13 @@ def test_poll_edit_blocked(hub, tmp_path):
 def test_poll_persist_restore(tmp_path):
     """投票权威状态入 R16 快照：重启后 _polls 与历史票数仍保留。"""
     store_dir = tmp_path / "r26_poll"
+    StoreCoordinator.initialize_new(store_dir)
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit"))
     h1 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), store_dir=str(store_dir))
     port1 = _free_port()
     stop1 = threading.Event()
-    threading.Thread(target=serve_tcp, args=(h1, port1, stop1, False), daemon=True).start()
+    supervisor = threading.Thread(target=serve_tcp, args=(h1, port1, stop1, False), daemon=True)
+    supervisor.start()
     time.sleep(0.1)
     a, ac = _spawn(port1, "alice", tmp_path)
     b, bc = _spawn(port1, "bob", tmp_path)
@@ -243,7 +246,9 @@ def test_poll_persist_restore(tmp_path):
         h1._persist_flush()
     finally:
         a.stop(); b.stop()
-    stop1.set(); time.sleep(0.2)
+        stop1.set()
+        supervisor.join(12)
+        assert not supervisor.is_alive() and not h1._recovery.owner.held
 
     h2 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), store_dir=str(store_dir))
     assert seq in h2._polls
@@ -253,6 +258,7 @@ def test_poll_persist_restore(tmp_path):
         msgs = [x for x in h2.bus._channels.get("all", [])]
     m = next(x for x in msgs if x.get("seq") == seq)
     assert m["poll"]["votes"].get(str(bob_uid)) == 0
+    assert h2.shutdown(normal=False)
 
 
 # ---------- R26B 频道广播 ----------

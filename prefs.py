@@ -6,6 +6,7 @@
 键与本地历史频道键一致（public / private:a:b / group:gid）。
 """
 import json
+from copy import deepcopy
 import os
 import sys
 import threading
@@ -25,12 +26,17 @@ def _prefs_path() -> str:
     return os.path.join(base, "prefs.json")
 
 
+class StarsPreservationError(ValueError):
+    """A stars operation would overwrite an unsupported or ambiguous value."""
+
+
 class Prefs:
     """线程安全的小型 JSON 偏好存储（读时全量、写时原子替换）。"""
 
     def __init__(self, path: str | None = None) -> None:
         self._path = path or _prefs_path()
         self._lock = threading.Lock()
+        self._preserved_stars = {}
         self._data = {"pinned": [], "muted": [], "archived": [], "dnd": False,
                       "interaction_mode": "tg", "stars": [], "unread_marks": []}
         self._load()
@@ -44,6 +50,17 @@ class Prefs:
                 for k in known:
                     if isinstance(d.get(k), list):
                         self._data[k] = [str(x) for x in d[k]]
+                # Preserve opaque legacy values separately from the existing list view.
+                if "stars" in d and not isinstance(d["stars"], list):
+                    self._preserved_stars["top"] = deepcopy(d["stars"])
+                profiles = d.get("profiles")
+                if isinstance(profiles, dict):
+                    protected = {nick: deepcopy(prof["stars"])
+                                 for nick, prof in profiles.items()
+                                 if isinstance(prof, dict) and "stars" in prof
+                                 and not isinstance(prof["stars"], list)}
+                    if protected:
+                        self._preserved_stars["profiles"] = protected
                 if isinstance(d.get("dnd"), bool):
                     self._data["dnd"] = d["dnd"]
                 # 扩展键（如 r5b 的 hotkeys dict）原样保留，不丢自定义偏好
@@ -54,11 +71,63 @@ class Prefs:
             pass
 
     def _save(self) -> None:
+        self._check_preserved_profiles(self._data.get("profiles"))
+        data = self._data
+        if "top" in self._preserved_stars:
+            data = dict(data)
+            data["stars"] = self._preserved_stars["top"]
         try:
             with open(self._path, "w", encoding="utf-8") as f:
-                json.dump(self._data, f, ensure_ascii=False, indent=1)
+                json.dump(data, f, ensure_ascii=False, indent=1)
         except OSError:
             pass                       # 只读目录等极端情况：不阻断功能
+
+    def _check_preserved_profiles(self, profiles) -> None:
+        for nick, original in self._preserved_stars.get("profiles", {}).items():
+            prof = profiles.get(nick) if isinstance(profiles, dict) else None
+            try:
+                same = (isinstance(prof, dict) and "stars" in prof
+                        and json.dumps(prof["stars"], sort_keys=True)
+                        == json.dumps(original, sort_keys=True))
+            except (TypeError, ValueError):
+                same = False
+            if not same:
+                raise StarsPreservationError("本地收藏格式或归属尚未确认，原值已保留；本次操作未保存。")
+
+    def _check_stars_write(self, target_type) -> None:
+        if "top" in self._preserved_stars:
+            raise StarsPreservationError("本地收藏格式或归属尚未确认，原值已保留；本次操作未保存。")
+        current = self._data["stars"]
+        if target_type not in (list, dict) or not isinstance(current, (list, dict)):
+            raise StarsPreservationError("本地收藏格式尚未确认，原值已保留；本次操作未保存。")
+        if current and not isinstance(current, target_type):
+            raise StarsPreservationError("会话星标与消息收藏格式冲突，原值已保留；本次操作未保存。")
+
+    def check_stars_write(self, *, message_favorites: bool = False) -> None:
+        """Preflight a UI operation without changing either its state or stored data."""
+        with self._lock:
+            self._check_stars_write(dict if message_favorites else list)
+            if not message_favorites and not isinstance(self._data["stars"], list):
+                raise StarsPreservationError("会话星标与消息收藏格式冲突，原值已保留；本次操作未保存。")
+
+    def _check_profile_switch(self, nick: str) -> None:
+        profiles = self._data.get("profiles", {})
+        self._check_preserved_profiles(profiles)
+        self._check_stars_write(list)
+        if not isinstance(profiles, dict) or not isinstance(self._data["stars"], list):
+            raise StarsPreservationError("本地收藏格式或归属尚未确认，原值已保留；无法切换账号。")
+        for account in (self._data.get("active_profile"), nick):
+            if account not in profiles:
+                continue
+            prof = profiles[account]
+            if (not isinstance(prof, dict) or
+                    ("stars" in prof and not isinstance(prof["stars"], list))):
+                raise StarsPreservationError("本地收藏格式或归属尚未确认，原值已保留；无法切换账号。")
+
+    def check_profile_switch(self, nick: str) -> None:
+        """Reject ambiguous stars before the launcher registers or switches accounts."""
+        with self._lock:
+            self._check_profile_switch(nick)
 
     def is_pinned(self, key: str) -> bool:
         with self._lock:
@@ -142,6 +211,9 @@ class Prefs:
 
     def toggle_star(self, key: str) -> bool:
         with self._lock:
+            self._check_stars_write(list)
+            if not isinstance(self._data["stars"], list):
+                raise StarsPreservationError("会话星标与消息收藏格式冲突，原值已保留；本次操作未保存。")
             lst = self._data["stars"]
             if key in lst:
                 lst.remove(key)
@@ -191,11 +263,28 @@ class Prefs:
     def get(self, key: str, default=None):
         """通用取值（如 dnd 免打扰开关）。"""
         with self._lock:
-            return self._data.get(key, default)
+            value = self._data.get(key, default)
+            if ((key == "stars" and "top" in self._preserved_stars) or
+                    (key == "profiles" and self._preserved_stars.get("profiles"))):
+                return deepcopy(value)
+            return value
 
     def set(self, key: str, value) -> None:
         """通用键值写入并持久化。"""
         with self._lock:
+            if key == "stars":
+                target_type = list if isinstance(value, list) else dict if isinstance(value, dict) else None
+                self._check_stars_write(target_type)
+            elif key == "profiles":
+                self._check_preserved_profiles(value)
+                protected = {nick: deepcopy(prof["stars"])
+                             for nick, prof in value.items()
+                             if isinstance(prof, dict) and "stars" in prof
+                             and not isinstance(prof["stars"], list)} if isinstance(value, dict) else {}
+                if protected or self._preserved_stars.get("profiles"):
+                    value = deepcopy(value)
+                if protected:
+                    self._preserved_stars.setdefault("profiles", {}).update(protected)
             self._data[key] = value
             self._save()
 
@@ -296,6 +385,7 @@ class Prefs:
         """登记账号并设为默认。首个接入档案体系的账号认领现有顶层会话状态
         （pinned/muted/archived/drafts），老用户升级后无感迁移。"""
         with self._lock:
+            self._check_profile_switch(nick)
             profs = self._data.setdefault("profiles", {})
             if not profs:
                 profs[nick] = {k: self._data.get(k) for k in _PROFILE_KEYS}
@@ -310,6 +400,7 @@ class Prefs:
         顶层键始终保存当前档案的最新值（与既有读写路径兼容）；
         换出时快照进 profiles，换入时覆盖顶层。"""
         with self._lock:
+            self._check_profile_switch(nick)
             profs = self._data.setdefault("profiles", {})
             cur = self._data.get("active_profile")
             if cur and cur != nick:

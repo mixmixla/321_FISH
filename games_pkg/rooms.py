@@ -77,6 +77,8 @@ class RoomManager:
                 room.spectators.add(uid)
             else:
                 room.players.append(uid)
+                if room.owner_uid not in room.players:
+                    room.owner_uid = room.players[0]
             return room
 
     def spectate(self, uid: int, room_id: str) -> Room:

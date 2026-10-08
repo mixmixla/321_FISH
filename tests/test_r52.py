@@ -20,6 +20,7 @@ from pathlib import Path
 import pytest
 
 from config import CFG
+from server_recovery import StoreCoordinator
 from protocol import MsgType
 from server import Hub, serve as serve_tcp
 from web import serve as serve_web
@@ -260,6 +261,7 @@ def test_sign_set_trim_and_empty(hub):
 
 def test_avatar_sign_persist_restore(tmp_path):
     store_dir = str(tmp_path / "store")
+    StoreCoordinator.initialize_new(store_dir)
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit"),
                   web_files_dir=str(tmp_path / "web"))
     h1 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), store_dir=store_dir)
@@ -268,10 +270,12 @@ def test_avatar_sign_persist_restore(tmp_path):
     h1.dispatch(a, {"t": MsgType.SIGN_SET.value, "sign": "重启仍在"})
     h1._persist(force=True)
 
+    assert h1.shutdown(normal=False)
     h2 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), store_dir=store_dir)
     assert h2._avatar_known(a.uid) == "png"
     assert Path(h2.avatar_dir, f"{a.uid}.png").read_bytes() == PNG_BYTES
     assert h2.known[a.uid]["sign"] == "重启仍在"
+    assert h2.shutdown(normal=False)
 
 
 # ================= 网页端 =================

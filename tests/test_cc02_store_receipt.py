@@ -16,6 +16,23 @@ import threading
 from dataclasses import replace
 
 import pytest
+from server_recovery import StoreCoordinator
+
+
+_test_hubs = []
+
+
+@pytest.fixture(autouse=True)
+def _close_owned_hubs():
+    _test_hubs.clear()
+    yield
+    for h in _test_hubs:
+        # Deliberate FAILED cases return False; cleanup proves lifetime ends,
+        # rather than converting a failed Store into a successful shutdown.
+        h.shutdown(normal=False)
+        assert not h._recovery.owner.held
+        assert not any(t.is_alive() for t in h._managed_threads)
+    _test_hubs.clear()
 
 
 def _store_module():
@@ -35,10 +52,10 @@ def _field(value, *names):
     raise AssertionError(f"result field missing: {names!r}")
 
 
-def _retire_fixture(tmp_path):
+def _retire_fixture(tmp_path, *, with_admin=False):
     """Create a real known predecessor and an in-memory t0 pending candidate."""
     from config import CFG
-    from server import Hub
+    from server import Hub, Session
 
     cfg = replace(
         CFG,
@@ -48,20 +65,41 @@ def _retire_fixture(tmp_path):
         web_files_dir=str(tmp_path / "web"),
         persist_interval=0.0,
     )
+    StoreCoordinator.initialize_new(tmp_path / 'store')
     h = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"),
             store_dir=str(tmp_path / "store"))
+    _test_hubs.append(h)
     h.nick_to_uid["victim"] = 7
     h.known[7] = {"nick": "victim", "last_online": 1.0}
-    h._persist_flush()
+    if with_admin:
+        h._uid_seq = 8
+    assert h._persist_flush()
+    if with_admin:
+        admin = Session(0, cfg.admin_nick, 'tcp', '127.0.0.1', lambda *_: None)
+        # This fixture exercises a deliberately failed later retirement. Drain
+        # setup's required fresh capture synchronously before creating its
+        # intent, so an unrelated setup worker cannot publish the test's t0.
+        queue, requested = h._persist_queue_trigger, []
+        h._persist_queue_trigger = lambda *_: requested.append(True)
+        try:
+            assert h._on_hello(admin, {'nick': cfg.admin_nick, 'pwd': cfg.admin_pwd})
+            assert requested and h._persist(force=True)
+        finally:
+            h._persist_queue_trigger = queue
+        h._fixture_admin = admin
+        assert h.store.load()['nick_to_uid'][cfg.admin_nick] == admin.uid
     predecessor = copy.deepcopy(h._snapshot_state())
     operation_id = "op-t1-victim"
-    h.retired[7] = {"nick": "victim", "retired_at": 2.0,
-                    "operation_id": operation_id}
-    h.known.pop(7, None)
-    h._retire_ops[7] = {
-        "status": "pending", "operation_id": operation_id,
-        "target_uid": 7, "target_nick": "victim",
-    }
+    record = {"nick": "victim", "retired_at": 2.0, "operation_id": operation_id}
+    with h._persist_writer_lock:
+        assert h._recovery.accept_intent(7, record).effect == 'committed'
+        with h.lock:
+            h._apply_retirement_core_locked(7, record)
+            h._retire_ops[7] = {
+                "status": "pending", "operation_id": operation_id,
+                "target_uid": 7, "target_nick": "victim",
+                "persistence_phase": "snapshot", "identity_effect": "revoked",
+            }
     candidate_state = h._snapshot_state()
     candidate = {
         "uid": 7,
@@ -458,17 +496,31 @@ def test_unknown_blocks_every_writer_path_without_replacement(
 
 
 def test_known_predecessor_allows_same_operation_retry(tmp_path, monkeypatch):
-    h, _predecessor, _candidate_state, _candidate = _retire_fixture(tmp_path)
-    h._retire_ops[7]["status"] = "failed"
-    save_seen = threading.Event()
+    h, _predecessor, _candidate_state, _candidate = _retire_fixture(tmp_path, with_admin=True)
+    from server import Session
     original_save = h.store._save_encoded
+    module = _store_module()
+    monkeypatch.setattr(h.store, '_save_encoded', lambda encoded: module.SaveResult(
+        'not_committed', 'write', 'synthetic_predecessor', True, encoded.length, encoded.sha256))
+    assert h._persist(force=True) is False
+    assert h._retire_ops[7]['status'] == 'failed' and h._retire_ops[7]['retryable']
+    prior_admin_uid = h._fixture_admin.uid
+    h.unregister(h._fixture_admin, 'synthetic administrator disconnected after failure')
+    save_seen = threading.Event()
 
     def spy_save(encoded):
         save_seen.set()
         return original_save(encoded)
 
     monkeypatch.setattr(h.store, "_save_encoded", spy_save)
-    assert h._persist(force=True) is True
+    # Ordinary writers do not silently retry an accepted retirement. Only
+    # an authenticated explicit retry may publish the same operation again.
+    assert h._persist(force=True) is False
+    assert not save_seen.is_set()
+    admin = Session(0, h.cfg.admin_nick, 'tcp', '127.0.0.1', lambda *_: None)
+    assert h._on_hello(admin, {'nick': h.cfg.admin_nick, 'pwd': h.cfg.admin_pwd})
+    assert admin.uid == prior_admin_uid and not save_seen.is_set()
+    h._on_admin_user_del(admin, {'uid': 7, 'operation_id': 'op-t1-victim', 'request_id': 'retry-proof'})
     assert save_seen.wait(5)
     assert h._retire_ops[7]["status"] == "confirmed"
     assert h._retirement_payload(7)["origin"] == "written"
@@ -868,12 +920,16 @@ def test_same_uid_late_failure_does_not_downgrade_confirmed(tmp_path):
 def test_unknown_reconcile_covers_all_captured_operations_atomically(tmp_path,
                                                                      monkeypatch):
     h, _predecessor, _candidate_state, _candidate = _retire_fixture(tmp_path)
-    h.nick_to_uid["victim-2"] = 8
-    h.retired[8] = {"nick": "victim-2", "retired_at": 3.0,
-                    "operation_id": "op-t1-victim-2"}
+    record = {"nick": "victim-2", "retired_at": 3.0,
+              "operation_id": "op-t1-victim-2"}
+    with h._persist_writer_lock:
+        assert h._recovery.accept_intent(8, record).effect == 'committed'
+        with h.lock:
+            h._apply_retirement_core_locked(8, record)
     h._retire_ops[8] = {
         "status": "pending", "operation_id": "op-t1-victim-2",
         "target_uid": 8, "target_nick": "victim-2",
+        "persistence_phase": "snapshot", "identity_effect": "revoked",
     }
     real_replace = os.replace
 

@@ -425,11 +425,15 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
                    for role in client_nicks}
     profile_before = {role: _owned_inventory(path)
                       for role, path in profiles.items()}
-    server_cmd = [str(server_exe)]
+    store_root = profiles['server'] / 'store'
+    initialize_cmd = [str(server_exe), 'initialize-new', '--store-dir', str(store_root)]
+    server_cmd = [str(server_exe), 'open', '--store-dir', str(store_root)]
+    logs['initialize'] = run_dir / 'initialize.log'
     client_cmds = {role: [str(client_exe), "--host", "127.0.0.1", "--port",
                           str(tcp_port), "--nick", nick]
                    for role, nick in client_nicks.items()}
     server_proc = None
+    initialize_proc = None
     client_procs = {}
     result = {
         "schema_version": "REL-01.v1.run", "run_id": run_dir.name,
@@ -446,6 +450,16 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
     }
     code = 1
     try:
+        initialize_proc = launch_process(initialize_cmd, cwd=str(source), env=server_env,
+                                         log_path=logs['initialize'], desktop_name=desktop)
+        result['processes']['initialize'] = _process_record(
+            initialize_proc, desktop=desktop, command=initialize_cmd, expected_exe=server_exe)
+        initialize_code = initialize_proc.wait(timeout=15)
+        result['probes']['initialize'] = {'ok': initialize_code == 0,
+                                          'exit_code': initialize_code,
+                                          'store': 'profile-server/store'}
+        if initialize_code != 0:
+            raise RuntimeError('explicit initialization failed')
         server_proc = launch_process(server_cmd, cwd=str(source), env=server_env,
                                      log_path=logs["server"], desktop_name=desktop)
         result["processes"]["server"] = _process_record(
@@ -493,7 +507,7 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
         code = 1
     finally:
         cleanup = {}
-        for role, proc in [*client_procs.items(), ("server", server_proc)]:
+        for role, proc in [*client_procs.items(), ("server", server_proc), ('initialize', initialize_proc)]:
             if proc is None:
                 cleanup[role] = {"attempted": False, "ok": True}
                 continue

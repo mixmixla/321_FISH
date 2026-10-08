@@ -6,7 +6,7 @@ A1 僵尸会话活性释放——浏览器刷新/崩溃后 web 会话 5 分钟�
   死亡即释放；min_idle 锁内复查防「检查后复活」误踢。
 A2 web 会话恢复——/api/whoami 页面加载探活，Cookie 命中返回登录同款
   数据包，刷新免重登。
-B 昵称可选密码——PBKDF2 存储；web/tcp 登录校验；首次带密码即绑定
+B 昵称可选密码——PBKDF2 存储；web/tcp 登录校验；显式v1认领且持久确认后绑定
   （claim 先到先得）；SET_PWD 帧与 /api/passwd 设置/修改/清除；
   站点口令与昵称密码字段语义隔离（防误绑）。
 """
@@ -15,6 +15,7 @@ import json
 import socket
 import threading
 import time
+import uuid
 from dataclasses import replace
 
 import pytest
@@ -22,6 +23,8 @@ import pytest
 import server as server_mod
 from config import CFG
 from server import Hub, serve as serve_tcp
+from server_recovery import StoreCoordinator
+from credential_ops import WebContext
 from web import COOKIE_NAME, serve as serve_web
 
 
@@ -34,7 +37,9 @@ def _free_port() -> int:
 def _make_hub(tmp_path, **kw):
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit"),
                   web_files_dir=str(tmp_path / "web"))
-    return Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), **kw)
+    StoreCoordinator.initialize_new(tmp_path / 'store')
+    return Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"),
+               store_dir=str(tmp_path / 'store'), **kw)
 
 
 @pytest.fixture()
@@ -66,16 +71,17 @@ def web_env(tmp_path):
     tcp_port = _free_port()
     web_port = _free_port()
     stop_tcp = threading.Event()
-    stop_web = threading.Event()
-    threading.Thread(target=serve_tcp, args=(h, tcp_port, stop_tcp, False),
-                     daemon=True).start()
-    threading.Thread(target=serve_web, args=(h, web_port, stop_web, False),
-                     daemon=True).start()
+    tcp_thread = threading.Thread(target=serve_tcp, args=(h, tcp_port, stop_tcp, False), daemon=True)
+    tcp_thread.start()
+    serve_web(h, web_port, stop_tcp, False)
     time.sleep(0.2)
-    yield h, tcp_port, web_port
-    stop_web.set()
-    stop_tcp.set()
-    time.sleep(0.2)
+    try:
+        yield h, tcp_port, web_port
+    finally:
+        stop_tcp.set()
+        tcp_thread.join(10)
+        h.shutdown(normal=False)
+        assert not tcp_thread.is_alive() and not h._recovery.owner.held
 
 
 def _age(h, uid, seconds=1.0):
@@ -96,14 +102,16 @@ def _drop(h, nick):
 
 
 def _wait_pwd(h, uid, timeout=3.0):
-    """welcome 先于 claim 发出，轮询等待昵称密码落定。"""
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        with h.lock:
-            if (h.known.get(uid) or {}).get("pwd"):
-                return True
-        time.sleep(0.02)
-    return False
+    """Welcome now proves that claim was committed before authorization."""
+    with h.lock:
+        return bool((h.known.get(uid) or {}).get('pwd'))
+
+
+def _seed_password(hub, sess, token, password):
+    result = hub.credential_update(sess, {'credential_v': 1, 'request_id': uuid.uuid4().hex,
+                                         'old': '', 'new': password},
+                                   context=hub.web_auth_context(sess), token=token)
+    assert result['status'] == 'confirmed' and result['persisted']
 
 
 class _Cli:
@@ -143,7 +151,15 @@ class _Cli:
         return None
 
     def hello(self, pwd: str = ""):
-        hdr = {"t": "hello", "nick": self.nick}
+        rid = uuid.uuid4().hex
+        self.send({'t': 'auth_capabilities', 'auth_v': 1, 'request_id': rid})
+        response = self.wait('auth_capabilities')
+        assert response and response['request_id'] == rid
+        cap = response['auth']
+        hdr = {"t": "hello", "nick": self.nick, 'auth_v': 1,
+               'request_id': uuid.uuid4().hex, 'claim_password': bool(pwd),
+               'expected_server_epoch': cap['server_epoch'],
+               'expected_store_scope_id': cap['store_scope_id']}
         if pwd:
             hdr["pwd"] = pwd
         self.send(hdr)
@@ -165,12 +181,17 @@ class _Web:
     def __init__(self, port):
         self.port = port
         self.cookie = ""
+        self.context = None
 
     def _post(self, path, body):
         conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=8)
         headers = {"Content-Type": "application/json"}
         if self.cookie:
             headers["Cookie"] = self.cookie
+        if path == '/api/passwd':
+            body = {'credential_v': 1, 'request_id': uuid.uuid4().hex, **body}
+            assert self.context is not None
+            headers['X-Moyu-Context'] = self.context.encode()
         conn.request("POST", path, json.dumps(body).encode(), headers)
         r = conn.getresponse()
         data = json.loads(r.read().decode() or "{}")
@@ -178,6 +199,9 @@ class _Web:
         conn.close()
         if sc.startswith(f"{COOKIE_NAME}="):
             self.cookie = sc.split(";")[0]
+        if path == '/api/login' and data.get('ok'):
+            self.context = WebContext(data['auth']['server_epoch'], data['auth']['store_scope_id'],
+                                      data['uid'], data['session_binding_id'])
         return r.status, data
 
     def _get(self, path):
@@ -190,11 +214,15 @@ class _Web:
         return r.status, data
 
     def login(self, nick, password=None, nick_pwd=None):
-        body = {"nick": nick}
-        if password is not None:
-            body["password"] = password
-        if nick_pwd is not None:
-            body["nick_pwd"] = nick_pwd
+        status, meta = self._get('/api/meta')
+        assert status == 200
+        cap = meta['auth']
+        credential = (nick_pwd or '') if meta['site_pwd'] else (password or '')
+        body = {'nick': nick, 'auth_v': 1, 'request_id': uuid.uuid4().hex,
+                'expected_server_epoch': cap['server_epoch'],
+                'expected_store_scope_id': cap['store_scope_id'],
+                'claim_password': bool(credential), 'nick_pwd': credential,
+                'password': (password or '') if meta['site_pwd'] else ''}
         status, data = self._post("/api/login", body)
         assert status == 200 and data.get("ok"), (status, data)
         return data
@@ -297,7 +325,7 @@ def test_web_login_protected_nick_requires_pwd(web_env):
     """已设密码昵称：不带密码登录 → 拒绝并提示。"""
     h, _tcp, web_port = web_env
     s, _tok = h.login_web("甲", "127.0.0.1")
-    h._pwd_claim(s.uid, "abc123")
+    _seed_password(h, s, _tok, "abc123")
     w = _Web(web_port)
     status, d = w._post("/api/login", {"nick": "甲"})
     assert status == 403 and "密码" in d.get("error", "")
@@ -307,7 +335,7 @@ def test_web_login_wrong_pwd_rejected(web_env):
     """已设密码昵称：错误密码 → 拒绝「密码错误」。"""
     h, _tcp, web_port = web_env
     s, _tok = h.login_web("甲", "127.0.0.1")
-    h._pwd_claim(s.uid, "abc123")
+    _seed_password(h, s, _tok, "abc123")
     w = _Web(web_port)
     status, d = w._post("/api/login", {"nick": "甲", "password": "wrong"})
     assert status == 403 and d.get("error") == "密码错误"
@@ -317,7 +345,7 @@ def test_web_login_correct_pwd_ok(web_env):
     """已设密码昵称：正确密码 → 登录成功。"""
     h, _tcp, web_port = web_env
     s, _tok = h.login_web("甲", "127.0.0.1")
-    h._pwd_claim(s.uid, "abc123")
+    _seed_password(h, s, _tok, "abc123")
     _drop(h, "甲")                         # 原会话离开，释放昵称
     w = _Web(web_port)
     d = w.login("甲", password="abc123")
@@ -364,7 +392,7 @@ def test_tcp_hello_requires_pwd_for_protected_nick(web_env):
     hello 校验失败即断连，密码重试用新连接。"""
     h, tcp_port, _web = web_env
     s, _tok = h.login_web("甲", "127.0.0.1")
-    h._pwd_claim(s.uid, "abc123")
+    _seed_password(h, s, _tok, "abc123")
     _drop(h, "甲")                         # 释放占名 web 会话
     a = _Cli(tcp_port, "甲")
     try:
@@ -399,29 +427,22 @@ def test_tcp_hello_claims_pwd_first_time(web_env):
 
 
 def test_tcp_set_pwd_flow(web_env):
-    """SET_PWD 帧：设置 → 旧密码错拒（pwd_set）→ 改密 → 清除。"""
-    _h, tcp_port, _web = web_env
+    """Versioned SET still sets, rejects a wrong old password, changes and clears."""
+    h, tcp_port, _web = web_env
     a = _Cli(tcp_port, "甲")
     try:
         assert a.hello()
-        a.send({"t": "set_pwd", "old": "", "new": "p1"})
-        sys = a.wait("system", timeout=3.0,
-                     pred=lambda x: "已设置" in x.get("text", ""))
-        assert sys is not None
-        # 旧密码错误 → pwd_set（区别于登录 pwd，避免误弹登录框）
-        a.send({"t": "set_pwd", "old": "bad", "new": "p2"})
-        err = a.wait("error", timeout=3.0)
-        assert err and err.get("code") == "pwd_set", err
-        # 正确改密
-        a.send({"t": "set_pwd", "old": "p1", "new": "p2"})
-        sys = a.wait("system", timeout=3.0,
-                     pred=lambda x: "已修改" in x.get("text", ""))
-        assert sys is not None
-        # 清除
-        a.send({"t": "set_pwd", "old": "p2", "new": ""})
-        sys = a.wait("system", timeout=3.0,
-                     pred=lambda x: "已清除" in x.get("text", ""))
-        assert sys is not None
+        for rid, old, new, status in (
+                ('set', '', 'p1', 'confirmed'), ('wrong', 'bad', 'p2', 'failed'),
+                ('change', 'p1', 'p2', 'confirmed'), ('clear', 'p2', '', 'confirmed')):
+            a.send({'t': 'set_pwd', 'credential_v': 1, 'request_id': rid, 'old': old, 'new': new})
+            result = a.wait('credential_result', pred=lambda value: value.get('request_id') == rid)
+            assert result is not None and result['status'] == status
+            if status == 'confirmed':
+                assert result['persisted'] is True
+            else:
+                assert result['reason'] == 'old_password_invalid' and 'persisted' not in result
+        assert not h.known[a.uid].get('pwd')
     finally:
         a.close()
 

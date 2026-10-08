@@ -47,6 +47,9 @@ def _label(text: str) -> str:
 
 def _dispatch(hub, msg: dict) -> list:
     """研究 / 写代码 / 帮助 三分支；真实指令在后台线程跑。"""
+    available = getattr(hub, '_service_available', None)
+    if available is not None and not available():
+        return ["服务器正在停止，请重新连接后再试。"]
     text = (msg.get("text") or "").strip()
     bot = get_agent_bot()
 
@@ -60,13 +63,15 @@ def _dispatch(hub, msg: dict) -> list:
                  "04_mcp_im），Agent 能力不可用；请先配置后重试。")]
 
     # 立即回一条"开工中"，真实 LLM 执行放后台线程
-    threading.Thread(target=_run_async,
-                     kwargs={"hub": hub, "text": msg.get("text", ""),
-                             "to_uid": msg.get("uid"),
-                             "owner_uid": msg.get("uid"),
-                             "source_kind": "agent",
-                             "request_seq": msg.get("seq")},
-                     daemon=True).start()
+    arguments = {"hub": hub, "text": msg.get("text", ""),
+                 "to_uid": msg.get("uid"), "owner_uid": msg.get("uid"),
+                 "source_kind": "agent", "request_seq": msg.get("seq")}
+    start = getattr(hub, '_start_worker', None)
+    if start is not None:
+        if start(_run_async, kwargs=arguments, name='agent-bot') is None:
+            return ["服务器正在停止，请重新连接后再试。"]
+    else:
+        threading.Thread(target=_run_async, kwargs=arguments, daemon=True).start()
     return [f"🤖 收到，正在 {_label(text)}…（结果稍后以消息回传）"]
 
 

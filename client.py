@@ -8,6 +8,7 @@
 - 表情条：点表情 → 空输入框直接发"纯表情"，有输入则追加短代码 :code:
 """
 import argparse
+from copy import deepcopy
 import os
 import queue
 import sys
@@ -40,7 +41,8 @@ from stickers import (STICKER_BY_CODE, expand_shortcodes,
 from discovery import DiscoveryClient
 from hotkey import HotkeyManager, MOD_ALT
 from boss import BossWindow
-from prefs import Prefs, fish_add_day, fish_summary, in_dnd_range, trim_stars
+from prefs import (Prefs, StarsPreservationError, fish_add_day, fish_summary,
+                   in_dnd_range, trim_stars)
 from theme import (msg_colors, get_skin, names as skin_names,
                    display_name as skin_display, DEFAULT_SKIN,
                    GHOST, GHOST_PUNCH, GHOST_BLACK, ghost_palette,
@@ -378,6 +380,7 @@ class ChatWindow:
         self._auto_reply_at: dict = {}         # uid → 上次自动回复时间（冷却用，会话内内存）
         # R70H 摸鱼排行榜：opt-in 上报（默认关；开启后每结束一局向服务器累加 1 分）
         self._fish_upload = bool(self._prefs.get("fish_upload", False))
+        self._fish_last_state = None
         self._fish_board_game = ""             # 排行榜面板当前选中的游戏名
         self._ro_mode = False
         # T3 主题：皮肤名持久化于 prefs['skin']，默认 office 办公灰蓝
@@ -1063,59 +1066,70 @@ class ChatWindow:
         if self._closed:
             return
         try:
-            while True:
-                ev = self.core.events.get_nowait()
-                self._handle(ev)
-                if self._closed:
-                    return
-        except queue.Empty:
-            pass
-        # 热键 → 切换假工作窗
-        if CFG.global_hotkeys_enabled:
             try:
                 while True:
-                    self._hotkey.q.get_nowait()
-                    self._toggle_boss()
+                    ev = self.core.events.get_nowait()
+                    self._handle(ev)
+                    if self._closed:
+                        return
             except queue.Empty:
                 pass
-        # Alt+A → 区域截图即发
-        if CFG.global_hotkeys_enabled:
-            try:
-                while True:
-                    self._shot_hotkey.q.get_nowait()
-                    self._start_snip()
-            except queue.Empty:
-                pass
-        # 自动发现 → 未连上时自动切到最新候选服务器（约 1.2s 一次）
-        self._disco_ticks += 1
-        if CFG.discovery_enabled and self._disco is not None and self._disco_ticks % 10 == 0:
-            self._disco_ticks = 0
-            self._auto_target()
-        # C5：未读/置顶/搜索变化后统一重绘名单与群（批量，避免逐条刷新）
-        if self._list_dirty:
-            self._list_dirty = False
-            self._refresh_lists()
-        self._pump_scheduled()          # R14：到点触发定时发送
-        self._rec_tick()                 # R19：录音计时（约 120ms/拍）
-        self._fish_tick(time.time())     # R69A3：摸鱼报告（停留时长/游戏局数）
-        # R25A：约 1s 一次刷新标题（typing 3s 过期，惰性消失）
-        self._typing_ticks += 1
-        if self._typing_ticks % 8 == 0:
-            self._typing_ticks = 0
-            self._refresh_chan_label()
-        # R29B：约 1.2s 一次把当前会话草稿推给服务器（输入防抖）
-        self._draft_ticks += 1
-        if self._draft_dirty and self._draft_ticks % 10 == 0:
-            self._draft_ticks = 0
-            self._draft_dirty = False
-            self._push_draft(self._hist_key())
-            self._list_dirty = True          # R32B1：草稿前缀联动会话列表
-        self.root.after(120, self._poll)
+            # 热键 → 切换假工作窗
+            if CFG.global_hotkeys_enabled:
+                try:
+                    while True:
+                        self._hotkey.q.get_nowait()
+                        self._toggle_boss()
+                except queue.Empty:
+                    pass
+            # Alt+A → 区域截图即发
+            if CFG.global_hotkeys_enabled:
+                try:
+                    while True:
+                        self._shot_hotkey.q.get_nowait()
+                        self._start_snip()
+                except queue.Empty:
+                    pass
+            # 自动发现 → 未连上时自动切到最新候选服务器（约 1.2s 一次）
+            self._disco_ticks += 1
+            if CFG.discovery_enabled and self._disco is not None and self._disco_ticks % 10 == 0:
+                self._disco_ticks = 0
+                self._auto_target()
+            # C5：未读/置顶/搜索变化后统一重绘名单与群（批量，避免逐条刷新）
+            if self._list_dirty:
+                self._list_dirty = False
+                self._refresh_lists()
+            self._pump_scheduled()          # R14：到点触发定时发送
+            self._rec_tick()                 # R19：录音计时（约 120ms/拍）
+            self._fish_tick(time.time())     # R69A3：摸鱼报告（停留时长/游戏局数）
+            # R25A：约 1s 一次刷新标题（typing 3s 过期，惰性消失）
+            self._typing_ticks += 1
+            if self._typing_ticks % 8 == 0:
+                self._typing_ticks = 0
+                self._refresh_chan_label()
+            # R29B：约 1.2s 一次把当前会话草稿推给服务器（输入防抖）
+            self._draft_ticks += 1
+            if self._draft_dirty and self._draft_ticks % 10 == 0:
+                self._draft_ticks = 0
+                self._draft_dirty = False
+                self._push_draft(self._hist_key())
+                self._list_dirty = True          # R32B1：草稿前缀联动会话列表
+        finally:
+            # Tk still reports unexpected callbacks; keep polling only while
+            # this window is alive, including when a callback raises.
+            if not self._closed:
+                self.root.after(120, self._poll)
 
     def _handle(self, ev: dict) -> None:
+        epoch = ev.get("_connection_epoch")
+        if epoch is not None and epoch != getattr(self.core, "connection_epoch", 0):
+            return  # Queued authentication/state replies from an old connection.
+        if hasattr(self.core, "accepts_ui_event") and not self.core.accepts_ui_event(ev):
+            return
         t = ev.get("t")
         if t == "state":
             self._on_state(ev.get("state"))
+            self._refresh_retirement_results()
         elif t == "welcome":
             self._on_welcome(ev)
         elif t == "chat":
@@ -1159,6 +1173,8 @@ class ChatWindow:
             self._on_preview(ev)             # R26D：链接预览补发
         elif t == "admin_groups_roster":
             self._on_admin_groups_roster(ev)  # 系统管理员：群目录回帧 → 群管理面板
+        elif t == "retirement_status":
+            self._on_retirement_status(ev)
         elif t == "admin_user_info":
             self._on_admin_user_info(ev)     # 系统管理员：某人信息+所属群 回帧
         elif t == "invis_ack":
@@ -1856,7 +1872,7 @@ class ChatWindow:
 
     def _on_error(self, ev: dict) -> None:
         code = ev.get("code")
-        if code == "kicked":
+        if code in ("kicked", "deleted") or (code == "retired" and ev.get("manual_login_required") is True):
             if not self._closed:
                 self.request_switch_account()
         elif code in ("conn", "offline"):
@@ -1926,7 +1942,11 @@ class ChatWindow:
 
     def _toggle_star_conv(self, key: str) -> None:
         """⭐ 置星/取消星标当前会话（更强置顶，显示于置顶分组之上）。"""
-        self._prefs.toggle_star(key)
+        try:
+            self._prefs.toggle_star(key)
+        except StarsPreservationError as exc:
+            self._append_sys(str(exc))
+            return
         self._touch_conv_state(key)
 
     def _toggle_mute_conv(self, key: str) -> None:
@@ -5542,8 +5562,14 @@ class ChatWindow:
         raw = self.msg_list.get_row(idx)
         if not raw or raw.get("seq") is None or not self.msg_list.body_text(idx):
             return
+        try:
+            self._prefs.check_stars_write(message_favorites=True)
+        except StarsPreservationError as exc:
+            self._append_sys(str(exc))
+            return
+        updated = deepcopy(self._stars)
         key = self._pin_key(*self.view)
-        stars = self._stars.setdefault(key, {})
+        stars = updated.setdefault(key, {})
         seq = raw["seq"]
         if seq in stars:
             stars.pop(seq, None)
@@ -5556,8 +5582,13 @@ class ChatWindow:
         # 限量 200：去重由 dict 键保证，超限删最旧（复用可单测的纯函数）
         trim_stars(stars, 200)
         if not stars:
-            self._stars.pop(key, None)
-        self._prefs.set("stars", self._stars)
+            updated.pop(key, None)
+        try:
+            self._prefs.set("stars", updated)
+        except StarsPreservationError as exc:
+            self._append_sys(str(exc))
+            return
+        self._stars = updated
         self._append_sys("已收藏" if seq in self._stars.get(key, {}) else "已取消收藏")
 
     def _open_stars(self) -> None:
@@ -10005,7 +10036,7 @@ class ChatWindow:
         dlg = tk.Toplevel(self.root)
         ui_fx.fade_in(dlg)                        # R43A1 弹窗淡入
         dlg.title("管理员面板")
-        dlg.geometry("360x420")
+        dlg.geometry("420x520")
         dlg.attributes("-topmost", True)
         dlg.configure(bg=self._dp["win"])
         self._apply_apple_dialog(dlg, "管理员面板")
@@ -10023,6 +10054,7 @@ class ChatWindow:
                   command=self._admin_clear_all).pack(fill="x", padx=10, pady=4)
         tk.Button(dlg, text="👥 群管理（增删成员 / 解散群）", font=f,
                   command=self._admin_groups_panel).pack(fill="x", padx=10, pady=4)
+        tk.Button(dlg, text="退役结果与查询", font=f, command=self._retirement_results).pack(fill="x", padx=10, pady=4)
         tk.Label(dlg, text="全部账号（●在线 ○离线，支持离线管理）", fg=self._dp["sub"],
                  font=f, anchor="w").pack(fill="x", padx=10, pady=(8, 0))
         tk.Button(dlg, text="🔍 双击账号 → 进入「单个用户操作」",
@@ -10035,59 +10067,18 @@ class ChatWindow:
         box.pack(fill="both", expand=True, padx=10)
         btns = tk.Frame(dlg)
         btns.pack(fill="x", padx=10, pady=6)
-        tk.Button(btns, text="🔨 踢下线", font=f,
-                  command=lambda: self._admin_panel_kick(box, dlg)).pack(
-            side="left", padx=2)
-        tk.Button(btns, text="🧹 清空其全部消息", font=f,
-                  command=lambda: self._admin_panel_clear(box)).pack(
-            side="left", padx=2)
-        tk.Button(btns, text="👻 隐身/显身", font=f,
-                  command=lambda: self._admin_panel_invis(box)).pack(
-            side="left", padx=2)
-        tk.Button(btns, text="🗑 清除用户", font=f, bg="#fdecea", fg="#b71c1c",
-                  activebackground="#fbdcd9", activeforeground="#b71c1c",
-                  command=lambda: self._admin_panel_del(box)).pack(
-            side="left", padx=2)
+        for col in range(2):
+            btns.grid_columnconfigure(col, weight=1)
+        for index, (label, command) in enumerate((
+                ("踢下线", lambda: self._admin_panel_kick(box, dlg)),
+                ("清空其全部消息", lambda: self._admin_panel_clear(box)),
+                ("隐身 / 显身", lambda: self._admin_panel_invis(box)),
+                ("账号退役…", lambda: self._admin_panel_del(box)))):
+            tk.Button(btns, text=label, font=f, command=command).grid(
+                row=index//2, column=index%2, sticky="ew", padx=2, pady=2)
 
         def _reload() -> None:
-            # R58：合并 在线 roster + 离线 known，管理员可管理所有账户（含离线）
-            rows = {}
-            for uid, u in self.core.roster.items():
-                rows[uid] = (u.get("nick", f"用户{uid}"), True,
-                             bool(u.get("invisible")))
-            for uid, u in self.core.known.items():
-                if uid not in rows:
-                    rows[uid] = (u.get("nick", f"用户{uid}"),
-                                 uid in self.core.roster,
-                                 bool(u.get("invisible")))
-            # 重填前记住当前选中 uid 与滚动比例，刷新后恢复位置（不跳回顶部/首项）
-            sel_uid = None
-            try:
-                cs = box.curselection()
-                if cs:
-                    sel_uid = int(box.get(cs[0]).split("#")[1])
-            except Exception:
-                sel_uid = None
-            frac = box.yview()[0] if box.size() else 0.0
-            box.delete(0, "end")
-            target_idx = None
-            idx = 0
-            for uid, (nick, online, inv) in sorted(
-                    rows.items(), key=lambda kv: (kv[1][0], kv[0])):
-                mark = "👻 " if inv else ""
-                dot = "●" if online else "○"
-                box.insert("end", f"{mark}{dot} {nick}  #{uid}")
-                if uid == sel_uid:
-                    target_idx = idx
-                idx += 1
-            if target_idx is not None:
-                box.selection_set(target_idx)
-                box.see(target_idx)
-            else:
-                try:
-                    box.yview_moveto(frac)
-                except Exception:
-                    pass
+            self._reload_admin_rows(box)
 
         _reload()
         # 主动刷新：仅在右侧操作台操作后触发，不打扰轮询
@@ -10109,66 +10100,63 @@ class ChatWindow:
         self.core.send_admin_clear_all()
         self._append_sys("🧹 已向服务器提交：清空全部聊天记录")
 
+    @staticmethod
+    def _admin_selected(box):
+        selection = box.curselection()
+        rows = getattr(box, "_admin_rows", ())
+        return rows[selection[0]] if selection and selection[0] < len(rows) else None
+
+    def _reload_admin_rows(self, box) -> None:
+        selected = self._admin_selected(box)
+        selected_uid = selected[0] if selected else None
+        fraction = box.yview()[0] if box.size() else 0.0
+        roster, known = dict(self.core.roster), dict(self.core.known)
+        users = {**known, **roster}
+        rows = tuple(sorted(((int(uid), str(data.get("nick") or f"用户{uid}"), uid in roster,
+                              bool(data.get("invisible"))) for uid, data in users.items()),
+                            key=lambda row: (row[1], row[0])))
+        box.delete(0, "end")
+        box._admin_rows = rows
+        for index, (uid, nick, online, invisible) in enumerate(rows):
+            box.insert("end", f"{'👻 ' if invisible else ''}{'●' if online else '○'} {nick}  #{uid}")
+            if uid == selected_uid:
+                box.selection_set(index)
+        box.yview_moveto(fraction)
+
     def _admin_panel_kick(self, box, dlg) -> None:
-        sel = box.curselection()
-        if not sel:
-            return
-        uid = int(box.get(sel[0]).split("#")[1])
-        dlg.destroy()
-        self._admin_kick(uid)
+        row = self._admin_selected(box)
+        if row:
+            dlg.destroy()
+            self._admin_kick(row[0])
 
     def _admin_panel_clear(self, box) -> None:
-        sel = box.curselection()
-        if not sel:
-            return
-        uid = int(box.get(sel[0]).split("#")[1])
-        self._admin_clear_uid(uid)
+        row = self._admin_selected(box)
+        if row:
+            self._admin_clear_uid(row[0])
 
     def _admin_panel_invis(self, box) -> None:
-        """R56B：管理员强制选中用户隐身/显身（切换其当前状态）。"""
-        sel = box.curselection()
-        if not sel:
+        row = self._admin_selected(box)
+        if not row:
             return
-        uid = int(box.get(sel[0]).split("#")[1])
-        cur = bool((self.core.roster.get(uid) or {}).get("invisible"))
-        nick = (self.core.roster.get(uid) or {}).get("nick", f"用户{uid}")
-        self.core.send_admin_force_invis(uid, not cur)
-        self._append_sys(f"🕓 已请求让 @{nick} {'显身' if cur else '隐身'}")
+        uid, nick, _online, invisible = row
+        self.core.send_admin_force_invis(uid, not invisible)
+        self._append_sys(f"已请求让 @{nick} {'显身' if invisible else '隐身'}")
 
     def _admin_panel_del(self, box) -> None:
-        """系统管理员：清除选中用户（删除账号，不可恢复）。
-        二次确认后发送 admin_user_del；连带清其全部消息、移出全部群。"""
-        from widgets import dialogbox
-        sel = box.curselection()
-        if not sel:
-            return
-        entry = box.get(sel[0])
-        uid = int(entry.split("#")[1])
-        if uid == self.core.uid:
-            self._append_sys("不能清除自己")
-            return
-        nick = entry.split(" ", 1)[0].lstrip("●○👻 ")
-        if not dialogbox.ask_yesno(
-                "清除用户",
-                f"确定清除用户「{nick}  #{uid}」？\n"
-                "将删除其账号、清空其全部消息、并移出所有群，且不可恢复！",
-                parent=self.root):
-            return
-        self.core.send_admin_user_del(uid)
-        self._append_sys(f"🗑 已向服务器提交：清除用户 @{nick}")
+        row = self._admin_selected(box)
+        if row:
+            self._confirm_del_uid(row[0], row[1])
+
 
     def _admin_user_ops(self, box) -> None:
         """R58B：点进/双击单个用户，弹出该用户独立操作台
         （查看详情 / 踢下线 / 清空其消息 / 隐身显身 / 删除账号）。"""
         from widgets import dialogbox
-        sel = box.curselection()
-        if not sel:
+        row = self._admin_selected(box)
+        if not row:
             self._append_sys("请先在列表里选中一个用户")
             return
-        entry = box.get(sel[0])
-        part = entry.lstrip("●○👻 ")
-        uid = int(part.rsplit("#", 1)[1])
-        nick = part.rsplit("#", 1)[0].rstrip()
+        uid, nick, _online, _invisible = row
         if uid == self.core.uid:
             self._append_sys("不能对自己执行操作")
             return
@@ -10220,20 +10208,221 @@ class ChatWindow:
         _mk("🧹 清空其全部消息", lambda: self._admin_clear_uid(uid))
         _mk("👻 隐身 / 显身（当前 " + ("隐身" if cur_inv else "显身") + "）",
             lambda: self.core.send_admin_force_invis(uid, not cur_inv))
-        _mk("🗑 删除账号（不可恢复）",
+        _mk("账号退役（昵称保留）…",
             lambda: self._confirm_del_uid(uid, nick), danger=True, close=True)
 
     def _confirm_del_uid(self, uid: int, nick: str) -> None:
-        """删除账号二次确认（点在用户操作台的红色按钮）。"""
+        """Both administrator entry points use the same identity and M1 promise."""
         from widgets import dialogbox
+        if uid == self.core.uid:
+            self._append_sys("不能退役当前管理员自身")
+            return
+        scope = self.core.retirement_scope
+        epoch = self.core.connection_epoch
+        if scope is None:
+            self._append_sys("请先连接目标服务器并以系统管理员身份登录")
+            return
         if not dialogbox.ask_yesno(
-                "删除账号",
-                f"确定删除账号「{nick}  #{uid}」？\n"
-                "将删除账号、清空其全部消息、移出所有群，且不可恢复！",
+                "账号退役",
+                f"确认退役「{nick}  #{uid}」？\n服务器：{scope.host}:{scope.port}\n\n"
+                "身份将停止使用，昵称仍保留；按既有规则清理本人状态和作者消息、移出群聊。\n"
+                "共享内容与他人副本不会全部删除。只有服务器持久确认后才算完成。\n\n"
+                "确认后会先核对目标；失败或结果未知时请在退役结果中查询。",
                 parent=self.root):
             return
-        self.core.send_admin_user_del(uid)
-        self._append_sys(f"🗑 已向服务器提交：删除账号 @{nick}")
+        if self.core.connection_epoch != epoch or self.core.retirement_scope != scope:
+            self._append_sys("确认期间连接或管理员身份已改变，请重新核对目标")
+            return
+        self._retirement_results()
+        self.core.send_admin_user_del(uid, expected_nick=nick, expected_scope=scope, expected_epoch=epoch)
+        self._refresh_retirement_results()
+
+    def _on_retirement_status(self, _ev) -> None:
+        # Called only by the Tk event pump. Network callbacks never create UI.
+        self._refresh_retirement_results()
+        reload_rows = getattr(self, "_admin_reload", None)
+        if reload_rows:
+            reload_rows()
+
+    def _retirement_results(self) -> None:
+        from tkinter import ttk
+        old = getattr(self, "_retirement_ui", None)
+        if old and old["dlg"].winfo_exists():
+            old["dlg"].lift()
+            self._refresh_retirement_results()
+            return
+        dp = self._dp
+        dlg = tk.Toplevel(self.root)
+        dlg.title("账号退役 · 结果与查询")
+        dlg.geometry("760x580")
+        dlg.minsize(640, 480)
+        dlg.configure(bg=dp["win"])
+        # An opaque system-framed result window keeps status readable.
+        body = tk.Frame(dlg, bg=dp["win"])
+        body.pack(fill="both", expand=True, padx=16, pady=16)
+        body.grid_columnconfigure(0, weight=1)
+        body.grid_rowconfigure(3, weight=1)
+        tk.Label(body, text="退役结果", font=(FONT_FAMILY, FONT_SIZE+3, "bold"),
+                 bg=dp["win"], fg=dp.get("fg", "#202b27"), anchor="w").grid(row=0, column=0, sticky="ew")
+        hint = tk.Label(body, text="发送、名单变化和持久确认是不同阶段。关闭窗口不会取消服务器处理。",
+                        bg=dp["win"], fg=dp["sub"], font=self._f, anchor="w", wraplength=580)
+        hint.grid(row=1, column=0, sticky="ew", pady=(4, 12))
+        query_row = tk.Frame(body, bg=dp["win"])
+        query_row.grid(row=2, column=0, sticky="ew", pady=(0, 12))
+        tk.Label(query_row, text="UID 或昵称", font=self._f, bg=dp["win"], fg=dp.get("fg", "#202b27")).pack(side="left", padx=(0, 8))
+        target = tk.Entry(query_row, font=self._f)
+        target.pack(side="left", fill="x", expand=True, padx=(0, 8))
+        query_button = tk.Button(query_row, text="查询服务器状态", font=self._f, command=self._retirement_manual_query)
+        query_button.pack(side="left")
+        target.bind("<Return>", lambda _event: self._retirement_manual_query())
+        table_area = tk.Frame(body, bg=dp["win"])
+        table_area.grid(row=3, column=0, sticky="nsew")
+        style = ttk.Style(dlg)
+        style.configure("Retirement.Treeview", font=self._f, rowheight=30)
+        table = ttk.Treeview(table_area, columns=("target", "server", "phase"), show="headings",
+                             selectmode="browse", height=6, style="Retirement.Treeview")
+        for column, title, width in (("target", "目标", 190), ("server", "服务端结果", 160), ("phase", "当前请求", 220)):
+            table.heading(column, text=title)
+            table.column(column, width=width, minwidth=100, stretch=True)
+        scrollbar = ttk.Scrollbar(table_area, orient="vertical", command=table.yview)
+        table.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        table.pack(fill="both", expand=True)
+        detail_area = tk.Frame(body, bg=dp["win"])
+        detail_area.grid(row=4, column=0, sticky="ew", pady=(12, 8))
+        detail = tk.Text(detail_area, height=5, font=self._f, wrap="word", relief="solid", bd=1,
+                         bg=dp["win"], fg=dp.get("fg", "#202b27"), padx=10, pady=8)
+        detail_scroll = ttk.Scrollbar(detail_area, orient="vertical", command=detail.yview)
+        detail.configure(yscrollcommand=detail_scroll.set, state="disabled")
+        detail_scroll.pack(side="right", fill="y")
+        detail.pack(fill="both", expand=True)
+        actions = tk.Frame(body, bg=dp["win"])
+        actions.grid(row=5, column=0, sticky="ew")
+        buttons = {}
+        for action, label in (("query", "查询所选事项"), ("retry", "重试原操作…"), ("cancel", "取消本地预核对")):
+            button = tk.Button(actions, text=label, font=self._f,
+                               command=lambda operation=action: self._retirement_selected_action(operation))
+            button.pack(side="left", padx=(0, 8))
+            buttons[action] = button
+        tk.Button(actions, text="更新视图", font=self._f, command=self._refresh_retirement_results).pack(side="right")
+        footer = tk.Label(body, font=self._f, bg=dp["win"], fg=dp["sub"], anchor="w", wraplength=580)
+        footer.grid(row=6, column=0, sticky="ew", pady=(10, 0))
+        body.bind("<Configure>", lambda event: (hint.config(wraplength=max(100, event.width)),
+                                                footer.config(wraplength=max(100, event.width))))
+        self._retirement_ui = {"dlg": dlg, "table": table, "target": target, "query_button": query_button,
+                               "detail": detail, "buttons": buttons, "footer": footer, "records": {}}
+        table.bind("<<TreeviewSelect>>", lambda _event: self._render_retirement_selection())
+        self._refresh_retirement_results()
+        target.focus_set()
+
+    def _retirement_manual_query(self) -> None:
+        ui = getattr(self, "_retirement_ui", None)
+        if ui and ui["dlg"].winfo_exists():
+            self.core.query_admin_retirement(ui["target"].get())
+            self._refresh_retirement_results()
+
+    _RETIRE_STATES = {"pending": "处理中 · 未持久确认", "failed": "持久处理失败",
+                      "unknown": "持久结果未知", "confirmed": "已持久确认"}
+    _RETIRE_PHASES = {"idle": "未开始", "preflight": "核对中 · 未发退役命令", "sending": "正在发送",
+                      "waiting": "已发送 · 等待结果", "querying": "正在查询", "query_failed": "查询未完成",
+                      "rejected": "本次请求被拒绝", "unverified": "当前连接尚未核验", "cancelled": "本地预核对已取消",
+                      "no_record": "未报告退役记录", "pending": "等待持久结果", "failed": "请查看失败信息",
+                      "unknown": "结果未知 · 仅可查询", "confirmed": "确认完成"}
+
+    def _refresh_retirement_results(self) -> None:
+        ui = getattr(self, "_retirement_ui", None)
+        if not ui or not ui["dlg"].winfo_exists():
+            return
+        records = self.core.retirement_snapshot()
+        table = ui["table"]
+        selection = table.selection()
+        selected = selection[0] if selection else None
+        current = {record.intent_id: record for record in records}
+        for row in table.get_children():
+            if row not in current:
+                table.delete(row)
+        for record in records:
+            receipt = record.confirmed or record.receipt
+            server = self._RETIRE_STATES.get(receipt.status, "未收到结果") if receipt else "未收到结果"
+            if receipt and not record.current_verified:
+                server += "（历史）"
+            values = (f"{record.nick or record.target}  #{record.uid or '待解析'}", server,
+                      self._RETIRE_PHASES.get(record.phase, record.phase))
+            if table.exists(record.intent_id):
+                table.item(record.intent_id, values=values)
+            else:
+                table.insert("", "end", iid=record.intent_id, values=values)
+        ui["records"] = current
+        if selected in current:
+            table.selection_set(selected)
+        elif current:
+            table.selection_set(next(reversed(current)))
+        online = self.core.retirement_scope is not None
+        ui["query_button"].config(state="normal" if online else "disabled")
+        ui["footer"].config(text=f"本次客户端 {len(records)} / 64 条临时记录；历史事项不跨进程保存。"
+                            + ("" if online else " 当前未以管理员身份连接。"))
+        self._render_retirement_selection()
+
+    def _render_retirement_selection(self) -> None:
+        ui = self._retirement_ui
+        selection = ui["table"].selection()
+        record = ui["records"].get(selection[0]) if selection else None
+        for action, attribute in (("query", "can_query"), ("retry", "can_retry"), ("cancel", "can_cancel")):
+            ui["buttons"][action].config(state="normal" if record and getattr(record, attribute) else "disabled")
+        text = "输入 UID 或昵称可查询已从名单消失的目标。查询不会发起退役。"
+        if record:
+            text = (f"目标：{record.nick or record.target} / UID {record.uid or '待解析'}\n"
+                    f"服务器：{record.scope.host}:{record.scope.port} · 管理员 UID {record.scope.admin_uid}\n"
+                    f"当前请求：{self._RETIRE_PHASES.get(record.phase, record.phase)}\n")
+            receipt = record.confirmed or record.receipt
+            if receipt:
+                origin = {"written": "写入完成", "reconciled_current_json": "当前保存状态对账确认",
+                          "restored_valid_json": "从已有保存状态恢复"}.get(receipt.origin, "未提供")
+                text += (f"服务端结果：{self._RETIRE_STATES[receipt.status]}"
+                         + ("（历史，本连接尚未核验）" if not record.current_verified else "")
+                         + f"\n操作号：{receipt.operation_id}\n确认来源：{origin}\n")
+                if receipt.persistence_phase is None:
+                    text += "撤权阶段：未提供撤权阶段（旧服务器结果）\n"
+                else:
+                    phase = {"intent": "退役意图", "snapshot": "状态快照"}[receipt.persistence_phase]
+                    effect = {
+                        "not_started": "尚未开始撤权",
+                        "revoked": "已撤销身份权限；持久结果以上方服务端结果为准",
+                        "unverified": "撤权效果未核实；服务器恢复后请重新查询",
+                    }[receipt.identity_effect]
+                    text += f"持久阶段：{phase}\n身份效果：{effect}\n"
+                if receipt.content_sha256 is not None:
+                    text += f"内容摘要：{receipt.content_sha256}\n"
+                if receipt.content_length is not None:
+                    text += f"内容长度：{receipt.content_length} bytes\n"
+                if receipt.failed_stage or receipt.error_code:
+                    text += f"失败阶段：{receipt.failed_stage or '未提供'} · {receipt.error_code or '未提供'}\n"
+            if record.diagnostic:
+                text += f"提示：{record.diagnostic}\n"
+        ui["detail"].config(state="normal")
+        ui["detail"].delete("1.0", "end")
+        ui["detail"].insert("1.0", text)
+        ui["detail"].config(state="disabled")
+
+    def _retirement_selected_action(self, action) -> None:
+        ui = self._retirement_ui
+        selection = ui["table"].selection()
+        record = ui["records"].get(selection[0]) if selection else None
+        if not record:
+            return
+        if action == "query":
+            self.core.query_admin_retirement(intent_id=record.intent_id)
+        elif action == "cancel":
+            self.core.cancel_admin_retirement(record.intent_id)
+        elif action == "retry":
+            from widgets import dialogbox
+            if not record.can_retry or not dialogbox.ask_yesno(
+                    "重试原退役操作", f"为「{record.nick} #{record.uid}」重试保存原操作？\n"
+                    "不会重新执行一次身份清理；仍以服务器返回结果为准。", parent=ui["dlg"]):
+                return
+            self.core.retry_admin_retirement(record.intent_id)
+        self._refresh_retirement_results()
+
 
     def _refresh_admin_after(self) -> None:
         """操作后主动刷新左侧账号列表：立即刷新 + 延迟两拍，等服务器状态同步。
@@ -10488,6 +10677,9 @@ class ChatWindow:
                  anchor="w").pack(fill="x", padx=10, pady=(10, 2))
         tk.Label(dlg, text=f"状态：{status}", fg=color, font=f,
                  anchor="w").pack(fill="x", padx=10, pady=(0, 2))
+        if ev.get("correlated") is False:
+            tk.Label(dlg, text="旧服务器详情未关联；不能作为退役确认", fg=self._dp["sub"],
+                     font=f, anchor="w").pack(fill="x", padx=10, pady=(2, 4))
         tk.Label(dlg, text="所属群（共 %d 个）：" % len(groups),
                  fg=self._dp["sub"], font=f, anchor="w").pack(fill="x", padx=10,
                                                               pady=(6, 2))
@@ -10698,7 +10890,7 @@ class ChatWindow:
         if last and not getattr(self, "_boss_active", False):
             self._fish_add(sec=min(now - last, 5.0))   # 卡顿/休眠钳制
         st = getattr(self.core, "game_state", None)
-        if isinstance(st, dict) and st is not self._fish_last_state:
+        if isinstance(st, dict) and st is not getattr(self, "_fish_last_state", None):
             self._fish_last_state = st
             phase = str(st.get("phase") or "")
             if st.get("over") is True or phase in self._FISH_OVER_PHASES:
@@ -12124,16 +12316,27 @@ class GameWindow:
 
     def _refresh_games(self) -> None:
         core = self.core
+        scroll = self._scroll_regions[0][0]
+        scroll_y = scroll.yview()[0]
+        # The column cache only describes the old widget generation.
+        self._cols_active = None
         for w in self.game_inner.winfo_children():
             w.destroy()
         self.game_cards = {}
         self._game_order = sorted(core.game_meta.keys())
+        if self._sel_game not in core.game_meta:
+            self._sel_game = None
         if not self._game_order:                   # 空状态：别让大厅变成一片空白
             tk.Label(self.game_inner, text="正在获取桌游列表…\n请确认已连接服务器（桌游随服务器端启停）",
                      bg=self._pal["win"], fg=self._pal["sub"], justify="center",
                      font=(FONT_FAMILY, FONT_SIZE)).grid(
                 row=0, column=0, columnspan=6, sticky="nsew", padx=8, pady=12)
             self.game_inner.grid_columnconfigure(0, weight=1)
+            for column in range(1, 6):
+                self.game_inner.grid_columnconfigure(column, weight=0)
+            self.game_inner.update_idletasks()
+            self._game_scroll_refresh()
+            scroll.yview_moveto(0)
             self._highlight_game()
             return
         for name in self._game_order:
@@ -12143,6 +12346,7 @@ class GameWindow:
             self.game_cards[name] = card
         self._apply_game_grid()
         self._highlight_game()
+        scroll.yview_moveto(scroll_y)
 
     def _game_cols(self) -> int:
         """按当前左栏宽度自适应列数（2~6 列），拉宽窗口桌游卡横向铺开。"""
@@ -12167,8 +12371,8 @@ class GameWindow:
         for i, name in enumerate(self._game_order):
             self.game_cards[name].grid(row=i // cols, column=i % cols,
                                        padx=5, pady=5, sticky="nsew")
-        for c in range(cols):               # 每列等权：卡片均宽，间距均匀
-            self.game_inner.grid_columnconfigure(c, weight=1)
+        for c in range(6):                  # Also clear weights of removed columns.
+            self.game_inner.grid_columnconfigure(c, weight=int(c < cols))
         self.game_inner.update_idletasks()
         self._game_scroll_refresh()
 

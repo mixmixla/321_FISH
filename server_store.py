@@ -13,7 +13,10 @@ import hashlib
 import json
 import math
 import os
+import secrets
+import stat
 import threading
+import time
 from typing import Any
 
 
@@ -167,31 +170,45 @@ def encode_state(state: dict) -> EncodedState:
                         sha256=hashlib.sha256(payload).hexdigest())
 
 
+class _PublishDeadline(TimeoutError):
+    """No new replace may start after the caller's publication deadline."""
+
+
 class ServerStore:
     """线程安全的全量快照持久化；节流/捕获/对账由 Hub 管理。"""
 
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str, *, create_parent: bool = True,
+                 unique_temp: bool = False, replace_retry_budget: float = 0.0) -> None:
         self._path = os.path.abspath(path)
         self._lock = threading.Lock()
         self._hub_writer = None
         self._hub_permit = threading.local()
         self._last_save_result: SaveResult | None = None
         self._save_generation = 0
-        os.makedirs(os.path.dirname(self._path), exist_ok=True)
+        self._unique_temp = unique_temp
+        if (not math.isfinite(replace_retry_budget) or replace_retry_budget < 0
+                or (replace_retry_budget and not unique_temp)):
+            raise ValueError('replace retry requires an owned unique temporary file')
+        self._replace_retry_budget = replace_retry_budget
+        if create_parent:
+            os.makedirs(os.path.dirname(self._path), exist_ok=True)
 
     def _bind_hub_writer(self, callback) -> None:
         """绑定活动 Hub 的兼容入口；独立 ServerStore 不设置该回调。"""
         self._hub_writer = callback
 
     @contextmanager
-    def _hub_write_permit(self):
+    def _hub_write_permit(self, *, deadline=None):
         """仅供 Hub 现有 writer 进入真实 bytes IO 的私有 permit。"""
         old = getattr(self._hub_permit, "active", False)
+        old_deadline = getattr(self._hub_permit, 'deadline', None)
         self._hub_permit.active = True
+        self._hub_permit.deadline = deadline
         try:
             yield
         finally:
             self._hub_permit.active = old
+            self._hub_permit.deadline = old_deadline
 
     def load(self) -> dict:
         """读 state.json；缺失/JSON 损坏/残留 .tmp → 返回 {}，绝不抛异常。"""
@@ -207,6 +224,27 @@ class ServerStore:
     def _payload_meta(payload: bytes) -> tuple[int, str]:
         return len(payload), hashlib.sha256(payload).hexdigest()
 
+    @staticmethod
+    def _owns_temp(path, identity, payload=None):
+        """Check the originally created file, never a replacement or link."""
+        if identity is None:
+            return False
+        try:
+            info = os.lstat(path)
+            if (not stat.S_ISREG(info.st_mode)
+                    or getattr(info, 'st_file_attributes', 0) & 0x400
+                    or (info.st_dev, info.st_ino) != identity):
+                return False
+            if payload is None:
+                return True
+            with open(path, 'rb') as stream:
+                opened = os.fstat(stream.fileno())
+                return ((opened.st_dev, opened.st_ino) == identity
+                        and opened.st_size == len(payload)
+                        and stream.read(len(payload) + 1) == payload)
+        except OSError:
+            return False
+
     def save_bytes(self, payload: bytes) -> SaveResult:
         """原子写入一份已编码 payload，并报告真实阶段结果。
 
@@ -221,14 +259,22 @@ class ServerStore:
             return SaveResult("not_committed", "encode", "payload_not_bytes",
                               False, 0, None)
         length, digest = self._payload_meta(payload)
-        tmp = self._path + ".tmp"
+        tmp = self._path + (".tmp-" + secrets.token_hex(12)
+                            if self._unique_temp else ".tmp")
         fh = None
         replaced = False
+        replace_attempted = False
+        temp_created = False
+        temp_identity = None
         stage = "open"
         first_error: BaseException | None = None
         with self._lock:
             try:
-                fh = open(tmp, "wb")
+                fh = open(tmp, "xb" if self._unique_temp else "wb")
+                temp_created = True
+                if self._unique_temp:
+                    created = os.fstat(fh.fileno())
+                    temp_identity = (created.st_dev, created.st_ino)
                 stage = "write"
                 offset = 0
                 while offset < length:
@@ -247,7 +293,32 @@ class ServerStore:
                 fh.close()
                 fh = None
                 stage = "replace"
-                os.replace(tmp, self._path)
+                deadline = (time.monotonic() + self._replace_retry_budget
+                            if self._replace_retry_budget else None)
+                caller_deadline = getattr(self._hub_permit, 'deadline', None)
+                if caller_deadline is not None:
+                    deadline = (caller_deadline if deadline is None
+                                else min(deadline, caller_deadline))
+                last_refusal = None
+                while True:
+                    if deadline is not None and time.monotonic() >= deadline:
+                        if last_refusal is not None:
+                            raise last_refusal
+                        raise _PublishDeadline('publication deadline expired')
+                    replace_attempted = True
+                    try:
+                        os.replace(tmp, self._path)
+                        break
+                    except OSError as exc:
+                        if (not self._replace_retry_budget
+                                or getattr(exc, 'winerror', None) not in (5, 32, 33)
+                                or not self._owns_temp(tmp, temp_identity, payload)):
+                            raise
+                        last_refusal = exc
+                        remaining = deadline - time.monotonic()
+                        if remaining <= 0:
+                            raise
+                        time.sleep(min(0.01, remaining))
                 replaced = True
                 return SaveResult("committed", "replace", None, False,
                                   length, digest)
@@ -256,9 +327,9 @@ class ServerStore:
                 # Any exception raised while invoking replace is deliberately
                 # uncertain: an injected wrapper may have completed replace
                 # before raising, and this layer cannot prove the final file.
-                effect = "uncertain" if stage == "replace" else "not_committed"
+                effect = "uncertain" if replace_attempted else "not_committed"
                 retryable = effect == "not_committed"
-                code = f"{stage}_failed"
+                code = 'replace_deadline' if isinstance(exc, _PublishDeadline) else f"{stage}_failed"
                 return SaveResult(effect, stage, code, retryable,
                                   length, digest)
             finally:
@@ -270,7 +341,8 @@ class ServerStore:
                         # close cleanup must never mask it.
                         if first_error is None:
                             first_error = OSError("close failed")
-                if not replaced:
+                if not replaced and (not self._unique_temp or
+                        (temp_created and self._owns_temp(tmp, temp_identity))):
                     try:
                         os.remove(tmp)
                     except BaseException:

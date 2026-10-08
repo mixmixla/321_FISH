@@ -11,12 +11,16 @@ import struct
 from enum import Enum
 
 from config import CFG
+from credential_ops import strict_json
 
 
 class MsgType(str, Enum):
     # 连接与元
     HELLO = "hello"
+    AUTH_CAPABILITIES = "auth_capabilities"  # Pre-auth, one read-only probe per connection.
     SET_PWD = "set_pwd"    # R47：昵称密码设置/修改/清除（header: old/new；new 空=清除）
+    CREDENTIAL_GET = "credential_get"        # Authenticated own-UID runtime receipt query.
+    CREDENTIAL_RESULT = "credential_result"
     WELCOME = "welcome"
     ROSTER = "roster"
     SYSTEM = "system"
@@ -191,9 +195,20 @@ class MsgType(str, Enum):
     ADMIN_GROUPS_ROSTER = "admin_groups_roster"  # 回帧：{groups:[{gid,name,kind,public,owner,
                                              #          admins,member_count,members:[{uid,nick}]}]}
     ADMIN_GROUP_SET = "admin_group_set"  # 管理员：增删成员/解散群 header{gid,op=add|remove|dissolve,uid}
-    ADMIN_USER_GET = "admin_user_get"   # 管理员：查某人信息+所属群（header uid/known；回 ADMIN_USER_INFO）
-    ADMIN_USER_INFO = "admin_user_info" # 回帧：{uid,nick,online,groups:[{gid,name,role}]}
-    ADMIN_USER_DEL = "admin_user_del"   # 管理员：清除用户（删除账号 header uid/known；清其消息、移出全部群）
+    # GET/DEL: uid=UID或已知昵称，operation_id可选；request_id可选ASCII [A-Za-z0-9_-]{1,64}。
+    # INFO及入口拒绝error回显合法request_id；缺省维持旧形状。关联号不参与鉴权或持久化。
+    ADMIN_USER_GET = "admin_user_get"   # 只查询；必要时只读文件对账，不新建退役操作或保存
+    ADMIN_USER_INFO = "admin_user_info" # {uid,nick,online,groups,invisible,retirement?}
+    # retirement: status=pending/failed/unknown/confirmed, operation_id, target_uid/target_nick,
+    # origin/content_sha256/content_length/failed_stage/error_code/retryable（可选证明可为null）。
+    # origin/content_sha256/content_length只允许confirmed提供，其他状态必须缺省或null。
+    # persistence_phase/identity_effect必须同时缺省（legacy）或同时合法，不能null：
+    # pending/failed: intent+not_started 或 snapshot+revoked；
+    # unknown: intent+unverified 或 snapshot+revoked；confirmed: snapshot+revoked。
+    # 新字段不是failed_stage；缺省不能按status推断已撤权，GET仍只读。
+    # 一个DEL可能先回pending再回最终INFO；send成功、名单或CLEARED不能充当持久确认。
+    ADMIN_USER_DEL = "admin_user_del"   # M1账号退役；保留UID和昵称，沿用保护集及共享内容语义
+    # HELLO拒绝：身份退役/状态不可用用error/retired，正常口令错误仍用error/pwd；不依文案猜身份。
     INV_SET = "invis_set"           # 隐身上线开关（header on；服务器按 uid 权威持久，仅广播他人可见名单过滤）
     INV_ACK = "invis_ack"           # 回帧：{on}；已生效
     ADMIN_INVIS_SET = "admin_invis_set"  # R56B：管理员强制显身/隐身（header uid,on；服务器校验）
@@ -269,7 +284,7 @@ class FrameReader:
             return None
         raw_header = bytes(self._buf[4:4 + header_len])
         try:
-            header = json.loads(raw_header.decode("utf-8"))
+            header = strict_json(raw_header.decode("utf-8"))
         except (ValueError, UnicodeDecodeError) as exc:
             raise ProtocolError(f"bad json header: {exc}") from exc
         if not isinstance(header, dict) or "t" not in header:

@@ -8,6 +8,7 @@ from dataclasses import replace
 import pytest
 
 from config import CFG
+from server_recovery import StoreCoordinator
 from server import Hub, Session
 
 
@@ -57,6 +58,7 @@ def _group(gid, owner, members, admin, muted):
 def test_real_json_restore_keeps_group_roles_mutes_and_read_monotonicity(
         tmp_path):
     store_dir = tmp_path / "store"
+    StoreCoordinator.initialize_new(store_dir)
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit1"),
                   web_files_dir=str(tmp_path / "web1"), admin_pwd="")
     h1 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit1"),
@@ -66,16 +68,18 @@ def test_real_json_restore_keeps_group_roles_mutes_and_read_monotonicity(
         member, _member_out = _attach(h1, "restore-member")
         admin, _admin_out = _attach(h1, "restore-admin")
         gid = 7
+        h1._gid_seq = gid + 1  # Hand-seeded group preserves the real allocation invariant.
         h1.groups[gid] = _group(
             gid, owner.uid,
             {owner.uid: owner.nick, member.uid: member.nick,
              admin.uid: admin.nick},
             admin.uid, member.uid)
+        h1.groups[gid]['admins'] = {admin.uid}  # Runtime uses a set; snapshot writes the legacy list.
         h1.reads[f"group:{gid}"] = {member.uid: 5}
         h1.reads["public"] = {admin.uid: 2}
-        h1._persist_flush()
+        assert h1._persist_flush()
     finally:
-        h1.audit.close()
+        assert h1.shutdown(normal=False)
 
     cfg2 = replace(CFG, audit_dir=str(tmp_path / "audit2"),
                    web_files_dir=str(tmp_path / "web2"), admin_pwd="")
@@ -115,7 +119,7 @@ def test_real_json_restore_keeps_group_roles_mutes_and_read_monotonicity(
         assert h2.reads[f"group:{gid}"] == {member2.uid: 7}
         assert owner2.uid == owner.uid
     finally:
-        h2.audit.close()
+        assert h2.shutdown(normal=False)
 
 
 def test_restore_rejects_invalid_groups_and_reads_without_widening_permissions(

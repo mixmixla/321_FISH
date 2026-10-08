@@ -20,6 +20,7 @@ from pathlib import Path
 import pytest
 
 from config import CFG
+from server_recovery import StoreCoordinator
 from server import Hub, Session
 
 
@@ -51,13 +52,21 @@ def _cfg(tmp_path, *, store=False):
     )
 
 
-def _hub(tmp_path, *, store=False):
+def _hub(tmp_path, *, store=False, new=True):
+    if store and new:
+        StoreCoordinator.initialize_new(tmp_path / 'store')
     h = Hub(
         cfg=_cfg(tmp_path, store=store),
         audit_dir=str(tmp_path / "audit"),
         store_dir=str(tmp_path / "store") if store else None,
     )
     return h
+
+
+def _close_store_hub(h):
+    h.shutdown(normal=False)
+    assert not h._recovery.owner.held
+    assert not any(t.is_alive() for t in h._managed_threads)
 
 
 def _attach(hub, nick, stype="tcp"):
@@ -393,8 +402,9 @@ def test_quota_is_per_owner_and_different_uid_can_progress(tmp_path):
     assert pending["status"] == "pending"
 
 
-def test_resource_stage_pause_allows_store_force_progress(tmp_path, monkeypatch):
+def test_resource_stage_pause_allows_store_force_progress(tmp_path, monkeypatch, request):
     h = _hub(tmp_path, store=True)
+    request.addfinalizer(lambda: _close_store_hub(h))
     owner, _out = _attach(h, "store-progress")
     entered = threading.Event()
     release = threading.Event()
@@ -419,8 +429,9 @@ def test_resource_stage_pause_allows_store_force_progress(tmp_path, monkeypatch)
 
 
 def test_resource_bytes_do_not_replace_first_store_failure_old_json(tmp_path,
-                                                                   monkeypatch):
+                                                                   monkeypatch, request):
     h = _hub(tmp_path, store=True)
+    request.addfinalizer(lambda: _close_store_hub(h))
     owner, _out = _attach(h, "store-old-json")
     h._persist_flush()
     state_path = Path(tmp_path, "store", "state.json")
@@ -431,7 +442,9 @@ def test_resource_bytes_do_not_replace_first_store_failure_old_json(tmp_path,
     h._on_cloud_put(owner, {"t": "cloud_put"}, RESOURCE_A)
     h._persist(force=True)
     assert state_path.read_bytes() == old_state
-    restored = _hub(tmp_path, store=True)
+    _close_store_hub(h)
+    restored = _hub(tmp_path, store=True, new=False)
+    request.addfinalizer(lambda: _close_store_hub(restored))
     assert restored.cloud[owner.uid]["blob"] == RESOURCE_A
     restored_owner, _restored_out = _attach(restored, "store-old-json")
     op = next(reversed(h._resource_ops))

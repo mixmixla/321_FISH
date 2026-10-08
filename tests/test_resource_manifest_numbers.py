@@ -14,7 +14,7 @@ import pytest
 
 from config import CFG
 from server import Hub, Session
-from web import _Handler, _QuietServer
+from web import serve as serve_web
 
 
 FID = "c" * 32
@@ -24,7 +24,7 @@ BODY = b"synthetic-number-boundary"
 @pytest.fixture
 def resource(tmp_path):
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit"),
-                  web_files_dir=str(tmp_path / "web"), admin_pwd="")
+                  web_files_dir=str(tmp_path / "web"), admin_pwd="", bind_host='127.0.0.1')
     hub = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"))
     frames = []
     session = Session(0, "manifest-number-owner", "web", "127.0.0.1",
@@ -33,7 +33,8 @@ def resource(tmp_path):
     # The HTTP authentication check still executes; token creation is synthetic.
     hub.session_by_token = lambda token: session if token == "synthetic-token" else None
     yield hub, session, frames
-    hub.audit.close()
+    assert hub.shutdown(normal=False)
+    assert not any(worker.is_alive() for worker in hub._managed_threads)
 
 
 def _manifest(hub, session, new, **changes):
@@ -94,10 +95,7 @@ def test_huge_timestamp_chat_is_rejected_without_bus_side_effect(resource, new):
 def test_huge_timestamp_http_get_returns_404(resource, new):
     hub, session, _ = resource
     _manifest(hub, session, new, ts=10**1000)
-    handler = type("SyntheticManifestHandler", (_Handler,), {"hub": hub})
-    httpd = _QuietServer(("127.0.0.1", 0), handler)
-    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-    thread.start()
+    httpd = serve_web(hub, port=0, https=False)
     conn = http.client.HTTPConnection("127.0.0.1", httpd.server_address[1], timeout=5)
     try:
         conn.request("GET", "/api/file?fid=" + FID,
@@ -107,7 +105,5 @@ def test_huge_timestamp_http_get_returns_404(resource, new):
         assert json.loads(response.read())["ok"] is False
     finally:
         conn.close()
-        httpd.shutdown()
-        httpd.server_close()
-        thread.join(timeout=2)
-        assert not thread.is_alive()
+        assert hub.shutdown(normal=False)
+        assert not any(worker.is_alive() for worker in hub._managed_threads)

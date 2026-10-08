@@ -14,6 +14,7 @@ from config import CFG
 from crypto import client_handshake
 from server import Hub, serve as serve_tcp, ChatBus
 from server_store import SaveResult
+from server_recovery import StoreCoordinator
 from web import serve as serve_web
 
 
@@ -840,10 +841,39 @@ def test_serverstore_atomic_roundtrip(tmp_path):
     assert ServerStore(str(p)).load() == {}
 
 
-def _hub_with_store(tmp_path, store_dir):
+_store_test_hubs = []
+
+
+@pytest.fixture(autouse=True)
+def _close_owned_store_hubs():
+    _store_test_hubs.clear()
+    yield
+    for h in _store_test_hubs:
+        h.shutdown(normal=False)
+        supervisor = getattr(h, '_test_store_supervisor', None)
+        if supervisor is not None:
+            supervisor.join(12)
+            assert not supervisor.is_alive()
+        assert not h._recovery.owner.held
+        assert not any(worker.is_alive() for worker in h._managed_threads)
+    _store_test_hubs.clear()
+
+
+def _hub_with_store(tmp_path, store_dir, *, new=True):
     """构造启用持久化的独立 Hub（每测孤立目录），只托底审计，不起 TCP。"""
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit"))
-    return Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), store_dir=str(store_dir))
+    if new:
+        StoreCoordinator.initialize_new(store_dir)
+    h = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"), store_dir=str(store_dir))
+    _store_test_hubs.append(h)
+    return h
+
+
+def _start_store_service(hub, port, stop):
+    supervisor = threading.Thread(target=serve_tcp, args=(hub, port, stop, False), daemon=True)
+    hub._test_store_supervisor = supervisor
+    supervisor.start()
+    return supervisor
 
 
 def test_persist_messages_and_restore(tmp_path):
@@ -852,7 +882,7 @@ def test_persist_messages_and_restore(tmp_path):
     h1 = _hub_with_store(tmp_path, str(store_dir))
     port = _free_port()
     stop = threading.Event()
-    threading.Thread(target=serve_tcp, args=(h1, port, stop, False), daemon=True).start()
+    supervisor = _start_store_service(h1, port, stop)
     time.sleep(0.1)
     a = TestClient(port, "alice")
     b = TestClient(port, "bob")
@@ -860,10 +890,15 @@ def test_persist_messages_and_restore(tmp_path):
     a.send({"t": "chat", "text": "持久化一枝"})
     a.wait("chat", pred=lambda e: e.get("text") == "持久化一枝")
     h1._persist_flush()          # 强制落盘
+    # Reopen the explicitly saved checkpoint. Graceful final capture is
+    # covered separately; it intentionally includes disconnect mutations.
+    assert h1.shutdown(normal=False)
     a.close(); b.close()
-    stop.set(); time.sleep(0.2)
+    stop.set()
+    supervisor.join(12)
+    assert not supervisor.is_alive() and not h1._recovery.owner.held
 
-    h2 = _hub_with_store(tmp_path, str(store_dir))   # 模拟重启
+    h2 = _hub_with_store(tmp_path, str(store_dir), new=False)   # 模拟重启
     with h2.bus._lock:
         pub = [x for x in h2.bus._channels.get("all", [])]
     assert any(x.get("text") == "持久化一枝" for x in pub)
@@ -876,17 +911,22 @@ def test_persist_uid_and_nick_reuse_after_restart(tmp_path):
     h1 = _hub_with_store(tmp_path, str(store_dir))
     port = _free_port()
     stop = threading.Event()
-    threading.Thread(target=serve_tcp, args=(h1, port, stop, False), daemon=True).start()
+    supervisor = _start_store_service(h1, port, stop)
     time.sleep(0.1)
     a = TestClient(port, "alice")
     b = TestClient(port, "bob")
     a.hello(); b.hello()
     uid_a, uid_b = a.uid, b.uid
     h1._persist_flush()
+    # Reopen the explicitly saved checkpoint. Graceful final capture is
+    # covered separately; it intentionally includes disconnect mutations.
+    assert h1.shutdown(normal=False)
     a.close(); b.close()
-    stop.set(); time.sleep(0.2)
+    stop.set()
+    supervisor.join(12)
+    assert not supervisor.is_alive() and not h1._recovery.owner.held
 
-    h2 = _hub_with_store(tmp_path, str(store_dir))
+    h2 = _hub_with_store(tmp_path, str(store_dir), new=False)
     assert h2.nick_to_uid["alice"] == uid_a
     assert h2.nick_to_uid["bob"] == uid_b
     # uid_seq 已推进到两 uid 之上 → 新加入者不复用已分配 uid
@@ -895,7 +935,7 @@ def test_persist_uid_and_nick_reuse_after_restart(tmp_path):
     # 重启后新 Hub 上同名重连 → 仍复用同 uid（会话未在线时复用现存映射）
     port2 = _free_port()
     stop2 = threading.Event()
-    threading.Thread(target=serve_tcp, args=(h2, port2, stop2, False), daemon=True).start()
+    supervisor2 = _start_store_service(h2, port2, stop2)
     time.sleep(0.1)
     a2 = TestClient(port2, "alice")
     a2.hello()
@@ -909,7 +949,9 @@ def test_persist_uid_and_nick_reuse_after_restart(tmp_path):
     k2 = tuple(sorted((int(a2.uid), int(bs.uid))))
     assert k2 == k1, f"会话键跨重启漂移: {k1} vs {k2}"
     a2.close(); bs.close()
-    stop2.set(); time.sleep(0.2)
+    stop2.set()
+    supervisor2.join(12)
+    assert not supervisor2.is_alive()
 
 
 def test_persist_group_reads_pins_restore(tmp_path):
@@ -918,7 +960,7 @@ def test_persist_group_reads_pins_restore(tmp_path):
     h1 = _hub_with_store(tmp_path, str(store_dir))
     port = _free_port()
     stop = threading.Event()
-    threading.Thread(target=serve_tcp, args=(h1, port, stop, False), daemon=True).start()
+    supervisor = _start_store_service(h1, port, stop)
     time.sleep(0.1)
     a = TestClient(port, "alice")
     b = TestClient(port, "bob")
@@ -936,10 +978,15 @@ def test_persist_group_reads_pins_restore(tmp_path):
     a.send({"t": "pin", "seq": m["seq"], "on": True})
     a.wait("pin", pred=lambda e: e.get("seq") == m["seq"] and e.get("on"))
     h1._persist_flush()
+    # Reopen the explicitly saved checkpoint. Graceful final capture is
+    # covered separately; it intentionally includes disconnect mutations.
+    assert h1.shutdown(normal=False)
     a.close(); b.close()
-    stop.set(); time.sleep(0.2)
+    stop.set()
+    supervisor.join(12)
+    assert not supervisor.is_alive() and not h1._recovery.owner.held
 
-    h2 = _hub_with_store(tmp_path, str(store_dir))
+    h2 = _hub_with_store(tmp_path, str(store_dir), new=False)
     assert gid in h2.groups and h2.groups[gid]["name"] == "持久群"
     assert h2.groups[gid]["members"].get(a.uid) is not None
     assert h2.pins.get("public", {}).get("seq") == m["seq"]
@@ -1010,16 +1057,16 @@ def test_persist_flush_single_write_and_no_loss(tmp_path):
     store_dir = tmp_path / "r16_flush"
     h = _hub_with_store(tmp_path, str(store_dir))
     writes, _ = _wrap_persist(h)
-    h.reads["all"] = {"1": 5}
-    h._persist_flush()                       # 一次 flush → 恰好一次写
+    h.reads["public"] = {"1": 5}  # Conversation key; "all" belongs only to bus channels.
+    assert h._persist_flush()                # 一次 flush → 恰好一次写
     assert len(writes) == 1, f"flush 应只写一次: {len(writes)}"
-    assert h.store.load()["reads"].get("all") == {"1": 5}
+    assert h.store.load()["reads"].get("public") == {"1": 5}
     # 空闲关停兜底：不再有变更，盘上仍是最新、不覆盖为旧
     h.store._save_encoded = (lambda encoded: (
         writes.append(1) or SaveResult("not_committed", "write", "test_stop",
                                        False, encoded.length, encoded.sha256)))
     h._persist_flush()
-    assert h.store.load()["reads"].get("all") == {"1": 5}, "关停兜底不丢最后状态"
+    assert h.store.load()["reads"].get("public") == {"1": 5}, "关停兜底不丢最后状态"
 
 
 def test_snapshot_isolation(tmp_path):
@@ -1236,7 +1283,8 @@ def test_bus_seq_index_rebuilt_on_restore(tmp_path):
     h = _hub_with_store(tmp_path, str(store_dir))
     msg = h.bus.publish({"channel": "public", "uid": 1, "text": "hi"})
     h._persist_flush()
-    h2 = _hub_with_store(tmp_path, str(store_dir))
+    assert h.shutdown(normal=False)
+    h2 = _hub_with_store(tmp_path, str(store_dir), new=False)
     assert h2.bus.find(msg["seq"])[1]["text"] == "hi"
 
 

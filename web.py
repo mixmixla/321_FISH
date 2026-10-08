@@ -25,14 +25,17 @@ import base64
 import queue
 import re
 import ssl
+import select
 import sys
 import threading
 import time
 import urllib.parse
+from dataclasses import replace
 from http.cookies import CookieError, SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from protocol import MsgType
+import credential_ops as credential_mod
 import bots as _bots                     # R46：登录下发机器人清单（网页端入口）
 try:
     import _art as _art_assets            # 原创美术：登录横幅/吉祥物（内嵌 base64）
@@ -157,6 +160,10 @@ button:active{transform:scale(.96)}
 button.ghost{background:linear-gradient(135deg,var(--side),#fff);color:var(--txt);box-shadow:var(--shadow-sm);border:1px solid var(--line)}
 button.sm{padding:4px 12px;font-size:12px;border-radius:12px 12px 12px 6px;box-shadow:none}
 #main{flex:1;display:flex;align-items:stretch;min-height:0;display:none}
+#chat{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;overflow:hidden;isolation:isolate}
+#chat > :not(#msgs){flex-shrink:0}
+#chat #msgs{min-height:0;overflow:auto;overflow-wrap:anywhere}
+#chat #head{overflow-x:auto}
 #side{width:248px;flex:0 0 248px;background:rgba(251,239,224,.62);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-right:1px solid var(--line);padding:18px 12px;overflow:auto}
 #side h2{font-size:11px;color:var(--dim);margin:20px 4px 8px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;display:flex;align-items:center;gap:6px}
 #side h2::after{content:"";height:3px;flex:1;border-radius:2px;background:
@@ -523,6 +530,31 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
   #input{padding:10px;gap:6px;border-radius:0}
   #login{margin:6vh auto;width:92vw;padding:20px 16px}
 }
+#chat #input{flex-wrap:wrap;gap:8px}
+#chat #input textarea{flex:1 0 100%;min-width:0;width:100%;font-family:inherit}
+#chat #input button{padding:7px 12px}
+#chat #input #btnSend{margin-left:auto}
+#chat #input .sil{margin-left:0}
+
+/* Keep primary reading/composing space usable; secondary tools remain named and reachable. */
+#chat #head{overflow:visible;position:relative;z-index:60}
+#chat #input{z-index:50}
+#headTitle{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.head-tools,.compose-tools{position:relative;flex-shrink:0;font-size:12px;font-weight:400}
+.head-tools summary,.compose-tools summary{cursor:pointer;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt);white-space:nowrap}
+.head-tools summary:focus-visible,.compose-tools summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.toolmenu{position:absolute;right:0;z-index:80;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:300px;max-width:calc(100vw - 20px);padding:12px;background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg)}
+.head-tools .toolmenu{top:calc(100% + 8px)}
+.compose-tools .toolmenu{bottom:calc(100% + 8px);right:auto;left:-86px}
+.toolmenu>.add{cursor:pointer;display:flex;align-items:center;gap:4px;min-width:0;margin:0;padding:5px;font-size:14px;float:none}
+.toolmenu>.add::after{content:attr(title);font-size:11px;font-weight:400;line-height:1.4}
+.toolmenu select{max-width:100%}
+#chat .toolmenu .sil{margin-left:0}
+.toolmenu button{min-width:0}
+@media(max-width:640px){
+  .compose-tools{position:static}
+  .compose-tools .toolmenu{left:10px;right:10px;width:auto;max-width:none;bottom:calc(100% + 8px)}
+}
 </style>
 </head>
 <body>
@@ -542,8 +574,8 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
     <h2>⏳ 稍后处理<span class="add" title="展开/收起待处理清单" onclick="toggleMarkPanel()">⌄</span></h2>
     <div id="marksec" style="display:none"></div>
     <h2>频道</h2>
-    <div class="item on" data-ch="public"><span class="dot"></span>公共聊天</div>
-    <div class="item" onclick="openSaved()" title="发给自己：收藏夹 / 我的笔记"><span class="dot svdot"></span>📌 收藏夹（我的笔记）</div>
+    <div class="item on" data-ch="public" role="button" tabindex="0" onclick="selectChannel({type:'public'})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}"><span class="dot"></span>公共聊天</div>
+    <div class="item" data-ch="saved" onclick="openSaved()" title="发给自己：收藏夹 / 我的笔记"><span class="dot svdot"></span>📌 收藏夹（我的笔记）</div>
     <div class="item" onclick="openFavMsgs()" title="⭐消息收藏（本地）：跨会话聚合浏览"><span class="dot svdot"></span>⭐ 我的收藏</div>
     <h2>群聊<span class="add" title="创建群" onclick="createGroup()">＋</span><span class="add" title="凭邀请码加入" onclick="joinByInvite()">✉</span></h2>
     <div id="groups"></div>
@@ -559,7 +591,7 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
     <div class="item" onclick="openMoments()"><span class="dot"></span>看看大家的动态</div>
   </div>
   <div id="chat">
-    <div id="head"><span id="btnSide" title="会话列表" onclick="toggleSide()">☰</span><span id="headTitle">公共聊天</span><span class="sub" id="headSub"></span><span id="btnBlock" class="add" style="display:none" title="屏蔽/解除屏蔽"></span><span id="btnAdmin" class="add" style="display:none" title="管理员面板" onclick="adminPanel()">🧹</span><span id="btnExport" class="add" title="导出本会话记录（txt）" onclick="exportChat()">⬇</span><span class="add" title="图片墙（聚合本会话已加载图片）" onclick="openAlbum()">🖼</span><span class="add" title="我的资料" onclick="profilePanel()">👤</span><span class="add" title="退出登录" onclick="logout()">⏻</span><span class="add" title="昵称密码" onclick="pwdPanel()">🔑</span><span class="add" title="新消息提示音（关闭/轻柔/默认/叮咚）" onclick="soundPanel()">🔊</span><span class="add" title="勿扰时段（抑制通知/提示音）" onclick="dndPanel()">🔕</span><span class="add" title="关键词提醒（命中关键词始终系统通知）" onclick="kwPanel()">🔔</span><span class="add" title="敏感词打码（仅本机显示，点击揭示）" onclick="guardPanel()">🕶️</span><span class="add" title="摸鱼排行榜（只读，按游戏累计积分）" onclick="fishBoardPanel()">🏆</span><span class="add" title="主题风格（暖粉手绘/冷灰极简）"><select id="selThemeFamily" onchange="setThemeFamily(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="retro">暖粉</option><option value="flat">冷灰</option></select></span><span id="btnTheme" class="add" title="深浅色主题切换" onclick="toggleTheme()">🌙</span><select id="selChatTheme" class="add" title="聊天主题（气泡配色）" onchange="setChatTheme(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="">跟随皮肤</option><option value="mint">薄荷</option><option value="coral">珊瑚</option><option value="peach">暖粉</option><option value="ink">墨蓝</option></select></div>
+    <div id="head"><span id="btnSide" title="会话列表" onclick="toggleSide()">☰</span><span id="headTitle">公共聊天</span><span class="sub" id="headSub"></span><details class="head-tools"><summary>更多</summary><div class="toolmenu"><span id="btnBlock" class="add" style="display:none" title="屏蔽/解除屏蔽"></span><span id="btnAdmin" class="add" style="display:none" title="管理员面板" onclick="adminPanel()">🧹</span><span id="btnExport" class="add" title="导出本会话记录（txt）" onclick="exportChat()">⬇</span><span class="add" title="图片墙（聚合本会话已加载图片）" onclick="openAlbum()">🖼</span><span class="add" title="我的资料" onclick="profilePanel()">👤</span><span class="add" title="退出登录" onclick="logout()">⏻</span><span class="add" title="昵称密码" onclick="pwdPanel()">🔑</span><span class="add" title="新消息提示音（关闭/轻柔/默认/叮咚）" onclick="soundPanel()">🔊</span><span class="add" title="勿扰时段（抑制通知/提示音）" onclick="dndPanel()">🔕</span><span class="add" title="关键词提醒（命中关键词始终系统通知）" onclick="kwPanel()">🔔</span><span class="add" title="敏感词打码（仅本机显示，点击揭示）" onclick="guardPanel()">🕶️</span><span class="add" title="摸鱼排行榜（只读，按游戏累计积分）" onclick="fishBoardPanel()">🏆</span><span class="add" title="主题风格（暖粉手绘/冷灰极简）"><select id="selThemeFamily" onchange="setThemeFamily(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="retro">暖粉</option><option value="flat">冷灰</option></select></span><span id="btnTheme" class="add" title="深浅色主题切换" onclick="toggleTheme()">🌙</span><select id="selChatTheme" class="add" title="聊天主题（气泡配色）" onchange="setChatTheme(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="">跟随皮肤</option><option value="mint">薄荷</option><option value="coral">珊瑚</option><option value="peach">暖粉</option><option value="ink">墨蓝</option></select></div></details></div>
     <div id="sbar" style="display:none">
       <input id="sinput" placeholder="搜索本会话消息（Ctrl+F，Enter 下一个）" autocomplete="off">
       <span id="scount"></span>
@@ -572,6 +604,7 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
       <textarea id="text" placeholder="输入消息，Enter 发送，:smile: 表情"></textarea>
       <button id="btnImg" title="发送图片">🖼</button>
       <button id="btnFile" title="发送文件">📎</button>
+      <details class="compose-tools"><summary>更多</summary><div class="toolmenu">
       <button id="btnPoll" title="发起投票">🗳</button>
       <button id="btnEvbody" title="群内@全体（醒目广播）" onclick="insertEvbody()">📣@所有</button>
       <button id="btnSched" title="定时发送（服务器托管）">⏰</button>
@@ -583,6 +616,7 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
         <option value="log">🎭日志</option>
         <option value="excel">🎭表格</option>
       </select>
+      </div></details>
       <button id="btnSend">发送</button>
     </div>
     <input type="file" id="fimg" accept="image/*" style="display:none">
@@ -716,22 +750,50 @@ function applyChatTheme(){
   setChatTheme(v);
 }
 applyChatTheme();
-function pushDraft(){
-  // R29B：当前会话草稿推给服务器（空=清除）；1s 防抖
-  clearTimeout(pushDraft.t);
-  pushDraft.t=setTimeout(()=>{
-    const c=state.cur,text=$("#text").value;
-    const body={token:state.token,channel:c.type,text:text};
+function discardGroupDraft(gid,discardLocal=true){
+  const key=convKey("group",gid);
+  if(discardLocal)delete state.drafts[key];
+  const versions=state.draftVersions||(state.draftVersions={});
+  versions[key]=(versions[key]||0)+1;
+  const epochs=state.groupDraftEpoch||(state.groupDraftEpoch={});
+  epochs[gid]=(epochs[gid]||0)+1;
+  if(state.cur.type==="group"&&state.cur.gid===gid)clearTimeout(pushDraft.t);
+}
+function writeDraft(c,text,token,epoch=(state.groupDraftEpoch||{})[c.gid]||0){
+  // One writer per account/channel: a slow older save cannot resurrect a cleared draft.
+  const key=token+"|"+convKey(c.type,c.type==="group"?c.gid:c.uid);
+  const queues=writeDraft.pending||(writeDraft.pending=new Map());
+  const previous=queues.get(key)||Promise.resolve();
+  const next=previous.then(()=>{
+    if(!token||state.token!==token)return;
+    if(c.type==="group"&&(!state.meIn[c.gid]||state.groupAccessPending===c.gid||
+      ((state.groupDraftEpoch||{})[c.gid]||0)!==epoch))return;
+    const body={token:token,channel:c.type,text:text};
     if(c.type!=="public")body.to=c.uid||c.gid;
-    fetch("/api/draft",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
-      .then(r=>r.json()).catch(()=>{});
-    state.drafts[convKey()]=text;
-  },1000);}
-function applyDraft(){
+    return fetch("/api/draft",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+      .then(r=>r.json()).then(d=>{if(!d.ok)throw Error("draft rejected");});
+  }).catch(()=>{if(state.token===token)showStatus("草稿同步失败，本页内容已保留");});
+  queues.set(key,next);
+  next.then(()=>{if(queues.get(key)===next)queues.delete(key);});
+  return next;
+}
+function pushDraft(immediate=false){
+  // Capture the owner and text at input time, before another channel is selected.
+  clearTimeout(pushDraft.t);
+  if(state.editSeq!=null)return;
+  const c={...state.cur},text=$("#text").value,key=convKey();
+  const versions=state.draftVersions||(state.draftVersions={});
+  if(immediate!==true||state.drafts[key]!==text)versions[key]=(versions[key]||0)+1;
+  state.drafts[key]=text;
+  const token = state.token;
+  const epoch=(state.groupDraftEpoch||{})[c.gid]||0;
+  const save=()=>writeDraft(c,text,token,epoch);
+  if(immediate===true)save();else pushDraft.t=setTimeout(save,1000);}
+function applyDraft(force=false){
   // R29B：切会话时若输入为空且服务器有草稿 → 回填
-  const t=$("#text");if(t.value.trim())return;
+  const t=$("#text");if(!force&&t.value.trim())return;
   const d=state.drafts[convKey()]||"";
-  if(t.value!==d){t.value=d;t.focus();}}
+  if(t.value!==d){t.value=d;t.focus();}growTextArea();}
 function expand(t){return (t||"").replace(/:([A-Za-z0-9_]+):/g,(m,c)=>state.stickers[c]?state.stickers[c].emoji:m)}
 function fmtTime(ts){const d=new Date(ts*1000);return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
 function fmtText(t){                             // R41G + R70F：贴纸码展开 → 本地打码 → 安全 HTML
@@ -1139,19 +1201,32 @@ function channelName(){const c=state.cur;
   return "私聊："+c.uid}
 // ---- R20：会话键 / 已读 / 群管理 ----
 function convKey(type,to){const c=type||state.cur.type;
+  if(type==null)to=c==="group"?state.cur.gid:state.cur.uid;
   if(c==="public")return "public";
   if(c==="group")return "group:"+to;
   const lo=Math.min(state.uid,to),hi=Math.max(state.uid,to);return "private:"+lo+":"+hi;}
 function groupApi(action,data){
+  const token = state.token,navigation=state.navigationRequest;
   const body=Object.assign({token:state.token,action:action},data||{});
   fetch("/api/group",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
     .then(r=>r.json()).then(d=>{
+      if(state.token!==token)return;
       if(d.ok&&d.groups){
         if(action==="join"&&data.gid!=null)state.meIn[data.gid]=true;
-        if(action==="leave"&&data.gid!=null)delete state.meIn[data.gid];
+        if(action==="leave"&&data.gid!=null){
+          const sameNavigation=state.navigationRequest===navigation;
+          const inSameGroup=state.cur.type==="group"&&state.cur.gid===data.gid;
+          // Always invalidate writes captured before this leave. A newer visit
+          // keeps its local text until fresh detail confirms current membership.
+          discardGroupDraft(data.gid,sameNavigation||!inSameGroup);
+          if(sameNavigation){
+            delete state.meIn[data.gid];
+            if(inSameGroup)selectChannel({type:"public"},false);
+          }
+        }
         if(action==="join_invite")showStatus("已凭邀请码加入群");   // R28
         syncGroups(d.groups);
-        if(action==="join"&&data.gid!=null){state.cur={type:"group",gid:data.gid};loadGroupDetail(data.gid);}
+        if(action==="join"&&data.gid!=null&&state.navigationRequest===navigation){openGroup({gid:data.gid});}
         if(action==="ann_mode"||action==="announce"||action==="slow")refreshPanel();   // C9①/R70D：模式/公告/慢速变化刷新面板
       }else if(!d.ok&&d.error){showStatus(d.error);}});}
 function createGroup(){
@@ -1160,12 +1235,20 @@ function createGroup(){
   const isPub=confirm("设为公开群？\n\n公开群：所有人都能看到并直接加入。\n私有群（默认）：仅群成员可见，需凭邀请码加入。");
   groupApi("create",{name:name.slice(0,20),public:isPub?1:0});}
 function openGroup(g){
+  const token = state.token,navigation=state.navigationRequest=(state.navigationRequest||0)+1;
   // 成员关系一律由 detail 判定；已加入则进会话+面板，否则提示加入
   fetch("/api/group_detail?gid="+g.gid).then(r=>r.json()).then(d=>{
+    if(state.token!==token||state.navigationRequest!==navigation)return;
+    if((!d.ok||!d.member)&&state.cur.type==="group"&&state.cur.gid===g.gid){
+      state.meIn[g.gid]=false;state.groupAccessPending=null;
+      discardGroupDraft(g.gid);closePanel();selectChannel({type:"public"},false);
+      showStatus("群不可用或已不在该群，返回公共聊天");return;
+    }
     if(!d.ok){showStatus("群不存在或无权访问");return;}
     state.meIn[g.gid]=!!d.member;
     if(!d.member){ if(confirm("加入群「"+g.name+"」？"))groupApi("join",{gid:g.gid});return; }
     state.gmembers[g.gid]=d.members||[];   // R67：缓存群成员供 @ 候选
+    state.groupAccessPending=null;
     selectChannel({type:"group",gid:g.gid});
     renderGroupPanel(d);
     // R9H：进群时把 detail 的 avatar 同步到列表项，群头像即刻可见
@@ -1297,9 +1380,9 @@ function showInviteCode(code){   // R28：弹窗显示邀请码，并尝试复�
   prompt("群邀请码（已尝试复制到剪贴板）",code||"");}
 function leaveGroup(){if(state.panelGid&&confirm("确认退出该群？")){groupApi("leave",{gid:state.panelGid});closePanel();}}
 function syncGroups(list){
-  state.serverGroups=list;
-  // 已加入关系由 detail 维护；这里仅重绘列表
+  state.groups=list;state.serverGroups=list;
   renderGroups();
+  refreshPanel();
 }
 // R9H：群状态/群头像回帧 → 把 about/avatar 同步进群对象并重绘列表与面板
 function syncGroupProfile(d){
@@ -1933,9 +2016,21 @@ function sendPoll(){
     body:JSON.stringify(body)}).then(r=>r.json()).then(d=>{if(!d.ok)showStatus(d.error||"投票失败")});
 }
 function refreshPanel(){
-  if(state.panelGid==null)return;
-  fetch("/api/group_detail?gid="+state.panelGid).then(r=>r.json()).then(d=>{
-    if(!d.ok){closePanel();return;}renderGroupPanel(d);});}
+  if(state.cur.type!=="group")return;
+  const gid=state.cur.gid,token = state.token,navigation=state.navigationRequest;
+  const request=state.groupAccessRequest=(state.groupAccessRequest||0)+1;
+  state.groupAccessPending=gid;applyRO();
+  const current=()=>state.token===token&&state.navigationRequest===navigation&&state.groupAccessRequest===request&&state.cur.type==="group"&&state.cur.gid===gid;
+  fetch("/api/group_detail?gid="+gid).then(r=>r.json()).then(d=>{
+    if(!current())return;
+    state.groupAccessPending=null;
+    state.meIn[gid]=!!d.ok&&!!d.member;
+    if(!state.meIn[gid]){discardGroupDraft(gid);closePanel();selectChannel({type:"public"},false);showStatus("已不在该群，返回公共聊天");return;}
+    const key=convKey("group",gid);
+    if(Object.prototype.hasOwnProperty.call(state.drafts,key))writeDraft({type:"group",gid:gid},state.drafts[key],token);
+    if(state.panelGid===gid)renderGroupPanel(d);
+    applyRO();renderGroups();
+  }).catch(()=>{if(current())showStatus("群权限暂无法确认，请重新打开该群");});}
 function addSys(t){const d=document.createElement("div");d.className="sys";d.textContent=t;$("#msgs").appendChild(d);scrollToBottom(false)}
 function addNudge(t){const d=document.createElement("div");d.className="sys nudge";d.textContent=t;$("#msgs").appendChild(d);scrollToBottom(false)}   // R67 拍一拍轻量行
 function addShake(t){const d=document.createElement("div");d.className="sys nudge";d.textContent=t;$("#msgs").appendChild(d);scrollToBottom(false)}   // R68 窗口抖动轻量行
@@ -1990,7 +2085,10 @@ function searchJump(dir){
 document.addEventListener("keydown",e=>{           // R55-2：Ctrl+F 打开会话内搜索（主界面内）
   if(e.key==="f"&&(e.ctrlKey||e.metaKey)&&!e.shiftKey){
     if($("#main").style.display!=="none"){e.preventDefault();searchOpen();}}});
-function selectChannel(c){
+function selectChannel(c,saveDraft=true){
+  state.navigationRequest=(state.navigationRequest||0)+1;
+  const unreadBefore=state.unread[convKey(c.type,c.type==="group"?c.gid:c.uid)]||0;
+  if(state.editSeq==null&&saveDraft)pushDraft(true);else clearTimeout(pushDraft.t);
   cancelEdit();                                    // R55-3：切会话退出编辑态
   closeSide();                                      // R67：窄屏点会话自动收起抽屉
   state.cur=c;$("#headTitle").textContent=channelName()+"  ";
@@ -1998,11 +2096,12 @@ function selectChannel(c){
   state.atBottom=true;    // R__：切会话默认钉底，加载历史落到底部
   document.querySelectorAll("#side .item").forEach(e=>e.classList.remove("on"));
   if(c.type==="public")document.querySelector('[data-ch="public"]').classList.add("on");
+  if(c.type==="private"&&c.uid===state.uid)document.querySelector('[data-ch="saved"]').classList.add("on");
   if(c.type==="private"){state.unread[convoKey(c.uid)]=0;renderConvos();updateTitle();}
   if(c.type!=="group")$("#apanel").style.display="none";
   renderHeadActions();
-  clearMsgs();loadHistory(c);renderRoster();renderGroups();applyRO();
-  applyDraft();cancelReply();}              // R29B：切会话回填服务器草稿；R41G：清引用态
+  clearMsgs();loadHistory(c,unreadBefore);renderRoster();renderGroups();applyRO();
+  applyDraft(true);cancelReply();}          // Replace the composer with this channel's draft.
 function renderHeadActions(){               // R50：私聊标题右侧屏蔽/解除按钮
   const c=state.cur,b=$("#btnBlock");
   if(c.type==="private"&&c.uid!==state.uid){
@@ -2020,13 +2119,15 @@ function toggleBlock(){                     // R50：屏蔽/解除当前私聊�
     body:JSON.stringify({token:state.token,op:on?"block":"unblock",uid:c.uid})})
     .then(r=>r.json()).then(d=>{if(!d.ok)showStatus(d.error||"操作失败")});
 }
-function loadHistory(c){
+function loadHistory(c,unreadBefore=null){
+  const key=convKey(c.type,c.type==="group"?c.gid:c.uid),token = state.token;
+  const request=state.historyRequest=(state.historyRequest||0)+1;
   const q={channel:c.type};
   if(c.type==="private")q.to=c.uid;
   if(c.type==="group")q.to=c.gid;
-  const un=state.unread[convKey()]||0;          // R55-9：进入前未读数（用于未读分隔线）
+  const un=unreadBefore==null?(state.unread[key]||0):unreadBefore;
   fetch("/api/history?"+new URLSearchParams(q)).then(r=>r.json()).then(d=>{
-    if(!d.ok)return;
+    if(!d.ok||state.token!==token||state.historyRequest!==request||convKey()!==key)return;
     const msgs=d.msgs||[];
     msgs.forEach(e=>addMsg(e,e.uid===state.uid));
     if(un>0&&msgs.length){                        // R55-9：在末尾 un 条前插「未读分隔线」
@@ -2786,11 +2887,15 @@ function stickerMenu(ev,code){
   ctxMenu(ev.clientX,ev.clientY,items);
 }
 function sendSticker(code){
+  if(channelRO()){showStatus("当前频道只读");return;}
   fetch("/api/send",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({token:state.token,channel:state.cur.type,to:state.cur.type==="public"?undefined:(state.cur.uid||state.cur.gid),sticker:code})})
     .then(r=>r.json()).then(d=>{if(!d.ok)showStatus(d.error||"发送失败")});
 }
 function send(){
+  if(channelRO()){showStatus("当前频道只读");return;}
+  const owner={...state.cur},key=convKey(),token = state.token,original=$("#text").value;
+  const version=(state.draftVersions||{})[key]||0;
   const t=$("#text").value.trim();
   if(!t)return;
   if(state.editSeq!=null){                         // R55-3：编辑态 → 走 /api/edit
@@ -2798,7 +2903,7 @@ function send(){
     fetch("/api/edit",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({token:state.token,seq:seq,text:t,rich:richSegs(t)})})
       .then(r=>r.json()).then(d=>{
-        if(d.ok){$("#text").value="";growTextArea();cancelEdit();pushDraft();}
+        if(d.ok){if(state.token===token&&convKey()===key&&state.editSeq===seq&&$("#text").value===original){$("#text").value="";growTextArea();cancelEdit();pushDraft();}}
         else showStatus(d.error||"编辑失败")});
     return;
   }
@@ -2809,29 +2914,44 @@ function send(){
   if(state.reply)body.reply=state.reply;         // R41G：附带引用快照
   if(state.cur.type!=="public")body.to=state.cur.uid||state.cur.gid;
   fetch("/api/send",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
-    .then(r=>r.json()).then(d=>{if(d.ok){$("#text").value="";growTextArea();state.drafts[convKey()]="";cancelReply();pushDraft();}else{showStatus(d.error||"发送失败，文本已保留可重发")}})
+    .then(r=>r.json()).then(d=>{if(d.ok){
+      if(state.token!==token)return;
+      if(((state.draftVersions||{})[key]||0)!==version)return;
+      state.drafts[key]="";
+      writeDraft(owner,"",token);
+      if(convKey()===key&&state.editSeq==null&&$("#text").value===original){
+        clearTimeout(pushDraft.t);
+        $("#text").value="";growTextArea();cancelReply();
+      }
+    }else{showStatus(d.error||"发送失败，文本已保留可重发")}})
     .catch(()=>{showStatus("⚠ 发送失败，文本已保留，点击发送即可重发");});   // R60：网络断连 → 保留草稿供重发
 }
 // ---- R23 网页端图片/文件 ----
 function fmtSize(n){n=+n||0;if(n<1024)return n+"B";if(n<1048576)return (n/1024).toFixed(1)+"KB";return (n/1048576).toFixed(1)+"MB";}
 function uploadSend(file,kind){
+  if(channelRO()){showStatus("当前频道只读");return;}
+  const owner={...state.cur},token = state.token;
   const rd=new FileReader();
   rd.onload=()=>{
+    if(state.token!==token)return;
     const b64=String(rd.result).split(",")[1]||"";
     fetch("/api/upload",{method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({token:state.token,name:file.name,kind:kind,data:b64})})
       .then(r=>r.json()).then(d=>{
         if(!d.ok){showStatus(d.error||"上传失败");return}
-        sendFile(d.file);});
+        if(state.token===token)sendFile(d.file,owner,token);})
+      .catch(()=>showStatus("上传失败，请重新选择文件"));
   };
   rd.onerror=()=>showStatus("读取文件失败");
   rd.readAsDataURL(file);
 }
-function sendFile(f){
-  const body={token:state.token,channel:state.cur.type,file:f};
-  if(state.cur.type!=="public")body.to=state.cur.uid||state.cur.gid;
+function sendFile(f,owner={...state.cur},token = state.token){
+  if(state.token!==token)return;
+  const body={token:token,channel:owner.type,file:f};
+  if(owner.type!=="public")body.to=owner.uid||owner.gid;
   fetch("/api/send",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
-    .then(r=>r.json()).then(d=>{if(!d.ok)showStatus(d.error||"发送失败")});
+    .then(r=>r.json()).then(d=>{if(!d.ok)showStatus(d.error||"发送失败")})
+    .catch(()=>showStatus("文件消息发送失败，请重试"));
 }
 // ---- R51 网页端：定时发送（服务器托管）+ 撤回（scope） ----
 function delMsg(seq,scope){
@@ -3506,7 +3626,7 @@ function openStream(){
     else if(d.t==="sched_list"){                       // R51：定时消息权威列表同步
       state.scheds=d.items||[];
       renderSchedList();}
-    else if(d.t==="group_list"){state.groups=d.groups;state.serverGroups=d.groups;renderRoster();renderGroups();refreshPanel();applyRO();}
+    else if(d.t==="group_list"){syncGroups(d.groups||[]);renderRoster();applyRO();}
     else if(d.t==="group_state"){addSys(d.text||"群信息已更新");syncGroupProfile(d);refreshPanel();}   // R9H：同步 about/avatar
     else if(d.t==="group_avatar_data"){syncGroupProfile(d);}   // R9H：群头像回帧 → 上传者立即刷新
     else if(d.t==="group_invite"){showInviteCode(d.code);}   // R28：邀请码回帧（单播）
@@ -3658,6 +3778,8 @@ function curChannelGroup(){                        // R71：当前会话若为�
   return (state.serverGroups.length?state.serverGroups:state.groups||[]).find(x=>x.gid===c.gid)||null;}
 function curIsChannel(){const g=curChannelGroup();return !!g&&g.kind==="channel";}
 function channelRO(){
+  if(state.cur.type!=="group")return false;
+  if(state.groupAccessPending===state.cur.gid||!state.meIn[state.cur.gid])return true;
   const g=curChannelGroup();
   return !!g&&g.kind==="channel"&&g.owner!==state.uid;}
 function applyRO(){
@@ -3665,7 +3787,8 @@ function applyRO(){
   const text=$("#text"),inp=$("#input");
   const dis=[text,$("#btnSend"),$("#btnImg"),$("#btnFile"),$("#btnPoll"),$("#btnSched"),$("#btnBurn")];
   dis.forEach(el=>{if(el)el.disabled=ro});
-  text.placeholder=ro?"📢 频道仅创建者可发言（只读，可在贴下评论）":"输入消息，Enter 发送，:smile: 表情";
+  text.placeholder=state.cur.type==="group"&&state.groupAccessPending===state.cur.gid?"正在确认群成员身份…":
+    ro?"当前群聊只读或不可用":"输入消息，Enter 发送，:smile: 表情";
   inp.dataset.ro=ro?"1":"";}
 
 // ==================== R49 网页端桌游 ====================
@@ -5861,6 +5984,48 @@ class _Handler(BaseHTTPRequestHandler):
     hub = None                       # 由 web.serve 注入
     protocol_version = "HTTP/1.1"
 
+    def handle(self):
+        """Keep idle HTTP/1.1 readers cancellable, including buffered pipelines.
+
+        Windows socket.makefile readers can remain blocked after another
+        thread shuts down the socket. Wait before starting the next request;
+        the existing parser/body handling and buffering stay unchanged.
+        """
+        self.close_connection = False
+        try:
+            while not self.close_connection and self._service_available():
+                timeout = self.connection.gettimeout()
+                try:
+                    self.connection.setblocking(False)
+                    try:
+                        buffered = bool(self.rfile.peek(1))
+                    except (BlockingIOError, ssl.SSLWantReadError, ssl.SSLWantWriteError):
+                        buffered = False
+                finally:
+                    self.connection.settimeout(timeout)
+                readable = buffered
+                if not readable:
+                    ready, _, _ = select.select([self.connection], [], [], 0.2)
+                    readable = bool(ready)
+                if readable and self._service_available():
+                    self.handle_one_request()
+        except (OSError, ValueError):
+            pass
+        finally:
+            self.close_connection = True
+
+    def _service_available(self):
+        stop = getattr(getattr(self, 'server', None), '_hub_stop', None)
+        check = getattr(self.hub, '_service_available', None)
+        return not (stop is not None and stop.is_set()) and (check is None or check())
+
+    def _reject_stopping(self):
+        if self._service_available():
+            return False
+        self.close_connection = True
+        self._json(503, {'ok': False, 'error': '服务器正在停止或存储状态未确认'})
+        return True
+
     def log_message(self, *args):
         pass
 
@@ -5893,13 +6058,28 @@ class _Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def _read_json(self) -> dict:
+    def _read_json(self, *, strict=False) -> dict:
         try:
+            if strict and (self.headers.get('Transfer-Encoding')
+                           or len(self.headers.get_all('Content-Length', [])) > 1):
+                self.close_connection = True
+                raise credential_mod.CredentialError('invalid_json')
             length = int(self.headers.get("Content-Length") or 0)
-            if length > 1 << 20:
+            if length < 0 or length > 1 << 20:
+                if strict:
+                    self.close_connection = True
+                    raise credential_mod.CredentialError('invalid_json')
                 return {}
-            return json.loads(self.rfile.read(length).decode("utf-8") or "{}")
+            raw = self.rfile.read(length)
+            if strict:
+                value = credential_mod.strict_json(raw.decode('utf-8') or '{}')
+                if len(raw) != length or not isinstance(value, dict):
+                    raise credential_mod.CredentialError('invalid_json')
+                return value
+            return json.loads(raw.decode("utf-8") or "{}")
         except (ValueError, UnicodeDecodeError):
+            if strict:
+                raise credential_mod.CredentialError('invalid_json') from None
             return {}
 
     def _read_raw(self, limit: int) -> bytes:
@@ -5940,6 +6120,77 @@ class _Handler(BaseHTTPRequestHandler):
 
     def _session(self, body: dict) -> "Session | None":
         return self.hub.session_by_token(self._tok_any(body))
+
+    @staticmethod
+    def _credential_status(reason):
+        if reason == 'credential_pending':
+            return 202
+        if reason == 'credential_upgrade_required':
+            return 426
+        if reason == 'context_required':
+            return 428
+        if reason in ('context_changed', 'credential_conflict', 'request_parameter_conflict',
+                      'credential_already_bound',
+                      'claim_required', 'auth_context_changed'):
+            return 409
+        if reason in ('session_inactive', 'unauthorized'):
+            return 401
+        if reason in ('service_unavailable', 'credential_store_unavailable',
+                      'credential_unknown', 'credential_write_failed', 'credential_store_busy',
+                      'credential_capacity', 'credential_authority_unverified',
+                      'credential_candidate_invalid', 'login_not_attached'):
+            return 503
+        if reason in ('invalid_password', 'old_password_invalid', 'credential_not_set',
+                      'credential_admin_managed', 'retired', 'reserved_identity'):
+            return 403
+        return 400
+
+    def _credential_error_response(self, reason, *, text=None, credential=None):
+        payload = {'ok': False, 'error': text or str(credential_mod.AuthFailure(reason)),
+                   'reason': reason}
+        if credential is not None:
+            payload['credential'] = credential.payload(server_epoch=self.hub._server_epoch)
+        self._json(self._credential_status(reason), payload)
+
+    def _credential_session(self, data):
+        """Credential routes never use a body token to override any mt_token Cookie."""
+        raw_cookie = self.headers.get('Cookie') or ''
+        cookie_present = re.search(r'(?:^|;)\s*' + re.escape(COOKIE_NAME) + r'\s*=', raw_cookie) is not None
+        token = self._cookie_token() if cookie_present else data.get('token', '')
+        if not isinstance(token, str):
+            token = ''
+        sess = self.hub.session_by_token(token)
+        if sess is None:
+            self._credential_error_response('unauthorized')
+            return None
+        try:
+            headers = self.headers.get_all('X-Moyu-Context', [])
+            query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query, keep_blank_values=True)
+            values = query.get('moyu_ctx', [])
+            if len(headers) > 1 or len(values) > 1:
+                raise credential_mod.CredentialError('context_invalid')
+            supplied = [credential_mod.WebContext.decode(raw) for raw in headers + values]
+            if not supplied:
+                raise credential_mod.CredentialError('context_required')
+            if any(item != supplied[0] for item in supplied[1:]):
+                raise credential_mod.CredentialError('context_invalid')
+            context = supplied[0]
+            if context != self.hub.web_auth_context(sess):
+                raise credential_mod.CredentialError('context_changed')
+        except credential_mod.CredentialError as exc:
+            self._credential_error_response(exc.reason)
+            return None
+        return sess, context, token
+
+    def _credential_response(self, payload, *, query=False):
+        status, reason = payload.get('status'), payload.get('reason')
+        code = (200 if status == 'confirmed' or (query and reason == 'operation_unavailable')
+                else 202 if status == 'pending' else self._credential_status(reason))
+        response = {'ok': status == 'confirmed', **payload}
+        if status != 'confirmed':
+            response['error'] = ('凭据操作仍在处理中' if status == 'pending'
+                                 else str(credential_mod.AuthFailure(reason)))
+        self._json(code, response)
 
     def _same_origin(self) -> bool:
         """退出 POST 若带 Origin，必须与当前请求 Host/协议同源。"""
@@ -5995,6 +6246,8 @@ class _Handler(BaseHTTPRequestHandler):
 
     # ---------- 路由 ----------
     def do_GET(self):
+        if self._reject_stopping():
+            return
         path = urllib.parse.urlparse(self.path).path
         if path == "/":
             data = _SERVED_PAGE()
@@ -6010,6 +6263,8 @@ class _Handler(BaseHTTPRequestHandler):
             self._whoami()                   # R47-A2：Cookie 会话恢复
         elif path == "/api/meta":
             self._meta()                     # R48：登录页探测站点口令开关
+        elif path == "/api/credential_result":
+            self._credential_get()
         elif path == "/api/game_list":
             self._game_list()                # R49：大厅初始快照（游戏元数据+房间）
         elif path == "/api/fish_board":
@@ -6059,11 +6314,17 @@ class _Handler(BaseHTTPRequestHandler):
             self._json(404, {"ok": False, "error": "not found"})
 
     def do_POST(self):
+        if self._reject_stopping():
+            return
         path = urllib.parse.urlparse(self.path).path
         if path == "/api/upload":
             self._upload()
             return
-        body = self._read_json()
+        try:
+            body = self._read_json(strict=path in ('/api/login', '/api/passwd'))
+        except credential_mod.CredentialError as exc:
+            self._credential_error_response(exc.reason)
+            return
         if path == "/api/login":
             self._login(body)
         elif path == "/api/logout":
@@ -6145,31 +6406,57 @@ class _Handler(BaseHTTPRequestHandler):
             self._json(429, {"ok": False,
                              "error": f"登录尝试过于频繁，请 {int(wait) + 1} 秒后再试"})
             return
-        if self.hub._web_password and not hmac.compare_digest(
-                str(body.get("password") or "").encode("utf-8"),
-                str(self.hub._web_password).encode("utf-8")):
-            guard.fail(ip)
-            self.hub.audit.log(type="web_login_failed", ip=ip, reason="password")
-            self._json(403, {"ok": False, "error": "口令错误"})
+        if not self._same_origin():
+            self._json(403, {"ok": False, "reason": "forbidden", "error": "请求来源不允许"})
             return
-        # R47-B：password 字段语义区分——设了站点口令时它只作站点口令，
-        # 昵称密码走独立 nick_pwd 字段，防止把站点口令误绑成昵称密码
-        if self.hub._web_password:
-            nick_pwd = str(body.get("nick_pwd") or "")
-        else:
-            nick_pwd = str(body.get("password") or "")
-        sess, token = self.hub.login_web(body.get("nick", ""),
-                                         self.client_address[0],
-                                         nick_pwd)
+        try:
+            intent = credential_mod.LoginIntent.parse(body)
+            site_password = body.get('password', '')
+            if not isinstance(site_password, str):
+                raise credential_mod.CredentialError('invalid_password_fields')
+            if self.hub._web_password and not hmac.compare_digest(
+                    site_password.encode('utf-8'), str(self.hub._web_password).encode('utf-8')):
+                guard.fail(ip)
+                self.hub.audit.log(type='web_login_failed', ip=ip, reason='password')
+                self._json(403, {'ok': False, 'reason': 'site_password_invalid', 'error': '口令错误'})
+                return
+            if intent.version == 1:
+                if not self.hub._web_password and site_password:
+                    raise credential_mod.CredentialError('unexpected_site_password')
+                nick_pwd = body.get('nick_pwd', '')
+            else:
+                nick_pwd = body.get('nick_pwd', '') if self.hub._web_password else site_password
+            if not isinstance(nick_pwd, str):
+                raise credential_mod.CredentialError('invalid_password_fields')
+        except (credential_mod.CredentialError, UnicodeError) as exc:
+            self._credential_error_response(getattr(exc, 'reason', 'invalid_password_fields'))
+            return
+        sess, token = self.hub.login_web(body.get('nick', ''), self.client_address[0],
+                                         nick_pwd, auth_header=body)
         if not sess:
             guard.fail(ip)
-            self.hub.audit.log(type="web_login_failed", ip=ip, reason="nick")
-            self._json(403, {"ok": False, "error": token})
+            self.hub.audit.log(type='web_login_failed', ip=ip, reason='nick')
+            self._credential_error_response(getattr(token, 'reason', 'invalid_password'),
+                                            text=str(token), credential=getattr(token, 'credential', None))
+            return
+        try:
+            metadata = self.hub.auth_capabilities()
+        except credential_mod.CredentialError as exc:
+            self.hub.unregister(sess, 'login_metadata_failed')
+            credential = (None if getattr(sess, '_claim_replay', False)
+                          else getattr(sess, '_login_credential', None))
+            if credential is not None:
+                credential = replace(credential, login_status='not_attached')
+            self._credential_error_response(exc.reason,
+                                            credential=credential)
             return
         guard.success(ip)
         cookie = (f"{COOKIE_NAME}={token}; Path=/; HttpOnly; SameSite=Strict"
                   + ("; Secure" if self._is_tls() else ""))
         self._json(200, {"ok": True, "uid": sess.uid, "nick": sess.nick,
+                         "auth": metadata, "session_binding_id": sess.session_binding_id,
+                         **({"credential": sess._login_credential.payload(server_epoch=self.hub._server_epoch)}
+                            if getattr(sess, '_login_credential', None) is not None else {}),
                          "is_admin": sess.is_admin,             # R53：管理员标识
                          "token": token, "roster": self.hub._roster(),
                          "known": self.hub._known_list(sess.uid),   # R63：已知用户（含离线 last_online）
@@ -6189,7 +6476,12 @@ class _Handler(BaseHTTPRequestHandler):
 
     def _meta(self):
         """R48：登录页探测——站点口令是否启用，决定表单拆双密码框（无需鉴权）。"""
-        self._json(200, {"ok": True, "site_pwd": bool(self.hub._web_password)})
+        try:
+            metadata = self.hub.auth_capabilities()
+        except credential_mod.CredentialError as exc:
+            self._credential_error_response(exc.reason)
+            return
+        self._json(200, {"ok": True, "site_pwd": bool(self.hub._web_password), "auth": metadata})
 
     def _game_list(self):
         """R49：大厅初始快照——游戏元数据 + 房间列表（与 TCP game_list 帧同构）。"""
@@ -6265,8 +6557,14 @@ class _Handler(BaseHTTPRequestHandler):
         if not sess:
             self._json(401, {"ok": False, "error": "未登录"})
             return
+        try:
+            metadata = self.hub.auth_capabilities()
+        except credential_mod.CredentialError as exc:
+            self._credential_error_response(exc.reason)
+            return
         sess.touch()
         self._json(200, {"ok": True, "uid": sess.uid, "nick": sess.nick,
+                         "auth": metadata, "session_binding_id": sess.session_binding_id,
                          "is_admin": sess.is_admin,             # R53：管理员标识
                          "token": tok, "roster": self.hub._roster(),
                          "known": self.hub._known_list(sess.uid),   # R63：已知用户（含离线 last_online）
@@ -6283,18 +6581,44 @@ class _Handler(BaseHTTPRequestHandler):
                          "blocked": sorted(self.hub._blocked(sess.uid))})  # R50
 
     def _passwd(self, body: dict):
-        """R47-B：网页端昵称密码设置/修改/清除（复用 hub.set_password）。"""
-        sess = self._session(body)
-        if not sess:
-            self._json(401, {"ok": False, "error": "未登录"})
+        if not self._same_origin():
+            self._json(403, {'ok': False, 'reason': 'forbidden', 'error': '请求来源不允许'})
             return
-        sess.touch()
-        err = self.hub.set_password(sess.uid, str(body.get("old") or ""),
-                                    str(body.get("new") or ""))
-        if err:
-            self._json(403, {"ok": False, "error": err})
+        # Report upgrade before requiring a context unknown to old pages. They
+        # retain ordinary authenticated browsing but cannot use the old writer.
+        try:
+            credential_mod.UpdateRequest.parse(body, password_max=64)
+        except credential_mod.CredentialError as exc:
+            self._credential_error_response(exc.reason)
             return
-        self._json(200, {"ok": True})
+        binding = self._credential_session(body)
+        if binding is None:
+            return
+        sess, context, token = binding
+        result = self.hub.credential_update(sess, body, context=context, token=token)
+        self._credential_response(result)
+
+    def _credential_get(self):
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query, keep_blank_values=True)
+        if any(len(values) != 1 for values in query.values()):
+            self._credential_error_response('invalid_credential_request')
+            return
+        data = {key: values[0] for key, values in query.items()}
+        # HTTP query values are strings; only the exact wire literal "1" is
+        # translated. All other values remain invalid, not int-coerced.
+        if data.get('credential_v') == '1':
+            data['credential_v'] = 1
+        try:
+            credential_mod.QueryRequest.parse(data)
+        except credential_mod.CredentialError as exc:
+            self._credential_error_response(exc.reason)
+            return
+        binding = self._credential_session(data)
+        if binding is None:
+            return
+        sess, context, token = binding
+        self._credential_response(self.hub.credential_query(
+            sess, data, context=context, token=token), query=True)
 
     def _block(self, body: dict):
         """R50：网页端屏蔽/解除（复用 BLOCK_SET 帧，服务器权威持久化）。"""
@@ -7620,12 +7944,14 @@ class _Handler(BaseHTTPRequestHandler):
             self._json(401, {"ok": False, "error": "未登录"})
             return
         # SSE 连接上限：防单账号/恶意客户端用无限 EventSource 耗尽线程与队列
-        if int(_sse_active) >= _SSE_MAX:
+        with _sse_lock:
+            admitted = int(_sse_active) < _SSE_MAX
+            if admitted:
+                _sse_active += 1
+        if not admitted:
             self._json(503, {"ok": False,
                              "error": "连接数已满，请稍后再试"})
             return
-        with _sse_lock:
-            _sse_active += 1
         try:
             self._sse_loop(sess)
         finally:
@@ -7642,29 +7968,99 @@ class _Handler(BaseHTTPRequestHandler):
         q = queue.Queue(maxsize=256)      # R49：连接级队列（fanout），多开/刷新互不抢帧
         sess.send.attach(q)
         last_keep = time.time()
+        def active():
+            check = getattr(self.hub, '_session_is_active', None)
+            return not getattr(sess, 'closed', False) and (check is None or check(sess))
         try:
-            while True:
+            while self._service_available() and active():
                 try:
-                    payload, _body = q.get(timeout=15.0)
+                    payload, _body = q.get(timeout=0.5)
+                    terminal = (isinstance(payload, dict) and payload.get('t') == MsgType.ERROR.value
+                                and payload.get('code') in ('deleted', 'kicked'))
+                    if not self._service_available() or (not active() and not terminal):
+                        break
                     self.wfile.write(("data: " + json.dumps(payload, ensure_ascii=False)
                                       + "\n\n").encode("utf-8"))
                     self.wfile.flush()
-                    sess.touch()
+                    if terminal:
+                        break
+                    if active():
+                        sess.touch()
                     last_keep = time.time()
                 except queue.Empty:
+                    if not self._service_available() or not active():
+                        break
                     if time.time() - last_keep >= 15.0:
                         self.wfile.write(b": ping\n\n")
                         self.wfile.flush()
-                        sess.touch()
+                        if active():
+                            sess.touch()
                         last_keep = time.time()
         except (BrokenPipeError, ConnectionResetError, OSError):
             pass
         finally:
             sess.send.detach(q)           # R49：断开即注销，防旧连接偷帧
+            self.close_connection = True
 
 
 class _QuietServer(ThreadingHTTPServer):
     """握手失败/对端重置静默化（HTTPS 端口被明文探测属正常噪音，不刷屏）"""
+
+    def process_request(self, request, client_address):
+        start = getattr(self.hub, '_start_worker', None)
+        if start is None:
+            return super().process_request(request, client_address)
+        thread = start(self.process_request_thread, args=(request, client_address),
+                       name='http-request', connection=request)
+        if thread is None:
+            self.shutdown_request(request)
+
+    def _available(self):
+        stop = getattr(self, '_hub_stop', None)
+        check = getattr(self.hub, '_service_available', None)
+        return not (stop is not None and stop.is_set()) and (check is None or check())
+
+    def process_request_thread(self, request, client_address):
+        """Track raw accept first, then transfer ownership before TLS IO."""
+        original = request
+        try:
+            context = getattr(self, '_tls_context', None)
+            if context is not None:
+                request = context.wrap_socket(request, server_side=True, do_handshake_on_connect=False)
+                replace_connection = getattr(self.hub, '_replace_managed_connection', None)
+                if replace_connection is not None and not replace_connection(original, request):
+                    return
+                original_timeout = request.gettimeout()
+                request.setblocking(False)
+                deadline = time.monotonic() + max(0.1, float(getattr(self.hub.cfg, 'handshake_timeout', 5)))
+                while self._available():
+                    left = deadline - time.monotonic()
+                    if left <= 0:
+                        raise TimeoutError('TLS handshake timed out')
+                    try:
+                        request.do_handshake()
+                        break
+                    except ssl.SSLWantReadError:
+                        select.select([request], [], [], min(left, 0.2))
+                    except ssl.SSLWantWriteError:
+                        select.select([], [request], [], min(left, 0.2))
+                else:
+                    return
+                request.settimeout(original_timeout)
+            if self._available():
+                self.finish_request(request, client_address)
+        except Exception:
+            if self._available():
+                self.handle_error(request, client_address)
+        finally:
+            try:
+                self.shutdown_request(request)
+            finally:
+                forget = getattr(self.hub, '_forget_managed_connection', None)
+                if forget is not None:
+                    forget(request)
+                if request is not original:
+                    original.close()
 
     def handle_error(self, request, client_address):
         exc = sys.exc_info()[1]
@@ -7681,28 +8077,42 @@ def serve(hub, port: int | None = None, stop: threading.Event | None = None,
     生产入口 server.serve 显式传 True（环境变量 MOYU_WEB_HTTPS=0 可关）。
     HTTPS 证书由 tls_cert 零依赖自签生成，缓存在 audit_dir 同级的 web_tls/ 下。
     """
+    check = getattr(hub, '_service_available', None)
+    if check is not None and not check():
+        from server_recovery import StoreError
+        raise StoreError('service_unavailable')
     port = hub.cfg.web_port if port is None else port
-    _Handler.hub = hub
+    # Keep each listener bound to its own Hub, including embedded test servers.
+    handler_type = type('BoundHandler', (_Handler,), {'hub': hub})
     # REL-01: the web listener follows the same literal IPv4 bind address as
     # the TCP listener.  getattr keeps embedded/legacy test doubles that
     # predate Cfg.bind_host compatible while real Cfg instances always carry
     # the validated value.
     bind_host = getattr(hub.cfg, "bind_host", "0.0.0.0")
-    httpd = _QuietServer((bind_host, port), _Handler)
+    httpd = _QuietServer((bind_host, port), handler_type)
+    httpd.hub = hub
+    httpd._hub_stop = stop if stop is not None else getattr(hub, '_service_stop', None)
     httpd.daemon_threads = True
     httpd.allow_reuse_address = True
     if https is None:
         https = bool(getattr(hub.cfg, "web_https", False))
-    if https:
-        import tls_cert
-        tls_dir = os.path.join(
-            os.path.dirname(os.path.abspath(hub.cfg.audit_dir)), "web_tls")
-        cert, key = tls_cert.ensure_cert(tls_dir)
-        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ctx.load_cert_chain(cert, key)
-        httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
-    hub.audit.log(type="web_start", port=httpd.server_address[1],
-                  https=bool(https))
-    threading.Thread(target=httpd.serve_forever, kwargs={"poll_interval": 0.5},
-                     daemon=True).start()
+    try:
+        if https:
+            import tls_cert
+            tls_dir = os.path.join(
+                os.path.dirname(os.path.abspath(hub.cfg.audit_dir)), "web_tls")
+            cert, key = tls_cert.ensure_cert(tls_dir)
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            ctx.load_cert_chain(cert, key)
+            httpd._tls_context = ctx
+        hub.audit.log(type="web_start", port=httpd.server_address[1], https=bool(https))
+        start = getattr(hub, '_start_http_listener', None)
+        if start is not None:
+            start(httpd)
+        else:
+            threading.Thread(target=httpd.serve_forever, kwargs={"poll_interval": 0.1},
+                             daemon=True).start()
+    except BaseException:
+        httpd.server_close()
+        raise
     return httpd

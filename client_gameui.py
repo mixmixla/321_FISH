@@ -439,6 +439,141 @@ def _board_coords(cv, ox, oy, cell, n, ink=None, mg=10):
         _text(cv, ox - mg, oy + i * cell, str(i + 1), ink, fnt)
 
 
+# ---------------------------------------------------------------------------
+# 主题D4：棋子造型共享图元（以几何造型替代纯文字 / unicode 字符）
+# ---------------------------------------------------------------------------
+_CHESS_KIND = {1: "K", 2: "Q", 3: "R", 4: "B", 5: "N", 6: "P",
+               11: "K", 12: "Q", 13: "R", 14: "B", 15: "N", 16: "P"}
+
+
+def _chess_piece(cv, cx, cy, cell, v):
+    """国际象棋矢量棋子：底座 + 收腰躯干 + 颈环 + 兵种冠饰四段构造。
+    白子浅色、黑子深色填充，以几何造型替代原 ♚♛♜♝♞♟ 字符。"""
+    kind = _CHESS_KIND.get(v, "P")
+    dark = v > 10
+    fill = "#333333" if dark else "#f4f1ea"
+    edge = "#0d0d0d" if dark else "#6f6f6f"
+    s = cell * 0.80
+    hw = s * 0.30
+    top, bot = cy - s * 0.50, cy + s * 0.50
+    lw = max(1, int(s * 0.03))
+    # 底座：两级椭圆台
+    cv.create_oval(cx - hw * 1.30, bot - s * 0.16, cx + hw * 1.30, bot,
+                   fill=fill, outline=edge, width=lw)
+    cv.create_oval(cx - hw * 1.05, bot - s * 0.30, cx + hw * 1.05, bot - s * 0.13,
+                   fill=fill, outline=edge, width=1)
+    # 躯干：收腰多边形
+    cv.create_polygon(cx - hw * 0.62, bot - s * 0.22, cx + hw * 0.62, bot - s * 0.22,
+                      cx + hw * 0.46, top + s * 0.34, cx - hw * 0.46, top + s * 0.34,
+                      fill=fill, outline=edge, width=1)
+    # 颈环
+    cv.create_oval(cx - hw * 0.70, top + s * 0.28, cx + hw * 0.70, top + s * 0.40,
+                   fill=fill, outline=edge, width=1)
+    if kind == "P":                        # 兵：圆头
+        cv.create_oval(cx - hw * 0.56, cy - s * 0.34 - hw * 0.56,
+                       cx + hw * 0.56, cy - s * 0.34 + hw * 0.56,
+                       fill=fill, outline=edge, width=1)
+    elif kind == "R":                      # 车：城齿顶
+        cv.create_rectangle(cx - hw * 0.80, top + s * 0.06, cx + hw * 0.80, top + s * 0.34,
+                            fill=fill, outline=edge, width=1)
+        for i in (-1, 0, 1):
+            x = cx + i * hw * 0.54
+            cv.create_rectangle(x - hw * 0.17, top - s * 0.06, x + hw * 0.17, top + s * 0.10,
+                                fill=fill, outline=edge, width=1)
+    elif kind == "N":                      # 马：马头侧姿（含眼点）
+        pts = [(cx - hw * 0.55, cy - s * 0.16), (cx - hw * 0.30, cy - s * 0.44),
+               (cx + hw * 0.10, cy - s * 0.50), (cx + hw * 0.34, cy - s * 0.64),
+               (cx + hw * 0.55, cy - s * 0.30), (cx + hw * 0.60, cy + s * 0.02),
+               (cx + hw * 0.18, cy + s * 0.02), (cx - hw * 0.32, cy - s * 0.02)]
+        cv.create_polygon([c for p in pts for c in p], fill=fill, outline=edge, width=1)
+        cv.create_oval(cx + hw * 0.02, cy - s * 0.44, cx + hw * 0.24, cy - s * 0.32,
+                       fill=edge, outline="")
+    elif kind == "B":                      # 象：尖顶 + 顶珠
+        cv.create_polygon(cx, top - s * 0.06, cx + hw * 0.60, top + s * 0.30,
+                          cx - hw * 0.60, top + s * 0.30, fill=fill, outline=edge, width=1)
+        cv.create_oval(cx - hw * 0.15, top - s * 0.12, cx + hw * 0.15, top + s * 0.02,
+                       fill=fill, outline=edge, width=1)
+    else:                                  # Q 后 / K 王
+        cv.create_polygon(cx - hw * 0.74, top + s * 0.30, cx + hw * 0.74, top + s * 0.30,
+                          cx + hw * 0.48, top + s * 0.06, cx - hw * 0.48, top + s * 0.06,
+                          fill=fill, outline=edge, width=1)
+        if kind == "Q":                    # 冠上三点珠
+            for i in (-1, 0, 1):
+                x = cx + i * hw * 0.52
+                cv.create_oval(x - hw * 0.16, top - s * 0.06, x + hw * 0.16, top + s * 0.08,
+                               fill=fill, outline=edge, width=1)
+        else:                              # 王冠十字
+            cv.create_rectangle(cx - hw * 0.10, top - s * 0.14, cx + hw * 0.10, top + s * 0.08,
+                                fill=fill, outline=edge, width=1)
+            cv.create_rectangle(cx - hw * 0.30, top - s * 0.06, cx + hw * 0.30, top + s * 0.02,
+                                fill=fill, outline=edge, width=1)
+
+
+def _xiangqi_piece(cv, cx, cy, cell, name, red, gint=0.0):
+    """中国象棋子：木底 + 双层圆环 + 中心楷体字。红黑分色，造型替代裸文字。"""
+    r = cell * 0.40
+    fg = "#c0392b" if red else "#1b1b1b"
+    _disc(cv, cx, cy, r, "#f7e9cd", outline=fg, outline_w=2,
+          glow=True, gint=gint)
+    cv.create_oval(cx - r * 0.80, cy - r * 0.80, cx + r * 0.80, cy + r * 0.80,
+                   outline=fg, width=1)
+    _text(cv, cx, cy, name, fg, (_FONT_B[0], int(cell * 0.44)))
+
+
+def _shogi_piece(cv, cx, cy, cell, sym, dark, gint=0.0, sel=False):
+    """将棋駒：五角形木牌（尖端朝上）+ 楷体字，造型替代原圆片 + 文字。
+    sel=True 时外描边换主强调色并加粗，作选中态。"""
+    s = cell * 0.84
+    hw = s * 0.42
+    ocol = "#c0392b" if not dark else "#1b1b1b"
+    if gint:
+        _g_piece_glow(cv, cx, cy, hw, "#f7e9cd", gint)
+    pts = [(cx, cy - s * 0.50), (cx + hw, cy - s * 0.18), (cx + hw, cy + s * 0.46),
+           (cx - hw, cy + s * 0.46), (cx - hw, cy - s * 0.18)]
+    cv.create_polygon([c for p in pts for c in p], fill="#f7e9cd",
+                      outline=_SEL if sel else ocol, width=3 if sel else 2)
+    _text(cv, cx, cy + s * 0.02, sym, ocol, (_FONT_B[0], int(cell * 0.40)))
+
+
+def _junqi_piece(cv, cx, cy, cell, cn, side_col, gint=0.0):
+    """军棋子：圆角方牌 + 白色内框 + 军阶字，造型替代原圆片 + 文字。"""
+    s = cell * 0.82
+    h = s / 2
+    if gint:
+        _g_piece_glow(cv, cx, cy, h, side_col, gint)
+    _rrect(cv, cx - h, cy - h, cx + h, cy + h, s * 0.16, side_col,
+           _shade(side_col, -0.35), 2)
+    cv.create_rectangle(cx - h * 0.80, cy - h * 0.80, cx + h * 0.80, cy + h * 0.80,
+                        outline="#ffffff", width=1)
+    _text(cv, cx, cy, cn, "#ffffff", (_FONT_F[0], max(8, int(cell * 0.26))))
+
+
+def _dou_beast(cv, cx, cy, cell, tier, ink="#333333"):
+    """斗兽棋兽子造型：头 + 耳 + 眼三段几何，耳型按兽阶分档，替代原 emoji。"""
+    r = cell * 0.24
+    if tier <= 2:                          # 鼠/猫：大圆耳
+        for sx in (-1, 1):
+            cv.create_oval(cx + sx * r * 0.80 - r * 0.32, cy - r * 1.30 - r * 0.32,
+                           cx + sx * r * 0.80 + r * 0.32, cy - r * 1.30 + r * 0.32,
+                           fill=ink, outline="")
+    elif tier <= 5:                        # 犬/狼/豹：尖耳
+        for sx in (-1, 1):
+            cv.create_polygon(cx + sx * r * 0.55, cy - r * 0.50,
+                              cx + sx * r * 1.05, cy - r * 1.45,
+                              cx + sx * r * 0.18, cy - r * 0.90,
+                              fill=ink, outline="")
+    else:                                  # 虎/狮/象：小圆耳 + 宽脸
+        for sx in (-1, 1):
+            cv.create_oval(cx + sx * r * 0.86 - r * 0.22, cy - r * 1.02 - r * 0.22,
+                           cx + sx * r * 0.86 + r * 0.22, cy - r * 1.02 + r * 0.22,
+                           fill=ink, outline="")
+    cv.create_oval(cx - r, cy - r, cx + r, cy + r, fill=ink, outline="")
+    for sx in (-1, 1):                     # 眼
+        cv.create_oval(cx + sx * r * 0.38 - r * 0.15, cy - r * 0.18 - r * 0.15,
+                       cx + sx * r * 0.38 + r * 0.15, cy - r * 0.18 + r * 0.15,
+                       fill="#ffffff", outline="")
+
+
 def _turn_banner(cv, w, header_h, text, accent, ypad=8):
     """顶栏精致化：柔和渐变卡 + 顶/底描边 + 标题投影。"""
     base = accent
@@ -1789,19 +1924,11 @@ def _xiangqi_chess(cv, st, me, nick, submit, repaint, ui, priv, w, h, kind="xian
                 _sel_mark(cv, cx, cy, cell * 0.46, _SEL)
             if kind == "xiangqi":
                 name = piece_name.get(v, str(v % 10 or v))
-                fg = "#c0392b" if v <= 10 else "#1b1b1b"
-                _g_piece_glow(cv, cx, cy, cell * 0.4, "#f7e9cd", breathing)
-                cv.create_oval(cx - cell * 0.4, cy - cell * 0.4,
-                               cx + cell * 0.4, cy + cell * 0.4,
-                               fill="#f7e9cd", outline=fg, width=2)
-                _text(cv, cx, cy, name, fg, (_FONT_B[0], int(cell * 0.46)))
+                _xiangqi_piece(cv, cx, cy, cell, name, v <= 10, breathing)
             else:
-                sym = {1: "♚", 2: "♛", 3: "♜", 4: "♝", 5: "♞", 6: "♟",
-                       11: "♔", 12: "♕", 13: "♖", 14: "♗", 15: "♘", 16: "♙"}.get(v, "")
-                _g_piece_glow(cv, cx, cy, cell * 0.5,
+                _g_piece_glow(cv, cx, cy, cell * 0.40,
                               "#ffffff" if v <= 6 else "#1b1b1b", breathing)
-                _text(cv, cx, cy, sym, "#1b1b1b"
-                      if v <= 6 else "#ffffff", (_FONT_BIG[0], int(cell * 0.7)))
+                _chess_piece(cv, cx, cy, cell, v)
     # ---- 动效（降级）：只做辉光 + 胜利星点（数量封顶 ≤48）----
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
@@ -2230,7 +2357,6 @@ def _p_spy(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 # 棋盘走子类游戏（halma/checkers/junqi/dou/shogi/blokus/ludo）
 # ---------------------------------------------------------------------------
 _HALMA_COL = ["#e05555", "#3f6fe0", "#f2c94c", "#3ba55d"]
-_DOU_EMO = {1: "🐭", 2: "🐱", 3: "🐶", 4: "🐺", 5: "🐆", 6: "🐅", 7: "🦁", 8: "🐘"}
 _DOU_CN = {1: "鼠", 2: "猫", 3: "狗", 4: "狼", 5: "豹", 6: "虎", 7: "狮", 8: "象"}
 _SHOGI_SYM = {1: "玉", 2: "飛", 3: "角", 4: "金", 5: "銀", 6: "桂", 7: "香",
               8: "歩", 9: "龍", 10: "馬"}
@@ -2434,11 +2560,7 @@ def _p_junqi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         side_col = ("#e05555" if side == 0 else "#2c2c2c")
         cx, cy = x0 + cell / 2, y0 + cell / 2
         anchors.append((cx, cy))
-        _disc(cv, cx, cy, cell * 0.42, side_col,
-              outline=_shade(side_col, -0.35), glow=True, gint=breathing)
-        fs = max(8, int(cell * 0.26))
-        cv.create_text(cx, cy, text=cn, fill="#ffffff",
-                       font=(_FONT_F[0], fs), anchor="center")
+        _junqi_piece(cv, cx, cy, cell, cn, side_col, breathing)
 
     _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
                 "junqi", rows, cols, "⚔ 军棋（明棋）", pt)
@@ -2467,18 +2589,18 @@ def _p_dou(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         else:
             a, side = code, 0
         # 营格标红底
-        if (x, y) in ((3, 0), (3, 8)):
+        camp = (x, y) in ((3, 0), (3, 8))
+        if camp:
             _disc(cv, cx, cy, cell * 0.44, "#a02f2f", outline="#7a1f1f")
         else:
             _disc(cv, cx, cy, cell * 0.42, "#f6f4ee", outline=_PANEL_BD)
-        emo = _DOU_EMO.get(a, "")
         cn = _DOU_CN.get(a, "")
-        fs = max(9, int(cell * 0.30))
-        cv.create_text(cx, cy - cell * 0.12, text=emo,
-                       font=(_FONT_F[0], fs), anchor="s")
-        cv.create_text(cx, cy + cell * 0.06, text=cn,
-                       fill="#333", font=(_FONT_F[0], max(8, int(cell * 0.16))),
-                       anchor="n")
+        _dou_beast(cv, cx, cy - cell * 0.06, cell, a,
+                   ink="#7a2020" if camp else "#333333")
+        cv.create_text(cx, cy + cell * 0.30, text=cn,
+                       fill="#7a2020" if camp else "#333",
+                       font=(_FONT_F[0], max(8, int(cell * 0.16))),
+                       anchor="center")
 
     _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
                 "dou", rows, cols, "🐭 斗兽棋", pt)
@@ -2523,18 +2645,9 @@ def _p_shogi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             t = c % 10 if c else 0
             p = 0 if c <= 10 else 1
             cx, cy = ox + x * cell + cell / 2, oy + y * cell + cell / 2
-            if p == 0:
-                fcol, ocol = "#f7e9cd", "#c0392b"
-            else:
-                fcol, ocol = "#f7e9cd", "#1b1b1b"
             anchors.append((cx, cy))
-            _disc(cv, cx, cy, cell * 0.42, fcol, outline=ocol,
-                  glow=True, gint=breathing)
-            _text(cv, cx, cy, _SHOGI_SYM.get(t, str(t)), ocol,
-                  (_FONT_BIG[0], int(cell * 0.5)))
-            if (x, y) == mv_sel:
-                _disc(cv, cx, cy, cell * 0.46, fcol, outline=_SEL,
-                      outline_w=3)
+            _shogi_piece(cv, cx, cy, cell, _SHOGI_SYM.get(t, str(t)), p == 1,
+                         breathing, sel=((x, y) == mv_sel))
     # 手牌区（底部）
     players = st.get("players") or []
     my_pl = players.index(me) if me in players else 0

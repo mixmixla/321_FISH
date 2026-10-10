@@ -484,30 +484,30 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
 #tkpanel.on{display:flex}
 #tkpanel .card{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:22px 22px 22px 10px;padding:12px;width:min(560px,94vw);max-height:80vh;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow-lg)}
 #tkpanel #tkList{overflow:auto;display:flex;flex-direction:column;gap:6px}
-/* R49 桌游 */
-#gpanel{position:fixed;inset:0;background:rgba(90,70,50,.5);display:flex;align-items:center;justify-content:center;z-index:97}
-#gpanel .card{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:26px 26px 26px 12px;padding:16px;width:min(740px,94vw);max-height:90vh;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow-lg),0 0 0 6px rgba(255,209,102,.10)}
-#ghead{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:#3d3a54}
+/* R49 桌游：面板/按钮/卡片统一走「雾岸」Token（色·圆角·字号·禁用态），与桌面画师同源 */
+#gpanel{position:fixed;inset:0;background:rgba(16,30,26,.55);display:flex;align-items:center;justify-content:center;z-index:97}
+#gpanel .card{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:var(--r2);padding:16px;width:min(740px,94vw);max-height:90vh;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow-lg)}
+#ghead{display:flex;align-items:center;gap:8px;font-weight:700;font-size:var(--body-font,14px);color:var(--txt)}
 #gmain{overflow:auto;max-height:50vh}
-#gpriv{background:var(--side);border:1px dashed #f0d3a8;border-radius:14px 14px 14px 6px;padding:8px 12px;font-size:12px;color:var(--txt)}
-#glog{background:var(--side);border:1px solid var(--line);border-radius:14px 14px 14px 6px;padding:7px 12px;font-size:11px;max-height:15vh;overflow:auto;color:var(--dim)}
-.gbtn{cursor:pointer;border:1px solid var(--line);background:var(--side);color:var(--txt);border-radius:14px 14px 14px 6px;padding:5px 14px;font-size:12px;font-weight:600;box-shadow:var(--shadow-sm);transition:transform .1s,background .15s}
-.gbtn:hover{background:linear-gradient(135deg,var(--coral),#ffb28a);color:#fff;border-color:transparent}
-.gbtn:disabled{opacity:.4;cursor:default;box-shadow:none}
-.gbtn.go{background:linear-gradient(135deg,var(--coral),#ffb28a);color:#fff;border:none;box-shadow:0 3px 10px rgba(255,138,92,.28)}
-.gbtn.go:hover{transform:translateY(-1px)}
-.gcard{border:1px solid var(--line);border-radius:20px 20px 20px 10px;padding:12px;font-size:12px;display:flex;flex-direction:column;gap:4px;overflow:hidden;background:var(--card);box-shadow:var(--shadow-sm);transition:transform .15s,box-shadow .15s}
+#gpriv{background:var(--side);border:1px dashed var(--line);border-radius:var(--r1);padding:8px 12px;font-size:var(--secondary-font,12px);color:var(--txt)}
+#glog{background:var(--side);border:1px solid var(--line);border-radius:var(--r1);padding:7px 12px;font-size:var(--secondary-font,12px);max-height:15vh;overflow:auto;color:var(--dim)}
+.gbtn{cursor:pointer;border:1px solid var(--line);background:var(--side);color:var(--txt);border-radius:var(--r1);padding:5px 14px;font-size:var(--secondary-font,12px);font-weight:600;box-shadow:var(--shadow-sm);transition:transform .1s,background .15s}
+.gbtn:hover{background:var(--accent);color:var(--on-accent,#fff);border-color:var(--accent)}
+.gbtn:disabled{background:var(--ux-disabled-background,var(--side));color:var(--ux-disabled-text,var(--dim));cursor:default;box-shadow:none;opacity:1}
+.gbtn.go{background:var(--accent);color:var(--on-accent,#fff);border:none;box-shadow:0 3px 10px rgba(22,121,108,.28)}
+.gbtn.go:hover{background:var(--ux-accent-hover,var(--accent));transform:translateY(-1px)}
+.gcard{border:1px solid var(--line);border-radius:var(--r2);padding:12px;font-size:var(--secondary-font,12px);display:flex;flex-direction:column;gap:4px;overflow:hidden;background:var(--card);box-shadow:var(--shadow-sm);transition:transform .15s,box-shadow .15s}
 .gcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
-.gcard b{font-size:14px}
+.gcard b{font-size:var(--body-font,14px)}
 .gcard .go{margin-top:auto}
-.gcell{width:36px;height:36px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;border-radius:12px 12px 12px 6px;background:var(--card);transition:transform .1s,box-shadow .1s}
+.gcell{width:36px;height:36px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;border-radius:var(--r1);background:var(--card);transition:transform .1s,box-shadow .1s}
 .gcell:hover{transform:scale(1.06);box-shadow:var(--shadow-sm)}
 .gmap{display:grid;gap:3px;font-size:10px}
-.gmap>div{border:1px solid var(--line);border-radius:9px 9px 9px 4px;padding:2px;min-height:26px;text-align:center;background:var(--card)}
+.gmap>div{border:1px solid var(--line);border-radius:var(--r1);padding:2px;min-height:26px;text-align:center;background:var(--card)}
 .glogl{padding:1px 0;border-bottom:1px dashed var(--line)}
-.unocard{display:inline-block;border:1.5px solid #7a5c4a;border-radius:10px 10px 10px 4px;padding:3px 9px;margin:2px;cursor:pointer;background:#fff;color:#111;font-size:12px;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,.08)}
-.unocard.dis{opacity:.4;cursor:default}
-.gsec{font-weight:700;margin:8px 0 3px;font-size:12px;color:#8a6a52}
+.unocard{display:inline-block;border:1.5px solid var(--line);border-radius:var(--r1);padding:3px 9px;margin:2px;cursor:pointer;background:var(--card);color:var(--txt);font-size:var(--secondary-font,12px);font-weight:600;box-shadow:var(--shadow-sm)}
+.unocard.dis{background:var(--ux-disabled-background,var(--side));color:var(--ux-disabled-text,var(--dim));cursor:default;box-shadow:none;opacity:1}
+.gsec{font-weight:700;margin:8px 0 3px;font-size:var(--secondary-font,12px);color:var(--dim)}
 /* Apple 风格滚动条 */
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}

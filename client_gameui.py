@@ -18,11 +18,20 @@ import math
 import time
 import random
 
-# ---- 基础字号（客户端窗口用，此处保持一致即可）----
-_FONT_F  = ("Microsoft YaHei UI", 10)
-_FONT_B  = ("Microsoft YaHei UI", 12, "bold")
-_FONT_H  = ("Microsoft YaHei UI", 14, "bold")
-_FONT_BIG = ("Microsoft YaHei UI", 18, "bold")
+import ui_design as _ux
+
+# ---- 「雾岸」设计 Token（唯一源：docs/design/UX-01.tokens.json → ui_design.py）----
+# 桌面棋牌只“消费”Token，不复制数值；Tk 与 Web 因此保持同源同观感。
+_UXT = _ux.design_tokens()
+_UXC = _UXT["colors"]
+_UXFAM = _UXT["font"]["windows_families"]
+_UXRADIUS = _UXT["radius"]
+
+# ---- 基础字号（族与字号派生自 Token：secondary=10 / body=11 / heading=18）----
+_FONT_F  = (_UXFAM[0], _UXT["font"]["secondary_pt"])
+_FONT_B  = (_UXFAM[0], _UXT["font"]["body_pt"], "bold")
+_FONT_H  = (_UXFAM[0], _UXT["font"]["body_pt"] + 3, "bold")
+_FONT_BIG = (_UXFAM[0], _UXT["font"]["heading_pt"], "bold")
 
 # 每款游戏的主题渐变色（上→下），对齐 client._GAME_GRAD 的观感
 THEME = {
@@ -74,15 +83,16 @@ THEME = {
     "balatro":  ("#5b1f2a", "#2a1030"),
 }
 
-_WHITE = "#ffffff"
-_PANEL = "#fdf8ee"     # 面板底色（奶白暖粉）
-_PANEL_BD = "#f0e2cc"   # 面板描边（浅咖）
-_MUTED = "#b39378"      # 弱化文字（暖灰咖）
-_WARMTXT = "#4a3b32"    # 正文（暖棕）
-_ACCENT = "#ff8a5c"     # 珊瑚（主强调）
-_ACCENT2 = "#8f9bff"    # 浅紫蓝（次强调）
-_SUN = "#ffd166"        # 向日葵黄
-_MINT = "#6fcba0"       # 薄荷绿
+# 语义色：底/边/字/强调均派生自「雾岸」Token，桌面画师与 Web 同源同色
+_WHITE = _UXC["on_accent"]        # 强调色之上的前景白
+_PANEL = _UXC["surface"]          # 卡片/面板底色
+_PANEL_BD = _UXC["border"]        # 面板/卡片描边
+_MUTED = "#b39378"                # 深色棋盘上的弱化标签文字（保留原值以保证对比度）
+_TXT = _UXC["text"]               # 正文
+_SEL = _UXC["accent"]             # 选中/命中/终局高亮（主强调）
+_OK = _UXC["success"]             # 成功态
+_WARN = _UXC["waiting"]           # 等待/警示态
+_ERR = _UXC["error"]              # 错误/危险态
 
 
 def _hex2rgb(h):
@@ -128,8 +138,8 @@ def _rrect_pts(x0, y0, x1, y1, r=10):
             x1, y1, x1 - r, y1, x0 + r, y1, x0, y1, x0, y1 - r, x0, y0 + r]
 
 
-def _rrect(cv, x0, y0, x1, y1, r=10, fill=_WHITE, outline=_PANEL_BD,
-           width=1, tags=""):
+def _rrect(cv, x0, y0, x1, y1, r=_UXRADIUS["message"], fill=_WHITE,
+           outline=_PANEL_BD, width=1, tags=""):
     """圆角矩形：卡片统一走这里。浅色奶咖填充加暖色描边+顶部高光，深色填充只加顶部提亮。"""
     is_hex = isinstance(fill, str) and len(fill) == 7 and fill[0] == "#"
     cv.create_polygon(_rrect_pts(x0, y0, x1, y1, r), fill=fill,
@@ -236,7 +246,7 @@ def _disc(cv, cx, cy, r, color, top_bright=0.32, bot_dark=-0.18,
                        width=outline_w)
 
 
-def _text(cv, x, y, s, fill="#4a3b32", font=_FONT_F, anchor="center", tags=""):
+def _text(cv, x, y, s, fill=_TXT, font=_FONT_F, anchor="center", tags=""):
     cv.create_text(x, y, text=s, fill=fill, font=font, anchor=anchor, tags=tags)
 
 
@@ -376,7 +386,7 @@ def _stone(cv, cx, cy, r, color, outline="#000", last=False, glow=False,
                    fill=_shade(color, 0.62), outline="")
     if last:
         cv.create_oval(cx - r * 1.22, cy - r * 1.22, cx + r * 1.22,
-                       cy + r * 1.22, fill="", outline="#ffd75e", width=2,
+                       cy + r * 1.22, fill="", outline=_SEL, width=2,
                        tags="_lastglow")
 
 
@@ -423,11 +433,11 @@ def _hover_overlay(cv, ui):
     x0, y0 = ox + h[0] * cell, oy + h[1] * cell
     cv.create_polygon(_rrect_pts(x0 + 3, y0 + 3, x0 + cell - 3, y0 + cell - 3,
                                  5),
-                      fill="#ffffff", outline="", smooth=True,
+                      fill=_WHITE, outline="", smooth=True,
                       splinesteps=24, stipple="gray25", tags="_hover")
     cv.create_polygon(_rrect_pts(x0 + 3, y0 + 3, x0 + cell - 3, y0 + cell - 3,
                                  5),
-                      fill="", outline="#d8cfc0", width=2, smooth=True,
+                      fill="", outline=_PANEL_BD, width=2, smooth=True,
                       splinesteps=24, tags="_hover")
 
 
@@ -490,7 +500,7 @@ def _lift(cv, ui, idx, x0, y0, x1, y1, lift=9, glow="#ffffff"):
     return on, dy
 
 
-def _sel_mark(cv, cx, cy, r, color="#ff9800"):
+def _sel_mark(cv, cx, cy, r, color=_SEL):
     """选中子指示：外圈光圈 + 上方小三角 + 四角微点（比裸描边更醒目）。"""
     cv.create_oval(cx - r * 1.34, cy - r * 1.34, cx + r * 1.34, cy + r * 1.34,
                    fill="", outline=color, width=2)
@@ -520,13 +530,13 @@ def _hover_hint(cv, ui):
 
 def _strip(cv, w, y, text, kind="info", accent="#c99a6d"):
     """柔和状态提示条：圆角卡 + 图标。kind ∈ ok/warn/info/danger。"""
-    col = {"ok": "#4caf50", "warn": "#ff9800", "info": "#b39378",
-           "danger": "#e0535a"}.get(kind, "#b39378")
+    col = {"ok": _OK, "warn": _WARN, "info": _MUTED,
+           "danger": _ERR}.get(kind, _MUTED)
     ic = {"ok": "✅", "warn": "⚠️", "info": "ℹ️", "danger": "⛔"}.get(kind, "ℹ️")
     _rrect(cv, w * 0.06, y, w * 0.94, y + 30, 15, _shade(col, 0.85),
            _shade(col, -0.12))
     _icon_badge(cv, w * 0.12, y + 15, 11, ic, col, 10)
-    _text(cv, w * 0.185, y + 15, text, "#3a3a3a", _FONT_B, anchor="w")
+    _text(cv, w * 0.185, y + 15, text, _TXT, _FONT_B, anchor="w")
 
 
 def _score_chips(cv, w, y, items, accent):
@@ -545,8 +555,8 @@ def _score_chips(cv, w, y, items, accent):
         if is_me:
             cv.create_line(x0 + hh / 2, y - hh / 2 + 2, x - hh / 2,
                            y - hh / 2 + 2, fill=_shade(fill, 0.45), width=1)
-        _text(cv, x0 + 12, y, text, ("#3a3a3a" if not is_me or _luma(fill) > 150
-                                     else "#ffffff"), _FONT_B, anchor="w")
+        _text(cv, x0 + 12, y, text, (_TXT if not is_me or _luma(fill) > 150
+                                     else _WHITE), _FONT_B, anchor="w")
         x = x0 - 6
     return x
 
@@ -702,7 +712,7 @@ def _flagship_hover(cv, ui):
     cell = ui["cell"]
     cx, cy = ui["ox"] + (x + offset) * cell, ui["oy"] + (y + offset) * cell
     r = cell * 0.35
-    cv.create_oval(cx - r, cy - r, cx + r, cy + r, outline="#4b7c72",
+    cv.create_oval(cx - r, cy - r, cx + r, cy + r, outline=_SEL,
                    width=2, dash=(3, 2), tags="_hover")
 
 
@@ -718,7 +728,7 @@ def _flagship_feedback(cv, ui, st, needed, now, lastpx):
     if lastpx:
         cx, cy = lastpx
         r = max(3, ui["cell"] * 0.12)
-        cv.create_oval(cx - r, cy - r, cx + r, cy + r, outline="#c45e32",
+        cv.create_oval(cx - r, cy - r, cx + r, cy + r, outline=_SEL,
                        width=2, tags="flagship-last")
         if ui["_flagship_animate"]:
             pulse = ui["cell"] * (0.42 + 0.2 * age / 0.9)
@@ -732,7 +742,7 @@ def _flagship_feedback(cv, ui, st, needed, now, lastpx):
                        ui["oy"] + (start[1] + offset) * ui["cell"],
                        ui["ox"] + (end[0] + offset) * ui["cell"],
                        ui["oy"] + (end[1] + offset) * ui["cell"],
-                       fill="#c45e32", width=3, tags="flagship-win")
+                       fill=_SEL, width=3, tags="flagship-win")
     # Flagship feedback is finite.  The owning window supplies a cancellable
     # after scheduler; no global timer or idle breathing loop is introduced.
     if ui.get("_flagship_animate") and ui.get("_schedule_repaint"):
@@ -1556,7 +1566,7 @@ def _p_kalah(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         cv.create_rectangle(x0, cy - 11, x0 + tw, cy + 11, fill=fill,
                             outline=_PANEL_BD, width=1)
         _text(cv, x0 + tw / 2, cy, tag,
-              "#8a5fbf" if own else "#4a3b32", (_FONT_F[0], 9))
+              "#8a5fbf" if own else _TXT, (_FONT_F[0], 9))
     # 库（竖向胶囊，附顶部反光）
     cv.create_oval(start - storeW, topY - holeR, start - 40, topY + holeR,
                    fill=_PANEL, outline=_PANEL_BD, width=2)
@@ -1684,7 +1694,7 @@ def _xiangqi_chess(cv, st, me, nick, submit, repaint, ui, priv, w, h, kind="xian
             cx, cy = ox + x * cell + cell / 2, oy + y * cell + cell / 2
             anchors.append((cx, cy))
             if (x, y) == sel:
-                _sel_mark(cv, cx, cy, cell * 0.46, "#ff9800")
+                _sel_mark(cv, cx, cy, cell * 0.46, _SEL)
             if kind == "xiangqi":
                 name = piece_name.get(v, str(v % 10 or v))
                 fg = "#c0392b" if v <= 10 else "#1b1b1b"
@@ -2214,7 +2224,7 @@ def _p_halma(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             if (x, y) == sel:
                 cv.create_oval(cx - cell * 0.46, cy - cell * 0.46,
                                cx + cell * 0.46, cy + cell * 0.46,
-                               outline="#ff9800", width=3)
+                               outline=_SEL, width=3)
     # ---- 动效：落子光晕/微粒子 + 胜利星点（纯时间推导，数量封顶）----
     _g_draw_last(cv, ui, now, lastpx, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
@@ -2275,7 +2285,7 @@ def _p_checkers(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             if (x, y) == sel:
                 cv.create_oval(cx - cell * 0.46, cy - cell * 0.46,
                                cx + cell * 0.46, cy + cell * 0.46,
-                               outline="#ff9800", width=3)
+                               outline=_SEL, width=3)
     # ---- 动效：落子光晕/微粒子 + 胜利星点（纯时间推导，数量封顶）----
     _g_draw_last(cv, ui, now, lastpx, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
@@ -2314,7 +2324,7 @@ def _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
             cv.create_rectangle(ox + sx * cell + 2, oy + sy * cell + 2,
                                 ox + (sx + 1) * cell - 2,
                                 oy + (sy + 1) * cell - 2,
-                                outline="#ff9800", width=3)
+                                outline=_SEL, width=3)
 
 
 @_register("junqi")
@@ -2434,7 +2444,7 @@ def _p_shogi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             _text(cv, cx, cy, _SHOGI_SYM.get(t, str(t)), ocol,
                   (_FONT_BIG[0], int(cell * 0.5)))
             if (x, y) == mv_sel:
-                _disc(cv, cx, cy, cell * 0.46, fcol, outline="#ff9800",
+                _disc(cv, cx, cy, cell * 0.46, fcol, outline=_SEL,
                       outline_w=3)
     # 手牌区（底部）
     players = st.get("players") or []
@@ -2455,7 +2465,7 @@ def _p_shogi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         cx0 = 12 + i * (cw + gap)
         cy0 = hy + 24
         fcol = "#f7e9cd"
-        ocol = "#ff9800" if drop_sel == t else "#7a5a2a"
+        ocol = _SEL if drop_sel == t else "#7a5a2a"
         _rrect(cv, cx0, cy0, cx0 + cw, cy0 + cw, 8, fcol,
                ocol, 3 if drop_sel == t else 1)
         _text(cv, cx0 + cw / 2, cy0 + cw / 2 - 8, _SHOGI_SYM.get(t, str(t)),
@@ -2789,7 +2799,7 @@ def _p_rummikub(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             col_c = _RMK_COL.get(t.get("c", ""), "#888")
             is_sel = hand_ids[i] in sel
             fill = _shade(col_c, 0.25) if is_sel else col_c
-            outl = "#ff9800" if is_sel else _shade(col_c, -0.3)
+            outl = _SEL if is_sel else _shade(col_c, -0.3)
             _soft_shadow(cv, cx, cy + 2, cx + cw, cy + ch, 6, 2)
             _rrect(cv, cx, cy - (8 if is_sel else 0), cx + cw,
                    cy + ch - (8 if is_sel else 0), 6, fill, outl,
@@ -4314,8 +4324,8 @@ _BALATRO_RARITY_OF = {  # 与 games_pkg JOKER_RARITY 保持一致
 
 
 # 本文件内牌桌专用字体族（完整元组由 family/size 或 family/size/weight 组成）
-_FONT_BF = "Microsoft YaHei UI"          # 粗体族
-_FONT_FB = "Microsoft YaHei UI"          # 常规族
+_FONT_BF = _UXFAM[0]                     # 粗体族（派生自 Token）
+_FONT_FB = _UXFAM[0]                     # 常规族（派生自 Token）
 
 
 def _draw_balatro_card(cv, x0, y0, cw, ch, card, gold=False):

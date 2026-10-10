@@ -86,6 +86,7 @@ class CocGame(BaseGame):
         self.picked = set()                      # 已被选走的 card id
         self.scene = ""
         self.logs = []                           # 保留最近 N 条剧情/检定行
+        self.last_check = None                   # 最近一次检定（供 UI 画 d100 骰面）
         self._log_max = 30
         self._ended = False
 
@@ -98,6 +99,7 @@ class CocGame(BaseGame):
                        ((u, c["id"]) for u, c in self.assigned.items())},
             "scene": self.scene,
             "logs": list(self.logs),
+            "last_check": dict(self.last_check) if self.last_check else None,
         }
 
     def private(self, uid):
@@ -180,6 +182,8 @@ class CocGame(BaseGame):
         roll, level = resolve_check(val, self.rng)
         skill_label = skill if isinstance(skill, str) else f"技能{val}"
         line = f"🎲 {self._nick(uid)} 对「{skill_label}」检定 → {level}"
+        self.last_check = {"uid": uid, "skill": skill_label,
+                           "roll": roll, "level": level}
         self._log(line)
         return [line]
 

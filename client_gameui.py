@@ -574,6 +574,102 @@ def _dou_beast(cv, cx, cy, cell, tier, ink="#333333"):
                        fill="#ffffff", outline="")
 
 
+# ---------------------------------------------------------------------------
+# 主题D5：骰子图形与掷骰动画共享图元（统一 yahtzee/ludo/coc 骰面）
+#
+# 与棋子/卡牌同源：一律"纯时间推导"绘制，禁 after/线程/全局计时器；滚动动画
+# 只借 ui['repaint'] 的既有重绘链推进帧，状态跨帧存 ui dict，窗口结束即自停。
+# ---------------------------------------------------------------------------
+_DIE_PIPS = {1: [(0, 0)],
+             2: [(-1, -1), (1, 1)],
+             3: [(-1, -1), (0, 0), (1, 1)],
+             4: [(-1, -1), (1, -1), (-1, 1), (1, 1)],
+             5: [(-1, -1), (1, -1), (0, 0), (-1, 1), (1, 1)],
+             6: [(-1, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (1, 1)]}
+_DIE_ROLL_DUR = 0.55        # 掷骰滚动动画总时长（秒）
+
+
+def _die_face(cv, cx, cy, s, val, accent=_UXC["accent"], fresh=False, blank=False):
+    """统一骰面：象牙白圆角骰身 + 上下高光/暗边 + 内凹 pip 点阵（_disc 出立体）。
+    val=None 或 blank=True 时画空白骰（问号面）；fresh=True 叠一圈暖金描边作
+    "刚落定"提示。纯绘制，无副作用。s 为半边长（骰面边长 = 2s）。"""
+    _soft_shadow(cv, cx - s, cy - s, cx + s, cy + s, s * 0.30, max(2, s * 0.14))
+    _rrect(cv, cx - s, cy - s, cx + s, cy + s, s * 0.28,
+           _shade("#ffffff", 0.16), "#b7b2a6", 1)
+    cv.create_line(cx - s + s * 0.32, cy - s + 2, cx + s - s * 0.32, cy - s + 2,
+                   fill="#ffffff", width=2)
+    cv.create_line(cx - s + s * 0.32, cy + s - 2, cx + s - s * 0.32, cy + s - 2,
+                   fill=_shade("#cfcabd", -0.06), width=1)
+    if blank or val is None:
+        _text(cv, cx, cy, "?", _MUTED, (_FONT_B[0], max(10, int(s * 0.9))))
+    else:
+        step = s * 0.52
+        pr = max(1.4, s * 0.155)
+        ink = _shade(accent, -0.42)
+        for px, py in _DIE_PIPS.get(int(val), []):
+            _disc(cv, cx + px * step, cy + py * step, pr, ink,
+                  top_bright=0.20, bot_dark=-0.30, outline=_shade(ink, -0.22))
+    if fresh:
+        cv.create_polygon(_rrect_pts(cx - s - 3, cy - s - 3, cx + s + 3, cy + s + 3,
+                                     s * 0.34),
+                          fill="", outline="#ffd75e", width=2, smooth=True,
+                          splinesteps=24, stipple=_g_stipple(0.5), tags="_die_fresh")
+
+
+_LEVEL_INK = {"大成功": _UXC["success"], "极难成功": _UXC["success"],
+              "困难成功": _UXC["accent"], "普通成功": _UXC["accent"],
+              "失败": _UXC["waiting"], "大失败": _UXC["error"]}
+
+
+def _d100_face(cv, cx, cy, s, val, level="", accent=_UXC["accent"], fresh=False):
+    """COC 百分骰（d100）：竖长骰身 + 顶标 "d100" + 中央大数字 + 判定级别色标。
+    level 为空则不画级别。纯绘制，无副作用。s 为半宽，高为 1.3s。"""
+    hh = s * 1.30
+    _soft_shadow(cv, cx - s, cy - hh, cx + s, cy + hh, s * 0.22, 3)
+    _rrect(cv, cx - s, cy - hh, cx + s, cy + hh, s * 0.20,
+           _shade("#ffffff", 0.14), "#b7b2a6", 1)
+    cv.create_line(cx - s + s * 0.30, cy - hh + 2, cx + s - s * 0.30, cy - hh + 2,
+                   fill="#ffffff", width=2)
+    _text(cv, cx, cy - hh + s * 0.26, "d100", _MUTED,
+          (_FONT_F[0], max(7, int(s * 0.20))))
+    _text(cv, cx, cy + s * 0.16, str(val), _shade(accent, -0.30),
+          (_FONT_B[0], max(12, int(s * 0.62))))
+    if level:
+        _text(cv, cx, cy + hh - s * 0.24, level,
+              _LEVEL_INK.get(level, _MUTED), (_FONT_B[0], max(8, int(s * 0.24))))
+    if fresh:
+        cv.create_polygon(_rrect_pts(cx - s - 3, cy - hh - 3, cx + s + 3,
+                                     cy + hh + 3, s * 0.24),
+                          fill="", outline="#ffd75e", width=2, smooth=True,
+                          splinesteps=24, stipple=_g_stipple(0.5), tags="_die_fresh")
+
+
+def _die_scramble(now, seed=0, n=6):
+    """滚面伪随机：按时间片生成 1..n 的确定值（无 random，跨帧自然跳变）。"""
+    h = int(now * 26) * 2654435761 + int(seed) * 40503 + 12345
+    return (h % int(n)) + 1
+
+
+def _die_roll_fx(ui, now, key, repaint):
+    """掷骰滚动窗口：key（骰面签名）变化 → 记录起始时间并进入滚动窗口。
+    返回 (rolling, k)：rolling=True 表示仍在动画窗内（调用方据此换面/抖动），
+    k 为该窗剩余比例 1→0。纯时间推导，无 after/线程；窗口外返回 (False, 0.0)。
+    首次进入（ui 尚无历史 key）不触发动画，避免开局空滚。"""
+    if "_die_key" not in ui:
+        ui["_die_key"] = key
+        return False, 0.0
+    if ui["_die_key"] != key:
+        ui["_die_key"] = key
+        ui["_die_t0"] = now
+    t0 = ui.get("_die_t0", now)
+    age = now - t0
+    if key is None or age < 0 or age >= _DIE_ROLL_DUR:
+        return False, 0.0
+    if repaint is not None:
+        _anim_need(ui, repaint, gap=0.05, cap=40)
+    return True, 1.0 - age / _DIE_ROLL_DUR
+
+
 def _turn_banner(cv, w, header_h, text, accent, ypad=8):
     """顶栏精致化：柔和渐变卡 + 顶/底描边 + 标题投影。"""
     base = accent
@@ -2219,6 +2315,26 @@ def _p_coc(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                       anchor="ne")
             cards.append((cx, cy, cx + cw, cy + ch, c["id"]))
         ui.update(game="coc", cards=cards)
+    # D5：play 阶段右下角画最近一次检定的 d100 骰面（含掷骰滚动动画）
+    if phase == "play":
+        lc = st.get("last_check")
+        dnow = time.monotonic()
+        dkey = None if not lc else (lc.get("uid"), lc.get("roll"))
+        rolling, rk = _die_roll_fx(ui, dnow, dkey, repaint)
+        if lc:
+            ds = 36
+            dx = w - ds - 22
+            dy = 156
+            jit = -math.sin(rk * math.pi) * 9 if rolling else 0.0
+            if rolling:
+                _d100_face(cv, dx, dy + jit, ds, _die_scramble(dnow, 11, 100),
+                           "", accent)
+            else:
+                _d100_face(cv, dx, dy + jit, ds, int(lc.get("roll", 0)),
+                           lc.get("level", ""), accent, fresh=True)
+            _text(cv, dx, dy + jit + ds * 1.30 + 14,
+                  f"{nick(lc.get('uid'))} · {lc.get('skill','')}",
+                  _MUTED, (_FONT_F[0], 8))
 
 
 @_register("werewolf")
@@ -2907,13 +3023,25 @@ def _p_ludo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 if u == me:
                     tokens.append((sx, sy, idx, max(14, csz * 0.9)))
     ui.update(game="ludo", tokens=tokens, me=me)
-    # 提示 / 骰面
-    note = f"🎲 骰面：{dice}" if dice is not None else "🎲 尚未掷骰（点下方「掷骰」）"
-    if st.get("turn_uid") == me and dice is not None:
-        note += "　点你一架机前进"
-    elif st.get("turn_uid") != me:
-        note += f"　等待 {nick(st.get('turn_uid'))}"
-    _text(cv, w / 2, header + note_h / 2, note, "#333", _FONT_B)
+    # 提示 / 骰面：右上角画统一矢量骰 + 掷骰滚动动画（替代纯文字"骰面：N"）
+    dnow = time.monotonic()
+    dkey = None if dice is None else int(dice)
+    rolling, rk = _die_roll_fx(ui, dnow, dkey, repaint)
+    die_cx = w - 34
+    die_cy = header + note_h / 2
+    ds = 15
+    if dkey is None:
+        _die_face(cv, die_cx, die_cy, ds, None, accent, blank=True)
+        note = "尚未掷骰（点下方「掷骰」）"
+    else:
+        jit = -math.sin(rk * math.pi) * 6 if rolling else 0.0
+        show = _die_scramble(dnow, 3, 6) if rolling else dkey
+        _die_face(cv, die_cx, die_cy + jit, ds, show, accent, fresh=not rolling)
+        if st.get("turn_uid") == me:
+            note = "点你一架机前进"
+        else:
+            note = f"等待 {nick(st.get('turn_uid'))}"
+    _text(cv, w / 2, header + note_h / 2, "🎲 " + note, "#333", _FONT_B)
 
 
 # ---------------------------------------------------------------------------
@@ -3025,22 +3153,8 @@ def _p_rummikub(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 
 def _draw_die(cv, cx, cy, s, val, accent):
-    _soft_shadow(cv, cx - s, cy - s, cx + s, cy + s, s * 0.3, 2)
-    _rrect(cv, cx - s, cy - s, cx + s, cy + s, s * 0.28,
-           _shade("#ffffff", 0.15), "#b0b0b0", 1)
-    cv.create_line(cx - s + s * 0.3, cy - s + 2, cx + s - s * 0.3, cy - s + 2,
-                   fill="#ffffff", width=2)
-    s0 = s * 0.24
-    positions = {1: [(0, 0)],
-                 2: [(-1, -1), (1, 1)],
-                 3: [(-1, -1), (0, 0), (1, 1)],
-                 4: [(-1, -1), (1, -1), (-1, 1), (1, 1)],
-                 5: [(-1, -1), (1, -1), (0, 0), (-1, 1), (1, 1)],
-                 6: [(-1, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (1, 1)]}
-    for px, py in positions.get(int(val), []):
-        cv.create_oval(cx + px * s0 - s0 * 0.55, cy + py * s0 - s0 * 0.55,
-                       cx + px * s0 + s0 * 0.55, cy + py * s0 + s0 * 0.55,
-                       fill=_shade(accent, -0.45), outline="")
+    """兼容旧名：转调统一骰面 _die_face。"""
+    _die_face(cv, cx, cy, s, val, accent)
 
 
 @_register("yahtzee")
@@ -3052,22 +3166,26 @@ def _p_yahtzee(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     elif st.get("turn_uid"):
         title += f"　轮到 {nick(st['turn_uid'])} · 第 {st.get('round',1)} 轮"
     _turn_banner(cv, w, 46, title, accent)
-    # 骰面 5 枚
+    # 骰面 5 枚（统一矢量骰面 + 掷骰/重掷滚动动画）
     dice = st.get("dice") or [None] * 5
     gap = w * 0.06
     die_s = min(44, int((w - gap * 6) / 5 / 2))
     x0 = (w - (die_s * 2 * 5 + gap * 4)) / 2
     y0 = 90
+    now = time.monotonic()
+    rolling, rk = _die_roll_fx(ui, now, tuple(dice), repaint)
     _text(cv, w / 2, y0 - 30, "本回合骰面" + (f"（还可重掷 {st.get('rolls_left',0)} 次）"
           if st.get("rolls_left") else ""), _MUTED, _FONT_F)
     for i, d in enumerate(dice):
         cx = x0 + i * (die_s * 2 + gap) + die_s
+        jit = -math.sin(rk * math.pi) * die_s * 0.30 if rolling else 0.0
+        cy = y0 + die_s + jit
         if d is None:
-            cv.create_rectangle(cx - die_s, y0 - die_s, cx + die_s, y0 + die_s,
-                                fill="#eee", outline="#ccc")
-            _text(cv, cx, y0, "?", _MUTED, _FONT_B)
+            _die_face(cv, cx, cy, die_s, None, accent, blank=True)
+        elif rolling:
+            _die_face(cv, cx, cy, die_s, _die_scramble(now, i, 6), accent)
         else:
-            _draw_die(cv, cx, y0 + die_s, die_s, d, accent)
+            _die_face(cv, cx, cy, die_s, d, accent, fresh=True)
     # 分类得分矩阵
     cats = st.get("cats") or {}
     players = st.get("players") or []

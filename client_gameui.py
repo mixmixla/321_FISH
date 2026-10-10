@@ -562,6 +562,60 @@ def _score_chips(cv, w, y, items, accent):
 
 
 # ---------------------------------------------------------------------------
+# 主题 D1：统一卡面 / 牌背规范（圆角·柔影·背面纹样·选中描边）
+# 供 uno / blackjack / rummikub / davinci / lovelove / nimmt / halloween /
+# matchpairs 共用，使桌面各卡牌游戏观感统一，并与「雾岸」Token 同源。
+# ---------------------------------------------------------------------------
+_UXR_CTRL = _UXRADIUS["control"]        # 7：手牌 / 小卡
+_UXR_BIG = _UXRADIUS["panel"]           # 12：大卡 / 面板
+
+
+def _suit_ink(suit):
+    """花色前景色：红桃/方块用错误红，其余用正文墨色（与企业色无关，纯牌面语义）。"""
+    return "#c0392b" if suit in ("♥", "♦") else "#1b1b1b"
+
+
+def _card_back(cv, x0, y0, x1, y1, base="#3a5aa0", r=_UXR_CTRL):
+    """统一牌背：底色 + 内描边 + 横向菱格纹 + 中心菱形徽记。纯函数绘制。"""
+    _rrect(cv, x0, y0, x1, y1, r, base, _shade(base, -0.32))
+    m = max(3.0, (x1 - x0) * 0.10)
+    cv.create_polygon(_rrect_pts(x0 + m, y0 + m, x1 - m, y1 - m, r * 0.7),
+                      fill="", outline=_shade(base, 0.35), width=1,
+                      smooth=True, splinesteps=20)
+    step = max(5.0, (y1 - y0) * 0.16)
+    yy = y0 + step
+    while yy < y1 - 2:
+        cv.create_line(x0 + m, yy, x1 - m, yy, fill=_shade(base, 0.16), width=1)
+        yy += step
+    ccx, ccy = (x0 + x1) / 2, (y0 + y1) / 2
+    dd = min(x1 - x0, y1 - y0) * 0.16
+    cv.create_polygon(ccx, ccy - dd, ccx + dd, ccy, ccx, ccy + dd,
+                      ccx - dd, ccy, fill=_shade(base, 0.42), outline="")
+
+
+def _card_ring(cv, x0, y0, x1, y1, r=_UXR_CTRL):
+    """选中强调描边：外扩一圈主强调色光环（统一“选中”视觉语言）。"""
+    cv.create_polygon(_rrect_pts(x0 - 3, y0 - 3, x1 + 3, y1 + 3, r + 2),
+                      fill="", outline=_SEL, width=2, smooth=True,
+                      splinesteps=24)
+
+
+def _card_face(cv, x0, y0, x1, y1, face="#ffffff", edge=None, r=_UXR_CTRL,
+               selected=False, shadow=True, back=False, back_col="#3a5aa0"):
+    """统一卡面外框：柔影 + 圆角卡 + 选中强调描边；back=True 画统一牌背。
+    正面上层内容（点数/花色/图案）由调用方在此之后自绘。"""
+    if shadow:
+        _soft_shadow(cv, x0, y0 + 2, x1, y1, r, 2)
+    if back:
+        _card_back(cv, x0, y0, x1, y1, back_col, r)
+    else:
+        _rrect(cv, x0, y0, x1, y1, r, face, edge or _PANEL_BD,
+               width=2 if selected else 1)
+    if selected:
+        _card_ring(cv, x0, y0, x1, y1, r)
+
+
+# ---------------------------------------------------------------------------
 # 点击分发
 # ---------------------------------------------------------------------------
 def handle_click(ui, x, y):
@@ -1792,8 +1846,7 @@ def _p_uno(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     top = st.get("top")
     _text(cv, w / 2 - 130, 100, "弃牌堆顶", _MUTED, _FONT_F)
     if top:
-        # 卡牌浮雕：弃牌堆顶加柔和投影，让牌在桌面上更"浮起"
-        _soft_shadow(cv, w / 2 - 150, 96, w / 2 - 150 + 100, 96 + 140, 10, 3)
+        # 弃牌堆顶：统一卡面自带柔影，直接绘制
         _draw_uno_card(cv, w / 2 - 150, 96, 100, 140, top, ccmap, _FONT_BIG)
         # 刚出的牌（top 即上一手）：淡金描边呼吸渐隐 + 金色星点一簇（≤14，纯时间推导）
         _g_play_fx(cv, ui, time.monotonic(), top,
@@ -1819,12 +1872,12 @@ def _p_uno(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         for i, cstr in enumerate(hand):
             cx0 = x0 + i * (cw + gap)
             y0 = h - 150
-            _soft_shadow(cv, cx0, y0 + 2, cx0 + cw, y0 + ch, 8, 3)
             on, dy = _lift(cv, ui, i, cx0, y0, cx0 + cw, y0 + ch, 9, "#ffd75e")
             if on:                     # 悬停牌加轻微呼吸光环辅助视觉（复用 _g_breath）
                 _g_card_breath_ring(cv, time.monotonic(), cx0, y0,
                                     cx0 + cw, y0 + ch)
-            _draw_uno_card(cv, cx0, y0 + dy, cw, ch, cstr, ccmap, _FONT_B)
+            _draw_uno_card(cv, cx0, y0 + dy, cw, ch, cstr, ccmap, _FONT_B,
+                           selected=on)
             cards.append((cx0, y0, cx0 + cw, y0 + ch, hand_ids[i]))
             rects.append((cx0, y0 - 18, cx0 + cw, y0 + ch))
         _hov_rects(ui, rects)
@@ -1832,7 +1885,7 @@ def _p_uno(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     ui.update(me=me)
 
 
-def _draw_uno_card(cv, x0, y0, w, h, cstr, ccmap, font):
+def _draw_uno_card(cv, x0, y0, w, h, cstr, ccmap, font, selected=False):
     col = "#2c2c2c"
     sym = cstr or "?"
     if cstr:
@@ -1841,8 +1894,9 @@ def _draw_uno_card(cv, x0, y0, w, h, cstr, ccmap, font):
             col = ccmap[head]
             sym = cstr[1:]
     fg = "#fff" if _luma(col) < 150 else "#222"
-    cv.create_rectangle(x0, y0, x0 + w, y0 + h, fill=col, outline="#fff",
-                        width=2)
+    # 统一卡面（D1）：圆角 + 柔影（由调用方或此处统一）+ 选中强调描边
+    _card_face(cv, x0, y0, x0 + w, y0 + h, face=col, edge=_shade(col, 0.5),
+               r=_UXR_CTRL, selected=selected)
     cv.create_oval(x0 + w * 0.14, y0 + h * 0.14, x0 + w * 0.86,
                    y0 + h * 0.86, outline="#fff", width=2)
     _text(cv, x0 + w / 2, y0 + h / 2, sym, fg, font)
@@ -1876,18 +1930,17 @@ def _p_blackjack(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 def _draw_poker(cv, x, y, cstr, face_down=False):
     w, h = 52, 78
-    _soft_shadow(cv, x, y + 2, x + w, y + h, 6, 2)
     if face_down:
-        _rrect(cv, x, y, x + w, y + h, 6, "#3a5aa0", "#27457d", 1)
-        _text(cv, x + w / 2, y + h / 2, "🂠", "#ffffff", _FONT_B)
+        # 统一牌背（D1）：同一纹样跨游戏一致
+        _card_face(cv, x, y, x + w, y + h, back=True, r=_UXR_CTRL)
         return
     rank = cstr[0] if cstr else ""
     suit = cstr[1] if len(cstr) > 1 else ""
-    red = rank in ("♠", "♣") or suit in ("♠", "♣")
-    fg = "#c0392b" if red else "#1b1b1b"
-    _rrect(cv, x, y, x + w, y + h, 6, "#ffffff", "#cccccc", 1)
-    _text(cv, x + 8, y + 8, rank, fg, (_FONT_B[0], 14), anchor="nw")
-    _text(cv, x + w / 2, y + h / 2, suit, fg, (_FONT_B[0], 20))
+    ink = _suit_ink(suit)
+    _card_face(cv, x, y, x + w, y + h, face="#ffffff", edge="#cccccc",
+               r=_UXR_CTRL)
+    _text(cv, x + 8, y + 8, rank, ink, (_FONT_B[0], 14), anchor="nw")
+    _text(cv, x + w / 2, y + h / 2, suit, ink, (_FONT_B[0], 20))
 
 
 @_register("rps")
@@ -2759,8 +2812,8 @@ def _p_rummikub(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 col = _RMK_COL.get(tl.get("c", ""), "#888")
                 x0 = rx + j * (cw + gap)
                 fg = "#fff" if _luma(col) < 150 else "#222"
-                _soft_shadow(cv, x0, ty + 2, x0 + cw, ty + ch, 5, 2)
-                _rrect(cv, x0, ty, x0 + cw, ty + ch, 5, col, _shade(col, -0.3))
+                _card_face(cv, x0, ty, x0 + cw, ty + ch, face=col,
+                           edge=_shade(col, -0.3), r=_UXR_CTRL)
                 _text(cv, x0 + cw / 2, ty + ch / 2, str(tl.get("n", "?")),
                       fg, _FONT_B)
             # 记录发生变化的组行矩形，供成组反馈定位
@@ -2800,10 +2853,9 @@ def _p_rummikub(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             is_sel = hand_ids[i] in sel
             fill = _shade(col_c, 0.25) if is_sel else col_c
             outl = _SEL if is_sel else _shade(col_c, -0.3)
-            _soft_shadow(cv, cx, cy + 2, cx + cw, cy + ch, 6, 2)
-            _rrect(cv, cx, cy - (8 if is_sel else 0), cx + cw,
-                   cy + ch - (8 if is_sel else 0), 6, fill, outl,
-                   3 if is_sel else 1)
+            dy = 8 if is_sel else 0
+            _card_face(cv, cx, cy - dy, cx + cw, cy + ch - dy, face=fill,
+                       edge=outl, r=_UXR_CTRL, selected=is_sel)
             _text(cv, cx + cw / 2, cy + ch / 2 - (8 if is_sel else 0),
                   f"{t.get('c', '')}{t.get('n', '?')}",
                   "#fff" if _luma(fill) < 150 else "#222", _FONT_B)
@@ -2948,8 +3000,9 @@ def _p_nimmt(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         for k, card in enumerate(col):
             cy0 = top_y + k * (ch + gap)
             fill = _shade("#f7e9cd", 0.15) if (k == len(col) - 1) else "#efe6cd"
-            _rrect(cv, cx, cy0, cx + colw - 10, cy0 + ch, 5, fill,
-                   "#b9986a" if k == len(col) - 1 else _PANEL_BD)
+            _card_face(cv, cx, cy0, cx + colw - 10, cy0 + ch, face=fill,
+                       edge="#b9986a" if k == len(col) - 1 else _PANEL_BD,
+                       r=_UXR_CTRL)
             _text(cv, cx + (colw - 10) / 2, cy0 + ch / 2 - 6, str(card),
                   "#333", _FONT_B)
             _text(cv, cx + (colw - 10) / 2, cy0 + ch / 2 + 12, _bull_str(card),
@@ -2969,7 +3022,8 @@ def _p_nimmt(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         base = (w - (min(per, len(hand)) * (cw + gap2) - gap2)) / 2
         for i, card in enumerate(hand[:per]):
             cx = base + i * (cw + gap2)
-            _rrect(cv, cx, hy, cx + cw, hy + 58, 6, "#fff", "#b9986a")
+            _card_face(cv, cx, hy, cx + cw, hy + 58, face="#ffffff",
+                       edge="#b9986a", r=_UXR_CTRL)
             _text(cv, cx + cw / 2, hy + 20, str(card), "#333", _FONT_B)
             _text(cv, cx + cw / 2, hy + 40, _bull_str(card), "#c0392b",
                   (_FONT_F[0], 8))
@@ -3023,9 +3077,14 @@ def _p_davinci(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 fill, fg = _shade("#5b6ca8", 0.25), "#fff"
                 sym = str(v) if v is not None else "黑"
             else:
-                fill, fg = "#4a5a80", "#dfe6f0"
+                fill, fg = None, "#dfe6f0"
                 sym = "?"
-            _rrect(cv, x0, y, x0 + cw, y + ch, 6, fill, _shade("#5b6ca8", -0.3))
+            if fill is None:
+                _card_face(cv, x0, y, x0 + cw, y + ch, r=_UXR_CTRL,
+                           back=True, back_col="#4a5a80")
+            else:
+                _card_face(cv, x0, y, x0 + cw, y + ch, face=fill,
+                           edge=_shade("#5b6ca8", -0.3), r=_UXR_CTRL)
             _text(cv, x0 + cw / 2, y + ch / 2, sym, fg, _FONT_B)
         y += ch + gap + 14
     # 私密提示
@@ -3076,8 +3135,8 @@ def _p_lovelove(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         names = {1: "护卫", 2: "牧师", 3: "男爵", 4: "侍女", 5: "王子",
                  6: "国王", 7: "伯爵夫人", 8: "公主"}
         cx = w / 2 - 32
-        _rrect(cv, cx, y_card + 2, cx + 64, y_card + 90, 8,
-               _shade("#c265a4", 0.5), "#c265a4")
+        _card_face(cv, cx, y_card + 2, cx + 64, y_card + 90,
+                   face=_shade("#c265a4", 0.5), edge="#c265a4", r=_UXR_BIG)
         _text(cv, cx + 32, y_card + 34, str(v), "#fff", _FONT_BIG)
         _text(cv, cx + 32, y_card + 58, names.get(v, ""), "#fff",
               (_FONT_F[0], 9))
@@ -3135,7 +3194,8 @@ def _p_matchpairs(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         base = (w - min(per2, len(hand)) * 44 + 4) / 2
         for i, c in enumerate(hand[:per2]):
             cx = base + i * 44
-            _rrect(cv, cx, hy + 2, cx + 40, hy + 58, 6, "#fff", "#37a25f")
+            _card_face(cv, cx, hy + 2, cx + 40, hy + 58, face="#ffffff",
+                       edge="#37a25f", r=_UXR_CTRL)
             _text(cv, cx + 20, hy + 32, c, "#333", _FONT_B)
     else:
         _text(cv, w / 2, hy + 20, "（无手牌）", _MUTED, _FONT_F)
@@ -3193,7 +3253,8 @@ def _p_liar(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         base = (w - min(per2, len(hand)) * 44 + 4) / 2
         for i, v in enumerate(hand[:per2]):
             cx = base + i * 44
-            _rrect(cv, cx, hy + 2, cx + 40, hy + 54, 6, "#fff", "#c9853e")
+            _card_face(cv, cx, hy + 2, cx + 40, hy + 54, face="#ffffff",
+                       edge="#c9853e", r=_UXR_CTRL)
             _text(cv, cx + 20, hy + 28, str(v), "#333", _FONT_B)
     else:
         _text(cv, w / 2, hy + 20, "（无手牌）", _MUTED, _FONT_F)
@@ -3220,7 +3281,8 @@ def _p_halloween(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         base = (w - min(per, len(area)) * 74 + 4) / 2
         for i, f in enumerate(area[-per:]):
             cx = base + i * 74
-            _rrect(cv, cx, 96, cx + 68, 132, 8, _shade("#c2362c", 0.25), "#c2362c")
+            _card_face(cv, cx, 96, cx + 68, 132, face=_shade("#c2362c", 0.25),
+                       edge="#c2362c", r=_UXR_CTRL)
             _text(cv, cx + 34, 114, f, "#fff", (_FONT_BIG[0], 22))
     else:
         _text(cv, w / 2, 118, "（空白，可翻牌）", _MUTED, _FONT_F)

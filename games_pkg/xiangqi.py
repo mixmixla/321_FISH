@@ -160,24 +160,26 @@ class XiangQiGame(BaseGame):
         return None
 
     def _attacked(self, king_pos, by_player):
-        """(kx,ky) 是否被 by_player 的任意子攻击（含飞将）"""
+        """(kx,ky) 是否被 by_player 的任意子攻击（含飞将）。
+        _move_gen/_cannon_targets 以 self.turn 判定"己方/可吃"，故须临时切到攻击方
+        视角生成走法；否则王所在的敌方格会被当作攻击方己方子而漏判。"""
         kx, ky = king_pos
-        # 枚举 by_player 的每个子的落点是否含王
-        for y in range(ROWS):
-            for x in range(COLS):
-                c = self.board[y][x]
-                if c and _p(c) == by_player:
-                    # 炮/马等走法 + 飞将
-                    if _t(c) == CANNON:
-                        if (kx, ky) in self._cannon_targets(x, y, c):
-                            return True
-                    else:
-                        if (kx, ky) in self._move_gen(x, y, c):
-                            return True
-        # 飞将：对方将在同列且中间无子
-        oy = [i for i in range(ROWS) if self.board[i][kx] != 0]
-        if len(oy) >= 1:
-            pass
+        saved = self.turn
+        self.turn = by_player
+        try:
+            for y in range(ROWS):
+                for x in range(COLS):
+                    c = self.board[y][x]
+                    if c and _p(c) == by_player:
+                        # 炮/马等走法 + 飞将
+                        if _t(c) == CANNON:
+                            if (kx, ky) in self._cannon_targets(x, y, c):
+                                return True
+                        else:
+                            if (kx, ky) in self._move_gen(x, y, c):
+                                return True
+        finally:
+            self.turn = saved
         return False
 
     def _cannon_targets(self, x, y, code):
@@ -276,7 +278,7 @@ class XiangQiGame(BaseGame):
         return True
 
     def snapshot(self):
-        return {
+        state = {
             "game": self.name, "status": "playing",
             "board": self.board, "rows": ROWS, "cols": COLS,
             "turn_uid": None if self.winner else self.players[self.turn],
@@ -284,6 +286,10 @@ class XiangQiGame(BaseGame):
             "legend": {str(PIECE_CN[k]): PIECE_CN[k] for k in PIECE_CN},
             "last_move": self.last_move,
         }
+        if not self.winner:
+            # 将军提示：轮到行动的一方，其将帅此刻是否被攻击
+            state["check"] = self._in_check_self()
+        return state
 
     def ended(self):
         if self.winner:

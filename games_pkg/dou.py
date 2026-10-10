@@ -40,6 +40,7 @@ class DouGame(BaseGame):
         self.winner = None
         self.home = {0: HOMES[0], 1: HOMES[1]}
         self.last_move = None
+        self.last_event = None          # 最近一步结果反馈 {kind,x,y}，供 UI 提示
 
     def _enemy_in_den(self, pl):
         dx, dy = DENS[1 - pl]
@@ -71,6 +72,7 @@ class DouGame(BaseGame):
             self.board.pop((fx, fy), None)
             self.board[(tx, ty)] = (pl, a)
             self.last_move = ((fx, fy), (tx, ty))
+            self.last_event = {"kind": "win", "x": tx, "y": ty}
             self.winner = uid
             return [f"🏆 {self._nick(uid)} 的 {CN[a]} 占领敌营获胜！"]
         # 吃子判定
@@ -86,6 +88,7 @@ class DouGame(BaseGame):
                 self.board.pop((fx, fy))
                 self.board.pop((tx, ty))
                 self.last_move = ((fx, fy), (tx, ty))
+                self.last_event = {"kind": "trade", "x": tx, "y": ty}
                 self.turn = 1 - pl
                 return [f"⚔ {self._nick(uid)} {CN[a]} 与 {CN[oa]} 兑子"]
             if loses:
@@ -93,6 +96,7 @@ class DouGame(BaseGame):
         self.board.pop((fx, fy), None)
         self.board[(tx, ty)] = (pl, a)
         self.last_move = ((fx, fy), (tx, ty))
+        self.last_event = {"kind": "eat" if target else "move", "x": tx, "y": ty}
         self.turn = 1 - pl
         return [f"🐾 {self._nick(uid)} {CN[a]} ({fx},{fy})→({tx},{ty})" +
                 (f"，吃掉 {CN[target[1]]}" if target else "")]
@@ -142,6 +146,7 @@ class DouGame(BaseGame):
             "players": list(self.players), "winner_uid": self.winner,
             "legend": {str(EMO[a]): CN[a] for a in CN},
             "last_move": self.last_move,
+            "last_event": self.last_event,
         }
 
     def _code(self, cell):

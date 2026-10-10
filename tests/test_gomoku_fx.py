@@ -316,3 +316,50 @@ def test_rmk_table_change_detection():
     assert cu._g_rmk_table_change((3, 4), [[None] * 5, [None] * 4]) == (0, False)
     # 行数减少（抽走/拆组时不当作"成组反馈"，仍报行变化但 is_new=False 语义由调用方消化）
     assert cu._g_rmk_table_change((3, 4), [[None] * 2]) is not None
+
+
+# -------- F3 结果反馈徽标：将军/吃子/兑子/牺牲/挖雷/获胜 --------
+
+def test_event_style_covers_semantic_kinds_and_cleans_ui():
+    """结果徽标：语义事件均有配色+字形；move/未知 kind 无样式；key=None 清状态且不碰 Canvas。"""
+    for kind in ("check", "eat", "trade", "beaten", "mine_clear", "win"):
+        color, glyph = cu._G_EV_STYLE[kind]
+        assert color.startswith("#") and len(color) == 7
+        assert isinstance(glyph, str) and glyph
+    assert "move" not in cu._G_EV_STYLE                # 纯移动不弹徽标
+    assert cu._G_EV_DUR > 0
+    # 降级路径：不实例化 tk.Canvas，仅清理 ui 状态
+    ui = {"_g_ev": {"t0": 1.0}, "_g_evkey": (0, 0, "eat")}
+    cu._g_draw_event(None, ui, 2.0, None, "eat", 10)
+    assert "_g_ev" not in ui and "_g_evkey" not in ui
+    ui2 = {"_g_ev": {"t0": 1.0}, "_g_evkey": (0, 0, "move")}
+    cu._g_draw_event(None, ui2, 2.0, (5, 5), "move", 10)   # 无样式 → 清
+    assert "_g_ev" not in ui2 and "_g_evkey" not in ui2
+
+
+def test_event_draw_resets_on_change_and_terminates():
+    """事件徽标：首帧画环+字形并记 t0；同事件跨帧不重置；换事件重置；寿命结束不再绘制。"""
+    class _Canvas:                       # 最小画布桩：只接收绘制调用，不实例化 tk
+        def __init__(self):
+            self.n = 0
+            self.texts = []
+
+        def create_oval(self, *a, **k):
+            self.n += 1
+
+        def create_text(self, *a, **k):
+            self.n += 1
+            self.texts.append(k.get("text"))
+
+    cv = _Canvas()
+    ui = {}
+    cu._g_draw_event(cv, ui, 100.0, (50, 60), "check", 40)
+    assert ui["_g_ev"]["t0"] == 100.0 and ui["_g_evkey"] == (50, 60, "check")
+    assert cv.n > 0 and cv.texts == ["将"]             # 画了环 + 字形
+    cu._g_draw_event(cv, ui, 100.5, (50, 60), "check", 40)
+    assert ui["_g_ev"]["t0"] == 100.0                 # 同事件跨帧：不重置计时
+    cu._g_draw_event(cv, ui, 101.0, (80, 90), "eat", 40)
+    assert ui["_g_ev"]["t0"] == 101.0 and ui["_g_evkey"] == (80, 90, "eat")
+    cv.n = 0
+    cu._g_draw_event(cv, ui, 101.0 + cu._G_EV_DUR + 0.5, (80, 90), "eat", 40)
+    assert cv.n == 0                                  # 寿命结束（halo 归零）→ 不再绘制

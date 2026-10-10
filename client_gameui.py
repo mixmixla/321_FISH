@@ -1458,6 +1458,47 @@ def _g_hint_marks(cv, marks, cell):
                        tags="_g_hint")
 
 
+_G_EV_STYLE = {                 # 结果反馈徽标：事件 kind → (配色, 字形)
+    "check":      ("#ff5a5a", "将"),   # 将军
+    "eat":        ("#ff8a3d", "×"),    # 吃掉对方
+    "trade":      ("#c9a0ff", "⇄"),    # 兑子（同归）
+    "beaten":     ("#9aa0aa", "✕"),    # 被吃 / 牺牲
+    "mine_clear": ("#4fc3f7", "雷"),   # 工兵挖雷
+    "win":        ("#ffd75e", "★"),    # 获胜
+}
+_G_EV_DUR = 1.6                 # 结果徽标膨胀渐隐总时长（秒）
+
+
+def _g_draw_event(cv, ui, now, key, kind, cell):
+    """结果反馈徽标：在目标格上叠一枚语义化描边圆环 + 字形，膨胀渐隐。
+    key = (px, py) 目标格像素中心；kind 取 _G_EV_STYLE 的键（"move" 等无样式即不画）。
+    key=None 或 kind 无样式时清状态、不绘制；纯时间推导，状态存 ui。"""
+    if key is None or kind not in _G_EV_STYLE:
+        ui.pop("_g_ev", None)
+        ui.pop("_g_evkey", None)
+        return
+    px, py = key
+    ident = (px, py, kind)
+    if ui.get("_g_evkey") != ident:      # 事件变更 → 重置计时
+        ui["_g_ev"] = {"t0": now}
+        ui["_g_evkey"] = ident
+    ev = ui.get("_g_ev")
+    if not ev:
+        return
+    color, glyph = _G_EV_STYLE[kind]
+    hr, ha = _g_halo(now, ev["t0"], _G_EV_DUR, cell * 0.40)
+    if ha <= 0:
+        return
+    cv.create_oval(px - hr, py - hr, px + hr, py + hr, fill="",
+                   outline=color, width=2, stipple=_g_stipple(ha), tags="_g_ev")
+    r = cell * 0.26
+    cv.create_oval(px - r, py - r, px + r, py + r, fill=color, outline="",
+                   stipple=_g_stipple(0.50 * ha), tags="_g_ev")
+    cv.create_text(px, py, text=glyph, fill=_shade(color, 0.85 * (1.0 - ha)),
+                   font=("Segoe UI Emoji", max(10, int(cell * 0.42)), "bold"),
+                   tags="_g_ev")
+
+
 def _g_draw_win(cv, ui, now, w, anchors, breathing, on):
     """胜利动效：在棋子锚点上撒 ≤48 粒金色星点，循环复用持续飘升；
     顶栏 🏆 加一圈呼吸辉光。on=False（未获胜/平局）时清空状态。"""
@@ -2057,6 +2098,20 @@ def _xiangqi_chess(cv, st, me, nick, submit, repaint, ui, priv, w, h, kind="xian
             lastpx = (ox + lx * cell + cell / 2, oy + ly * cell + cell / 2)
     # ---- 动效：落子光晕/微粒子 + 胜利星点（数量封顶 ≤48）----
     _g_draw_last(cv, ui, now, lastpx, cell)
+    # ---- 结果反馈：将军徽标（轮到行动的一方将帅被攻击，定位其将帅格）----
+    evpx = evkind = None
+    if kind == "xiangqi" and st.get("check") and st.get("winner_uid") is None:
+        players = st.get("players") or []
+        king_code = 1 if (players and st.get("turn_uid") == players[0]) else 11
+        for yy in range(m):
+            for xx in range(n):
+                if board[yy][xx] == king_code:
+                    evpx = (ox + xx * cell + cell / 2, oy + yy * cell + cell / 2)
+                    evkind = "check"
+                    break
+            if evpx:
+                break
+    _g_draw_event(cv, ui, now, evpx, evkind, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
     _anim_need(ui, repaint, gap=0.04, cap=180)
@@ -2753,6 +2808,17 @@ def _p_junqi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             lastpx = (ui["ox"] + lx * cell + cell / 2, ui["oy"] + ly * cell + cell / 2)
     # ---- 动效：落子光晕/微粒子 + 胜利星点（数量封顶 ≤48）----
     _g_draw_last(cv, ui, now, lastpx, ui.get("cell") or 0)
+    # ---- 结果反馈：炸弹/挖雷/兑子/吃子徽标（服务端 last_event）----
+    evpx = evkind = None
+    ev = st.get("last_event")
+    cell = ui.get("cell") or 0
+    if ev and cell:
+        ex, ey = int(ev.get("x", -1)), int(ev.get("y", -1))
+        if 0 <= ex < cols and 0 <= ey < rows:
+            evpx = (ui["ox"] + ex * cell + cell / 2,
+                    ui["oy"] + ey * cell + cell / 2)
+            evkind = ev.get("kind")
+    _g_draw_event(cv, ui, now, evpx, evkind, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
     _anim_need(ui, repaint, gap=0.04, cap=180)
@@ -2805,6 +2871,17 @@ def _p_dou(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         if 0 <= lx < cols and 0 <= ly < rows and cell:
             lastpx = (ui["ox"] + lx * cell + cell / 2, ui["oy"] + ly * cell + cell / 2)
     _g_draw_last(cv, ui, now, lastpx, ui.get("cell") or 0)
+    # ---- 结果反馈：吃子/兑子/获胜徽标（服务端 last_event）----
+    evpx = evkind = None
+    ev = st.get("last_event")
+    cell = ui.get("cell") or 0
+    if ev and cell:
+        ex, ey = int(ev.get("x", -1)), int(ev.get("y", -1))
+        if 0 <= ex < cols and 0 <= ey < rows:
+            evpx = (ui["ox"] + ex * cell + cell / 2,
+                    ui["oy"] + ey * cell + cell / 2)
+            evkind = ev.get("kind")
+    _g_draw_event(cv, ui, now, evpx, evkind, cell)
     _anim_need(ui, repaint, gap=0.04, cap=180)
 
 

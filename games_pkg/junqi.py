@@ -50,6 +50,7 @@ class JunqiGame(BaseGame):
         self.turn = 0
         self.winner = None
         self.last_move = None
+        self.last_event = None          # 最近一步结果反馈 {kind,x,y}，供 UI 提示
 
     # ---- 编码辅助 ----
     @staticmethod
@@ -101,6 +102,7 @@ class JunqiGame(BaseGame):
         if target and _side(target) != self.turn and _rank(target) == FLAG:
             self.board[fy][fx] = EMPTY
             self.board[ty][tx] = code
+            self.last_event = {"kind": "win", "x": tx, "y": ty}
             self.winner = self.players[self.turn]
             return [f"🏆 {self._nick_n(self.turn)} 扛起对方军旗获胜！"]
         trank = _rank(target) if target else None
@@ -111,12 +113,14 @@ class JunqiGame(BaseGame):
             if rank == BOMB:
                 self.board[fy][fx] = EMPTY
                 self.board[ty][tx] = EMPTY
+                self.last_event = {"kind": "trade", "x": tx, "y": ty}
                 self.turn = 1 - self.turn
                 return msgs + [f"💥 炸弹与 {CN[trank]} 同归于尽"]
             # 敌方是炸弹 → 同归
             if trank == BOMB:
                 self.board[fy][fx] = EMPTY
                 self.board[ty][tx] = EMPTY
+                self.last_event = {"kind": "trade", "x": tx, "y": ty}
                 self.turn = 1 - self.turn
                 return msgs + [f"💥 撞上炸弹，同归于尽"]
             # 敌方是地雷 → 仅工兵可挖
@@ -124,29 +128,35 @@ class JunqiGame(BaseGame):
                 self.board[fy][fx] = EMPTY
                 if rank == ENGINEER:
                     self.board[ty][tx] = code
+                    self.last_event = {"kind": "mine_clear", "x": tx, "y": ty}
                     self.turn = 1 - self.turn
                     return msgs + [f"🔧 工兵挖掉地雷"]
                 else:
+                    self.last_event = {"kind": "beaten", "x": tx, "y": ty}
                     self.turn = 1 - self.turn
                     return msgs + [f"💣 {CN[rank]} 撞上地雷牺牲"]
             # 普通军衔比较
             if rank > trank:
                 self.board[fy][fx] = EMPTY
                 self.board[ty][tx] = code
+                self.last_event = {"kind": "eat", "x": tx, "y": ty}
                 self.turn = 1 - self.turn
                 return msgs + [f"⚔ 吃掉敌方 {CN[trank]}"]
             if rank == trank:
                 self.board[fy][fx] = EMPTY
                 self.board[ty][tx] = EMPTY
+                self.last_event = {"kind": "trade", "x": tx, "y": ty}
                 self.turn = 1 - self.turn
                 return msgs + [f"🤝 同级兑子"]
             # rank < trank → 被吃
             self.board[fy][fx] = EMPTY
+            self.last_event = {"kind": "beaten", "x": tx, "y": ty}
             self.turn = 1 - self.turn
             return msgs + [f"💥 被敌方 {CN[trank]} 吃掉"]
         # 空位移动
         self.board[fy][fx] = EMPTY
         self.board[ty][tx] = code
+        self.last_event = {"kind": "move", "x": tx, "y": ty}
         self.turn = 1 - self.turn
         return msgs
 
@@ -159,6 +169,7 @@ class JunqiGame(BaseGame):
             "players": list(self.players), "winner_uid": self.winner,
             "legend": {str(r): CN[r] for r in RANK_NAMES},
             "last_move": self.last_move,
+            "last_event": self.last_event,
         }
 
     def ended(self):

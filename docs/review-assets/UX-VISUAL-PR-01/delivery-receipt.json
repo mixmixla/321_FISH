@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-10 Asia/Shanghai",
+  "pr_url": "https://github.com/mixmixla/321_FISH/pull/8",
+  "pr_number": 8,
+  "state": "open",
+  "draft": true,
+  "merged": false,
+  "base": "main",
+  "base_sha": "7d6a98cbdd8c62f5d5af4d5b9a4a7e6be0663758",
+  "branch": "codex/ux-visual-chat-20261010",
+  "creation_head": "19e1fa10685e70abcc37c3ca23d161dc484e7ebf",
+  "files_at_creation": 42,
+  "source_content_id": "f13f45bf068641eb3e6135fca6c0eab9956e121259ee2e4a8a1d0d9f9aa0cb42",
+  "tested_inputs": 369,
+  "domain": {
+    "files": 18,
+    "passed": 165,
+    "failed": 1,
+    "skipped": 0,
+    "exit_code": 1,
+    "seconds": 418.967
+  },
+  "connector_create": "403 Resource not accessible by integration; no credential or permissions change",
+  "creation_method": "Existing authenticated Chrome GitHub page; draft selected; visible success verified by read-only connector",
+  "attached_to_chat": true,
+  "main_pushed": false,
+  "force_pushed": false,
+  "release_or_deploy": false,
+  "proof_local": "_tmp_gui/pr-delivery-08/pr8-created.png",
+  "proof_sha256": "6d2cbb950744624a4e4e91133a035c6ad29036d6af9c62e475e615da6558393d",
+  "note": "Creation facts; later docs-only commit is separately verified against remote/PR head. Product and visual acceptance remain pending."
+}

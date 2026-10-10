@@ -1,0 +1,509 @@
+{
+  "stage": "in progress; no final acceptance",
+  "runs": [
+    {
+      "run": "ux-visual-candidate-r1-20261009-105905-bb9684529e",
+      "summary": "_tmp_gui/test-gate/ux-visual-candidate-r1-20261009-105905-bb9684529e/summary.json",
+      "summary_sha256": "49a059e4fa25c859c1ed57d8d74818e1a39a4169429cc6ec0e4871b43024a1b9",
+      "files": 7,
+      "totals": {
+        "passed": 74,
+        "failed": 2
+      },
+      "exit_code": 1,
+      "seconds": 126.964,
+      "source_content_id": "e1950b206da96163c067c290c95c17c50fabda276df2a81ef3f5b445162fc9ef",
+      "raw_logs": [
+        {
+          "file": "tests/test_local_prefs_rules.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-candidate-r1-20261009-105905-bb9684529e/logs/test_local_prefs_rules.attempt1.log",
+          "sha256": "0ca6cc334e069b63370b83c9882c5770f2c2b72affd651bf26f392ef94657cac",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r43c.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-candidate-r1-20261009-105905-bb9684529e/logs/test_r43c.attempt1.log",
+          "sha256": "c7e01c95cc8fb0936c063d309318f42b2ef7c6575dcc72733404f4dc1da8fc55",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_session_list.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-candidate-r1-20261009-105905-bb9684529e/logs/test_session_list.attempt1.log",
+          "sha256": "7f485275d111d71f7db134592d0ab97ec0a921c27d04e7af294916b2204e2ef1",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_theme.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-candidate-r1-20261009-105905-bb9684529e/logs/test_theme.attempt1.log",
+          "sha256": "92d6784bda450e0ff115687db89f16435fc61b6c00ac7f0600a721372ecf55d0",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_design.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-candidate-r1-20261009-105905-bb9684529e/logs/test_ux_visual_chat_design.attempt1.log",
+          "sha256": "e8db3a9833a2e640fe50c27b749edf8f6bbecce446784fa153c43adfd4b5d6a3",
+          "exit_code": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_dpi.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-candidate-r1-20261009-105905-bb9684529e/logs/test_ux_visual_chat_dpi.attempt1.log",
+          "sha256": "cc880af29b8899079ea8401522e95895eb5dcfe0c8ae6f5c00fbfe474461574c",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-candidate-r1-20261009-105905-bb9684529e/logs/test_ux_visual_chat_regressions.attempt1.log",
+          "sha256": "cd20c8e293d70ad071771d83b3fa3b02dc6215e947c4a9d290733334bbede403",
+          "exit_code": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ]
+    },
+    {
+      "run": "ux-visual-domain-r5-20261009-115555-5e3df207c8",
+      "summary": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/summary.json",
+      "summary_sha256": "0c5ba93b19ce2c42b144db8f0524ee880735fca4d781164bcdd596f43c86affc",
+      "files": 16,
+      "totals": {
+        "passed": 171,
+        "failed": 1
+      },
+      "exit_code": 1,
+      "seconds": 244.213,
+      "source_content_id": "e23996b75f84a82874e0df1991da9b12a95adb4149c229363113f370039fcb30",
+      "raw_logs": [
+        {
+          "file": "tests/test_drafts.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_drafts.attempt1.log",
+          "sha256": "94ad3144849d2b9ca87236f7e45d42cb43a56f76ac5bc5f24eb0ee6fad255cfe",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_excel_skin.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_excel_skin.attempt1.log",
+          "sha256": "89246dd5e8493c338d07385346f3333b27ae385850baaeb54fc01d2275592903",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_flagship_gui.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_flagship_gui.attempt1.log",
+          "sha256": "df6cf8cd4f035423187962098ae8f2151be48648d3f53622cbcf9a092b5a5923",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_interaction_mode.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_interaction_mode.attempt1.log",
+          "sha256": "9bcc1e9793a2d62dfac41a005164ca31ed83deaf3520b4fb6c2dd952474c95d8",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_local_prefs_rules.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_local_prefs_rules.attempt1.log",
+          "sha256": "4f6bbd84a804bb56f55da7ac9d959326d657363fb478c6e2334f05327edde753",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_msg_list.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_msg_list.attempt1.log",
+          "sha256": "b1b2ac66ea6363e8e9bd481b10d5ff7f97a37372053e1c0e86769b4b9ae22e3c",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r43c.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_r43c.attempt1.log",
+          "sha256": "7cdd5f55905ae2ebf8e9839e1da9f6982d6c50df704c82d6c31282ddc98a0f79",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_runs.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_runs.attempt1.log",
+          "sha256": "2ece08006086469a8f76ae70dfd96d0af35b95e50f985914ddb9317fdf74f3a2",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_session_list.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_session_list.attempt1.log",
+          "sha256": "57bd6afa5fe438aa3c398243e8d2b0b36f4f9000c86f6e0cc32be6f3c998908c",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_settings_nav.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_settings_nav.attempt1.log",
+          "sha256": "a1827b5c98d2a0b73d0ee18283f28b8eca7ddfe9fabe61456e74210fa0aa703b",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_theme.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_theme.attempt1.log",
+          "sha256": "1d9f7afea1a9103dedc57dd5d402b45d58cbcd50a5c8525d257f2d20b963b74c",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_repair.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_ux_repair.attempt1.log",
+          "sha256": "2f189cb403b9228f576fbec78618b73b36958176974e718bcb0f0bc813a0a7e6",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_design.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_ux_visual_chat_design.attempt1.log",
+          "sha256": "3e179b676235984f2c3373fcf49dffeace44e71730cb4e503d0515d360b45ad6",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_dpi.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_ux_visual_chat_dpi.attempt1.log",
+          "sha256": "69f21218de712c85932720157187def63b0139aa2afa82dd30c792fd736b78a7",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_ux_visual_chat_regressions.attempt1.log",
+          "sha256": "0bd08e00c1e26bd3c16448b8bdd92f4c724d412e76cd324818f5017d494bf5ed",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_web.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-domain-r5-20261009-115555-5e3df207c8/logs/test_ux_visual_chat_web.attempt1.log",
+          "sha256": "496dbab12b9e615f97138d0b981ba011c9c5099f26dd5f9ce8d60da8142c6de2",
+          "exit_code": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ]
+    },
+    {
+      "run": "ux-visual-fix-r2-20261009-110529-b1d7427603",
+      "summary": "_tmp_gui/test-gate/ux-visual-fix-r2-20261009-110529-b1d7427603/summary.json",
+      "summary_sha256": "cd797437a3fc9c68aa9a27ee5c4c7ddffd0d0d36f19f51a5dc3288aab32bb4ed",
+      "files": 2,
+      "totals": {
+        "passed": 10
+      },
+      "exit_code": 0,
+      "seconds": 72.318,
+      "source_content_id": "40846cf712c69f2bf469ae104a1e3b3c6b95968fe4908b2e684d6316d2630e16",
+      "raw_logs": [
+        {
+          "file": "tests/test_ux_visual_chat_design.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-fix-r2-20261009-110529-b1d7427603/logs/test_ux_visual_chat_design.attempt1.log",
+          "sha256": "a5edfcc69d8229433a47f98da1099d37dc95fc8f2c963397b99e5a7650e1f320",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-fix-r2-20261009-110529-b1d7427603/logs/test_ux_visual_chat_regressions.attempt1.log",
+          "sha256": "a91a8ae16a3b1b97b57a0fbf9c4e5f77171c3313f93f585ea4844913445efba9",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ]
+    },
+    {
+      "run": "ux-visual-navigation-r4-20261009-113532-931c2989f5",
+      "summary": "_tmp_gui/test-gate/ux-visual-navigation-r4-20261009-113532-931c2989f5/summary.json",
+      "summary_sha256": "1df26a72ab7122f823ee360786cdb1029468e20842408ea0c7e77a9cb77d2b66",
+      "files": 3,
+      "totals": {
+        "passed": 24
+      },
+      "exit_code": 0,
+      "seconds": 60.948,
+      "source_content_id": "f4fe6bb7212abcd97ac5917a66ac5cc9278f1e34995c318791a8301ec5683a8b",
+      "raw_logs": [
+        {
+          "file": "tests/test_ux_visual_chat_design.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-navigation-r4-20261009-113532-931c2989f5/logs/test_ux_visual_chat_design.attempt1.log",
+          "sha256": "3c3fab8290696b8b31808da7c9ff1867c3a04bc8c41b2e4d350423324da1cb0f",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_dpi.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-navigation-r4-20261009-113532-931c2989f5/logs/test_ux_visual_chat_dpi.attempt1.log",
+          "sha256": "1ed4be85f4240479345d1ae5f7fec74c5da7c45c281b00c80f1438d949ffeecf",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-navigation-r4-20261009-113532-931c2989f5/logs/test_ux_visual_chat_regressions.attempt1.log",
+          "sha256": "5343fed9f182a782dd1a678ddace79d658446c636347855c06581a5361b40369",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ]
+    },
+    {
+      "run": "ux-visual-original-r1-20261009-104358-97aba44440",
+      "summary": "_tmp_gui/test-gate/ux-visual-original-r1-20261009-104358-97aba44440/summary.json",
+      "summary_sha256": "b98412e5f5c1c93e1edb4e3f42e7c4c14f301d549516f17e9e2d82ff6fbf8e97",
+      "files": 1,
+      "totals": {
+        "passed": 1,
+        "errors": 4
+      },
+      "exit_code": 1,
+      "seconds": 35.93,
+      "source_content_id": "c6d5ab5565f07eb7b2d37faa01c6795839237626cd740ba46e4e542f21465baf",
+      "raw_logs": [
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-original-r1-20261009-104358-97aba44440/logs/test_ux_visual_chat_regressions.attempt1.log",
+          "sha256": "cb7164f96bf616ef07b5f5889754543ff7ad7c9bfc10ea5483ec641ae5630696",
+          "exit_code": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ]
+    },
+    {
+      "run": "ux-visual-original-r2-20261009-105608-683f5255f0",
+      "summary": "_tmp_gui/test-gate/ux-visual-original-r2-20261009-105608-683f5255f0/summary.json",
+      "summary_sha256": "ccdfc35607f37546fa1695bb550d11b195119b7b6558af92e12af48c0ec8f376",
+      "files": 2,
+      "totals": {
+        "failed": 6,
+        "passed": 5
+      },
+      "exit_code": 1,
+      "seconds": 64.138,
+      "source_content_id": "0bff9d01dadfecd0e687bf8b66629cb3e0c9de769ccc3c329a650a7813fd6cf9",
+      "raw_logs": [
+        {
+          "file": "tests/test_ux_visual_chat_dpi.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-original-r2-20261009-105608-683f5255f0/logs/test_ux_visual_chat_dpi.attempt1.log",
+          "sha256": "fcab7659186b56d7b71b5bba65f0cc3002b124050d03e4276bb675f0c6090155",
+          "exit_code": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-original-r2-20261009-105608-683f5255f0/logs/test_ux_visual_chat_regressions.attempt1.log",
+          "sha256": "5e18943204b2f63bd752d557820fbb8840db6b9ed57fad7afa599205b3c39c10",
+          "exit_code": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ]
+    },
+    {
+      "run": "ux-visual-probe-r6-20261009-120350-ce6679e960",
+      "summary": "_tmp_gui/test-gate/ux-visual-probe-r6-20261009-120350-ce6679e960/summary.json",
+      "summary_sha256": "db9a7e4b9355c01814c892d145dc10a7e238fa7a08838f64d3d8bacb3cb38c8d",
+      "files": 4,
+      "totals": {
+        "passed": 25
+      },
+      "exit_code": 0,
+      "seconds": 76.023,
+      "source_content_id": "0bee28b7f182c4b5ede674bd8afdcc97014b5b73aff7a4169d77324836cb4c1c",
+      "raw_logs": [
+        {
+          "file": "tests/test_test_gate.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-probe-r6-20261009-120350-ce6679e960/logs/test_test_gate.attempt1.log",
+          "sha256": "0983b7a1a1b02ba8ed32f3f9c77cbcf7242e6f8d84917dcd71ec402e6fc26561",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_test_gate_safety.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-probe-r6-20261009-120350-ce6679e960/logs/test_test_gate_safety.attempt1.log",
+          "sha256": "14c7d5e93734da0818a52c78606a5563426ad7fcad48e90ab10d1aacd94050ac",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_test_gate_skips.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-probe-r6-20261009-120350-ce6679e960/logs/test_test_gate_skips.attempt1.log",
+          "sha256": "c98e67b0b527be19bf51287cba227f0555e46e1da3589fe98e9b291605cf9dc3",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_web.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-probe-r6-20261009-120350-ce6679e960/logs/test_ux_visual_chat_web.attempt1.log",
+          "sha256": "88cc14068cf549aa4579a6c4d6836ababcff4d3fd0e8109cd7e4b4e035a328bd",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ]
+    },
+    {
+      "run": "ux-visual-review-r3-20261009-111829-870835608e",
+      "summary": "_tmp_gui/test-gate/ux-visual-review-r3-20261009-111829-870835608e/summary.json",
+      "summary_sha256": "6d023d667daa2a10eed4dfb52f7fbb3c3d4a8205f0ed7fc3e9b5d429a4d26427",
+      "files": 3,
+      "totals": {
+        "passed": 20
+      },
+      "exit_code": 0,
+      "seconds": 95.738,
+      "source_content_id": "263f8f10c528c7a61081ab08e715d8bc341ce778ea84b3b090f9bed63c0116ae",
+      "raw_logs": [
+        {
+          "file": "tests/test_ux_visual_chat_design.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-review-r3-20261009-111829-870835608e/logs/test_ux_visual_chat_design.attempt1.log",
+          "sha256": "228bbf36ed20176704c27712fb8a1442345ce0b823dadef277932082419e0fb9",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_dpi.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-review-r3-20261009-111829-870835608e/logs/test_ux_visual_chat_dpi.attempt1.log",
+          "sha256": "1418cf862f6980d96927628326092b3f7aba1ef1c067251bfd2600fd6de79f83",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-review-r3-20261009-111829-870835608e/logs/test_ux_visual_chat_regressions.attempt1.log",
+          "sha256": "1fbea3537f6a287cfb10fc328361c83ea41268aea06e4470ccada934add3faa0",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ]
+    },
+    {
+      "run": "ux-visual-short-history-r2-20261009-114525-8fc406946a",
+      "summary": "_tmp_gui/test-gate/ux-visual-short-history-r2-20261009-114525-8fc406946a/summary.json",
+      "summary_sha256": "a2440c0d880b0700defb6c8391bd9a2074c560585d43657aa138dd5bacb5f9a7",
+      "files": 1,
+      "totals": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "seconds": 23.638,
+      "source_content_id": "e23996b75f84a82874e0df1991da9b12a95adb4149c229363113f370039fcb30",
+      "raw_logs": [
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-short-history-r2-20261009-114525-8fc406946a/logs/test_ux_visual_chat_regressions.attempt1.log",
+          "sha256": "cbd6084bb1688bde37fa2c64c945bfdcf54bbad567b869234e6de9a6ce332049",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ]
+    },
+    {
+      "run": "ux-visual-short-history-red-20261009-114311-f6f0c88dac",
+      "summary": "_tmp_gui/test-gate/ux-visual-short-history-red-20261009-114311-f6f0c88dac/summary.json",
+      "summary_sha256": "543a12c502fbfe22b44184e4593303c0f229bec3eb7112035cce841a25433c48",
+      "files": 1,
+      "totals": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "seconds": 28.959,
+      "source_content_id": "7209a97fb1e6dd3c2b5e275f0e032c53fa837005f368beddbb0ebbb97e6760b4",
+      "raw_logs": [
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/ux-visual-short-history-red-20261009-114311-f6f0c88dac/logs/test_ux_visual_chat_regressions.attempt1.log",
+          "sha256": "c1af59a1e5d628498151a28a203bfe18ca1488ba98ad5792d00367f03844f1fb",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ]
+    }
+  ]
+}

@@ -20,6 +20,8 @@
 
 ## Architecture
 
+- 雾岸聊天视觉候选以 `docs/design/UX-01.tokens.json` 为语义源，`ui_design.py` 编译导出供Tk与内嵌Web共用；线性图标来自同一几何，默认不透明，显式旧皮肤保留。DPI声明先于tray/Tk，当前为SYSTEM_AWARE，禁用开关不读写Tk scaling；实际视觉/DPI/EXE验收范围见指挥中心，不把原型或单测当整体验收。
+
 - `client.py:ChatWindow` 管 Tk UI；`client_core.py:ClientCore` 管网络、状态、API 与
   本地历史。后台 events 队列由 `_poll/_handle` 在主线程处理。
 - `protocol.MsgType/FrameReader` 管 JSON header + binary body 帧；`crypto` 管

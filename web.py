@@ -36,6 +36,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from protocol import MsgType
 import credential_ops as credential_mod
+from ui_design import icon_svg, web_chat_css
 import bots as _bots                     # R46：登录下发机器人清单（网页端入口）
 try:
     import _art as _art_assets            # 原创美术：登录横幅/吉祥物（内嵌 base64）
@@ -48,7 +49,11 @@ def _SERVED_PAGE():
         hero, mas = _art_assets.BANNER, _art_assets.MASCOT
     else:
         hero, mas = ("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='180'><rect width='600' height='180' fill='%23f6eee0' rx='18'/></svg>", "")
-    return PAGE.replace("@@HERO@@", hero).replace("@@MASCOT@@", mas).encode("utf-8")
+    page = PAGE.replace("@@HERO@@", hero).replace("@@MASCOT@@", mas)
+    page = page.replace('@@UX_CHAT_CSS@@', web_chat_css())
+    for name in ('chat', 'game', 'moments', 'image', 'attach', 'send'):
+        page = page.replace('@@UX_ICON_'+name+'@@', icon_svg(name))
+    return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
 # Web 安全响应头（每响应统一附加）。页面为单文件内联模板（1 个 <script>/<style>、
@@ -76,7 +81,7 @@ _sse_lock = threading.Lock()
 _sse_active = 0
 
 PAGE = r"""<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="mist">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -555,6 +560,7 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
   .compose-tools{position:static}
   .compose-tools .toolmenu{left:10px;right:10px;width:auto;max-width:none;bottom:calc(100% + 8px)}
 }
+@@UX_CHAT_CSS@@
 </style>
 </head>
 <body>
@@ -568,6 +574,12 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
   <button id="btnLogin" style="width:100%">进入</button>
 </div>
 <div id="main">
+  <nav id="uxRail" aria-label="主要功能">
+    <div class="brand">m.</div>
+    <button class="on" data-ux-nav="chat" aria-current="page" title="消息" onclick="selectChannel({type:'public'})">@@UX_ICON_chat@@<span>消息</span></button>
+    <button data-ux-nav="game" title="游戏大厅" onclick="gameLobby()">@@UX_ICON_game@@<span>桌游</span></button>
+    <button data-ux-nav="moments" title="朋友圈动态" onclick="openMoments()">@@UX_ICON_moments@@<span>动态</span></button>
+  </nav>
   <div id="side">
     <h2>⭐ 星标<span class="add" title="展开/收起星标会话" onclick="toggleStarPanel()">⌄</span></h2>
     <div id="starsec" style="display:none"></div>
@@ -591,7 +603,7 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
     <div class="item" onclick="openMoments()"><span class="dot"></span>看看大家的动态</div>
   </div>
   <div id="chat">
-    <div id="head"><span id="btnSide" title="会话列表" onclick="toggleSide()">☰</span><span id="headTitle">公共聊天</span><span class="sub" id="headSub"></span><details class="head-tools"><summary>更多</summary><div class="toolmenu"><span id="btnBlock" class="add" style="display:none" title="屏蔽/解除屏蔽"></span><span id="btnAdmin" class="add" style="display:none" title="管理员面板" onclick="adminPanel()">🧹</span><span id="btnExport" class="add" title="导出本会话记录（txt）" onclick="exportChat()">⬇</span><span class="add" title="图片墙（聚合本会话已加载图片）" onclick="openAlbum()">🖼</span><span class="add" title="我的资料" onclick="profilePanel()">👤</span><span class="add" title="退出登录" onclick="logout()">⏻</span><span class="add" title="昵称密码" onclick="pwdPanel()">🔑</span><span class="add" title="新消息提示音（关闭/轻柔/默认/叮咚）" onclick="soundPanel()">🔊</span><span class="add" title="勿扰时段（抑制通知/提示音）" onclick="dndPanel()">🔕</span><span class="add" title="关键词提醒（命中关键词始终系统通知）" onclick="kwPanel()">🔔</span><span class="add" title="敏感词打码（仅本机显示，点击揭示）" onclick="guardPanel()">🕶️</span><span class="add" title="摸鱼排行榜（只读，按游戏累计积分）" onclick="fishBoardPanel()">🏆</span><span class="add" title="主题风格（暖粉手绘/冷灰极简）"><select id="selThemeFamily" onchange="setThemeFamily(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="retro">暖粉</option><option value="flat">冷灰</option></select></span><span id="btnTheme" class="add" title="深浅色主题切换" onclick="toggleTheme()">🌙</span><select id="selChatTheme" class="add" title="聊天主题（气泡配色）" onchange="setChatTheme(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="">跟随皮肤</option><option value="mint">薄荷</option><option value="coral">珊瑚</option><option value="peach">暖粉</option><option value="ink">墨蓝</option></select></div></details></div>
+    <div id="head"><span id="btnSide" title="会话列表" onclick="toggleSide()">☰</span><span id="headTitle">公共聊天</span><span class="sub" id="headSub"></span><details class="head-tools"><summary>更多</summary><div class="toolmenu"><span id="btnBlock" class="add" style="display:none" title="屏蔽/解除屏蔽"></span><span id="btnAdmin" class="add" style="display:none" title="管理员面板" onclick="adminPanel()">🧹</span><span id="btnExport" class="add" title="导出本会话记录（txt）" onclick="exportChat()">⬇</span><span class="add" title="图片墙（聚合本会话已加载图片）" onclick="openAlbum()">🖼</span><span class="add" title="我的资料" onclick="profilePanel()">👤</span><span class="add" title="退出登录" onclick="logout()">⏻</span><span class="add" title="昵称密码" onclick="pwdPanel()">🔑</span><span class="add" title="新消息提示音（关闭/轻柔/默认/叮咚）" onclick="soundPanel()">🔊</span><span class="add" title="勿扰时段（抑制通知/提示音）" onclick="dndPanel()">🔕</span><span class="add" title="关键词提醒（命中关键词始终系统通知）" onclick="kwPanel()">🔔</span><span class="add" title="敏感词打码（仅本机显示，点击揭示）" onclick="guardPanel()">🕶️</span><span class="add" title="摸鱼排行榜（只读，按游戏累计积分）" onclick="fishBoardPanel()">🏆</span><span class="add" title="主题风格（暖粉手绘/冷灰极简）"><select id="selThemeFamily" onchange="setThemeFamily(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="mist">雾岸</option><option value="retro">暖粉</option><option value="flat">冷灰</option></select></span><span id="btnTheme" class="add" title="深浅色主题切换" onclick="toggleTheme()">🌙</span><select id="selChatTheme" class="add" title="聊天主题（气泡配色）" onchange="setChatTheme(this.value)" style="height:24px;font-size:12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--txt)"><option value="">跟随皮肤</option><option value="mint">薄荷</option><option value="coral">珊瑚</option><option value="peach">暖粉</option><option value="ink">墨蓝</option></select></div></details></div>
     <div id="sbar" style="display:none">
       <input id="sinput" placeholder="搜索本会话消息（Ctrl+F，Enter 下一个）" autocomplete="off">
       <span id="scount"></span>
@@ -602,8 +614,8 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
     <div id="rbar">↩ <span id="rprev"></span><b onclick="cancelBar()" title="取消引用/编辑">✕</b></div>
     <div id="input">
       <textarea id="text" placeholder="输入消息，Enter 发送，:smile: 表情"></textarea>
-      <button id="btnImg" title="发送图片">🖼</button>
-      <button id="btnFile" title="发送文件">📎</button>
+      <button id="btnImg" title="发送图片">@@UX_ICON_image@@图片</button>
+      <button id="btnFile" title="发送文件">@@UX_ICON_attach@@附件</button>
       <details class="compose-tools"><summary>更多</summary><div class="toolmenu">
       <button id="btnPoll" title="发起投票">🗳</button>
       <button id="btnEvbody" title="群内@全体（醒目广播）" onclick="insertEvbody()">📣@所有</button>
@@ -617,7 +629,8 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
         <option value="excel">🎭表格</option>
       </select>
       </div></details>
-      <button id="btnSend">发送</button>
+      <span class="ux-send-hint">Enter 发送 · Shift+Enter 换行</span>
+      <button id="btnSend">@@UX_ICON_send@@发送</button>
     </div>
     <input type="file" id="fimg" accept="image/*" style="display:none">
     <input type="file" id="ffile" style="display:none">
@@ -691,28 +704,28 @@ function remarkDlg(uid){
 //   light     暖粉浅（默认） / dark     暖粉深
 //   flat      冷灰浅         / flat-dark 冷灰深（墨蓝黑）
 function webThemeMode(){let m="";try{m=localStorage.getItem("web_theme")||""}catch(e){}
-  return ["dark","flat","flat-dark"].includes(m)?m:"light";}
+  return ["light","dark","flat","flat-dark","mist","mist-dark"].includes(m)?m:"mist";}
 function applyWebTheme(mode){
   const m=(arguments.length===1)?mode:webThemeMode();
   const r=document.documentElement;
   if(m==="light")r.removeAttribute("data-theme");else r.setAttribute("data-theme",m);
-  const b=$("#btnTheme");if(b)b.textContent=(m==="dark"||m==="flat-dark")?"☀️":"🌙";
-  const fam=$("#selThemeFamily");if(fam)fam.value=(m==="flat"||m==="flat-dark")?"flat":"retro";
+  const b=$("#btnTheme");if(b)b.textContent=(m==="dark"||m==="flat-dark"||m==="mist-dark")?"☀️":"🌙";
+  const fam=$("#selThemeFamily");if(fam)fam.value=m.startsWith('mist')?'mist':(m==="flat"||m==="flat-dark")?"flat":"retro";
   try{localStorage.setItem("web_theme",m)}catch(e){}
 }
 function setTheme(dark){          // 兼容旧布尔调用：布尔=当前家族内切深浅；字符串=整 token
   const cur=webThemeMode();let m;
   if(typeof dark==="string")m=dark;
-  else{const fam=(cur==="flat"||cur==="flat-dark")?"flat":"retro";
-       m=fam==="flat"?(dark?"flat-dark":"flat"):(dark?"dark":"light");}
+  else{const fam=cur.startsWith('mist')?'mist':(cur==="flat"||cur==="flat-dark")?"flat":"retro";
+       m=fam==='mist'?(dark?'mist-dark':'mist'):fam==="flat"?(dark?"flat-dark":"flat"):(dark?"dark":"light");}
   applyWebTheme(m);
 }
 function toggleTheme(){           // 🌙/☀️：当前家族内切换深浅、保留家族
-  const cur=webThemeMode();const fam=(cur==="flat"||cur==="flat-dark")?"flat":"retro";
+  const cur=webThemeMode();if(cur.startsWith('mist')){applyWebTheme(cur==='mist'?'mist-dark':'mist');return;}const fam=(cur==="flat"||cur==="flat-dark")?"flat":"retro";
   applyWebTheme(fam==="flat"?(cur==="flat"?"flat-dark":"flat"):(cur==="dark"?"light":"dark"));
 }
 function setThemeFamily(fam){     // 家族切换（暖粉/冷灰）：保留当前深浅
-  const cur=webThemeMode();const dark=(cur==="dark"||cur==="flat-dark");
+  const cur=webThemeMode();const dark=(cur==="dark"||cur==="flat-dark"||cur==="mist-dark"); if(fam==='mist'){applyWebTheme(dark?'mist-dark':'mist');return;}
   applyWebTheme(fam==="flat"?(dark?"flat-dark":"flat"):(dark?"dark":"light"));
 }
 applyWebTheme();                  // 启动恢复：默认 light（暖粉浅）；旧的 "dark" 仍落在暖粉深
@@ -2085,7 +2098,15 @@ function searchJump(dir){
 document.addEventListener("keydown",e=>{           // R55-2：Ctrl+F 打开会话内搜索（主界面内）
   if(e.key==="f"&&(e.ctrlKey||e.metaKey)&&!e.shiftKey){
     if($("#main").style.display!=="none"){e.preventDefault();searchOpen();}}});
+function uxSelectNavigation(key){
+  document.querySelectorAll('[data-ux-nav]').forEach(button=>{
+    const selected=button.dataset.uxNav===key;
+    button.classList.toggle('on',selected);
+    if(selected)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
+  });
+}
 function selectChannel(c,saveDraft=true){
+  uxSelectNavigation('chat');
   state.navigationRequest=(state.navigationRequest||0)+1;
   const unreadBefore=state.unread[convKey(c.type,c.type==="group"?c.gid:c.uid)]||0;
   if(state.editSeq==null&&saveDraft)pushDraft(true);else clearTimeout(pushDraft.t);
@@ -3408,7 +3429,7 @@ function openStream(){
     const cls=n===1?"mpc-grid row1":(n===2||n===4?"mpc-grid row2":"mpc-grid");
     return "<div class='"+cls+"'>"+fns.map(f=>"<img src='/api/moment_img/"+encodeURIComponent(f)+"' loading='lazy' onclick='window.open(this.src)'></img>").join("")+"</div>";
   }
-  window.closeMoments=function(){state.mpanelOpen=false;document.getElementById("mpanel").style.display="none"};
+  window.closeMoments=function(){state.mpanelOpen=false;document.getElementById("mpanel").style.display="none";uxSelectNavigation('chat')};
   function updateMomDot(){                         // R68 朋友圈互动红点
     const e=document.getElementById("momDot");if(!e)return;
     if(state.momUnread>0){e.textContent=state.momUnread>99?"99+":state.momUnread;e.style.display="inline-block";}
@@ -3431,6 +3452,7 @@ function openStream(){
     fetch("/api/moment_comment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:state.token,pid,text:t})}).then(()=>window.fetchMoments())}
   window.momentDel=function(pid){if(confirm("确定删除这条动态？"))fetch("/api/moment_del",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:state.token,pid})}).then(()=>window.fetchMoments())}
   window.openMoments=function(){
+    uxSelectNavigation('moments');
     state.mpanelOpen=true;document.getElementById("mpanel").style.display="block";
     const me=document.getElementById("mcovMe");
     if(me){me.style.background=mavColor(state.uid);me.textContent=(state.nick||"我").charAt(0).toUpperCase();}
@@ -3904,6 +3926,7 @@ function renderGames(){                        // 侧栏房间速览
 }
 // ---- 大厅 ----
 function gameLobby(){
+  uxSelectNavigation('game');
   state.globbyOpen=true;
   let m=$("#globby");if(m)m.remove();
   m=document.createElement("div");m.id="globby";
@@ -3922,7 +3945,7 @@ function gameLobby(){
       state.grooms=d.rooms||[];renderLobby();renderGames();}}).catch(()=>{});
   renderLobby();
 }
-function closeLobby(){state.globbyOpen=false;const m=$("#globby");if(m)m.remove()}
+function closeLobby(){state.globbyOpen=false;const m=$("#globby");if(m)m.remove();uxSelectNavigation('chat')}
 function renderLobby(){
   const gb=$("#glGames");if(!gb)return;
   gb.innerHTML="";
@@ -3962,7 +3985,7 @@ function renderLobby(){
     row.appendChild(b);rb.appendChild(row);});
 }
 // ---- 房间面板 ----
-function openGamePanel(rid){
+function openGamePanel(rid){uxSelectNavigation('game');
   const isNew=state.groom!==rid;
   state.groom=rid;if(isNew){state.glog=[]}
   if(isNew)gameAPI("sync",{room_id:rid},true);   // R49：重进/刷新后补拉一次状态
@@ -3975,7 +3998,7 @@ function openGamePanel(rid){
   p.onclick=e=>{if(e.target===p)hideGamePanel()};
   renderGamePanel();
 }
-function hideGamePanel(){state.groom=null;state.gst=null;state.gpriv=null;state.glog=[];
+function hideGamePanel(){uxSelectNavigation('chat');state.groom=null;state.gst=null;state.gpriv=null;state.glog=[];
   const p=$("#gpanel");if(p)p.remove()}
 function gHeadBtn(txt,fn){const b=document.createElement("button");b.className="gbtn";b.textContent=txt;b.onclick=fn;return b}
 function gBtn(txt,act,dis){const b=document.createElement("button");b.className="gbtn";b.textContent=txt;

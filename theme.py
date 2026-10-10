@@ -16,6 +16,7 @@ R41D：`system_prefers_dark()` 读 Windows 个性化注册表（AppsUseLightThem
 配合 client 的「跟随系统深浅」开关自动切 apple/apple_dark 皮肤。
 """
 import os
+from ui_design import mist_skin
 
 # Token → (浅色) 值；深色皮肤按 TG night 调色板取值（§7.4）。
 # 数值化密度常量（对标 TG st:: 间距/圆角/时长，避免散落硬编码）。
@@ -543,7 +544,11 @@ SKINS = {
     },
 }
 
-DEFAULT_SKIN = "apple"
+for _skin in SKINS.values():
+    _skin['decorative_background'] = True
+SKINS['mist'] = mist_skin(SKINS['office'])
+SKINS['mist_dark'] = mist_skin(SKINS['office'], dark=True)
+DEFAULT_SKIN = "mist"
 
 # R15 全透明黑字模式：挖空色与纯黑。复用 -transparentcolor 把全窗背景挖空只剩黑字。
 GHOST_PUNCH = "#010203"     # 挖空色（近黑、极罕见，避免与正常浅色主题误撞）
@@ -568,12 +573,14 @@ GHOST = {
     # 几何 token：ghost 下保留原值（非颜色，不可挖空）
     "bubble_r": 10, "bubble_pad_h": 8, "bubble_pad_v": 5, "titlebar_h": 28,
     "traffic_lights": False,
+    "decorative_background": False,
 }
 
 # msg_list.COLORS 与主题 Token 的映射（get 时摘出传入 MsgList(colors=...)）
 # 扩展键（mention/link/date/react_*/read/mention_self/link_self）仅在对应皮肤提供 token 时注入，
 # 既有 SKINS 不含这些键 → msg_colors 过滤跳过，视觉零回归；GHOST 提供 → 全挖空。
 MSG_TOKEN_MAP = {
+    "decorative_background": "decorative_background",
     "bg": "msg_bg", "sys": "sys", "self": "self", "priv": "priv",
     "normal": "normal", "hit": "hit", "hit_active": "hit_active",
     "bubble_in": "bubble_in", "bubble_out": "bubble_out",

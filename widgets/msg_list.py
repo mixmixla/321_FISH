@@ -2450,6 +2450,12 @@ class MsgList(tk.Canvas):
         return {"ink": "#f0e0c2", "fill": "#f5e7cd", "ac": "#ffd9b0"}
 
     def _draw_doodles(self) -> None:
+        if not self._pal.get('decorative_background', True):
+            self.delete(self._DOODLE_TAG)
+            self.delete('excel_grid')
+            if self._grid_color:
+                self._draw_grid()
+            return
         if self._grid_color:
             self.delete(self._DOODLE_TAG)
             self._draw_grid()

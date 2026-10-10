@@ -2008,7 +2008,7 @@ def _xiangqi_chess(cv, st, me, nick, submit, repaint, ui, priv, w, h, kind="xian
                   11: "将", 12: "士", 13: "象", 14: "马", 15: "车", 16: "炮", 17: "卒"}
     now = time.monotonic()
     breathing = _g_breath(now)             # 呼吸辉光强度（纯时间推导，idle 唯一增量）
-    anchors = []                           # 棋子中心，作胜利星点锚点（降级：棋无 last_move）
+    anchors = []                           # 棋子中心，作胜利星点锚点
     for y in range(m):
         for x in range(n):
             v = board[y][x]
@@ -2025,7 +2025,18 @@ def _xiangqi_chess(cv, st, me, nick, submit, repaint, ui, priv, w, h, kind="xian
                 _g_piece_glow(cv, cx, cy, cell * 0.40,
                               "#ffffff" if v <= 6 else "#1b1b1b", breathing)
                 _chess_piece(cv, cx, cy, cell, v)
-    # ---- 动效（降级）：只做辉光 + 胜利星点（数量封顶 ≤48）----
+    # ---- 最近一步金色光晕标记（服务端 last_move 目标格）----
+    lastpx = None
+    last = st.get("last_move")
+    if last and len(last) == 2 and last[1]:
+        try:
+            lx, ly = int(last[1][0]), int(last[1][1])
+        except (TypeError, ValueError, IndexError):
+            lx = ly = -1
+        if 0 <= lx < n and 0 <= ly < m:
+            lastpx = (ox + lx * cell + cell / 2, oy + ly * cell + cell / 2)
+    # ---- 动效：落子光晕/微粒子 + 胜利星点（数量封顶 ≤48）----
+    _g_draw_last(cv, ui, now, lastpx, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
     _anim_need(ui, repaint, gap=0.04, cap=180)
@@ -2071,7 +2082,7 @@ def _p_go(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     board = st.get("board") or []
     now = time.monotonic()
     breathing = _g_breath(now)             # 呼吸辉光强度（纯时间推导，idle 唯一增量）
-    anchors = []                           # 棋子中心，作胜利星点锚点（降级：围棋无 last_move）
+    anchors = []                           # 棋子中心，作胜利星点锚点
     for y in range(n):
         for x in range(n):
             v = board[y][x]
@@ -2082,7 +2093,18 @@ def _p_go(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             _stone(cv, cx, cy, cell * 0.44,
                    "#111111" if v == 1 else "#ffffff", "#888888",
                    glow=True, gint=breathing)
-    # ---- 动效（降级）：缺 last_move 只做辉光 + 胜利星点（数量封顶 ≤48）----
+    # ---- 最近一步金色光晕标记（落子交叉点）----
+    lastpx = None
+    last = st.get("last_move")
+    if last and len(last) == 2:
+        try:
+            lx, ly = int(last[0]), int(last[1])
+        except (TypeError, ValueError):
+            lx = ly = -1
+        if 0 <= lx < n and 0 <= ly < n:
+            lastpx = (ox + lx * cell, oy + ly * cell)
+    # ---- 动效：落子光晕/微粒子 + 胜利星点（数量封顶 ≤48）----
+    _g_draw_last(cv, ui, now, lastpx, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
     _anim_need(ui, repaint, gap=0.04, cap=180)
@@ -2665,7 +2687,7 @@ def _p_junqi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     legend = st.get("legend") or {}
     now = time.monotonic()
     breathing = _g_breath(now)             # 呼吸辉光强度（纯时间推导，idle 唯一增量）
-    anchors = []                           # 棋子中心，作胜利星点锚点（降级：军棋无 last_move）
+    anchors = []                           # 棋子中心，作胜利星点锚点
 
     def pt(cv, y, x, code, x0, y0, cell):
         if not code:
@@ -2680,7 +2702,19 @@ def _p_junqi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
     _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
                 "junqi", rows, cols, "⚔ 军棋（明棋）", pt)
-    # ---- 动效（降级）：只做辉光 + 胜利星点（数量封顶 ≤48）----
+    # ---- 最近一步金色光晕标记（服务端 last_move 目标格）----
+    lastpx = None
+    last = st.get("last_move")
+    if last and len(last) == 2 and last[1]:
+        cell = ui.get("cell") or 0
+        try:
+            lx, ly = int(last[1][0]), int(last[1][1])
+        except (TypeError, ValueError, IndexError):
+            lx = ly = -1
+        if 0 <= lx < cols and 0 <= ly < rows and cell:
+            lastpx = (ui["ox"] + lx * cell + cell / 2, ui["oy"] + ly * cell + cell / 2)
+    # ---- 动效：落子光晕/微粒子 + 胜利星点（数量封顶 ≤48）----
+    _g_draw_last(cv, ui, now, lastpx, ui.get("cell") or 0)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
     _anim_need(ui, repaint, gap=0.04, cap=180)
@@ -2720,6 +2754,20 @@ def _p_dou(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
     _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
                 "dou", rows, cols, "🐭 斗兽棋", pt)
+    # ---- 最近一步金色光晕标记（服务端 last_move 目标格）----
+    now = time.monotonic()
+    lastpx = None
+    last = st.get("last_move")
+    if last and len(last) == 2 and last[1]:
+        cell = ui.get("cell") or 0
+        try:
+            lx, ly = int(last[1][0]), int(last[1][1])
+        except (TypeError, ValueError, IndexError):
+            lx = ly = -1
+        if 0 <= lx < cols and 0 <= ly < rows and cell:
+            lastpx = (ui["ox"] + lx * cell + cell / 2, ui["oy"] + ly * cell + cell / 2)
+    _g_draw_last(cv, ui, now, lastpx, ui.get("cell") or 0)
+    _anim_need(ui, repaint, gap=0.04, cap=180)
 
 
 @_register("shogi")
@@ -2752,7 +2800,7 @@ def _p_shogi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
               and (sel["fx"], sel["fy"]))
     now = time.monotonic()
     breathing = _g_breath(now)             # 呼吸辉光强度（纯时间推导，idle 唯一增量）
-    anchors = []                           # 棋子中心，作胜利星点锚点（降级：将棋无 last_move）
+    anchors = []                           # 棋子中心，作胜利星点锚点
     for y in range(n):
         for x in range(n):
             c = board[y][x]
@@ -2764,6 +2812,16 @@ def _p_shogi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             anchors.append((cx, cy))
             _shogi_piece(cv, cx, cy, cell, _SHOGI_SYM.get(t, str(t)), p == 1,
                          breathing, sel=((x, y) == mv_sel))
+    # ---- 最近一步金色光晕标记（服务端 last_move 目标格；打入也是目标格）----
+    lastpx = None
+    last = st.get("last_move")
+    if last and len(last) == 2 and last[1]:
+        try:
+            lx, ly = int(last[1][0]), int(last[1][1])
+        except (TypeError, ValueError, IndexError):
+            lx = ly = -1
+        if 0 <= lx < n and 0 <= ly < n:
+            lastpx = (ox + lx * cell + cell / 2, oy + ly * cell + cell / 2)
     # 手牌区（底部）
     players = st.get("players") or []
     my_pl = players.index(me) if me in players else 0
@@ -2796,7 +2854,8 @@ def _p_shogi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     if drop_sel:
         _text(cv, w / 2, hand_h + 10, f"已选「{_SHOGI_CN.get(drop_sel,'')}」，点击棋盘空位打入",
               "#c0392b", _FONT_F)
-    # ---- 动效（降级）：只做辉光 + 胜利星点（数量封顶 ≤48）----
+    # ---- 动效：落子光晕/微粒子 + 胜利星点（数量封顶 ≤48）----
+    _g_draw_last(cv, ui, now, lastpx, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
     _anim_need(ui, repaint, gap=0.04, cap=180)
@@ -2837,6 +2896,16 @@ def _p_blokus(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             cv.create_rectangle(bx + x * cell, by + y * cell,
                                 bx + (x + 1) * cell, by + (y + 1) * cell,
                                 fill=fill, outline="#d8d0b8", width=1)
+    # 最近一步标记：本次落子覆盖的格子加金色描边
+    for rc in (st.get("last_move") or []):
+        try:
+            lr, lc = int(rc[0]), int(rc[1])
+        except (TypeError, ValueError, IndexError):
+            continue
+        if 0 <= lr < n and 0 <= lc < n:
+            cv.create_rectangle(bx + lc * cell + 1, by + lr * cell + 1,
+                                bx + (lc + 1) * cell - 1, by + (lr + 1) * cell - 1,
+                                outline="#ffd75e", width=2)
     # 右侧面板：战况 + 交互区（选择拼块 / 换方向 / 跳过 / 点棋盘落子）
     px = bx + n * cell + 14
     py = by + 4
@@ -3023,6 +3092,24 @@ def _p_ludo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 if u == me:
                     tokens.append((sx, sy, idx, max(14, csz * 0.9)))
     ui.update(game="ludo", tokens=tokens, me=me)
+    # 最近一步动效：金色光晕标记本次被推动的机（到达提示格 stall 或完成 FIN）
+    now = time.monotonic()
+    lm = st.get("last_move")
+    lastpx = None
+    if isinstance(lm, dict):
+        try:
+            pi = players.index(lm.get("uid"))
+        except (ValueError, TypeError):
+            pi = -1
+        if pi >= 0:
+            ddx2, ddy2 = corner_dx[pi % 4]
+            if lm.get("fin"):
+                lastpx = (cx + ddx2 * R * 0.76, cy + ddy2 * R * 0.76)
+            elif isinstance(lm.get("stall"), int):
+                lastpx = ring_pt(lm["stall"])
+    _g_draw_last(cv, ui, now, lastpx, csz)
+    if lastpx is not None:
+        _anim_need(ui, repaint, gap=0.04, cap=180)
     # 提示 / 骰面：右上角画统一矢量骰 + 掷骰滚动动画（替代纯文字"骰面：N"）
     dnow = time.monotonic()
     dkey = None if dice is None else int(dice)

@@ -49,6 +49,7 @@ class ChessGame(BaseGame):
         self.turn = 0
         self.winner = None
         self.result = None                  # 胜/负/和
+        self.last_move = None
         self._setup()
 
     def _setup(self):
@@ -286,6 +287,7 @@ class ChessGame(BaseGame):
         if captured:
             msgs.append("💥 吃子")
         # 切换回合判定胜负
+        self.last_move = ((fx, fy), (tx, ty))
         self.turn = 1 - self.turn
         opp = 1 - pl
         in_check_opp = self._in_check(opp)
@@ -308,6 +310,7 @@ class ChessGame(BaseGame):
             "turn_uid": None if self.winner or self.result == "draw" else self.players[self.turn],
             "players": list(self.players), "winner_uid": self.winner,
             "legend": {str(SYM[k]): CN[k] for k in SYM},
+            "last_move": self.last_move,
         }
 
     def ended(self):

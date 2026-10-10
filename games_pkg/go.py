@@ -44,6 +44,7 @@ class GoGame(BaseGame):
         self.over = False
         self.scores = None
         self.last_opp = None
+        self.last_move = None
 
     def _own_color(self):
         return 1 if self.turn == 0 else 2
@@ -82,6 +83,7 @@ class GoGame(BaseGame):
         if uid != self.players[self.turn]:
             raise GameRuleError("还没轮到你")
         if action.get("pass"):
+            self.last_move = None
             self.passes += 1
             if self.passes >= 2:          # 连续两次过 → 终局
                 self.over = True
@@ -133,6 +135,7 @@ class GoGame(BaseGame):
         self.history.append(key)
         self.passes = 0
         self.last_opp = key
+        self.last_move = (x, y)
         self.turn = 1 - self.turn
         return [f"⚫ {self._nick(uid)} 落子({x},{y})" + (f"，提 {len(caps)} 子" if caps else "")]
 
@@ -189,6 +192,7 @@ class GoGame(BaseGame):
             "turn_uid": None if self.over else self.players[self.turn],
             "captured": self.captured, "players": list(self.players),
             "winner_uid": self.winner, "scores": self.scores, "over": self.over,
+            "last_move": self.last_move,
             "legend": {"0": "空", "1": "⚫", "2": "⚪"},
         }
 

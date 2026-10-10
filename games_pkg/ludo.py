@@ -26,6 +26,7 @@ class LudoGame(BaseGame):
         self.winner = None
         self.last_roll = None
         self.finished_seq = []
+        self.last_move = None
 
     # ---- 轨道位置 ----
     def _start(self, i):
@@ -114,6 +115,10 @@ class LudoGame(BaseGame):
             msgs = [f"✈️ {self._nick(u)} 第 {idx + 1} 架 {STONE_CN[idx]} 前进 {self.dice} 格"]
         self.miles[u][idx] = s
         self.dice_val = s
+        self.last_move = {
+            "uid": u, "idx": idx, "fin": s >= FIN,
+            "stall": None if s >= FIN else (self._start(self.turn) + s) % TRACK,
+        }
         if s < FIN:
             ti = self._start(self.turn)
             stall = (ti + s) % TRACK
@@ -157,6 +162,7 @@ class LudoGame(BaseGame):
             "starts": {str(self.players[i]): self._start(i) for i in range(len(self.players))},
             "track": TRACK, "dice": self.dice, "winner_uid": self.winner,
             "stones": STONE_CN, "players": list(self.players),
+            "last_move": self.last_move,
         }
 
     def ended(self):

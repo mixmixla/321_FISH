@@ -39,6 +39,7 @@ class DouGame(BaseGame):
         self.turn = 0
         self.winner = None
         self.home = {0: HOMES[0], 1: HOMES[1]}
+        self.last_move = None
 
     def _enemy_in_den(self, pl):
         dx, dy = DENS[1 - pl]
@@ -69,6 +70,7 @@ class DouGame(BaseGame):
         if (tx, ty) == DENS[1 - pl]:
             self.board.pop((fx, fy), None)
             self.board[(tx, ty)] = (pl, a)
+            self.last_move = ((fx, fy), (tx, ty))
             self.winner = uid
             return [f"🏆 {self._nick(uid)} 的 {CN[a]} 占领敌营获胜！"]
         # 吃子判定
@@ -83,12 +85,14 @@ class DouGame(BaseGame):
             if not wins and not loses:      # 平级兑掉
                 self.board.pop((fx, fy))
                 self.board.pop((tx, ty))
+                self.last_move = ((fx, fy), (tx, ty))
                 self.turn = 1 - pl
                 return [f"⚔ {self._nick(uid)} {CN[a]} 与 {CN[oa]} 兑子"]
             if loses:
                 raise GameRuleError(f"{CN[a]} 吃不了 {CN[oa]}")
         self.board.pop((fx, fy), None)
         self.board[(tx, ty)] = (pl, a)
+        self.last_move = ((fx, fy), (tx, ty))
         self.turn = 1 - pl
         return [f"🐾 {self._nick(uid)} {CN[a]} ({fx},{fy})→({tx},{ty})" +
                 (f"，吃掉 {CN[target[1]]}" if target else "")]
@@ -137,6 +141,7 @@ class DouGame(BaseGame):
             "turn_uid": None if self.winner else self.players[self.turn],
             "players": list(self.players), "winner_uid": self.winner,
             "legend": {str(EMO[a]): CN[a] for a in CN},
+            "last_move": self.last_move,
         }
 
     def _code(self, cell):

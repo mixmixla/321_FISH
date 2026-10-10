@@ -43,6 +43,7 @@ class XiangQiGame(BaseGame):
         self.board = [[0] * COLS for _ in range(ROWS)]
         self.turn = 0
         self.winner = None
+        self.last_move = None
         self._setup()
 
     def _setup(self):
@@ -246,6 +247,7 @@ class XiangQiGame(BaseGame):
         if captured:
             msgs.append(f"💥 吃掉对方 {PIECE_CN[saved]}")
         # 飞将判定：若对方王此刻被攻击且无解 → 将死
+        self.last_move = ((fx, fy), (tx, ty))
         self.turn = 1 - self.turn
         if self._is_stalemate(self.turn):
             self.winner = uid
@@ -280,6 +282,7 @@ class XiangQiGame(BaseGame):
             "turn_uid": None if self.winner else self.players[self.turn],
             "players": list(self.players), "winner_uid": self.winner,
             "legend": {str(PIECE_CN[k]): PIECE_CN[k] for k in PIECE_CN},
+            "last_move": self.last_move,
         }
 
     def ended(self):

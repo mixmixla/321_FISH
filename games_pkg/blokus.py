@@ -81,6 +81,7 @@ class BlokusGame(BaseGame):
         self.placed = {p: 0 for p in players}      # 已放置面积
         self.pass_seq = 0                          # 已连续跳过的人数
         self.last_action = None
+        self.last_move = None
         self.winner = None
 
     # ---- 规则判定 ----
@@ -179,6 +180,7 @@ class BlokusGame(BaseGame):
         del self.bag[uid][name]
         self.placed[uid] += area
         self.last_action = (uid, name)
+        self.last_move = [[rr, cc] for (rr, cc) in placed_cells]
         msgs = [f"🧩 {self._nick(uid)} 放置拼块「{name}」"]
         if not self.bag[uid]:
             return msgs + [self._finish(f"{self._nick(uid)} 拼块放完，对局结束")]
@@ -209,6 +211,7 @@ class BlokusGame(BaseGame):
             "placed": {str(u): self.placed[u] for u in self.players},
             "has_piece": {str(u): sorted(self.bag[u].keys()) for u in self.players},
             "colors": PLAYER_COL[:self.n],
+            "last_move": self.last_move,
             # JSON-safe：每个朝向表示为 ["r,c", ...] 字符串列表（set 不可序列化）
             "pieces": {name: [sorted(f"{r},{c}" for (r, c) in ori)
                               for ori in PIECE_CATALOG[name]]

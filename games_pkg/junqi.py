@@ -95,6 +95,7 @@ class JunqiGame(BaseGame):
         return 0 if code == EMPTY else _side(code)
 
     def _resolve(self, fx, fy, tx, ty, code, rank, target):
+        self.last_move = ((fx, fy), (tx, ty))
         msgs = [f"🐾 {self._nick_n(self.turn)} {CN[rank]} ({fx},{fy})→({tx},{ty})"]
         # 扛军旗 → 立即获胜
         if target and _side(target) != self.turn and _rank(target) == FLAG:
@@ -157,6 +158,7 @@ class JunqiGame(BaseGame):
             "turn_uid": None if self.winner else self.players[self.turn],
             "players": list(self.players), "winner_uid": self.winner,
             "legend": {str(r): CN[r] for r in RANK_NAMES},
+            "last_move": self.last_move,
         }
 
     def ended(self):

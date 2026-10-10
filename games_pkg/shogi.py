@@ -42,6 +42,7 @@ class ShogiGame(BaseGame):
         self.turn = 0
         self.winner = None
         self.kpos = {0: None, 1: None}
+        self.last_move = None
         self._setup()
 
     def _setup(self):
@@ -165,6 +166,7 @@ class ShogiGame(BaseGame):
                 raise GameRuleError("不能落在该处")
             self.board[y][x] = _code(pl, t)
             self.hand[pl].remove(t)
+            self.last_move = ((-1, -1), (x, y))
             self.turn = 1 - pl
             return [f"🪁 {self._nick(uid)} 打入 {CN[t]}({x},{y})"]
         # 普通走子
@@ -183,6 +185,7 @@ class ShogiGame(BaseGame):
         taken = self.board[ty][tx]
         self.board[ty][tx] = c
         self.board[fy][fx] = 0
+        self.last_move = ((fx, fy), (tx, ty))
         if _t(c) == K:
             self.kpos[pl] = (tx, ty)
         msgs = [f"♟ {self._nick(uid)} {CN[_t(c)]} ({fx},{fy})→({tx},{ty})"]
@@ -222,6 +225,7 @@ class ShogiGame(BaseGame):
             "players": list(self.players), "winner_uid": self.winner,
             "hand": {str(k): v for k, v in self.hand.items()},
             "legend": {str(SYM[t]): CN[t] for t in SYM},
+            "last_move": self.last_move,
         }
 
     def ended(self):

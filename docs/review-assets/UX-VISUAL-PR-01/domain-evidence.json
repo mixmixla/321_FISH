@@ -1,0 +1,143 @@
+{
+  "run_id": "ux-visual-pr-domain-r1-20261010-082258-ff92f4cea5",
+  "summary_sha256": "3aa726e067678cb2d823a61b2e288c8c5901c4a6e47a786399a3828f58ab113c",
+  "files": 18,
+  "totals": {
+    "passed": 165,
+    "failed": 1
+  },
+  "exit_code": 1,
+  "seconds": 418.967,
+  "source_content_id": "f13f45bf068641eb3e6135fca6c0eab9956e121259ee2e4a8a1d0d9f9aa0cb42",
+  "raw_log_root": "_tmp_gui/test-gate/ux-visual-pr-domain-r1-20261010-082258-ff92f4cea5",
+  "raw_logs": [
+    {
+      "file": "tests/test_drafts.py",
+      "log": "logs/test_drafts.attempt1.log",
+      "sha256": "db4bc1e39af458cad81d807be51ebcc4b8060662048bbeda2ba0ca44fd601b22",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_excel_skin.py",
+      "log": "logs/test_excel_skin.attempt1.log",
+      "sha256": "caced14790eafd213e49473dca3fe4857514d79a31af8277f726e7fac61ef355",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_flagship_gui.py",
+      "log": "logs/test_flagship_gui.attempt1.log",
+      "sha256": "a8275c8e6bae946295ec80bde16232214b8767119b46de7ff7a441cb3696e241",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_interaction_mode.py",
+      "log": "logs/test_interaction_mode.attempt1.log",
+      "sha256": "1da8aa1c619281b31123e2adfd3b63fde71fc183d1fcb6ffa091685cec2da4a4",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_msg_list.py",
+      "log": "logs/test_msg_list.attempt1.log",
+      "sha256": "3bd87e6d91a90a19480ba4d26cdee9d0f370ca77a07c5fcb80e68345f34a820b",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r43c.py",
+      "log": "logs/test_r43c.attempt1.log",
+      "sha256": "1937581a11b4667dc651db49df2edac6258761a015f4d3724c85c5da99c207e9",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_runs.py",
+      "log": "logs/test_runs.attempt1.log",
+      "sha256": "6080562eee02d5a2b1b28b934accd2862eace2d70694b61dc80a72792c5b0421",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_session_list.py",
+      "log": "logs/test_session_list.attempt1.log",
+      "sha256": "5f3667375155b22e6a1aaa2cf6e6ede8b1f020a94a00a32a30239ba17e7445e8",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_settings_nav.py",
+      "log": "logs/test_settings_nav.attempt1.log",
+      "sha256": "68926910ae1146661dd7906cf725241ca3ea2256f1f659d56b38457dec543c20",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_test_gate.py",
+      "log": "logs/test_test_gate.attempt1.log",
+      "sha256": "33951a309636b2c22bb076404eec17efec64c762e9585d481672a9a26dc7d621",
+      "exit_code": 1,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_test_gate_safety.py",
+      "log": "logs/test_test_gate_safety.attempt1.log",
+      "sha256": "b52daeb6eaec59f6e4f760d91809df7475656127adb6b8be7362158605a1d605",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_test_gate_skips.py",
+      "log": "logs/test_test_gate_skips.attempt1.log",
+      "sha256": "8a6ce2c09a38f958b3c2ccb4cc5636a05031b238b4d9c455aa1d8bdd4c8b5209",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_theme.py",
+      "log": "logs/test_theme.attempt1.log",
+      "sha256": "d9c07a718312a00342d2599f7ccd5ba0af286e899e5f62b21e333ea6ebeaa228",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ux_repair.py",
+      "log": "logs/test_ux_repair.attempt1.log",
+      "sha256": "c40eba920f2c62cbc2b9db2379f9f3f3797a162cddf453bafbcb5201f9a1b938",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ux_visual_chat_design.py",
+      "log": "logs/test_ux_visual_chat_design.attempt1.log",
+      "sha256": "a23aaca44321374751b7ac26406c652ef64caec26fff2376c0215db9aa204f49",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ux_visual_chat_dpi.py",
+      "log": "logs/test_ux_visual_chat_dpi.attempt1.log",
+      "sha256": "af9d73a3b4a8effb7889fbf8c8b211293b2b9962c2a714aa8b9285f9340f6898",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ux_visual_chat_regressions.py",
+      "log": "logs/test_ux_visual_chat_regressions.attempt1.log",
+      "sha256": "b93cde4fa78ef43d0c71c4bb80cbdb91f29554c301c18606cfd91543a4175c0d",
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ux_visual_chat_web.py",
+      "log": "logs/test_ux_visual_chat_web.attempt1.log",
+      "sha256": "0b400b9cae083028859563f2d2fc0a6f22ad3293c9971a2f1e2acefea1d04196",
+      "exit_code": 0,
+      "cleanup_ok": true
+    }
+  ],
+  "base": "7d6a98cbdd8c62f5d5af4d5b9a4a7e6be0663758",
+  "not_full_or_visual_acceptance": true
+}

@@ -63,6 +63,8 @@ from widgets.image_wall import ImageWall   # R69B5 会话图片墙（九宫格�
 from widgets.task_panel import TaskPanel   # R69B6/B7 群待办/接龙/签到面板
 from widgets.text_viewer import TextViewer
 from widgets import ui_fx                         # R43A1 弹窗淡入/按压反馈
+from widgets.design_controls import IconButton
+from ui_design import body_font, color as design_color
 from file_client import _hsize
 import client_gameui                    # R: 桌游对局 Canvas 图形化渲染
 import optional                          # R38B 可选依赖探测（vosk/翻译/rlottie）
@@ -394,7 +396,7 @@ class ChatWindow:
         self._settings_win = None              # R交互：内嵌全屏设置面板（懒建）
         # 主窗半透明（T7 扩展：chat/消息背景透出桌面玻璃感，0.6~1.0；R55F5 默认抬到 0.95，
         #   原 0.78 在浅色壁纸上会让桌面图标/纹理透过窗口与消息文字"叠"在一起难辨认）
-        self._chat_alpha = float(self._prefs.get("chat_alpha", 0.95))
+        self._chat_alpha = float(self._prefs.get("chat_alpha", 1.0))
         self._skin = get_skin(self._skin_name)
         self._dp = dialog_pal(self._skin)   # R57：对话框/独立面板派生配色
         ui_fx.set_sound(CFG.hardware_enabled and
@@ -429,7 +431,7 @@ class ChatWindow:
         self._roster_order: list = []      # listbox idx -> uid
         self._group_order: list = []       # listbox idx -> gid
         # R25A/B：会话标题基础文案（无正在输入后缀）+ 轮询计数；R25D 当前文件夹
-        self._chan_base = ""
+        self._chan_base = "公共频道"
         self._typing_ticks = 0
         self._active_folder: str | None = None   # 当前会话文件夹名（None=全部）
         # R34 群内话题：根 seq → 回复数徽标计数 + 当前打开的话题窗口
@@ -525,12 +527,15 @@ class ChatWindow:
 
     # ---------- UI 搭建 ----------
     def _build(self) -> None:
+        from dpi import apply_early
+        dpi_enabled = bool(self._prefs.get('dpi_aware', True))
+        apply_early(dpi_enabled)
         self.root = tk.Tk()
         self._set_default_colors()               # R57B：root 就绪后接入控件默认皮肤（须在 root 创建后）
         from dpi import fix_scaling           # R43C 高分屏：声明后按真实 DPI 校正
-        self._dpi_scale = fix_scaling(self.root)   # R56：存为实例属性供列宽等比缩放用
+        self._dpi_scale = fix_scaling(self.root, enabled=dpi_enabled)
         _dpi_scale = self._dpi_scale
-        self.root.geometry(f"{int(WINDOW_W * _dpi_scale)}x{int(WINDOW_H * _dpi_scale)}")
+        self.root.geometry(f"{int(max(WINDOW_W, 960) * _dpi_scale)}x{int(max(WINDOW_H, 680) * _dpi_scale)}")
         self.root.minsize(int(680 * _dpi_scale), int(480 * _dpi_scale))
         # 半透明玻璃感（chat_alpha 0.6~1.0，受设置页滑杆调整并持久化；默认 0.95 保证可读）
         self.root.attributes("-alpha", self._chat_alpha)
@@ -541,8 +546,10 @@ class ChatWindow:
                 and self._prefs.get("frameless", True)):
             self._frameless = True
             self.root.overrideredirect(True)
-        f = (FONT_FAMILY, FONT_SIZE)
+        f = body_font()
         self._f = f
+        self._design_buttons = []
+        self._navigation_buttons = {}
         if self._frameless:
             from widgets.title_bar import TitleBar
             self.title_bar = TitleBar(self.root, self, f)
@@ -560,7 +567,7 @@ class ChatWindow:
         sk = self._skin
         top = tk.Frame(self.root, bg=sk["window_bg"])
         self._status_bar_frame = top
-        top.pack(fill="x", padx=6, pady=(4, 2))
+        top.pack(fill="x", padx=12, pady=(6, 4))
         self._excel_chrome.set_anchor(top)
         self._excel_chrome.set_visible(self._skin_name == "excel")
         self.status_dot = tk.Label(top, text="○", fg=sk["sub"], font=f,
@@ -570,13 +577,14 @@ class ChatWindow:
                                     bg=sk["window_bg"])
         self.status_text.pack(side="left", padx=(2, 0))
         self._top_btns = []
-        for txt, cmd in (("—", self.hide_to_mini), ("▣", self.open_game),
-                         ("⚙", self._on_settings)):
-            b = tk.Button(top, text=txt, width=2, command=cmd,
-                          font=f, relief="flat", fg=sk["sub"],
-                          bg=sk["window_bg"])
-            b.pack(side="right")
+        for icon, txt, cmd in (("minimize", "收起", self.hide_to_mini),
+                              ("game", "桌游", self.open_game),
+                              ("settings", "设置", self._on_settings)):
+            b = IconButton(top, icon=icon, text=txt, command=cmd,
+                           palette=sk, scale=_dpi_scale, pady=3)
+            b.pack(side="right", padx=(4, 0))
             self._top_btns.append(b)
+            self._design_buttons.append(b)
 
         # 主体：左侧名单/群 + 右侧会话
         body = tk.Frame(self.root, bg=sk["window_bg"])
@@ -587,6 +595,8 @@ class ChatWindow:
         body.pack(fill="both", expand=True, padx=6, pady=2)
         self._build_left(body)
         self._build_right(body)
+        self.root.bind('<FocusIn>', self._navigation_focus, add='+')
+        self._apply_skin(persist=False)
         self.msg_list.set_grid(sk["glass_border"] if self._skin_name == "excel" else None)
         self._sync_excel_layout()
         # R-字号：会话/消息/输入三个控件已就绪，注入持久化的聊天主体字号
@@ -613,7 +623,7 @@ class ChatWindow:
         set_default_frame(self._prefs.get("avatar_frame") or "none")
         icon_bg = sk.get("icon_bg", sk["list_bg"])
         # ① 60px 图标栏（微信/Telegram 三栏最左列；R56 高 DPI 下列宽随窗缩放）
-        self.icon_bar = tk.Frame(body, width=int(60 * self._dpi_scale), bg=icon_bg)
+        self.icon_bar = tk.Frame(body, width=int(76 * self._dpi_scale), bg=icon_bg)
         self.icon_bar.pack(side="left", fill="y")
         self.icon_bar.pack_propagate(False)
         # 自己的圆形头像（点击 → 个人资料窗口；登录后画图/首字）
@@ -624,17 +634,21 @@ class ChatWindow:
         self.icon_avatar.bind("<Button-1>", lambda e: self._on_profile())
         self.icon_avatar.bind("<Button-3>", lambda e: self._on_profile())
         # 导航图标（微信风格纵向排布）
-        for glyph, tip, cmd in (("💬", "会话", None),
-                                ("👥", "联系人", self._open_contacts_panel),
-                                ("📸", "朋友圈", self._open_moments),
-                                ("⚙", "设置", self._on_settings)):
-            b = tk.Button(self.icon_bar, text=glyph, font=(FONT_FAMILY, 14),
-                          relief="flat", bd=0, bg=icon_bg, fg=sk["sub"],
-                          activebackground=icon_bg,
-                          activeforeground=sk.get("accent", sk["fg"]),
-                          command=cmd)
-            b.pack(pady=3)
-            if glyph == "📸":
+        for icon, tip, cmd in (("chat", "消息", lambda: self._switch_view('public', None)),
+                              ("people", "联系人", self._open_contacts_panel),
+                              ("game", "桌游", self.open_game),
+                              ("moments", "动态", self._open_moments)):
+            b = IconButton(self.icon_bar, icon=icon, text=tip,
+                           command=lambda key=icon, action=cmd:self._navigate(key, action),
+                           palette=sk, role='navigation', scale=self._dpi_scale,
+                           compound='top', padx=6, pady=8)
+            b.pack(fill='x', padx=6, pady=3)
+            self._design_buttons.append(b)
+            self._navigation_buttons[icon] = b
+            if icon == 'chat':
+                b._nav_selected = True
+                b.set_palette(sk)
+            if icon == "moments":
                 self._mom_btn = b                # R68：朋友圈入口（挂红点）
         # R68 朋友圈互动红点：未读数角标（红底白字，>0 时显示）
         self._mom_unread = 0
@@ -644,21 +658,24 @@ class ChatWindow:
                                    bd=0, padx=3, pady=0)
         self.icon_bar.bind("<Configure>", lambda e: self._update_mom_badge())
         # 底部菜单按钮（设置/资料入口）
-        tk.Button(self.icon_bar, text="☰", font=(FONT_FAMILY, 14),
-                  relief="flat", bd=0, bg=icon_bg, fg=sk["sub"],
-                  activebackground=icon_bg,
-                  activeforeground=sk.get("accent", sk["fg"]),
-                  command=self._on_settings).pack(side="bottom", pady=8)
+        settings_button = IconButton(self.icon_bar, icon='settings', text='设置',
+                                     command=lambda:self._navigate('settings',self._on_settings), palette=sk,
+                                     role='navigation', scale=self._dpi_scale,
+                                     compound='top', padx=6, pady=8)
+        settings_button.pack(side='bottom', fill='x', padx=6, pady=8)
+        self._design_buttons.append(settings_button)
+        self._navigation_buttons['settings'] = settings_button
         # ② 中间列表列（原名单/群内容，宽 250；R56 随 DPI 缩放）
-        left = tk.Frame(body, width=int(250 * self._dpi_scale), bg=sk["list_bg"])
+        left = tk.Frame(body, width=int(244 * self._dpi_scale), bg=sk["list_bg"])
+        self._session_frame = left
         left.pack(side="left", fill="y", padx=(0, 4))
         left.pack_propagate(False)
         f = self._f
-        tk.Label(left, text="在线", fg=sk["sub"], font=f, anchor="w",
-                 bg=sk["list_bg"]).pack(fill="x")
+        tk.Label(left, text="消息", fg=sk["fg"], font=(body_font()[0], 14, 'bold'), anchor="w",
+                 bg=sk["list_bg"]).pack(fill="x", padx=12, pady=(14, 10))
         # R25D 会话文件夹标签行（全部/各文件夹/＋新建）
         self._folder_bar = tk.Frame(left, bg=sk["list_bg"])
-        self._folder_bar.pack(fill="x", pady=(0, 2))
+        self._folder_bar.pack(fill="x", padx=12, pady=(0, 8))
         self._rebuild_folder_bar()
         # C1/C6 搜索框：实时过滤名单/群（Ctrl+F 聚焦）
         self.search_entry = tk.Entry(left, font=f,
@@ -667,7 +684,7 @@ class ChatWindow:
                                      relief="flat",
                                      highlightthickness=1,
                                      highlightbackground=sk["glass_border"])
-        self.search_entry.pack(fill="x", pady=(0, 2))
+        self.search_entry.pack(fill="x", padx=12, pady=(0, 10), ipady=6)
         self.search_entry.bind("<KeyRelease>",
                                lambda e: (setattr(self, "_search",
                                                   self.search_entry.get().strip().lower()),
@@ -678,6 +695,7 @@ class ChatWindow:
         self.roster_list = SessionList(
             left, font=self._f, height=2 * 56, on_pick=self._on_pick_roster,
             avatars=self._avatars, layout=self._mode_cfg["layout"],
+            scale=self._dpi_scale,
             on_act=self._on_roster_hover_act,   # R-：hover 快捷操作
             on_avatar_dbl=self._shake_roster)   # R68：双击头像 → 窗口抖动
         self.roster_list.pack(fill="both", expand=True)
@@ -687,6 +705,7 @@ class ChatWindow:
         self.group_list = SessionList(
             left, font=self._f, height=3 * 56, on_pick=self._on_pick_group,
             avatars=self._avatars, layout=self._mode_cfg["layout"],
+            scale=self._dpi_scale,
             on_act=self._on_group_hover_act,   # R-：hover 快捷操作
             on_avatar_dbl=self._shake_group)   # R68：双击头像 → 窗口抖动
         self.group_list.pack(fill="x", pady=(0, 2))
@@ -718,6 +737,25 @@ class ChatWindow:
         self._archived_list.bind("<Double-Button-1>", self._open_archived)
         self._archived_list.bind("<Button-3>", self._on_archived_menu)
         self._archived_list.pack_forget()
+
+    def _select_navigation(self, key):
+        for name, button in getattr(self, '_navigation_buttons', {}).items():
+            button._nav_selected = name == key
+            button.set_palette(self._skin)
+
+    def _navigate(self, key, action):
+        action()
+        self._select_navigation(key)
+
+    def _navigation_focus(self, event):
+        if event.widget is self.root:
+            settings = getattr(self, '_settings_win', None)
+            active = settings is not None and settings.winfo_exists() and settings.winfo_ismapped()
+            self._select_navigation('settings' if active else 'chat')
+
+    def _navigation_dialog_closed(self, event, dialog):
+        if event.widget is dialog and not self._closed:
+            self._select_navigation('chat')
 
     def _sync_excel_layout(self, is_excel=None) -> None:
         """Excel 使用工作表中心区域；其它皮肤与原聊天视图复用原控件。"""
@@ -769,12 +807,13 @@ class ChatWindow:
     def _build_right(self, body) -> None:
         sk = self._skin
         right = tk.Frame(body, bg=sk["panel_bg"])
+        self._chat_frame = right
         right.pack(side="left", fill="both", expand=True)
         f = self._f
         # 会话标题行 = 标题 + 免打扰灰标（平时隐藏）
         self.chan_label_row = tk.Frame(right, bg=sk["panel_bg"])
-        self.chan_label_row.pack(fill="x")
-        self.chan_label = tk.Label(self.chan_label_row, text="公共频道", fg=sk["fg"], font=f,
+        self.chan_label_row.pack(fill="x", padx=16, pady=(12, 12))
+        self.chan_label = tk.Label(self.chan_label_row, text="公共频道", fg=sk["fg"], font=(body_font()[0], 13, 'bold'),
                                    anchor="w", bg=sk["panel_bg"])
         self.chan_label.pack(side="left", fill="x", expand=True)
         # R72 优化：点会话标题的「📍 正在共享位置」→ 打开共享者地图
@@ -927,11 +966,12 @@ class ChatWindow:
         self._sticker_row.pack_forget()          # 默认隐藏
 
         bottom = tk.Frame(right, bg=sk["panel_bg"])
-        bottom.pack(fill="x", pady=(3, 0))
+        bottom.pack(fill="x", padx=14, pady=(8, 10))
         self._bottom_frame = bottom               # R26B：频道只读时整条禁用
         # 单行高 Text：Enter 发送、Shift+Enter 换行（对标 TG 多行输入）
-        self.entry = tk.Text(bottom, height=1, font=f, wrap="word",
-                             highlightthickness=0, bd=1, undo=False,
+        self.entry = tk.Text(bottom, height=3, font=f, wrap="word",
+                             highlightthickness=1, bd=0, undo=False,
+                             padx=10, pady=8,
                              bg=sk["input_bg"], fg=sk["fg"],
                              insertbackground=sk["fg"],
                              relief="flat",
@@ -942,7 +982,7 @@ class ChatWindow:
         self._entry_manual_lines = int(self._prefs.get("entry_manual_lines", 0) or 0)
         self._drag_y0 = 0
         self._drag_h0 = 0
-        self._drag_bar = tk.Frame(bottom, height=4, bg=sk["sub"],
+        self._drag_bar = tk.Frame(bottom, height=3, bg=sk["glass_border"],
                                   cursor="sb_v_double_arrow")
         self._drag_bar.pack(side="top", fill="x")
 
@@ -984,31 +1024,27 @@ class ChatWindow:
         # R31 工具行（TG 风格收纳）：输入框整行在上，工具行在下；
         # 高频平铺（表情/文件/语音/投票/更多），低频收进「＋」更多菜单
         bar = tk.Frame(bottom, bg=sk["panel_bg"])
-        bar.pack(side="top", fill="x")
+        bar.pack(side="top", fill="x", before=self.entry, pady=(0, 6))
         self._toolbar_bar = bar                   # R31：主题刷色需覆盖
         self._bottom_btns = []
 
         def _tool(txt, cmd):
-            b = tk.Button(bar, text=txt, command=cmd,
-                          font=f, relief="flat", padx=4, bd=0,
-                          fg=sk["sub"], bg=sk["panel_bg"],
-                          activebackground=sk["panel_bg"],
-                          activeforeground=sk["accent"], cursor="hand2")
+            icons = {'表情':'emoji', '附件':'attach', '录音':'mic', '更多':'more', '@所有':'broadcast'}
+            b = IconButton(bar, text=txt, icon=icons[txt], command=cmd,
+                           palette=sk, scale=self._dpi_scale, padx=4, pady=4)
             b.pack(side="left")
-            b.bind("<Enter>", lambda e, x=b: x.config(fg=self._skin["accent"]))
-            b.bind("<Leave>", lambda e, x=b: x.config(fg=self._skin["sub"]))
-            ui_fx.press_feedback(b, pressed_bg=sk["input_bg"])   # R43A2 按压反馈
             self._bottom_btns.append(b)
+            self._design_buttons.append(b)
             return b
 
-        _tool("😊", self._toggle_stickers)        # 表情/贴纸条
-        _tool("📎", self._on_send_file)           # 发文件
-        self._vrec_btn = _tool("🎙", self._toggle_record)   # 语音录入
+        _tool("表情", self._toggle_stickers)        # 表情/贴纸条
+        _tool("附件", self._on_send_file)           # 发文件
+        self._vrec_btn = _tool("录音", self._toggle_record)   # 语音录入
         self._vrec_default_bg = sk["panel_bg"]
-        self._more_btn = _tool("＋", self._more_menu)       # 更多（TG 风格收纳）
+        self._more_btn = _tool("更多", self._more_menu)       # 低频能力保持原菜单
         # @全体：群聊输入便捷入口，点击把 @全体 插入光标处（服务器据此全员广播）。
         # 非群聊时灰显并提示原因（见 _refresh_evbody），避免"点了没反应"的无效按键感。
-        self._evbody_btn = _tool("📣@所有", self._insert_evbody)
+        self._evbody_btn = _tool("@所有", self._insert_evbody)
         self._evbody_btn.pack_forget()                # 默认隐藏，仅群聊显示
         # 条件不可用提示：灰显时点击给出原因（disabled 态下 command 不触发，bind 仍生效）
         self._evbody_btn.bind(
@@ -1034,10 +1070,17 @@ class ChatWindow:
             self._silent_btn.pack(side="left")
         if self._disguise_mode:
             self._disguise_btn.pack(side="left")
-        self._send_btn = tk.Button(bar, text="发送", command=self._send,
-                  font=f, padx=6, relief="flat",
-                  fg="#ffffff", bg=sk["accent"])
+        self._compose_footer = tk.Frame(bottom, bg=sk['panel_bg'])
+        self._compose_footer.pack(fill='x', pady=(8, 0))
+        self._compose_target = tk.Label(self._compose_footer, text='发送到：公共频道',
+                                       bg=sk['panel_bg'], fg=sk['sub'],
+                                       font=(body_font()[0], 9), anchor='w')
+        self._compose_target.pack(side='left', fill='x', expand=True)
+        self._send_btn = IconButton(self._compose_footer, icon='send', text='发送',
+                                   command=self._send, palette=sk, role='primary',
+                                   scale=self._dpi_scale, padx=14, pady=6)
         self._send_btn.pack(side="right")
+        self._design_buttons.append(self._send_btn)
 
         # R19 语音录音条（点 🎙 出现；含计时/完成/取消，默认隐藏）
         voice_bg = sk.get("voice_bg", "#fff2e6")
@@ -1407,6 +1450,7 @@ class ChatWindow:
         注意：不能叫 _focus_search —— 类里已有同名方法（Ctrl+F 聊天内搜索）
         定义在其后，会覆盖本方法导致按钮点击无效。
         """
+        self._select_navigation('people')
         if getattr(self, "_contacts_win", None) and self._contacts_win.winfo_exists():
             self._contacts_win.lift()
             self._contacts_win.focus_force()
@@ -1415,6 +1459,7 @@ class ChatWindow:
         f = self._f
         dlg = tk.Toplevel(self.root)
         self._contacts_win = dlg
+        dlg.bind('<Destroy>', lambda event:self._navigation_dialog_closed(event,dlg), add='+')
         ui_fx.fade_in(dlg)                        # R43A1 弹窗淡入
         dlg.title("通讯录")
         dlg.transient(self.root)
@@ -1594,6 +1639,7 @@ class ChatWindow:
 
     # ---------- 朋友圈（📸 图标 → 独立时间轴窗口） ----------
     def _open_moments(self) -> None:
+        self._select_navigation('moments')
         from widgets.moment_list import MomentList
         if getattr(self, "_moments_win", None) and self._moments_win.winfo_exists():
             self._moments_win.lift()
@@ -1603,6 +1649,7 @@ class ChatWindow:
         f = self._f
         dlg = tk.Toplevel(self.root)
         self._moments_win = dlg
+        dlg.bind('<Destroy>', lambda event:self._navigation_dialog_closed(event,dlg), add='+')
         ui_fx.fade_in(dlg)
         dlg.title("朋友圈")
         dlg.transient(self.root)
@@ -2204,7 +2251,11 @@ class ChatWindow:
 
     def _apply_font_scale(self, f=None) -> None:
         """R-字号：把当前字号立即注入 消息区+会话列表+输入区（设置变更即时生效）。"""
-        f = f or (FONT_FAMILY, self._font_scale_size())
+        if f is None:
+            mist = self._skin.get('name', '').startswith('雾岸')
+            family, base = body_font() if mist else (FONT_FAMILY, _FONT_SCALES[1])
+            f = (family, self._font_scale_size() + base - _FONT_SCALES[1])
+        self._f = f
         for w in (getattr(self, "msg_list", None),
                   getattr(self, "roster_list", None),
                   getattr(self, "group_list", None)):
@@ -3562,6 +3613,9 @@ class ChatWindow:
         if sharing:
             text += " · 📍 " + "、".join(self._marker_name(u) for u in sharing[:3]) + " 正在共享位置"
         self.chan_label.config(text=text)
+        compose_target = getattr(self, '_compose_target', None)
+        if compose_target is not None:
+            compose_target.configure(text='发送到：'+self._chan_base)
         if hasattr(self, "_excel_chrome"):
             self._excel_chrome.set_context(text)
         if sharing:
@@ -4300,7 +4354,7 @@ class ChatWindow:
         if manual > 0:
             target = max(n, manual)          # 内容多少行就多高，但至少 manual 行
         else:
-            target = max(1, min(6, n))       # 纯自动：1-6 行
+            target = max(3, min(6, n))       # 输入区保留三行；手动高度仍优先
         if int(self.entry.cget("height")) != target:
             self.entry.config(height=target)
 
@@ -5230,6 +5284,7 @@ class ChatWindow:
 
     def _switch_view(self, ch: str, to) -> None:
         """统一切会话：设置 view、装载历史、联动名单/群高亮"""
+        self._select_navigation('chat')
         self._mark_read_current()              # R30A：切走前记录本会话读到哪
         self._save_draft()                     # R12：切走前保存当前会话草稿
         self._reset_hist()                     # R12：跨会话不串历史浏览态
@@ -8599,6 +8654,7 @@ class ChatWindow:
 
     def _close_settings(self) -> None:
         """R交互：关闭内嵌全屏设置面板（隐藏保留，可再次打开）。"""
+        self._select_navigation('chat')
         if self._settings_win is not None and self._settings_win.winfo_exists():
             self._settings_win.place_forget()
 
@@ -8707,11 +8763,13 @@ class ChatWindow:
         opt("*Scrollbar.background", win)
         opt("*Scrollbar.troughcolor", border)
 
-    def _apply_skin(self, name: str | None = None, palette: dict | None = None) -> None:
+    def _apply_skin(self, name: str | None = None, palette: dict | None = None, *, persist=True) -> None:
         """T3：按当前 _skin_name（或给定 palette，R15 ghost 全透明黑字）应用 Token
         到顶层控件 + msg_list；palette 由 R15 toggle_ghost 注入，不改写 _skin_name。"""
+        previous = self._skin
         self._skin = palette if palette else get_skin(name if name else self._skin_name)
         sk = self._skin
+        self._recolor_chat_surfaces(previous, sk)
         self._dp = dialog_pal(sk)      # R57：对话框/独立面板派生配色（含深色）
         self._set_default_colors()     # R57B：未指定颜色的控件默认跟随皮肤
         self.root.configure(bg=sk["window_bg"])
@@ -8790,7 +8848,7 @@ class ChatWindow:
         db = getattr(self, "_drag_bar", None)
         if db is not None:
             try:
-                db.configure(bg=sk["sub"])
+                db.configure(bg=sk["glass_border"])
             except tk.TclError:
                 pass
         for b in getattr(self, "_bottom_btns", []):
@@ -8818,7 +8876,8 @@ class ChatWindow:
             "fg": sk["fg"],
             "sub": sk["sub"],
             "accent": sk["accent"],
-            "selected_fg": "#ffffff",
+            "selected_fg": sk['fg'] if sk.get('name', '').startswith('雾岸') else "#ffffff",
+            "selected_bg": design_color('selected_background', sk.get('name') == '雾岸深色') if sk.get('name', '').startswith('雾岸') else sk['accent'],
             "muted": sk["sub"],
             "hover": sk.get("hover_bg", "#ececec"),
         }
@@ -8857,7 +8916,52 @@ class ChatWindow:
         self._tint_notif_bar("_voice_bar", "voice_bg", None, None,
                              default_bg="#fff2e6", default_fg="#e03e3e",
                              tint_fg=False)
-        self._prefs.set("skin", self._skin_name)
+        for button in getattr(self, '_design_buttons', ()):
+            button.set_palette(sk)
+        self._apply_font_scale()
+        if persist:
+            self._prefs.set("skin", self._skin_name)
+
+    def _recolor_chat_surfaces(self, previous, current):
+        backgrounds = {previous[key]: current[key] for key in
+                       ('window_bg','list_bg','icon_bg','panel_bg','input_bg')}
+        foregrounds = {previous[key]: current[key] for key in ('fg','sub')}
+        def visit(widget):
+            if isinstance(widget, tk.Toplevel):
+                return
+            options = widget.keys()
+            updates = {}
+            if 'background' in options:
+                old = str(widget.cget('background'))
+                if old in backgrounds:
+                    updates['background'] = backgrounds[old]
+            if 'foreground' in options:
+                old = str(widget.cget('foreground'))
+                if old in foregrounds:
+                    updates['foreground'] = foregrounds[old]
+            if updates:
+                widget.configure(**updates)
+            for child in widget.winfo_children():
+                visit(child)
+        for container in (getattr(self,'_body_frame',None),getattr(self,'_status_bar_frame',None)):
+            if container is not None:
+                visit(container)
+        if getattr(self,'icon_bar',None) is not None:
+            self.icon_bar.configure(bg=current['icon_bg'])
+            self.icon_avatar.configure(bg=current['icon_bg'])
+        for attribute,role in (('_body_frame','window_bg'),('_session_frame','list_bg'),
+                               ('_folder_bar','list_bg'),('_chat_frame','panel_bg'),
+                               ('_wrap_frame','panel_bg'),('chan_label_row','panel_bg'),
+                               ('_bottom_frame','panel_bg'),('_toolbar_bar','panel_bg'),
+                               ('_compose_footer','panel_bg')):
+            frame=getattr(self,attribute,None)
+            if frame is not None:
+                frame.configure(bg=current[role])
+                for child in frame.winfo_children():
+                    if isinstance(child,tk.Label):
+                        child.configure(bg=current[role])
+        if getattr(self,'_compose_target',None) is not None:
+            self._compose_target.configure(bg=current['panel_bg'],fg=current['sub'])
 
     def _apply_chat_theme(self) -> None:
         """聊天主题叠层：在已套的皮肤 token 之上再叠气泡/聊天区主题色，
@@ -9362,6 +9466,7 @@ class ChatWindow:
     def _on_settings(self) -> None:
         """设置：R57B3 全自绘控件（勾选框/滑杆/下拉/按钮），精确贴合主窗 Apple 蓝调；
         热键状态 + 分组设置行 + 发现的服务器（双击连接）+ 手动 IP/端口兜底。"""
+        self._select_navigation('settings')
         dp = self._dp
         win, fg, sub = dp["win"], dp["fg"], dp["sub"]
         acc, inp, border = dp["accent"], dp["input"], dp["border"]
@@ -11002,6 +11107,7 @@ class ChatWindow:
     # ---------- 游戏入口 ----------
     def open_game(self) -> None:
         """打开游戏协作面板（游戏 + 游戏内聊天 overlay）"""
+        self._select_navigation('game')
         if getattr(self, "_game_win", None) is None:
             self._game_win = GameWindow(self, pal=self._dp)
         self._game_win.show()
@@ -13343,6 +13449,9 @@ class GameWindow:
             pass
 
     def hide(self, reason="manual") -> None:
+        select = getattr(self.app, '_select_navigation', None)
+        if select is not None:
+            select('chat')
         if reason != "collapse":
             self._restore_allowed = False
         self._hide_reason = reason
@@ -13877,8 +13986,6 @@ def main() -> int:
     if not _acquire_single_instance():       # 已有实例且已唤醒其可见窗 → 退出
         bootlog("client single-instance exit")
         return 0
-    if CFG.tray_enabled:
-        _start_early_tray()                  # 进程一启动就放托盘图标，随时可见"在跑"
     out = getattr(sys, "stdout", None)
     if out is not None:
         try:
@@ -13898,6 +14005,8 @@ def main() -> int:
         _dpi_on = True
     from dpi import apply_early
     apply_early(_dpi_on)
+    if CFG.tray_enabled:
+        _start_early_tray()                  # DPI声明必须先于托盘的隐藏Tk/ HWND
     if args.nick.strip():
         # --nick 快速通道：跳过账号门禁，直接以指定昵称进主窗
         launcher.run_chat(args.host, args.port, Prefs(), args.nick.strip())

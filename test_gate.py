@@ -227,7 +227,7 @@ def _allowed_relative(path: Path) -> bool:
     lowered = [part.lower() for part in path.parts]
     top = lowered[0] if lowered else ""
     if top == "tests":
-        return path.suffix.lower() == ".py"
+        return path.suffix.lower() in {".py", ".cjs"}
     if top in {"games_pkg", "widgets", "assets"}:
         return True
     if len(lowered) != 1:
@@ -278,6 +278,8 @@ def _source_files(root: Path) -> list[Path]:
     tests_dir = root / "tests"
     if tests_dir.is_dir():
         mandatory.extend(tests_dir.glob("test_*.py"))
+        # Embedded Web UI probes are test inputs too, including before commit.
+        mandatory.extend(tests_dir.glob("*.cjs"))
     # Include newly added, not-yet-tracked Python modules in the two project
     # packages used by the application.  Their bytes belong in the candidate
     # fingerprint just like tracked files.

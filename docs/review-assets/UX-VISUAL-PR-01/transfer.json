@@ -1,0 +1,153 @@
+{
+  "base": "7d6a98cbdd8c62f5d5af4d5b9a4a7e6be0663758",
+  "original_head": "c864234e09f97a32e3df871b5bd7c13312adeed7",
+  "files": [
+    {
+      "path": "client.py",
+      "raw_sha256": "81e8e7708d5345f41b2250e5287246dafa19636d0dd3f9ee7a5e1a4e6c5f6e99",
+      "normalized_sha256": "81e8e7708d5345f41b2250e5287246dafa19636d0dd3f9ee7a5e1a4e6c5f6e99"
+    },
+    {
+      "path": "docs/design/UX-01-design-system.md",
+      "raw_sha256": "649184f972d70268457b3f27b7828b8c1bee44f53586330027c64afc95bda276",
+      "normalized_sha256": "649184f972d70268457b3f27b7828b8c1bee44f53586330027c64afc95bda276"
+    },
+    {
+      "path": "docs/design/UX-01-directions.html",
+      "raw_sha256": "10d6f9cebd0910cea30f234239f7ea6d16d94c3adcd81da6e3680e05b442b63c",
+      "normalized_sha256": "10d6f9cebd0910cea30f234239f7ea6d16d94c3adcd81da6e3680e05b442b63c"
+    },
+    {
+      "path": "docs/design/UX-01.tokens.json",
+      "raw_sha256": "a137658af6f3f9899c2106a0e6020c1b1e6d2569bab462488bb7c42dc0eb4078",
+      "normalized_sha256": "a137658af6f3f9899c2106a0e6020c1b1e6d2569bab462488bb7c42dc0eb4078"
+    },
+    {
+      "path": "docs/review-assets/UX-VISUAL-CHAT-01/boundary-check.json",
+      "raw_sha256": "8443d225133e2707f95856b984b9db61bfb9479a71d5dd09b1207a288dfe9a69",
+      "normalized_sha256": "8443d225133e2707f95856b984b9db61bfb9479a71d5dd09b1207a288dfe9a69"
+    },
+    {
+      "path": "docs/review-assets/UX-VISUAL-CHAT-01/current-source.json",
+      "raw_sha256": "9a754a983eb1699d0b3cb991f725039334bb69c067c091c8f6ffe5fdb3293543",
+      "normalized_sha256": "9a754a983eb1699d0b3cb991f725039334bb69c067c091c8f6ffe5fdb3293543"
+    },
+    {
+      "path": "docs/review-assets/UX-VISUAL-CHAT-01/entry-boundary.json",
+      "raw_sha256": "7dba96c7fbb36e88b593b9aa9affbb7c20f8b0d67b2f79f21f666a10f5373471",
+      "normalized_sha256": "7dba96c7fbb36e88b593b9aa9affbb7c20f8b0d67b2f79f21f666a10f5373471"
+    },
+    {
+      "path": "docs/review-assets/UX-VISUAL-CHAT-01/entry-source.json",
+      "raw_sha256": "ddd957937adc7599f31ff4c1fcac951c586d1e4a05d3c0bb725f62e60c68046b",
+      "normalized_sha256": "ddd957937adc7599f31ff4c1fcac951c586d1e4a05d3c0bb725f62e60c68046b"
+    },
+    {
+      "path": "docs/review-assets/UX-VISUAL-CHAT-01/runs.json",
+      "raw_sha256": "1452f79737028419e9c83247eadabc38444eb90d5326ee039b13ad76f9738373",
+      "normalized_sha256": "1452f79737028419e9c83247eadabc38444eb90d5326ee039b13ad76f9738373"
+    },
+    {
+      "path": "docs/review-assets/UX-VISUAL-CHAT-01/token-export.json",
+      "raw_sha256": "464862c6d5d4b5972d3b51bc162ff598a6c4ce644e6a8ed568ee14e25e5124a7",
+      "normalized_sha256": "464862c6d5d4b5972d3b51bc162ff598a6c4ce644e6a8ed568ee14e25e5124a7"
+    },
+    {
+      "path": "docs/review-packages/UX-VISUAL-CHAT-01-r1.md",
+      "raw_sha256": "5322fc926342390b6e338c64510c2feba8ebde805382718de951e59eb9e4ab3e",
+      "normalized_sha256": "5322fc926342390b6e338c64510c2feba8ebde805382718de951e59eb9e4ab3e"
+    },
+    {
+      "path": "docs/review-packages/UX-VISUAL-PR-01-r1.md",
+      "raw_sha256": "9b5a1fe8e8316254409ee4f751e482a77c8e2df809dfa59b3b161ee99db644cc",
+      "normalized_sha256": "9b5a1fe8e8316254409ee4f751e482a77c8e2df809dfa59b3b161ee99db644cc"
+    },
+    {
+      "path": "docs/task-packages/UX-VISUAL-CHAT-01.md",
+      "raw_sha256": "f37363e441cf338d7707fe02b58fd396dd40b49a6df1f42f68bf988ebb7d0e27",
+      "normalized_sha256": "f37363e441cf338d7707fe02b58fd396dd40b49a6df1f42f68bf988ebb7d0e27"
+    },
+    {
+      "path": "docs/task-packages/UX-VISUAL-PR-01.md",
+      "raw_sha256": "a8c3c4a3433529e98e66bebd748203a472f14607074a51885d992fd9d1b698b7",
+      "normalized_sha256": "a8c3c4a3433529e98e66bebd748203a472f14607074a51885d992fd9d1b698b7"
+    },
+    {
+      "path": "docs/后续开发Prompt_UX-TRIAL-01.md",
+      "raw_sha256": "79a1b5bea1d0302440e4d9c261a6b34b866d152ff89133d6b7afaa96be63bb31",
+      "normalized_sha256": "79a1b5bea1d0302440e4d9c261a6b34b866d152ff89133d6b7afaa96be63bb31"
+    },
+    {
+      "path": "dpi.py",
+      "raw_sha256": "94693c8b490f949678321aca3d96ad4032a87986073e4d513cae07bff08cf27d",
+      "normalized_sha256": "6f263f1f8087c72a53592fd28980de5ea711da4cb1e7052737db0de5d4654de9"
+    },
+    {
+      "path": "test_gate.py",
+      "raw_sha256": "faf33affe47f2c33e0b8e893acf27faeecd86780d9fde8108e87c4b7449939e5",
+      "normalized_sha256": "faf33affe47f2c33e0b8e893acf27faeecd86780d9fde8108e87c4b7449939e5"
+    },
+    {
+      "path": "tests/test_ux_visual_chat_design.py",
+      "raw_sha256": "39bcac94d2c05b089283de61f261c06459e53ffeb46d96f3b5e8cd1c100451e3",
+      "normalized_sha256": "39bcac94d2c05b089283de61f261c06459e53ffeb46d96f3b5e8cd1c100451e3"
+    },
+    {
+      "path": "tests/test_ux_visual_chat_dpi.py",
+      "raw_sha256": "9b57d7bf93e4fc26af01e1bb8671579928c8b8e350ccd044297184bb9e9a21ad",
+      "normalized_sha256": "9b57d7bf93e4fc26af01e1bb8671579928c8b8e350ccd044297184bb9e9a21ad"
+    },
+    {
+      "path": "tests/test_ux_visual_chat_regressions.py",
+      "raw_sha256": "68b0c86e1822c83f7a0e7a1698fe1ec924bf69810bfb9fb4deb622c6da394c95",
+      "normalized_sha256": "68b0c86e1822c83f7a0e7a1698fe1ec924bf69810bfb9fb4deb622c6da394c95"
+    },
+    {
+      "path": "tests/test_ux_visual_chat_web.py",
+      "raw_sha256": "095a46efaed3334c754f4d8a59a9c41dcf3bed8379090d81d0e204d5dedf7609",
+      "normalized_sha256": "095a46efaed3334c754f4d8a59a9c41dcf3bed8379090d81d0e204d5dedf7609"
+    },
+    {
+      "path": "tests/ux_visual_chat_probe.cjs",
+      "raw_sha256": "03ce09af6fd2b090909da1dba5eccc01f06bda067df5ac48837adbf23525b3f8",
+      "normalized_sha256": "03ce09af6fd2b090909da1dba5eccc01f06bda067df5ac48837adbf23525b3f8"
+    },
+    {
+      "path": "tests/web_navigation_probe.cjs",
+      "raw_sha256": "4707a05ec6fec855a72dd558f0519b5ac27478691839173baf48e164a6085bc2",
+      "normalized_sha256": "4707a05ec6fec855a72dd558f0519b5ac27478691839173baf48e164a6085bc2"
+    },
+    {
+      "path": "theme.py",
+      "raw_sha256": "9fb0a05045476944902ffaf0dc6e4b943c276fbbf5cc7b601719e0655eb41f0a",
+      "normalized_sha256": "f4199424822c6be78bbf10dd8ff1678b8546441be186ba7f2a46e0c81af0509d"
+    },
+    {
+      "path": "ui_design.py",
+      "raw_sha256": "0d3f690141279e22547f1dd52aeb35019b955be862107da190c4a1aecb8d8bdd",
+      "normalized_sha256": "0d3f690141279e22547f1dd52aeb35019b955be862107da190c4a1aecb8d8bdd"
+    },
+    {
+      "path": "web.py",
+      "raw_sha256": "b2131216c8fd44ea3770942842fab9d5fa0ffde4da5daeb377cc00f6975b78d5",
+      "normalized_sha256": "b2131216c8fd44ea3770942842fab9d5fa0ffde4da5daeb377cc00f6975b78d5"
+    },
+    {
+      "path": "widgets/design_controls.py",
+      "raw_sha256": "79a1aff33f78082e8662844ea40c8ee7362c3e05bb0c666939e9f2275d40be4c",
+      "normalized_sha256": "79a1aff33f78082e8662844ea40c8ee7362c3e05bb0c666939e9f2275d40be4c"
+    },
+    {
+      "path": "widgets/msg_list.py",
+      "raw_sha256": "ab8a3dcea2a9e9133e81d5d6dfba5a758faf9dcf7a5230e046fb90941d603cab",
+      "normalized_sha256": "34a6f5ae5bdfcbef344079c4971624119e6d8458394c91e7ff46552daa8b4943"
+    },
+    {
+      "path": "widgets/session_list.py",
+      "raw_sha256": "d9f91d52ad0148dbb4db0a4c3030b923acee6c8d80421f5730fb069b14a7db89",
+      "normalized_sha256": "15c9530f1fe130d88303ac5148589c3e543a61582c64c528696176c3e8bb5b70"
+    }
+  ],
+  "transfer": "exact working bytes; existing entry and main matched after CRLF to LF",
+  "excluded": "inherited unintegrated account/CP4 modules and their local test; runtime/real data/binaries"
+}

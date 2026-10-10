@@ -1,0 +1,8 @@
+{
+  "canonical_path": "docs/design/UX-01.tokens.json",
+  "canonical_sha256": "a137658af6f3f9899c2106a0e6020c1b1e6d2569bab462488bb7c42dc0eb4078",
+  "export_path": "ui_design.py",
+  "export_sha256": "0d3f690141279e22547f1dd52aeb35019b955be862107da190c4a1aecb8d8bdd",
+  "exact_export": true,
+  "runtime_resource_lookup": false
+}

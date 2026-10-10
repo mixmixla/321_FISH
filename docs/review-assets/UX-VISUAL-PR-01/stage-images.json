@@ -1,0 +1,121 @@
+{
+  "stage_only": true,
+  "final_visual_acceptance": false,
+  "images": [
+    {
+      "path": "screenshots/before-native-wide.png",
+      "sha256": "1ee10a625a3e05e2762304a5a58ec9cd82d74e2ff1fb3a213b35fb50ba696326",
+      "run": "before-b1c31d55bb",
+      "fixture": "synthetic names and messages, owned profile and app-only capture",
+      "limitation": "old baseline; no early-DPI fixture normalization; not final acceptance pair",
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "34cd066bf8be95a0daadfa116f94850f21857c21889d32ba94094e4e25627809"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "593295987ce567505a22d5d60aad9b0ee6d703bf5a4cbcdcdeb7e7dfe88fa148"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "b8b6a21315486d6136c9c8b783f37aced62a76a57f55c45884cab2d58362a013"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "e65f45378020028002dd3ddfdbe5530fb21cca26254457dbe0e688bc359ac5bf"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "f0985d605d1e46366515ca0c2ef7acfde89f4a211136cb343ca0bc729203af02"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "8bf4f0a00a21a43929a8a92fc5eee27e5e712a9b7b3eb01546e23e047743f406"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/after-native-r1.png",
+      "sha256": "087128c785c8830d4ff009f0915393dfb5bdfbfaac66384e7e14d738c16c4bfc",
+      "run": "after-df83e93cb9",
+      "fixture": "synthetic names and messages, owned profile and app-only capture",
+      "limitation": "early 10pt Mist stage; not current 11pt/DPI candidate",
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "60dd2bba6bd19211207f053ece6815c8484191482e2837c54deaa3df7846045c"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "593295987ce567505a22d5d60aad9b0ee6d703bf5a4cbcdcdeb7e7dfe88fa148"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "9fb0a05045476944902ffaf0dc6e4b943c276fbbf5cc7b601719e0655eb41f0a"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "f9276c59006090d24c8e8558fe1df5cde844ddb9e863785f0ba86db5b00a3b8f"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "3cee4ed5f296e839bf1b59bb7a30f85c81b730a3240f652f1bd68194235fd67b"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "ab8a3dcea2a9e9133e81d5d6dfba5a758faf9dcf7a5230e046fb90941d603cab"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "3484c0e3a0ee5c8b915952f2f72eeb5a98d7569769a78ed9402642fcd6ce4470"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "e8ed28c51937b5f02c92adc29115181aa82aa282ba9c10084a0379f0074fc1e2"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/after-web-r2.png",
+      "sha256": "0af9f81df73164b31023bea36a7dccd0e2a21799596afe63f47603d975120054",
+      "run": "web-2ca35ed0ce",
+      "fixture": "synthetic names and messages, owned profile and app-only capture",
+      "limitation": "actual synthetic HTTP/Hub Web stage; not final full-browser or EXE acceptance",
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "81e8e7708d5345f41b2250e5287246dafa19636d0dd3f9ee7a5e1a4e6c5f6e99"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "94693c8b490f949678321aca3d96ad4032a87986073e4d513cae07bff08cf27d"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "9fb0a05045476944902ffaf0dc6e4b943c276fbbf5cc7b601719e0655eb41f0a"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "b2131216c8fd44ea3770942842fab9d5fa0ffde4da5daeb377cc00f6975b78d5"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "d9f91d52ad0148dbb4db0a4c3030b923acee6c8d80421f5730fb069b14a7db89"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "ab8a3dcea2a9e9133e81d5d6dfba5a758faf9dcf7a5230e046fb90941d603cab"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "0d3f690141279e22547f1dd52aeb35019b955be862107da190c4a1aecb8d8bdd"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "79a1aff33f78082e8662844ea40c8ee7362c3e05bb0c666939e9f2275d40be4c"
+        }
+      ]
+    }
+  ]
+}

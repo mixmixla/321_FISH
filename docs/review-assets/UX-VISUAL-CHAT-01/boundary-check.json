@@ -1,0 +1,41 @@
+{
+  "protected_files": 1063,
+  "changed_original_files": [
+    "client.py",
+    "docs/AI_COMMAND_CENTER.md",
+    "docs/design/UX-01.tokens.json",
+    "docs/任务清单.md",
+    "dpi.py",
+    "test_gate.py",
+    "tests/test_local_prefs_rules.py",
+    "tests/web_navigation_probe.cjs",
+    "theme.py",
+    "web.py",
+    "widgets/msg_list.py",
+    "widgets/session_list.py"
+  ],
+  "new_public_files": [
+    "docs/review-assets/UX-VISUAL-CHAT-01/boundary-check.json",
+    "docs/review-assets/UX-VISUAL-CHAT-01/current-source.json",
+    "docs/review-assets/UX-VISUAL-CHAT-01/entry-boundary.json",
+    "docs/review-assets/UX-VISUAL-CHAT-01/entry-source.json",
+    "docs/review-assets/UX-VISUAL-CHAT-01/runs.json",
+    "docs/review-assets/UX-VISUAL-CHAT-01/token-export.json",
+    "docs/review-packages/UX-VISUAL-CHAT-01-r1.md",
+    "docs/review-packages/UX-VISUAL-PR-01-r1.md",
+    "docs/task-packages/UX-VISUAL-CHAT-01.md",
+    "docs/task-packages/UX-VISUAL-PR-01.md",
+    "tests/test_ux_visual_chat_design.py",
+    "tests/test_ux_visual_chat_dpi.py",
+    "tests/test_ux_visual_chat_regressions.py",
+    "tests/test_ux_visual_chat_web.py",
+    "tests/ux_visual_chat_probe.cjs",
+    "ui_design.py",
+    "widgets/design_controls.py"
+  ],
+  "head_unchanged": true,
+  "documents": 4,
+  "relative_links": 377,
+  "roadmap_source_sha256": "eaf2f05fbccacca6260d23a78b67e0d3e850c477f4a65b1314a617434fcd670a",
+  "note": "Ownership/docs only; not product acceptance."
+}

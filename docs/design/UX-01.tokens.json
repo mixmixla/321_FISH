@@ -1,0 +1,101 @@
+{
+  "version": 2,
+  "status": "runtime-export-chat-pilot",
+  "direction": "mist-shore",
+  "colors": {
+    "text": "#213336",
+    "text_secondary": "#5F706A",
+    "text_hint": "#667872",
+    "background": "#F2F5F4",
+    "surface": "#FFFFFF",
+    "border": "#E1E8E5",
+    "accent": "#16796C",
+    "accent_hover": "#11685C",
+    "accent_pressed": "#0C554B",
+    "selected_background": "#E5F3EE",
+    "focus": "#16796C",
+    "success": "#167144",
+    "success_background": "#EAF5ED",
+    "waiting": "#77551B",
+    "waiting_background": "#FAF3E2",
+    "error": "#B23B3B",
+    "error_background": "#FCECEC",
+    "disabled_text": "#68756F",
+    "disabled_background": "#EDF0EE",
+    "navigation": "#203D38",
+    "navigation_text": "#CCE0D7",
+    "on_accent": "#FFFFFF"
+  },
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32
+  ],
+  "radius": {
+    "control": 7,
+    "panel": 12,
+    "message": 10
+  },
+  "font": {
+    "windows_families": [
+      "Microsoft YaHei UI",
+      "Segoe UI"
+    ],
+    "body_pt": 11,
+    "secondary_pt": 10,
+    "heading_pt": 18,
+    "web_body_px": 14,
+    "web_secondary_px": 12,
+    "line_height": 1.5
+  },
+  "icons": {
+    "size": 20,
+    "stroke": 1.7,
+    "style": "outline"
+  },
+  "opacity": {
+    "default": 1.0,
+    "optional_min": 0.85
+  },
+  "states": [
+    "default",
+    "hover",
+    "pressed",
+    "focus",
+    "selected",
+    "disabled",
+    "loading",
+    "offline",
+    "error",
+    "success",
+    "waiting"
+  ],
+  "implementation": "Canonical source exported to ui_design.py for Tk/Web chat. Other core pages and complete visual acceptance remain pending.",
+  "dark_colors": {
+    "text": "#E5EEE9",
+    "text_secondary": "#B2C3BA",
+    "text_hint": "#A6BBB0",
+    "background": "#15251F",
+    "surface": "#1E3028",
+    "border": "#395246",
+    "accent": "#86CDB3",
+    "accent_hover": "#9BDAC4",
+    "accent_pressed": "#65B296",
+    "selected_background": "#2C4B3C",
+    "focus": "#91DABB",
+    "success": "#8BD8AB",
+    "success_background": "#254632",
+    "waiting": "#E2C786",
+    "waiting_background": "#433922",
+    "error": "#EFA19F",
+    "error_background": "#4C2A2A",
+    "disabled_text": "#A9BBB0",
+    "disabled_background": "#2B3C33",
+    "navigation": "#101E18",
+    "navigation_text": "#CFE2D6",
+    "on_accent": "#15251F"
+  }
+}

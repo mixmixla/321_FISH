@@ -93,7 +93,7 @@ class SessionList(tk.Canvas):
     _HND_TAG = "slhnd"          # 手柄 tag（供 tag_bind 事件绑定）
 
     def __init__(self, parent, font, height=5 * 56, on_pick=None,
-                 avatars=None, layout="tg", on_act=None, on_avatar_dbl=None, **kw):
+                 avatars=None, layout="tg", on_act=None, on_avatar_dbl=None, scale=1.0, **kw):
         self._font = tkfont.Font(root=parent, font=font)
         # 手柄状态：None=未启用；dict 记录拖动区间（避免滚动条/滚轮干扰）
         self._hnd = None
@@ -102,6 +102,12 @@ class SessionList(tk.Canvas):
         # R交互：按布局密度覆盖行高/纵坐标/角标参数（实例属性遮蔽类常量）
         for _k, _v in self.LAYOUTS.get(layout, self.LAYOUTS["tg"]).items():
             setattr(self, _k, _v)
+        self._scale = max(0.5, float(scale))
+        for key in ('ROW_H', 'PAD', 'AVATAR', 'AV_GAP', 'NAME_Y', 'PREV_Y',
+                    'BADGE_H', 'BADGE_R', 'SECTION_H', 'SECTION_PAD',
+                    'ACT_W', 'ACT_GAP', 'ACT_R', 'HND_W', 'HND_PAD', 'HND_MIN_H'):
+            setattr(self, key, max(1, round(getattr(self, key) * self._scale)))
+        self._TEXT_L = self.PAD + self.AVATAR + self.AV_GAP
         family = self._font.actual("family")
         self._name_font = tkfont.Font(root=parent, font=(family, 10, "bold"))
         self._prev_font = tkfont.Font(root=parent, font=(family, 9))
@@ -120,7 +126,7 @@ class SessionList(tk.Canvas):
         kw.setdefault("bg", self._pal["bg"])
         kw.setdefault("highlightthickness", 0)
         kw.setdefault("relief", "flat")
-        super().__init__(parent, height=height, **kw)
+        super().__init__(parent, height=round(height * self._scale), **kw)
         self._on_pick = on_pick
         self._on_act = on_act        # R-：hover 快捷操作回调(i, 'read'|'archive'|'delete')
         self._on_avatar_dbl = on_avatar_dbl   # R68：双击头像回调(i)（窗口抖动）
@@ -273,9 +279,10 @@ class SessionList(tk.Canvas):
         self._last_font = tuple(font)
         self._font = tkfont.Font(root=self, font=font)
         family = self._font.actual("family")
-        self._name_font = tkfont.Font(root=self, font=(family, 10, "bold"))
-        self._prev_font = tkfont.Font(root=self, font=(family, 9))
-        self._time_font = tkfont.Font(root=self, font=(family, 9))
+        size = max(9, abs(int(self._font.cget('size'))))
+        self._name_font = tkfont.Font(root=self, font=(family, size, "bold"))
+        self._prev_font = tkfont.Font(root=self, font=(family, max(9, size-1)))
+        self._time_font = tkfont.Font(root=self, font=(family, max(9, size-1)))
         self._badge_font = tkfont.Font(root=self, font=(family, 10, "bold"))
         self._section_font = tkfont.Font(root=self, font=(family, 9, "bold"))
         self._avatar_font = (family, 9, "bold")
@@ -514,7 +521,7 @@ class SessionList(tk.Canvas):
         if sel:
             # Apple 风格：圆角蓝色选中高亮（内缩 2px）
             self._round_rect(2, y + 2, win_w - 2, y + self.ROW_H - 2,
-                             6, fill=self._pal["accent"])
+                             6, fill=self._pal.get("selected_bg", self._pal["accent"]))
         elif i == self._hover:
             # Apple 风格：圆角灰色 hover 高亮
             self._round_rect(2, y + 2, win_w - 2, y + self.ROW_H - 2,

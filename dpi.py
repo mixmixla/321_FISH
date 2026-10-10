@@ -54,8 +54,8 @@ def apply_early(enabled: bool = True) -> bool:
         user32 = ctypes.windll.user32
         if hasattr(user32, "SetProcessDpiAwarenessContext"):
             try:
-                # DPI_AWARENESS_CONTEXT_SYSTEM_AWARE = (HANDLE)-3
-                if user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-3)):
+                # SYSTEM_AWARE is -2; -3 is PER_MONITOR_AWARE, requiring DPI reflow.
+                if user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-2)):
                     return True
             except Exception:
                 pass
@@ -69,8 +69,10 @@ def apply_early(enabled: bool = True) -> bool:
         return False
 
 
-def fix_scaling(root) -> float:
+def fix_scaling(root, *, enabled=True) -> float:
     """root 建立后校正 tk scaling；返回缩放因子（dpi/96，非 Windows=1.0）。"""
+    if not enabled:
+        return 1.0
     dpi = _system_dpi()
     if os.name == "nt" and dpi > 0:
         try:

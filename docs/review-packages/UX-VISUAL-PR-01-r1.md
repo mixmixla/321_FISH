@@ -15,3 +15,12 @@
 [范围审查](../review-assets/UX-VISUAL-PR-01/scope-review.md)确认有限delta及描述边界；[公开资料审计](../review-assets/UX-VISUAL-PR-01/public-audit.md)未发现本增量秘密值/非合成截图。[阶段图片与当时源码SHA](../review-assets/UX-VISUAL-PR-01/stage-screenshots.md)保留真实版本差异，不当最终11pt/DPI/EXE对照。main中心历史保留，仅新增视觉/交付块，并从状态源再生任务清单。
 
 managed worktree创建持续creating、attach归属失败，未使用/修改/删除其checkout；实际候选在ignored目录独立clone完成，不改原HEAD/分支/业务dirty。提交和远端事实在完成后另补。
+
+## 实际PR交付（2026-10-10）
+
+- 明确42路径提交19e1fa10685e70abcc37c3ca23d161dc484e7ebf，369受测输入逐路径按Git实际filter映射与index一致；没有代码/测试修改。普通push codex/ux-visual-chat-20261010成功，remote HEAD一致、main保持7d6a98c。
+- 连接器创建返回403 Resource not accessible by integration；没有读取凭据或扩大权限。已有Chrome登录会话正常页面填写准确正文并选择Draft，实际创建[PR #8](https://github.com/mixmixla/321_FISH/pull/8)，随后read-only connector核open/draft=true/merged=false/base main/head19e1fa1，已attach当前聊天。
+- 领域原165P/1F/0skip/exit1保持。只读诊断核嵌套broken已打印SyntaxError/1 error in1.53s、empty已打印no tests ran，子进程未在3秒期限内结束，runner依真实timeout强制清理；为何未及时退出仍UNDETERMINED，不把历史r6绿替代或认定UI根因。
+- 后续本交付记录只更改资料/状态源及投影，不重新测试不变输入，不改Draft为ready，不merge/tag/Release/部署或上传二进制。原开发HEAD c864234/branch/应用测试与全部继承dirty保持，旧账号Goal paused。
+
+[结构化回执](../review-assets/UX-VISUAL-PR-01/delivery-receipt.json)保存创建身份和截图hash；截图仅本地，浏览器页面已保留为可查看结果。后继仍从当前视觉Task闭两导航MUST和门禁FAIL，再完成full/同版EXE/独立实际视觉及其他桌面页面，不将本次PR交付当产品接受。

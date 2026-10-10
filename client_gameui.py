@@ -829,6 +829,92 @@ def _score_chips(cv, w, y, items, accent):
 
 
 # ---------------------------------------------------------------------------
+# 主题 F6：阶段 / 轮次 / 计分 统一 HUD（雾岸 Token 同源）
+# 供顶部留白游戏（rps / calc24 / guess_number / drawguess 等）共用：左侧一枚
+# 「阶段·轮次」胶囊，右侧复用 _score_chips 排开计分小卡（我那张用强调色高亮）。
+# 胜负仍由 _turn_banner 的「🏆 {昵称} 获胜」标题约定统一呈现（30+ 处一致）。
+# ---------------------------------------------------------------------------
+_PHASE_LABEL = {
+    "idle": "准备", "setup": "准备", "waiting": "等待", "await_secret": "出题中",
+    "collecting": "进行中", "playing": "进行中", "answering": "作答中",
+    "guessing": "猜数中", "drawing": "作画中", "revealed": "揭晓",
+    "round_end": "本轮结束", "ended": "已结束", "finished": "已结束",
+}
+
+
+def _phase_label(ph):
+    """阶段码 → 中文标签；未知阶段原样回显，空值返回空串。纯函数。"""
+    if not ph:
+        return ""
+    return _PHASE_LABEL.get(str(ph), str(ph))
+
+
+def _hud_items(st, me, nick, max_chips=6):
+    """把任意游戏快照归一化成统一 HUD 数据（纯函数，无副作用）。
+
+    返回 (阶段文本, 计分项)：阶段文本形如「作答中 · 第 3 轮」（缺项自动省略，
+    轮次为 0 时不显示）；计分项为 [(标签, 数值, 是否我), ...]，按玩家序号升序、
+    最多 max_chips 项——我显示为「我」，其余取昵称前 5 字。
+    """
+    st = st or {}
+    label = _phase_label(st.get("status") or st.get("phase"))
+    rnd = st.get("round")
+    if rnd is None:
+        rnd = st.get("round_no")
+    if label and rnd:
+        phase_text = f"{label} · 第 {int(rnd)} 轮"
+    elif label:
+        phase_text = label
+    elif rnd:
+        phase_text = f"第 {int(rnd)} 轮"
+    else:
+        phase_text = ""
+    items = []
+    scores = st.get("scores") or {}
+    if isinstance(scores, dict) and scores:
+        try:
+            pairs = sorted(((int(u), v) for u, v in scores.items()),
+                           key=lambda kv: kv[0])
+        except (TypeError, ValueError):
+            pairs = []
+        for u, v in pairs[:max_chips]:
+            tag = "我" if u == me else str(nick(u))
+            if len(tag) > 6:
+                tag = tag[:5] + "…"
+            items.append((tag, v, u == me))
+    return phase_text, items
+
+
+def _status_hud(cv, w, y, st, me, nick, accent):
+    """F6 统一状态 HUD：左「阶段·轮次」胶囊 + 右计分小卡（复用 _score_chips）。
+    纯绘制，不读时钟、不持状态；数据缺失时静默省略对应一侧。
+    窄窗按可用宽度自右向左裁剪计分卡，避免与左侧胶囊重叠。"""
+    phase_text, items = _hud_items(st, me, nick)
+    left = 12
+    if phase_text:
+        tw = _text_w(phase_text)
+        hh = 24
+        x1 = 12 + tw + 38
+        _rrect(cv, 12, y - hh / 2, x1, y + hh / 2, hh / 2,
+               _shade(accent, 0.86), _shade(accent, -0.18))
+        cv.create_oval(25, y - 3.5, 32, y + 3.5, fill=_shade(accent, -0.25),
+                       outline="")
+        _text(cv, 38, y, phase_text, _TXT, _FONT_B, anchor="w")
+        left = x1 + 10
+    if items:
+        cum = w - 12
+        keep = []
+        for tag, val, is_me in items:
+            cwid = _text_w(f"{tag} {val}") + 26
+            if cum - cwid < left:
+                break
+            cum -= cwid
+            keep.append((tag, val, is_me))
+        if keep:
+            _score_chips(cv, w, y, keep, accent)
+
+
+# ---------------------------------------------------------------------------
 # 主题 D1：统一卡面 / 牌背规范（圆角·柔影·背面纹样·选中描边）
 # 供 uno / blackjack / rummikub / davinci / lovelove / nimmt / halloween /
 # matchpairs 共用，使桌面各卡牌游戏观感统一，并与「雾岸」Token 同源。
@@ -2407,6 +2493,7 @@ def _p_rps(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     else:
         title += "　揭晓中…"
     _turn_banner(cv, w, 46, title, accent)
+    _status_hud(cv, w, 68, st, me, nick, accent)      # F6：阶段·轮次 + 计分
     icons = ["✊", "✋", "✌️"]
     sizes = [("石头", 0), ("剪刀", 1), ("布", 2)]
     gap = 90
@@ -2472,6 +2559,7 @@ def _p_calc24(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     else:
         title += f"　第 {st.get('round',1)} 轮"
     _turn_banner(cv, w, 46, title, accent)
+    _status_hud(cv, w, 68, st, me, nick, accent)      # F6：阶段·轮次 + 计分
     cards = st.get("cards") or []
     cw, ch = 86, 120
     total = len(cards) * (cw + 16) - 16
@@ -2483,10 +2571,6 @@ def _p_calc24(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         _text(cv, cx + cw / 2, h / 2 - 60 + ch / 2, str(v), "#333", _FONT_BIG)
     _text(cv, w / 2, h / 2 - 95, "用 + - × ÷ 凑出 24（答案写进下方输入框）",
           _MUTED, _FONT_F)
-    sc = st.get("scores") or {}
-    if sc:
-        _text(cv, w / 2, h - 40, "积分：" + "　".join(
-            f"{nick(int(u))}:{v}" for u, v in sorted(sc.items())), _MUTED, _FONT_F)
 
 
 @_register("coc")
@@ -4053,6 +4137,7 @@ def _p_guess_number(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     if owner is not None:
         title += f"　出题者：{nick(owner)}" + ("（你）" if owner == me else "")
     _turn_banner(cv, w, 46, title, accent)
+    _status_hud(cv, w, 68, st, me, nick, accent)      # F6：阶段·轮次 + 计分
     low, high = st.get("low"), st.get("high")
     if low is None or high is None:
         low, high = 1, 100
@@ -4070,16 +4155,6 @@ def _p_guess_number(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             lg.get("dir"), "")
         _text(cv, w / 2, 210, f"上一位 {nick(lg['uid'])} 猜 {lg.get('val')}：{dir_txt}",
               "#333", _FONT_B)
-    # 积分面板
-    scores = st.get("scores") or {}
-    if scores:
-        y = 270
-        _text(cv, w / 2, y, "积分榜", _MUTED, _FONT_F)
-        y += 24
-        for u, v in sorted(scores.items(), key=lambda kv: -kv[1]):
-            hl = "#c0392b" if int(u) == me else "#333"
-            _text(cv, w / 2, y, f"{nick(int(u))}：{v}", hl, _FONT_B)
-            y += 26
 
 
 @_register("drawguess")
@@ -4094,6 +4169,7 @@ def _p_drawguess(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     elif drawer is not None:
         title += f"　画手：{nick(drawer)}" + ("（你）" if drawer == me else "")
     _turn_banner(cv, w, 46, title, accent)
+    _status_hud(cv, w, 58, st, me, nick, accent)      # F6：阶段·轮次 + 计分
     # 画布区域：统一 400×300 逻辑坐标（与 Web 端一致），等比缩放并居中；
     # 命中反算见 handle_drag，保证桌面/网页两端笔画坐标可互通。
     canvas_x, canvas_y, canvas_w, canvas_h = 14, 70, w - 28, h - 150
@@ -4133,11 +4209,7 @@ def _p_drawguess(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         if gy is not None:
             _text(cv, 14, 60 + canvas_h + 10, f"已猜中：{nick(gy)}", "#37a25f",
                   _FONT_B, anchor="w")
-    # 猜词日志 / 积分
-    scores = st.get("scores") or {}
-    _text(cv, 14, 60 + canvas_h + 30, "积分：" + "　".join(
-        f"{nick(int(u))}:{v}" for u, v in sorted(scores.items())),
-        "#555", (_FONT_F[0], 9), anchor="w")
+    # 猜词日志（计分已由顶部 F6 HUD 统一呈现）
     log = st.get("guess_log") or []
     if log:
         last = log[-2:]

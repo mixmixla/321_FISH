@@ -425,3 +425,68 @@ def test_event_draw_resets_on_change_and_terminates():
     cv.n = 0
     cu._g_draw_event(cv, ui, 101.0 + cu._G_EV_DUR + 0.5, (80, 90), "eat", 40)
     assert cv.n == 0                                  # 寿命结束（halo 归零）→ 不再绘制
+
+
+# -------- F6 阶段/轮次/计分统一组件：归一化 + HUD 绘制（全 headless）--------
+
+def test_phase_label_maps_known_and_passthrough():
+    """F6：已知阶段码 → 中文标签；未知原样回显；空值返回空串。"""
+    assert cu._phase_label("answering") == "作答中"
+    assert cu._phase_label("round_end") == "本轮结束"
+    assert cu._phase_label("collecting") == "进行中"
+    assert cu._phase_label("weird_phase") == "weird_phase"   # 未知标签原样回显
+    assert cu._phase_label("") == "" and cu._phase_label(None) == ""
+
+
+def test_hud_items_normalizes_phase_round_and_scores():
+    """F6：快照归一化 —— 阶段·轮次文本正确、计分项升序且标记我、越界裁剪。"""
+    nick = lambda u: f"P{u}"
+    st = {"status": "answering", "round": 3, "scores": {8: 1, 7: 2}}
+    phase_text, items = cu._hud_items(st, 7, nick)
+    assert phase_text == "作答中 · 第 3 轮"
+    assert items == [("我", 2, True), ("P8", 1, False)]      # 按玩家序号升序
+    # 轮次为 0（rps 未开赛）→ 只显示阶段；缺轮次走 round_no 回退
+    assert cu._hud_items({"status": "collecting", "round": 0}, 7, nick)[0] == "进行中"
+    assert cu._hud_items({"phase": "playing", "round_no": 5}, 7, nick)[0] == "进行中 · 第 5 轮"
+    assert cu._hud_items({}, 7, nick) == ("", [])
+    # 计分项封顶 6 个；长昵称截断为前 5 字 + 省略号；非字典 scores 静默忽略
+    many = {"scores": {u: u for u in range(10)}}
+    assert len(cu._hud_items(many, 0, nick)[1]) == 6
+    assert cu._hud_items({"scores": {7: 1}}, 0, lambda u: "超级长昵称名字")[1] == \
+        [("超级长昵称…", 1, False)]
+    assert cu._hud_items({"scores": [1, 2]}, 7, nick)[1] == []
+
+
+def test_status_hud_draws_pill_and_chips_and_fits_narrow():
+    """F6：HUD 左画「阶段·轮次」胶囊、右画计分小卡；窄窗按宽度裁剪计分卡不重叠。"""
+    class _Canvas:                       # 最小画布桩：只记录文本，不实例化 tk
+        def __init__(self):
+            self.texts = []
+
+        def create_polygon(self, *a, **k):
+            pass
+
+        def create_line(self, *a, **k):
+            pass
+
+        def create_oval(self, *a, **k):
+            pass
+
+        def create_text(self, *a, **k):
+            self.texts.append(k.get("text"))
+
+    nick = lambda u: f"P{u}"
+    st = {"status": "answering", "round": 2, "scores": {7: 3, 8: 1}}
+    cv = _Canvas()
+    cu._status_hud(cv, 600, 68, st, 7, nick, "#c99a6d")
+    assert "作答中 · 第 2 轮" in cv.texts           # 左侧阶段·轮次胶囊
+    assert "我 3" in cv.texts and "P8 1" in cv.texts  # 右侧计分小卡
+    # 极窄窗：胶囊占满宽度 → 计分卡被整体裁掉，不溢出、不报错
+    cv2 = _Canvas()
+    cu._status_hud(cv2, 150, 68, st, 7, nick, "#c99a6d")
+    assert "作答中 · 第 2 轮" in cv2.texts
+    assert all("P8" not in t and "我 3" not in t for t in cv2.texts)
+    # 空快照：静默不绘制任何文本
+    cv3 = _Canvas()
+    cu._status_hud(cv3, 600, 68, {}, 7, nick, "#c99a6d")
+    assert cv3.texts == []

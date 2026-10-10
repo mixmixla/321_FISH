@@ -2327,10 +2327,42 @@ def _p_rps(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     if subm:
         _text(cv, w / 2, y - 100, "已出拳：" + "　".join(nick(int(u)) for u in subm),
               _MUTED, _FONT_F)
-    # 最近战报
-    matches = st.get("matches")
-    if matches:
-        _text(cv, w / 2, h - 30, "上轮：请见日志", _MUTED, _FONT_F)
+    # 最近战报（对战结果可视化：逐对呈现双方出拳与胜负，替代原「请见日志」）
+    matches = st.get("matches") or []
+    byes = st.get("byes") or []
+    if matches or byes:
+        rnd = st.get("round") or 0
+        top = y + 104
+        row_h = 44
+        sx = min(1.0, w / 560.0)          # 横向偏移随画布宽度缩放，窄窗不溢出
+        _text(cv, w / 2, top - 24, f"上轮战报 · 第 {rnd} 轮", _MUTED, _FONT_B)
+        rows = [("m", m) for m in matches] + [("b", u) for u in byes]
+        avail = max(1, int((h - top - 14) / row_h))   # 只画放得下的行，剩余折叠
+        for i, (kind, item) in enumerate(rows[:avail]):
+            ry = top + i * row_h
+            if kind == "b":
+                _text(cv, w / 2, ry, f"{nick(int(item))} 轮空（本轮无对手）",
+                      _MUTED, _FONT_F)
+                continue
+            a, b, wu = item.get("a"), item.get("b"), item.get("winner")
+            ca, cb = item.get("ca", -1), item.get("cb", -1)
+            ga = "－" if ca == -1 else icons[ca]
+            gb = "－" if cb == -1 else icons[cb]
+            win_a, win_b = (wu == a), (wu == b)
+            na = ("🏆 " if win_a else "") + nick(int(a))
+            nb = nick(int(b)) + (" 🏆" if win_b else ("（平）" if wu == -1 else ""))
+            _text(cv, w / 2 - 96 * sx, ry, na, _OK if win_a else _MUTED,
+                  _FONT_B, anchor="e")
+            _text(cv, w / 2 - 44 * sx, ry, ga, _WHITE if win_a else _MUTED,
+                  (_FONT_BIG[0], 16))
+            _text(cv, w / 2, ry, "⚔", _MUTED, _FONT_F)
+            _text(cv, w / 2 + 44 * sx, ry, gb, _WHITE if win_b else _MUTED,
+                  (_FONT_BIG[0], 16))
+            _text(cv, w / 2 + 96 * sx, ry, nb, _OK if win_b else _MUTED,
+                  _FONT_B, anchor="w")
+        rest = len(rows) - avail
+        if rest > 0:
+            _text(cv, w / 2, top + avail * row_h, f"…另有 {rest} 场", _MUTED, _FONT_F)
 
 
 @_register("calc24")

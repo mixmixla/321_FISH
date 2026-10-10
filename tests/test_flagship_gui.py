@@ -86,6 +86,46 @@ def test_flagship_canvas_real_tk_click_and_private_feedback():
         root.destroy()
 
 
+def test_rps_match_results_render_real_tk():
+    """F4：rps 有战报（matches/byes）时渲染对战结果可视化——胜负/平局/轮空
+    三类行均绘制且不抛异常；空战报时不再出现「请见日志」占位。"""
+    try:
+        root = tk.Tk()
+    except tk.TclError as exc:
+        pytest.skip(f"Tk unavailable: {exc}")
+    root.geometry("760x600+40+40")
+    root.deiconify()
+    cv = tk.Canvas(root, width=560, height=460, highlightthickness=0)
+    cv.pack(fill="both", expand=True)
+    try:
+        root.update_idletasks()
+        root.update()
+        st = {
+            "game": "rps", "status": "collecting", "round": 3,
+            "submitted": [7], "players": [7, 8, 9, 10, 11],
+            "scores": {7: 1, 8: 1, 9: 0, 10: 0, 11: 0},
+            "matches": [
+                {"a": 7, "b": 8, "ca": 0, "cb": 1, "winner": 8},     # 胜负
+                {"a": 9, "b": 10, "ca": 2, "cb": 2, "winner": -1},   # 平局
+            ],
+            "byes": [11],                                            # 轮空
+        }
+        ui = {"me": 7}
+        client_gameui.render(
+            cv, "rps", st, 7, lambda uid: f"P{uid}",
+            lambda *a: None, lambda: None, ui, None,
+            cv.winfo_width(), cv.winfo_height())
+        root.update()
+        texts = [str(cv.itemcget(it, "text")) for it in cv.find_all()
+                 if cv.type(it) == "text"]
+        blob = "\n".join(texts)
+        assert "上轮战报" in blob                 # 结果面板出现
+        assert "🏆" in blob and "（平）" in blob and "轮空" in blob
+        assert "请见日志" not in blob             # 旧的占位文案已移除
+    finally:
+        root.destroy()
+
+
 def _fake_game_core(game="gomoku"):
     size = 15 if game == "gomoku" else None
     board = ([[0] * 15 for _ in range(15)] if game == "gomoku"

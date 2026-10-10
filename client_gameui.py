@@ -1670,6 +1670,39 @@ def _g_kalah_pit_change(prev, cur):
     return None
 
 
+def _g_kalah_sow_plan(prev_last, cur_last, skip_of_pid):
+    """判断是否出现一次新的撒播：cur_last=(pid, hole, last, ...)。
+    与 prev_last 不同且有效 → 返回 (hole, last, skip_store)；否则 None。纯函数。"""
+    if not cur_last or len(cur_last) < 3:
+        return None
+    if prev_last is not None and tuple(prev_last) == tuple(cur_last):
+        return None
+    pid, hole, last = cur_last[0], cur_last[1], cur_last[2]
+    if hole is None or last is None:
+        return None
+    skip = (skip_of_pid or {}).get(pid)
+    if skip is None:
+        return None
+    return (int(hole), int(last), int(skip))
+
+
+def _g_kalah_sow_path(start, last, skip_store, n=14):
+    """撒播落子序列：从 start 的下一格起逐格前进、跳过 skip_store，直到抵达 last（含）。
+    last==start 或数据异常（不可达）返回空列表。纯函数，供逐洞动画与单测使用。"""
+    if last is None or start is None or last == start:
+        return []
+    seq = []
+    idx = int(start)
+    for _ in range(n * 4):                      # 安全上限，防死循环
+        idx = (idx + 1) % n
+        if idx == skip_store:
+            continue
+        seq.append(idx)
+        if idx == last:
+            return seq
+    return []
+
+
 def _g_kalah_board_fx(cv, ui, now, cells, a_holes, b_holes, holeR, breathing,
                       last_center):
     """kalah 板面动效（纯时间推导，不做落子粒子）：
@@ -1683,11 +1716,11 @@ def _g_kalah_board_fx(cv, ui, now, cells, a_holes, b_holes, holeR, breathing,
                        hy + rr * 1.25, fill="", outline=_shade("#ffd166", 0.85),
                        width=1, stipple=_g_stipple(0.05 + 0.10 * breathing),
                        tags="_k_glow")
-    # 2) 子数变化 → 小脉冲（复用 _g_halo 膨胀渐隐）
+    # 2) 子数变化 → 小脉冲（复用 _g_halo 膨胀渐隐）；已有逐洞撒播动画时让位，不重复
     prev = ui.get("_k_counts")
     gi = _g_kalah_pit_change(prev, cells)
     ui["_k_counts"] = tuple(cells)
-    if gi is not None:
+    if gi is not None and not ui.get("_k_sow"):
         pc = _g_kalah_pit_center(gi, a_holes, b_holes)
         if pc is not None:
             ui["_k_pulse"] = {"cx": pc[0], "cy": pc[1], "t0": now}
@@ -1709,6 +1742,53 @@ def _g_kalah_board_fx(cv, ui, now, cells, a_holes, b_holes, holeR, breathing,
                        fill="", outline="#ffd75e", width=2,
                        stipple=_g_stipple(0.25 + 0.35 * breathing),
                        tags="_k_last")
+
+
+def _g_kalah_sow_fx(cv, ui, now, holectr, holeR, start_center):
+    """F5：撒播逐洞动画。按 ui['_k_sow'] 的落子序列逐洞呈现——一颗种子在相邻坑间
+    插值移动，每到一坑发一次落地脉冲并留下金色种子点；超过总时长自动清理状态。
+    纯时间推导（禁 after/线程），holectr 为 {全局坑下标: (cx, cy)}。"""
+    sow = ui.get("_k_sow")
+    if not sow:
+        return
+    seq = sow.get("seq") or ()
+    STEP = 0.09
+    t0 = sow.get("t0", now)
+    el = now - t0
+    total = len(seq) * STEP
+    if el > total + 0.2:
+        ui.pop("_k_sow", None)
+        return
+    # 已落下的种子点 + 落地脉冲（按到达时刻逐洞出现）
+    for i, gi in enumerate(seq):
+        t_land = t0 + i * STEP
+        if now < t_land:
+            break
+        c = holectr.get(gi)
+        if c is None:
+            continue
+        PR, Pa = _g_halo(now, t_land, 0.30, holeR * 0.7)
+        if Pa > 0:
+            cv.create_oval(c[0] - PR, c[1] - PR, c[0] + PR, c[1] + PR,
+                           fill="", outline="#ffc93c", width=2,
+                           stipple=_g_stipple(Pa), tags="_k_sow")
+        sr = max(2.5, holeR * 0.20)
+        cv.create_oval(c[0] - sr, c[1] - sr, c[0] + sr, c[1] + sr,
+                       fill="#ffd166", outline="#e0a800", width=1,
+                       tags="_k_sow")
+    # 移动中的种子：在「上一坑 → 当前坑」之间插值
+    if 0 <= el < total:
+        f = el / STEP
+        seg = int(f)
+        frac = f - seg
+        b = holectr.get(seq[seg])
+        a = start_center if seg == 0 else holectr.get(seq[seg - 1])
+        if a and b:
+            mx = a[0] + (b[0] - a[0]) * frac
+            my = a[1] + (b[1] - a[1]) * frac
+            mr = max(3.0, holeR * 0.30)
+            cv.create_oval(mx - mr, my - mr, mx + mr, my + mr, fill="#ffe08a",
+                           outline="#b8860b", width=1, tags="_k_sow")
 
 
 @_register("gomoku")
@@ -1995,8 +2075,26 @@ def _p_kalah(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             lastc = a_holes[_hole]
         elif _pid == p1 and 0 <= _hole < 6:
             lastc = b_holes[_hole]
+    # F5：检测新撒播 → 建立逐洞落子序列（先于板面 fx，便于抑制单坑脉冲）
+    holectr = {}
+    for _i in range(6):
+        holectr[_i] = a_holes[_i]
+        holectr[8 + _i] = b_holes[_i]
+    _skip_of_pid = {}
+    if p0 is not None:
+        _skip_of_pid[p0] = 7      # p0 己方库=6，撒播跳过对方库 7
+    if p1 is not None:
+        _skip_of_pid[p1] = 6      # p1 己方库=7，撒播跳过对方库 6
+    _plan = _g_kalah_sow_plan(ui.get("_k_lastmove"), _lmv, _skip_of_pid)
+    ui["_k_lastmove"] = tuple(_lmv) if _lmv else None
+    if _plan is not None:
+        _seq = _g_kalah_sow_path(_plan[0], _plan[1], _plan[2])
+        if _seq:
+            ui["_k_sow"] = {"seq": tuple(_seq), "t0": now}
     _g_kalah_board_fx(cv, ui, now, cells, a_holes, b_holes, holeR, breathing,
                       lastc)
+    # 逐洞撒播动画（从被取空的起点坑出发）
+    _g_kalah_sow_fx(cv, ui, now, holectr, holeR, lastc)
     # 胜利：在获胜方一侧(坑位)撒金色星点 + 🏆 光环
     on_win = st.get("winner_uid") is not None
     w_anchors = []

@@ -210,6 +210,68 @@ def test_kalah_win_stars_capped_on_side():
     assert drawn_alive <= cu._G_PART_WIN_MAX
 
 
+# -------- F5 撒播逐洞动画：撒播计划 + 落子路径 + 逐洞推进（全 headless）--------
+
+def test_kalah_sow_plan_detects_new_move_only():
+    """F5：撒播计划仅在新 last_move 出现时触发；同值/无效/未知玩家一律返回 None。"""
+    skip = {1: 7, 2: 6}
+    assert cu._g_kalah_sow_plan(None, None, skip) is None
+    assert cu._g_kalah_sow_plan(None, (1, 0, 4, False, 0), skip) == (0, 4, 7)
+    prev = (1, 0, 4, False, 0)
+    assert cu._g_kalah_sow_plan(prev, prev, skip) is None            # 同值不重放
+    assert cu._g_kalah_sow_plan(prev, (2, 3, 9, False, 0), skip) == (3, 9, 6)
+    assert cu._g_kalah_sow_plan(prev, (9, 0, 4, False, 0), skip) is None   # 未知玩家
+    assert cu._g_kalah_sow_plan(prev, (1, None, 4, False, 0), skip) is None
+    assert cu._g_kalah_sow_plan(prev, (1, 0, None, False, 0), skip) is None
+    assert cu._g_kalah_sow_plan(prev, (1, 0), skip) is None          # 字段不足
+
+
+def test_kalah_sow_path_skips_opponent_store():
+    """F5：撒播路径逐格前进、跳过对方库（p0 己方库 6 → 跳过 7；p1 反之）。"""
+    assert cu._g_kalah_sow_path(3, 4, 7) == [4]              # 单步
+    assert cu._g_kalah_sow_path(3, 8, 7) == [4, 5, 6, 8]     # 6 为己方库可落，7 被跳过
+    assert cu._g_kalah_sow_path(8, 11, 6) == [9, 10, 11]     # B 侧直行
+    assert cu._g_kalah_sow_path(13, 1, 6) == [0, 1]          # 绕到 A 侧、跳过 6
+    assert cu._g_kalah_sow_path(3, 3, 7) == []               # 起点==终点：单圈无法表达
+    assert cu._g_kalah_sow_path(None, 4, 7) == []
+    assert cu._g_kalah_sow_path(3, None, 7) == []
+
+
+def test_kalah_sow_draw_progresses_and_cleans_ui():
+    """F5：逐洞撒播绘制 —— 随 elapsed 推进落子逐洞增多；超过总时长清理 ui 且不残留。
+    最小画布桩，headless，不实例化 tk。"""
+    class _Canvas:
+        def __init__(self):
+            self.ovals = []
+
+        def create_oval(self, *a, **k):
+            self.ovals.append(k.get("tags"))
+
+    holectr = {i: (100 + i * 40, 400) for i in range(6)}
+    holectr.update({8 + j: (100 + j * 40, 80) for j in range(6)})
+    ui = {"_k_sow": {"seq": (4, 5, 6, 8), "t0": 100.0}}
+
+    # 首帧（elapsed=0）：仅 1 坑落地
+    cv0 = _Canvas()
+    cu._g_kalah_sow_fx(cv0, ui, 100.0, holectr, 26, (100, 400))
+    assert ui.get("_k_sow") is not None
+    n0 = sum(1 for t in cv0.ovals if t == "_k_sow")
+    # 中段（elapsed≈2 步）：更多坑落地
+    cv1 = _Canvas()
+    cu._g_kalah_sow_fx(cv1, ui, 100.0 + 2 * 0.09 + 0.01, holectr, 26, (100, 400))
+    n1 = sum(1 for t in cv1.ovals if t == "_k_sow")
+    assert n1 > n0
+    # 超寿命：清理状态、本帧不再绘制
+    cv2 = _Canvas()
+    cu._g_kalah_sow_fx(cv2, ui, 100.0 + 4 * 0.09 + 0.5, holectr, 26, (100, 400))
+    assert "_k_sow" not in ui
+    assert cv2.ovals == []
+    # 无动画 state：静默返回，不碰画布也不报错
+    cv3 = _Canvas()
+    cu._g_kalah_sow_fx(cv3, {}, 100.0, holectr, 26, None)
+    assert cv3.ovals == []
+
+
 # -------- 线一传统棋类：公共棋子辉光路径（一处验证，覆盖 xiangqi/chess/go/
 # halma/checkers/shogi/junqi/tictactoe 共用 _g_glow_stipple 与 _stone/_disc）-----
 

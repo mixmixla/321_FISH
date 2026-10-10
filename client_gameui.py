@@ -403,6 +403,42 @@ def _fit(n, w, h, header=46, pad=14):
     return ox, oy, cell
 
 
+def _star_points(n):
+    """主流星位（hoshi）0-indexed 坐标：19 路 9 星（角/边中点/天元）；
+    15 路五子棋 5 星；13/9 路围棋 5 星；其余尺寸仅天元。纯函数。"""
+    if n >= 19:
+        edge, mid = 3, n // 2
+        return [(x, y) for x in (edge, mid, n - 1 - edge)
+                for y in (edge, mid, n - 1 - edge)]
+    if n == 15:
+        return [(3, 3), (11, 3), (3, 11), (11, 11), (7, 7)]
+    if n == 13:
+        return [(3, 3), (9, 3), (3, 9), (9, 9), (6, 6)]
+    if n == 9:
+        return [(2, 2), (6, 2), (2, 6), (6, 6), (4, 4)]
+    return [(n // 2, n // 2)]
+
+
+def _draw_hoshi(cv, ox, oy, cell, n, ink="#6b4423", r=2.5):
+    """按 _star_points 在交叉点绘制实心星位圆点。"""
+    for sx, sy in _star_points(n):
+        cv.create_oval(ox + sx * cell - r, oy + sy * cell - r,
+                       ox + sx * cell + r, oy + sy * cell + r,
+                       fill=ink, outline="")
+
+
+def _board_coords(cv, ox, oy, cell, n, ink=None, mg=10):
+    """在棋盘上/左外侧标注坐标：列用字母（跳过 I，围棋/棋类惯例），
+    行用 1..n 自上而下。mg 为标签与最外线间距，须小于底板留白以免越界。"""
+    ink = _MUTED if ink is None else ink
+    letters = "ABCDEFGHJKLMNOPQRSTUVWXYZ"
+    fnt = (_FONT_F[0], 8)
+    for i in range(n):
+        lab = letters[i] if i < len(letters) else str(i + 1)
+        _text(cv, ox + i * cell, oy - mg, lab, ink, fnt)
+        _text(cv, ox - mg, oy + i * cell, str(i + 1), ink, fnt)
+
+
 def _turn_banner(cv, w, header_h, text, accent, ypad=8):
     """顶栏精致化：柔和渐变卡 + 顶/底描边 + 标题投影。"""
     base = accent
@@ -1399,15 +1435,17 @@ def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     ox, oy, cell = _fit(n, w, h, header=46)
     ui.update(ox=ox, oy=oy, cell=cell, n=n, rows=n, cols=n, game="gomoku")
     # 棋盘（纸面木纹底）加柔和投影
-    _soft_shadow(cv, ox - 12, oy - 8, ox + n * cell + 8, oy + n * cell + 8,
+    _soft_shadow(cv, ox - 18, oy - 14, ox + n * cell + 14, oy + n * cell + 14,
                  6, 5)
-    _paper_board(cv, ox - 10, oy - 10, ox + n * cell + 10, oy + n * cell + 10,
+    _paper_board(cv, ox - 16, oy - 16, ox + n * cell + 16, oy + n * cell + 16,
                  base="#f6f3e9", edge="#c8c2b0")
     for i in range(n):
         cv.create_line(ox, oy + i * cell, ox + (n - 1) * cell, oy + i * cell,
                        fill="#8a5a2b")
         cv.create_line(ox + i * cell, oy, ox + i * cell, oy + (n - 1) * cell,
                        fill="#8a5a2b")
+    _draw_hoshi(cv, ox, oy, cell, n, ink="#6b4423")
+    _board_coords(cv, ox, oy, cell, n, ink="#a08b6a", mg=9)
     board = st.get("board") or []
     last = st.get("last_move")
     if isinstance(last, list) and len(last) == 2:
@@ -1802,10 +1840,8 @@ def _p_go(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         cv.create_line(ox + i * cell, oy, ox + i * cell, oy + (n - 1) * cell,
                        fill="#7a5a2a")
     if n in (9, 13, 19):
-        for y in (3, n - 4 if n > 9 else n // 2):
-            for x in (3, n - 4 if n > 9 else n // 2):
-                cv.create_oval(ox + x * cell - 2, oy + y * cell - 2,
-                               ox + x * cell + 2, oy + y * cell + 2, fill="#7a5a2a")
+        _draw_hoshi(cv, ox, oy, cell, n, ink="#7a5a2a")
+    _board_coords(cv, ox, oy, cell, n, ink="#8a6a34", mg=max(9, cell * 0.4))
     cv.create_text(ox - 14, oy + n * cell + cell / 2,
                    text="点交叉点落子 · 过一手", anchor="w", font=(_FONT_F[0], 9),
                    fill=_MUTED)
@@ -1992,8 +2028,8 @@ def _p_calc24(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     x0 = (w - total) / 2
     for i, v in enumerate(cards):
         cx = x0 + i * (cw + 16)
-        cv.create_rectangle(cx, h / 2 - 60, cx + cw, h / 2 - 60 + ch,
-                            fill="#fff", outline="#ccc", width=2)
+        _card_face(cv, cx, h / 2 - 60, cx + cw, h / 2 - 60 + ch, face="#ffffff",
+                   edge="#cccccc", r=_UXR_BIG)
         _text(cv, cx + cw / 2, h / 2 - 60 + ch / 2, str(v), "#333", _FONT_BIG)
     _text(cv, w / 2, h / 2 - 95, "用 + - × ÷ 凑出 24（答案写进下方输入框）",
           _MUTED, _FONT_F)

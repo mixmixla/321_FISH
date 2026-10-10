@@ -37,6 +37,9 @@ class OthelloGame(BaseGame):
             state["passing"] = True
         if self.scores:
             state["scores"] = dict(self.scores)
+        if self.winner_uid is None and self.scores is None:
+            # 合法落点提示：当前行动玩家的所有可夹子空格 [[x, y], ...]
+            state["hints"] = self._legal_cells(self.turn)
         return state
 
     def act(self, uid: int, action: dict) -> list:
@@ -106,6 +109,17 @@ class OthelloGame(BaseGame):
                 if self._flip_count(x, y, stone, opp):
                     return True
         return False
+
+    def _legal_cells(self, index: int) -> list:
+        """当前玩家（players[index]）所有合法落点 [[x, y], ...]"""
+        stone = index + 1
+        opp = 3 - stone
+        out = []
+        for y in range(SIZE):
+            for x in range(SIZE):
+                if self.board[y][x] == 0 and self._flip_count(x, y, stone, opp):
+                    out.append([x, y])
+        return out
 
     def _flip_count(self, x: int, y: int, stone: int, opp: int) -> int:
         total = 0

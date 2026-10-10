@@ -1445,6 +1445,19 @@ def _g_draw_last(cv, ui, now, key, cell):
                        outline="", stipple=_g_stipple(a), tags="_g_last_parts")
 
 
+def _g_hint_marks(cv, marks, cell):
+    """合法落点 / 可跳点提示：金色虚线空心环 + 中心点（与最近一步实心光晕区分）。
+    marks = [(px, py), ...]，各候选格像素中心。"""
+    for (px, py) in marks:
+        r = cell * 0.30
+        ob = _shade("#ffd75e", -0.05)
+        cv.create_oval(px - r, py - r, px + r, py + r, fill="",
+                       outline=ob, width=2, dash=(3, 3), tags="_g_hint")
+        d = cell * 0.09
+        cv.create_oval(px - d, py - d, px + d, py + d, fill=ob, outline="",
+                       tags="_g_hint")
+
+
 def _g_draw_win(cv, ui, now, w, anchors, breathing, on):
     """胜利动效：在棋子锚点上撒 ≤48 粒金色星点，循环复用持续飘升；
     顶栏 🏆 加一圈呼吸辉光。on=False（未获胜/平局）时清空状态。"""
@@ -1787,6 +1800,13 @@ def _p_othello(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                   _WHITE, _FONT_F, anchor="ne")
     # ---- 动效：落子光晕/微粒子 + 胜利星点（同 gomoku 范式，数量封顶）----
     on_win = st.get("winner_uid") is not None
+    # 合法落点提示：仅当前行动玩家、且为我方出手时标注可夹子空格
+    if me is not None and st.get("turn_uid") == me and not on_win:
+        _g_hint_marks(
+            cv,
+            [(ox + int(hx) * cell + cell / 2, oy + int(hy) * cell + cell / 2)
+             for hx, hy in (st.get("hints") or [])],
+            cell)
     _g_draw_last(cv, ui, now, lastpx, cell)
     _g_draw_win(cv, ui, now, w, stone_anchors, breathing, on_win)
     _anim_need(ui, repaint, gap=0.04, cap=180)
@@ -2579,6 +2599,15 @@ def _p_halma(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                                cx + cell * 0.46, cy + cell * 0.46,
                                outline=_SEL, width=3)
     # ---- 动效：落子光晕/微粒子 + 胜利星点（纯时间推导，数量封顶）----
+    # 合法落点提示：选中己方子时高亮可直移/可跳目标
+    hints = st.get("hints") or {}
+    if me is not None and st.get("turn_uid") == me and sel:
+        tgt = hints.get(f"{sel[0]},{sel[1]}") or []
+        _g_hint_marks(
+            cv,
+            [(ox + int(tx) * cell + cell / 2, oy + int(ty) * cell + cell / 2)
+             for tx, ty in tgt],
+            cell)
     _g_draw_last(cv, ui, now, lastpx, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
@@ -2640,6 +2669,15 @@ def _p_checkers(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                                cx + cell * 0.46, cy + cell * 0.46,
                                outline=_SEL, width=3)
     # ---- 动效：落子光晕/微粒子 + 胜利星点（纯时间推导，数量封顶）----
+    # 合法落点提示：选中己方子时高亮可走/可跳（含吃子落点）
+    hints = st.get("hints") or {}
+    if me is not None and st.get("turn_uid") == me and sel:
+        tgt = hints.get(f"{sel[0]},{sel[1]}") or []
+        _g_hint_marks(
+            cv,
+            [(ox + int(tx) * cell + cell / 2, oy + int(ty) * cell + cell / 2)
+             for tx, ty in tgt],
+            cell)
     _g_draw_last(cv, ui, now, lastpx, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)

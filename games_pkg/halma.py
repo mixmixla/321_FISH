@@ -134,11 +134,24 @@ class HalmaGame(BaseGame):
         self.turn = (self.turn + 1) % self.n
         return msgs
 
+    # ---- 提示辅助 ----
+    def _targets(self, x, y):
+        """(x,y) 上棋子的合法落点 [[tx, ty], ...]：直移一格（空）+ 隔一子直跳（空）"""
+        out = []
+        for dx, dy in DIRS:
+            nx, ny = x + dx, y + dy
+            if (nx, ny) in VALID and (nx, ny) not in self.board:
+                out.append([nx, ny])
+            jx, jy = x + dx * 2, y + dy * 2
+            if (jx, jy) in VALID and (jx, jy) not in self.board and (nx, ny) in self.board:
+                out.append([jx, jy])
+        return out
+
     def snapshot(self):
         grid = [[0] * N for _ in range(N)]
         for (x, y), (p, arm) in self.board.items():
             grid[y][x] = p
-        return {
+        state = {
             "game": self.name, "status": "playing",
             "board": grid, "size": N,
             "valid": [[1 if (x, y) in VALID else 0 for x in range(N)] for y in range(N)],
@@ -148,6 +161,16 @@ class HalmaGame(BaseGame):
             "players": list(self.players), "winner_uid": self.winner,
             "owners": {str(p): self.arm_of[p] for p in self.players},
         }
+        if not self.winner:
+            me = self.players[self.turn]
+            hints = {}
+            for (x, y), (p, arm) in self.board.items():
+                if p == me:
+                    tg = self._targets(x, y)
+                    if tg:
+                        hints[f"{x},{y}"] = tg
+            state["hints"] = hints
+        return state
 
     def ended(self):
         if self.winner:

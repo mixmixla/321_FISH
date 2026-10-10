@@ -150,8 +150,44 @@ class CheckersGame(BaseGame):
                             return True
         return False
 
+    def _targets(self, x, y):
+        """(x,y) 上棋子的合法落点 [[tx, ty], ...]
+        普通子：前向斜 1 格（空）+ 前向斜跳过一枚敌子（落点空）
+        王：四斜向连续空格 + 斜向隔一枚敌子跳吃"""
+        cell = self.board[y][x]
+        out = []
+        if self._is_man(cell):
+            d = self._dir(cell)
+            for dx in (-1, 1):
+                nx, ny = x + dx, y + d
+                if not (0 <= nx < N and 0 <= ny < N):
+                    continue
+                if self.board[ny][nx] == 0:
+                    out.append([nx, ny])
+                if self._enemy(self.board[ny][nx]):
+                    jx, jy = x + dx * 2, y + d * 2
+                    if 0 <= jx < N and 0 <= jy < N and self.board[jy][jx] == 0:
+                        out.append([jx, jy])
+        else:
+            for dx in (-1, 1):
+                for dy in (-1, 1):
+                    nx, ny = x + dx, y + dy
+                    while 0 <= nx < N and 0 <= ny < N:
+                        if self.board[ny][nx] == 0:
+                            out.append([nx, ny])
+                            nx += dx
+                            ny += dy
+                        elif self._enemy(self.board[ny][nx]):
+                            jx, jy = nx + dx, ny + dy
+                            if 0 <= jx < N and 0 <= jy < N and self.board[jy][jx] == 0:
+                                out.append([jx, jy])
+                            break
+                        else:
+                            break
+        return out
+
     def snapshot(self):
-        return {
+        state = {
             "game": self.name, "status": "playing",
             "board": self.board, "size": N,
             "turn_uid": None if self.winner else self.players[self.turn],
@@ -159,6 +195,16 @@ class CheckersGame(BaseGame):
             "legend": {str(BLACK_MAN): "黑", str(RED_MAN): "红",
                        str(BLACK_KING): "黑王", str(RED_KING): "红王"},
         }
+        if not self.winner:
+            hints = {}
+            for y in range(N):
+                for x in range(N):
+                    if self._me(self.board[y][x]):
+                        tg = self._targets(x, y)
+                        if tg:
+                            hints[f"{x},{y}"] = tg
+            state["hints"] = hints
+        return state
 
     def ended(self):
         if self.winner:

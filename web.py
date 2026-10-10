@@ -508,6 +508,37 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
 .unocard{display:inline-block;border:1.5px solid var(--line);border-radius:var(--r1);padding:3px 9px;margin:2px;cursor:pointer;background:var(--card);color:var(--txt);font-size:var(--secondary-font,12px);font-weight:600;box-shadow:var(--shadow-sm)}
 .unocard.dis{background:var(--ux-disabled-background,var(--side));color:var(--ux-disabled-text,var(--dim));cursor:default;box-shadow:none;opacity:1}
 .gsec{font-weight:700;margin:8px 0 3px;font-size:var(--secondary-font,12px);color:var(--dim)}
+/* R__D6 web 统一卡面/棋子图形：扑克·UNO·数字·角色·彩色棋子；与桌面画师同源「雾岸」圆角/描边 */
+.vcard{position:relative;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:38px;height:52px;border-radius:var(--r1);background:var(--card);border:1.5px solid var(--line);box-shadow:var(--shadow-sm);margin:2px;vertical-align:middle;overflow:hidden;font-weight:800;line-height:1;color:var(--txt);text-align:center;user-select:none}
+.vcard .cor{position:absolute;top:2px;left:4px;font-size:10px;font-weight:800}
+.vcard .sym{font-size:18px}
+.vcard .sub{position:absolute;bottom:2px;font-size:8px;font-weight:600;color:var(--dim)}
+.vcard.red{color:#c2362c}
+.vcard.blk{color:#39424a}
+.vcard.sm{width:28px;height:40px;margin:1px}
+.vcard.sm .sym{font-size:14px}
+.vcard.sm .cor{font-size:8px;top:1px;left:3px}
+.vcard.wide{width:auto;min-width:54px;height:auto;padding:6px 10px;flex-direction:row;gap:5px;font-size:15px}
+.vcard.dimmed{opacity:.45}
+.vcard.click{cursor:pointer;transition:transform .1s,box-shadow .1s,border-color .15s}
+.vcard.click:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--accent)}
+.vcard.back{background:repeating-linear-gradient(45deg,var(--accent) 0 5px,var(--ux-accent-pressed,var(--accent)) 5px 10px);border-color:var(--ux-navigation,var(--accent))}
+.vcard.back .sym{color:var(--on-accent,#fff);font-size:15px}
+.vcard.uno{border-color:transparent;color:#fff}
+.vcard.uno.c0{background:#d8514a}
+.vcard.uno.c1{background:#e0a83a}
+.vcard.uno.c2{background:#3f9d5c}
+.vcard.uno.c3{background:#4a7de0}
+.vcard.uno.cw{background:linear-gradient(135deg,#d8514a 0 25%,#e0a83a 25% 50%,#3f9d5c 50% 75%,#4a7de0 75% 100%)}
+.vcard.uno .sym{font-size:15px;text-shadow:0 1px 2px rgba(0,0,0,.28)}
+.vcard.role{border-color:var(--accent);background:var(--ux-selected-background,var(--side))}
+.vcard.role .sym{color:var(--accent)}
+.vtile{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:30px;padding:0 4px;border-radius:var(--r1);background:var(--card);border:1.5px solid var(--line);box-shadow:var(--shadow-sm);margin:1px;font-weight:800;font-size:13px;color:var(--txt)}
+.vtile.r{background:#d8514a;color:#fff;border-color:#b93f39}
+.vtile.b{background:#4a7de0;color:#fff;border-color:#3a63b8}
+.vtile.y{background:#e0a83a;color:#fff;border-color:#bd8624}
+.vtile.k{background:#39424a;color:#fff;border-color:#28303a}
+.vtile.w{background:#f5f2e8;color:#7a6a3a;border-color:#d9cfae}
 /* Apple 风格滚动条 */
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -3893,6 +3924,32 @@ function gTitle(gname,txt){                 // 对局内标题条：渐变底 + 
   d.appendChild(t);return d;
 }
 const UNO_COLOR_CN={red:"红",yellow:"黄",green:"绿",blue:"蓝"};
+// ---- R__D6 卡面构造：mkCard 生成 DOM，vcardHTML 复用为 HTML 串（与桌面画师同源配色）----
+function mkCard(o){
+  o=o||{};
+  const el=document.createElement("span");
+  el.className="vcard"+(o.cls?" "+o.cls:"");
+  if(o.style)el.style.cssText=o.style;
+  if(o.title)el.title=o.title;
+  if(o.cor!=null){const c=document.createElement("span");c.className="cor";c.textContent=o.cor;el.appendChild(c);}
+  if(o.sym!=null){const s=document.createElement("span");s.className="sym";s.textContent=o.sym;el.appendChild(s);}
+  if(o.sub!=null){const b=document.createElement("span");b.className="sub";b.textContent=o.sub;el.appendChild(b);}
+  return el;
+}
+function vcardHTML(o){return mkCard(o).outerHTML}
+const UNO_CLS={红:"c0",黄:"c1",绿:"c2",蓝:"c3"};
+function unoParts(cs){
+  cs=String(cs||"");
+  if(cs.indexOf("万能")===0)return {cls:"cw",sym:(cs==="万能+4"?"+4":"变"),cor:"W",wild:true,title:cs};
+  const cc=cs.slice(0,1);return {cls:UNO_CLS[cc]||"c0",sym:cs.slice(1)||cc,cor:cc,wild:false,title:cs};
+}
+function unoCardHTML(cs){const p=unoParts(cs);return vcardHTML({cls:"uno "+p.cls,sym:p.sym,cor:p.cor,title:p.title})}
+function pokerCard(cs){
+  cs=String(cs||"");if(!cs)return "";
+  const suit=cs.slice(-1),rank=cs.slice(0,-1);
+  const red=(suit==="♥"||suit==="♦");
+  return vcardHTML({cls:"sm "+(red?"red":"blk"),cor:rank,sym:suit,title:cs});
+}
 function gnick(u){if(state.gnicks[u])return state.gnicks[u];
   const r=(state.roster||[]).find(x=>x.uid===u);return r?(r.nick||("玩家"+u)):("玩家"+u)}
 function scoreHTML(sc){return "🏆 "+Object.entries(sc||{}).map(([u,v])=>esc(gnick(+u))+" "+v).join("　")}
@@ -4459,9 +4516,10 @@ const GRENDER={
   uno(box,s){
     const my=state.uid,isMe=s.current_uid===my;
     const d=document.createElement("div");d.style.cssText="text-align:center;padding:4px";
-    d.innerHTML="<div style='font-size:20px;font-weight:700;margin:6px'>"+esc(s.top||"")
-      +(s.top_color?"<span style='font-size:12px;color:var(--dim)'>（当前色 "
-        +(UNO_COLOR_CN[s.top_color]||s.top_color)+"）</span>":"")+"</div>"
+    d.innerHTML="<div style='margin:6px'>桌面：<span style='display:inline-block;vertical-align:middle'>"
+      +unoCardHTML(s.top||"")+"</span>"
+      +(s.top_color?"<span style='font-size:11px;color:var(--dim)'> 当前色 "
+        +(UNO_COLOR_CN[s.top_color]||s.top_color)+"</span>":"")+"</div>"
       +"<div>方向 "+s.direction+" · 轮到 "+esc(gnick(s.current_uid))+(isMe?"（你）":"")+"</div>"
       +"<div style='color:var(--dim);font-size:11px;margin-top:2px'>"
       +Object.entries(s.hand_counts||{}).map(([u,c])=>esc(gnick(+u))+"×"+c).join("　")+"</div>"
@@ -4471,8 +4529,9 @@ const GRENDER={
     if(p&&p.hand&&isMe){
       const bar=document.createElement("div");bar.style.cssText="text-align:center;margin:8px";
       p.hand.forEach((cs,i)=>{
-        const c=document.createElement("span");c.className="unocard";c.textContent=cs;
-        const isWild=cs.indexOf("万能")===0;
+        const pt=unoParts(cs);
+        const c=mkCard({cls:"uno click "+pt.cls,sym:pt.sym,cor:pt.cor,title:pt.title});
+        const isWild=pt.wild;
         c.onclick=()=>{
           if(!isWild)gameAPI("action",{room_id:state.groom,action:{card:p.hand_ids[i]}});
           else{
@@ -4494,21 +4553,21 @@ const GRENDER={
       draw.appendChild(gBtn("🂠 摸牌",{draw:true}));
       box.appendChild(draw);}
     else if(p&&p.hand){
-      const w=document.createElement("div");w.style.cssText="text-align:center;color:var(--dim);font-size:12px";
-      w.textContent="你的手牌："+p.hand.join(" ");box.appendChild(w);}
+      const w=document.createElement("div");w.style.cssText="text-align:center;margin-top:4px";
+      w.innerHTML="<span style='color:var(--dim);font-size:12px'>你的手牌：</span>"+p.hand.map(unoCardHTML).join("");
+      box.appendChild(w);}
     if(s.winner_uid!=null)
       box.appendChild(Object.assign(document.createElement("div"),
         {style:"text-align:center;margin-top:6px",innerHTML:"🏆 "+esc(gnick(s.winner_uid))+" 出完！"
           +(s.match_winner!=null?"　比赛冠军 "+esc(gnick(s.match_winner)):"")}));
   },
   blackjack(box,s){
-    const handLine=u=>"牌值 "+(s.hand_values[u]||0);
     const d=document.createElement("div");d.style.cssText="padding:4px";
-    d.innerHTML="<div class='gsec'>庄家："+(s.dealer||[]).join(" ")+"（"+s.dealer_value+"）</div>"
+    d.innerHTML="<div class='gsec'>庄家："+(s.dealer||[]).map(pokerCard).join("")+"（"+s.dealer_value+"）</div>"
       +"<div style='font-size:12px'>"+Object.entries(s.hands||{}).map(([u,h])=>{
         const uid=+u;
         return "<div class='glogl'>"+(uid===state.uid?"<b>你</b>":esc(gnick(uid)))
-          +"："+h.join(" ")+"（"+(s.hand_values[u]||0)+"）"
+          +"："+h.map(pokerCard).join("")+"（"+(s.hand_values[u]||0)+"）"
           +(s.current_uid===uid?" ⏳":(s.stand||[]).includes(uid)?" 🛑 已停":"")
           +(s.results[u]!=null?(" → "+({win:"✅ 胜",draw:"➖ 平",lose:"❌ 负"}[s.results[u]]||s.results[u])):"")+"</div>";}).join("")+"</div>";
     box.appendChild(d);
@@ -4522,7 +4581,7 @@ const GRENDER={
   },
   calc24(box,s){
     const d=document.createElement("div");d.style.cssText="text-align:center;padding:6px";
-    d.innerHTML="<div style='font-size:22px;font-weight:700;margin:8px'>"+(s.cards||[]).join("　")+"</div>"
+    d.innerHTML="<div style='margin:8px'>"+(s.cards||[]).map(c=>vcardHTML({cls:"wide",sym:c})).join("")+"</div>"
       +(s.status==="answering"?"<div style='color:var(--dim)'>剩余 "+s.wait+"s</div>"
         :(s.solved_uid?"<div>🎉 "+esc(gnick(s.solved_uid))+" 答对："+esc(s.win_expr||"")+"</div>":"下一轮即将开始…"))
       +"<div style='margin-top:6px'>"+scoreHTML(s.scores)+"</div>";
@@ -4552,8 +4611,9 @@ const GRENDER={
       bar.appendChild(gBtn("🂠 摸牌",{draw:true}));box.appendChild(bar);}
     const p=state.gpriv;
     if(p&&p.hand){const w=document.createElement("div");
-      w.style.cssText="text-align:center;color:var(--dim);font-size:12px";
-      w.textContent="你的手牌："+p.hand.join(" ");box.appendChild(w);}
+      w.style.cssText="text-align:center;margin-top:4px";
+      w.innerHTML="<span style='color:var(--dim);font-size:12px'>你的手牌：</span>"+p.hand.map(pokerCard).join("");
+      box.appendChild(w);}
   },
   betrayal(box,s){
     const my=state.uid;
@@ -4951,14 +5011,16 @@ const GRENDER={
     box.appendChild(gTitle("azul","花砖物语 · 拼花"));
     const CC=s.colors||{};
     const CTS={r:"#e05555",w:"#f5f2e8",b:"#4a7de0",y:"#e8b93c",k:"#3a3d42"};
+    const CTS_CLS={r:"r",w:"w",b:"b",y:"y",k:"k"};
+    const azTile=t=>"<span class='vtile "+(CTS_CLS[t.c]||"w")+"' title='"+CC[t.c]+"'>"+CC[t.c]+"</span>";
     const chunk=a=>a.map(x=>({c:x.c,n:x.n}));   // offers/center 已是 {c,n} 小对象
     const d=document.createElement("div");
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>第 "+s.round+" 轮 · 回合 → "
       +esc(gnick(s.turn_uid))+"　🧱 袋剩 "+s.bag+"　"+scoreHTML(s.score)+"</div>";
     d.innerHTML+="<div class='gsec'>工厂碗</div><div style='display:flex;flex-wrap:wrap;gap:4px'>"
-      +(s.offers||[]).map((b,i)=>b.length?("<span title='碗"+(i+1)+"' style='border:1px solid var(--line,#ddd);border-radius:6px;padding:3px 5px'>"
-        +b.map(t=>"<b style='color:"+CTS[t.c]+"'>"+CC[t.c]+"</b>").join(",")+"</span>"):"<span style='color:var(--dim)'>[碗"+(i+1)+"空]</span>").join("　")
-      +"</div><div style='font-size:11px'>中央："+(s.center||[]).map(t=>"<b style='color:"+CTS[t.c]+"'>"+CC[t.c]+"</b>").join(",")||"（空）"+"</div>";
+      +(s.offers||[]).map((b,i)=>b.length?("<span title='碗"+(i+1)+"' style='border:1px solid var(--line,#ddd);border-radius:8px;padding:3px 5px;display:inline-block'>"
+        +b.map(azTile).join("")+"</span>"):"<span style='color:var(--dim)'>[碗"+(i+1)+"空]</span>").join("　")
+      +"</div><div style='font-size:11px'>中央："+((s.center||[]).map(azTile).join("")||"（空）")+"</div>";
     d.innerHTML+="<div class='gsec'>我的墙</div><div style='display:grid;grid-template-columns:repeat(5,24px);gap:2px'>"
       +[0,1,2,3,4].map(r=>[0,1,2,3,4].map(c=>{
         const v=(s.wall[state.uid]||{})[r+","+c];
@@ -4967,7 +5029,7 @@ const GRENDER={
       }).join("")).join("")
       +"<div class='gsec' style='grid-column:1/-1'>我的花纹行</div>"
       +Object.entries(s.rows[state.uid]||{}).map(([r,row])=>"<div style='grid-column:1/-1;font-size:11px'>第"+(+r+1)+"行："
-        +row.map(t=>"<b style='color:"+CTS[t]+"'>"+CC[t]+"</b>").join("")+"（"+(+r+1-row.length)+"空）</div>").join("")
+        +row.map(azTile).join("")+"（"+(+r+1-row.length)+"空）</div>").join("")
       +"<div style='grid-column:1/-1;font-size:11px'>地板："+((s.floor[state.uid]||0))+"　分："+s.score[state.uid]+"</div>"
       +"</div>";
     box.appendChild(d);
@@ -4988,8 +5050,8 @@ const GRENDER={
   },
   rummikub(box,s){
     box.appendChild(gTitle("rummikub","拉密 · 出牌"));
-    const CC={红:"#e05555",黄:"#e8b93c",蓝:"#4a7de0",黑:"#3a3d42"};
-    const tile=t=>"<b style='color:"+(CC[t.c]||"#333")+";font-size:12px'>"+t.c+t.n+"</b>";
+    const CC={红:"r",黄:"y",蓝:"b",黑:"k"};
+    const tile=t=>"<span class='vtile "+(CC[t.c]||"w")+"' title='"+esc(t.c+t.n)+"'>"+t.n+"</span>";
     function rClass(row){
       if(row.length<3)return null;
       const uniqN=new Set(row.map(t=>t.n)),uniqC=new Set(row.map(t=>t.c));
@@ -5054,12 +5116,11 @@ const GRENDER={
   nimmt(box,s){
     box.appendChild(gTitle("nimmt","牛头王 · 避牛头"));
     const d=document.createElement("div");
-    const rowHtml=(row,i)=>row.map((c,j)=>"<span title='"+c+"' style='padding:0 3px'>"+(j===0?"<b>"+c+"</b>":c)
-      +"</span>").join(" ");
+    const rowHtml=row=>row.map(c=>vcardHTML({cls:"sm",sym:c,title:String(c)})).join("");
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>第 "+s.round+"/10 轮 · "
       +Object.entries(s.bulls||{}).map(([u,v])=>esc(gnick(+u))+"🐂"+v).join("　")+"</div>"
       +"<div class='gsec'>桌面 4 列</div>"
-      +[0,1,2,3].map((i,ix)=>"<div style='font-size:11px'>第"+(ix+1)+"列："+(s.table[ix]?rowHtml(s.table[ix],ix):"")+"</div>").join("");
+      +[0,1,2,3].map((i,ix)=>"<div style='font-size:11px'>第"+(ix+1)+"列："+(s.table[ix]?rowHtml(s.table[ix]):"")+"</div>").join("");
     box.appendChild(d);
     const p=state.gpriv;
     if(p&&p.hand){
@@ -5067,9 +5128,9 @@ const GRENDER={
       const hd=document.createElement("div");hd.className="gsec";hd.textContent="我的手牌（选一张打出）";
       w.appendChild(hd);
       p.hand.forEach(c=>{
-        const b=document.createElement("button");b.className="gbtn";b.style.marginRight="6px";b.textContent=c;
-        b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"choose",card:c}});
-        w.appendChild(b);});
+        const el=mkCard({cls:"click",sym:c,cor:c,title:"打出 "+c});
+        el.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"choose",card:c}});
+        w.appendChild(el);});
       box.appendChild(w);
       if(Object.keys(s.chosen||{}).includes(String(state.uid)))
         box.appendChild(Object.assign(document.createElement("div"),
@@ -5084,15 +5145,20 @@ const GRENDER={
     const rows=(s.dead||[]).map(u=>"<div style='color:var(--dim)'>💀 "+esc(gnick(u))+" 出局</div>").join("");
     w.innerHTML="<div class='gsec'>牌堆剩 "+s.draw_left+" 张</div>"
       +Object.keys(s.hands||{}).map(u=>{
-        const tiles=(s.hands[u]||[]).map(t=>t.open?"<b>"+esc(String(lv(t.v)))+"</b>":"<span style='color:var(--dim)'>▮?</span>").join("　");
-        return "<div style='display:flex;gap:6px'><span style='min-width:64px;color:var(--dim)'>"+esc(gnick(+u))+":</span><span>"+tiles+"</span></div>";
+        const tiles=(s.hands[u]||[]).map(t=>t.open
+          ?vcardHTML({cls:"sm blk",sym:lv(t.v),title:"公开 "+lv(t.v)})
+          :vcardHTML({cls:"sm back",sym:"?",title:"暗牌"})).join("");
+        return "<div style='display:flex;gap:6px;align-items:center'><span style='min-width:64px;color:var(--dim)'>"+esc(gnick(+u))+":</span><span>"+tiles+"</span></div>";
       }).join("")+rows;
     box.appendChild(w);
     const me=state.uid, mine=(s.hands||{})[me]||[];
     const myrow=(state.gpriv&&state.gpriv.row)||mine;
-    if(myrow.length)box.appendChild(Object.assign(document.createElement("div"),
-      {style:"font-size:11px;color:var(--dim);margin-top:4px",
-        textContent:"我的手牌："+myrow.map((t,i)=>i+"位="+(t.open&&t.v!=null?"公开 "+esc(String(lv(t.v))):"▮?")).join(" ，")}));
+    if(myrow.length){
+      const r=document.createElement("div");r.style.cssText="margin-top:4px";
+      r.innerHTML="<span style='font-size:11px;color:var(--dim)'>我的手牌：</span>"
+        +myrow.map((t,i)=>vcardHTML({cls:"sm"+((t.open&&t.v!=null)?" blk":" back"),
+          cor:i,sym:((t.open&&t.v!=null)?lv(t.v):"?"),title:"第"+(i+1)+"位"})).join("");
+      box.appendChild(r);}
     const bar=document.createElement("div");bar.style.cssText="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px";
     if(s.turn===me&&!s.winner_uid){
       bar.appendChild(gBtn("摸明牌",{op:"draw",open:true}));
@@ -5146,19 +5212,23 @@ const GRENDER={
   },
   lovelove(box,s){
     box.appendChild(gTitle("lovelove","情书 · 递给心上人"));
+    const LOVE_NAME={1:"护卫",2:"牧师",3:"男爵",4:"侍女",5:"王子",6:"国王",7:"伯爵夫人",8:"公主"};
+    const roleCard=v=>vcardHTML({cls:"role wide",sym:(LOVE_NAME[v]||v),title:"情书 · 数值"+v});
     const w=document.createElement("div");w.style.cssText="font-size:12px;line-height:20px";
     const dead=((s.dead||[]).map(u=>esc(gnick(u))).join("、")||"无");
     w.innerHTML="<div class='gsec'>存活："+(s.alive||[]).map(u=>esc(gnick(u))).join("　")
       +"</div><div><span style='color:var(--dim)'>出局：</span>"+dead
-      +"　<span style='color:var(--dim)'>废牌：</span>"+((s.discard||[]).map(x=>x[1]).join(","))+"　牌堆剩 "+s.deck_left+"</div>";
+      +"　<span style='color:var(--dim)'>废牌：</span>"
+      +((s.discard||[]).map(x=>"<span class='vtile w' title='数值"+x[1]+"'>"+(LOVE_NAME[x[1]]||x[1])+"</span>").join("")||"无")
+      +"　牌堆剩 "+s.deck_left+"</div>";
     box.appendChild(w);
     const me=state.uid, mine=state.gpriv?state.gpriv.hand:null;
     const bar=document.createElement("div");bar.style.cssText="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px";
     if(s.winner_uid){bar.appendChild(document.createTextNode("🏁 对局结束"));}
     else if(s.cur!==me){bar.appendChild(document.createTextNode("⏳ 等待 "+esc(gnick(s.cur))));}
     else if(mine!=null){
-      bar.appendChild(Object.assign(document.createElement("div"),
-        {textContent:"我的手牌："+mine}));
+      const hd=document.createElement("span");hd.innerHTML="我的手牌："+roleCard(mine);
+      bar.appendChild(hd);
       const ts=document.createElement("select");
       ts.appendChild(Object.assign(document.createElement("option"),{value:"",textContent:"(无需目标)"}));
       (s.alive||[]).forEach(u=>{if(u!==me)ts.appendChild(Object.assign(document.createElement("option"),{value:u,textContent:gnick(u)}))});
@@ -5179,7 +5249,9 @@ const GRENDER={
     const w=document.createElement("div");w.style.cssText="font-size:12px;line-height:20px";
     w.innerHTML="<div class='gsec'>轮到："+esc(gnick(s.turn))+"</div>"
       +"<div>"+(Object.entries(s.counts||{}).map(([f,n])=>"<span style='margin-right:10px'>"+f+"×"+n+"</span>").join("")||"旁观")+"</div>"
-      +"<div style='margin-top:4px'>桌上：「"+(s.area&&s.area.length?s.area.join(" "):"空")+"」</div>"
+      +"<div style='margin-top:4px'>桌上："+(s.area&&s.area.length
+        ?s.area.map(f=>"<span class='vtile w' style='font-size:18px'>"+f+"</span>").join("")
+        :"<span style='color:var(--dim)'>（空）</span>")+"</div>"
       +(s.can_slap?"<div style='color:#c2362c;font-weight:700'>🔔 桌上已有 5 个相同水果！</div>":"");
     box.appendChild(w);
     const me=state.uid;

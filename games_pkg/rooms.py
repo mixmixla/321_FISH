@@ -10,6 +10,7 @@ import time
 from enum import Enum
 
 from games_pkg.base import BaseGame, GameRuleError
+from games_pkg.common_actions import COMMON_ACTION_GAMES, CommonActionsGame
 
 
 class RoomStatus(str, Enum):
@@ -142,7 +143,10 @@ class RoomManager:
                 raise GameRuleError(
                     f"至少需要 {room.game_cls.min_players} 人"
                     f"（当前 {len(room.players)} 人，其余可点观战）")
-            room.gs = room.game_cls(room.players, seed=self._seed_for(room))
+            gs = room.game_cls(room.players, seed=self._seed_for(room))
+            if getattr(gs, "name", None) in COMMON_ACTION_GAMES:
+                gs = CommonActionsGame(gs)      # 叠加 认输/悔棋/求和 通用动作层
+            room.gs = gs
             room.status = RoomStatus.PLAYING
             room.round_no += 1
             return room

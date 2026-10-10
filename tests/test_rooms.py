@@ -75,3 +75,57 @@ def test_disconnect_cleanup(mgr):
     mgr.on_disconnect(2)
     mgr.on_disconnect(1)
     assert room.room_id not in mgr.rooms
+
+
+# ---- A6 通用动作层：认输 / 悔棋 / 求和 ----
+
+def _start_gomoku(mgr):
+    room = mgr.create(1, "gomoku")
+    mgr.join(2, room.room_id)
+    mgr.start(1, room.room_id)
+    return room
+
+
+def test_common_layer_only_wraps_listed_games(mgr):
+    room = _start_gomoku(mgr)
+    assert "common" in room.gs.snapshot()            # 棋类被代理
+    g = mgr.create(1, "guess_number")
+    mgr.join(2, g.room_id)
+    mgr.start(1, g.room_id)
+    assert "common" not in g.gs.snapshot()           # 未接入者不受影响
+
+
+def test_common_resign_ends_game(mgr):
+    room = _start_gomoku(mgr)
+    msgs = mgr.handle_action(1, room.room_id, {"op": "resign"})
+    assert msgs and "认输" in msgs[0]
+    ended = room.gs.ended()
+    assert ended["winner_uid"] == 2 and "认输" in ended["detail"]
+
+
+def test_common_undo_without_history_rejected(mgr):
+    room = _start_gomoku(mgr)
+    with pytest.raises(GameRuleError):
+        mgr.handle_action(1, room.room_id, {"op": "undo"})
+
+
+def test_common_undo_rolls_back(mgr):
+    room = _start_gomoku(mgr)
+    mgr.handle_action(1, room.room_id, {"x": 0, "y": 0})
+    mgr.handle_action(2, room.room_id, {"x": 1, "y": 1})
+    mgr.handle_action(1, room.room_id, {"op": "undo"})   # 回退到玩家2落子前
+    board = room.gs.snapshot()["board"]
+    assert board[0][0] == 1 and board[1][1] == 0
+
+
+def test_common_draw_flow(mgr):
+    room = _start_gomoku(mgr)
+    with pytest.raises(GameRuleError):                   # 不能回应自己的求和
+        mgr.handle_action(1, room.room_id, {"op": "draw_accept"})
+    mgr.handle_action(1, room.room_id, {"op": "draw"})
+    assert room.gs.snapshot()["common"]["draw_offer"] == 1
+    mgr.handle_action(2, room.room_id, {"op": "draw_reject"})
+    assert room.gs.snapshot()["common"]["draw_offer"] is None
+    mgr.handle_action(1, room.room_id, {"op": "draw"})
+    mgr.handle_action(2, room.room_id, {"op": "draw_accept"})
+    assert room.gs.ended() == {"winner_uid": None, "detail": "双方同意，和局"}

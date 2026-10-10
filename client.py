@@ -11481,6 +11481,7 @@ _GAME_ACTIONS = {
     "drawguess": [
         ("笔画", {"key": "stroke", "kind": "stroke"}, "画手输入 x1,y1,x2,y2"),
         ("猜词", {"key": "guess", "kind": "text"}, "输入你的猜测"),
+        ("🗑 清空", {"fixed": {"clear": True}}, "画手清空画布（也可直接在画布上拖动作画）"),
     ],
     "connect4": [("落子", {"key": "col", "kind": "int"}, "输入列号 0~6")],
     "othello": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起）")],
@@ -11517,7 +11518,10 @@ _GAME_ACTIONS = {
     ],
     "halma": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（直移或隔子直跳）")],
     "checkers": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（斜移/斜跳吃子）")],
-    "blokus": [("放置", {"key": None, "kind": "blok"}, "输入 拼块名 方向号 x y")],
+    "blokus": [
+        ("放置", {"key": None, "kind": "blok"}, "输入 拼块名 方向号 x y（也可直接在棋盘上点击落子）"),
+        ("⏭ 跳过", {"fixed": {"op": "pass"}}, "跳过本回合"),
+    ],
     "ludo": [
         ("掷骰", {"fixed": {"op": "roll"}}, ""),
         ("走机", {"key": None, "kind": "ludomove"}, "输入机号 0~3"),
@@ -11525,7 +11529,7 @@ _GAME_ACTIONS = {
     ],
     "onewolf": [
         ("🔮预言看一人", {"op": "peek", "key": "look_one", "kind": "uid"}, "输入目标 uid（预言家）"),
-        ("🔮预言看中心", {"fixed": {"op": "peek", "look_center": [0, 1]}}, "预言家看中心两张"),
+        ("🔮看中心(自选)", {"op": "peek", "key": "look_center", "kind": "twoidx"}, "预言家选中心两张：两个序号 0~2（空格分隔）"),
         ("🗡️强盗换牌", {"op": "swap", "key": "rob", "kind": "uid"}, "输入交换目标 uid（强盗）"),
         ("🗳️投票", {"op": "vote", "key": "target", "kind": "uid"}, "输入处决目标 uid"),
     ],
@@ -11569,13 +11573,95 @@ _GAME_ACTIONS = {
     ],
     "balatro": [
         ("🎮 出牌", {"fixed": {"op": "play"}}, "结算当前出战的牌型"),
+        ("🗑 弃牌", {"op": "discard", "key": None, "kind": "handidx",
+                  "ui_list": "balatro_cards", "ui_cid_key": "cid"},
+         "输入要弃掉的手牌序号（棋盘窗手牌从左到右 1 起）"),
     ],
     "balatro_solo": [
         ("🎮 出牌", {"fixed": {"op": "play"}}, "结算当前出战的牌型"),
+        ("🗑 弃牌", {"op": "discard", "key": None, "kind": "handidx",
+                  "ui_list": "balatro_cards", "ui_cid_key": "cid"},
+         "输入要弃掉的手牌序号（棋盘窗手牌从左到右 1 起）"),
         ("🛒 逛店", {"fixed": {"op": "shop"}}, "过关后开商店淘货（购Joker/消耗品）"),
         ("▶ 继续", {"fixed": {"op": "next"}}, "商店结束，进下一盲注"),
     ],
+    # ---- CC-03 桌面交互补齐：11 款此前被拦截的桌游 ----
+    "azul": [
+        ("🧱 取砖", {"op": "take", "key": None, "kind": "srccol"}, "输入 来源 颜色，如 center r 或 0 b"),
+        ("🪟 落砖", {"op": "place", "key": "row", "kind": "int"}, "输入花纹行 0~4"),
+        ("🌀 溢出地板", {"fixed": {"op": "floor"}}, "本回合取的砖全部溢出（地板扣分）"),
+    ],
+    "bolan": [
+        ("🗳 投放", {"op": "place", "key": "r", "kind": "int"}, "输入选区 0~4"),
+        ("🔥 弃2枚翻倍", {"op": "devote", "key": "r", "kind": "int"}, "输入选区 0~4（耗 2 枚影响力）"),
+    ],
+    "chengzhu": [
+        ("🏰 放置板子", {"key": None, "kind": "dxyrot"}, "输入 板号 x y [方向 0横/1竖]"),
+        ("⏭ 跳过", {"fixed": {"op": "pass"}}, "跳过本回合并转为下一位挑选"),
+    ],
+    "gemcity": [
+        ("💎 取3异色", {"op": "take", "key": "colors", "kind": "colors"}, "输入三种不同颜色（o/d/r/e/s）"),
+        ("➡ 取2同色", {"op": "take2", "key": "color", "kind": "text"}, "输入颜色 o/d/r/e/s（该色需 ≥4）"),
+        ("📥 保留", {"op": "reserve", "key": None, "kind": "tieridx"}, "输入 层 序号（层1~3）"),
+        ("🛒 购买", {"op": "buy", "key": None, "kind": "tieridx"}, "输入 层 序号（层1~3）"),
+        ("♻ 购保留卡", {"op": "buy_res", "key": "idx", "kind": "int"}, "输入保留卡序号 0 起"),
+    ],
+    "gongfang": [
+        ("👷 工作", {"op": "work", "key": "id", "kind": "int"}, "输入工位 id"),
+        ("⏭ 过牌", {"fixed": {"op": "pass"}}, "本轮不再放置工人"),
+    ],
+    "kaituo": [
+        ("🎲 掷骰", {"fixed": {"op": "roll"}}, "掷 2 骰并结算资源"),
+        ("🏠 布置（开局）", {"key": None, "kind": "setup2"}, "开局：输入 顶点i 顶点j 路端b_i 路端b_j"),
+        ("⛏ 建造", {"op": "build", "key": None, "kind": "buildspec"}, "输入 类型 i j [b_i b_j]，类型 road/settle/city"),
+        ("🔄 交换", {"op": "trade", "key": None, "kind": "tradespec"}, "输入 给 得 [数量]，如 wood brick 4"),
+        ("⏭ 跳过", {"fixed": {"op": "skip"}}, "结束本回合"),
+    ],
+    "lingdi": [
+        ("🏗 放置", {"op": "place", "key": None, "kind": "rcmeeple"}, "输入 行 列 [self | 米行,米列]，self 表示就地放米宝"),
+        ("⏭ 跳过", {"fixed": {"op": "pass"}}, "跳过本回合"),
+    ],
+    "nimmt": [
+        ("🃏 出牌", {"key": "card", "kind": "int"}, "输入手牌点数"),
+    ],
+    "siji": [
+        ("🎴 打出", {"op": "play", "key": "idx", "kind": "int"}, "输入手牌序号 0 起"),
+        ("⚙️ 激活", {"op": "activate", "key": "idx", "kind": "int"}, "输入引擎卡序号 0 起"),
+        ("👑 换分", {"fixed": {"op": "convert"}}, "3 金币换 1 胜利点"),
+    ],
+    "tielu": [
+        ("🚂 认领", {"op": "claim", "key": None, "kind": "ab"}, "输入 城市A 城市B（0~7）"),
+        ("🎫 摸2张", {"fixed": {"op": "draw"}}, "摸 2 张车票卡"),
+        ("📜 抽票证", {"fixed": {"op": "ticket"}}, "抽 1 张私人票证"),
+        ("⏭ 跳过", {"fixed": {"op": "skip"}}, "结束本回合"),
+    ],
+    "yahtzee": [
+        ("🎲 掷骰", {"fixed": {"op": "roll"}}, "掷 5 骰（可再重掷 2 次）"),
+        ("🔁 重掷", {"op": "reroll", "key": "keep", "kind": "intlist"}, "输入要保留的骰位 0~4（逗号分隔）"),
+        ("📝 记分", {"op": "score", "key": "cat", "kind": "text"}, "输入分类键，如 1/3/three/house/small/large/yahtzee/chance"),
+    ],
+    # ---- CC-03 桌面交互补齐：5 款仅点击棋类补按钮 ----
+    "chess": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
+    "xiangqi": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
+    "junqi": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
+    "dou": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
+    "shogi": [
+        ("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）"),
+        ("打入", {"op": "drop", "key": None, "kind": "droptxy"}, "输入 子类型编号 x y"),
+    ],
 }
+
+# ---- A6 通用动作层：为全部对弈类补 认输/悔棋/求和 按钮 ----
+_COMMON_ACTION_BTNS = [
+    ("🏳️ 认输", {"fixed": {"op": "resign"}}, "认输：本局立即结束"),
+    ("♻ 悔棋", {"fixed": {"op": "undo"}}, "回退一步（需有历史，仅生效于本端已同步状态）"),
+    ("🤝 求和", {"fixed": {"op": "draw"}}, "向对手提议和棋"),
+    ("✅ 同意和棋", {"fixed": {"op": "draw_accept"}}, "同意对方的和棋提议"),
+    ("❌ 拒绝和棋", {"fixed": {"op": "draw_reject"}}, "拒绝对方的和棋提议"),
+]
+for _cg in ("gomoku", "connect4", "othello", "tictactoe", "chess", "xiangqi",
+            "shogi", "junqi", "dou", "go", "checkers", "halma", "ludo"):
+    _GAME_ACTIONS[_cg] = list(_GAME_ACTIONS.get(_cg, [])) + list(_COMMON_ACTION_BTNS)
 
 # 参数动作的友好输入窗：kind -> callable(win, title, hint, label) -> str|None
 def _KIND_INPUTS():
@@ -11599,6 +11685,20 @@ def _KIND_INPUTS():
         "ludomove": lambda w, t, h: _one(w, t, h, "机号 0~3"),
         "blok": lambda w, t, h: _one(w, t, h, "拼块名 方向号 x y"),
         "ninjaattack": lambda w, t, h: _one(w, t, h, "目标 uid"),
+        # ---- CC-03 桌面补齐新增输入类 ----
+        "srccol": lambda w, t, h: _one(w, t, h, "来源 颜色"),
+        "dxyrot": lambda w, t, h: _one(w, t, h, "板号 x y [方向]"),
+        "colors": lambda w, t, h: _one(w, t, h, "三种颜色"),
+        "tieridx": lambda w, t, h: _one(w, t, h, "层 序号"),
+        "setup2": lambda w, t, h: _one(w, t, h, "顶点i 顶点j 路端b_i 路端b_j"),
+        "buildspec": lambda w, t, h: _one(w, t, h, "类型 i j [b_i b_j]"),
+        "tradespec": lambda w, t, h: _one(w, t, h, "给 得 [数量]"),
+        "rcmeeple": lambda w, t, h: _one(w, t, h, "行 列 [self | 米行,米列]"),
+        "twoidx": lambda w, t, h: _one(w, t, h, "两个序号 0~2"),
+        "ab": lambda w, t, h: _one(w, t, h, "城市A 城市B"),
+        "intlist": lambda w, t, h: _one(w, t, h, "保留骰位（逗号分隔）"),
+        "droptxy": lambda w, t, h: _one(w, t, h, "子类型 x y"),
+        "handidx": lambda w, t, h: _one(w, t, h, "手牌序号"),
     }
 
 
@@ -11666,10 +11766,8 @@ _GAME_GRAD_DEF = ("#4a4f5a", "#333842")     # 未知游戏兜底渐变
 # capable, but their desktop action path is known to be incomplete.  The
 # lobby explains the boundary and blocks accidental creation/join; the other
 # games remain available with an explicit "unverified" notice.
-_DESKTOP_UNSUPPORTED_GAMES = {
-    "azul", "bolan", "chengzhu", "gemcity", "gongfang", "kaituo",
-    "lingdi", "nimmt", "siji", "tielu", "yahtzee",
-}
+# CC-03 补齐后 11 款桌游已具备桌面操作入口，解除拦截。
+_DESKTOP_UNSUPPORTED_GAMES = set()
 
 
 def _desktop_game_status(name: str) -> tuple[str, str]:
@@ -12326,6 +12424,8 @@ class GameWindow:
         self.game_cv.bind("<Configure>", self._on_cv_resize)
         self.game_cv.bind("<Button-1>", self._on_cv_click)
         self.game_cv.bind("<Motion>", self._on_cv_motion)
+        self.game_cv.bind("<B1-Motion>", self._on_cv_drag)
+        self.game_cv.bind("<ButtonRelease-1>", self._on_cv_drag_end)
         # 日志区（系统事件 / 私密信息 / 规则提示）：底部固定高度，不抢对局面板
         self.state_text = tk.Text(right, font=f, state="disabled", wrap="word",
                                   relief="flat", bg=self._pal["win"], height=5)
@@ -12797,6 +12897,25 @@ class GameWindow:
     def _on_cv_click(self, evt) -> None:
         try:
             client_gameui.handle_click(self._cv_ui, evt.x, evt.y)
+        except Exception:
+            pass
+        try:
+            client_gameui.handle_drag(self.game_cv, self._cv_ui, evt.x, evt.y,
+                                      "down")
+        except Exception:
+            pass
+
+    def _on_cv_drag(self, evt) -> None:
+        try:
+            client_gameui.handle_drag(self.game_cv, self._cv_ui, evt.x, evt.y,
+                                      "move")
+        except Exception:
+            pass
+
+    def _on_cv_drag_end(self, evt) -> None:
+        try:
+            client_gameui.handle_drag(self.game_cv, self._cv_ui, evt.x, evt.y,
+                                      "up")
         except Exception:
             pass
 
@@ -13324,10 +13443,20 @@ class GameWindow:
         if op:
             action = dict(action)
             action["op"] = op
-        self.act_hint.config(text="")
         source_ui = (self._board_win._cv_ui
                      if getattr(self, "_board_win", None)
                      and self._board_win.active() else self._cv_ui)
+        # ui_list：把输入的序号映射为棋盘勾选项的 id（如小丑牌弃牌 → 手牌 cid）
+        if spec.get("ui_list"):
+            items = source_ui.get(spec["ui_list"]) or []
+            idx = action.pop("_idx", None)
+            if not (isinstance(idx, int) and 1 <= idx <= len(items)):
+                self.act_hint.config(text="输入有误，请重试")
+                _db.show_message(title, "序号超出可见手牌范围，请重新操作",
+                                 kind="warning", parent=self.win)
+                return
+            action[spec.get("ui_cid_key", "cid")] = items[idx - 1][4]
+        self.act_hint.config(text="")
         self._do_action(action, source_ui)
 
     def _cur_game(self) -> str:
@@ -13387,6 +13516,87 @@ class GameWindow:
                 parts = text.split()
                 return {"op": "place", "piece": parts[0], "oi": int(parts[1]),
                         "x": int(parts[2]), "y": int(parts[3])}
+            # ---- CC-03 桌面补齐新增解析 ----
+            if kind == "srccol":       # 花砖物语：来源 颜色
+                parts = text.split()
+                if len(parts) < 2:
+                    return None
+                src = parts[0]
+                if src.lower() != "center":
+                    src = int(src)
+                return {"src": src, "col": parts[1].lower()}
+            if kind == "dxyrot":       # 我是城主：板号 x y [方向]
+                parts = text.split()
+                if len(parts) < 3:
+                    return None
+                rot = int(parts[3]) if len(parts) > 3 else 0
+                return {"dom": int(parts[0]), "x": int(parts[1]),
+                        "y": int(parts[2]), "rot": rot}
+            if kind == "colors":       # 璀璨宝石：三种不同颜色
+                cs = [x.lower() for x in text.replace(",", " ").split() if x]
+                return {"colors": cs}
+            if kind == "tieridx":      # 璀璨宝石：层 序号
+                t, i = (int(v) for v in text.replace(",", " ").split())
+                return {"tier": t, "idx": i}
+            if kind == "setup2":       # 开拓：开局 顶点i 顶点j 路端b_i 路端b_j
+                a = list(map(int, text.replace(",", " ").split()))
+                if len(a) < 4:
+                    return None
+                return {"i": a[0], "j": a[1], "b_i": a[2], "b_j": a[3]}
+            if kind == "buildspec":    # 开拓：建造 类型 i j [b_i b_j]
+                parts = text.replace(",", " ").split()
+                if len(parts) < 3:
+                    return None
+                kk = parts[0].lower()
+                nums = list(map(int, parts[1:]))
+                act = {"kind": kk, "i": nums[0], "j": nums[1]}
+                if kk == "road" and len(nums) >= 4:
+                    act["b_i"], act["b_j"] = nums[2], nums[3]
+                return act
+            if kind == "tradespec":    # 开拓：交换 给 得 [数量]
+                parts = text.split()
+                if len(parts) < 2:
+                    return None
+                act = {"give": parts[0].lower(), "want": parts[1].lower()}
+                if len(parts) > 2:
+                    act["n"] = int(parts[2])
+                return act
+            if kind == "rcmeeple":     # 领地：行 列 [self | 米行,米列]
+                toks = text.replace(",", " ").split()
+                if len(toks) < 2:
+                    return None
+                act = {"r": int(toks[0]), "c": int(toks[1])}
+                rest = text.split()[2:]
+                if rest:
+                    mv = "".join(rest).lower()
+                    if mv not in ("-", "none", "无"):
+                        if mv == "self":
+                            act["meeple"] = "self"
+                        else:
+                            mm = mv.split(",")
+                            if len(mm) != 2:
+                                return None
+                            act["meeple"] = f"{int(mm[0])},{int(mm[1])}"
+                return act
+            if kind == "twoidx":       # 一对序号（预言家看中心两张）
+                a = list(map(int, text.replace(",", " ").split()))
+                if len(a) < 2:
+                    return None
+                return {key: [a[0], a[1]]}
+            if kind == "ab":           # 铁路：城市A 城市B
+                a = list(map(int, text.replace(",", " ").split()))
+                if len(a) < 2:
+                    return None
+                return {"a": a[0], "b": a[1]}
+            if kind == "intlist":      # 快艇骰子：保留骰位
+                return {"keep": [int(x) for x in text.replace(",", " ").split() if x]}
+            if kind == "droptxy":      # 将棋：打入 子类型 x y
+                parts = text.replace(",", " ").split()
+                if len(parts) < 3:
+                    return None
+                return {"t": int(parts[0]), "x": int(parts[1]), "y": int(parts[2])}
+            if kind == "handidx":      # 小丑牌：手牌序号（占位，随后由 ui_list 映射为 cid）
+                return {"_idx": int(text)}
         except (ValueError, TypeError):
             return None
         return None
@@ -13585,6 +13795,8 @@ class BoardFocusWindow:
         cv.bind("<Configure>", self._on_resize)
         cv.bind("<Button-1>", self._on_click)
         cv.bind("<Motion>", self._on_motion)
+        cv.bind("<B1-Motion>", self._on_drag)
+        cv.bind("<ButtonRelease-1>", self._on_drag_end)
 
         win.protocol("WM_DELETE_WINDOW", self.hide)
 
@@ -13605,6 +13817,25 @@ class BoardFocusWindow:
     def _on_click(self, evt) -> None:
         try:
             client_gameui.handle_click(self._cv_ui, evt.x, evt.y)
+        except Exception:
+            pass
+        try:
+            client_gameui.handle_drag(self.game_cv, self._cv_ui, evt.x, evt.y,
+                                      "down")
+        except Exception:
+            pass
+
+    def _on_drag(self, evt) -> None:
+        try:
+            client_gameui.handle_drag(self.game_cv, self._cv_ui, evt.x, evt.y,
+                                      "move")
+        except Exception:
+            pass
+
+    def _on_drag_end(self, evt) -> None:
+        try:
+            client_gameui.handle_drag(self.game_cv, self._cv_ui, evt.x, evt.y,
+                                      "up")
         except Exception:
             pass
 

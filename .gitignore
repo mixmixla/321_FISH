@@ -18,6 +18,7 @@ dist/
 __pycache__/
 *.pyc
 .pytest_cache/
+.pytest_bt_vis/
 .venv/
 
 # 系统 / 编辑器

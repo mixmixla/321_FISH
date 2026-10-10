@@ -4007,6 +4007,22 @@ function gBtn(txt,act,dis){const b=document.createElement("button");b.className=
 function gLog(line){const box=$("#glog");if(!box)return;
   const d=document.createElement("div");d.className="glogl";d.textContent=line;
   box.appendChild(d);box.scrollTop=box.scrollHeight}
+function gCommonBar(box,s){        // A6 通用动作条：认输/悔棋/求和（仅代理棋类有 s.common）
+  const c=s&&s.common;if(!c||c.ended)return;
+  const bar=document.createElement("div");bar.className="gsec";
+  bar.style.cssText="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px";
+  const me=state.uid;
+  bar.appendChild(gBtn("🏳️ 认输",{op:"resign"}));
+  if(c.can_undo)bar.appendChild(gBtn("♻ 悔棋",{op:"undo"}));
+  if(c.draw_offer==null)bar.appendChild(gBtn("🤝 求和",{op:"draw"}));
+  else if(c.draw_offer!==me){bar.appendChild(gBtn("✅ 同意和棋",{op:"draw_accept"}));
+    bar.appendChild(gBtn("❌ 拒绝和棋",{op:"draw_reject"}))}
+  if(c.draw_offer!=null){
+    const tip=document.createElement("span");
+    tip.style.cssText="font-size:12px;color:var(--dim);align-self:center";
+    tip.textContent=(c.draw_offer===me?"已向对手提议和棋…":"对手提议和棋，请回应");
+    bar.appendChild(tip);}
+  box.appendChild(bar)}
 function renderGamePanel(){
   const p=$("#gpanel");if(!p||!state.groom)return;
   const head=$("#ghead");head.innerHTML="";
@@ -4041,6 +4057,7 @@ function renderGamePanel(){
   if(!s){main.textContent="等待状态…";return}
   const fn=GRENDER[gname];
   if(fn)fn(main,s);else main.textContent="暂不支持的游戏渲染";
+  gCommonBar(main,s);
   if(room.status==="ended"){
     main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
     const note=document.createElement("div");note.className="gsec";
@@ -4229,8 +4246,18 @@ const GRENDER={
       const w=document.createElement("div");w.className="gsec";w.textContent="🔮 预言家：偷看一人或中心两张";box.appendChild(w);
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0";
       s.players.forEach(u=>{if(u!==me)bar.appendChild(gBtn("看 "+gnick(u),{op:"peek",look_one:u}))});
-      bar.appendChild(gBtn("看中心两张",{op:"peek",look_center:[0,1]}));
-      box.appendChild(bar);}
+      box.appendChild(bar);
+      const cb=document.createElement("div");cb.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0;align-items:center";
+      cb.appendChild(document.createTextNode("🔮 看中心两张："));
+      const SA=Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
+      const SB=Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
+      [0,1,2].forEach(i=>{const o1=document.createElement("option");o1.value=i;o1.textContent=i+1;
+        const o2=document.createElement("option");o2.value=i;o2.textContent=i+1;SA.appendChild(o1);SB.appendChild(o2);});
+      const cok=document.createElement("button");cok.className="gbtn";cok.textContent="查看";
+      cok.onclick=()=>{const a=parseInt(SA.value,10),b=parseInt(SB.value,10);
+        if(a===b){gLog("❌ 请选择两张不同的中央牌");return}
+        gameAPI("action",{room_id:state.groom,action:{op:"peek",look_center:[a,b]}});};
+      cb.append(SA,SB,cok);box.appendChild(cb);}
     if(s.phase==="night"&&acting()&&pv.role===3){          // 强盗
       const w=document.createElement("div");w.className="gsec";w.textContent="🗡️ 强盗：与一位玩家交换身份";box.appendChild(w);
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0";
@@ -4680,6 +4707,20 @@ const GRENDER={
     if(sel.value==="road"){b2.append(ib,jj)}
     sel.onchange=()=>{if(sel.value==="road"){b2.append(ib,jj)}};
     b2.appendChild(bb);box.appendChild(b2);
+    const b3=document.createElement("div");b3.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center";
+    const MKS=Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
+    const MKD=Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
+    ["wood","brick","lamb","wheat","ore"].forEach(k=>{
+      const o1=document.createElement("option");o1.value=k;o1.textContent=R_CN[k];MKS.appendChild(o1);
+      const o2=document.createElement("option");o2.value=k;o2.textContent=R_CN[k];MKD.appendChild(o2);});
+    const nI=Object.assign(document.createElement("input"),{type:"number",value:"4",min:"4",
+      style:"width:52px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"});
+    const tb=document.createElement("button");tb.className="gbtn";tb.textContent="🔄 交换";
+    tb.onclick=()=>{const g=MKS.value,w=MKD.value,n=parseInt(nI.value,10)||4;
+      if(g===w){gLog("❌ 不能换同一种资源");return}
+      gameAPI("action",{room_id:state.groom,action:{op:"trade",give:g,want:w,n}});};
+    b3.append(document.createTextNode("交换 "),MKS,document.createTextNode("给 ×"),nI,document.createTextNode("→ 换 "),MKD,tb);
+    box.appendChild(b3);
     box.appendChild(gBtn("⏭ 跳过",{op:"skip"}));
   },
   lingdi(box,s){
@@ -4698,10 +4739,17 @@ const GRENDER={
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
       const I=(ph)=>Object.assign(document.createElement("input"),{type:"number",placeholder:ph,
         style:"width:52px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"}),
-        r=I("行"),c=I("列"),m=I("米宝,0-9"),
+        r=I("行"),c=I("列"),
         b=document.createElement("button");b.className="gbtn go";b.textContent="🏗 放置";
-      b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"place",r:r.value,c:c.value,meeple:(m.value?("self"):null)}});
-      [r,c,m,b].forEach(x=>bar.appendChild(x));bar.appendChild(gBtn("⏭ 跳过",{op:"pass"}));
+      const mt=Object.assign(document.createElement("input"),{placeholder:"米宝:空/self/行,列",
+        style:"width:120px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"});
+      b.onclick=()=>{const act={op:"place",r:r.value,c:c.value};const mv=(mt.value||"").trim().toLowerCase();
+        if(mv==="self"){act.meeple="self"}
+        else if(mv){const p=mv.replace(/\s+/g,"").split(",");
+          if(p.length!==2||isNaN(parseInt(p[0],10))||isNaN(parseInt(p[1],10))){gLog("❌ 米宝坐标格式应为 行,列 或 self");return}
+          act.meeple=p[0]+","+p[1];}
+        gameAPI("action",{room_id:state.groom,action:act});};
+      [r,c,mt,b].forEach(x=>bar.appendChild(x));bar.appendChild(gBtn("⏭ 跳过",{op:"pass"}));
       box.appendChild(bar);}
   },
   tielu(box,s){
@@ -4788,7 +4836,8 @@ const GRENDER={
       [["0","向右"],["1","向下"]].forEach(k=>{const o=document.createElement("option");o.value=k[0];o.textContent=k[1];S.appendChild(o)});
       const b=document.createElement("button");b.className="gbtn go";b.textContent="🏰 放置";
       b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"pick",dom:di.value,x:x.value,y:y.value,rot:S.value}});
-      bar.append(di,x,y,S,b);box.appendChild(bar);}
+      bar.append(di,x,y,S,b);box.appendChild(bar);
+      box.appendChild(gBtn("⏭ 跳过",{op:"pass"}));}
   },
   gemcity(box,s){
     box.appendChild(gTitle("gemcity","璀璨宝石 · 收集换分"));
@@ -4820,16 +4869,31 @@ const GRENDER={
       const bb=document.createElement("button");bb.className="gbtn";bb.textContent="🛒 购买";
       bb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"buy",tier:S1.value,idx:S2.value}});
       b2.append(S1,S2,bb);box.appendChild(b2);
-      const s3=document.createElement("div");s3.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px";
-      s3.appendChild(gBtn("➡ 取2同色🔴",{op:"take2",color:"r"}));
-      s3.appendChild(gBtn("➡ 取2同色🟢",{op:"take2",color:"e"}));
+      const s3=document.createElement("div");s3.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center";
+      s3.appendChild(document.createTextNode("取2同色 "));
+      const S3=Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
+      ["o","d","r","e","s"].forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=(C_CN[c]||c);S3.appendChild(o)});
+      const t2b=document.createElement("button");t2b.className="gbtn";t2b.textContent="➡ 取2";
+      t2b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"take2",color:S3.value}});
+      s3.append(S3,t2b);box.appendChild(s3);
       const resBox=document.createElement("div");resBox.style.cssText="display:flex;gap:6px;margin-top:6px";
       resBox.appendChild(document.createTextNode("保留："));
       const st=document.createElement("select");[1,2,3].forEach(t=>{const o=document.createElement("option");o.value=t;o.textContent=t+"级";st.appendChild(o)});
       const si=document.createElement("select");for(let i=0;i<4;i++){const o=document.createElement("option");o.value=i;o.textContent="[卡"+i+"]";si.appendChild(o)}
       const rb=document.createElement("button");rb.className="gbtn";rb.textContent="📥 保留";
       rb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"reserve",tier:parseInt(st.value,10),idx:parseInt(si.value,10)}});
-      resBox.append(st,si,rb);box.appendChild(resBox);}
+      resBox.append(st,si,rb);box.appendChild(resBox);
+      const rsv=(state.gpriv&&state.gpriv.reserved)||[];
+      if(rsv.length){
+        const brBox=document.createElement("div");brBox.style.cssText="display:flex;gap:6px;margin-top:6px;align-items:center";
+        brBox.appendChild(document.createTextNode("购保留卡："));
+        const sr=document.createElement("select");sr.style.cssText="border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)";
+        rsv.forEach((c,i)=>{const o=document.createElement("option");o.value=i;
+          o.textContent="["+i+"] 🎴+"+c.pts+" "+ (C_CN&&C_CN[c.disc]?C_CN[c.disc]:c.disc);sr.appendChild(o)});
+        const brb=document.createElement("button");brb.className="gbtn";brb.textContent="♻ 购买";
+        brb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"buy_res",idx:parseInt(sr.value,10)}});
+        brBox.append(sr,brb);box.appendChild(brBox);}
+    }
   },
   siji(box,s){
     box.appendChild(gTitle("siji","四季物语 · 引擎构筑"));
@@ -4859,7 +4923,7 @@ const GRENDER={
       b2.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"activate",idx:S2.value}});
       bar2.append(S2,b2);box.appendChild(bar2);
       const s3=document.createElement("div");s3.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px";
-      s3.appendChild(gBtn("👑 3金换1分",{op:"convert"}));s3.appendChild(gBtn("⏭ 跳过",{op:"convert"},true));box.appendChild(s3);}
+      s3.appendChild(gBtn("👑 3金换1分",{op:"convert"}));box.appendChild(s3);}
   },
   bolan(box,s){
     box.appendChild(gTitle("bolan","波兰大选 · 区域控制"));
@@ -5000,10 +5064,12 @@ const GRENDER={
     const p=state.gpriv;
     if(p&&p.hand){
       const w=document.createElement("div");w.style.cssText="margin-top:6px";
-      w.innerHTML="<div class='gsec'>我的手牌（选一张打出）</div>"+p.hand.map(c=>{
+      const hd=document.createElement("div");hd.className="gsec";hd.textContent="我的手牌（选一张打出）";
+      w.appendChild(hd);
+      p.hand.forEach(c=>{
         const b=document.createElement("button");b.className="gbtn";b.style.marginRight="6px";b.textContent=c;
         b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"choose",card:c}});
-        return b.outerHTML;}).join("");
+        w.appendChild(b);});
       box.appendChild(w);
       if(Object.keys(s.chosen||{}).includes(String(state.uid)))
         box.appendChild(Object.assign(document.createElement("div"),
@@ -5055,22 +5121,27 @@ const GRENDER={
     box.appendChild(gTitle("kalah","非洲播棋 · 多子者胜"));
     const c=s.cells||[],A=s.p0,B=s.p1,st=s.stores||{};
     const chip=n=>n?"<b>"+n+"</b>":"<span style='color:var(--dim)'>·</span>";
-    const cell=(n,i,btn)=>{
-      if(!btn)return "<span style='display:inline-block;min-width:24px;text-align:center;border:1px solid var(--line,#ddd);border-radius:8px;padding:8px 2px;margin:1px'>"+chip(n)+"</span>";
-      const b=document.createElement("button");b.className="gbtn";b.style.minWidth="28px";b.style.padding="7px 2px";b.textContent=n;
-      b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{hole:i+1}});return b.outerHTML;
-    };
+    const cell=n=>"<span style='display:inline-block;min-width:24px;text-align:center;border:1px solid var(--line,#ddd);border-radius:8px;padding:8px 2px;margin:1px'>"+chip(n)+"</span>";
     const w=document.createElement("div");w.style.cssText="font-size:12px";
-    w.innerHTML=
-      "<div style='display:flex;align-items:stretch'>"
-      +"<div style='align-self:center;border:1px solid var(--line,#ddd);border-radius:10px;padding:6px;text-align:center'>"+chip(st[B]||0)+"<div style='font-size:9px;color:var(--dim)'>"+esc(gnick(B))+"</div></div>"
-      +"<div style='flex:1'>"+c.slice(13,7).reverse().map((n,i)=>cell(n,12-i,false)).join("")+"</div>"
-      +"</div>"
-      +"<div style='display:flex;align-items:stretch'>"
-      +"<div style='flex:1'>"+c.slice(0,6).map((n,i)=>cell(n,i,true)).join("")+"</div>"
-      +"<div style='align-self:center;border:1px solid var(--line,#ddd);border-radius:10px;padding:6px;text-align:center'>"+chip(st[A]||0)+"<div style='font-size:9px'>"+esc(gnick(A))+"</div></div>"
-      +"</div>"
-      +"<div style='margin-top:4px;color:var(--dim)'>点己方洞播子"+(s.turn===A?"（轮到你）":"　轮到 "+esc(gnick(s.turn)))+"</div>";
+    const top=document.createElement("div");top.style.cssText="display:flex;align-items:stretch";
+    top.innerHTML=
+      "<div style='align-self:center;border:1px solid var(--line,#ddd);border-radius:10px;padding:6px;text-align:center'>"+chip(st[B]||0)+"<div style='font-size:9px;color:var(--dim)'>"+esc(gnick(B))+"</div></div>"
+      +"<div style='flex:1'>"+c.slice(13,7).reverse().map(n=>cell(n)).join("")+"</div>";
+    w.appendChild(top);
+    const bot=document.createElement("div");bot.style.cssText="display:flex;align-items:stretch";
+    const holes=document.createElement("div");holes.style.cssText="flex:1";
+    c.slice(0,6).forEach((n,i)=>{
+      const b=document.createElement("button");b.className="gbtn";b.style.minWidth="28px";b.style.padding="7px 2px";b.textContent=n;
+      b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{hole:i+1}});
+      holes.appendChild(b);});
+    bot.appendChild(holes);
+    const storeA=document.createElement("div");storeA.style.cssText="align-self:center;border:1px solid var(--line,#ddd);border-radius:10px;padding:6px;text-align:center";
+    storeA.innerHTML=chip(st[A]||0)+"<div style='font-size:9px'>"+esc(gnick(A))+"</div>";
+    bot.appendChild(storeA);
+    w.appendChild(bot);
+    const hint=document.createElement("div");hint.style.cssText="margin-top:4px;color:var(--dim)";
+    hint.textContent="点己方洞播子"+(s.turn===A?"（轮到你）":"　轮到 "+esc(gnick(s.turn)));
+    w.appendChild(hint);
     box.appendChild(w);
   },
   lovelove(box,s){
@@ -5228,7 +5299,7 @@ const GRENDER={
       b.onclick=()=>{state.blokP=pc;state.blokO=0;};row.appendChild(b);});
     const prev=document.createElement("span");prev.style.cssText="display:inline-block;margin-left:6px";
     if(ots.length){const oc=ots[oi];let mini="";
-      for(let r=0;r<6;r++){for(let ccol=0;ccol<6;ccol++){mini+=oc.has(r+","+ccol)?"▣":"·";}mini+="<br>";}
+      for(let r=0;r<6;r++){for(let ccol=0;ccol<6;ccol++){mini+=oc.includes(r+","+ccol)?"▣":"·";}mini+="<br>";}
       prev.innerHTML=mini;
       row.appendChild(prev);
     }
@@ -5245,7 +5316,7 @@ const GRENDER={
     bar.appendChild(allow);
     zone.appendChild(bar);
     box.appendChild(zone);
-    function placeBlokus(corner){gameAPI("action",{room_id:state.groom,action:{op:"place",piece:pick,oi:oi||0,x:corner.x,y:corner.y}});}
+    function placeBlokus(corner){gameAPI("action",{room_id:state.groom,action:{op:"place",piece:pick,oi:oi||0,x:corner.y,y:corner.x}});}
   },
   ludo(box,s){
     const tr=s.track||40,per=11,ARMCOL=["#e05555","#3f6fe0","#3ba55d","#e8b93c"];

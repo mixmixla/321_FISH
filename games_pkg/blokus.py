@@ -209,7 +209,10 @@ class BlokusGame(BaseGame):
             "placed": {str(u): self.placed[u] for u in self.players},
             "has_piece": {str(u): sorted(self.bag[u].keys()) for u in self.players},
             "colors": PLAYER_COL[:self.n],
-            "pieces": PIECE_CATALOG,
+            # JSON-safe：每个朝向表示为 ["r,c", ...] 字符串列表（set 不可序列化）
+            "pieces": {name: [sorted(f"{r},{c}" for (r, c) in ori)
+                              for ori in PIECE_CATALOG[name]]
+                       for name in PIECE_CATALOG},
         }
 
     def ended(self):

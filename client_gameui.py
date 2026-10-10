@@ -561,6 +561,52 @@ def handle_click(ui, x, y):
         fn(ui, x, y)
 
 
+def handle_drag(cv, ui, x, y, phase):
+    """鼠标拖拽作画：仅"你画我猜"画手在作画阶段生效。
+
+    phase："down" 起笔 / "move" 续笔 / "up" 收笔。widget 坐标经 dg_map
+    换算回 400×300 逻辑坐标后逐段作为 stroke 发送，与 Web 端一致；同时
+    本地即时描线（tag=dg_ink）避免等待心跳回包。
+    """
+    if ui.get("game") != "drawguess":
+        return
+    st = ui.get("state") or {}
+    if st.get("phase") != "drawing" or st.get("drawer_uid") != ui.get("me"):
+        return
+    mp = ui.get("dg_map")
+    if not mp:
+        return
+    ox, oy, scale = mp
+    lx = max(0.0, min(400.0, (x - ox) / scale))
+    ly = max(0.0, min(300.0, (y - oy) / scale))
+    if phase == "down":
+        ui["dg_last"] = (lx, ly)
+        return
+    if phase == "up":
+        ui.pop("dg_last", None)
+        return
+    last = ui.get("dg_last")
+    if last is None:
+        ui["dg_last"] = (lx, ly)
+        return
+    x1, y1 = last
+    if abs(lx - x1) < 1 and abs(ly - y1) < 1:
+        return
+    ui["dg_last"] = (lx, ly)
+    stroke = {"type": "line", "x1": int(x1), "y1": int(y1),
+              "x2": int(lx), "y2": int(ly), "color": "black", "width": 3}
+    try:
+        cv.create_line(ox + x1 * scale, oy + y1 * scale,
+                       ox + lx * scale, oy + ly * scale,
+                       fill="black", width=3, capstyle="round", tags="dg_ink")
+    except Exception:
+        pass
+    try:
+        ui["submit"]({"stroke": stroke})
+    except Exception:
+        pass
+
+
 def _cell_of(ui, x, y):
     if ui.get("game") == "gomoku":
         return _intersection_of(ui, x, y)
@@ -960,6 +1006,42 @@ def _click_balatro_solo(ui, x, y):
             return
 
 
+def _click_blokus(ui, x, y):
+    """角斗士棋：点拼块 chip 选中 / 换方向 / 跳过 / 点棋盘空格落子。
+
+    落子发送 {"op":"place","piece","oi","x","y"}。服务端 blokus._place 中 x
+    为行偏移、y 为列偏移（位形已归一化，min r=0/min c=0），而 _cell_of 返回
+    (列, 行)，故此处需交换为 (x=行, y=列)。"""
+    st = ui.get("state") or {}
+    if st.get("winner_uid") is not None or st.get("turn_uid") != ui.get("me"):
+        return
+    rect = ui.get("blok_rot")
+    if rect and rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]:
+        ots = (st.get("pieces") or {}).get(ui.get("blok_pick")) or []
+        if ots:
+            ui["blok_oi"] = (ui.get("blok_oi", 0) + 1) % len(ots)
+            ui["repaint"]()
+        return
+    rect = ui.get("blok_pass")
+    if rect and rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]:
+        ui["submit"]({"op": "pass"})
+        return
+    for x0, y0, x1, y1, name in ui.get("blok_chips") or ():
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            ui["blok_pick"] = name
+            ui["blok_oi"] = 0
+            ui["repaint"]()
+            return
+    c = _cell_of(ui, x, y)
+    if not c:
+        return
+    name = ui.get("blok_pick")
+    if not name or name not in ((st.get("has_piece") or {}).get(str(ui.get("me"))) or []):
+        return
+    ui["submit"]({"op": "place", "piece": name,
+                  "oi": ui.get("blok_oi", 0), "x": c[1], "y": c[0]})
+
+
 _CLICKS = {
     "gomoku": _click_xy, "othello": _click_xy, "tictactoe": _click_xy,
     "go": _click_go, "xiangqi": _click_move, "chess": _click_move,
@@ -970,6 +1052,7 @@ _CLICKS = {
     "shogi": _click_shogi, "ludo": _click_ludo,
     "rummikub": _click_rummikub, "balatro": _click_balatro,
     "balatro_solo": _click_balatro_solo,   # 单人版：商店/消耗品 + select/unselect
+    "blokus": _click_blokus,               # 角斗士棋：选拼块/换方向/跳过/点棋盘落子
 }
 
 
@@ -2395,8 +2478,9 @@ def _p_shogi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 def _p_blokus(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["blokus"][1]
     n = st.get("size") or 20
+    ended = st.get("winner_uid") is not None
     title = "🧩 角斗士棋"
-    if st.get("winner_uid") is not None:
+    if ended:
         title = f"🏆 {nick(st['winner_uid'])} 获胜"
     elif st.get("turn_uid"):
         title += f"　轮到 {nick(st['turn_uid'])}"
@@ -2406,6 +2490,7 @@ def _p_blokus(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     colors = st.get("colors") or ["#e05555", "#3f6fe0", "#3ba55d", "#e8b93c"]
     placed = st.get("placed") or {}
     has_piece = st.get("has_piece") or {}
+    catalog = st.get("pieces") or {}
     panel_w = max(150, int(w * 0.22))
     cell = max(4, min((w - panel_w - 24) / n, (h - 46 - 24) / n))
     bx = 10
@@ -2424,29 +2509,90 @@ def _p_blokus(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             cv.create_rectangle(bx + x * cell, by + y * cell,
                                 bx + (x + 1) * cell, by + (y + 1) * cell,
                                 fill=fill, outline="#d8d0b8", width=1)
-    _text(cv, bx + n * cell / 2, h - 12,
-          "放置拼块：用下方按钮区选择拼块/方向/落点", "#666", (_FONT_F[0], 9))
-    # 右侧面板：各方剩余拼块与已占面积
+    # 右侧面板：战况 + 交互区（选择拼块 / 换方向 / 跳过 / 点棋盘落子）
     px = bx + n * cell + 14
     py = by + 4
     _text(cv, px, py, "战况", "#333", _FONT_B, anchor="w")
-    py += 26
+    py += 24
     for i, u in enumerate(players):
         col = colors[i % len(colors)]
-        _text(cv, px, py, f"● {nick(u)}" + ("（我）" if u == me else ""),
-              col, _FONT_B, anchor="w")
-        py += 20
-        _text(cv, px + 8, py, f"已占 {placed.get(str(u), 0)} 格", "#555",
-              _FONT_F, anchor="w")
+        _text(cv, px, py, f"● {nick(u)}" + ("（我）" if u == me else "")
+              + f"  已占 {placed.get(str(u), 0)} 格", col,
+              (_FONT_F[0], 9), anchor="w")
         py += 18
-        pieces = has_piece.get(str(u)) or []
-        # 拼块名两两一行分列
-        line = " ".join(pieces)
-        lines = [line[i:i + 24] for i in range(0, len(line), 24)] or [""]
-        for ln in lines:
-            _text(cv, px + 8, py, ln, "#777", (_FONT_F[0], 9), anchor="w")
-            py += 14
-        py += 8
+    py += 8
+    # 每帧重置点击热区，避免残留失效区域
+    ui["blok_chips"] = []
+    ui["blok_rot"] = None
+    ui["blok_pass"] = None
+    my_turn = (not ended) and st.get("turn_uid") == me
+    mine = has_piece.get(str(me)) or []
+    if my_turn and mine:
+        _text(cv, px, py, "选择拼块（点击）", "#333", _FONT_B, anchor="w")
+        py += 22
+        pick = ui.get("blok_pick")
+        if pick not in mine:
+            pick = mine[0]
+            ui["blok_pick"] = pick
+            ui["blok_oi"] = 0
+        chips = []
+        cw, chh, gap = 46, 22, 4
+        cols_n = max(1, int((w - px - 10) // (cw + gap)))
+        cx, cy = px, py
+        for idx, nm in enumerate(mine):
+            if idx and idx % cols_n == 0:
+                cx = px
+                cy += chh + gap
+            sel = (nm == pick)
+            cv.create_rectangle(cx, cy, cx + cw, cy + chh,
+                                fill=(accent if sel else "#ffffff"),
+                                outline=accent, width=2 if sel else 1)
+            _text(cv, cx + cw / 2, cy + chh / 2, nm,
+                  ("#ffffff" if sel else "#333333"), (_FONT_F[0], 9))
+            chips.append((cx, cy, cx + cw, cy + chh, nm))
+            cx += cw + gap
+        ui["blok_chips"] = chips
+        py = cy + chh + 12
+        # 选中拼块的方向预览 + 换方向
+        ots = list(catalog.get(pick) or [])
+        if ots:
+            oi = ui.get("blok_oi", 0) % len(ots)
+            ui["blok_oi"] = oi
+            cellset = set()
+            maxr = maxc = 0
+            for pr in ots[oi]:
+                try:
+                    a, b = str(pr).split(",")
+                    a, b = int(a), int(b)
+                except (ValueError, TypeError):
+                    continue
+                cellset.add((a, b))
+                maxr, maxc = max(maxr, a), max(maxc, b)
+            msz = 12
+            _text(cv, px, py, f"方向 {oi + 1}/{len(ots)}", "#333",
+                  (_FONT_F[0], 9), anchor="w")
+            mx0 = px + 72
+            for (a, b) in cellset:
+                cv.create_rectangle(mx0 + b * msz, py - 8 + a * msz,
+                                    mx0 + (b + 1) * msz, py - 8 + (a + 1) * msz,
+                                    fill=accent, outline="#ffffff")
+            py += max((maxr + 1) * msz, 18) + 12
+            rot = (px, py, px + 72, py + 22)
+            cv.create_rectangle(*rot, fill="#ffffff", outline=accent, width=1)
+            _text(cv, px + 36, py + 11, "↻ 换方向", "#333", (_FONT_F[0], 9))
+            ui["blok_rot"] = rot
+            py += 30
+        pas = (px, py, px + 92, py + 22)
+        cv.create_rectangle(*pas, fill="#ffffff", outline="#999999", width=1)
+        _text(cv, px + 46, py + 11, "🙋 跳过回合", "#333", (_FONT_F[0], 9))
+        ui["blok_pass"] = pas
+        py += 26
+        _text(cv, px, py, "点棋盘空格落子", "#666666", (_FONT_F[0], 9), anchor="w")
+    elif ended:
+        _text(cv, px, py, "对局已结束", "#666666", _FONT_F, anchor="w")
+    elif st.get("turn_uid") is not None:
+        _text(cv, px, py, f"等待 {nick(st['turn_uid'])} 落子…", "#666666",
+              _FONT_F, anchor="w")
 
 
 @_register("ludo")
@@ -3277,22 +3423,28 @@ def _p_drawguess(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     elif drawer is not None:
         title += f"　画手：{nick(drawer)}" + ("（你）" if drawer == me else "")
     _turn_banner(cv, w, 46, title, accent)
-    # 画布区域：把已画的笔画重画出来
+    # 画布区域：统一 400×300 逻辑坐标（与 Web 端一致），等比缩放并居中；
+    # 命中反算见 handle_drag，保证桌面/网页两端笔画坐标可互通。
     canvas_x, canvas_y, canvas_w, canvas_h = 14, 70, w - 28, h - 150
-    cv.create_rectangle(canvas_x, canvas_y, canvas_w,
-                        canvas_y + canvas_h, fill="#fff", outline=_PANEL_BD)
+    scale = max(min(canvas_w / 400.0, canvas_h / 300.0), 0.05)
+    dw, dh = 400 * scale, 300 * scale
+    ox = canvas_x + (canvas_w - dw) / 2.0
+    oy = canvas_y + (canvas_h - dh) / 2.0
+    ui["dg_map"] = (ox, oy, scale)
+    cv.create_rectangle(ox, oy, ox + dw, oy + dh, fill="#fff", outline=_PANEL_BD)
     strokes = st.get("strokes") or []
     for s in strokes:
         if not isinstance(s, dict):
             continue
         if s.get("type") == "line":
             x1, y1 = s.get("x1", 0), s.get("y1", 0)
-            x2, y2 = s.get("x2", canvas_w), s.get("y2", canvas_h)
+            x2, y2 = s.get("x2", 400), s.get("y2", 300)
             _col = s.get("color") or "black"
             _wid = s.get("width") or 3
             try:
-                cv.create_line(x1, y1, x2, y2, fill=_col, width=int(_wid),
-                               capstyle="round")
+                cv.create_line(ox + x1 * scale, oy + y1 * scale,
+                               ox + x2 * scale, oy + y2 * scale,
+                               fill=_col, width=int(_wid), capstyle="round")
             except Exception:
                 pass
     # 顶部信息

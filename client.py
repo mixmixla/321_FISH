@@ -11511,7 +11511,10 @@ _GAME_ACTIONS = {
         ("过", {"fixed": {"op": "pass"}}, ""),
     ],
     "tictactoe": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）")],
-    "go": [("过一手", {"fixed": {"pass": True}}, "弃一手（轮流连续过则终局）")],
+    "go": [
+        ("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）"),
+        ("过一手", {"fixed": {"pass": True}}, "弃一手（轮流连续过则终局）"),
+    ],
     "halma": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（直移或隔子直跳）")],
     "checkers": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（斜移/斜跳吃子）")],
     "blokus": [("放置", {"key": None, "kind": "blok"}, "输入 拼块名 方向号 x y")],
@@ -11552,10 +11555,17 @@ _GAME_ACTIONS = {
         ("👉下一回合", {"fixed": {"op": "next"}}, "结算后进入下一回合"),
     ],
     "coc": [
+        ("🎭开局(KP)", {"fixed": {"op": "begin"}}, "KP 开始调查（需全员已选卡）"),
         ("🔰选卡", {"op": "choose_card", "key": "card_id", "kind": "text"}, "输入调查员 id（setup 阶段）"),
         ("🎲检定", {"op": "check", "key": "skill", "kind": "text"}, "输入技能名发起 d100 检定"),
         ("🗒️剧情(KP)", {"op": "set_scene", "key": "scene", "kind": "text"}, "KP 更新场景文案"),
         ("🏁结束(KP)", {"fixed": {"op": "end"}}, "KP 收尾本局"),
+    ],
+    "rummikub": [
+        ("🎴组新组", {"op": "meld", "sel_key": "rmk"}, "先在棋盘点选手牌，再点此组新组（≥3 张同数异色/同色连号）"),
+        ("🔧接续", {"op": "extend", "sel_key": "rmk", "need_row": True}, "点选手牌后接续到桌面某一组"),
+        ("🂠摸牌", {"fixed": {"op": "draw"}}, "本回合未出牌时摸一张并结束回合"),
+        ("✅结束回合", {"fixed": {"op": "done"}}, "结束本回合"),
     ],
     "balatro": [
         ("🎮 出牌", {"fixed": {"op": "play"}}, "结算当前出战的牌型"),
@@ -11658,7 +11668,7 @@ _GAME_GRAD_DEF = ("#4a4f5a", "#333842")     # 未知游戏兜底渐变
 # games remain available with an explicit "unverified" notice.
 _DESKTOP_UNSUPPORTED_GAMES = {
     "azul", "bolan", "chengzhu", "gemcity", "gongfang", "kaituo",
-    "lingdi", "nimmt", "siji", "tielu", "yahtzee", "go", "rummikub", "coc",
+    "lingdi", "nimmt", "siji", "tielu", "yahtzee",
 }
 
 
@@ -13254,7 +13264,7 @@ class GameWindow:
             b.pack(side="left", padx=(0, 2))
 
     def _set_pending(self, spec: dict, hint: str) -> None:
-        """按钮动作：fixed=直接发；否则按 kind 弹友好参数窗（不再用底部输入框）。"""
+        """按钮动作：fixed=直接发；sel_key=取棋盘勾选；否则按 kind 弹友好参数窗。"""
         source_ui = (self._board_win._cv_ui
                      if getattr(self, "_board_win", None)
                      and self._board_win.active() else self._cv_ui)
@@ -13262,7 +13272,36 @@ class GameWindow:
             self.act_hint.config(text="")
             self._do_action(spec["fixed"], source_ui)
             return
+        if "sel_key" in spec:
+            self._submit_sel(spec, source_ui)
+            return
         self._ask_params(spec, hint)
+
+    def _submit_sel(self, spec: dict, source_ui) -> None:
+        """把棋盘上勾选的牌（ui.sel[sel_key]）作为 tiles 提交，可选补一个行号。"""
+        ids = list((source_ui.get("sel") or {}).get(spec["sel_key"], []))
+        if not ids:
+            self.act_hint.config(text="先在棋盘上点选要出的牌")
+            return
+        action = {"op": spec["op"], "tiles": ids}
+        if spec.get("need_row"):
+            from widgets import dialogbox as _db
+            label = self.core.game_meta.get(self._cur_game(), {}).get("label", "游戏")
+            r = _db.ask_string(f"{label} · 接续",
+                               "接续到第几组（桌面左侧编号，从 1 起）",
+                               parent=self.win)
+            if r is None:
+                self.act_hint.config(text="")
+                return
+            try:
+                action["row"] = int(r) - 1
+            except (TypeError, ValueError):
+                self.act_hint.config(text="行号无效")
+                return
+        # 提交后清空勾选，避免旧选择残留
+        (source_ui.get("sel") or {}).pop(spec["sel_key"], None)
+        self.act_hint.config(text="")
+        self._do_action(action, source_ui)
 
     def _ask_params(self, spec: dict, hint: str) -> None:
         """参数动作：根据 kind 弹出对应输入窗，友好收集参数后发送。"""

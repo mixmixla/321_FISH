@@ -767,6 +767,20 @@ def _click_move(ui, x, y):
     ui["repaint"]()
 
 
+def _click_go(ui, x, y):
+    """围棋：单击交叉点直接落子（GoGame.act 期望 {"x","y"}，无需两段式选子）。"""
+    st = ui.get("state") or {}
+    if st.get("over") or st.get("winner_uid") is not None:
+        return
+    c = _cell_of(ui, x, y)
+    if not c:
+        return
+    board = st.get("board") or []
+    if c[1] >= len(board) or c[0] >= len(board[c[1]]) or board[c[1]][c[0]]:
+        return
+    ui["submit"]({"x": c[0], "y": c[1]})
+
+
 def _click_kalah(ui, x, y):
     """6 洞播棋：点己方洞（1~6）"""
     me = ui["me"]
@@ -948,7 +962,7 @@ def _click_balatro_solo(ui, x, y):
 
 _CLICKS = {
     "gomoku": _click_xy, "othello": _click_xy, "tictactoe": _click_xy,
-    "go": _click_move, "xiangqi": _click_move, "chess": _click_move,
+    "go": _click_go, "xiangqi": _click_move, "chess": _click_move,
     "connect4": _click_col, "kalah": _click_kalah,
     "uno": _click_uno, "coc": _click_coc_deck,
     "halma": _click_move, "checkers": _click_move,
@@ -1646,7 +1660,7 @@ def _p_go(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 cv.create_oval(ox + x * cell - 2, oy + y * cell - 2,
                                ox + x * cell + 2, oy + y * cell + 2, fill="#7a5a2a")
     cv.create_text(ox - 14, oy + n * cell + cell / 2,
-                   text="过(P) 弃标", anchor="w", font=(_FONT_F[0], 9),
+                   text="点交叉点落子 · 过一手", anchor="w", font=(_FONT_F[0], 9),
                    fill=_MUTED)
     board = st.get("board") or []
     now = time.monotonic()
@@ -1662,12 +1676,6 @@ def _p_go(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             _stone(cv, cx, cy, cell * 0.44,
                    "#111111" if v == 1 else "#ffffff", "#888888",
                    glow=True, gint=breathing)
-    sel = (ui.get("sel") or {})
-    if sel.get("game") == "go" and "fx" in sel:
-        _sel_mark(cv, ox + sel["fx"] * cell, oy + sel["fy"] * cell,
-                  cell * 0.5, "#ff9800")
-        _text(cv, w / 2, oy + n * cell + 23, "已选中 · 点击目标交叉点落子",
-              "#c0392b", (_FONT_F[0], 9))
     # ---- 动效（降级）：缺 last_move 只做辉光 + 胜利星点（数量封顶 ≤48）----
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
@@ -2590,6 +2598,7 @@ def _p_rummikub(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         for ri, row in enumerate(table):
             total = len(row) * (cw + gap) - gap
             rx = (w - total) / 2
+            _text(cv, 24, ty + ch / 2, f"第{ri + 1}组", _MUTED, _FONT_F, anchor="w")
             for j, tl in enumerate(row):
                 col = _RMK_COL.get(tl.get("c", ""), "#888")
                 x0 = rx + j * (cw + gap)

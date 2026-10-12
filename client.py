@@ -10890,11 +10890,13 @@ class ChatWindow:
         if (not force_root and self._mini is not None
                 and snap.get("mini_visible", False)):
             self._mini.show()
+        restored_game = False
         gw = snap.get("game")
         if (gw is not None and not getattr(gw, "_closed", False)
                 and getattr(gw, "_restore_allowed", True)):
             try:
                 gw.show()
+                restored_game = True
             except Exception:
                 pass
         board = snap.get("board")
@@ -10902,8 +10904,13 @@ class ChatWindow:
                 and getattr(board, "_restore_allowed", True)):
             try:
                 board.show(reason="collapse")
+                restored_game = True
             except Exception:
                 pass
+        if restored_game:
+            select = getattr(self, "_select_navigation", None)
+            if select is not None:
+                select("game")
 
     def _toggle_boss(self) -> None:
         """藏起全部摸鱼窗（主窗/迷你条/游戏窗），弹出假工作窗；再按切回。

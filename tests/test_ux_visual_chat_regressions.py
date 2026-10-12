@@ -100,6 +100,17 @@ def test_closing_auxiliary_panel_restores_chat_selection(app,panel):
     assert all(not button._nav_selected for name,button in app._navigation_buttons.items() if name!='chat')
 
 
+def test_collapse_restore_reselects_game_while_room_panel_is_open(app):
+    app.open_game()
+    app.root.update()
+    assert app._navigation_buttons['game']._nav_selected
+    app.hide_to_mini()
+    app.show_main()
+    app.root.update()
+    assert app._navigation_buttons['game']._nav_selected
+    assert not app._navigation_buttons['chat']._nav_selected
+
+
 def test_short_history_is_not_clipped_after_window_grows(app):
     samples=[(2,'小周','上午的任务都处理好了，分享一下今天的计划。'),
              (1,'我','收到。我把重点整理进工作表，下午一起看。'),

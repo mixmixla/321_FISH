@@ -25,9 +25,10 @@ for(const name of ['uxSelectNavigation','openGamePanel','hideGamePanel','closeLo
 ctx.uxSelectNavigation('chat');assert.equal(buttons[0].on,true);
 ctx.closeLobby();ctx.openGamePanel('synthetic-room');
 assert.equal(buttons[1].on,true);assert.equal(buttons[1].attrs['aria-current'],'page');assert.equal(buttons[0].on,false);
+ctx.closeLobby();assert.equal(buttons[1].on,true);assert.equal(buttons[0].on,false);
 ctx.hideGamePanel();assert.equal(buttons[0].on,true);assert.equal(buttons[1].attrs['aria-current'],undefined);
 assert.equal(ctx.webThemeMode(),'mist');ctx.applyWebTheme();assert.equal(attributes['data-theme'],'mist');
 ctx.toggleTheme();assert.equal(ctx.webThemeMode(),'mist-dark');ctx.toggleTheme();assert.equal(ctx.webThemeMode(),'mist');
 storage.set('web_theme','light');assert.equal(ctx.webThemeMode(),'light');
 ctx.setThemeFamily('mist');assert.equal(ctx.webThemeMode(),'mist');
-console.log(JSON.stringify({navigation_room_open_close:true,aria_current:true,mist_pair:true,legacy_preference:true,full_script_syntax:true}));
+console.log(JSON.stringify({navigation_room_open_close:true,aria_current:true,lobby_room_retains_game:true,mist_pair:true,legacy_preference:true,full_script_syntax:true}));

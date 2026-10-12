@@ -4008,7 +4008,7 @@ function gameLobby(){
       state.grooms=d.rooms||[];renderLobby();renderGames();}}).catch(()=>{});
   renderLobby();
 }
-function closeLobby(){state.globbyOpen=false;const m=$("#globby");if(m)m.remove();uxSelectNavigation('chat')}
+function closeLobby(){state.globbyOpen=false;const m=$("#globby");if(m)m.remove();uxSelectNavigation(state.groom?'game':'chat')}
 function renderLobby(){
   const gb=$("#glGames");if(!gb)return;
   gb.innerHTML="";

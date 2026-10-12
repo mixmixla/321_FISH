@@ -12418,6 +12418,7 @@ class GameWindow:
         # 桌游对局图形区（Canvas 棋盘，鼠标点击直接交互）：独占弹性空间，
         # 窗口拉大时棋盘随之放大（日志区不再与其平分空间）。
         self._cv_ui = {"sel": {}}
+        self._last_board_ui = self._cv_ui   # 最近被点击的棋盘 ui（供动作读取/清理）
         self.game_cv = tk.Canvas(wrap, bg=self._pal["win"], highlightthickness=0,
                                  height=1)
         self.game_cv.pack(fill="both", expand=True)
@@ -12895,6 +12896,7 @@ class GameWindow:
             pass
 
     def _on_cv_click(self, evt) -> None:
+        self._last_board_ui = self._cv_ui
         try:
             client_gameui.handle_click(self._cv_ui, evt.x, evt.y)
         except Exception:
@@ -13392,13 +13394,52 @@ class GameWindow:
             self._do_action(spec["fixed"], source_ui)
             return
         if "sel_key" in spec:
-            self._submit_sel(spec, source_ui)
+            self._submit_sel(spec)
             return
         self._ask_params(spec, hint)
 
-    def _submit_sel(self, spec: dict, source_ui) -> None:
-        """把棋盘上勾选的牌（ui.sel[sel_key]）作为 tiles 提交，可选补一个行号。"""
-        ids = list((source_ui.get("sel") or {}).get(spec["sel_key"], []))
+    def _board_uis(self) -> list:
+        """候选棋盘 ui：最近操作棋盘优先，其次可见专注窗，最后大厅内嵌，去重。
+
+        大厅内嵌棋盘与独立专注窗各自持有独立的 _cv_ui/选择状态，且可同时可见、
+        同时可点击。按“最近操作”排首，保证按按钮时取到用户实际点选的那份 sel。
+        """
+        uis = []
+        last = getattr(self, "_last_board_ui", None)
+        if isinstance(last, dict):
+            uis.append(last)
+        bw = getattr(self, "_board_win", None)
+        if bw is not None and bw.active():
+            uis.append(bw._cv_ui)
+        uis.append(self._cv_ui)
+        out = []
+        seen = set()
+        for u in uis:                    # 按对象身份去重（两份 ui 内容可能恰好相同）
+            if id(u) in seen:
+                continue
+            seen.add(id(u))
+            out.append(u)
+        return out
+
+    def _room_ctx(self) -> tuple:
+        """当前对局的 (room_id, round, game) 快照，供弹窗返回后的上下文复核。"""
+        room = self.core.game_room or {}
+        return (room.get("room_id"), room.get("round"), room.get("game"))
+
+    def _submit_sel(self, spec: dict) -> None:
+        """把棋盘上勾选的牌（ui.sel[sel_key]）作为 tiles 提交，可选补一个行号。
+
+        双棋盘同时可见时按“最近操作优先”在候选 ui 中取首个非空选择；提交后清空
+        所有候选棋盘的同名勾选。接续弹窗为模态等待，期间房间/轮次可能被新状态
+        替换，故弹窗返回后复核上下文，变化则丢弃旧选择。
+        """
+        uis = self._board_uis()
+        ids = []
+        for u in uis:
+            got = list((u.get("sel") or {}).get(spec["sel_key"], []))
+            if got:
+                ids = got
+                break
         if not ids:
             self.act_hint.config(text="先在棋盘上点选要出的牌")
             return
@@ -13406,21 +13447,28 @@ class GameWindow:
         if spec.get("need_row"):
             from widgets import dialogbox as _db
             label = self.core.game_meta.get(self._cur_game(), {}).get("label", "游戏")
+            ctx = self._room_ctx()
             r = _db.ask_string(f"{label} · 接续",
                                "接续到第几组（桌面左侧编号，从 1 起）",
                                parent=self.win)
             if r is None:
                 self.act_hint.config(text="")
                 return
+            if self._room_ctx() != ctx:      # 弹窗期间对局已变 → 丢弃旧选择
+                for u in uis:
+                    (u.get("sel") or {}).pop(spec["sel_key"], None)
+                self.act_hint.config(text="对局已变化，请重新操作")
+                return
             try:
                 action["row"] = int(r) - 1
             except (TypeError, ValueError):
                 self.act_hint.config(text="行号无效")
                 return
-        # 提交后清空勾选，避免旧选择残留
-        (source_ui.get("sel") or {}).pop(spec["sel_key"], None)
+        # 提交后清空候选棋盘勾选，避免旧选择残留
+        for u in uis:
+            (u.get("sel") or {}).pop(spec["sel_key"], None)
         self.act_hint.config(text="")
-        self._do_action(action, source_ui)
+        self._do_action(action, uis[0])
 
     def _ask_params(self, spec: dict, hint: str) -> None:
         """参数动作：根据 kind 弹出对应输入窗，友好收集参数后发送。"""
@@ -13815,6 +13863,10 @@ class BoardFocusWindow:
             pass
 
     def _on_click(self, evt) -> None:
+        try:
+            self.host._last_board_ui = self._cv_ui
+        except Exception:
+            pass
         try:
             client_gameui.handle_click(self._cv_ui, evt.x, evt.y)
         except Exception:

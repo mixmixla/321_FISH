@@ -79,6 +79,7 @@ class CommonActionsGame:
 
     def _draw(self, uid: int) -> list:
         self._require_active(uid)
+        self._require_two_player()
         if self._draw_offer is not None and self._draw_offer != uid:
             raise GameRuleError("已有求和提议待回应")
         self._draw_offer = uid
@@ -86,6 +87,7 @@ class CommonActionsGame:
 
     def _draw_accept(self, uid: int) -> list:
         self._require_active(uid)
+        self._require_two_player()
         if self._draw_offer is None:
             raise GameRuleError("当前没有待回应的求和")
         if self._draw_offer == uid:
@@ -95,6 +97,7 @@ class CommonActionsGame:
 
     def _draw_reject(self, uid: int) -> list:
         self._require_active(uid)
+        self._require_two_player()
         if self._draw_offer is None:
             raise GameRuleError("当前没有待回应的求和")
         if self._draw_offer == uid:
@@ -127,6 +130,11 @@ class CommonActionsGame:
             raise GameRuleError("对局已结束")
         if uid not in self.players:
             raise GameRuleError("观战者不能操作")
+
+    def _require_two_player(self) -> None:
+        """求和类动作仅对两人局开放；多人局（ludo/halma 等 2~4 人）不支持。"""
+        if len(self.players) != 2:
+            raise GameRuleError("多人局暂不支持求和")
 
     def _push_history(self) -> bool:
         """成功压入返回 True；不可深拷贝则返回 False（放弃回滚能力）。"""

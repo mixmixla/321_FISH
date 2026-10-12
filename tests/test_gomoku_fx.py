@@ -490,3 +490,99 @@ def test_status_hud_draws_pill_and_chips_and_fits_narrow():
     cv3 = _Canvas()
     cu._status_hud(cv3, 600, 68, {}, 7, nick, "#c99a6d")
     assert cv3.texts == []
+
+
+# -------- P0 桌面交互修复：围棋命中几何 / 你画我猜字段（全 headless）--------
+
+def test_cell_of_go_uses_intersection_not_floor():
+    """围棋命中走交叉点最近取整（与 gomoku 同几何），不再是矩形 floor。"""
+    ui = {"game": "go", "ox": 0.0, "oy": 0.0, "cell": 10.0, "n": 19}
+    assert cu._cell_of(ui, 30.0, 40.0) == (3, 4)         # 正落交叉点
+    # 落到下一交叉点更近的一侧（0.6 格）→ 取 1；旧的矩形 floor 会给 0
+    assert cu._cell_of(ui, 6.0, 6.0) == (1, 1)
+    # 与 gomoku 完全同几何：同参同结果
+    ui["game"] = "gomoku"
+    assert cu._cell_of(ui, 6.0, 6.0) == (1, 1)
+    # 超出板外半格容差 → None（不越界落子）
+    assert cu._cell_of({"game": "go", "ox": 0.0, "oy": 0.0,
+                        "cell": 10.0, "n": 19}, -6.0, 5.0) is None
+
+
+def test_handle_drag_accepts_drawguess_status_field():
+    """你画我猜拖拽门禁认 status：快照只发 status，旧代码只读 phase → 恒早退。"""
+    sent = []
+    ui = {"game": "drawguess", "me": 7,
+          "state": {"status": "drawing", "drawer_uid": 7},
+          "dg_map": (0.0, 0.0, 1.0), "submit": sent.append}
+    cu.handle_drag(None, ui, 0.0, 0.0, "down")           # 起笔
+    cu.handle_drag(None, ui, 10.0, 10.0, "move")         # 续笔
+    assert sent and sent[0]["stroke"]["x2"] == 10        # 有笔画提交（旧代码此处恒空）
+    # 非画手：仍早退，不提交
+    ui2 = {"game": "drawguess", "me": 8,
+           "state": {"status": "drawing", "drawer_uid": 7},
+           "dg_map": (0.0, 0.0, 1.0), "submit": sent.append}
+    cu.handle_drag(None, ui2, 0.0, 0.0, "down")
+    cu.handle_drag(None, ui2, 10.0, 10.0, "move")
+    assert len(sent) == 1
+
+
+def test_painter_drawguess_reads_status_field():
+    """"你画我猜"揭晓标题取自 status（round_end），旧代码只读 phase → 恒显示绘画中。"""
+    class _AnyCanvas:
+        def __init__(self):
+            self.texts = []
+
+        def __getattr__(self, name):
+            def _noop(*a, **k):
+                if name == "create_text" and k.get("text") is not None:
+                    self.texts.append(k.get("text"))
+            return _noop
+
+    cv = _AnyCanvas()
+    st = {"status": "round_end", "round": 2, "drawer_uid": 7,
+          "word": "咖啡杯", "scores": {7: 1, 8: 1}}
+    cu._p_drawguess(cv, st, 7, lambda u: f"P{u}",
+                    lambda a: None, lambda: None, {}, None, 480, 360)
+    assert any("咖啡杯" in t for t in cv.texts)          # 揭晓标题来自 status
+
+
+def test_cell_of_ignores_stale_cols_rows_for_square_boards():
+    """方阵棋盘（如 blokus）不受同窗口残留的 cols/rows（connect4 的 7x6）误裁。"""
+    ui = {"game": "blokus", "ox": 0.0, "oy": 0.0, "cell": 10.0, "n": 20,
+          "cols": 7, "rows": 6}                       # 模拟残留几何
+    assert cu._cell_of(ui, 150.0, 150.0) == (15, 15)  # 第 16 行/列仍可点（旧码 → None）
+    # 矩形棋盘（junqi）仍按 cols/rows 限界
+    ui2 = {"game": "junqi", "ox": 0.0, "oy": 0.0, "cell": 10.0, "n": 12,
+           "cols": 5, "rows": 12}
+    assert cu._cell_of(ui2, 60.0, 30.0) is None       # 越过 5 列 → 出界
+    assert cu._cell_of(ui2, 40.0, 30.0) == (4, 3)
+
+
+def test_blokus_controls_stay_inside_short_window():
+    """窗口偏矮 / 拼块多时，blokus 交互控件仍留在窗内可点击（不再无限下溢）。"""
+    class _Canvas:
+        def __init__(self):
+            self.texts = []
+
+        def __getattr__(self, name):
+            def _noop(*a, **k):
+                if name == "create_text" and k.get("text") is not None:
+                    self.texts.append(k.get("text"))
+            return _noop
+
+    mine = ["I1", "I2", "I3", "I4", "I5", "L4", "V3", "T4", "Z4", "O4",
+            "S4", "L5", "P5", "W5", "U5"]
+    catalog = {nm: [[f"{r},0" for r in range(5)]] for nm in mine}   # 纵向 5 格 → 预览最高
+    h = 300
+    st = {"size": 20, "turn_uid": 7, "players": [7, 8],
+          "board": [[None] * 20 for _ in range(20)],
+          "has_piece": {"7": mine}, "pieces": catalog}
+    ui = {}
+    cu._p_blokus(_Canvas(), st, 7, lambda u: f"P{u}", lambda a: None,
+                 lambda: None, ui, None, 640, h)
+    assert ui["blok_pass"][3] <= h                    # 跳过按钮未落出窗底
+    if ui["blok_rot"]:
+        assert ui["blok_rot"][3] <= h
+    assert all(c[3] <= h for c in ui["blok_chips"])
+    # 老代码（chh=22 固定）会把跳过按钮推到 300 之外；此处应已被压缩到窗内
+    assert ui["blok_pass"][1] < h

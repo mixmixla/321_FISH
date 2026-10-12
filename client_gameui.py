@@ -988,7 +988,8 @@ def handle_drag(cv, ui, x, y, phase):
     if ui.get("game") != "drawguess":
         return
     st = ui.get("state") or {}
-    if st.get("phase") != "drawing" or st.get("drawer_uid") != ui.get("me"):
+    if (st.get("status") or st.get("phase")) != "drawing" \
+            or st.get("drawer_uid") != ui.get("me"):
         return
     mp = ui.get("dg_map")
     if not mp:
@@ -1025,7 +1026,7 @@ def handle_drag(cv, ui, x, y, phase):
 
 
 def _cell_of(ui, x, y):
-    if ui.get("game") == "gomoku":
+    if ui.get("game") in ("gomoku", "go"):
         return _intersection_of(ui, x, y)
     if ui.get("game") == "connect4":
         return _connect4_column_of(ui, x, y)
@@ -1033,9 +1034,13 @@ def _cell_of(ui, x, y):
     n = ui.get("n")
     if None in (ox, oy, cell, n):
         return None
-    # 矩形棋盘（junqi/dou）用 cols/rows 限定边界，缺省回退为方阵 n
-    cols = ui.get("cols", n)
-    rows = ui.get("rows", n)
+    # 仅矩形棋盘（junqi/dou）用 cols/rows 限定边界；方阵棋盘只认 n，
+    # 避免同窗口切游戏后残留的 cols/rows（如 connect4 的 7x6）误裁命中区。
+    if ui.get("game") in ("junqi", "dou"):
+        cols = ui.get("cols", n)
+        rows = ui.get("rows", n)
+    else:
+        cols = rows = n
     cx, cy = (x - ox) / cell, (y - oy) / cell
     if cx < 0 or cy < 0 or cx >= cols or cy >= rows:
         return None
@@ -3261,9 +3266,21 @@ def _p_blokus(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             pick = mine[0]
             ui["blok_pick"] = pick
             ui["blok_oi"] = 0
-        chips = []
-        cw, chh, gap = 46, 22, 4
+        # 预取选中拼块的当前方向索引（供纵横自适应与预览共用）
+        ots = list(catalog.get(pick) or [])
+        oi = ui.get("blok_oi", 0) % len(ots) if ots else 0
+        if ots:
+            ui["blok_oi"] = oi
+        # 纵向自适应：预留下方固定控件（方向预览/换方向/跳过/提示）高度后，
+        # 把剩余空间分给拼块网格；窗口偏矮时压缩拼块高度与方向预览尺寸，
+        # 保证所有控件始终落在窗内可点击（不再单调递增溢出窗外）。
+        cw, gap = 46, 4
         cols_n = max(1, int((w - px - 10) // (cw + gap)))
+        rows_n = max(1, (len(mine) + cols_n - 1) // cols_n)
+        reserve = 12 + 26 + 16 + (30 if ots else 0)
+        avail = max(0, h - py - 8)
+        chh = int(max(12, min(22, (avail - reserve) // rows_n - gap)))
+        chips = []
         cx, cy = px, py
         for idx, nm in enumerate(mine):
             if idx and idx % cols_n == 0:
@@ -3280,10 +3297,7 @@ def _p_blokus(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         ui["blok_chips"] = chips
         py = cy + chh + 12
         # 选中拼块的方向预览 + 换方向
-        ots = list(catalog.get(pick) or [])
         if ots:
-            oi = ui.get("blok_oi", 0) % len(ots)
-            ui["blok_oi"] = oi
             cellset = set()
             maxr = maxc = 0
             for pr in ots[oi]:
@@ -3294,15 +3308,19 @@ def _p_blokus(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                     continue
                 cellset.add((a, b))
                 maxr, maxc = max(maxr, a), max(maxc, b)
-            msz = 12
-            _text(cv, px, py, f"方向 {oi + 1}/{len(ots)}", "#333",
-                  (_FONT_F[0], 9), anchor="w")
-            mx0 = px + 72
-            for (a, b) in cellset:
-                cv.create_rectangle(mx0 + b * msz, py - 8 + a * msz,
-                                    mx0 + (b + 1) * msz, py - 8 + (a + 1) * msz,
-                                    fill=accent, outline="#ffffff")
-            py += max((maxr + 1) * msz, 18) + 12
+            # 方向预览按剩余空间收缩（下限 5px/格）；空间仍不足则省略预览本身，
+            # 保证其下的「换方向 / 跳过」按钮始终留在窗内可点击。
+            room = h - 80 - py
+            msz = int(max(0, min(12, room // max(1, maxr + 1))))
+            if msz >= 5:
+                _text(cv, px, py, f"方向 {oi + 1}/{len(ots)}", "#333",
+                      (_FONT_F[0], 9), anchor="w")
+                mx0 = px + 72
+                for (a, b) in cellset:
+                    cv.create_rectangle(mx0 + b * msz, py - 8 + a * msz,
+                                        mx0 + (b + 1) * msz, py - 8 + (a + 1) * msz,
+                                        fill=accent, outline="#ffffff")
+                py += max((maxr + 1) * msz, 18) + 12
             rot = (px, py, px + 72, py + 22)
             cv.create_rectangle(*rot, fill="#ffffff", outline=accent, width=1)
             _text(cv, px + 36, py + 11, "↻ 换方向", "#333", (_FONT_F[0], 9))
@@ -4160,7 +4178,7 @@ def _p_guess_number(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 @_register("drawguess")
 def _p_drawguess(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["drawguess"][1]
-    phase = st.get("phase", "drawing")
+    phase = st.get("status") or st.get("phase") or "drawing"
     drawer = st.get("drawer_uid")
     title = "🎨 你画我猜"
     if phase == "round_end":

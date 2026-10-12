@@ -129,3 +129,36 @@ def test_common_draw_flow(mgr):
     mgr.handle_action(1, room.room_id, {"op": "draw"})
     mgr.handle_action(2, room.room_id, {"op": "draw_accept"})
     assert room.gs.ended() == {"winner_uid": None, "detail": "双方同意，和局"}
+
+
+def _start_multi(mgr, game, uids):
+    room = mgr.create(uids[0], game)
+    for u in uids[1:]:
+        mgr.join(u, room.room_id)
+    mgr.start(uids[0], room.room_id)
+    return room
+
+
+def test_common_draw_closed_in_four_player_ludo(mgr):
+    """四人局：求和被拒，不能由两人提前判整局和棋。"""
+    room = _start_multi(mgr, "ludo", [1, 2, 3, 4])
+    assert len(room.players) == 4
+    with pytest.raises(GameRuleError):
+        mgr.handle_action(1, room.room_id, {"op": "draw"})
+    assert room.gs.snapshot()["common"]["draw_offer"] is None
+    assert room.gs.ended() is None
+    # 即便存在陈旧提议，多人局的回应也不得终局
+    room.gs._draw_offer = 1
+    with pytest.raises(GameRuleError):
+        mgr.handle_action(2, room.room_id, {"op": "draw_accept"})
+    assert room.gs.ended() is None
+    with pytest.raises(GameRuleError):
+        mgr.handle_action(2, room.room_id, {"op": "draw_reject"})
+
+
+def test_common_draw_closed_in_three_player_halma(mgr):
+    room = _start_multi(mgr, "halma", [1, 2, 3])
+    assert len(room.players) == 3
+    with pytest.raises(GameRuleError):
+        mgr.handle_action(1, room.room_id, {"op": "draw"})
+    assert room.gs.ended() is None

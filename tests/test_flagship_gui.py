@@ -484,17 +484,34 @@ def test_collapse_visibility_manual_hide_unsupported_guard_and_after_cleanup(mon
         root.update()
         assert not client_module.ChatWindow._visible_window(gw.win)
 
-        # Unsupported desktop games remain visible in the room state but have
-        # no action widgets and cannot send a stale action through _do_action.
+        # Released desktop games (e.g. 围棋) stay visible in the room state
+        # with real action widgets, and a valid action is forwarded to the
+        # backend through the same _do_action gate.
         core.game_room = {**core.game_room, "game": "go", "round": 2}
         core.game_state = {"game": "go", "turn_uid": 7,
                            "board": [[0] * 19 for _ in range(19)],
                            "size": 19}
         gw.show(); gw._sync(); root.update()
+        labels = [str(w.cget("text")) for w in gw.act_btns.winfo_children()]
+        assert "落子" in labels and "过一手" in labels
+        calls_before = len(core.calls)
+        gw._do_action({"pass": True})
+        assert len(core.calls) == calls_before + 1
+        assert core.calls[-1] == ("room-1", {"pass": True})
+
+        # If a game is temporarily marked unsupported, it degrades to
+        # read-only: no action widgets and no forwarded action.
+        original_unsupported = client_module._DESKTOP_UNSUPPORTED_GAMES
+        monkeypatch.setattr(client_module, "_DESKTOP_UNSUPPORTED_GAMES", {"go"})
+        core.game_room = {**core.game_room, "round": 3}   # 触发 _sync 重建动作区
+        gw._sync(); root.update()
         assert gw.act_btns.winfo_children() == []
+        assert "只读" in str(gw.act_hint.cget("text"))
         calls_before = len(core.calls)
         gw._do_action({"pass": True})
         assert len(core.calls) == calls_before
+        monkeypatch.setattr(client_module, "_DESKTOP_UNSUPPORTED_GAMES",
+                            original_unsupported)
 
         # Both real canvases own separate finite after jobs; hiding the game
         # window cancels both queues while preserving the latest core frame.

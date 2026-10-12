@@ -504,6 +504,1435 @@
           "unexpected_skips": []
         }
       ]
+    },
+    {
+      "run": "full-head-08d263b-20261012-114926-a063c8ae68",
+      "summary": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/summary.json",
+      "summary_sha256": "f83c383ad0c193fd15ff521086a0a86db4609b38fe124367116df851eac83828",
+      "files": 157,
+      "totals": {
+        "passed": 2300,
+        "failed": 5,
+        "skipped": 2
+      },
+      "exit_code": 1,
+      "seconds": 562.327,
+      "source_content_id": "3c04a62cd590cd35ff4efb5ca1ef514da2240cd330868ee3e04741656cc350ee",
+      "raw_logs": [
+        {
+          "file": "tests/test_account_credential_commit.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_account_credential_commit.attempt1.log",
+          "sha256": "ad3ec79f10be2409d780bf597bb17a651c4a89e5824d4b805adcd351695c4264",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_account_credential_contracts.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_account_credential_contracts.attempt1.log",
+          "sha256": "2788811986d19cb6dce9a431324a80771302bf6a5586edaee19087ed1c87a957",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_account_credential_file_failures.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_account_credential_file_failures.attempt1.log",
+          "sha256": "ee996adab2e08ffc3e84eba7c1a499694fff17e0ed6255eb024715b7a3a4d11f",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_account_credential_regressions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_account_credential_regressions.attempt1.log",
+          "sha256": "68b1d97984e3a0be95639bd9616b42dc28ef9b2f9abd46f280306eb52e2efedc",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_account_credential_transactions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_account_credential_transactions.attempt1.log",
+          "sha256": "7311df88793d1ca39cfcfbb55eb3178dd6c04fba575ba055d1b6ad2bb60eee41",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_account_credential_wire.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_account_credential_wire.attempt1.log",
+          "sha256": "b42b12a7e76d7cf9847dc2646dca58c496e34ba6a11b3df8228ffa454fb8c418",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_admin_credentials.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_admin_credentials.attempt1.log",
+          "sha256": "afe119ee2ec8469688effdff7a116e96e0654724e9d3445700e45e21d2f9ea24",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_admin_groups.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_admin_groups.attempt1.log",
+          "sha256": "5ab3d7c4e0b982b9ea438ffb6f53faa3dee767865aff08aa3e52bb375929ad12",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_admin_groups_web.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_admin_groups_web.attempt1.log",
+          "sha256": "c3d4bbf98f8b12fb7fc27056dca020a563e12079b7c9171124577463464f20e1",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_audit_audio_callbacks.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_audit_audio_callbacks.attempt1.log",
+          "sha256": "35e5266a6773c370f5e2a4741aa0ece9f6124f8e55ad038960ab9e7a82b42173",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_audit_e2ee_limits.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_audit_e2ee_limits.attempt1.log",
+          "sha256": "9284279041e4e7688c4e0c9d1a5f551cf8bdb29d329d943ff803961d180cf24f",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_audit_file_auth.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_audit_file_auth.attempt1.log",
+          "sha256": "545e440c5d59128ba7add859866f92256c6bcad9440ac32a65bee2340126c283",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_audit_moment_images.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_audit_moment_images.attempt1.log",
+          "sha256": "9014148bf4cf2566816306a054dca6e4be01a09ee682786ddc706031961aeb96",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_audit_preview.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_audit_preview.attempt1.log",
+          "sha256": "5c26bba44b8c855fc75f2fb9114754b8d4c35bc17e8b8d1c7555d09dbdf5d61e",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_audit_server_security.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_audit_server_security.attempt1.log",
+          "sha256": "70527891f5532dd84d2bbeb9358dc2a3a31d5df5ee0a9b69becceaa42194db74",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_auth.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_auth.attempt1.log",
+          "sha256": "6b627cc516185dfd45f5ccd8f3588332cf557e78ee4c6b5c956b04a756fef8ed",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_betrayal.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_betrayal.attempt1.log",
+          "sha256": "7a5c6d77950ec24c94d4c670d0585aba72eebcfbfc55c2c2c54b38065e0341ae",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_c9_group.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_c9_group.attempt1.log",
+          "sha256": "0f05a208ada0368f2732cebd491547aec8bc98fc35da4d3d6dcef6ca5e6b23cb",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_cc02_retire_core.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_cc02_retire_core.attempt1.log",
+          "sha256": "fd8d7c17dc094f55321517ee6e96bc51a70b9584ece9c74e53ae5565a5acee00",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_cc02_store_min.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_cc02_store_min.attempt1.log",
+          "sha256": "a7411eac9015c978802ef06ca03a340563e127b30fc0f7c524176c318cf58cdb",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_cc02_store_receipt.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_cc02_store_receipt.attempt1.log",
+          "sha256": "512e46cafa076625f5ad17e6f60fa6597580f8d40a5647d8026c7c90edfca15f",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_cc02a_client_kick.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_cc02a_client_kick.attempt1.log",
+          "sha256": "7695a99c863c869cb2ea954d220bfc4ab54ec024ddc7eeac0d6b85577d8a173d",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_cc02a_kick.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_cc02a_kick.attempt1.log",
+          "sha256": "840bc1d16162836eb8baadd102d9afa1e18fa0fbcb56d036de079a0bc20ed57e",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_cc02a_profile.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_cc02a_profile.attempt1.log",
+          "sha256": "ce5d2f11d2ff627a4ffcb3d9bed548f436e01efb541e8e1eea9be060d73ed552",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_cc02a_restore.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_cc02a_restore.attempt1.log",
+          "sha256": "fb257140f1df9dcab6588fbdad7070ceb309bb4b6d50465f6cf2d86ccba54542",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_cc02a_web_kick.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_cc02a_web_kick.attempt1.log",
+          "sha256": "b5496eae1a8a773171154c05079a53fca47a3b9c91f0dc518be8dc24218f9428",
+          "exit_code": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_cc02c_resource_async.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_cc02c_resource_async.attempt1.log",
+          "sha256": "f41079e3605b59be4bd877c4b8baea380495e792559b6e103794a926d248cbb7",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_cc02c_resource_files.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_cc02c_resource_files.attempt1.log",
+          "sha256": "a9cf6f133d46eed95ee07f502cd5044e1dbfedc36cc567309d2cd5bd425543ae",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_cc02c_resource_integration.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_cc02c_resource_integration.attempt1.log",
+          "sha256": "505ddb03c89fd57ec2a5a4ba3d5b2d6536e59a784cb8b81834c7833b62aae5b0",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_client_core.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_client_core.attempt1.log",
+          "sha256": "423fe2b2e02d22495ba1c46a4d63d5367195c9796847d54bb6ad23cbd062e0c7",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_config_crashlog.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_config_crashlog.attempt1.log",
+          "sha256": "5bda4f8fc0165420e8b84a348679234f7bc8cc5532843d7e34d3e0c30ff83f12",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_crypto.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_crypto.attempt1.log",
+          "sha256": "57cd57fb43df83aae7085518419c5a9edf270f06e97d1a0aee421386dea67a10",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_discovery.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_discovery.attempt1.log",
+          "sha256": "2a3f2254829b76f5c2fabf60a935d023db6a7fc47e59878ecc2840352f3e820b",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_drafts.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_drafts.attempt1.log",
+          "sha256": "2ae0703acfabd55b253183d240f96ee588074fcf0d28530b73e81f056e05a883",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_excel_sheet.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_excel_sheet.attempt1.log",
+          "sha256": "7bcd263f8fb1281871dc917c12dc0a8559ac869cd889c85eabbbfad08eb63cbe",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_excel_skin.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_excel_skin.attempt1.log",
+          "sha256": "6dd3b21487c091b58aee258784f8bc63e5bef319ec3538eafb7b1e382edb0c5b",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_filexfer.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_filexfer.attempt1.log",
+          "sha256": "81210a9bc55db4ac3f3c8605b72fa6ee66cc5879116a3c8b7bc7c69ee83e98e6",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_flagship_board.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_flagship_board.attempt1.log",
+          "sha256": "ae4c8e18110e0764afd774b1c12b2c88c02a6006e4667ce9138ec52e18d9ec6c",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_flagship_game_wire.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_flagship_game_wire.attempt1.log",
+          "sha256": "1e78250db440de85e52001614140557c523d997eaff4fa0101c38bbf678fae4d",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_flagship_gui.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_flagship_gui.attempt1.log",
+          "sha256": "9fe337bbc52a37eaa394861a9d3d778656da3e68edd37afd2f6d3b2125176139",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_friend_trial_start.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_friend_trial_start.attempt1.log",
+          "sha256": "00726b76fb0ec1b938170ce1b385e7962f4f0dee4155f7b474c3d70b7cad14af",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_fwd_media.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_fwd_media.attempt1.log",
+          "sha256": "3e6310a0bcf4371938ccb773d0f2bd6a8e90421b3ddabcb5a1bbb8a58c8f6117",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_game_client_lifecycle.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_game_client_lifecycle.attempt1.log",
+          "sha256": "753e341d34c84fb835ae8566d45ce6250914a7e2ad08b9ed8f01c555a73083b0",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_game_lifecycle.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_game_lifecycle.attempt1.log",
+          "sha256": "3ddcac3307391d3498f5e32d090b537b83dc995b1594180ba55841ff40098e4a",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_game_owner_recovery.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_game_owner_recovery.attempt1.log",
+          "sha256": "259af72f6b17778aee3bedfb09867f06e3e5099f214a332b3e91155e203c2c9c",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games.attempt1.log",
+          "sha256": "5efe245ed09f6c450461fb80c181c38a5a2f3460a3a675d8290b7d789a2248c7",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_coc.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_coc.attempt1.log",
+          "sha256": "405759fc629525eae52df97228eec9e8f0439712107aea2610b98ede032d1d10",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_euro.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_euro.attempt1.log",
+          "sha256": "8588d83f8628d0e18495b9121b887f2c23c8b06ae591ef4f2042063d41b61495",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_new.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_new.attempt1.log",
+          "sha256": "2325372360b5bf216bf4063543445ed70e0e02f5ade6aa807af1df38edda0ce6",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_w1_new.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_w1_new.attempt1.log",
+          "sha256": "9feb649f25f1b4ae4cf1a9ca68063eebb80d89a9d4c05e615a38ba689506fd52",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_w2_logic.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_w2_logic.attempt1.log",
+          "sha256": "7c7cedddf5fa2c283784feaa92679b1bf4a7e6aa671c6d242c90c798fe07f184",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_w3.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_w3.attempt1.log",
+          "sha256": "05fd76ec3c47c94a97be4aef6258be14cefc83ce51eacac6b771099d2d9af058",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_w3_rooms.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_w3_rooms.attempt1.log",
+          "sha256": "6ed17620f68863a849ec9b3fbf6786bd931dad87cda3e701f794801cbe729be3",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_w4.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_w4.attempt1.log",
+          "sha256": "7087fd6d9fb34921b4bc18dfa1ed52078dac6521816ed7160c6f7ee8047633d0",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_w4b.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_w4b.attempt1.log",
+          "sha256": "ecd6a6193d99646c5acb9f2d16a45af1921de18283de50755e8f0a4b796fe611",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_w5_avalon.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_w5_avalon.attempt1.log",
+          "sha256": "46edc87b33e661e3fae21a92a8dd38118662adeb3d1cf7d29732f59f701037d9",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_w5_liar.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_w5_liar.attempt1.log",
+          "sha256": "9a300d8e0576059bf96337b12405b739f8910e555a361f62e7c2dbb4b88a4521",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_w5_ninja.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_w5_ninja.attempt1.log",
+          "sha256": "67ecd033ff9b6c789c9fa77a08973200a7197e96beb9a6558f7f5f9375801623",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_w5_onewolf.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_w5_onewolf.attempt1.log",
+          "sha256": "1a6e6f5bb4e97aa2107886c00dcf2c70d74f9ab3a36fff9fe97de75229a82c99",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_games_w5_werewolf.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_games_w5_werewolf.attempt1.log",
+          "sha256": "bf568926fa3114a41555f6c338324354f537627dde9d808dc63b1988c0329814",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_global_search.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_global_search.attempt1.log",
+          "sha256": "44476fbd5f42a5ac909b14a5b77134c7fe6da99e3b328a826d64009df8b3e018",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_gomoku_fx.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_gomoku_fx.attempt1.log",
+          "sha256": "84b84d50a94601897b120b3d7e7b6e3290233c353f79324d52b1a4293c975386",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_interaction_mode.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_interaction_mode.attempt1.log",
+          "sha256": "ff7fb72055c60f60f6b8cf127c52a5eb9276be660b36127d3a521a1eaa35fd54",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_invis.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_invis.attempt1.log",
+          "sha256": "aef569cfcc20995cc190dd16e89c644dd1bed0dd868f11f2acdacd0b08165c64",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_login_foreground.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_login_foreground.attempt1.log",
+          "sha256": "f22a4604802bc42a4864c3c85266a3fed10d6393355644ea13655670b17a59ea",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_login_visibility.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_login_visibility.attempt1.log",
+          "sha256": "a1589f20438be04782a157e62a541c01724d73e43f2b9843fd8f75d4a3a97aa0",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_msg_list.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_msg_list.attempt1.log",
+          "sha256": "29df65123aee5be756f88536ec8da709bf16af10bd64396383707d2a19d9cf86",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_msglist_group.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_msglist_group.attempt1.log",
+          "sha256": "2d497b2df2ddf465a3a66d29738453c176c079bfa3384d17a39f1283d3ec38b8",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_multisession.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_multisession.attempt1.log",
+          "sha256": "0564adba0ba28aadb9628d8ed4b771af8d9d492d8a53c1d57716f2c3de1a9a58",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_p0_web_security.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_p0_web_security.attempt1.log",
+          "sha256": "c3f7c61f04a64eb27e137ae5981f0cf0f10c991550869617476b7ec487868a6a",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_passcode_logic.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_passcode_logic.attempt1.log",
+          "sha256": "0a6033a82ae2125cf243e60233c2f2e4ed335bc6942ef7c96e2095df6020d5c9",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_prefs.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_prefs.attempt1.log",
+          "sha256": "8cc35e2af28989b1274cad21b5ae5774bc07d375153dab96d03e7f3456465b90",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_prefs_schema_audit.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_prefs_schema_audit.attempt1.log",
+          "sha256": "2e8c9e0ebc6cc02b87553db855cb8751e8aadceba6d4ed5ad76d4f45fccae7c0",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_protocol.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_protocol.attempt1.log",
+          "sha256": "eafae157bfe5ebfafb8a77cb5f3e0f2bead0d5956bf5095de9bc448b815c90d4",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r15_ghost.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r15_ghost.attempt1.log",
+          "sha256": "ce1c338e40b70f2a8712be75aa47e3aa52e43eebaafa95b18fbcb3dd074345c5",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r25.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r25.attempt1.log",
+          "sha256": "3bd525aa0837492b8e023dca758c890a2ef62778a46fe2ea60e3a5bbd6c92959",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r26.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r26.attempt1.log",
+          "sha256": "1ba6bfca9e538685ec48cd9d8ea246d256812daed15d35c4597e5671a1538c2d",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r27.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r27.attempt1.log",
+          "sha256": "7d01e93ee203050cdbe4c6390e8aabed84f0ebaa25734c8e300626bf10301f76",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r28_group_mgmt.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r28_group_mgmt.attempt1.log",
+          "sha256": "8e0490d2adaa16671d34ab52da6439f750829125c424b7b537848dd45dee90ab",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r29.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r29.attempt1.log",
+          "sha256": "e1463594f1babdb44e035741a7451a3cc4d00d53c6df576d98d784e8dd3a89b4",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r30.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r30.attempt1.log",
+          "sha256": "38f6a2da16ca439b25b5275a095c85feb81f31e9baa7af8abda9d0aa1e6ff12a",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r32.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r32.attempt1.log",
+          "sha256": "f137e0e76697a0fb5ae47d372560d23cfd1116ebdd4f070bb331382b71e9fb76",
+          "exit_code": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r33.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r33.attempt1.log",
+          "sha256": "2f6841c6ca40d9726d676639c46e6f94e9b888935341caa584e721c8024fa4a7",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r34.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r34.attempt1.log",
+          "sha256": "b49fbcdb96c4c0ea50c76e30f305b9853f8e055c8053fc0a66e3b040b88403c0",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r35.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r35.attempt1.log",
+          "sha256": "4bc8605b1cfbf2cefec1453c089a6ab68ce3721b6e46f946edf36327e6e4442f",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r36.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r36.attempt1.log",
+          "sha256": "2bcaaca0daa3c2fe41e1c3432e0c54c41dcd75877948c43e552551c406be9402",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r37.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r37.attempt1.log",
+          "sha256": "d473b8041b2b9b0b98198cc2747b369c87ebd4ca5001eb7ef60a06abcc25fabb",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r38.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r38.attempt1.log",
+          "sha256": "99966f734750705d6d1904681855f4c2b836a520add9220ec62be9299b86ed16",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r39a.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r39a.attempt1.log",
+          "sha256": "807ff9464caa2655b23a2e2d8cc2afbaf72fddb8f93bc9ab572d0e629a0309ab",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r39b.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r39b.attempt1.log",
+          "sha256": "715a1b76436ed2e136e2a1fa1fd79a30e6530c4da2c8505de0173a5f578da621",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r39c.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r39c.attempt1.log",
+          "sha256": "2d62024118644049e4efd7ffdaf94f899e3720bf9fa82055f877e767b06d01ea",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r39d.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r39d.attempt1.log",
+          "sha256": "bd0a3beaccd65e4a57f3e197f7fe4dec411d33883b973a7211af13d56caaff84",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r41.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r41.attempt1.log",
+          "sha256": "4efe4a7345158fd00b654fb625f74338d9f0ab32e21b3f2ee9dab343353c6495",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r41g.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r41g.attempt1.log",
+          "sha256": "eca8cee76be398fb810be06422dc39a16989baf833b975c40f3f7ed595b112a0",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r42.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r42.attempt1.log",
+          "sha256": "89a354553005f4c8a2ba28e9fa8b65354de204b5ee70ef422f340e53e32d288b",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r43a.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r43a.attempt1.log",
+          "sha256": "1cfc76805a31a9093f076bc44e0a6491ec7cc72e72b9cb266126f699f40f3fb6",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r43b.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r43b.attempt1.log",
+          "sha256": "54af0b53bf8007572073ebfc14b6fd765ede24a2c05905e8ee19f7aa1f2e7b35",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r43c.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r43c.attempt1.log",
+          "sha256": "9d41d2a312b61f9727f7bd613c9d6036992d29dcfb0b418c9f4f042d733b47e9",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r44.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r44.attempt1.log",
+          "sha256": "9b1bdd6a0204421150c7959c16ee37a9dbd69b122d878f7093d53cfe15cad866",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r45.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r45.attempt1.log",
+          "sha256": "2c1094ef32993242e77d74b37d1de136254a3d2a031982c3049b2bb9ad5c764e",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r46.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r46.attempt1.log",
+          "sha256": "b44b2133cf9d337ab46bcb8a670f66f1a2e85ca111437f2e69e9f63b603240cb",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r46b_web_fix.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r46b_web_fix.attempt1.log",
+          "sha256": "5d2ad7d3573c0b46c16494778848d81a97b16216b61d12e974f17e8c9bb6514d",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r47.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r47.attempt1.log",
+          "sha256": "0e9bcc7ea11c7ec28558ff7c4d9e498aceb7a2aa38405701e33663c9c97a85ab",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r49.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r49.attempt1.log",
+          "sha256": "7a6005f10c1f6cce2bbe29bd487837c04da8e3d3c32e476366a93ed40f1ab014",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r51.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r51.attempt1.log",
+          "sha256": "7fea76c2d795c880d7d47e02652327e75b677ba55b41b6274554bbd042480720",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r52.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r52.attempt1.log",
+          "sha256": "1881df3ceadbc10153ca001fb9a9687c96dd435a97a6cd8aa2f7fa8e2f6d355a",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r53.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r53.attempt1.log",
+          "sha256": "b6b8aee09a83e853ed0707fc472192531fa1c693c4ad1fc592c3004b94faaa85",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r54.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r54.attempt1.log",
+          "sha256": "4f21840453d28bef82e6253985c9e3185e79e7fa37a0fc1dd7554fa3807359e8",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r61_features.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r61_features.attempt1.log",
+          "sha256": "66ed1ba6b0902cd26d64d8755727bb6fb3ee91b89c5e7979c400d17c8157c443",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r64_paste_snip.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r64_paste_snip.attempt1.log",
+          "sha256": "a04c1e2a405695868a873a2fae9c74231808ad661b5964b388cd17bb74dbf431",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r64_sticker_packs.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r64_sticker_packs.attempt1.log",
+          "sha256": "3526ac0ed3b975dfdd3f0f6ab529ec40e26848dafdebe506a6f270a6619d1dc1",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r65_web_sticker_packs.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r65_web_sticker_packs.attempt1.log",
+          "sha256": "f5a1849afebbaee79a596d5b7cdba72be7d13281350a30313603f0cae75988db",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r69.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r69.attempt1.log",
+          "sha256": "86d39b33ca70f3d3d95f44b5198f037f2d4f58c9ee6ec28391710c1e156328b1",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r70.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r70.attempt1.log",
+          "sha256": "85e8f557c9fa3f3ff6d6bb2b6e5666529a23bdcdf9a7f5f6ba34b8e9cca405e6",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r71.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r71.attempt1.log",
+          "sha256": "647873b4ab9d11f882577fa197a70850e9d49d239aef4a74710e04215fa791ce",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r72.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r72.attempt1.log",
+          "sha256": "7496a48e47f3dd992f618fa926b852233cc283ade54cedbf46e9872f92011df1",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_r73.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_r73.attempt1.log",
+          "sha256": "deac3b99853aa06eb5d9fdab503833b746cfc46a148979a3f6429cda2c0704d0",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_rel01_local_trial.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_rel01_local_trial.attempt1.log",
+          "sha256": "5f262fc09148f9d313928012b12c3af3d2786b33483731581d1e8cd5cc0b6e4c",
+          "exit_code": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_resource_manifest_numbers.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_resource_manifest_numbers.attempt1.log",
+          "sha256": "0aeaca1f2231611b6958310c0cdec76e0c2f1a0d77f208fffe8d565cb3da4d10",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_cli.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_cli.attempt1.log",
+          "sha256": "72ef198b424bfb1bb21dea6bb823b4c6d507d9b27a07053fcc7ff26daeac2289",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_client.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_client.attempt1.log",
+          "sha256": "c678eef361a570d2950655966e14690c9300a5614050552ec9e55dc796ac0d91",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_control_faults.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_control_faults.attempt1.log",
+          "sha256": "8cc432a15e4fa270f790a844d1cff5d9617b2712e1490a7998be54b4a1e5d37f",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_gate_io.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_gate_io.attempt1.log",
+          "sha256": "bd4cd98e75a3d794fba8b85dfb14804366d8bab0c46f4a1a13a54506955936f8",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_hub.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_hub.attempt1.log",
+          "sha256": "299e7f26a3878b049945017dfb20a6564ed5bea978f474f2067c5085f97ba3c3",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_identity.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_identity.attempt1.log",
+          "sha256": "a1bf1471482c031b44aa7ada9eab5a8cdfc244ce054f92c07317feaa9acaa2d1",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_lifecycle.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_lifecycle.attempt1.log",
+          "sha256": "20c5f6313ad8d0707044ef2162c58ee35cfe45143b64c48a395135ae5ec5476f",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_process_faults.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_process_faults.attempt1.log",
+          "sha256": "da187e8b6bac352e3037b981a09362ff87b7e4930bc45a5225b8f61cb9e3a72d",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_publish_io.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_publish_io.attempt1.log",
+          "sha256": "01057fba4ebb377205733c781104d0714e246da09c2c19ecf0e3262d8c2df6b7",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_reconcile.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_reconcile.attempt1.log",
+          "sha256": "1dd81cfaa23cb8d39ba1d01e6ff86816291968d419a240cdade0f6c91617c7b7",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_resources.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_resources.attempt1.log",
+          "sha256": "f3c0d8ee3a070bdd05f1cc1a8feef104d6878d2324b86f148d286e9e641691b9",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retire_recovery_store.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retire_recovery_store.attempt1.log",
+          "sha256": "2723711511ea9d1897f6a12dcd20bf5b64bb332404bafe076321ee4a4f0b4d31",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retirement_status.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retirement_status.attempt1.log",
+          "sha256": "927b5e8a8580c652025b60197987e43ed0ed3ec3d233fe5d8d83812c8e72f645",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retirement_status_gui.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retirement_status_gui.attempt1.log",
+          "sha256": "10ac5c56558132f6b8509455f1e7a8e19988292dc2510c5755ba939511c070fc",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_retirement_status_wire.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_retirement_status_wire.attempt1.log",
+          "sha256": "5113c1f8482a0ce188f167b87cbedde54930c4934240f1cd3da74f631e8682cd",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_rooms.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_rooms.attempt1.log",
+          "sha256": "0f01f52bd54949f259abff3b6caf3dbaaee5a182727e000206ed8a0936a1f222",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_runs.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_runs.attempt1.log",
+          "sha256": "41c8e11e0f96fee03f314257d46b8dc61eef8a969b1f80a85fe8a94c1ef23d44",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_server.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_server.attempt1.log",
+          "sha256": "67112dec98b18a5cda0b3a9828d620baff3dbdc0346564297f34b76af229c3f3",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_server_game_lifecycle.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_server_game_lifecycle.attempt1.log",
+          "sha256": "676ea19e6b0799492be47bae1265f90493282eddf69ae76ff2dae4b8f9e2e26e",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_server_games.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_server_games.attempt1.log",
+          "sha256": "d61835ec829a26b115a402af21e4119cc3f4455ee5d9d247b1341367b1e9df05",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_session_cleanup.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_session_cleanup.attempt1.log",
+          "sha256": "be5beffbdbb0af35ca34f516fbb974359dfa4e4c4eb6e01c30b3a9e229116427",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_session_list.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_session_list.attempt1.log",
+          "sha256": "335b3b57502511b2dc41421ec9e4063dafe31b116252fec2fc649febe65576f4",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_settings_nav.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_settings_nav.attempt1.log",
+          "sha256": "4ad1054faf292cd831b95ab2f457e4c052412dedaffafcdb5b57956d19699f1a",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_shortcuts.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_shortcuts.attempt1.log",
+          "sha256": "2c5e7d61795fc78e070937adf6447207b173950c29ec9eb4b70774aaab0b17b3",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_stars_preserve.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_stars_preserve.attempt1.log",
+          "sha256": "e2aeb3e6fce478ec8f8214f5611070fd63686e2f98fbf5df4e36221365425b78",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_test_gate.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_test_gate.attempt1.log",
+          "sha256": "4df2fa01f0b1f6d01afcc4f6df6d3b306da6caf93e3e09e0492e1dbc833b3927",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_test_gate_safety.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_test_gate_safety.attempt1.log",
+          "sha256": "389527bdacc89c43279e3d43fb3fd6e00dbe0b4bf9f991963b64ee217a108e02",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_test_gate_skips.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_test_gate_skips.attempt1.log",
+          "sha256": "de413cc61057e88dbbb06602801a9da7805928f6531dc479d209704ec2455d50",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_test_runner_exitcodes.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_test_runner_exitcodes.attempt1.log",
+          "sha256": "3c11d6a82f2c1c94f45b7c11af220cc0c848983adc266c9063b85259a91bace3",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_theme.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_theme.attempt1.log",
+          "sha256": "070db35eabce1a329cd278f2ddb148bdcac782413203747647976f4e307a1042",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_repair.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_ux_repair.attempt1.log",
+          "sha256": "7b570c8850d5a5d45de66141b7df69952431512334c5d2081a4c6611edec4a24",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_design.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_ux_visual_chat_design.attempt1.log",
+          "sha256": "f70651f217a8e01507b1bfadc4b40f486bd33b5b87c98bb7ab71ae88ef8ba3ab",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_dpi.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_ux_visual_chat_dpi.attempt1.log",
+          "sha256": "35b90f0e9b75d220fd3163b088566709f5036863e565676685248df68f292b4d",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_ux_visual_chat_regressions.attempt1.log",
+          "sha256": "a4febf8ca6b8bcbf382eb7ba0c3ecfb893c5cab8f0eceb57319e8f9be524ca86",
+          "exit_code": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_ux_visual_chat_web.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_ux_visual_chat_web.attempt1.log",
+          "sha256": "188c7d2c78e3347bd0649f49b266c0cd289fd68f9cfe0221f5ea1989c86953ff",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_visual_screenshot.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_visual_screenshot.attempt1.log",
+          "sha256": "afb8cf807eef9703aae90e2cebb8db1d394cb7f31c2f8df0483abf9d31a43610",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_web_group_read.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_web_group_read.attempt1.log",
+          "sha256": "2a92bbf3fc680c5f737a63682d4a7b7d7eca56fbe4539e6c0c1e056e39011aa9",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        },
+        {
+          "file": "tests/test_web_logout.py",
+          "attempt": 1,
+          "log": "_tmp_gui/test-gate/full-head-08d263b-20261012-114926-a063c8ae68/logs/test_web_logout.attempt1.log",
+          "sha256": "1af5eac9156614297a626f980b8f34dd198eed1f6dfb5696b3bd26e9cd7c35ba",
+          "exit_code": 0,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ]
     }
   ]
 }

@@ -36,12 +36,18 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from protocol import MsgType
 import credential_ops as credential_mod
-from ui_design import icon_svg, web_chat_css
+from ui_design import (icon_svg, game_icon_svg, role_icon_svg, resource_icon_svg,
+                       GAME_ICONS, ROLE_ICONS, RESOURCE_ICONS, web_chat_css)
 import bots as _bots                     # R46：登录下发机器人清单（网页端入口）
 try:
     import _art as _art_assets            # 原创美术：登录横幅/吉祥物（内嵌 base64）
 except Exception:
     _art_assets = None
+
+def _js_json_literal(obj):
+    """把对象编码成可嵌进 JS 双引号字符串的 JSON 文本（配合模板里的 JSON.parse("…")）。"""
+    return json.dumps(json.dumps(obj))[1:-1]
+
 
 def _SERVED_PAGE():
     """登录页注入原创美术数据 URI（src 模式；_art 缺失时回退为纯色横幅）。"""
@@ -53,6 +59,17 @@ def _SERVED_PAGE():
     page = page.replace('@@UX_CHAT_CSS@@', web_chat_css())
     for name in ('chat', 'game', 'moments', 'image', 'attach', 'send'):
         page = page.replace('@@UX_ICON_'+name+'@@', icon_svg(name))
+    # E1：47 款游戏统一矢量图标（单源 ui_design.GAME_ICONS → SVG），大厅房间行复用
+    _gico = {k: game_icon_svg(k, 18) for k in GAME_ICONS}
+    _gico['__fallback'] = game_icon_svg('', 18)
+    page = page.replace('@@UX_GAME_ICONS@@', _js_json_literal(_gico))
+    # E2/E3：角色卡 + 资源图标（单源 ui_design.ROLE_ICONS / RESOURCE_ICONS → SVG）
+    _rico = {k: role_icon_svg(k, 18) for k in ROLE_ICONS}
+    _rico['__fallback'] = role_icon_svg('', 18)
+    page = page.replace('@@UX_ROLE_ICONS@@', _js_json_literal(_rico))
+    _resico = {k: resource_icon_svg(k, 18) for k in RESOURCE_ICONS}
+    _resico['__fallback'] = resource_icon_svg('', 18)
+    page = page.replace('@@UX_RESOURCE_ICONS@@', _js_json_literal(_resico))
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -3850,13 +3867,32 @@ function applyRO(){
 state.gmeta={};state.grooms=[];state.groom=null;state.gst=null;state.gpriv=null;state.gleft={};
 state.gnicks={};state.glog=[];state.globbyOpen=false;
 state.fish={};state.fishOpen=false;state.fishGame="";   // R70H 摸鱼排行榜缓存
-const GICON={guess_number:"🔢",gomoku:"⚫",rps:"✊",spy:"🕵️",uno:"🃏",blackjack:"🂠",
-  drawguess:"🎨",connect4:"🔴",othello:"⚪",calc24:"🧮",matchpairs:"🂡",betrayal:"🏚️",
-  kaituo:"🏜️",lingdi:"🏰",tielu:"🚆",gongfang:"⚒️",
-  chengzhu:"👑",gemcity:"💎",siji:"🌸",bolan:"🗳️",
-  azul:"🧱",rummikub:"🀄",yahtzee:"🎲",nimmt:"🐂",
-  davinci:"🔐",kalah:"🥜",lovelove:"💌",halloween:"🔔",
-  xiangqi:"♟️",chess:"♛",go:"⚫",shogi:"🎎",junqi:"🪖",dou:"🐘",onewolf:"🐺",werewolf:"🐺",avalon:"⚔️",liar:"🎲",ninja:"🥷",coc:"🔮"};
+// E1：47 款游戏统一矢量图标（单源 ui_design.GAME_ICONS → SVG），大厅房间行复用。
+// 与 GART（渐变封面美术）正交：GICON 只做单色轮廓小图标，颜色随 currentColor。
+// 占位符包在 JSON.parse("…") 里：模板未替换时也是合法 JS（语法探针 ux_visual_chat_probe.cjs 会整段 eval）。
+const GICONSVG=JSON.parse("@@UX_GAME_ICONS@@");
+function gIcon(name,size){const s=GICONSVG[name]||GICONSVG.__fallback;if(!s)return "";const n=size||18;
+  return s.replace('width="18"','width="'+n+'"').replace('height="18"','height="'+n+'"');}
+// E2/E3：角色卡 + 资源图标（单源 ui_design.ROLE_ICONS / RESOURCE_ICONS → SVG）。
+const ROLEICONSVG=JSON.parse("@@UX_ROLE_ICONS@@");
+function rIcon(name,size){const s=ROLEICONSVG[name]||ROLEICONSVG.__fallback;if(!s)return "";const n=size||18;
+  return s.replace('width="18"','width="'+n+'"').replace('height="18"','height="'+n+'"').replace('<svg ','<svg style="vertical-align:-3px" ');}
+const RESICONSVG=JSON.parse("@@UX_RESOURCE_ICONS@@");
+function resIcon(name,size){const s=RESICONSVG[name]||RESICONSVG.__fallback;if(!s)return "";const n=size||18;
+  return s.replace('width="18"','width="'+n+'"').replace('height="18"','height="'+n+'"').replace('<svg ','<svg style="vertical-align:-3px" ');}
+// 角色编码：隐藏身份游戏 private() 载荷 → ROLE_ICONS 键（与桌面端 client_gameui._ROLE_KEY 对齐）。
+const ROLENUM={werewolf:{0:"villager",1:"werewolf",2:"seer",3:"witch",4:"hunter"},
+  onewolf:{0:"villager",1:"werewolf",2:"seer",3:"robber",4:"insomniac"},
+  avalon:{0:"loyal",1:"merlin",2:"assassin",3:"mordred"}};
+const COCMAP={det:"detective",doc:"doctor",rep:"reporter",nat:"naturalist",occ:"occultist",arc:"archaeologist"};
+function roleIcon(g,pv){                 // 无法识别时返回 ""（不绘制，保持与桌面端一致）
+  if(g==="liar")return rIcon("liar",16);
+  if(!pv)return "";
+  let k="";
+  if(ROLENUM[g])k=ROLENUM[g][pv.role]||"";
+  else if(g==="spy")k=pv.role==="spy"?"spy":"civilian";
+  else if(g==="coc")k=COCMAP[(pv.card||{}).id]||"";
+  return k?rIcon(k,16):"";}
 // ---- R59 SVG 游戏美术系统：每款一个渐变底色 + 专属图形，内联 data-URI（不依赖静态路由）----
 // GART[name] = [起色, 止色, 48×48 内图形 SVG]
 const GART={
@@ -4039,7 +4075,9 @@ function renderLobby(){
       playing:"对局中 · 观战 "+(r.spectators||[]).length+" 人",ended:"已结束"}[r.status]||r.status);
     const row=document.createElement("div");
     row.style.cssText="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line,#eee);font-size:12px";
-    row.innerHTML="<span>"+(GICON[r.game]||"🎮")+" <b>"+esc(m.label||r.game)+"</b>（"+esc(r.room_id)+"）</span>"
+    row.innerHTML="<span style='display:inline-flex;align-items:center;gap:6px'>"
+      +"<span style='display:inline-flex;color:var(--accent)'>"+gIcon(r.game,18)+"</span>"
+      +"<b>"+esc(m.label||r.game)+"</b>（"+esc(r.room_id)+"）</span>"
       +"<span style='color:var(--dim)'>"+st+"</span>";
     const b=document.createElement("button");b.className="gbtn";
     b.textContent=inR?"进入":(r.status==="created"?"加入":"观战");
@@ -4128,7 +4166,7 @@ function renderGamePanel(){
   const pv=state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+pv.hand.join(" "));
-    if(gname==="spy")bits.push("🎭 身份："+(pv.role==="spy"?"卧底":"平民")+" · 词："+esc(pv.word));
+    if(gname==="spy")bits.push(roleIcon("spy",pv)+" 身份："+(pv.role==="spy"?"卧底":"平民")+" · 词："+esc(pv.word));
     if(pv.hint)bits.push(esc(pv.hint));
     if(pv.stats&&gname==="betrayal"){
       bits.push("💪 力量"+pv.stats.might+"　🏃 速度"+pv.stats.speed
@@ -4137,7 +4175,7 @@ function renderGamePanel(){
         +"("+pv.pos+")　阵营："+(pv.side==="traitor"?"叛徒":"幸存者"));}
     if(pv.card&&gname==="coc"){      // COC：自己的调查员卡（属性+技能）
       const c=pv.card,a=c.attrs||{},sg=c.sig||{};
-      bits.push("🔰 你："+c.emoji+c.name);
+      bits.push(roleIcon("coc",pv)+" 你："+c.emoji+c.name);
       bits.push("属性："+Object.keys(a).map(k=>k+a[k]).join(" "));
       bits.push("技能："+Object.keys(sg).map(k=>k+sg[k]).join(" "));}
     if(bits.length){priv.innerHTML=bits.join("<br>");priv.style.display=""}}
@@ -4294,7 +4332,7 @@ const GRENDER={
     const d=document.createElement("div");d.style.cssText="padding:4px";
     const bits=[];
     if(pv&&pv.name){
-      bits.push("🎭 你的身份："+pv.name+(pv.origin&&pv.origin!==pv.name?"（初始："+pv.origin+"）":""));
+      bits.push(roleIcon("onewolf",pv)+" 你的身份："+pv.name+(pv.origin&&pv.origin!==pv.name?"（初始："+pv.origin+"）":""));
       if(pv.role===1)bits.push("🐺 狼队友："+((pv.teammates||[]).map(gnick).join("、")||"仅你一人"));
       if(pv.seer_view)bits.push("🔮 看到 "+gnick(pv.seer_view.uid)+" 是 "+pv.seer_view.name);
       if(pv.seer_center)bits.push("🔮 中心两张："+pv.seer_center.role_a+" / "+pv.seer_center.role_b);
@@ -4351,7 +4389,7 @@ const GRENDER={
     const alive=s.alive||[], voted=s.voted||[];
     const bits=[];
     if(pv&&pv.name){
-      bits.push("🎭 你的身份："+pv.name+(pv.role===1&&pv.teammates&&pv.teammates.length
+      bits.push(roleIcon("werewolf",pv)+" 你的身份："+pv.name+(pv.role===1&&pv.teammates&&pv.teammates.length
         ?"　🐺队友："+pv.teammates.map(gnick).join("、"):""));
       if(pv.seer_view)bits.push("🔮 查验 "+gnick(pv.seer_view.target)+" 是 "+pv.seer_view.name);
       if(pv.witch_kill)bits.push("🩸 本晚将被刀："+gnick(pv.witch_kill));
@@ -4404,7 +4442,7 @@ const GRENDER={
     const team=s.team||[], av=(s.players||[]).filter(u=>!team.includes(u));
     const bits=[];
     if(pv&&pv.name){
-      bits.push("🎭 你的身份："+pv.name+(pv.role===1?"（知晓叛军，务必隐藏！）":""));
+      bits.push(roleIcon("avalon",pv)+" 你的身份："+pv.name+(pv.role===1?"（知晓叛军，务必隐藏！）":""));
       if((pv.role===2||pv.role===3)&&pv.evil)bits.push("🌑 叛军："+pv.evil.map(u=>esc(gnick(u))).join("、"));
       if(pv.role===3)bits.push("🗡️ 你是刺客：终局指认梅林");
     }
@@ -4466,7 +4504,7 @@ const GRENDER={
       Object.entries(s.hand_size||{}).map(([u,c])=>esc(gnick(+u))+"×"+c).join("　")+"</div>";
     box.appendChild(d);
     if(pv&&pv.hand){
-      const w=document.createElement("div");w.className="gsec";w.textContent="你的手牌（选一张并报数，可虚报）";
+      const w=document.createElement("div");w.className="gsec";w.innerHTML=roleIcon("liar")+" 你的手牌（选一张并报数，可虚报）";
       box.appendChild(w);
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0";
       // 每个手牌值一个按钮，点击后进入报数选择
@@ -4742,7 +4780,8 @@ const GRENDER={
     html+="<div class='gsec'>你的资源（"+esc(gnick(state.uid))+"）</div>";
     const res=s.res[state.uid]||{};
     for(const k of ["wood","brick","lamb","wheat","ore"])
-      html+="<span style='margin:0 6px'>"+R_CN[k]+"×"+(res[k]||0)+"</span>";
+      html+="<span style='margin:0 6px'><span style='color:"+(R_COL[k]||"#666")+"'>"
+        +resIcon(k,14)+"</span>"+R_CN[k]+"×"+(res[k]||0)+"</span>";
     html+="<div class='gsec'>定居点/城市/道路</div>";
     html+="<div style='font-size:11px;color:var(--dim)'>村 ×"+(Object.values(s.board).filter(v=>!v.city).length)
       +"　城 ×"+(Object.values(s.board).filter(v=>v.city).length)
@@ -4877,13 +4916,17 @@ const GRENDER={
     box.appendChild(gTitle("chengzhu","我是城主 · 领地扩"));
     const T_CN={fd:"田",fo:"林",mo:"山",wa:"水",gr:"牧"};
     const T_COL={fd:"#e8d48f",fo:"#3ba55d",mo:"#9aa0a6",wa:"#4a7de0",gr:"#a8d695"};
+    // E3：地形/皇冠图标描边色（市场行在深浅两种主题下都要可辨识）。
+    const T_IC={fd:"#c9a227",fo:"#2f8a48",mo:"#7a8087",wa:"#3a6fcf",gr:"#5faa3a"};
+    const tI=(t)=>T_IC[t]?"<span style='color:"+T_IC[t]+"'>"+resIcon(t,13)+"</span>":"";
+    const crI=(n)=>n?"<span style='color:#7c4a1f'>"+resIcon("crown",12)+"</span>"+n:"";
     const grd=s.grid[state.uid]||{};
     let grid="<div style='display:grid;grid-template-columns:repeat("+s.size+",minmax(26px,1fr));gap:1px;margin:6px 0'>";
     for(let r=0;r<s.size;r++)for(let c=0;c<s.size;c++){
       const cell=grd[r+","+c];
       grid+="<div style='height:26px;border-radius:2px;background:"+(cell?(T_COL[cell.terr]||"#ccc"):"rgba(0,0,0,.04)")
         +";color:#333;font-size:10px;display:flex;align-items:center;justify-content:center'>"
-        +(cell?(cell.crown?"👑"+cell.crown:""):"")+"</div>";}
+        +(cell?crI(cell.crown):"")+"</div>";}
     grid+="</div>";
     const d=document.createElement("div");
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>本轮挑选 → "+esc(gnick(s.picker_uid))
@@ -4891,7 +4934,7 @@ const GRENDER={
       +"<div class='gsec'>我的领地</div>"+grid
       +"<div class='gsec'>市场</div>"
       +(s.market||[]).map((m,i)=>{const a=T_CN[m.A.terr],b=T_CN[m.B.terr];
-        return "<span style='margin-right:8px'>["+i+"] "+a+(m.A.crown?"👑"+m.A.crown:"")+" + "+b+(m.B.crown?"👑"+m.B.crown:"")+"</span>";}).join("");
+        return "<span style='margin-right:8px'>["+i+"] "+tI(m.A.terr)+a+crI(m.A.crown)+" + "+tI(m.B.terr)+b+crI(m.B.crown)+"</span>";}).join("");
     box.appendChild(d);
     if(s.picker_uid===state.uid){
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
@@ -4908,17 +4951,21 @@ const GRENDER={
   gemcity(box,s){
     box.appendChild(gTitle("gemcity","璀璨宝石 · 收集换分"));
     const C_CN=s.colors||{};
-    const tok=(t)=>Object.entries(t||{}).map(([c,n])=>(c+"×"+n)).join("　");
+    // E3：宝石图标描边色（深浅主题通用；o/d 取中间调，避免纯黑/纯白在某一主题下不可辨）。
+    const GMCOL={o:"#8a8a8a",d:"#b9c6d4",r:"#d2534f",e:"#3a9b5f",s:"#4a7de0",g:"#c9962a"};
+    const gmI=(c,sz)=>GMCOL[c]?"<span style='color:"+GMCOL[c]+"'>"+resIcon(c,sz||13)+"</span>":"";
+    const tok=(t)=>Object.entries(t||{}).map(([c,n])=>gmI(c)+"×"+n).join("　");
     const d=document.createElement("div");
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>回合 → "+esc(gnick(s.turn_uid))
-      +"　金库(O/D/R/E/S/G)："+Object.entries(s.bank).map(([c,n])=>c+"×"+n).join(" ")+"　"+scoreHTML(s.score)+"</div>";
+      +"　金库："+Object.entries(s.bank).map(([c,n])=>gmI(c,14)+"×"+n).join(" ")+"　"+scoreHTML(s.score)+"</div>";
     let mkt="<div class='gsec'>市场</div>";
     for(let t=1;t<=3;t++){mkt+="<div style='font-size:11px'><b>"+t+"级</b>　"
-      +((s.market[t]||[]).map((c,i)=>{const cost=Object.entries(c.cost).filter(e=>e[1]>0).map(e=>C_CN[e[0]]+"×"+e[1]).join(" ");
-        return "<span style='margin:0 6px'>["+i+"] 🎴+"+c.pts+" "+C_CN[c.disc]+"　需"+cost+"</span>";}).join("")||"（空）")+"</div>";}
+      +((s.market[t]||[]).map((c,i)=>{const cost=Object.entries(c.cost).filter(e=>e[1]>0).map(e=>gmI(e[0],12)+"×"+e[1]).join(" ");
+        return "<span style='margin:0 6px'>["+i+"] "+gmI(c.disc,15)+"+"+c.pts+" "+C_CN[c.disc]+"　需"+cost+"</span>";}).join("")||"（空）")+"</div>";}
     mkt+="<div class='gsec'>你的宝石</div>"+tok(s.tokens[state.uid])
       +"<div style='font-size:11px;color:var(--dim)'>永久折扣："+tok(s.discount[state.uid])
-      +"　贵宾待邀："+(s.nobles||[]).length+"｜你的贵宾×"+(state.gpriv?(state.gpriv.nobles||[]).length:0)+"</div>";
+      +"　<span style='color:#c9962a'>"+resIcon("crown",12)+"</span>贵宾待邀："+(s.nobles||[]).length
+      +"｜你的贵宾×"+(state.gpriv?(state.gpriv.nobles||[]).length:0)+"</div>";
     d.innerHTML+=mkt;box.appendChild(d);
     if(s.turn_uid===state.uid){
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
@@ -4964,12 +5011,15 @@ const GRENDER={
   siji(box,s){
     box.appendChild(gTitle("siji","四季物语 · 引擎构筑"));
     const d=document.createElement("div");
-    const hand=(s.hand[state.uid]||[]).map((c,i)=>"["+i+"] "+c.name+"(需"+c.cost+"💧产"+c.out+")").join("　")||"（空）";
+    // E3：四季物语 资源图标描边色（深浅主题通用；水晶取蓝色，金币/胜利点取金色）。
+    const SJ_IC={crystal:"#4a9fc4",apple:"#c9962a",vt:"#c9962a"};
+    const sjI=(k,sz)=>SJ_IC[k]?"<span style='color:"+SJ_IC[k]+"'>"+resIcon(k,sz||13)+"</span>":"";
+    const hand=(s.hand[state.uid]||[]).map((c,i)=>"["+i+"] "+c.name+"(需"+c.cost+sjI("crystal",12)+"产"+c.out+")").join("　")||"（空）";
     const eng=(s.engine[state.uid]||[]).map((c,i)=>"["+i+"] "+c.name+(c.played?"(已激活)":"")).join("　")||"（空）";
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>第 "+s.season+"/"+s.seasons+" 季 · 剩"+s.turns_left+" 动 · 回合 → "
       +esc(gnick(s.turn_uid))+"　"+scoreHTML(s.vp)+"</div>"
-      +"<div style='font-size:12px'>💧 水晶 "+s.crystal[state.uid]+"　🪙 金币 "+s.gold[state.uid]
-      +"　👑 胜利点 "+s.vp[state.uid]+"</div>"
+      +"<div style='font-size:12px'>"+sjI("crystal",15)+" 水晶 "+s.crystal[state.uid]+"　"+sjI("apple",15)+" 金币 "+s.gold[state.uid]
+      +"　"+sjI("vt",14)+" 胜利点 "+s.vp[state.uid]+"</div>"
       +"<div class='gsec'>手牌</div><div style='font-size:12px'>"+hand+"</div>"
       +"<div class='gsec'>我的引擎</div><div style='font-size:12px'>"+eng+"</div>";
     box.appendChild(d);
@@ -5636,7 +5686,8 @@ const GRENDER={
       deck.forEach(c=>{
         const cid=c.id;if(picked[cid])return;   // 已被他人选走，不显示
         const el=document.createElement("div");el.className="gcard";
-        el.innerHTML="<div style='height:40px;border-radius:8px;margin:-8px -8px 6px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1f5236,#123022);font-size:22px'>"+c.emoji+"</div>"
+        el.innerHTML="<div style='height:40px;border-radius:8px;margin:-8px -8px 6px;display:flex;align-items:center;justify-content:center;gap:4px;background:linear-gradient(135deg,#1f5236,#123022);font-size:20px'>"
+          +"<span style='color:#bfe3c6'>"+roleIcon("coc",{card:{id:cid}})+"</span>"+c.emoji+"</div>"
           +"<b>"+esc(c.name)+"</b><span style='color:var(--dim);font-size:11px'>"+esc(c.desc||"")+"</span>";
         const b=document.createElement("button");b.className="gbtn go";b.textContent="选这张卡";
         b.onclick=()=>{gameAPI("action",{room_id:state.groom,action:{op:"choose_card",card_id:cid}});renderGamePanel()};

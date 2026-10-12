@@ -63,7 +63,8 @@ from widgets.image_wall import ImageWall   # R69B5 会话图片墙（九宫格�
 from widgets.task_panel import TaskPanel   # R69B6/B7 群待办/接龙/签到面板
 from widgets.text_viewer import TextViewer
 from widgets import ui_fx                         # R43A1 弹窗淡入/按压反馈
-from widgets.design_controls import IconButton
+from widgets.design_controls import (IconButton, game_icon_image,
+                                     role_icon_image, resource_icon_image)
 from ui_design import body_font, color as design_color
 from file_client import _hsize
 import client_gameui                    # R: 桌游对局 Canvas 图形化渲染
@@ -12061,9 +12062,9 @@ class _GameCard(_CardBase):
             g = int(a[1] + (b[1] - a[1]) * t)
             bl = int(a[2] + (b[2] - a[2]) * t)
             cv.create_line(0, y, w, y, fill=f"#{r:02x}{g:02x}{bl:02x}")
-        icon = _GAME_ICON.get(self.key, "🎲")   # 居中偏上的大图标（下方留给药丸按钮）
-        cv.create_text(w // 2, h // 2 - 3, text=icon,
-                       fill="#ffffff", font=(FONT_FAMILY, int(FONT_SIZE * 2.0), "bold"))
+        # 居中偏上的大图标（矢量轮廓，白色描边；下方留给药丸按钮）
+        self._cover_icon = game_icon_image(cv, self.key, "#ffffff", 34)
+        cv.create_image(w // 2, h // 2 - 3, image=self._cover_icon, anchor="center")
 
     def _paint(self, hover):
         if self._selected:
@@ -12090,7 +12091,6 @@ class _RoomCard(_CardBase):
                          cursor="hand2", pal=pal)
         meta = core.game_meta.get(room["game"], {})
         label = meta.get("label", room["game"])
-        icon = _GAME_ICON.get(room["game"], "🎲")
         me = core.uid
         owner = room.get("owner_uid")
         host_nick = _nick_of(core, owner) if owner else "?"
@@ -12106,7 +12106,12 @@ class _RoomCard(_CardBase):
         self.row1 = tk.Frame(self, bg=self._pal["bg"])
         self.row1.pack(fill="x", padx=4, pady=(3, 0))
         mark = "★ " if owner == me else ""
-        l1 = tk.Label(self.row1, text=f"{mark}{icon} {label} {room['room_id']}",
+        self._room_icon = tk.Label(
+            self.row1, image=game_icon_image(self.row1, room["game"],
+                                             self._pal["fg"], 15),
+            bg=self._pal["bg"])
+        self._room_icon.pack(side="left", padx=(0, 3))
+        l1 = tk.Label(self.row1, text=f"{mark}{label} {room['room_id']}",
                       bg=self._pal["bg"], fg=self._pal["fg"],
                       font=(FONT_FAMILY, FONT_SIZE, "bold"))
         l1.pack(side="left")
@@ -12128,7 +12133,7 @@ class _RoomCard(_CardBase):
         self.badge = tk.Label(self.row2, text=status_cn, bg=badge_bg, fg=badge_fg,
                               font=(FONT_FAMILY, FONT_SIZE - 2), padx=4)
         self.badge.pack(side="right")
-        self._texts = [l1, l2, l3]
+        self._texts = [self._room_icon, l1, l2, l3]
 
     def _paint(self, hover):
         if self._selected:

@@ -17,8 +17,16 @@ import tkinter as tk
 import math
 import time
 import random
+import re
 
 import ui_design as _ux
+from widgets.design_controls import (game_icon_image as _game_icon_image,
+                                     role_icon_image as _role_icon_image,
+                                     resource_icon_image as _resource_icon_image)
+
+# 顶栏标题前导 emoji（如「♟ 中国象棋」「🏆 P7 获胜」）统一改由左侧矢量图标承担；
+# CJK/字母数字属 \w，故只剥离标题开头的符号簇，绝不误伤正文。
+_LEAD_ICON = re.compile(r'^[^\w\s]+[ \t]*')
 
 # ---- 「雾岸」设计 Token（唯一源：docs/design/UX-01.tokens.json → ui_design.py）----
 # 桌面棋牌只“消费”Token，不复制数值；Tk 与 Web 因此保持同源同观感。
@@ -670,15 +678,100 @@ def _die_roll_fx(ui, now, key, repaint):
     return True, 1.0 - age / _DIE_ROLL_DUR
 
 
+def _banner_icon(cv, game, size=20):
+    """按画布缓存游戏矢量图标 PhotoImage（白描边），避免每帧重建。"""
+    cache = getattr(cv, "_banner_icon_cache", None)
+    if isinstance(cache, tuple) and len(cache) == 3 and \
+            cache[0] == game and cache[1] == size:
+        return cache[2]
+    photo = _game_icon_image(cv, game, _WHITE, size)
+    cv._banner_icon_cache = (game, size, photo)
+    return photo
+
+
+def _real_cv(cv):
+    """真 Tk Canvas 才会在 render() 时写入字符串 _gkey（见 render 入口）；
+    假画布桩（test_gomoku_fx 等）无此键或其值非字符串 → 只画文本、绝不
+    调用 ImageTk.PhotoImage(master=cv)，保持 headless 安全。"""
+    return isinstance(getattr(cv, "_gkey", None), str)
+
+
+def _cached_icon(cv, bucket, key, tint, size, factory):
+    """按画布缓存矢量图标 PhotoImage（同键同色同尺寸只渲染一次）。"""
+    cache = getattr(cv, bucket, None)
+    if not isinstance(cache, dict):
+        cache = {}
+        setattr(cv, bucket, cache)
+    ck = (key, tint, size)
+    img = cache.get(ck)
+    if img is None:
+        img = factory()
+        cache[ck] = img
+    return img
+
+
+def _role_img(cv, key, tint, size=18):
+    return _cached_icon(cv, "_role_img_cache", key, tint, size,
+                        lambda: _role_icon_image(cv, key, tint, size))
+
+
+def _res_img(cv, key, tint, size=16):
+    return _cached_icon(cv, "_res_img_cache", key, tint, size,
+                        lambda: _resource_icon_image(cv, key, tint, size))
+
+
+# E2：各游戏 private() 的角色编码 → ui_design.ROLE_ICONS 键（单源，双端复用）。
+_ROLE_KEY = {
+    "werewolf": {0: "villager", 1: "werewolf", 2: "seer", 3: "witch", 4: "hunter"},
+    "onewolf": {0: "villager", 1: "werewolf", 2: "seer", 3: "robber", 4: "insomniac"},
+    "avalon": {0: "loyal", 1: "merlin", 2: "assassin", 3: "mordred"},
+}
+_COC_ROLE = {"det": "detective", "doc": "doctor", "rep": "reporter",
+             "nat": "naturalist", "occ": "occultist", "arc": "archaeologist"}
+
+
+def _role_key(game, priv):
+    """从私密载荷解析角色图标键；无法识别返回 None（不绘制）。"""
+    if game == "liar":
+        return "liar"          # 撒谎者无角色，用游戏主题图标做身份标识
+    if not priv:
+        return None
+    if game in _ROLE_KEY:
+        return _ROLE_KEY[game].get(priv.get("role"))
+    if game == "spy":
+        r = priv.get("role")
+        return r if r in ("spy", "civilian") else None
+    if game == "coc":
+        return _COC_ROLE.get((priv.get("card") or {}).get("id"))
+    return None
+
+
+def _role_chip(cv, w, y, game, priv, text, fg, font=_FONT_B):
+    """身份行：左侧叠加角色矢量图标（E2 角色卡），文本仍居中。
+    仅真 Canvas 绘制图标；假画布桩退化为纯文本，保持 headless 安全。"""
+    key = _role_key(game, priv)
+    if key and _real_cv(cv):
+        cv.create_image(24, y, image=_role_img(cv, key, fg, 18), anchor="center")
+    _text(cv, w / 2, y, text, fg, font)
+
+
 def _turn_banner(cv, w, header_h, text, accent, ypad=8):
-    """顶栏精致化：柔和渐变卡 + 顶/底描边 + 标题投影。"""
+    """顶栏精致化：柔和渐变卡 + 顶/底描边 + 标题投影 + 左侧游戏矢量图标。"""
     base = accent
     _grad(cv, 0, 0, w, header_h, _shade(base, 0.42), _shade(base, -0.10))
     cv.create_line(0, 1, w, 1, fill=_shade(base, 0.6), width=1)
     cv.create_line(0, int(header_h) - 1, w, int(header_h) - 1,
                    fill=_shade(base, -0.32), width=1)
-    _text(cv, w / 2 + 1, header_h / 2 + 1, text, _shade(base, -0.45), _FONT_B)
-    _text(cv, w / 2, header_h / 2, text, _WHITE, _FONT_B)
+    # 左侧矢量游戏图标（E1 游戏内复用）：仅真 Canvas 记录 _gkey 时绘制，
+    # 假画布桩（测试）无 _gkey → 跳过；窄窗留白不足时不画以免与居中标题叠字。
+    gkey = getattr(cv, "_gkey", None)
+    if isinstance(gkey, str) and w >= 132:
+        cv.create_image(20, header_h / 2, image=_banner_icon(cv, gkey, 20),
+                        anchor="center")
+    # 标题前导 emoji 已由图标承担，正文不再重复
+    label = _LEAD_ICON.sub("", text) or text
+    _text(cv, w / 2 + 1, header_h / 2 + 1, label, _shade(base, -0.45), _FONT_B)
+    _text(cv, w / 2, header_h / 2, label, _WHITE, _FONT_B)
 
 
 def _hover_overlay(cv, ui):
@@ -1507,6 +1600,7 @@ def render(cv, game, st, me, nick, submit, repaint, ui, priv, w, h):
     if w < 80 or h < 80:
         return
     cv.delete("all")
+    cv._gkey = game          # 供 _turn_banner 绘制左侧游戏矢量图标
     painter = _PAINTERS.get(game)
     if painter:
         painter(cv, st, me, nick, submit, repaint, ui, priv, w, h)
@@ -2611,8 +2705,7 @@ def _p_coc(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     _turn_banner(cv, w, 46, title, accent)
     if phase == "play" and priv and priv.get("card"):
         c = priv["card"]
-        _text(cv, w / 2, 90, f"{c.get('emoji','')} 调查员：{c['name']}",
-              "#333", _FONT_B)
+        _role_chip(cv, w, 90, "coc", priv, f"调查员：{c['name']}", "#333")
         attrs = c.get("attrs") or {}
         y = 130
         _text(cv, w / 2, y, "属性：" + "　".join(f"{k} {v}" for k, v in attrs.items()),
@@ -2644,8 +2737,10 @@ def _p_coc(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             taken = any(v == c["id"] for v in cores.values())
             fill = "#efefef" if taken else "#fff"
             _rrect(cv, cx, cy, cx + cw, cy + ch, 10, fill, _PANEL_BD)
-            _text(cv, cx + cw / 2, cy + 22, f"{c.get('emoji','')} {c['name']}",
-                  "#333", _FONT_B)
+            if _real_cv(cv) and _COC_ROLE.get(c["id"]):
+                cv.create_image(cx + 16, cy + 22, anchor="center",
+                                image=_role_img(cv, _COC_ROLE[c["id"]], "#5a4a35", 16))
+            _text(cv, cx + cw / 2, cy + 22, c["name"], "#333", _FONT_B)
             _text(cv, cx + cw / 2, cy + 46, c.get("desc") or "", _MUTED,
                   (_FONT_F[0], 8), anchor="center")
             if taken:
@@ -2689,7 +2784,7 @@ def _p_werewolf(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         title = f"🏆 {nick(st['winner'])} 阵营获胜"
     _turn_banner(cv, w, 46, title, accent)
     if priv and priv.get("name"):
-        _text(cv, w / 2, 92, f"你的身份：{priv['name']}", "#333", _FONT_B)
+        _role_chip(cv, w, 92, "werewolf", priv, f"你的身份：{priv['name']}", "#333")
     alive = st.get("alive") or []
     players = st.get("players") or []
     need = set(st.get("need") or [])
@@ -2732,7 +2827,7 @@ def _p_avalon(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         title = f"🏆 胜利：{nick(st['winner'])}"
     _turn_banner(cv, w, 46, title, accent)
     if priv and priv.get("name"):
-        _text(cv, w / 2, 88, f"你的身份：{priv['name']}", "#333", _FONT_B)
+        _role_chip(cv, w, 88, "avalon", priv, f"你的身份：{priv['name']}", "#333")
     leader = st.get("leader")
     if leader is not None:
         _text(cv, w / 2, 112, f"领袖：{nick(leader)}", _MUTED, _FONT_F)
@@ -2780,8 +2875,9 @@ def _p_spy(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     if priv and priv.get("word"):
         role = priv.get("role")
         fg = "#c0392b" if role == "spy" else "#1f5236"
-        _text(cv, w / 2, 92, f"你：{role == 'spy' and '🕵️ 卧底' or '😇 平民'}"
-                             f" · 词：{priv['word']}", fg, _FONT_B)
+        _role_chip(cv, w, 92, "spy", priv,
+                   f"你：{role == 'spy' and '卧底' or '平民'}"
+                   f" · 词：{priv['word']}", fg)
     if st.get("speaker_uid") is not None:
         _text(cv, w / 2, 118, f"当前描述：{nick(st['speaker_uid'])}", _MUTED, _FONT_F)
     alive = st.get("alive") or []
@@ -3970,7 +4066,8 @@ def _p_liar(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     if priv and isinstance(priv.get("hand"), list):
         hand = priv["hand"]
     hy = y0 + ((len(players) - 1) // per + 1) * (ch + gap) + 20
-    _text(cv, w / 2, hy - 18, "我的手牌（值列表，出牌走下方按钮）", _MUTED, _FONT_F)
+    _role_chip(cv, w, hy - 18, "liar", None,
+               "我的手牌（值列表，出牌走下方按钮）", _MUTED, _FONT_F)
     if hand:
         per2 = max(1, (w - 24) // 44)
         base = (w - min(per2, len(hand)) * 44 + 4) / 2
@@ -4124,8 +4221,8 @@ def _p_onewolf(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 _text(cv, w / 2, 78, "🎉 好人获胜", "#7fff7f", _FONT_B)
             else:
                 _text(cv, w / 2, 78, "🐺 狼人获胜", "#c0392b", _FONT_B)
-        _text(cv, w / 2, st.get("phase") == "result" and 104 or 78,
-              f"你的身份：{v}{extra}", "#333", _FONT_F)
+        _role_chip(cv, w, st.get("phase") == "result" and 104 or 78,
+                   "onewolf", priv, f"你的身份：{v}{extra}", "#333", _FONT_F)
     players = st.get("players") or []
     need = st.get("need_act") or []
     acted = st.get("acted") or []
@@ -4336,8 +4433,7 @@ def _p_kaituo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         cv.create_line(x0, y0, x1, y1, fill=_pcolor(o, players),
                        width=max(3, int(cell * 0.22)), capstyle="round")
     # 玩家资源面板（底部）
-    res_order = [("wood", "🪵"), ("brick", "🧱"), ("lamb", "🐑"),
-                 ("wheat", "🌾"), ("ore", "⛏️")]
+    res_order = ["wood", "brick", "lamb", "wheat", "ore"]
     res_color = {"wood": "#6aa84f", "brick": "#c27f5a", "lamb": "#a9cc7e",
                  "wheat": "#e4cd6b", "ore": "#9aa0ab"}
     n = len(players)
@@ -4356,10 +4452,14 @@ def _p_kaituo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         res = resources.get(str(u), {})
         sw = pw - 16
         i = 0
-        for rk, icon in res_order:
+        for rk in res_order:
             cx0 = x0 + 8 + i * (sw / 5)
-            cv.create_oval(cx0 + 2, py0 + 34, cx0 + 13, py0 + 45,
-                           fill=res_color[rk], outline="")
+            if _real_cv(cv):
+                cv.create_image(cx0 + 8, py0 + 39, anchor="center",
+                                image=_res_img(cv, rk, res_color[rk], 16))
+            else:
+                cv.create_oval(cx0 + 2, py0 + 34, cx0 + 13, py0 + 45,
+                               fill=res_color[rk], outline="")
             _text(cv, cx0 + 17, py0 + 39, str(res.get(rk, 0)), "#f0e6d8",
                   (_FONT_F[0], 9), anchor="w")
             i += 1
@@ -4614,9 +4714,14 @@ def _p_chengzhu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             if gx:
                 crown = gx.get("crown", 0)
                 if crown:
-                    _text(cv, x0 + cell / 2, yy0 + cell / 2,
-                          "👑" if crown else "", "#7c4a1f",
-                          (_FONT_F[0], int(cell * 0.32)))
+                    if _real_cv(cv):
+                        cv.create_image(x0 + cell / 2, yy0 + cell / 2,
+                                        anchor="center",
+                                        image=_res_img(cv, "crown", "#7c4a1f",
+                                                       max(12, int(cell * 0.46))))
+                    else:
+                        _text(cv, x0 + cell / 2, yy0 + cell / 2, "👑", "#7c4a1f",
+                              (_FONT_F[0], int(cell * 0.32)))
                     _text(cv, x0 + cell - 4, yy0 + 12, str(crown), "#7c4a1f",
                           (_FONT_F[0], int(cell * 0.22)), anchor="ne")
     # 右：市场板块（1x2 多米诺）
@@ -4637,6 +4742,15 @@ def _p_chengzhu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         cv.create_rectangle(bx + mcell + 6, by, bx + mcell * 2 + 6,
                             by + mcell, fill=tcol.get(B.get("terr"), "#eee"),
                             outline="#5a4a35", width=1)
+        if _real_cv(cv):
+            _tsz = max(12, int(mcell * 0.5))
+            if A.get("terr"):
+                cv.create_image(bx + mcell / 2, by + mcell / 2, anchor="center",
+                                image=_res_img(cv, A["terr"], "#5a4a35", _tsz))
+            if B.get("terr"):
+                cv.create_image(bx + mcell + 6 + mcell / 2, by + mcell / 2,
+                                anchor="center",
+                                image=_res_img(cv, B["terr"], "#5a4a35", _tsz))
         cA, cB = A.get("crown", 0), B.get("crown", 0)
         if cA:
             _text(cv, bx + 6, by + 8, str(cA), "#7c4a1f",
@@ -4671,6 +4785,9 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     gcol = {"o": "#3a3a3a", "d": "#f0f0f0", "r": "#d2534f",
             "e": "#3a9b5f", "s": "#4a7de0", "g": "#e0b33c"}
     gtok = {"o": "⬛", "d": "⬜", "r": "🔴", "e": "🟢", "s": "🔵", "g": "🟡"}
+    # E3：宝石图标描边色（卡面/银行/玩家面板均为深底，"o"需提亮才可辨识）
+    gdisp = dict(gcol)
+    gdisp["o"] = "#a6a6a6"
     colors = ["o", "d", "r", "e", "s"]
     market = st.get("market") or {}
     # 市场 3 级 × 4
@@ -4686,15 +4803,27 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             _text(cv, x0 + cw - 8, y0 + 14, f"+{cd.get('pts', 0)}", "#ffd75e",
                   _FONT_B, anchor="ne")
             dc = gcol.get(cd.get("disc"), "#888")
-            cv.create_oval(x0 + 8, y0 + 8, x0 + 26, y0 + 26, fill=dc,
-                           outline="#fff")
+            if _real_cv(cv):
+                cv.create_image(x0 + 17, y0 + 17, anchor="center",
+                                image=_res_img(cv, cd.get("disc"),
+                                               gdisp.get(cd.get("disc"), "#888"),
+                                               18))
+            else:
+                cv.create_oval(x0 + 8, y0 + 8, x0 + 26, y0 + 26, fill=dc,
+                               outline="#fff")
             cost = cd.get("cost") or {}
             yy = y0 + 40
             for k in colors:
                 v = cost.get(k, 0)
                 if v:
-                    _text(cv, x0 + 12, yy, f"{gtok[k]}×{v}", "#e8e8e8",
-                          (_FONT_F[0], 9), anchor="w")
+                    if _real_cv(cv):
+                        cv.create_image(x0 + 15, yy, anchor="center",
+                                        image=_res_img(cv, k, gdisp[k], 12))
+                        _text(cv, x0 + 25, yy, f"×{v}", "#e8e8e8",
+                              (_FONT_F[0], 9), anchor="w")
+                    else:
+                        _text(cv, x0 + 12, yy, f"{gtok[k]}×{v}", "#e8e8e8",
+                              (_FONT_F[0], 9), anchor="w")
                     yy += 15
         y0 += chh + 14
     # 银行 + 贵宾
@@ -4704,16 +4833,25 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     _text(cv, bx, py, "宝石池：", "#e8e0d0", _FONT_B, anchor="w")
     xx = bx + 80
     for k in colors + ["g"]:
-        cv.create_oval(xx, py - 8, xx + 16, py + 8, fill=gcol.get(k, "#888"),
-                       outline="")
+        if _real_cv(cv):
+            cv.create_image(xx + 8, py, anchor="center",
+                            image=_res_img(cv, k, gdisp.get(k, "#888"), 16))
+        else:
+            cv.create_oval(xx, py - 8, xx + 16, py + 8, fill=gcol.get(k, "#888"),
+                           outline="")
         _text(cv, xx + 22, py, str(bank.get(k, 0)), "#e8e8e8", _FONT_F,
               anchor="w")
         xx += 34
     nobles = st.get("nobles") or []
     if nobles:
-        _text(cv, bx, py + 24, "贵宾：" + "  ".join(
-            f"👑+3({'+'.join(f'{gtok.get(k,k)}{v}' for k, v in nb.items())})"
-            for nb in nobles[:3]), "#ffd75e", (_FONT_F[0], 9), anchor="w")
+        lx = bx + 4
+        if _real_cv(cv):
+            cv.create_image(lx, py + 24, anchor="center",
+                            image=_res_img(cv, "crown", "#ffd75e", 13))
+            lx += 11
+        _text(cv, lx, py + 24, "贵宾 +3(" + "  ".join(
+            "+".join(f"{k}{v}" for k, v in nb.items())
+            for nb in nobles[:3]) + ")", "#ffd75e", (_FONT_F[0], 9), anchor="w")
     # 玩家（宝石/折扣/分）
     n = len(players)
     gap = 8
@@ -4731,8 +4869,12 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         tk_tok = tokens.get(str(u), {})
         xx = x0 + 8
         for k in colors:
-            cv.create_oval(xx, ply + 28, xx + 12, ply + 40,
-                           fill=gcol.get(k, "#888"), outline="")
+            if _real_cv(cv):
+                cv.create_image(xx + 6, ply + 34, anchor="center",
+                                image=_res_img(cv, k, gdisp[k], 13))
+            else:
+                cv.create_oval(xx, ply + 28, xx + 12, ply + 40,
+                               fill=gcol.get(k, "#888"), outline="")
             _text(cv, xx + 16, ply + 34, str(tk_tok.get(k, 0)), "#e8e8e8",
                   (_FONT_F[0], 8), anchor="w")
             xx += 30
@@ -4772,8 +4914,16 @@ def _p_siji(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         fill = "#3a4a3a" if not filled else "#1e2f24"
         _rrect(cv, cx, y0 + 24, cx + cw, y0 + 24 + chh, 8, fill, "#5a7a5a")
         _text(cv, cx + cw / 2, y0 + 44, c.get("name", "?"), "#fff", _FONT_B)
-        _text(cv, cx + cw / 2, y0 + 64, f"⚙{kind_cn.get(c.get('kind'), '')}+{c.get('out','')}",
-              "#cfe0c0", (_FONT_F[0], 9))
+        kind = c.get("kind")
+        otext = f"{kind_cn.get(kind, '')}+{c.get('out','')}"
+        if _real_cv(cv) and kind in kind_cn:
+            cv.create_image(cx + cw / 2 - 20, y0 + 64, anchor="center",
+                            image=_res_img(cv, kind, "#cfe0c0", 13))
+            _text(cv, cx + cw / 2 + 8, y0 + 64, otext, "#cfe0c0",
+                  (_FONT_F[0], 9))
+        else:
+            _text(cv, cx + cw / 2, y0 + 64, f"⚙{otext}", "#cfe0c0",
+                  (_FONT_F[0], 9))
         _text(cv, cx + cw / 2, y0 + 82, "已激活" if filled else "待激活",
               "#9fbf9f", (_FONT_F[0], 8))
     # 我的资源
@@ -4781,8 +4931,21 @@ def _p_siji(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     cry = st.get("crystal") or {}
     gd = st.get("gold") or {}
     vp = st.get("vp") or {}
-    _text(cv, w / 2, yy, f"💎施法 {cry.get(str(me), 0)}   💰金币 {gd.get(str(me), 0)}"
-          f"   👑胜利 {vp.get(str(me), 0)}", "#eff2e6", _FONT_B)
+    cry_v, gd_v, vp_v = (cry.get(str(me), 0), gd.get(str(me), 0),
+                         vp.get(str(me), 0))
+    if _real_cv(cv):
+        seg = w / 3
+        for i, (k, lab, val) in enumerate((("crystal", "施法", cry_v),
+                                           ("apple", "金币", gd_v),
+                                           ("vt", "胜利", vp_v))):
+            ctr = seg * i + seg / 2
+            cv.create_image(ctr - 30, yy, anchor="center",
+                            image=_res_img(cv, k, "#eff2e6", 15))
+            _text(cv, ctr - 18, yy, f"{lab} {val}", "#eff2e6", _FONT_B,
+                  anchor="w")
+    else:
+        _text(cv, w / 2, yy, f"💎施法 {cry_v}   💰金币 {gd_v}   👑胜利 {vp_v}",
+              "#eff2e6", _FONT_B)
     # 玩家矩阵
     n = len(players)
     gap = 8
@@ -4794,10 +4957,21 @@ def _p_siji(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                             outline=_shade(accent, 0.3), width=1)
         _text(cv, x0 + pw / 2, ply + 14, nick(u) + ("（我）" if u == me else ""),
               "#fff", _FONT_B)
-        _text(cv, x0 + pw / 2, ply + 34,
-              f"💎{cry.get(str(u),0)} 💰{gd.get(str(u),0)}", "#cfe0d8", _FONT_F)
-        _text(cv, x0 + pw / 2, ply + 54, f"👑 {vp.get(str(u), 0)}", "#ffd75e",
-              _FONT_B)
+        cu, gu, vu = (cry.get(str(u), 0), gd.get(str(u), 0), vp.get(str(u), 0))
+        if _real_cv(cv):
+            cx2 = x0 + pw / 2
+            cv.create_image(cx2 - 26, ply + 34, anchor="center",
+                            image=_res_img(cv, "crystal", "#cfe0d8", 13))
+            _text(cv, cx2 - 16, ply + 34, str(cu), "#cfe0d8", _FONT_F, anchor="w")
+            cv.create_image(cx2 + 8, ply + 34, anchor="center",
+                            image=_res_img(cv, "apple", "#cfe0d8", 13))
+            _text(cv, cx2 + 18, ply + 34, str(gu), "#cfe0d8", _FONT_F, anchor="w")
+            cv.create_image(cx2 - 20, ply + 54, anchor="center",
+                            image=_res_img(cv, "vt", "#ffd75e", 14))
+            _text(cv, cx2 - 10, ply + 54, str(vu), "#ffd75e", _FONT_B, anchor="w")
+        else:
+            _text(cv, x0 + pw / 2, ply + 34, f"💎{cu} 💰{gu}", "#cfe0d8", _FONT_F)
+            _text(cv, x0 + pw / 2, ply + 54, f"👑 {vu}", "#ffd75e", _FONT_B)
 
 
 @_register("bolan")

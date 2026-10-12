@@ -1,0 +1,835 @@
+{
+  "stage_only": true,
+  "final_visual_acceptance": false,
+  "run": "visual-20261012-123901",
+  "images": [
+    {
+      "path": "screenshots/ui-mist-frameless-dpi96-normal.png",
+      "sha256": "6e16acb222a55ff2d6131a1828f82c54ae64f41a11e7da04a080b1324b573860",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist + frameless @ 96 DPI (1.00x), normal window",
+      "pixel_size": [
+        960,
+        680
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist-frameless-dpi120-normal.png",
+      "sha256": "a0ae6114e88a2a8f74e481948067cab8d619994fe6426916df97b96920bfaa80",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist + frameless @ 120 DPI (1.25x), normal window",
+      "pixel_size": [
+        1200,
+        850
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist-frameless-dpi144-normal.png",
+      "sha256": "02b96035ed07e9fab85d6cb85726614c27ad363f0d6ba5c575d4c4e37aa1ad7e",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist + frameless @ 144 DPI (1.50x), normal window",
+      "pixel_size": [
+        1440,
+        1020
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist-native-dpi96-normal.png",
+      "sha256": "83b44c20d239afc1137c6ac7e5d759ee56fd86427edcbbc8555960d1f1f0d65e",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist + native titlebar @ 96 DPI (1.00x), normal window",
+      "pixel_size": [
+        960,
+        680
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist-native-dpi120-normal.png",
+      "sha256": "214072dc924c4727c93fadb20f169564d0be29dc08402c38c541174fe7f5b464",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist + native titlebar @ 120 DPI (1.25x), normal window",
+      "pixel_size": [
+        1200,
+        850
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist-native-dpi144-normal.png",
+      "sha256": "99235f16af418badb4817a40862d8dafc42180aded7672a080d3e75b17500bb9",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist + native titlebar @ 144 DPI (1.50x), normal window",
+      "pixel_size": [
+        1440,
+        1020
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist_dark-frameless-dpi96-normal.png",
+      "sha256": "a1b17eb7602f773d793b5d03b14deeb905460210c62b2d750399177f2bcfd76e",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist_dark + frameless @ 96 DPI (1.00x), normal window",
+      "pixel_size": [
+        960,
+        680
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist_dark-frameless-dpi120-normal.png",
+      "sha256": "3206301503b5d7717c0f8ef97f5b73147655824f44ca7a0a7eba7dbd99e48f83",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist_dark + frameless @ 120 DPI (1.25x), normal window",
+      "pixel_size": [
+        1200,
+        850
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist_dark-frameless-dpi144-normal.png",
+      "sha256": "1029df1a0a9ff821224524768a1ef9ebdc683b736c143b59a2c6691da5a6c16f",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist_dark + frameless @ 144 DPI (1.50x), normal window",
+      "pixel_size": [
+        1440,
+        1020
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist_dark-native-dpi96-normal.png",
+      "sha256": "d2d3d691dd29602d34946c0bf915c3139bfde9618d9945baabcce4768ea8ac0c",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist_dark + native titlebar @ 96 DPI (1.00x), normal window",
+      "pixel_size": [
+        960,
+        680
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist_dark-native-dpi120-normal.png",
+      "sha256": "4302bb7b32a710c2a1da52fda93f46a0af39de780794c5536f0600fd6dc9b45b",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist_dark + native titlebar @ 120 DPI (1.25x), normal window",
+      "pixel_size": [
+        1200,
+        850
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist_dark-native-dpi144-normal.png",
+      "sha256": "f3a630cc8328d84c868a739b1a9e279b4d1f890d8519b704615c9013765ebb1f",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist_dark + native titlebar @ 144 DPI (1.50x), normal window",
+      "pixel_size": [
+        1440,
+        1020
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist-frameless-dpi96-minimal.png",
+      "sha256": "ced9847d68f6a4ffd6b7e0eb00da00edce76203545fafc3473fea0fe03a08fde",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist + frameless @ 96 DPI (1.00x), minimal 680x480 window",
+      "pixel_size": [
+        680,
+        480
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist-frameless-dpi120-minimal.png",
+      "sha256": "62090e950e685b6258fdcd33574cde5dec1894171aa29bf2493be349fafe19d7",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist + frameless @ 120 DPI (1.25x), minimal 850x600 window",
+      "pixel_size": [
+        850,
+        600
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist-frameless-dpi144-minimal.png",
+      "sha256": "85d768b758e3c20f6a35a4c865f7eda8a610b8521d807266b683c5934b6bf08d",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, no server",
+      "limitation": "mist + frameless @ 144 DPI (1.50x), minimal 1020x720 window",
+      "pixel_size": [
+        1020,
+        720
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist-frameless-dpi96-offline.png",
+      "sha256": "fcbae0fff5cf869c68c71219b165d21792f4ce677bd43f7dbe00df183c542871",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, connection state forced offline",
+      "limitation": "mist + frameless @ 96 DPI, offline/failure status bar",
+      "pixel_size": [
+        960,
+        680
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist-frameless-dpi96-input.png",
+      "sha256": "6a7c99463d85559a2f6098cb15e5ee970fc1f69686b327529c509712e31737ef",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, in-memory draft only",
+      "limitation": "mist + frameless @ 96 DPI, compose region with typed draft",
+      "pixel_size": [
+        960,
+        680
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    },
+    {
+      "path": "screenshots/ui-mist-frameless-dpi96-more.png",
+      "sha256": "dcc48f5259039d26d8d622f9280f27ac8b46ff9fa3b9b76515c3cde5f17493ee",
+      "run": "visual-20261012-123901",
+      "render_attempts": 1,
+      "fixture": "synthetic roster+messages, fresh temp profile, native menu posted (dismissed via synthetic VK_ESCAPE)",
+      "limitation": "mist + frameless @ 96 DPI, low-frequency more-menu popup (screen region grab)",
+      "pixel_size": [
+        976,
+        700
+      ],
+      "application_inputs": [
+        {
+          "path": "client.py",
+          "raw_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf"
+        },
+        {
+          "path": "dpi.py",
+          "raw_sha256": "da50eb655e1e1be0913aee7921f00fbed614338312ae9e85441c615dd5b89204"
+        },
+        {
+          "path": "theme.py",
+          "raw_sha256": "787b8669b9a5b106ed6e9d68fc2fbba5e14a2fb606b63582768b908bf556a0d5"
+        },
+        {
+          "path": "web.py",
+          "raw_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061"
+        },
+        {
+          "path": "ui_design.py",
+          "raw_sha256": "ea0395cde27028690368be7490c1e963c08fc433efc0cad35fa2f1995b116e35"
+        },
+        {
+          "path": "widgets/session_list.py",
+          "raw_sha256": "4f0f5701cc6386915f97465c4c7afc45709dd0dbbf5434a3bf922609d790c4e8"
+        },
+        {
+          "path": "widgets/msg_list.py",
+          "raw_sha256": "c942ee2faead0fb0d3883ab35059646d3ac25299626701e6a0cc8c70eb567b3c"
+        },
+        {
+          "path": "widgets/design_controls.py",
+          "raw_sha256": "621fbb73717a8705e3814e15cb5f9a7ad0cebed82b64c0a9a609b27bc046095b"
+        }
+      ]
+    }
+  ]
+}

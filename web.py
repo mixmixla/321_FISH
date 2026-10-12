@@ -3934,6 +3934,12 @@ function mkCard(o){
   if(o.cor!=null){const c=document.createElement("span");c.className="cor";c.textContent=o.cor;el.appendChild(c);}
   if(o.sym!=null){const s=document.createElement("span");s.className="sym";s.textContent=o.sym;el.appendChild(s);}
   if(o.sub!=null){const b=document.createElement("span");b.className="sub";b.textContent=o.sub;el.appendChild(b);}
+  if(typeof o.click==="function"){          // 可操作卡面：补齐按钮语义与键盘激活（Enter/Space）
+    el.setAttribute("role","button");
+    el.setAttribute("tabindex","0");
+    el.onclick=o.click;
+    el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "||e.key==="Spacebar"){e.preventDefault();o.click();}};
+  }
   return el;
 }
 function vcardHTML(o){return mkCard(o).outerHTML}
@@ -4530,9 +4536,8 @@ const GRENDER={
       const bar=document.createElement("div");bar.style.cssText="text-align:center;margin:8px";
       p.hand.forEach((cs,i)=>{
         const pt=unoParts(cs);
-        const c=mkCard({cls:"uno click "+pt.cls,sym:pt.sym,cor:pt.cor,title:pt.title});
         const isWild=pt.wild;
-        c.onclick=()=>{
+        const act=()=>{
           if(!isWild)gameAPI("action",{room_id:state.groom,action:{card:p.hand_ids[i]}});
           else{
             const cbar=box.querySelector(".wbar");
@@ -4547,6 +4552,7 @@ const GRENDER={
                 gameAPI("action",{room_id:state.groom,action:{card:p.hand_ids[i],color:cl}})};
               sel.appendChild(b);});
             box.appendChild(sel);}};
+        const c=mkCard({cls:"uno click "+pt.cls,sym:pt.sym,cor:pt.cor,title:pt.title,click:act});
         bar.appendChild(c);});
       box.appendChild(bar);
       const draw=document.createElement("div");draw.style.cssText="text-align:center;margin:6px";
@@ -5128,8 +5134,8 @@ const GRENDER={
       const hd=document.createElement("div");hd.className="gsec";hd.textContent="我的手牌（选一张打出）";
       w.appendChild(hd);
       p.hand.forEach(c=>{
-        const el=mkCard({cls:"click",sym:c,cor:c,title:"打出 "+c});
-        el.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"choose",card:c}});
+        const el=mkCard({cls:"click",sym:c,cor:c,title:"打出 "+c,
+          click:()=>gameAPI("action",{room_id:state.groom,action:{op:"choose",card:c}})});
         w.appendChild(el);});
       box.appendChild(w);
       if(Object.keys(s.chosen||{}).includes(String(state.uid)))

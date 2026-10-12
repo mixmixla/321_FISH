@@ -852,9 +852,10 @@ def _phase_label(ph):
 def _hud_items(st, me, nick, max_chips=6):
     """把任意游戏快照归一化成统一 HUD 数据（纯函数，无副作用）。
 
-    返回 (阶段文本, 计分项)：阶段文本形如「作答中 · 第 3 轮」（缺项自动省略，
-    轮次为 0 时不显示）；计分项为 [(标签, 数值, 是否我), ...]，按玩家序号升序、
-    最多 max_chips 项——我显示为「我」，其余取昵称前 5 字。
+    返回 (阶段文本, 计分项, 隐藏数)：阶段文本形如「作答中 · 第 3 轮」（缺项自动
+    省略，轮次为 0 时不显示）；计分项为 [(标签, 数值, 是否我), ...]，按玩家序号
+    升序、最多 max_chips 项——优先保留「我」，其余按序号补齐，隐藏数用于提示还有
+    未展开的玩家。我显示为「我」，其余取昵称前 5 字。
     """
     st = st or {}
     label = _phase_label(st.get("status") or st.get("phase"))
@@ -870,6 +871,7 @@ def _hud_items(st, me, nick, max_chips=6):
     else:
         phase_text = ""
     items = []
+    hidden = 0
     scores = st.get("scores") or {}
     if isinstance(scores, dict) and scores:
         try:
@@ -877,19 +879,29 @@ def _hud_items(st, me, nick, max_chips=6):
                            key=lambda kv: kv[0])
         except (TypeError, ValueError):
             pairs = []
-        for u, v in pairs[:max_chips]:
+        if len(pairs) > max_chips:
+            kept = pairs[:max_chips]
+            if me is not None and all(u != me for u, _ in kept):
+                mine = [(u, v) for u, v in pairs if u == me]
+                if mine:
+                    kept = sorted(kept[:max_chips - 1] + mine,
+                                  key=lambda kv: kv[0])
+            hidden = len(pairs) - len(kept)
+            pairs = kept
+        for u, v in pairs:
             tag = "我" if u == me else str(nick(u))
             if len(tag) > 6:
                 tag = tag[:5] + "…"
             items.append((tag, v, u == me))
-    return phase_text, items
+    return phase_text, items, hidden
 
 
 def _status_hud(cv, w, y, st, me, nick, accent):
     """F6 统一状态 HUD：左「阶段·轮次」胶囊 + 右计分小卡（复用 _score_chips）。
     纯绘制，不读时钟、不持状态；数据缺失时静默省略对应一侧。
-    窄窗按可用宽度自右向左裁剪计分卡，避免与左侧胶囊重叠。"""
-    phase_text, items = _hud_items(st, me, nick)
+    窄窗按可用宽度自右向左裁剪计分卡，避免与左侧胶囊重叠；被裁剪或被上限隐藏的
+    玩家数（含「我」之外的）以「+N」小标提示，避免数据静默丢失。"""
+    phase_text, items, hidden = _hud_items(st, me, nick)
     left = 12
     if phase_text:
         tw = _text_w(phase_text)
@@ -902,16 +914,26 @@ def _status_hud(cv, w, y, st, me, nick, accent):
         _text(cv, 38, y, phase_text, _TXT, _FONT_B, anchor="w")
         left = x1 + 10
     if items:
+        # 预先为「+N」小标预留宽度（按可能出现的最大位数），避免它挤掉小卡
+        reserve = _text_w(f"+{hidden + len(items)}") + 24 if hidden else 0
         cum = w - 12
         keep = []
         for tag, val, is_me in items:
             cwid = _text_w(f"{tag} {val}") + 26
-            if cum - cwid < left:
+            if cum - cwid < left + reserve:
                 break
             cum -= cwid
             keep.append((tag, val, is_me))
+        dropped = hidden + (len(items) - len(keep))
         if keep:
-            _score_chips(cv, w, y, keep, accent)
+            cum = _score_chips(cv, w, y, keep, accent)
+        if dropped:
+            txt = f"+{dropped}"
+            x0 = cum - _text_w(txt) - 20
+            if x0 >= left:
+                _rrect(cv, x0, y - 12, cum, y + 12, 12,
+                       _shade(accent, 0.92), _PANEL_BD)
+                _text(cv, x0 + 10, y, txt, _MUTED, _FONT_B, anchor="w")
 
 
 # ---------------------------------------------------------------------------

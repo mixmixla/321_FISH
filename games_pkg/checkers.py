@@ -72,6 +72,8 @@ class CheckersGame(BaseGame):
         if not (abs(dx) == abs(dy)):
             raise GameRuleError("只能斜向移动")
         step = abs(dx)
+        if self._is_man(cell) and dy * self._dir(cell) < 0:
+            raise GameRuleError("普通子不能后退")
         if self._is_man(cell) and step == 2 and self.board[fy + dy // 2][fx + dx // 2] == 0:
             raise GameRuleError("非法")
         if step > 2 and self._is_man(cell):
@@ -169,18 +171,27 @@ class CheckersGame(BaseGame):
                     if 0 <= jx < N and 0 <= jy < N and self.board[jy][jx] == 0:
                         out.append([jx, jy])
         else:
+            # 王走法须与 act 保持一致：1 格可走、连续空格≥3 格可走；
+            # 恰好 2 格被 act 当作吃子检查（要求中间有敌子），故不提示；
+            # 只有紧邻的敌子才可跳吃（落点在 2 格外）。
             for dx in (-1, 1):
                 for dy in (-1, 1):
                     nx, ny = x + dx, y + dy
+                    step = 1
                     while 0 <= nx < N and 0 <= ny < N:
-                        if self.board[ny][nx] == 0:
-                            out.append([nx, ny])
+                        c = self.board[ny][nx]
+                        if c == 0:
+                            if step != 2:
+                                out.append([nx, ny])
+                            step += 1
                             nx += dx
                             ny += dy
-                        elif self._enemy(self.board[ny][nx]):
-                            jx, jy = nx + dx, ny + dy
-                            if 0 <= jx < N and 0 <= jy < N and self.board[jy][jx] == 0:
-                                out.append([jx, jy])
+                        elif self._enemy(c):
+                            if step == 1:
+                                jx, jy = nx + dx, ny + dy
+                                if (0 <= jx < N and 0 <= jy < N
+                                        and self.board[jy][jx] == 0):
+                                    out.append([jx, jy])
                             break
                         else:
                             break

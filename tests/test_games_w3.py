@@ -130,6 +130,55 @@ def test_checkers_can_only_own():
         g.act(1, {"fx": spot[0], "fy": spot[1], "tx": spot[0], "ty": spot[1]})
 
 
+def _checkers_pos(board_map, turn=0, players=(1, 2)):
+    """构造指定棋面/轮次的国际跳棋，用于提示与动作一致性差分测试"""
+    g = _g("checkers", list(players))
+    g.board = [[0] * 8 for _ in range(8)]
+    for (x, y), v in board_map.items():
+        g.board[y][x] = v
+    g.turn = turn
+    g.winner = None
+    return g
+
+
+def test_checkers_king_hint_consistent_with_act():
+    """复审场景：王(2,3) 与敌子(4,5)，提示不得给出 act 无法执行的落点"""
+    g = _checkers_pos({(2, 3): 3, (4, 5): 2}, turn=0)
+    hints = {tuple(t) for t in g._targets(2, 3)}
+    for bad in [(5, 6), (0, 1), (4, 1), (0, 5)]:
+        assert bad not in hints
+    assert (3, 4) in hints
+
+
+def test_checkers_hints_match_act():
+    """提示集合必须与 act 实际接受的移动集合完全一致（双向差分）"""
+    layout = {
+        (1, 0): 1, (3, 0): 1, (5, 2): 1, (7, 2): 1, (2, 3): 3,
+        (0, 5): 2, (2, 5): 2, (4, 5): 2, (6, 6): 2, (0, 7): 2,
+        (4, 3): 4,
+    }
+    uid = 1
+    ref = _checkers_pos(layout, turn=0)
+    checked = 0
+    for y in range(8):
+        for x in range(8):
+            if not ref._me(ref.board[y][x]):
+                continue
+            checked += 1
+            hints = {tuple(t) for t in ref._targets(x, y)}
+            legal = set()
+            for ty in range(8):
+                for tx in range(8):
+                    h = _checkers_pos(layout, turn=0)
+                    try:
+                        h.act(uid, {"fx": x, "fy": y, "tx": tx, "ty": ty})
+                        legal.add((tx, ty))
+                    except GameRuleError:
+                        pass
+            assert hints == legal, f"({x},{y}) 不一致: hints={hints} legal={legal}"
+    assert checked > 0
+
+
 # ---------- 角斗士棋 ----------
 def test_blokus_first_must_corner():
     g = _g("blokus", [1, 2, 3, 4])

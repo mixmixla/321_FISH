@@ -442,16 +442,22 @@ def test_hud_items_normalizes_phase_round_and_scores():
     """F6：快照归一化 —— 阶段·轮次文本正确、计分项升序且标记我、越界裁剪。"""
     nick = lambda u: f"P{u}"
     st = {"status": "answering", "round": 3, "scores": {8: 1, 7: 2}}
-    phase_text, items = cu._hud_items(st, 7, nick)
+    phase_text, items, hidden = cu._hud_items(st, 7, nick)
     assert phase_text == "作答中 · 第 3 轮"
     assert items == [("我", 2, True), ("P8", 1, False)]      # 按玩家序号升序
+    assert hidden == 0
     # 轮次为 0（rps 未开赛）→ 只显示阶段；缺轮次走 round_no 回退
     assert cu._hud_items({"status": "collecting", "round": 0}, 7, nick)[0] == "进行中"
     assert cu._hud_items({"phase": "playing", "round_no": 5}, 7, nick)[0] == "进行中 · 第 5 轮"
-    assert cu._hud_items({}, 7, nick) == ("", [])
+    assert cu._hud_items({}, 7, nick) == ("", [], 0)
     # 计分项封顶 6 个；长昵称截断为前 5 字 + 省略号；非字典 scores 静默忽略
     many = {"scores": {u: u for u in range(10)}}
     assert len(cu._hud_items(many, 0, nick)[1]) == 6
+    # 高 UID 的「我」不会被前 6 项挤掉（复审 #2）
+    ptext, pitems, phidden = cu._hud_items({"scores": {u: u for u in range(1, 9)}},
+                                           8, nick)
+    assert any(is_me for _t, _v, is_me in pitems)
+    assert len(pitems) == 6 and phidden == 2
     assert cu._hud_items({"scores": {7: 1}}, 0, lambda u: "超级长昵称名字")[1] == \
         [("超级长昵称…", 1, False)]
     assert cu._hud_items({"scores": [1, 2]}, 7, nick)[1] == []
@@ -490,6 +496,32 @@ def test_status_hud_draws_pill_and_chips_and_fits_narrow():
     cv3 = _Canvas()
     cu._status_hud(cv3, 600, 68, {}, 7, nick, "#c99a6d")
     assert cv3.texts == []
+
+
+def test_status_hud_keeps_me_and_flags_hidden():
+    """F6/复审#2：>6 人时「我」始终成卡，被隐藏的玩家数用「+N」标出。"""
+    class _Canvas:
+        def __init__(self):
+            self.texts = []
+
+        def create_polygon(self, *a, **k):
+            pass
+
+        def create_line(self, *a, **k):
+            pass
+
+        def create_oval(self, *a, **k):
+            pass
+
+        def create_text(self, *a, **k):
+            self.texts.append(k.get("text"))
+
+    nick = lambda u: f"P{u}"
+    st = {"status": "playing", "scores": {u: u for u in range(1, 9)}}
+    cv = _Canvas()
+    cu._status_hud(cv, 900, 68, st, 8, nick, "#c99a6d")
+    assert "我 8" in cv.texts          # 当前用户（高 UID）不再被截断
+    assert "+2" in cv.texts            # 被隐藏的两人以「+N」提示
 
 
 # -------- P0 桌面交互修复：围棋命中几何 / 你画我猜字段（全 headless）--------

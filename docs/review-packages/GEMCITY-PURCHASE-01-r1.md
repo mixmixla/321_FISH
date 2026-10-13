@@ -48,12 +48,16 @@ cleanup_ok，无意外skip；全量与领域source ID一致，工具session54447
 
 base `08d263b2a78b7a6df0b888616e2fbf44793182b8`；独立分支
 `fix/gemcity-purchase-20261013`，工作目录 `_tmp_gui/gate-collection-20261013`
-沿用初始诊断名称。尚未commit/push/PR，不沿用上游旧审查为本候选通过。
+沿用初始诊断名称。代码commit `1153e068dd06ec8af6f65f1df89c2b9184a6b12e`
+已普通push并核远端一致；Draft PR创建因连接器403和浏览器控制启动错误受阻，尚无PR号。
+[交付回执](../review-assets/GEMCITY-PURCHASE-01/delivery.json)保存入口与原因，不沿用旧审查为本候选通过。
 
 [原工作区边界](../review-assets/GEMCITY-PURCHASE-01/boundary.json)：原开发HEAD c864234、
 原分支/index与入场1145公开文件保护；原目录只更新本Task/Review、指挥中心与投影。
 没有pull/stash/reset/clean/强推或真实数据操作。PR7/8已由实时GitHub确认merged；
 本轮没有merge/release权限，没有主分支push。
 
-完整门禁和证据归档/独立原证据终核已完成，提交和draft PR待完成。CP4历史WinError5、完整EXE对局与
+完整门禁和证据归档/独立原证据终核、任务分支commit/push已完成，draft PR创建仍受阻。
+已审阅的TRIAL-EVIDENCE-REFRESH-01纯文档提交另在任务分支整合，371运行输入不变；
+该资料接受不改变full FAIL。CP4历史WinError5、完整EXE对局与
 退出、外机Windows、真实LAN、视觉/DPI等原验收缺口保持；本规则修复不关闭它们。

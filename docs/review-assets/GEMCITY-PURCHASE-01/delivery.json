@@ -1,0 +1,22 @@
+{
+  "task": "GEMCITY-PURCHASE-01.v1.1",
+  "status": "BRANCH_PUSHED_DRAFT_PR_CREATE_BLOCKED",
+  "code_commit": "1153e068dd06ec8af6f65f1df89c2b9184a6b12e",
+  "branch": "fix/gemcity-purchase-20261013",
+  "base": "08d263b2a78b7a6df0b888616e2fbf44793182b8",
+  "remote_code_head_verified": true,
+  "full_gate": {"files": 158, "passed": 2323, "failed": 3, "skipped": 2, "exit_code": 1},
+  "ai_accepted": false,
+  "merge_ready": false,
+  "github_connector_error": "403 Resource not accessible by integration",
+  "browser_attempts": 2,
+  "browser_error": "MXC launcher cannot locate required Windows platform directory, HRESULT 0x80070003",
+  "github_cli_available": false,
+  "pull_request_number": null,
+  "compare_url": "https://github.com/mixmixla/321_FISH/compare/main...fix/gemcity-purchase-20261013?expand=1",
+  "prepared_body_local": "D:/Project/321_FISH/_tmp_gui/advance-20261013/PR_BODY.md",
+  "credentials_extracted": false,
+  "permissions_changed": false,
+  "main_pushed": false,
+  "merged_or_released": false
+}

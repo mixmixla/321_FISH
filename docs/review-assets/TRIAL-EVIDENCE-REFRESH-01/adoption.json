@@ -1,0 +1,28 @@
+{
+  "task": "TRIAL-EVIDENCE-REFRESH-01.v1",
+  "status": "AI_ACCEPTED_DOCUMENTS_ONLY",
+  "frozen_base": "08d263b2a78b7a6df0b888616e2fbf44793182b8",
+  "source_commit": "456fd172c74b9ad2e6a6629dd7ebe663380626ba",
+  "integrated_commit": "7067725a9ca65362726ae2c10def5ab53f928b74",
+  "scope": "Six documentation files only; old game classification corrected, current full play/EXE remains unverified.",
+  "independent_review_must": 0,
+  "frozen_source_hashes_checked": 7,
+  "unchanged_current_sources": [
+    "client.py",
+    "client_gameui.py",
+    "web.py",
+    "games_pkg/__init__.py",
+    "games_pkg/kalah.py",
+    "games_pkg/balatro.py"
+  ],
+  "only_runtime_difference": "GemCity purchase fix outside frozen static evidence",
+  "original_static_audit_unchanged": true,
+  "frozen_runtime_inputs_unchanged_after_docs": 371,
+  "current_full_gate": {
+    "passed": 2323,
+    "failed": 3,
+    "skipped": 2,
+    "exit_code": 1
+  },
+  "not_application_exe_or_release_acceptance": true
+}

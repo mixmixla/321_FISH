@@ -41,7 +41,9 @@
 - 两旗舰桌面输入以最新Core的connected/player/turn/winner和room-round上下文复查，
   五子棋交点、四子棋列输入与hover共用几何；胜线以最终board/last_move计算。GameWindow/BoardFocus
   各自持有有限after；mini/boss保存窗口对象与可见性，手动隐藏/离房可取消恢复资格。
-  14项已确认无完整桌面操作的游戏被标识并阻止误入；精确分类与证据见[游戏完成度地图](docs/游戏完成度地图.md)。
+  上游已放开原14项桌面禁入并增加操作入口；入口存在不等于完整对局通过。
+  当前[游戏完成度地图](docs/游戏完成度地图.md)按冻结源码/旧版实验/当版待验分层，
+  Web/桌面Kalah第二方映射等已知缺口单列；不能由空禁入集推出47款可发布。
 - 公共房间只允许CREATED开始；leave/最后UID端断线承接既有player_left，观战退出不触发玩家规则。
   finish/reset与action/tick公开snapshot以room/gs/round身份校验，ENDED保留公开结果但不再分发private，
   复位保留房间成员供房主再开。人数不足且无native结果时公共层中止，不新增winner/奖励。

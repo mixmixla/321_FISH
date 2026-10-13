@@ -899,8 +899,8 @@ def _hud_items(st, me, nick, max_chips=6):
 def _status_hud(cv, w, y, st, me, nick, accent):
     """F6 统一状态 HUD：左「阶段·轮次」胶囊 + 右计分小卡（复用 _score_chips）。
     纯绘制，不读时钟、不持状态；数据缺失时静默省略对应一侧。
-    窄窗按可用宽度自右向左裁剪计分卡，避免与左侧胶囊重叠；被裁剪或被上限隐藏的
-    玩家数（含「我」之外的）以「+N」小标提示，避免数据静默丢失。"""
+    窄窗先保留「我」，再按可用宽度加入其他计分卡，避免与左侧胶囊重叠；被裁剪或
+    被上限隐藏的玩家数以「+N」小标提示。极窄窗放不下自身卡时不画计分卡。"""
     phase_text, items, hidden = _hud_items(st, me, nick)
     left = 12
     if phase_text:
@@ -915,13 +915,20 @@ def _status_hud(cv, w, y, st, me, nick, accent):
         left = x1 + 10
     if items:
         # 预先为「+N」小标预留宽度（按可能出现的最大位数），避免它挤掉小卡
-        reserve = _text_w(f"+{hidden + len(items)}") + 24 if hidden else 0
+        widths = [_text_w(f"{tag} {val}") + 26 for tag, val, _ in items]
+        reserve = (_text_w(f"+{hidden + len(items)}") + 24
+                   if hidden or sum(widths) > w - 12 - left else 0)
         cum = w - 12
         keep = []
-        for tag, val, is_me in items:
+        # The data cap keeps me, but width cropping must reserve me again.
+        # Drawing me first places my highlighted chip at the stable right edge.
+        priority = sorted(items, key=lambda item: not item[2])
+        for tag, val, is_me in priority:
             cwid = _text_w(f"{tag} {val}") + 26
             if cum - cwid < left + reserve:
-                break
+                if is_me:
+                    break                    # genuinely too narrow for my chip
+                continue
             cum -= cwid
             keep.append((tag, val, is_me))
         dropped = hidden + (len(items) - len(keep))
@@ -933,7 +940,7 @@ def _status_hud(cv, w, y, st, me, nick, accent):
             if x0 >= left:
                 _rrect(cv, x0, y - 12, cum, y + 12, 12,
                        _shade(accent, 0.92), _PANEL_BD)
-                _text(cv, x0 + 10, y, txt, _MUTED, _FONT_B, anchor="w")
+                _text(cv, x0 + 10, y, txt, _UXC["text_secondary"], _FONT_B, anchor="w")
 
 
 # ---------------------------------------------------------------------------
@@ -1459,6 +1466,12 @@ def _click_blokus(ui, x, y):
     st = ui.get("state") or {}
     if st.get("winner_uid") is not None or st.get("turn_uid") != ui.get("me"):
         return
+    for key, delta in (("blok_page_prev", -1), ("blok_page_next", 1)):
+        rect = ui.get(key)
+        if rect and rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]:
+            ui["blok_page"] = ui.get("blok_page", 0) + delta
+            ui["repaint"]()
+            return
     rect = ui.get("blok_rot")
     if rect and rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]:
         ots = (st.get("pieces") or {}).get(ui.get("blok_pick")) or []
@@ -3222,12 +3235,23 @@ def _p_blokus(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["blokus"][1]
     n = st.get("size") or 20
     ended = st.get("winner_uid") is not None
-    title = "🧩 角斗士棋"
+    title = "角斗士棋"
+    title_uid = st.get("winner_uid") if ended else st.get("turn_uid")
+    title_name = str(nick(title_uid)) if title_uid is not None else ""
+    nick_limit = max(4, int((w - 220) // 20))
+    if len(title_name) > nick_limit:
+        title_name = title_name[:nick_limit - 1] + "…"
     if ended:
-        title = f"🏆 {nick(st['winner_uid'])} 获胜"
+        title = f"🏆 {title_name} 获胜"
     elif st.get("turn_uid"):
-        title += f"　轮到 {nick(st['turn_uid'])}"
-    _turn_banner(cv, w, 46, title, accent)
+        title += f"　轮到 {title_name}"
+    # Blokus style sample: a quiet surface with a small piece mark, while
+    # the board/player colors retain the game's own identity.
+    _rrect(cv, 8, 8, w - 8, 44, _UXR_BIG, _UXC["surface"], _PANEL_BD)
+    for dx, dy in ((0, 0), (0, 8), (8, 8)):
+        cv.create_rectangle(22 + dx, 18 + dy, 28 + dx, 24 + dy,
+                            fill=accent, outline="")
+    _text(cv, 48, 26, title, _TXT, _FONT_H, anchor="w")
     board = st.get("board") or []
     players = st.get("players") or []
     colors = st.get("colors") or ["#e05555", "#3f6fe0", "#3ba55d", "#e8b93c"]
@@ -3265,95 +3289,120 @@ def _p_blokus(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     # 右侧面板：战况 + 交互区（选择拼块 / 换方向 / 跳过 / 点棋盘落子）
     px = bx + n * cell + 14
     py = by + 4
-    _text(cv, px, py, "战况", "#333", _FONT_B, anchor="w")
-    py += 24
+    right = w - 12
+    panel_width = right - px
+    _rrect(cv, px - 8, by - 12, w - 4, h - 6, _UXR_BIG,
+           _UXC["surface"], _PANEL_BD)
+    _text(cv, px, py, "战况", _TXT, _FONT_B, anchor="w")
+    py += 20
     for i, u in enumerate(players):
         col = colors[i % len(colors)]
-        _text(cv, px, py, f"● {nick(u)}" + ("（我）" if u == me else "")
-              + f"  已占 {placed.get(str(u), 0)} 格", col,
-              (_FONT_F[0], 9), anchor="w")
-        py += 18
-    py += 8
+        label = "我" if u == me else str(nick(u))
+        if len(label) > 5:
+            label = label[:4] + "…"
+        cv.create_oval(px, py - 3, px + 6, py + 3, fill=col, outline="")
+        _text(cv, px + 12, py, label, _TXT, (_FONT_F[0], 9), anchor="w")
+        _text(cv, right - 4, py, f"{placed.get(str(u), 0)} 格", _UXC["text_secondary"],
+              (_FONT_F[0], 9), anchor="e")
+        py += 16
+    py += 6
     # 每帧重置点击热区，避免残留失效区域
     ui["blok_chips"] = []
     ui["blok_rot"] = None
     ui["blok_pass"] = None
+    ui["blok_page_prev"] = None
+    ui["blok_page_next"] = None
     my_turn = (not ended) and st.get("turn_uid") == me
     mine = has_piece.get(str(me)) or []
     if my_turn and mine:
-        _text(cv, px, py, "选择拼块（点击）", "#333", _FONT_B, anchor="w")
-        py += 22
         pick = ui.get("blok_pick")
         if pick not in mine:
             pick = mine[0]
             ui["blok_pick"] = pick
             ui["blok_oi"] = 0
-        # 预取选中拼块的当前方向索引（供纵横自适应与预览共用）
+            ui["blok_page"] = 0
         ots = list(catalog.get(pick) or [])
         oi = ui.get("blok_oi", 0) % len(ots) if ots else 0
         if ots:
             ui["blok_oi"] = oi
-        # 纵向自适应：预留下方固定控件（方向预览/换方向/跳过/提示）高度后，
-        # 把剩余空间分给拼块网格；窗口偏矮时压缩拼块高度与方向预览尺寸，
-        # 保证所有控件始终落在窗内可点击（不再单调递增溢出窗外）。
-        cw, gap = 46, 4
-        cols_n = max(1, int((w - px - 10) // (cw + gap)))
-        rows_n = max(1, (len(mine) + cols_n - 1) // cols_n)
-        reserve = 12 + 26 + 16 + (30 if ots else 0)
-        avail = max(0, h - py - 8)
-        chh = int(max(12, min(22, (avail - reserve) // rows_n - gap)))
+        _text(cv, px, py, f"拼块 · {pick}", _TXT, _FONT_B, anchor="w")
+        _text(cv, px, py + 14, f"方向 {oi + 1}/{len(ots)}" if ots else "选择后点棋盘",
+              _UXC["text_secondary"], (_FONT_F[0], 9), anchor="w")
+        # A bounded preview shows rotation feedback without pushing controls down.
+        if ots:
+            cells = []
+            for value in ots[oi]:
+                try:
+                    a, b = map(int, str(value).split(","))
+                except (ValueError, TypeError):
+                    continue
+                cells.append((a, b))
+            if cells:
+                rows = max(a for a, _ in cells) + 1
+                cols = max(b for _, b in cells) + 1
+                msz = min(6, 24 / max(rows, cols))
+                mx0, my0 = right - cols * msz, py - 5
+                for a, b in cells:
+                    cv.create_rectangle(mx0 + b * msz, my0 + a * msz,
+                                        mx0 + (b + 1) * msz, my0 + (a + 1) * msz,
+                                        fill=accent, outline=_UXC["surface"])
+        py += 28
+        # Keep actions anchored above the bottom hint. Page the inventory rather
+        # than shrinking click targets or letting four-player inventories overflow.
+        actions_y = h - 56
+        gap, chh = 4, 24
+        cols_n = max(1, int((panel_width + gap) // 46))
+        cw = (panel_width - gap * (cols_n - 1)) / cols_n
+        rows_fit = max(1, int((actions_y - 8 - py + gap) // (chh + gap)))
+        paged = len(mine) > rows_fit * cols_n
+        if paged:
+            rows_fit = max(1, int((actions_y - 36 - py + gap) // (chh + gap)))
+        capacity = rows_fit * cols_n
+        page_count = (len(mine) + capacity - 1) // capacity
+        page = max(0, min(int(ui.get("blok_page", 0)), page_count - 1))
+        ui["blok_page"] = page
         chips = []
         cx, cy = px, py
-        for idx, nm in enumerate(mine):
+        for idx, nm in enumerate(mine[page * capacity:(page + 1) * capacity]):
             if idx and idx % cols_n == 0:
                 cx = px
                 cy += chh + gap
             sel = (nm == pick)
-            cv.create_rectangle(cx, cy, cx + cw, cy + chh,
-                                fill=(accent if sel else "#ffffff"),
-                                outline=accent, width=2 if sel else 1)
+            _rrect(cv, cx, cy, cx + cw, cy + chh, _UXR_CTRL,
+                   accent if sel else _UXC["surface"], accent if sel else _PANEL_BD,
+                   2 if sel else 1)
             _text(cv, cx + cw / 2, cy + chh / 2, nm,
-                  ("#ffffff" if sel else "#333333"), (_FONT_F[0], 9))
+                  (_WHITE if sel else _TXT), (_FONT_F[0], 9, "bold") if sel
+                  else (_FONT_F[0], 9))
             chips.append((cx, cy, cx + cw, cy + chh, nm))
             cx += cw + gap
         ui["blok_chips"] = chips
-        py = cy + chh + 12
-        # 选中拼块的方向预览 + 换方向
+        if paged:
+            pager_y = actions_y - 28
+            for key, label, enabled, x0 in (
+                    ("blok_page_prev", "‹", page > 0, px),
+                    ("blok_page_next", "›", page + 1 < page_count, right - 28)):
+                rect = (x0, pager_y, x0 + 28, pager_y + 24)
+                _rrect(cv, *rect, _UXR_CTRL, _UXC["surface"], _PANEL_BD)
+                _text(cv, x0 + 14, pager_y + 12, label,
+                      _TXT if enabled else _UXC["disabled_text"], _FONT_B)
+                ui[key] = rect if enabled else None
+            _text(cv, (px + right) / 2, pager_y + 12, f"{page + 1}/{page_count}",
+                  _UXC["text_secondary"], (_FONT_F[0], 9))
+        bw = (panel_width - 8) / 2
         if ots:
-            cellset = set()
-            maxr = maxc = 0
-            for pr in ots[oi]:
-                try:
-                    a, b = str(pr).split(",")
-                    a, b = int(a), int(b)
-                except (ValueError, TypeError):
-                    continue
-                cellset.add((a, b))
-                maxr, maxc = max(maxr, a), max(maxc, b)
-            # 方向预览按剩余空间收缩（下限 5px/格）；空间仍不足则省略预览本身，
-            # 保证其下的「换方向 / 跳过」按钮始终留在窗内可点击。
-            room = h - 80 - py
-            msz = int(max(0, min(12, room // max(1, maxr + 1))))
-            if msz >= 5:
-                _text(cv, px, py, f"方向 {oi + 1}/{len(ots)}", "#333",
-                      (_FONT_F[0], 9), anchor="w")
-                mx0 = px + 72
-                for (a, b) in cellset:
-                    cv.create_rectangle(mx0 + b * msz, py - 8 + a * msz,
-                                        mx0 + (b + 1) * msz, py - 8 + (a + 1) * msz,
-                                        fill=accent, outline="#ffffff")
-                py += max((maxr + 1) * msz, 18) + 12
-            rot = (px, py, px + 72, py + 22)
-            cv.create_rectangle(*rot, fill="#ffffff", outline=accent, width=1)
-            _text(cv, px + 36, py + 11, "↻ 换方向", "#333", (_FONT_F[0], 9))
+            rot = (px, actions_y, px + bw, actions_y + 28)
+            _rrect(cv, *rot, _UXR_CTRL, _UXC["selected_background"], accent)
+            _text(cv, px + bw / 2, actions_y + 14, f"换向 {oi + 1}/{len(ots)}",
+                  _TXT, (_FONT_F[0], 9))
             ui["blok_rot"] = rot
-            py += 30
-        pas = (px, py, px + 92, py + 22)
-        cv.create_rectangle(*pas, fill="#ffffff", outline="#999999", width=1)
-        _text(cv, px + 46, py + 11, "🙋 跳过回合", "#333", (_FONT_F[0], 9))
+        pas = (px + bw + 8, actions_y, right, actions_y + 28)
+        _rrect(cv, *pas, _UXR_CTRL, _UXC["surface"], _PANEL_BD)
+        _text(cv, (pas[0] + pas[2]) / 2, actions_y + 14, "跳过", _TXT,
+              (_FONT_F[0], 9))
         ui["blok_pass"] = pas
-        py += 26
-        _text(cv, px, py, "点棋盘空格落子", "#666666", (_FONT_F[0], 9), anchor="w")
+        _text(cv, px, h - 14, "选拼块 → 点棋盘", _UXC["text_secondary"],
+              (_FONT_F[0], 9), anchor="w")
     elif ended:
         _text(cv, px, py, "对局已结束", "#666666", _FONT_F, anchor="w")
     elif st.get("turn_uid") is not None:

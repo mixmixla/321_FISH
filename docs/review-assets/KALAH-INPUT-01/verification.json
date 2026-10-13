@@ -1,0 +1,62 @@
+{
+  "base": "c5492396e01e7edc37333dc7a0694141b3110788",
+  "source_content_id": "0ce014c9154473942cbc3b81e40d2ec9b9cb72d360aaba5f73bfe284151aa8c9",
+  "fingerprint": "b5702dd2812dd86292ee4e8915ab3aab169e3a8699c3ddd742b0144e5feb8338",
+  "results": [
+    {
+      "file": "tests/test_games_w2_logic.py",
+      "counts": {
+        "passed": 19
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_hash_verified": true
+    },
+    {
+      "file": "tests/test_gomoku_fx.py",
+      "counts": {
+        "passed": 33
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_hash_verified": true
+    },
+    {
+      "file": "tests/test_kalah_gui.py",
+      "counts": {
+        "passed": 2
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_hash_verified": true
+    },
+    {
+      "file": "tests/test_kalah_input.py",
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_hash_verified": true
+    },
+    {
+      "file": "tests/test_kalah_web.py",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_hash_verified": true
+    }
+  ],
+  "source_matches_final_gate": true,
+  "protected_source_unchanged": true,
+  "changed_ui_functions": [
+    "_click_kalah",
+    "_p_kalah"
+  ],
+  "only_kalah_web_renderer_changed": true,
+  "capture_matches_final_ui_source": true,
+  "screenshot_hashes_verified": 12,
+  "self_review": "0 MUST in assigned UI/PAGE scope; client.py integration remains with main"
+}

@@ -1,0 +1,204 @@
+{
+  "task": "GATE-FIXTURE-01",
+  "version": 1,
+  "base": "bb8496786f54f40118a9eae49610979d9811da97",
+  "head": "c92cef600caff01da156d0919d20b15a191d5465",
+  "branch": "test/gate-fixtures-20261013",
+  "auth_checks_unchanged": 13,
+  "original_r32_functions_preserved_except_two_exact_expectations": true,
+  "skip_calls_unchanged": true,
+  "manual_cases_added": 4,
+  "diff_check": "passed",
+  "only_two_test_files_changed": true,
+  "files": [
+    {
+      "path": "tests/test_cc02a_web_kick.py",
+      "sha256": "51b17982de0e240ebe950af5294a4f6ce0fe965c5f1ec15bddc73c34e1bba126"
+    },
+    {
+      "path": "tests/test_r32.py",
+      "sha256": "c3ecf56597c31248e4be4154a8176f1c3955356db4eea85ad3a6b845080e1013"
+    }
+  ],
+  "runs": {
+    "focused-host": {
+      "files": 2,
+      "totals": {
+        "passed": 27
+      },
+      "seconds": 4.652,
+      "exit_code": 0,
+      "source_content_id": "5f4aa9668cf77345292091ed554cd4b6c77a7ebb8cab587da1427f2072eca3af",
+      "content_fingerprint": "2160782fe592f6d11a247503f35b8427c7e59e6732c290c3d7ffeff7917105ef",
+      "summary_sha256": "ee69f308b74e55531a7b6f430e411fc4576938e0a531528dc1b7f57f15ea834b",
+      "manifest_sha256": "eec3dc6d87bca6d5f70db1856a0144e9ef568f517c0522d74a7e5b2104bb2e66",
+      "results": [
+        {
+          "file": "tests/test_cc02a_web_kick.py",
+          "counts": {
+            "passed": 1
+          },
+          "log": "D:\\Project\\321_FISH\\_tmp_gui\\gate-fixtures-evidence-20261013\\focused-host\\logs\\test_cc02a_web_kick.attempt1.log",
+          "log_sha256": "0d6a4684845b8d1b21909bea624950117e07c547c3a171b9997fde669f7578c7",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "exit_code": 0,
+          "sandbox_report_sha256": "dadd957eab13c842b6004b1a6a51a3a4aba780c39843d121e05458efa03bbefe",
+          "pid": 20032,
+          "desktop": null,
+          "command": [
+            "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_cc02a_web_kick.py",
+            "--basetemp",
+            "D:\\Project\\321_FISH\\_tmp_gui\\gate-fixtures-evidence-20261013\\focused-host\\basetemp\\test_cc02a_web_kick-1-81ff1d5b",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ]
+        },
+        {
+          "file": "tests/test_r32.py",
+          "counts": {
+            "passed": 26
+          },
+          "log": "D:\\Project\\321_FISH\\_tmp_gui\\gate-fixtures-evidence-20261013\\focused-host\\logs\\test_r32.attempt1.log",
+          "log_sha256": "3ed3f9df504481642825f6204bdc50a866701e11f403796f6383ebe0d898a9c7",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "exit_code": 0,
+          "sandbox_report_sha256": "4191fe3596e956bce9e2bb2d789d67ef4af0e155225eeca4fcf8f2cf3c64072f",
+          "pid": 2768,
+          "desktop": "MoyuGate-35612-84826fe524",
+          "command": [
+            "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_r32.py",
+            "--basetemp",
+            "D:\\Project\\321_FISH\\_tmp_gui\\gate-fixtures-evidence-20261013\\focused-host\\basetemp\\test_r32-1-efc96fe8",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=sys"
+          ]
+        }
+      ]
+    },
+    "ux-domain": {
+      "files": 2,
+      "totals": {
+        "passed": 14
+      },
+      "seconds": 17.354,
+      "exit_code": 0,
+      "source_content_id": "5f4aa9668cf77345292091ed554cd4b6c77a7ebb8cab587da1427f2072eca3af",
+      "content_fingerprint": "f7f519c6bdc7942d50fe9c730fa2c706a0400846faf423240aebf21b7033ea55",
+      "summary_sha256": "399b56c551115d5247bed9aab9910ad5a80029c6dee914220b6fffccef0cb63f",
+      "manifest_sha256": "afeb76bd7872af56c8de00f24986a937d7738d6136f4efa25c4b9d37e92add7a",
+      "results": [
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "counts": {
+            "passed": 13
+          },
+          "log": "D:\\Project\\321_FISH\\_tmp_gui\\gate-fixtures-evidence-20261013\\ux-domain\\logs\\test_ux_visual_chat_regressions.attempt1.log",
+          "log_sha256": "b1b8325b60041b17fb5bba60f5fb33e362c8336c1b6bd8394fb46e5c62531e32",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "exit_code": 0,
+          "sandbox_report_sha256": "5e6ae5cc5ed21ebb7cf351217ebc8da2f17b87e642044746a5d1ec4c37bff86f",
+          "pid": 35220,
+          "desktop": "MoyuGate-29612-943ce5c860",
+          "command": [
+            "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_ux_visual_chat_regressions.py",
+            "--basetemp",
+            "D:\\Project\\321_FISH\\_tmp_gui\\gate-fixtures-evidence-20261013\\ux-domain\\basetemp\\test_ux_visual_chat_regressions-1-0673aee7",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=sys"
+          ]
+        },
+        {
+          "file": "tests/test_ux_visual_chat_web.py",
+          "counts": {
+            "passed": 1
+          },
+          "log": "D:\\Project\\321_FISH\\_tmp_gui\\gate-fixtures-evidence-20261013\\ux-domain\\logs\\test_ux_visual_chat_web.attempt1.log",
+          "log_sha256": "1c33f29d50a9cccf3404f06e6cb975a0ed3f161c7625d898d7f06a27183fdde3",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "exit_code": 0,
+          "sandbox_report_sha256": "6a235c29395f8d80c085ab597fd251d31ae1849a1f6e7d1d3edb0bc8fc6086c2",
+          "pid": 23428,
+          "desktop": null,
+          "command": [
+            "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_ux_visual_chat_web.py",
+            "--basetemp",
+            "D:\\Project\\321_FISH\\_tmp_gui\\gate-fixtures-evidence-20261013\\ux-domain\\basetemp\\test_ux_visual_chat_web-1-31a87ced",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ]
+        }
+      ]
+    }
+  },
+  "first_infrastructure_failure_preserved": {
+    "run_dir": "D:\\Project\\321_FISH\\_tmp_gui\\gate-fixtures-evidence-20261013\\focused",
+    "cases_executed": 0,
+    "summary_exit_code": 2,
+    "shell_exit_code": 1,
+    "desktop": {
+      "available": false,
+      "error": "[Errno 0] CreateDesktopW failed",
+      "required": true,
+      "session_id": 1
+    },
+    "summary_sha256": "a8e63dea758004a2771dada0ded0d4e40e624ecd6c68ed236ba004147103dfcf"
+  },
+  "not_full_or_product_acceptance": true,
+  "baseline_failures_preserved": "FOLLOWUP-20261013/failure-comparison.json",
+  "process_check": {
+    "method": "Host CIM filtered only exact task worktree/evidence paths after both sessions naturally ended",
+    "matching_processes": 0,
+    "verified_at_utc": "2026-10-13T02:54:09.4075553Z",
+    "sessions": [
+      {
+        "session_id": 55498,
+        "exit_code": 1,
+        "cases_started": 0
+      },
+      {
+        "session_id": 23817,
+        "exit_code": 0
+      },
+      {
+        "session_id": 41354,
+        "exit_code": 0
+      }
+    ]
+  }
+}

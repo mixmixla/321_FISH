@@ -1,0 +1,36 @@
+{
+  "files": 2,
+  "totals": {
+    "passed": 14
+  },
+  "exit_code": 0,
+  "seconds": 17.354,
+  "source_content_id": "5f4aa9668cf77345292091ed554cd4b6c77a7ebb8cab587da1427f2072eca3af",
+  "content_fingerprint": "f7f519c6bdc7942d50fe9c730fa2c706a0400846faf423240aebf21b7033ea55",
+  "results": [
+    {
+      "file": "tests/test_ux_visual_chat_regressions.py",
+      "log": "test_ux_visual_chat_regressions.log.txt",
+      "sha256": "b1b8325b60041b17fb5bba60f5fb33e362c8336c1b6bd8394fb46e5c62531e32",
+      "counts": {
+        "passed": 13
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_ux_visual_chat_web.py",
+      "log": "test_ux_visual_chat_web.log.txt",
+      "sha256": "1c33f29d50a9cccf3404f06e6cb975a0ed3f161c7625d898d7f06a27183fdde3",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    }
+  ]
+}

@@ -1,0 +1,243 @@
+{
+  "source": "D:\\Project\\321_FISH\\_tmp_gui\\ui-boundary-20261013",
+  "client_gameui_sha256": "5b538f9ed9ef5665c9dc66b2563fca389fd4738d12c4bd6bc2bfc9d2077cd24b",
+  "client_py_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf",
+  "tk_scaling": 1.3333333333333333,
+  "captures": [
+    {
+      "file": "before-kalah-a-normal.png",
+      "window_size": [
+        920,
+        720
+      ],
+      "canvas_size": [
+        912,
+        681
+      ],
+      "capture_size": [
+        920,
+        720
+      ],
+      "screenshot_sha256": "9d5ab30189cd7ffe7b3b6cafe9c99cabc217858846e080550f5f7e718b4c4b0c",
+      "hotspots": {},
+      "texts": [
+        "🥜 非洲播棋　轮到 玩家11",
+        "🥜 非洲播棋　轮到 玩家11",
+        "A·玩家11（你）",
+        "B·玩家22",
+        "0",
+        "B（玩家22）",
+        "0",
+        "A（玩家11）",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ]
+    },
+    {
+      "file": "before-kalah-a-compact.png",
+      "window_size": [
+        480,
+        400
+      ],
+      "canvas_size": [
+        472,
+        361
+      ],
+      "capture_size": [
+        480,
+        400
+      ],
+      "screenshot_sha256": "22d22fb7af34a7a5d0e54dae2f0a6d699196a36d44264ccb605ed9432e8fbda2",
+      "hotspots": {},
+      "texts": [
+        "🥜 非洲播棋　轮到 玩家11",
+        "🥜 非洲播棋　轮到 玩家11",
+        "A·玩家11（你）",
+        "B·玩家22",
+        "0",
+        "B（玩家22）",
+        "0",
+        "A（玩家11）",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ]
+    },
+    {
+      "file": "before-kalah-b-normal.png",
+      "window_size": [
+        920,
+        720
+      ],
+      "canvas_size": [
+        912,
+        681
+      ],
+      "capture_size": [
+        920,
+        720
+      ],
+      "screenshot_sha256": "ff796aadf97bb401f814e8f3c54e62319ac28d5f6400b21b411dd8f09d9a3c1c",
+      "hotspots": {},
+      "texts": [
+        "🥜 非洲播棋　轮到 玩家22",
+        "🥜 非洲播棋　轮到 玩家22",
+        "A·玩家11",
+        "B·玩家22（你）",
+        "0",
+        "B（玩家22）",
+        "0",
+        "A（玩家11）",
+        "0",
+        "5",
+        "5",
+        "5",
+        "5",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ]
+    },
+    {
+      "file": "before-kalah-b-compact.png",
+      "window_size": [
+        480,
+        400
+      ],
+      "canvas_size": [
+        472,
+        361
+      ],
+      "capture_size": [
+        480,
+        400
+      ],
+      "screenshot_sha256": "5e92d3385d5004ea93e06368b0ba157b637816e96867fa5f551fa62f7cc122ca",
+      "hotspots": {},
+      "texts": [
+        "🥜 非洲播棋　轮到 玩家22",
+        "🥜 非洲播棋　轮到 玩家22",
+        "A·玩家11",
+        "B·玩家22（你）",
+        "0",
+        "B（玩家22）",
+        "0",
+        "A（玩家11）",
+        "0",
+        "5",
+        "5",
+        "5",
+        "5",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ]
+    },
+    {
+      "file": "before-kalah-b-last-normal.png",
+      "window_size": [
+        920,
+        720
+      ],
+      "canvas_size": [
+        912,
+        681
+      ],
+      "capture_size": [
+        920,
+        720
+      ],
+      "screenshot_sha256": "e3447b5fc90dd1e9c0eb8c50cb6529924bffcc39e0eba7acc7ffa0ad9d822dfc",
+      "hotspots": {},
+      "texts": [
+        "🥜 非洲播棋　轮到 玩家11",
+        "🥜 非洲播棋　轮到 玩家11",
+        "A·玩家11",
+        "B·玩家22（你）",
+        "0",
+        "B（玩家22）",
+        "0",
+        "A（玩家11）",
+        "0",
+        "5",
+        "5",
+        "5",
+        "5",
+        "4",
+        "0",
+        "5",
+        "5",
+        "5",
+        "5",
+        "4"
+      ]
+    },
+    {
+      "file": "before-kalah-b-last-compact.png",
+      "window_size": [
+        480,
+        400
+      ],
+      "canvas_size": [
+        472,
+        361
+      ],
+      "capture_size": [
+        480,
+        400
+      ],
+      "screenshot_sha256": "d61d7db879132d7f5d6f39706f15e66acac17080f84e5c41273781626bfa4c14",
+      "hotspots": {},
+      "texts": [
+        "🥜 非洲播棋　轮到 玩家11",
+        "🥜 非洲播棋　轮到 玩家11",
+        "A·玩家11",
+        "B·玩家22（你）",
+        "0",
+        "B（玩家22）",
+        "0",
+        "A（玩家11）",
+        "0",
+        "5",
+        "5",
+        "5",
+        "5",
+        "4",
+        "0",
+        "5",
+        "5",
+        "5",
+        "5",
+        "4"
+      ]
+    }
+  ],
+  "method": "Exact BoardFocusWindow and GameWindow._render_to, synthetic host; drag binding stubbed, opacity=1 for both variants"
+}

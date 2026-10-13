@@ -1,0 +1,39 @@
+{
+  "files": 2,
+  "totals": {
+    "failed": 29,
+    "passed": 14
+  },
+  "exit_code": 1,
+  "seconds": 44.798,
+  "source_content_id": "4d477cc3238a7c5df19aff511725798459d06286e95a3a78503f0a45c4dc11ab",
+  "content_fingerprint": "7099b53c56de1295b6d9882f98fb0ccdd046165f439c972b50e42318b4977bde",
+  "results": [
+    {
+      "file": "tests/test_kalah_parameters.py",
+      "log": "test_kalah_parameters.log.txt",
+      "sha256": "fe288d97b1409f3f0f2b8bcf17379b97e93378ce84271628687a4dedb14a6678",
+      "counts": {
+        "failed": 26,
+        "passed": 10
+      },
+      "exit_code": 1,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_rummikub_selection.py",
+      "log": "test_rummikub_selection.log.txt",
+      "sha256": "4dafc70ae79bf29289410b1478bedc5497077f085cd7a80cd5003d7bc04e1d7f",
+      "counts": {
+        "failed": 3,
+        "passed": 4
+      },
+      "exit_code": 1,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    }
+  ]
+}

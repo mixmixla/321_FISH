@@ -1,0 +1,51 @@
+{
+  "files": 3,
+  "totals": {
+    "failed": 9,
+    "passed": 2
+  },
+  "exit_code": 1,
+  "seconds": 15.71,
+  "source_content_id": "e2528499c0a16b9b92f95e408b03c5dc7c336f79fd6a7c03017aa5822f855fc8",
+  "content_fingerprint": "7ddff69b5face75e54b13fe28462989b75f7a19dbbd6fa118c224faa44619712",
+  "results": [
+    {
+      "file": "tests/test_kalah_gui.py",
+      "log": "test_kalah_gui.log.txt",
+      "sha256": "dd2e48f905b76c80b17306885bbf1556b44366e13d74c78c9bb685cb1c0d298a",
+      "counts": {
+        "failed": 1,
+        "passed": 1
+      },
+      "exit_code": 1,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_input.py",
+      "log": "test_kalah_input.log.txt",
+      "sha256": "3c44f3c47166dc1e9027ae3d3593cb5ec2b4edf33cfda3fcc24f9f8aeb71e29b",
+      "counts": {
+        "failed": 7,
+        "passed": 1
+      },
+      "exit_code": 1,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_web.py",
+      "log": "test_kalah_web.log.txt",
+      "sha256": "49dbc0a35621296210798ca649c7e39f50fa4fb46772d3f747ed16e6cca2ef00",
+      "counts": {
+        "failed": 1
+      },
+      "exit_code": 1,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    }
+  ]
+}

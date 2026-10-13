@@ -1,0 +1,40 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+________________________ test_actual_page_kalah_inputs ________________________
+
+    def test_actual_page_kalah_inputs():
+        result = subprocess.run(["node", str(Path(__file__).with_name("kalah_web_probe.cjs"))],
+                                capture_output=True, text=True, encoding="utf-8", timeout=20)
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: node:assert:152
+E           throw new AssertionError(obj);
+E           ^
+E         
+E         AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+E         
+E         6 !== 12
+E         
+E             at Object.<anonymous> (D:\Project\321_FISH\_tmp_gui\kalah-evidence-20261013\red\cases\test_kalah_web-1-412697b0\tests\kalah_web_probe.cjs:28:34)
+E             at Module._compile (node:internal/modules/cjs/loader:1761:14)
+E             at Object..js (node:internal/modules/cjs/loader:1893:10)
+E             at Module.load (node:internal/modules/cjs/loader:1481:32)
+E             at Module._load (node:internal/modules/cjs/loader:1300:12)
+E             at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+E             at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+E             at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+E             at node:internal/main/run_main_module:33:47 {
+E           generatedMessage: true,
+E           code: 'ERR_ASSERTION',
+E           actual: 6,
+E           expected: 12,
+E           operator: 'strictEqual',
+E           diff: 'simple'
+E         }
+E         
+E         Node.js v24.13.0
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['node', 'D:\\Project\\321_FISH\\_tmp_gui\\kalah-evidence-20261013\\red\\cases\\test_kalah_web-1...ERR_ASSERTION',\n  actual: 6,\n  expected: 12,\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v24.13.0\n").returncode
+
+tests\test_kalah_web.py:9: AssertionError
+1 failed in 1.55s

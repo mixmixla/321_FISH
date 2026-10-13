@@ -1,0 +1,134 @@
+.FFFFFFF                                                                 [100%]
+================================== FAILURES ===================================
+___ test_natural_turn_six_desktop_holes_match_real_rule[22-True-expected1] ____
+
+me = 22, b_turn = True, expected = {9, 10, 11, 12, 13, 14}
+
+    @pytest.mark.parametrize("me,b_turn,expected", [(11, False, set(range(1, 7))),
+                                                  (22, True, set(range(9, 15)))])
+    def test_natural_turn_six_desktop_holes_match_real_rule(me, b_turn, expected):
+        game, _, ui, sent = scene(me, b_turn=b_turn)
+        assert len(ui["holes"]) == 6
+        for x, y, radius, index in ui["holes"]:
+            cu.handle_click(ui, x, y)
+            assert sent[-1] == {"hole": index + 1}
+>           copy.deepcopy(game).act(me, sent[-1])
+
+tests\test_kalah_input.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x000002677FB6B950>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+_______ test_desktop_nonactor_and_spectator_have_no_hotspots[22-False] ________
+
+me = 22, b_turn = False
+
+    @pytest.mark.parametrize("me,b_turn", [(22, False), (11, True), (33, False)])
+    def test_desktop_nonactor_and_spectator_have_no_hotspots(me, b_turn):
+        _, _, ui, sent = scene(me, b_turn=b_turn)
+>       assert ui["holes"] == []
+E       assert [(170.0, 280,..., 280, 30, 5)] == []
+E         
+E         Left contains 6 more items, first extra item: (170.0, 280, 30, 0)
+E         Use -v to get more diff
+
+tests\test_kalah_input.py:45: AssertionError
+________ test_desktop_nonactor_and_spectator_have_no_hotspots[11-True] ________
+
+me = 11, b_turn = True
+
+    @pytest.mark.parametrize("me,b_turn", [(22, False), (11, True), (33, False)])
+    def test_desktop_nonactor_and_spectator_have_no_hotspots(me, b_turn):
+        _, _, ui, sent = scene(me, b_turn=b_turn)
+>       assert ui["holes"] == []
+E       assert [(170.0, 280,..., 280, 30, 5)] == []
+E         
+E         Left contains 6 more items, first extra item: (170.0, 280, 30, 0)
+E         Use -v to get more diff
+
+tests\test_kalah_input.py:45: AssertionError
+_______ test_desktop_nonactor_and_spectator_have_no_hotspots[33-False] ________
+
+me = 33, b_turn = False
+
+    @pytest.mark.parametrize("me,b_turn", [(22, False), (11, True), (33, False)])
+    def test_desktop_nonactor_and_spectator_have_no_hotspots(me, b_turn):
+        _, _, ui, sent = scene(me, b_turn=b_turn)
+>       assert ui["holes"] == []
+E       assert [(170.0, 280,..., 280, 30, 5)] == []
+E         
+E         Left contains 6 more items, first extra item: (170.0, 280, 30, 0)
+E         Use -v to get more diff
+
+tests\test_kalah_input.py:45: AssertionError
+_____________ test_desktop_empty_and_finished_holes_do_not_submit _____________
+
+    def test_desktop_empty_and_finished_holes_do_not_submit():
+        game, state, ui, sent = scene(22, b_turn=True)
+        game.cells[8] = 0
+        cu._p_kalah(Canvas(), state, 22, str, sent.append, lambda: None, ui, None, 640, 400)
+>       assert {h[3] for h in ui["holes"]} == set(range(9, 14))
+E       AssertionError: assert {0, 1, 2, 3, 4, 5} == {9, 10, 11, 12, 13}
+E         
+E         Extra items in the left set:
+E         0
+E         1
+E         2
+E         3
+E         4...
+E         
+E         ...Full output truncated (8 lines hidden), use '-vv' to show
+
+tests\test_kalah_input.py:54: AssertionError
+______________ test_desktop_stale_hotspot_rechecks_turn_and_cell ______________
+
+    def test_desktop_stale_hotspot_rechecks_turn_and_cell():
+        _, state, ui, sent = scene(22, b_turn=True)
+        x, y, _, index = ui["holes"][0]
+        state["cells"][index] = 0
+        cu.handle_click(ui, x, y)
+        state["cells"][index] = 4
+        state["turn"] = 11
+        cu.handle_click(ui, x, y)
+>       assert not sent
+E       AssertionError: assert not [{'hole': 1}, {'hole': 1}]
+
+tests\test_kalah_input.py:72: AssertionError
+__________ test_b_recent_move_uses_global_index_and_board_direction ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002677FD142B0>
+
+    def test_b_recent_move_uses_global_index_and_board_direction(monkeypatch):
+        game, _, _, _ = scene(22, b_turn=True)
+        game.act(22, {"hole": 9})
+        assert game.last_move[1] == 8
+        observed = []
+        monkeypatch.setattr(cu, "_g_kalah_board_fx",
+                            lambda cv, ui, now, cells, a, b, radius, breath, center:
+                            observed.append((a, b, center)))
+        ui = {}
+        cu._p_kalah(Canvas(), game.snapshot(), 22, str, lambda a: None,
+                    lambda: None, ui, None, 640, 400)
+        a, b, center = observed[0]
+>       assert center == b[0]
+E       assert None == (170.0, 96)
+
+tests\test_kalah_input.py:87: AssertionError
+7 failed, 1 passed in 1.77s

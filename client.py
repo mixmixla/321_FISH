@@ -11509,7 +11509,7 @@ _GAME_ACTIONS = {
         ("摸暗牌", {"fixed": {"op": "draw", "open": False}}, ""),
         ("猜牌", {"key": "gtv", "kind": "gtv"}, "输入 target pos val（空格分隔，val 可为 black）"),
     ],
-    "kalah": [("播子", {"key": "hole", "kind": "int"}, "输入己方洞号 1~6")],
+    "kalah": [("播子", {"key": "hole", "kind": "int"}, "输入己方洞号 1~6（按棋盘洞号）")],
     "lovelove": [
         ("弃牌出效果", {"key": "ldisc", "kind": "ldisc"}, "输入 play [target [val]] 空格分隔"),
     ],
@@ -13183,9 +13183,12 @@ class GameWindow:
                 lines.append("出局：" + "、".join(self._nick(u) for u in st["dead"]))
         elif game == "kalah":
             c = st.get("cells") or []
-            lines.append("对手(上)：" + " ".join(str(c[i]) for i in range(13, 7, -1))
+            p0, p1 = st.get("p0"), st.get("p1")
+            top = self._nick(p1) + ("（你）" if self.core.uid == p1 else "")
+            bottom = self._nick(p0) + ("（你）" if self.core.uid == p0 else "")
+            lines.append(top + "(上)：" + " ".join(str(c[i]) for i in range(13, 7, -1))
                          + f"  库 {c[7] if len(c) > 7 else '?'}")
-            lines.append("你(下)　：" + " ".join(str(c[i]) for i in range(0, 6))
+            lines.append(bottom + "(下)：" + " ".join(str(c[i]) for i in range(0, 6))
                          + f"  库 {c[6] if len(c) > 6 else '?'}")
             lines.append(f"轮到 {self._nick(st.get('turn'))} 播子")
         elif game == "lovelove":
@@ -13436,17 +13439,12 @@ class GameWindow:
     def _submit_sel(self, spec: dict) -> None:
         """把棋盘上勾选的牌（ui.sel[sel_key]）作为 tiles 提交，可选补一个行号。
 
-        双棋盘同时可见时按“最近操作优先”在候选 ui 中取首个非空选择；提交后清空
+        双棋盘同时可见时只取最近/默认候选，空选择也代表用户取消；提交后清空
         所有候选棋盘的同名勾选。接续弹窗为模态等待，期间房间/轮次可能被新状态
         替换，故弹窗返回后复核上下文，变化则丢弃旧选择。
         """
         uis = self._board_uis()
-        ids = []
-        for u in uis:
-            got = list((u.get("sel") or {}).get(spec["sel_key"], []))
-            if got:
-                ids = got
-                break
+        ids = list((uis[0].get("sel") or {}).get(spec["sel_key"], [])) if uis else []
         if not ids:
             self.act_hint.config(text="先在棋盘上点选要出的牌")
             return
@@ -13483,13 +13481,24 @@ class GameWindow:
         key = spec.get("key")
         kind = spec.get("kind")
         op = spec.get("op")
+        kalah_ctx = None
+        if self._cur_game() == "kalah" and kind == "int" and key == "hole":
+            st = self.core.game_state or {}
+            kalah_ctx = (self._room_ctx(), self.core.uid, st.get("p0"), st.get("p1"))
         gm = self.core.game_meta.get(self._cur_game(), {})
         title = f"{gm.get('label', '游戏')} · 操作"
         res = _KIND_INPUTS[kind](self.win, title, hint)
         if res is None:
             self.act_hint.config(text="")
             return
+        if kalah_ctx is not None:
+            st = self.core.game_state or {}
+            if kalah_ctx != (self._room_ctx(), self.core.uid, st.get("p0"), st.get("p1")):
+                self.act_hint.config(text="对局已变化，请重新操作")
+                return
         action = self._parse_action(key, kind, res)
+        if kalah_ctx is not None and action is not None:
+            action = self._kalah_parameter_action(action["hole"])
         if action is None:
             self.act_hint.config(text="输入有误，请重试")
             _db.show_message(title, "输入格式有误，请重新操作", kind="warning",
@@ -13512,7 +13521,30 @@ class GameWindow:
                 return
             action[spec.get("ui_cid_key", "cid")] = items[idx - 1][4]
         self.act_hint.config(text="")
-        self._do_action(action, source_ui)
+        self._do_action(action, None if kalah_ctx is not None else source_ui)
+
+    def _kalah_parameter_action(self, local: int) -> dict | None:
+        """本方1..6号转换一次；图形点击已携带全局wire，不经过此映射。"""
+        if not 1 <= local <= 6:
+            return None
+        st = self.core.game_state or {}
+        index = local - 1 + (8 if self.core.uid == st.get("p1") else 0)
+        return {"hole": index + 1} if self._kalah_can_submit(index) else None
+
+    def _kalah_can_submit(self, index: int) -> bool:
+        """实时core快照校验，拒绝已结束、旁观、等待、断线和空穴。"""
+        room, st = self.core.game_room or {}, self.core.game_state or {}
+        me = self.core.uid
+        p0, p1 = st.get("p0"), st.get("p1")
+        cells = st.get("cells") or []
+        own = range(0, 6) if me == p0 else range(8, 14)
+        return bool(getattr(self.core, "connected", False)
+                    and room.get("room_id") and room.get("game") == "kalah"
+                    and room.get("status") == "playing" and st.get("game") == "kalah"
+                    and st.get("status") == "playing" and st.get("winner_uid") is None
+                    and me is not None and p0 != p1 and me in (p0, p1)
+                    and me in (room.get("players") or []) and st.get("turn") == me
+                    and index in own and len(cells) == 14 and cells[index] > 0)
 
     def _cur_game(self) -> str:
         return (self.core.game_room or {}).get("game") or self._sel_game or ""
@@ -13661,6 +13693,16 @@ class GameWindow:
         st = self.core.game_state or {}
         rid = room.get("room_id")
         game = room.get("game")
+        if game == "kalah" or (source_ui is not None and source_ui.get("game") == "kalah"):
+            if game != "kalah":
+                return
+            if source_ui is not None and (
+                    source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st or source_ui.get("me") != self.core.uid):
+                return
+            wire = action.get("hole")
+            if not isinstance(wire, int) or not self._kalah_can_submit(wire - 1):
+                return
         if _desktop_game_status(game or "")[0] == "unsupported":
             self._append_state("桌面端当前不支持主要操作，本端只读", "warn")
             return

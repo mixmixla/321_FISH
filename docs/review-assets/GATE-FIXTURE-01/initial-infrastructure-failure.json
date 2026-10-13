@@ -1,0 +1,7 @@
+{
+  "results": [],
+  "exit_code": 2,
+  "test_processes_started": 0,
+  "reason": "Private Windows desktop unavailable under restricted shell; authorized host run used same command and new run directory.",
+  "original_summary_sha256": "a8e63dea758004a2771dada0ded0d4e40e624ecd6c68ed236ba004147103dfcf"
+}

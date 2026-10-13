@@ -1,0 +1,26 @@
+{
+  "files": 1,
+  "totals": {
+    "failed": 7,
+    "passed": 1
+  },
+  "exit_code": 1,
+  "seconds": 4.742,
+  "source_content_id": "381c35bedb879f125a2f23492fdfb460a5df77ae9a1c91bb7929fe67d5da748e",
+  "content_fingerprint": "716ff170adc9ce6855c609f5305903329a20c8eedde70265f3b345c3748093e7",
+  "results": [
+    {
+      "file": "tests/test_kalah_parameters.py",
+      "log": "test_kalah_parameters.log.txt",
+      "sha256": "7dc65b8fd8f28b06115bc5926575d90d09d77eff502363d74375f19dd913d85a",
+      "counts": {
+        "failed": 7,
+        "passed": 1
+      },
+      "exit_code": 1,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    }
+  ]
+}

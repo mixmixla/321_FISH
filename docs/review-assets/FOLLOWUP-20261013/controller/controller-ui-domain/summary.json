@@ -1,0 +1,156 @@
+{
+  "files": 12,
+  "totals": {
+    "passed": 220
+  },
+  "exit_code": 0,
+  "seconds": 37.638,
+  "source_content_id": "b81b266a532dcaedc1e86786e57f4ead1f31e10e4e73567dbad90924d89a378b",
+  "content_fingerprint": "9444112b4cd357fe70bd341e0089fbaf90c904a8f005f2d33b49376e9ed57739",
+  "results": [
+    {
+      "file": "tests/test_flagship_board.py",
+      "log": "test_flagship_board.log.txt",
+      "sha256": "0dedea89662396cbbef6d07ea3acdb664fb1f907996fd37485acae07b970e151",
+      "counts": {
+        "passed": 43
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_flagship_gui.py",
+      "log": "test_flagship_gui.log.txt",
+      "sha256": "154846992968ce117c5fdc7ebe24c3359992acec867c2ce4da668993ff4930e4",
+      "counts": {
+        "passed": 6
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_games_w1_new.py",
+      "log": "test_games_w1_new.log.txt",
+      "sha256": "228a63dc23a7b23ba520fc7f5dcb9f79377800d45b2ccef4c479329712dcaec3",
+      "counts": {
+        "passed": 14
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_games_w2_logic.py",
+      "log": "test_games_w2_logic.log.txt",
+      "sha256": "ddb790fd7137ed325d03ce4b32462b9274bc971db3ed391696c5407d2a9603fe",
+      "counts": {
+        "passed": 19
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_gameui_compact_controls.py",
+      "log": "test_gameui_compact_controls.log.txt",
+      "sha256": "d4856b4a37a73a7c5b3d7b0647e1eb15ea1008d45e2507ccd0f2bc453a11a1dd",
+      "counts": {
+        "passed": 26
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_gameui_compact_gui.py",
+      "log": "test_gameui_compact_gui.log.txt",
+      "sha256": "531cb04e83a773c76fdab05843484e11fb8bfc305a4ed2f18fb3c623084f7f84",
+      "counts": {
+        "passed": 3
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_gomoku_fx.py",
+      "log": "test_gomoku_fx.log.txt",
+      "sha256": "c6cf873946abb2b3c4162f1e037384e5dbbac1a46cf534489c159dc81dc4c0d2",
+      "counts": {
+        "passed": 33
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_gui.py",
+      "log": "test_kalah_gui.log.txt",
+      "sha256": "e0f7a2ed1573c6d9997ead5258b74f0af7503e7c09a53c503a527c4e151292da",
+      "counts": {
+        "passed": 2
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_input.py",
+      "log": "test_kalah_input.log.txt",
+      "sha256": "a734ccc5064b47fa27f760467b71eba37be672c0d2898879fa24b7d9bef24790",
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_parameters.py",
+      "log": "test_kalah_parameters.log.txt",
+      "sha256": "53a768b635fcf67a1a6804624f1efe479a69732c92826fd07bd3a86db07486e5",
+      "counts": {
+        "passed": 58
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_web.py",
+      "log": "test_kalah_web.log.txt",
+      "sha256": "10c61618f7978f671df6d96729250750d65ebfac16007629e0ccf15e657798df",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_rummikub_selection.py",
+      "log": "test_rummikub_selection.log.txt",
+      "sha256": "01264b700f74168ef20f3d3688fa5356d4debbbf2cb338c76e11317f90182361",
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    }
+  ]
+}

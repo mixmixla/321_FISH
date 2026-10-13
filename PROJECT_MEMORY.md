@@ -38,12 +38,20 @@
 - GemCity购买在扣款前校验折扣后各色支付与总万能金需求；保留卡只在支付成功后移除，
   不足拒绝保持规则状态/RNG/轮次完整不变。回归合同见 `tests/test_gemcity_purchase.py`，
   本批证据/实际交付状态见GEMCITY-PURCHASE-01 Task/Review与指挥中心。
+- 双棋盘的拉密按钮以最近/默认候选那份选择为权威，空选择代表取消，不回退另一
+  棋盘的旧牌；提交后仅清当前候选同名选择，未操作时保留原默认顺序。
+- Kalah wire hole仍为cells全局index+1：A本方1..6发送1..6，B本方1..6发送9..14；
+  A下排左至右1..6，B上排左至右6..1。参数只映射一次，图形携带真实global index。
+  桌面参数复核弹窗前后room/round/game/UID/座位与最新状态；最终图形提交复核
+  source_ui上下文/快照对象/身份和当前Core。摘要按p0/p1昵称标注自身，观战不自称。
+  Web按钮复核当前snapshot/房间/UID，结束、非轮到或空穴拒绝；确切证据见Kalah Review。
 - 两旗舰桌面输入以最新Core的connected/player/turn/winner和room-round上下文复查，
   五子棋交点、四子棋列输入与hover共用几何；胜线以最终board/last_move计算。GameWindow/BoardFocus
   各自持有有限after；mini/boss保存窗口对象与可见性，手动隐藏/离房可取消恢复资格。
   上游已放开原14项桌面禁入并增加操作入口；入口存在不等于完整对局通过。
   当前[游戏完成度地图](docs/游戏完成度地图.md)按冻结源码/旧版实验/当版待验分层，
-  Web/桌面Kalah第二方映射等已知缺口单列；不能由空禁入集推出47款可发布。
+  其中08d263b冻结静态切片的Kalah第二方缺口不改写为后继修复实测；当前修复版本/证据
+  另见KALAH-INPUT-01，不能由空禁入集推出47款可发布。
 - 公共房间只允许CREATED开始；leave/最后UID端断线承接既有player_left，观战退出不触发玩家规则。
   finish/reset与action/tick公开snapshot以room/gs/round身份校验，ENDED保留公开结果但不再分发private，
   复位保留房间成员供房主再开。人数不足且无native结果时公共层中止，不新增winner/奖励。

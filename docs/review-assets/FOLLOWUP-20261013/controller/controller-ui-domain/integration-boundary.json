@@ -1,0 +1,9 @@
+{
+  "tested_inputs": 379,
+  "since_domain_only_fixture_two_tests_changed": [
+    "tests/test_cc02a_web_kick.py",
+    "tests/test_r32.py"
+  ],
+  "current_product_inputs_unchanged": true,
+  "full_pending": true
+}

@@ -1,0 +1,36 @@
+{
+  "files": 2,
+  "totals": {
+    "passed": 27
+  },
+  "exit_code": 0,
+  "seconds": 4.652,
+  "source_content_id": "5f4aa9668cf77345292091ed554cd4b6c77a7ebb8cab587da1427f2072eca3af",
+  "content_fingerprint": "2160782fe592f6d11a247503f35b8427c7e59e6732c290c3d7ffeff7917105ef",
+  "results": [
+    {
+      "file": "tests/test_cc02a_web_kick.py",
+      "log": "test_cc02a_web_kick.log.txt",
+      "sha256": "0d6a4684845b8d1b21909bea624950117e07c547c3a171b9997fde669f7578c7",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_r32.py",
+      "log": "test_r32.log.txt",
+      "sha256": "3ed3f9df504481642825f6204bdc50a866701e11f403796f6383ebe0d898a9c7",
+      "counts": {
+        "passed": 26
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    }
+  ]
+}

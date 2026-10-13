@@ -1,0 +1,75 @@
+FF.....                                                                  [100%]
+================================== FAILURES ===================================
+___ test_live_select_then_deselect_does_not_submit_other_board_tiles[lobby] ___
+
+recent = 'lobby'
+
+    @pytest.mark.parametrize("recent", ["lobby", "focus"])
+    def test_live_select_then_deselect_does_not_submit_other_board_tiles(recent):
+        host, game, sent, hints, lobby, focus = host_for_game()
+        root = tk.Tk()
+        root.geometry("100x100")
+        cv = tk.Canvas(root)
+        cv.pack(fill="both", expand=True)
+        try:
+            root.update()
+            chosen, other = (lobby, focus) if recent == "lobby" else (focus, lobby)
+            other["sel"]["rmk"] = [18, 20, 22]
+            if recent == "lobby":
+                host.game_cv = cv
+                callback = MethodType(GameWindow._on_cv_click, host)
+            else:
+                host._board_win.game_cv = cv
+                callback = MethodType(BoardFocusWindow._on_click, host._board_win)
+            cv.bind("<Button-1>", callback)
+            for expected in ([42], []):
+                cv.event_generate("<Button-1>", x=10, y=10)
+                root.update()
+                assert chosen["sel"]["rmk"] == expected
+                assert host._last_board_ui is chosen
+            before = copy.deepcopy(game.__dict__)
+            GameWindow._submit_sel(host, {"op": "meld", "sel_key": "rmk"})
+>           assert sent == []
+E           AssertionError: assert [('synthetic'...18, 20, 22]})] == []
+E             
+E             Left contains one more item: ('synthetic', {'op': 'meld', 'tiles': [18, 20, 22]})
+E             Use -v to get more diff
+
+tests\test_rummikub_selection.py:66: AssertionError
+___ test_live_select_then_deselect_does_not_submit_other_board_tiles[focus] ___
+
+recent = 'focus'
+
+    @pytest.mark.parametrize("recent", ["lobby", "focus"])
+    def test_live_select_then_deselect_does_not_submit_other_board_tiles(recent):
+        host, game, sent, hints, lobby, focus = host_for_game()
+        root = tk.Tk()
+        root.geometry("100x100")
+        cv = tk.Canvas(root)
+        cv.pack(fill="both", expand=True)
+        try:
+            root.update()
+            chosen, other = (lobby, focus) if recent == "lobby" else (focus, lobby)
+            other["sel"]["rmk"] = [18, 20, 22]
+            if recent == "lobby":
+                host.game_cv = cv
+                callback = MethodType(GameWindow._on_cv_click, host)
+            else:
+                host._board_win.game_cv = cv
+                callback = MethodType(BoardFocusWindow._on_click, host._board_win)
+            cv.bind("<Button-1>", callback)
+            for expected in ([42], []):
+                cv.event_generate("<Button-1>", x=10, y=10)
+                root.update()
+                assert chosen["sel"]["rmk"] == expected
+                assert host._last_board_ui is chosen
+            before = copy.deepcopy(game.__dict__)
+            GameWindow._submit_sel(host, {"op": "meld", "sel_key": "rmk"})
+>           assert sent == []
+E           AssertionError: assert [('synthetic'...18, 20, 22]})] == []
+E             
+E             Left contains one more item: ('synthetic', {'op': 'meld', 'tiles': [18, 20, 22]})
+E             Use -v to get more diff
+
+tests\test_rummikub_selection.py:66: AssertionError
+2 failed, 5 passed in 2.34s

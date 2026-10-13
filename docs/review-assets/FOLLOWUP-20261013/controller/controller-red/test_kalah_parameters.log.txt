@@ -1,0 +1,1197 @@
+.F.F.F.F.F.FFFFFFFF.FFFFFFFFFF..FFF.                                     [100%]
+================================== FAILURES ===================================
+____________ test_each_local_hole_is_accepted_by_real_rules[1-22] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002216E89D480>
+uid = 22, local = 1
+
+    @pytest.mark.parametrize("uid", [11, 22])
+    @pytest.mark.parametrize("local", range(1, 7))
+    def test_each_local_hole_is_accepted_by_real_rules(monkeypatch, uid, local):
+        host, game, sent, _ = make_host(uid)
+        expected = copy.deepcopy(game)
+        wire = local if uid == 11 else local + 8
+        expected.act(uid, {"hole": wire})
+        input_value(monkeypatch, str(local))
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x000002216BA75810>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+____________ test_each_local_hole_is_accepted_by_real_rules[2-22] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002216E3859D0>
+uid = 22, local = 2
+
+    @pytest.mark.parametrize("uid", [11, 22])
+    @pytest.mark.parametrize("local", range(1, 7))
+    def test_each_local_hole_is_accepted_by_real_rules(monkeypatch, uid, local):
+        host, game, sent, _ = make_host(uid)
+        expected = copy.deepcopy(game)
+        wire = local if uid == 11 else local + 8
+        expected.act(uid, {"hole": wire})
+        input_value(monkeypatch, str(local))
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x000002216E385AE0>, uid = 22
+action = {'hole': 2}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+____________ test_each_local_hole_is_accepted_by_real_rules[3-22] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002216E2A8950>
+uid = 22, local = 3
+
+    @pytest.mark.parametrize("uid", [11, 22])
+    @pytest.mark.parametrize("local", range(1, 7))
+    def test_each_local_hole_is_accepted_by_real_rules(monkeypatch, uid, local):
+        host, game, sent, _ = make_host(uid)
+        expected = copy.deepcopy(game)
+        wire = local if uid == 11 else local + 8
+        expected.act(uid, {"hole": wire})
+        input_value(monkeypatch, str(local))
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x000002216FF428A0>, uid = 22
+action = {'hole': 3}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+____________ test_each_local_hole_is_accepted_by_real_rules[4-22] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002216FF436B0>
+uid = 22, local = 4
+
+    @pytest.mark.parametrize("uid", [11, 22])
+    @pytest.mark.parametrize("local", range(1, 7))
+    def test_each_local_hole_is_accepted_by_real_rules(monkeypatch, uid, local):
+        host, game, sent, _ = make_host(uid)
+        expected = copy.deepcopy(game)
+        wire = local if uid == 11 else local + 8
+        expected.act(uid, {"hole": wire})
+        input_value(monkeypatch, str(local))
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x000002216FF63AD0>, uid = 22
+action = {'hole': 4}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+____________ test_each_local_hole_is_accepted_by_real_rules[5-22] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002216FF87930>
+uid = 22, local = 5
+
+    @pytest.mark.parametrize("uid", [11, 22])
+    @pytest.mark.parametrize("local", range(1, 7))
+    def test_each_local_hole_is_accepted_by_real_rules(monkeypatch, uid, local):
+        host, game, sent, _ = make_host(uid)
+        expected = copy.deepcopy(game)
+        wire = local if uid == 11 else local + 8
+        expected.act(uid, {"hole": wire})
+        input_value(monkeypatch, str(local))
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x000002216FF32990>, uid = 22
+action = {'hole': 5}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+____________ test_each_local_hole_is_accepted_by_real_rules[6-22] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002216FF63E10>
+uid = 22, local = 6
+
+    @pytest.mark.parametrize("uid", [11, 22])
+    @pytest.mark.parametrize("local", range(1, 7))
+    def test_each_local_hole_is_accepted_by_real_rules(monkeypatch, uid, local):
+        host, game, sent, _ = make_host(uid)
+        expected = copy.deepcopy(game)
+        wire = local if uid == 11 else local + 8
+        expected.act(uid, {"hole": wire})
+        input_value(monkeypatch, str(local))
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x000002216FF4F750>, uid = 22
+action = {'hole': 6}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+____________ test_modal_context_change_discards_parameter[room_id] ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002216E97DB50>
+change = 'room_id'
+
+    @pytest.mark.parametrize("change", ["room_id", "round", "game", "uid", "seats"])
+    def test_modal_context_change_discards_parameter(monkeypatch, change):
+        host, game, sent, hints = make_host(22)
+    
+        def mutate():
+            if change in ("room_id", "round", "game"):
+                host.core.game_room[change] = {"room_id": "new-room", "round": 2, "game": "gemcity"}[change]
+            elif change == "uid":
+                host.core.uid = 11
+            else:
+                host.core.game_state = dict(host.core.game_state, p0=22, p1=11)
+    
+        before = copy.deepcopy(game.cells)
+        input_value(monkeypatch, "1", mutate)
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x000002216FF4FF70>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+_____________ test_modal_context_change_discards_parameter[round] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002216E93B050>
+change = 'round'
+
+    @pytest.mark.parametrize("change", ["room_id", "round", "game", "uid", "seats"])
+    def test_modal_context_change_discards_parameter(monkeypatch, change):
+        host, game, sent, hints = make_host(22)
+    
+        def mutate():
+            if change in ("room_id", "round", "game"):
+                host.core.game_room[change] = {"room_id": "new-room", "round": 2, "game": "gemcity"}[change]
+            elif change == "uid":
+                host.core.uid = 11
+            else:
+                host.core.game_state = dict(host.core.game_state, p0=22, p1=11)
+    
+        before = copy.deepcopy(game.cells)
+        input_value(monkeypatch, "1", mutate)
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DD3B0>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+_____________ test_modal_context_change_discards_parameter[game] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002216FF33070>
+change = 'game'
+
+    @pytest.mark.parametrize("change", ["room_id", "round", "game", "uid", "seats"])
+    def test_modal_context_change_discards_parameter(monkeypatch, change):
+        host, game, sent, hints = make_host(22)
+    
+        def mutate():
+            if change in ("room_id", "round", "game"):
+                host.core.game_room[change] = {"room_id": "new-room", "round": 2, "game": "gemcity"}[change]
+            elif change == "uid":
+                host.core.uid = 11
+            else:
+                host.core.game_state = dict(host.core.game_state, p0=22, p1=11)
+    
+        before = copy.deepcopy(game.cells)
+        input_value(monkeypatch, "1", mutate)
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DEAD0>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+______________ test_modal_context_change_discards_parameter[uid] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002216FF32FC0>
+change = 'uid'
+
+    @pytest.mark.parametrize("change", ["room_id", "round", "game", "uid", "seats"])
+    def test_modal_context_change_discards_parameter(monkeypatch, change):
+        host, game, sent, hints = make_host(22)
+    
+        def mutate():
+            if change in ("room_id", "round", "game"):
+                host.core.game_room[change] = {"room_id": "new-room", "round": 2, "game": "gemcity"}[change]
+            elif change == "uid":
+                host.core.uid = 11
+            else:
+                host.core.game_state = dict(host.core.game_state, p0=22, p1=11)
+    
+        before = copy.deepcopy(game.cells)
+        input_value(monkeypatch, "1", mutate)
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DEE90>, uid = 11
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+>           raise GameRuleError("还没轮到你")
+E           games_pkg.base.GameRuleError: 还没轮到你
+
+games_pkg\kalah.py:48: GameRuleError
+_____________ test_modal_context_change_discards_parameter[seats] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221721DF930>
+change = 'seats'
+
+    @pytest.mark.parametrize("change", ["room_id", "round", "game", "uid", "seats"])
+    def test_modal_context_change_discards_parameter(monkeypatch, change):
+        host, game, sent, hints = make_host(22)
+    
+        def mutate():
+            if change in ("room_id", "round", "game"):
+                host.core.game_room[change] = {"room_id": "new-room", "round": 2, "game": "gemcity"}[change]
+            elif change == "uid":
+                host.core.uid = 11
+            else:
+                host.core.game_state = dict(host.core.game_state, p0=22, p1=11)
+    
+        before = copy.deepcopy(game.cells)
+        input_value(monkeypatch, "1", mutate)
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DF750>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+____________ test_latest_state_blocks_unavailable_action[observer] ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221721DFD90>
+case = 'observer'
+
+    @pytest.mark.parametrize("case", ["observer", "turn", "room-ended", "draw", "winner",
+                                      "empty", "disconnected", "not-seated", "wrong-state"])
+    def test_latest_state_blocks_unavailable_action(monkeypatch, case):
+        host, game, sent, _ = make_host(22)
+    
+        def mutate():
+            core = host.core
+            if case == "observer":
+                core.uid = 99
+            elif case == "turn":
+                core.game_state["turn"] = 11
+            elif case == "room-ended":
+                core.game_room["status"] = "ended"
+            elif case in ("draw", "winner"):
+                core.game_state["status"] = "ended"
+                core.game_state["winner_uid"] = 22 if case == "winner" else None
+            elif case == "empty":
+                core.game_state["cells"] = list(core.game_state["cells"])
+                core.game_state["cells"][8] = 0
+            elif case == "disconnected":
+                core.connected = False
+            elif case == "not-seated":
+                core.game_room["players"] = [11]
+            else:
+                core.game_state["game"] = "gemcity"
+    
+        mutate()
+        before = copy.deepcopy(game.__dict__)
+        input_value(monkeypatch, "1")
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DFC50>, uid = 99
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+>           raise GameRuleError("还没轮到你")
+E           games_pkg.base.GameRuleError: 还没轮到你
+
+games_pkg\kalah.py:48: GameRuleError
+______________ test_latest_state_blocks_unavailable_action[turn] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002216FF57E30>
+case = 'turn'
+
+    @pytest.mark.parametrize("case", ["observer", "turn", "room-ended", "draw", "winner",
+                                      "empty", "disconnected", "not-seated", "wrong-state"])
+    def test_latest_state_blocks_unavailable_action(monkeypatch, case):
+        host, game, sent, _ = make_host(22)
+    
+        def mutate():
+            core = host.core
+            if case == "observer":
+                core.uid = 99
+            elif case == "turn":
+                core.game_state["turn"] = 11
+            elif case == "room-ended":
+                core.game_room["status"] = "ended"
+            elif case in ("draw", "winner"):
+                core.game_state["status"] = "ended"
+                core.game_state["winner_uid"] = 22 if case == "winner" else None
+            elif case == "empty":
+                core.game_state["cells"] = list(core.game_state["cells"])
+                core.game_state["cells"][8] = 0
+            elif case == "disconnected":
+                core.connected = False
+            elif case == "not-seated":
+                core.game_room["players"] = [11]
+            else:
+                core.game_state["game"] = "gemcity"
+    
+        mutate()
+        before = copy.deepcopy(game.__dict__)
+        input_value(monkeypatch, "1")
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DFF70>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+______________ test_latest_state_blocks_unavailable_action[draw] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000022172079150>
+case = 'draw'
+
+    @pytest.mark.parametrize("case", ["observer", "turn", "room-ended", "draw", "winner",
+                                      "empty", "disconnected", "not-seated", "wrong-state"])
+    def test_latest_state_blocks_unavailable_action(monkeypatch, case):
+        host, game, sent, _ = make_host(22)
+    
+        def mutate():
+            core = host.core
+            if case == "observer":
+                core.uid = 99
+            elif case == "turn":
+                core.game_state["turn"] = 11
+            elif case == "room-ended":
+                core.game_room["status"] = "ended"
+            elif case in ("draw", "winner"):
+                core.game_state["status"] = "ended"
+                core.game_state["winner_uid"] = 22 if case == "winner" else None
+            elif case == "empty":
+                core.game_state["cells"] = list(core.game_state["cells"])
+                core.game_state["cells"][8] = 0
+            elif case == "disconnected":
+                core.connected = False
+            elif case == "not-seated":
+                core.game_room["players"] = [11]
+            else:
+                core.game_state["game"] = "gemcity"
+    
+        mutate()
+        before = copy.deepcopy(game.__dict__)
+        input_value(monkeypatch, "1")
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DECB0>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+_____________ test_latest_state_blocks_unavailable_action[winner] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221721BDF60>
+case = 'winner'
+
+    @pytest.mark.parametrize("case", ["observer", "turn", "room-ended", "draw", "winner",
+                                      "empty", "disconnected", "not-seated", "wrong-state"])
+    def test_latest_state_blocks_unavailable_action(monkeypatch, case):
+        host, game, sent, _ = make_host(22)
+    
+        def mutate():
+            core = host.core
+            if case == "observer":
+                core.uid = 99
+            elif case == "turn":
+                core.game_state["turn"] = 11
+            elif case == "room-ended":
+                core.game_room["status"] = "ended"
+            elif case in ("draw", "winner"):
+                core.game_state["status"] = "ended"
+                core.game_state["winner_uid"] = 22 if case == "winner" else None
+            elif case == "empty":
+                core.game_state["cells"] = list(core.game_state["cells"])
+                core.game_state["cells"][8] = 0
+            elif case == "disconnected":
+                core.connected = False
+            elif case == "not-seated":
+                core.game_room["players"] = [11]
+            else:
+                core.game_state["game"] = "gemcity"
+    
+        mutate()
+        before = copy.deepcopy(game.__dict__)
+        input_value(monkeypatch, "1")
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DFED0>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+_____________ test_latest_state_blocks_unavailable_action[empty] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221721BE580>
+case = 'empty'
+
+    @pytest.mark.parametrize("case", ["observer", "turn", "room-ended", "draw", "winner",
+                                      "empty", "disconnected", "not-seated", "wrong-state"])
+    def test_latest_state_blocks_unavailable_action(monkeypatch, case):
+        host, game, sent, _ = make_host(22)
+    
+        def mutate():
+            core = host.core
+            if case == "observer":
+                core.uid = 99
+            elif case == "turn":
+                core.game_state["turn"] = 11
+            elif case == "room-ended":
+                core.game_room["status"] = "ended"
+            elif case in ("draw", "winner"):
+                core.game_state["status"] = "ended"
+                core.game_state["winner_uid"] = 22 if case == "winner" else None
+            elif case == "empty":
+                core.game_state["cells"] = list(core.game_state["cells"])
+                core.game_state["cells"][8] = 0
+            elif case == "disconnected":
+                core.connected = False
+            elif case == "not-seated":
+                core.game_room["players"] = [11]
+            else:
+                core.game_state["game"] = "gemcity"
+    
+        mutate()
+        before = copy.deepcopy(game.__dict__)
+        input_value(monkeypatch, "1")
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DFA70>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+__________ test_latest_state_blocks_unavailable_action[disconnected] __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221721BE820>
+case = 'disconnected'
+
+    @pytest.mark.parametrize("case", ["observer", "turn", "room-ended", "draw", "winner",
+                                      "empty", "disconnected", "not-seated", "wrong-state"])
+    def test_latest_state_blocks_unavailable_action(monkeypatch, case):
+        host, game, sent, _ = make_host(22)
+    
+        def mutate():
+            core = host.core
+            if case == "observer":
+                core.uid = 99
+            elif case == "turn":
+                core.game_state["turn"] = 11
+            elif case == "room-ended":
+                core.game_room["status"] = "ended"
+            elif case in ("draw", "winner"):
+                core.game_state["status"] = "ended"
+                core.game_state["winner_uid"] = 22 if case == "winner" else None
+            elif case == "empty":
+                core.game_state["cells"] = list(core.game_state["cells"])
+                core.game_state["cells"][8] = 0
+            elif case == "disconnected":
+                core.connected = False
+            elif case == "not-seated":
+                core.game_room["players"] = [11]
+            else:
+                core.game_state["game"] = "gemcity"
+    
+        mutate()
+        before = copy.deepcopy(game.__dict__)
+        input_value(monkeypatch, "1")
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DEAD0>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+___________ test_latest_state_blocks_unavailable_action[not-seated] ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221721BECF0>
+case = 'not-seated'
+
+    @pytest.mark.parametrize("case", ["observer", "turn", "room-ended", "draw", "winner",
+                                      "empty", "disconnected", "not-seated", "wrong-state"])
+    def test_latest_state_blocks_unavailable_action(monkeypatch, case):
+        host, game, sent, _ = make_host(22)
+    
+        def mutate():
+            core = host.core
+            if case == "observer":
+                core.uid = 99
+            elif case == "turn":
+                core.game_state["turn"] = 11
+            elif case == "room-ended":
+                core.game_room["status"] = "ended"
+            elif case in ("draw", "winner"):
+                core.game_state["status"] = "ended"
+                core.game_state["winner_uid"] = 22 if case == "winner" else None
+            elif case == "empty":
+                core.game_state["cells"] = list(core.game_state["cells"])
+                core.game_state["cells"][8] = 0
+            elif case == "disconnected":
+                core.connected = False
+            elif case == "not-seated":
+                core.game_room["players"] = [11]
+            else:
+                core.game_state["game"] = "gemcity"
+    
+        mutate()
+        before = copy.deepcopy(game.__dict__)
+        input_value(monkeypatch, "1")
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DFF70>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+__________ test_latest_state_blocks_unavailable_action[wrong-state] ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221721BF1C0>
+case = 'wrong-state'
+
+    @pytest.mark.parametrize("case", ["observer", "turn", "room-ended", "draw", "winner",
+                                      "empty", "disconnected", "not-seated", "wrong-state"])
+    def test_latest_state_blocks_unavailable_action(monkeypatch, case):
+        host, game, sent, _ = make_host(22)
+    
+        def mutate():
+            core = host.core
+            if case == "observer":
+                core.uid = 99
+            elif case == "turn":
+                core.game_state["turn"] = 11
+            elif case == "room-ended":
+                core.game_room["status"] = "ended"
+            elif case in ("draw", "winner"):
+                core.game_state["status"] = "ended"
+                core.game_state["winner_uid"] = 22 if case == "winner" else None
+            elif case == "empty":
+                core.game_state["cells"] = list(core.game_state["cells"])
+                core.game_state["cells"][8] = 0
+            elif case == "disconnected":
+                core.connected = False
+            elif case == "not-seated":
+                core.game_room["players"] = [11]
+            else:
+                core.game_state["game"] = "gemcity"
+    
+        mutate()
+        before = copy.deepcopy(game.__dict__)
+        input_value(monkeypatch, "1")
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DD450>, uid = 22
+action = {'hole': 1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+______ test_local_input_rejects_out_of_range_wire_numbers_and_cancel[0] _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221721BF690>
+value = '0'
+
+    @pytest.mark.parametrize("value", ["0", "7", "9", "-1", "abc", None])
+    def test_local_input_rejects_out_of_range_wire_numbers_and_cancel(monkeypatch, value):
+        host, _, sent, _ = make_host(22)
+        input_value(monkeypatch, value)
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DC730>, uid = 22
+action = {'hole': 0}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+______ test_local_input_rejects_out_of_range_wire_numbers_and_cancel[7] _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221721BF4D0>
+value = '7'
+
+    @pytest.mark.parametrize("value", ["0", "7", "9", "-1", "abc", None])
+    def test_local_input_rejects_out_of_range_wire_numbers_and_cancel(monkeypatch, value):
+        host, _, sent, _ = make_host(22)
+        input_value(monkeypatch, value)
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DC910>, uid = 22
+action = {'hole': 7}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+______ test_local_input_rejects_out_of_range_wire_numbers_and_cancel[9] _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221721BFE70>
+value = '9'
+
+    @pytest.mark.parametrize("value", ["0", "7", "9", "-1", "abc", None])
+    def test_local_input_rejects_out_of_range_wire_numbers_and_cancel(monkeypatch, value):
+        host, _, sent, _ = make_host(22)
+        input_value(monkeypatch, value)
+        GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+>       assert not sent
+E       AssertionError: assert not [('synthetic', {'hole': 9})]
+
+tests\test_kalah_parameters.py:124: AssertionError
+______ test_local_input_rejects_out_of_range_wire_numbers_and_cancel[-1] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000221721BF770>
+value = '-1'
+
+    @pytest.mark.parametrize("value", ["0", "7", "9", "-1", "abc", None])
+    def test_local_input_rejects_out_of_range_wire_numbers_and_cancel(monkeypatch, value):
+        host, _, sent, _ = make_host(22)
+        input_value(monkeypatch, value)
+>       GameWindow._ask_params(host, SPEC, "输入本方洞号1~6")
+
+tests\test_kalah_parameters.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13515: in _ask_params
+    self._do_action(action, source_ui)
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x00000221721DCA50>, uid = 22
+action = {'hole': -1}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+            raise GameRuleError("还没轮到你")
+        hole = action.get("hole")
+        try:
+            hole = int(hole) - 1               # 前端用 1~6
+        except (TypeError, ValueError):
+            raise GameRuleError("洞号无效")
+        holes = self._holes_of(uid)
+        if hole not in holes:
+>           raise GameRuleError("只能选己方洞")
+E           games_pkg.base.GameRuleError: 只能选己方洞
+
+games_pkg\kalah.py:56: GameRuleError
+____________ test_summary_identifies_actual_sides_and_observer[11] ____________
+
+uid = 11
+
+    @pytest.mark.parametrize("uid", [11, 22, 99])
+    def test_summary_identifies_actual_sides_and_observer(uid):
+        host, _, _, _ = make_host(uid)
+        state = dict(game="kalah", p0=11, p1=22, turn=22,
+                     cells=list(range(14)), status="playing")
+        lines = GameWindow._fmt_state(host, state).splitlines()
+>       assert "阿乙" in lines[0] and "13 12 11 10 9 8" in lines[0] and "库 7" in lines[0]
+E       AssertionError: assert ('阿乙' in '对手(上)：13 12 11 10 9 8  库 7')
+
+tests\test_kalah_parameters.py:133: AssertionError
+____________ test_summary_identifies_actual_sides_and_observer[22] ____________
+
+uid = 22
+
+    @pytest.mark.parametrize("uid", [11, 22, 99])
+    def test_summary_identifies_actual_sides_and_observer(uid):
+        host, _, _, _ = make_host(uid)
+        state = dict(game="kalah", p0=11, p1=22, turn=22,
+                     cells=list(range(14)), status="playing")
+        lines = GameWindow._fmt_state(host, state).splitlines()
+>       assert "阿乙" in lines[0] and "13 12 11 10 9 8" in lines[0] and "库 7" in lines[0]
+E       AssertionError: assert ('阿乙' in '对手(上)：13 12 11 10 9 8  库 7')
+
+tests\test_kalah_parameters.py:133: AssertionError
+____________ test_summary_identifies_actual_sides_and_observer[99] ____________
+
+uid = 99
+
+    @pytest.mark.parametrize("uid", [11, 22, 99])
+    def test_summary_identifies_actual_sides_and_observer(uid):
+        host, _, _, _ = make_host(uid)
+        state = dict(game="kalah", p0=11, p1=22, turn=22,
+                     cells=list(range(14)), status="playing")
+        lines = GameWindow._fmt_state(host, state).splitlines()
+>       assert "阿乙" in lines[0] and "13 12 11 10 9 8" in lines[0] and "库 7" in lines[0]
+E       AssertionError: assert ('阿乙' in '对手(上)：13 12 11 10 9 8  库 7')
+
+tests\test_kalah_parameters.py:133: AssertionError
+26 failed, 10 passed in 38.15s

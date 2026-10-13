@@ -1,0 +1,247 @@
+.FFFFFFF                                                                 [100%]
+================================== FAILURES ===================================
+_____ test_direct_global_wire_rechecks_current_core_not_only_old_ui[room] _____
+
+change = 'room'
+
+    @pytest.mark.parametrize("change", [None, "room", "round", "snapshot", "uid", "turn", "draw", "empty"])
+    def test_direct_global_wire_rechecks_current_core_not_only_old_ui(change):
+        host, game, sent, _ = make_host(22)
+        ui = dict(_room_context=("synthetic", 1), state=host.core.game_state, me=22, game="kalah")
+        if change == "room":
+            host.core.game_room["room_id"] = "new-room"
+        elif change == "round":
+            host.core.game_room["round"] = 2
+        elif change == "snapshot":
+            host.core.game_state = copy.deepcopy(host.core.game_state)
+        elif change == "uid":
+            host.core.uid = 11
+        elif change == "turn":
+            host.core.game_state["turn"] = 11
+        elif change == "draw":
+            host.core.game_state["status"] = "ended"
+        elif change == "empty":
+            host.core.game_state["cells"] = list(host.core.game_state["cells"])
+            host.core.game_state["cells"][8] = 0
+        before = copy.deepcopy(game.cells)
+        GameWindow._do_action(host, {"hole": 9}, ui)  # global wire; no second local mapping
+        if change is None:
+            assert sent == [("synthetic", {"hole": 9})]
+            assert game.last_move[1] == 8 and sum(game.cells) == 48
+        else:
+>           assert not sent and game.cells == before
+E           AssertionError: assert (not [('new-room', {'hole': 9})])
+
+tests\test_kalah_parameters.py:172: AssertionError
+____ test_direct_global_wire_rechecks_current_core_not_only_old_ui[round] _____
+
+change = 'round'
+
+    @pytest.mark.parametrize("change", [None, "room", "round", "snapshot", "uid", "turn", "draw", "empty"])
+    def test_direct_global_wire_rechecks_current_core_not_only_old_ui(change):
+        host, game, sent, _ = make_host(22)
+        ui = dict(_room_context=("synthetic", 1), state=host.core.game_state, me=22, game="kalah")
+        if change == "room":
+            host.core.game_room["room_id"] = "new-room"
+        elif change == "round":
+            host.core.game_room["round"] = 2
+        elif change == "snapshot":
+            host.core.game_state = copy.deepcopy(host.core.game_state)
+        elif change == "uid":
+            host.core.uid = 11
+        elif change == "turn":
+            host.core.game_state["turn"] = 11
+        elif change == "draw":
+            host.core.game_state["status"] = "ended"
+        elif change == "empty":
+            host.core.game_state["cells"] = list(host.core.game_state["cells"])
+            host.core.game_state["cells"][8] = 0
+        before = copy.deepcopy(game.cells)
+        GameWindow._do_action(host, {"hole": 9}, ui)  # global wire; no second local mapping
+        if change is None:
+            assert sent == [("synthetic", {"hole": 9})]
+            assert game.last_move[1] == 8 and sum(game.cells) == 48
+        else:
+>           assert not sent and game.cells == before
+E           AssertionError: assert (not [('synthetic', {'hole': 9})])
+
+tests\test_kalah_parameters.py:172: AssertionError
+___ test_direct_global_wire_rechecks_current_core_not_only_old_ui[snapshot] ___
+
+change = 'snapshot'
+
+    @pytest.mark.parametrize("change", [None, "room", "round", "snapshot", "uid", "turn", "draw", "empty"])
+    def test_direct_global_wire_rechecks_current_core_not_only_old_ui(change):
+        host, game, sent, _ = make_host(22)
+        ui = dict(_room_context=("synthetic", 1), state=host.core.game_state, me=22, game="kalah")
+        if change == "room":
+            host.core.game_room["room_id"] = "new-room"
+        elif change == "round":
+            host.core.game_room["round"] = 2
+        elif change == "snapshot":
+            host.core.game_state = copy.deepcopy(host.core.game_state)
+        elif change == "uid":
+            host.core.uid = 11
+        elif change == "turn":
+            host.core.game_state["turn"] = 11
+        elif change == "draw":
+            host.core.game_state["status"] = "ended"
+        elif change == "empty":
+            host.core.game_state["cells"] = list(host.core.game_state["cells"])
+            host.core.game_state["cells"][8] = 0
+        before = copy.deepcopy(game.cells)
+        GameWindow._do_action(host, {"hole": 9}, ui)  # global wire; no second local mapping
+        if change is None:
+            assert sent == [("synthetic", {"hole": 9})]
+            assert game.last_move[1] == 8 and sum(game.cells) == 48
+        else:
+>           assert not sent and game.cells == before
+E           AssertionError: assert (not [('synthetic', {'hole': 9})])
+
+tests\test_kalah_parameters.py:172: AssertionError
+_____ test_direct_global_wire_rechecks_current_core_not_only_old_ui[uid] ______
+
+change = 'uid'
+
+    @pytest.mark.parametrize("change", [None, "room", "round", "snapshot", "uid", "turn", "draw", "empty"])
+    def test_direct_global_wire_rechecks_current_core_not_only_old_ui(change):
+        host, game, sent, _ = make_host(22)
+        ui = dict(_room_context=("synthetic", 1), state=host.core.game_state, me=22, game="kalah")
+        if change == "room":
+            host.core.game_room["room_id"] = "new-room"
+        elif change == "round":
+            host.core.game_room["round"] = 2
+        elif change == "snapshot":
+            host.core.game_state = copy.deepcopy(host.core.game_state)
+        elif change == "uid":
+            host.core.uid = 11
+        elif change == "turn":
+            host.core.game_state["turn"] = 11
+        elif change == "draw":
+            host.core.game_state["status"] = "ended"
+        elif change == "empty":
+            host.core.game_state["cells"] = list(host.core.game_state["cells"])
+            host.core.game_state["cells"][8] = 0
+        before = copy.deepcopy(game.cells)
+>       GameWindow._do_action(host, {"hole": 9}, ui)  # global wire; no second local mapping
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_kalah_parameters.py:167: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:13676: in _do_action
+    self.core.game_action(rid, action)
+tests\test_kalah_parameters.py:23: in send
+    game.act(core.uid, action)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <games_pkg.kalah.KalahGame object at 0x000002989501A3F0>, uid = 11
+action = {'hole': 9}
+
+    def act(self, uid, action):
+        if self.finished or self.winner:
+            raise GameRuleError("本局已结束")
+        if uid != self.turn:
+>           raise GameRuleError("还没轮到你")
+E           games_pkg.base.GameRuleError: 还没轮到你
+
+games_pkg\kalah.py:48: GameRuleError
+_____ test_direct_global_wire_rechecks_current_core_not_only_old_ui[turn] _____
+
+change = 'turn'
+
+    @pytest.mark.parametrize("change", [None, "room", "round", "snapshot", "uid", "turn", "draw", "empty"])
+    def test_direct_global_wire_rechecks_current_core_not_only_old_ui(change):
+        host, game, sent, _ = make_host(22)
+        ui = dict(_room_context=("synthetic", 1), state=host.core.game_state, me=22, game="kalah")
+        if change == "room":
+            host.core.game_room["room_id"] = "new-room"
+        elif change == "round":
+            host.core.game_room["round"] = 2
+        elif change == "snapshot":
+            host.core.game_state = copy.deepcopy(host.core.game_state)
+        elif change == "uid":
+            host.core.uid = 11
+        elif change == "turn":
+            host.core.game_state["turn"] = 11
+        elif change == "draw":
+            host.core.game_state["status"] = "ended"
+        elif change == "empty":
+            host.core.game_state["cells"] = list(host.core.game_state["cells"])
+            host.core.game_state["cells"][8] = 0
+        before = copy.deepcopy(game.cells)
+        GameWindow._do_action(host, {"hole": 9}, ui)  # global wire; no second local mapping
+        if change is None:
+            assert sent == [("synthetic", {"hole": 9})]
+            assert game.last_move[1] == 8 and sum(game.cells) == 48
+        else:
+>           assert not sent and game.cells == before
+E           AssertionError: assert (not [('synthetic', {'hole': 9})])
+
+tests\test_kalah_parameters.py:172: AssertionError
+_____ test_direct_global_wire_rechecks_current_core_not_only_old_ui[draw] _____
+
+change = 'draw'
+
+    @pytest.mark.parametrize("change", [None, "room", "round", "snapshot", "uid", "turn", "draw", "empty"])
+    def test_direct_global_wire_rechecks_current_core_not_only_old_ui(change):
+        host, game, sent, _ = make_host(22)
+        ui = dict(_room_context=("synthetic", 1), state=host.core.game_state, me=22, game="kalah")
+        if change == "room":
+            host.core.game_room["room_id"] = "new-room"
+        elif change == "round":
+            host.core.game_room["round"] = 2
+        elif change == "snapshot":
+            host.core.game_state = copy.deepcopy(host.core.game_state)
+        elif change == "uid":
+            host.core.uid = 11
+        elif change == "turn":
+            host.core.game_state["turn"] = 11
+        elif change == "draw":
+            host.core.game_state["status"] = "ended"
+        elif change == "empty":
+            host.core.game_state["cells"] = list(host.core.game_state["cells"])
+            host.core.game_state["cells"][8] = 0
+        before = copy.deepcopy(game.cells)
+        GameWindow._do_action(host, {"hole": 9}, ui)  # global wire; no second local mapping
+        if change is None:
+            assert sent == [("synthetic", {"hole": 9})]
+            assert game.last_move[1] == 8 and sum(game.cells) == 48
+        else:
+>           assert not sent and game.cells == before
+E           AssertionError: assert (not [('synthetic', {'hole': 9})])
+
+tests\test_kalah_parameters.py:172: AssertionError
+____ test_direct_global_wire_rechecks_current_core_not_only_old_ui[empty] _____
+
+change = 'empty'
+
+    @pytest.mark.parametrize("change", [None, "room", "round", "snapshot", "uid", "turn", "draw", "empty"])
+    def test_direct_global_wire_rechecks_current_core_not_only_old_ui(change):
+        host, game, sent, _ = make_host(22)
+        ui = dict(_room_context=("synthetic", 1), state=host.core.game_state, me=22, game="kalah")
+        if change == "room":
+            host.core.game_room["room_id"] = "new-room"
+        elif change == "round":
+            host.core.game_room["round"] = 2
+        elif change == "snapshot":
+            host.core.game_state = copy.deepcopy(host.core.game_state)
+        elif change == "uid":
+            host.core.uid = 11
+        elif change == "turn":
+            host.core.game_state["turn"] = 11
+        elif change == "draw":
+            host.core.game_state["status"] = "ended"
+        elif change == "empty":
+            host.core.game_state["cells"] = list(host.core.game_state["cells"])
+            host.core.game_state["cells"][8] = 0
+        before = copy.deepcopy(game.cells)
+        GameWindow._do_action(host, {"hole": 9}, ui)  # global wire; no second local mapping
+        if change is None:
+            assert sent == [("synthetic", {"hole": 9})]
+            assert game.last_move[1] == 8 and sum(game.cells) == 48
+        else:
+>           assert not sent and game.cells == before
+E           AssertionError: assert (not [('synthetic', {'hole': 9})])
+
+tests\test_kalah_parameters.py:172: AssertionError
+7 failed, 1 passed, 36 deselected in 3.45s

@@ -1,0 +1,48 @@
+{
+  "files": 3,
+  "totals": {
+    "passed": 104
+  },
+  "exit_code": 0,
+  "seconds": 8.884,
+  "source_content_id": "4b7ff0facee5511aa99f2a9753b121ad497c39d37d356c157dc389c1eacbf91d",
+  "content_fingerprint": "693c1544bee6c059fd486372598e6d2d7ec466aaed58f757a1ffd5db679e4500",
+  "results": [
+    {
+      "file": "tests/test_flagship_board.py",
+      "log": "test_flagship_board.log.txt",
+      "sha256": "da0b7e274d806e9a17bd7730783411dbb6ba704987628cf484d95d3ddd1f210d",
+      "counts": {
+        "passed": 43
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_parameters.py",
+      "log": "test_kalah_parameters.log.txt",
+      "sha256": "3d95bb709524a9b73604bd0db8fc3f4018a2305a2cdb1e193f9a6094eae75e36",
+      "counts": {
+        "passed": 54
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_rummikub_selection.py",
+      "log": "test_rummikub_selection.log.txt",
+      "sha256": "2a972c7717cced890b77c3a37753edc011bf623e3bc84fd1e3a1bf058cf9e17f",
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    }
+  ]
+}

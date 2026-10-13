@@ -1279,12 +1279,19 @@ def _click_go(ui, x, y):
 
 
 def _click_kalah(ui, x, y):
-    """6 洞播棋：点己方洞（1~6）"""
-    me = ui["me"]
-    holes = ui["holes"]           # [(ox,oy,cell,hole_idx_local0to5)]
-    for ox, oy, cell, local in holes:
+    """点本方洞：热区携带 cells 全局索引，wire 使用 index + 1。"""
+    me = ui.get("me")
+    st = ui.get("state") or {}
+    if (st.get("status") != "playing" or st.get("turn") != me
+            or me not in (st.get("p0"), st.get("p1"))):
+        return
+    own = range(0, 6) if me == st.get("p0") else range(8, 14)
+    cells = st.get("cells") or []
+    holes = ui.get("holes") or []   # [(cx,cy,radius,global_index)]
+    for ox, oy, cell, index in holes:
         if ((x - ox) ** 2 + (y - oy) ** 2) <= (cell * 0.62) ** 2:
-            ui["submit"]({"hole": local + 1})
+            if index in own and len(cells) > index and cells[index] > 0:
+                ui["submit"]({"hole": index + 1})
             return
 
 
@@ -2123,6 +2130,8 @@ def _p_kalah(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     title = "🥜 非洲播棋"
     if st.get("winner_uid") is not None:
         title = f"🏆 {nick(st['winner_uid'])} 获胜"
+    elif st.get("status") == "ended":
+        title += "　和局"
     else:
         title += f"　轮到 {nick(st['turn']) }"
     _turn_banner(cv, w, 46, title, accent)
@@ -2138,7 +2147,10 @@ def _p_kalah(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     holes = []
     # A 洞底部（0..5，玩家 A 视角），点自己的洞
     a_holes = [(start + i * holeR * 2 + holeR, botY) for i in range(6)]
-    b_holes = [(start + i * holeR * 2 + holeR, topY) for i in range(6)]
+    # Logical B index 8+i stays stable; its physical row runs right to left,
+    # matching the sowing ring and the local 6..1 labels seen from A's side.
+    b_holes = [(start + (5 - i) * holeR * 2 + holeR, topY) for i in range(6)]
+    can_play = st.get("status") == "playing" and st.get("turn") == me
     for label, cy, is_p0, is_p1 in (
             ("A", botY, True, False), ("B", topY, False, True)):
         who = p0 if is_p0 else p1
@@ -2174,20 +2186,36 @@ def _p_kalah(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     _text(cv, w - start + 40 + 19, botY + 26, f"A（{nick(p0)}）", _MUTED, (_FONT_F[0], 8))
 
     for i, (hx, hy) in enumerate(a_holes):
-        mine = (st.get("turn") == me and me == p0)
+        mine = can_play and me == p0
         fill = _shade("#8a5fbf", 0.25) if mine and i < 6 else _PANEL
         _disc(cv, hx, hy, holeR, fill, outline=_PANEL_BD)
         v = cells[i] if len(cells) > i else 0
         _text(cv, hx, hy, str(v), "#333", _FONT_B)
-        holes.append((hx, hy, holeR, i))
+        _text(cv, hx, hy + holeR + 14, f"{i + 1}号", _UXC["text_secondary"],
+              (_FONT_F[0], 9))
+        if mine and v > 0:
+            holes.append((hx, hy, holeR, i))
     for j, (hx, hy) in enumerate(b_holes):
         idx = 8 + j
-        mine = (st.get("turn") == me and me == p1)
+        mine = can_play and me == p1
         fill = _shade("#8a5fbf", 0.25) if mine and len(cells) > idx else _PANEL
         _disc(cv, hx, hy, holeR, fill, outline=_PANEL_BD)
         v = cells[idx] if len(cells) > idx else 0
         _text(cv, hx, hy, str(v), "#333", _FONT_B)
-    ui.update(game="kalah", me=me, holes=holes)
+        _text(cv, hx, hy + holeR + 14, f"{j + 1}号", _UXC["text_secondary"],
+              (_FONT_F[0], 9))
+        if mine and v > 0:
+            holes.append((hx, hy, holeR, idx))
+    ui.update(game="kalah", me=me, state=st, holes=holes)
+    if st.get("status") == "ended":
+        hint = "本局已结束"
+    elif me not in (p0, p1):
+        hint = "观战中"
+    elif can_play:
+        hint = "选择己方 1～6 号洞播子"
+    else:
+        hint = f"等待 {nick(st.get('turn'))} 播子"
+    _text(cv, w / 2, h - 48, hint, _UXC["text_secondary"], _FONT_F)
 
     # ---- 板面动效（纯时间推导，复用 _g_breath/_g_halo，粒子全部复用胜利星点）----
     now = time.monotonic()
@@ -2199,8 +2227,8 @@ def _p_kalah(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         _pid, _hole = _lmv[0], _lmv[1]
         if _pid == p0 and 0 <= _hole < 6:
             lastc = a_holes[_hole]
-        elif _pid == p1 and 0 <= _hole < 6:
-            lastc = b_holes[_hole]
+        elif _pid == p1 and 8 <= _hole < 14:
+            lastc = b_holes[_hole - 8]
     # F5：检测新撒播 → 建立逐洞落子序列（先于板面 fx，便于抑制单坑脉冲）
     holectr = {}
     for _i in range(6):

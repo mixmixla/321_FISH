@@ -5193,26 +5193,46 @@ const GRENDER={
     box.appendChild(gTitle("kalah","非洲播棋 · 多子者胜"));
     const c=s.cells||[],A=s.p0,B=s.p1,st=s.stores||{};
     const chip=n=>n?"<b>"+n+"</b>":"<span style='color:var(--dim)'>·</span>";
-    const cell=n=>"<span style='display:inline-block;min-width:24px;text-align:center;border:1px solid var(--line,#ddd);border-radius:8px;padding:8px 2px;margin:1px'>"+chip(n)+"</span>";
+    const rid=state.groom;
+    const canPlay=(index,owner)=>s.status==="playing"&&s.turn===state.uid
+      &&owner===state.uid&&Number(c[index])>0;
+    const pit=(index,owner,local)=>{
+      const b=document.createElement("button");b.className="gbtn";
+      b.style.minWidth="28px";b.style.padding="7px 2px";
+      b.textContent=local+"号 · "+c[index];
+      b.title=(owner===state.uid?"己方":gnick(owner))+"第"+local+"号洞";
+      b.disabled=!canPlay(index,owner);
+      b.onclick=()=>{
+        const live=state.gst;
+        if(b.disabled||!canPlay(index,owner)||state.groom!==rid||!live
+          ||live.state!==s||!live.room||live.room.room_id!==rid
+          ||live.room.status!=="playing")return;
+        gameAPI("action",{room_id:rid,action:{hole:index+1}});
+      };
+      return b;
+    };
     const w=document.createElement("div");w.style.cssText="font-size:12px";
     const top=document.createElement("div");top.style.cssText="display:flex;align-items:stretch";
-    top.innerHTML=
-      "<div style='align-self:center;border:1px solid var(--line,#ddd);border-radius:10px;padding:6px;text-align:center'>"+chip(st[B]||0)+"<div style='font-size:9px;color:var(--dim)'>"+esc(gnick(B))+"</div></div>"
-      +"<div style='flex:1'>"+c.slice(13,7).reverse().map(n=>cell(n)).join("")+"</div>";
+    const storeB=document.createElement("div");storeB.style.cssText="align-self:center;border:1px solid var(--line,#ddd);border-radius:10px;padding:6px;text-align:center";
+    storeB.innerHTML=chip(st[B]||0)+"<div style='font-size:9px;color:var(--dim)'>"+esc(gnick(B))+"</div>";
+    top.appendChild(storeB);
+    const upper=document.createElement("div");upper.style.cssText="flex:1";
+    // Top B runs global13..8 / local6..1; callbacks keep the original index.
+    c.slice(8,14).reverse().forEach((n,j)=>upper.appendChild(pit(13-j,B,6-j)));
+    top.appendChild(upper);
     w.appendChild(top);
     const bot=document.createElement("div");bot.style.cssText="display:flex;align-items:stretch";
     const holes=document.createElement("div");holes.style.cssText="flex:1";
-    c.slice(0,6).forEach((n,i)=>{
-      const b=document.createElement("button");b.className="gbtn";b.style.minWidth="28px";b.style.padding="7px 2px";b.textContent=n;
-      b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{hole:i+1}});
-      holes.appendChild(b);});
+    c.slice(0,6).forEach((n,i)=>holes.appendChild(pit(i,A,i+1)));
     bot.appendChild(holes);
     const storeA=document.createElement("div");storeA.style.cssText="align-self:center;border:1px solid var(--line,#ddd);border-radius:10px;padding:6px;text-align:center";
     storeA.innerHTML=chip(st[A]||0)+"<div style='font-size:9px'>"+esc(gnick(A))+"</div>";
     bot.appendChild(storeA);
     w.appendChild(bot);
     const hint=document.createElement("div");hint.style.cssText="margin-top:4px;color:var(--dim)";
-    hint.textContent="点己方洞播子"+(s.turn===A?"（轮到你）":"　轮到 "+esc(gnick(s.turn)));
+    hint.textContent=s.status==="ended"?"本局已结束":
+      (state.uid!==A&&state.uid!==B?"观战中 · 轮到 "+gnick(s.turn):
+       s.turn===state.uid?"选择己方 1～6 号洞播子（轮到你）":"等待 "+gnick(s.turn)+" 播子");
     w.appendChild(hint);
     box.appendChild(w);
   },

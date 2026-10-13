@@ -4,6 +4,14 @@
 review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-13（Asia/Shanghai）。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+## FOLLOWUP-20261013 主控验证与UI/拉密/Kalah接续（2026-10-13）
+
+**BASELINE_COMPARING / UI_REVIEWING**。用户授权本阶段先明确3条full失败并做同环境干净对照，再独立审c549239实际diff/PNG后决定整合，接client.py拉密修复；不得带FAIL记整体验收。PR403暂不重试，已推分支2826784/clean/main08保持；旧root原dirty/c864234保留。root仅主分支源副本/合成资料验证，不碰公司窗口。
+对照命令在原项目.venv Python3.14.5，以相同test-all参数执行tests/test_cc02a_web_kick.py与tests/test_r32.py：干净08d263b的latest-main source/run-dir `_tmp_gui/advance-20261013/failure-baseline`；冻结购买候选2826784 source/run-dir `failure-candidate`。两个run顺序执行，各文件单attempt、合成profile/private desktop/loopback，原158文件2323P/3F/2S保持，不是重跑覆盖full。确认测试/生产与基线同名文件身份，结束核raw/cleanup/exit/source。
+UI commit c549239实际3文件（5文件111P是领域文件数）/base08；独立Sol读实际code/test/evidence，root实际查看actual-before/after PNG，不只信报告；尚未接受、没有cherry-pick。旧GUI raw after invalid-command-name观察保持，111P不等完整验收。
+KALAH-INPUT-01用户最新授权双方分工：root唯一client.py作者（包括拉密），UI窗唯一client_gameui.py/web.py作者与Kalah专属新测试，不全量/构建。wire hole维持global index+1；A local1..6→wire1..6，B local1..6→wire9..14。固定棋盘A下排local1..6，B上排左至右local6..1；点击带global index，不二次映射。root参数框映射本方1..6并复核弹窗前后room/round/game/UID，终局/观战/非轮到/空穴禁止提交。主控立即冻结Task v1，后续Kalah来源未交付前不改client_gameui.py/web.py。
+当前主控任务worktree `_tmp_gui/gate-collection-20261013` / fix/gemcity-purchase-20261013；base/head2826784，dirty仅新治理/Task，已有运行输入未改。下一：基线对照结束记录3个具体失败，再完成UI代码/实际图审阅，冻结拉密与Kalah root参数有限实现；最后按交付齐备程度安排领域/整合full，真实状态保存，14:30不开大任务/15:00收尾。
+
 ## TRIAL-EVIDENCE-REFRESH-01 资料校正整合（2026-10-13）
 
 **AI_ACCEPTED_DOCUMENTS_ONLY / LOCALLY_INTEGRATED**。[Task v1](task-packages/TRIAL-EVIDENCE-REFRESH-01.md)/[Review r1](review-packages/TRIAL-EVIDENCE-REFRESH-01-r1.md)/[主控接受边界](review-assets/TRIAL-EVIDENCE-REFRESH-01/adoption.json)。独立文档窗仅6文件，commit456fd172c74b9ad2e6a6629dd7ebe663380626ba/base08d263b，clean且独立只读0 MUST；root审实际diff/static/Review后cherry-pick为7067725a9ca65362726ae2c10def5ab53f928b74，仅进任务分支，不是main合并。

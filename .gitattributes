@@ -1,2 +1,4 @@
 # Immutable synthetic gate output: retain original bytes, including pytest diagnostic whitespace.
 docs/review-assets/GEMCITY-PURCHASE-01/**/*.log.txt -text -whitespace
+docs/review-assets/FOLLOWUP-20261013/**/*.log.txt -text -whitespace
+docs/review-assets/UI-BOUNDARY-01/**/*.log.txt -text -whitespace

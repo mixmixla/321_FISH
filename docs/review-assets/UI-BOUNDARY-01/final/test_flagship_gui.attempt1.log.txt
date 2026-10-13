@@ -1,0 +1,70 @@
+...invalid command name "2209593997504_poll"
+    while executing
+"2209593997504_poll"
+    ("after" script)
+invalid command name "2209595750336_update"
+    while executing
+"2209595750336_update"
+    ("after" script)
+invalid command name "2209593152704<lambda>"
+    while executing
+"2209593152704<lambda>"
+    ("after" script)
+invalid command name "2209594622080<lambda>"
+    while executing
+"2209594622080<lambda>"
+    ("after" script)
+invalid command name "2209614331968<lambda>"
+    while executing
+"2209614331968<lambda>"
+    ("after" script)
+.invalid command name "2209594936768_poll"
+    while executing
+"2209594936768_poll"
+    ("after" script)
+invalid command name "2209593985536<lambda>"
+    while executing
+"2209593985536<lambda>"
+    ("after" script)
+invalid command name "2209593990144<lambda>"
+    while executing
+"2209593990144<lambda>"
+    ("after" script)
+invalid command name "2209595868224_tick"
+    while executing
+"2209595868224_tick"
+    ("after" script)
+invalid command name "2209595674112<lambda>"
+    while executing
+"2209595674112<lambda>"
+    ("after" script)
+invalid command name "2209594946688_update"
+    while executing
+"2209594946688_update"
+    ("after" script)
+invalid command name "2209594935936<lambda>"
+    while executing
+"2209594935936<lambda>"
+    ("after" script)
+invalid command name "2209594946496<lambda>"
+    while executing
+"2209594946496<lambda>"
+    ("after" script)
+.invalid command name "2209593516288_poll"
+    while executing
+"2209593516288_poll"
+    ("after" script)
+invalid command name "2209593985856_tick"
+    while executing
+"2209593985856_tick"
+    ("after" script)
+invalid command name "2209595873728<lambda>"
+    while executing
+"2209595873728<lambda>"
+    ("after" script)
+invalid command name "2209595675520<lambda>"
+    while executing
+"2209595675520<lambda>"
+    ("after" script)
+.                                                                   [100%]
+6 passed in 10.37s

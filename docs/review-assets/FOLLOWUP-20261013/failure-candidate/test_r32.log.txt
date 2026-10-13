@@ -1,0 +1,38 @@
+........F.F...........                                                   [100%]
+================================== FAILURES ===================================
+_________________________ test_entry_height_one_line __________________________
+
+root = <tkinter.Tk object .>
+
+    def test_entry_height_one_line(root):
+        host = SimpleNamespace(entry=_mk_entry_stub(1, 6))
+        _attach_adjust(host)
+        host._adjust_entry_height()          # 1 行 → 收回 1
+>       assert host.entry.configured.get("height") == 1
+E       AssertionError: assert 3 == 1
+E        +  where 3 = <built-in method get of dict object at 0x000001CB4C4F0C80>('height')
+E        +    where <built-in method get of dict object at 0x000001CB4C4F0C80> = {'height': 3}.get
+E        +      where {'height': 3} = namespace(count=<function _mk_entry_stub.<locals>.<lambda> at 0x000001CB4C5105C0>, cget=<function _mk_entry_stub.<loca...at 0x000001CB5091C0F0>, config=<function _mk_entry_stub.<locals>._cfg at 0x000001CB5091C250>, configured={'height': 3}).configured
+E        +        where namespace(count=<function _mk_entry_stub.<locals>.<lambda> at 0x000001CB4C5105C0>, cget=<function _mk_entry_stub.<loca...at 0x000001CB5091C0F0>, config=<function _mk_entry_stub.<locals>._cfg at 0x000001CB5091C250>, configured={'height': 3}) = namespace(entry=namespace(count=<function _mk_entry_stub.<locals>.<lambda> at 0x000001CB4C5105C0>, cget=<function _mk_...250>, configured={'height': 3}), _adjust_entry_height=<bound method ChatWindow._adjust_entry_height of namespace(...)>).entry
+
+tests\test_r32.py:126: AssertionError
+______________________ test_entry_height_count_exception ______________________
+
+root = <tkinter.Tk object .>
+
+    def test_entry_height_count_exception(root):
+        entry = SimpleNamespace(count=lambda *a: (_ for _ in ()).throw(RuntimeError("x")),
+                                cget=lambda k: 4, config=lambda **kw: kw)
+        entry.configured = {}
+        entry.config = lambda **kw: entry.configured.update(kw)
+        host = SimpleNamespace(entry=entry)
+        _attach_adjust(host)
+        host._adjust_entry_height()          # count 异常 → 回退 1
+>       assert entry.configured.get("height") == 1
+E       AssertionError: assert 3 == 1
+E        +  where 3 = <built-in method get of dict object at 0x000001CB4C4B4280>('height')
+E        +    where <built-in method get of dict object at 0x000001CB4C4B4280> = {'height': 3}.get
+E        +      where {'height': 3} = namespace(count=<function test_entry_height_count_exception.<locals>.<lambda> at 0x000001CB5091D640>, cget=<function t... config=<function test_entry_height_count_exception.<locals>.<lambda> at 0x000001CB5091D900>, configured={'height': 3}).configured
+
+tests\test_r32.py:144: AssertionError
+2 failed, 20 passed in 2.14s

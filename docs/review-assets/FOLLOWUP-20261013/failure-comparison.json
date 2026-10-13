@@ -1,0 +1,101 @@
+{
+  "base": "08d263b",
+  "candidate": "2826784",
+  "method": "Same project Python/environment, same test-all selection/flags, sequential fresh profile/private desktop runs.",
+  "failures": [
+    {
+      "name": "test_production_web_kick_and_auth_failure_callbacks",
+      "file": "tests/test_cc02a_web_kick.py",
+      "cause": "Extracted closeLobby calls production uxSelectNavigation, absent from the test extraction/DOM fixture.",
+      "baseline_reproduced": true
+    },
+    {
+      "name": "test_entry_height_one_line",
+      "file": "tests/test_r32.py",
+      "cause": "Old assertion expects height1; current automatic composer floor is height3.",
+      "baseline_reproduced": true
+    },
+    {
+      "name": "test_entry_height_count_exception",
+      "file": "tests/test_r32.py",
+      "cause": "Old count-error fallback expects height1; current automatic floor returns height3.",
+      "baseline_reproduced": true
+    }
+  ],
+  "runs": {
+    "failure-baseline": {
+      "files": 2,
+      "totals": {
+        "failed": 3,
+        "passed": 20
+      },
+      "exit_code": 1,
+      "seconds": 6.402,
+      "source_content_id": "3c04a62cd590cd35ff4efb5ca1ef514da2240cd330868ee3e04741656cc350ee",
+      "content_fingerprint": "d2bbd4ed57138d7412516ebbf088f59bc94591e8c3666009932b59e17ef90963",
+      "logs": [
+        {
+          "file": "tests/test_cc02a_web_kick.py",
+          "log": "failure-baseline/test_cc02a_web_kick.log.txt",
+          "sha256": "a261e0bcd66de16826c08926f7fa42fc1dc8dd79811e953837efad35f1d4b465",
+          "exit": 1,
+          "counts": {
+            "failed": 1
+          },
+          "attempts": 1,
+          "cleanup_ok": true
+        },
+        {
+          "file": "tests/test_r32.py",
+          "log": "failure-baseline/test_r32.log.txt",
+          "sha256": "a83a4b17e4a47974af7ad6dcb339b97522bd3d33b0032386754cf0352d3dfced",
+          "exit": 1,
+          "counts": {
+            "failed": 2,
+            "passed": 20
+          },
+          "attempts": 1,
+          "cleanup_ok": true
+        }
+      ]
+    },
+    "failure-candidate": {
+      "files": 2,
+      "totals": {
+        "failed": 3,
+        "passed": 20
+      },
+      "exit_code": 1,
+      "seconds": 5.201,
+      "source_content_id": "c56eefa861bd569c11cea74cac8c202506845867a8bba061a829efce6d6bea60",
+      "content_fingerprint": "d9cf5fe109e3fa0f265428bd2942cfa410d5935124c8fb2b3a18a4197b4309a8",
+      "logs": [
+        {
+          "file": "tests/test_cc02a_web_kick.py",
+          "log": "failure-candidate/test_cc02a_web_kick.log.txt",
+          "sha256": "ce7af0ea49786f9c21e6b03280eadbf8647145b904529f8c97f5cca59c71f27e",
+          "exit": 1,
+          "counts": {
+            "failed": 1
+          },
+          "attempts": 1,
+          "cleanup_ok": true
+        },
+        {
+          "file": "tests/test_r32.py",
+          "log": "failure-candidate/test_r32.log.txt",
+          "sha256": "f20ae3b3364076bed1c8492c6a0c25fc69cbf2e6f30f1cd93dcf9fc66e27268d",
+          "exit": 1,
+          "counts": {
+            "failed": 2,
+            "passed": 20
+          },
+          "attempts": 1,
+          "cleanup_ok": true
+        }
+      ]
+    }
+  },
+  "full_gate_still_failed": true,
+  "not_a_clean_baseline_full_gate": true
+}

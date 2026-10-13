@@ -1,0 +1,35 @@
+{
+  "preaudit_actual_helper_hashes_match": true,
+  "helpers": {
+    "exit_native.py": "33284e300c7ac237b8a9c6f89342e2dc970f8ad02822d329b108b898870b8554",
+    "exit_sender.py": "ea992a918b7f50fba8a62a59cf0c1da760dcc975728cb3f691a78704d77676c4",
+    "exit_runtime_recheck.py": "8aef99527e4dd2c97821bc6762e3a8f054a61cf06d311cc0ad80fee4000487cc"
+  },
+  "base_executable": "C:\\Users\\liang\\.pyenv\\pyenv-win\\versions\\3.14.5\\python.exe",
+  "base_sha256": "3adbbf2af609e206e3ca18cd55fc7c4b52f5c8bb8218dd99fd5a9e50d7a193cd",
+  "owner_executable": "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+  "first_event_count": 0,
+  "first_all_jobs_empty": true,
+  "first_files": {
+    "bind-before.json": "2477f60462b15418caebaefa9c2c839cbd8415f2575aa29b83f8cb4ab3934b5b",
+    "exit_native.py.executed.txt": "33284e300c7ac237b8a9c6f89342e2dc970f8ad02822d329b108b898870b8554",
+    "exit_runtime.py.executed.txt": "701450c88a4036660bb5d87b1d419e52af19f8690ee3e803199710849e0af9a5",
+    "exit_sender.py.executed.txt": "ea992a918b7f50fba8a62a59cf0c1da760dcc975728cb3f691a78704d77676c4",
+    "initialize.log": "2c60840b08545d37e6b5a3ff26f1a2b8c302d4d8a9daf7c726f348f3caabbb54",
+    "launcher-proof.json": "0f317cea077df2e9c100c398b9b75eba64d14652a91f61e2b84c3fdbc4ade3a9",
+    "launch_console_owned.py": "8ef37af21f10af8e6454e36be991d5f081c72e5db40cb741d80aab6d950a5efc",
+    "launch_detached_owned.py": "297b80fc595f52fbc52d06c0b080489b8e17cf9e5a34b19109cc247291bd731c",
+    "sender-config.json": "2cade1677d6e50df23604e052ae4f7fd16f44bebf4e8ae8d386f55e2ffe64a39",
+    "sender-result.json": "3916607758918361e93f098020adceedf57e3677dec5ce74a5dca28af807e89d",
+    "sender.log": "3ac6e2cce5f829cf2ef216132ee9788e990816742ddb1ed30a740c165fb1bfa2",
+    "server.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "service-ctrl-c.json": "ce2e4045147c0b4e97c769856c485c3d2ebebfdf7a8a376e21ee6369b2ff4d2c",
+    "summary.json": "a92a6186d4b8f96e36118de6439de735d71db3f95b727c32bc21086902b89440"
+  },
+  "recheck_not_yet_started": true,
+  "command": [
+    "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+    "D:\\Project\\321_FISH\\_tmp_gui\\advance-20261013\\exit_runtime_recheck.py"
+  ],
+  "task_version": "EXE-EXIT-01 v1.2"
+}

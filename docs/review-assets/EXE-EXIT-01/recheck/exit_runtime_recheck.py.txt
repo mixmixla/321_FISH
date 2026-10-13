@@ -1,0 +1,168 @@
+from pathlib import Path
+from datetime import datetime,timezone
+import ctypes,hashlib,inspect,json,os,socket,struct,sys,time,uuid
+from ctypes import wintypes
+root=Path('D:/Project/321_FISH');work=root/'_tmp_gui/gate-collection-20261013'
+task=root/'_tmp_gui/exe-exit-20261013';run=task/'runtime-recheck';run.mkdir(exist_ok=False)
+sys.path.insert(0,str(work))
+import friend_trial_process as jobs
+import friend_trial_start as entry
+import local_trial
+from test_gate import source_manifest
+from exit_native import job_members,process_identity,require
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+build=json.loads((root/'_tmp_gui/exe-local-20261013/build-summary.json').read_text(encoding='utf-8'))
+server=Path(build['executables']['server.exe']['path'])
+desktop='MoyuExit-'+str(os.getpid())+'-'+uuid.uuid4().hex[:10]
+profile=run/'profile-server';entry.create_profile(profile,None)
+tcp,web=local_trial._ports();env=entry.child_environment(profile,bind_host='127.0.0.1',tcp=tcp,web=web)
+store=profile/'store';nonce=uuid.uuid4().hex
+results=[];procs=[]
+def save(name,value):
+ (run/name).write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+def phase(label):
+ value={'phase':label,'owner_pid':os.getpid(),'desktop':desktop,'utc':datetime.now(timezone.utc).isoformat()}
+ (task/'active.json').write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8');print(json.dumps(value),flush=True)
+def empty(proc,timeout=5):
+ end=time.monotonic()+timeout
+ while proc.active_count() and time.monotonic()<end:time.sleep(.05)
+ return proc.active_count()==0
+def state(proc):return {'poll':proc.poll(),'job_active':proc.active_count(),'job_pids':job_members(proc,jobs)}
+def cleanup(proc,row):
+ row['before_cleanup']=state(proc);row['cleanup_forced']=bool(proc.active_count())
+ if row['cleanup_forced']:require(proc.terminate_tree(),'Owned Job cleanup')
+ row['after_cleanup']=state(proc);require(row['after_cleanup']['job_active']==0,'Job cleanup incomplete');proc.close()
+def tcp_rows(proc):
+ members=set(job_members(proc,jobs));api=ctypes.WinDLL('iphlpapi',use_last_error=True)
+ fn=api.GetExtendedTcpTable;fn.argtypes=[ctypes.c_void_p,ctypes.POINTER(wintypes.DWORD),wintypes.BOOL,wintypes.ULONG,ctypes.c_int,wintypes.ULONG];fn.restype=wintypes.DWORD
+ size=wintypes.DWORD();rc=fn(None,ctypes.byref(size),False,2,5,0);require(rc in (0,122) and size.value>=4,'TCP table size')
+ buf=ctypes.create_string_buffer(size.value);require(fn(buf,ctypes.byref(size),False,2,5,0)==0,'TCP table')
+ count=struct.unpack_from('<I',buf.raw)[0];require(4+count*24<=len(buf),'TCP table count')
+ rows=[]
+ for i in range(count):
+  st,la,lp,ra,rp,pid=struct.unpack_from('<IIIIII',buf.raw,4+i*24)
+  if pid in members:rows.append({'pid':pid,'state':st,'local_address':socket.inet_ntoa(struct.pack('<I',la)),
+    'local_port':socket.ntohs(lp&0xffff),'remote_address':socket.inet_ntoa(struct.pack('<I',ra)),'remote_port':socket.ntohs(rp&0xffff)})
+ return rows
+# Clone the existing narrowly owned launcher with only required console/startup flags.
+original=inspect.getsource(jobs.launch_owned)
+def launcher(name,flags):
+ code=original.replace('def launch_owned(','def '+name+'(',1)
+ old='si.startup.dwFlags=_winapi.STARTF_USESTDHANDLES';assert code.count(old)==1
+ code=code.replace(old,old+'|1\n        si.startup.wShowWindow=0',1)
+ old='flags=0x4|0x200|0x08000000|0x400|0x80000';assert code.count(old)==1
+ code=code.replace(old,'flags='+flags,1)
+ (run/(name+'.py')).write_text(code,encoding='utf-8')
+ namespace=dict(vars(jobs));exec(compile(code,str(run/(name+'.py')),'exec'),namespace)
+ return namespace[name],sha(run/(name+'.py'))
+launch_console,console_sha=launcher('launch_console_owned','0x4|0x10|0x400|0x80000')
+launch_detached,detached_sha=launcher('launch_detached_owned','0x4|0x8|0x400|0x80000')
+save('launcher-proof.json',{'original_function_sha256':hashlib.sha256(original.encode()).hexdigest(),'source_sha256':sha(work/'friend_trial_process.py'),
+ 'console_launcher_sha256':console_sha,'detached_launcher_sha256':detached_sha,'only_changes':['function name','STARTF_USESHOWWINDOW/SW_HIDE','creation flags'],
+ 'job_handle_inherited':False,'assign_before_resume':True,'kill_on_job_close':True})
+entries,digest=source_manifest(work);assert digest==build['source_content_id'] and len(entries)==410
+assert all(sha(Path(rec['path']))==rec['sha256'] for rec in build['executables'].values())
+save('bind-before.json',{'head_doc_base':'f71438aedb229a509f741a4823bfc84ab552e5a0','source_content_id':digest,'source_count':len(entries),
+ 'binary_hashes':{name:{'sha256':rec['sha256'],'size':Path(rec['path']).stat().st_size} for name,rec in build['executables'].items()},
+ 'desktop':desktop,'ports':{'tcp':tcp,'web':web},'helpers':{n:sha(Path(__file__).with_name(n)) for n in ('exit_runtime_recheck.py','exit_sender.py','exit_native.py')}})
+service=None;sender=None;row={'case':'server-service-ctrl-c','status':'FAIL','event_count':0,'main_quit':'BLOCKED_NATIVE_UI_UNAVAILABLE'}
+try:
+ phase('fresh-store-initialize')
+ cmd=[str(server),'initialize-new','--store-dir',str(store)]
+ init=jobs.launch_owned(cmd,cwd=str(run),env=env,log_path=run/'initialize.log',desktop_name=desktop);procs.append((init,{'role':'initialize'}))
+ row['initialize']={'command':cmd,'exit_code':init.wait(timeout=45),'job_empty':empty(init),'before_cleanup':state(init)}
+ require(row['initialize']['exit_code']==0 and row['initialize']['job_empty'],'Fresh Store initialization')
+ phase('service-console-start')
+ cmd=[str(server),'open','--store-dir',str(store)]
+ service=launch_console(cmd,cwd=str(run),env=env,log_path=run/'server.log',desktop_name=desktop);procs.append((service,{'role':'service'}))
+ row['command']=cmd;row['target']=process_identity(service.pid)
+ require(row['target']['image']==os.path.normcase(str(server.resolve())),'Actual server image')
+ entry.wait_server(service,'127.0.0.1',tcp,timeout=45)
+ end=time.monotonic()+30
+ while time.monotonic()<end:
+  rows=tcp_rows(service);listens={r['local_port'] for r in rows if r['state']==2 and r['local_address']=='127.0.0.1'}
+  if {tcp,web}.issubset(listens):break
+  time.sleep(.05)
+ row['ready_tcp_rows']=rows;require({tcp,web}.issubset(listens),'Owned loopback TCP/HTTP listeners')
+ row['web']=local_trial._web_probe(web);require(row['web']['ok'],'Actual HTTP ready')
+ save('sender-config.json',{'nonce':nonce,'target':row['target'],'desktop':desktop})
+ phase('sender-attach-and-member-handshake')
+ # Same original .venv's base runtime, stdlib-only sender. Avoid its redirector,
+ # which creates its child with flags0 and loses DETACHED. Product EXEs unchanged.
+ assert Path(sys.executable).resolve()==(root/'.venv/Scripts/python.exe').resolve()
+ assert Path(sys.prefix).resolve()==(root/'.venv').resolve() and sys.version_info[:3]==(3,14,5)
+ sender_exe=Path(sys._base_executable).resolve()
+ cfg={}
+ for line in (root/'.venv/pyvenv.cfg').read_text(encoding='utf-8').splitlines():
+  if '=' in line:
+   key,value=line.split('=',1);cfg[key.strip()]=value.strip()
+ assert sender_exe==Path(cfg['executable']).resolve() and sender_exe.parent==Path(cfg['home']).resolve() and cfg['version']=='3.14.5'
+ assert sha(sender_exe)=='3adbbf2af609e206e3ca18cd55fc7c4b52f5c8bb8218dd99fd5a9e50d7a193cd'
+ row['sender_interpreter']={'owner_executable':sys.executable,'owner_prefix':sys.prefix,'base_executable':str(sender_exe),
+  'base_sha256':sha(sender_exe),'base_version':cfg['version'],'stdlib_only':True,'redirector_bypassed':True,'project_environment_changed':False}
+ cmd=[str(sender_exe),'-E','-S','-B',str(Path(__file__).with_name('exit_sender.py')),str(run),nonce]
+ sender_env=dict(env);sender_env.pop('__PYVENV_LAUNCHER__',None);row['sender_command']=cmd
+ sender=launch_detached(cmd,cwd=str(run),env=sender_env,log_path=run/'sender.log',desktop_name=desktop);procs.append((sender,{'role':'sender'}))
+ sender_identity=process_identity(sender.pid);row['sender_created_identity']=sender_identity
+ end=time.monotonic()+20
+ while not (run/'sender-ready.json').exists():
+  require(sender.poll() is None,'Sender exited before report')
+  if time.monotonic()>end:raise TimeoutError('Sender ready missing')
+  time.sleep(.03)
+ ready=json.loads((run/'sender-ready.json').read_text(encoding='utf-8'))
+ require(ready['nonce']==nonce and ready['sender_identity']==sender_identity,'Actual sender identity')
+ own=job_members(service,jobs);sender_own=job_members(sender,jobs)
+ require(sender_own==[sender.pid],'Detached sender Job only sender')
+ members=ready['members'];owned_console=set(members)-{sender.pid}
+ require(service.pid in owned_console and owned_console.issubset(set(own)),'Full console subset of owned server Job')
+ identities={str(pid):process_identity(pid) for pid in members};require(identities==ready['identities'],'Fresh full member identities')
+ require(all(identities[str(pid)]['image']==row['target']['image'] for pid in owned_console),'Only exact server images in console')
+ require(len(owned_console)==2,'Expected actual onefile parent and runtime child')
+ host=ready['console']['host_identity'];system_conhost=os.path.normcase(str(Path(os.environ['SystemRoot'])/'System32/conhost.exe'))
+ require(host['image']==system_conhost,'Dedicated OS consolehost image')
+ job_identities={str(pid):process_identity(pid) for pid in own}
+ require(all(v['image'] in (row['target']['image'],system_conhost) for v in job_identities.values()),'No unknown owned Job image')
+ row['owner_permit_observation']={'service_job':own,'sender_job':sender_own,'console_members':members,'identities':identities,
+   'job_identities':job_identities,'console':ready['console'],'unknown_member_count':0,'job_handle_inherited':False}
+ # No event has been sent before owner validation. Root never attaches/detaches.
+ permit={'nonce':nonce,'issued_ns':time.time_ns(),'sender_identity':sender_identity,'members':members,
+   'owned_console_pids':sorted(owned_console),'identities':identities}
+ tmp=run/'sender-permit.json.new';tmp.write_text(json.dumps(permit,indent=2)+'\n',encoding='utf-8');tmp.replace(run/'sender-permit.json')
+ phase('one-ctrl-c-natural-wait')
+ row['sender_exit_code']=sender.wait(timeout=25);require(empty(sender),'Sender owned Job empty')
+ row['sender_before_cleanup']=state(sender)
+ result=json.loads((run/'sender-result.json').read_text(encoding='utf-8'));row['sender_result']=result;row['event_count']=result['event_count']
+ require(row['sender_exit_code']==0 and result['event_count']==1 and result['status']=='PASS' and result['detached'],'Sender event/detach')
+ row['service_exit_code']=service.wait(timeout=35);require(empty(service),'Service owned Job empty')
+ row['service_natural_before_cleanup']=state(service);require(row['service_exit_code']==0,'Service natural exit0')
+ row['ports_closed']={str(p):False for p in (tcp,web)}
+ for port in (tcp,web):
+  with socket.socket() as sock:
+   sock.settimeout(.5);row['ports_closed'][str(port)]=sock.connect_ex(('127.0.0.1',port))!=0
+ require(all(row['ports_closed'].values()),'Loopback ports closed naturally')
+ phase('post-natural-store-inspect')
+ cmd=[str(server),'inspect','--store-dir',str(store)]
+ check=jobs.launch_owned(cmd,cwd=str(run),env=env,log_path=run/'inspect.log',desktop_name=desktop);procs.append((check,{'role':'inspect'}))
+ row['inspect']={'command':cmd,'exit_code':check.wait(timeout=35),'job_empty':empty(check),'before_cleanup':state(check)}
+ require(row['inspect']['exit_code']==0 and row['inspect']['job_empty'],'Persisted Store inspect')
+ row['status']='PASS'
+except Exception as exc:row.update(error_type=type(exc).__name__,error=str(exc))
+finally:
+ phase('owned-cleanup-after-recorded-result')
+ row['cleanup']=[]
+ for proc,clean in reversed(procs):
+  try:cleanup(proc,clean)
+  except Exception as exc:clean.update(cleanup_error=str(exc));row['status']='FAIL'
+  row['cleanup'].append(clean)
+ save('service-ctrl-c.json',row)
+ entries,after=source_manifest(work)
+ binary_after={name:sha(Path(rec['path'])) for name,rec in build['executables'].items()}
+ summary={'task':'EXE-EXIT-01 v1.2','service_status':row['status'],'source_content_id':after,'source_count':len(entries),
+  'source_unchanged':after==digest,'binary_unchanged':all(binary_after[n]==r['sha256'] for n,r in build['executables'].items()),
+  'binary_hashes_after':binary_after,'all_owned_jobs_empty':all(c.get('after_cleanup',{}).get('job_active')==0 for c in row['cleanup']),
+  'forced_cleanup_count':sum(bool(c.get('cleanup_forced')) for c in row['cleanup']),
+  'main_session_exit':'BLOCKED_NATIVE_UI_UNAVAILABLE','complete_game':'UNVERIFIED','external_windows':'UNVERIFIED','physical_lan':'UNVERIFIED',
+  'global_input_or_capture_used':False,'root_attach_or_detach_used':False,'product_modified':False,'logs':{p.name:{'sha256':sha(p),'size':p.stat().st_size} for p in run.glob('*.log')}}
+ summary['exit_code']=0 if row['status']=='PASS' and summary['source_unchanged'] and summary['binary_unchanged'] and summary['all_owned_jobs_empty'] else 1
+ save('summary.json',summary);phase('completed');print(json.dumps(summary),flush=True)
+sys.exit(summary['exit_code'])

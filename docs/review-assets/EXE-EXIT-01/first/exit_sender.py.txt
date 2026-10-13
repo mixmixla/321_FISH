@@ -1,0 +1,51 @@
+"""EXE-EXIT-01 detached sender: no parent-console attachment or arbitrary PID."""
+from pathlib import Path
+import ctypes,json,os,sys,time
+from exit_native import k,require,console_members,console_window,process_identity
+run=Path(sys.argv[1]);nonce=sys.argv[2]
+cfg=json.loads((run/'sender-config.json').read_text(encoding='utf-8'))
+assert cfg['nonce']==nonce and cfg['target']['pid']>0 and cfg['target']['pid']!=0xffffffff
+report={'sender_pid':os.getpid(),'nonce':nonce,'attached':False,'event_count':0,'detached':False,'status':'FAIL'}
+def save(name,value):
+ p=run/name;q=run/(name+'.new');q.write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8');q.replace(p)
+try:
+ # A detached sender must start without any console. Never detach a preexisting one.
+ buf=(ctypes.c_ulong*8)();ctypes.set_last_error(0)
+ initial=k.GetConsoleProcessList(buf,8);err=ctypes.get_last_error()
+ report['initial_console_count']=initial;report['initial_console_error']=err
+ require(initial==0 and err==6,'Sender unexpectedly has a console')
+ require(process_identity(cfg['target']['pid'])==cfg['target'],'Target changed before AttachConsole')
+ require(k.AttachConsole(cfg['target']['pid']),'Attach only owned server')
+ report['attached']=True
+ # Attach resets control handlers. Ignore Ctrl+C only in this dedicated sender.
+ require(k.SetConsoleCtrlHandler(None,True),'Ignore sender own Ctrl+C')
+ report['members']=console_members();report['identities']={str(pid):process_identity(pid) for pid in report['members']}
+ report['console']=console_window(cfg['desktop'])
+ report['sender_identity']=process_identity(os.getpid())
+ save('sender-ready.json',report)
+ deadline=time.monotonic()+20
+ while not (run/'sender-permit.json').exists():
+  if time.monotonic()>deadline:raise TimeoutError('Owned owner permit missing')
+  time.sleep(.03)
+ permit=json.loads((run/'sender-permit.json').read_text(encoding='utf-8'))
+ require(permit['nonce']==nonce and permit['sender_identity']==report['sender_identity'],'Permit identity/nonce mismatch')
+ require(0<=time.time_ns()-permit['issued_ns']<=10_000_000_000,'Expired owner permit')
+ now=console_members();require(now==report['members']==permit['members'],'Console membership changed')
+ require(cfg['target']['pid'] in now and os.getpid() in now,'Missing target/sender')
+ require(set(now)-{os.getpid()}==set(permit['owned_console_pids']),'Permit owned console scope')
+ fresh={str(pid):process_identity(pid) for pid in now}
+ require(fresh==report['identities']==permit['identities'],'Console process identity changed')
+ require(console_window(cfg['desktop'])==report['console'],'Private console changed')
+ # Exactly one event; CTRL_C_EVENT cannot target a nonzero process group.
+ report['event_count']=1;report['event']={'type':0,'group':0,'members':now,'time_ns':time.time_ns()}
+ require(k.GenerateConsoleCtrlEvent(0,0),'Dedicated console Ctrl+C')
+ report['event_api_success']=True;report['status']='PASS'
+except Exception as exc:
+ report.update(error_type=type(exc).__name__,error=str(exc))
+finally:
+ if report['attached']:
+  try:require(k.FreeConsole(),'Sender detach');report['detached']=True
+  except Exception as exc:report.update(status='FAIL',detach_error=str(exc))
+ save('sender-result.json',report)
+ print(json.dumps(report),flush=True)
+sys.exit(0 if report['status']=='PASS' and report['detached'] else 1)

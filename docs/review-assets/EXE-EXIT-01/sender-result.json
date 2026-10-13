@@ -1,0 +1,64 @@
+{
+  "sender_pid": 5028,
+  "nonce": "e1bacf9407784f0eb8939869c9083a61",
+  "attached": true,
+  "event_count": 1,
+  "detached": true,
+  "status": "PASS",
+  "initial_console_count": 0,
+  "initial_console_error": 6,
+  "members": [
+    5028,
+    14072,
+    14700
+  ],
+  "identities": {
+    "5028": {
+      "pid": 5028,
+      "image": "c:\\users\\liang\\.pyenv\\pyenv-win\\versions\\3.14.5\\python.exe",
+      "creation_filetime": 134363416767441212,
+      "session_id": 1
+    },
+    "14072": {
+      "pid": 14072,
+      "image": "d:\\project\\321_fish\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist\\server.exe",
+      "creation_filetime": 134363416740612226,
+      "session_id": 1
+    },
+    "14700": {
+      "pid": 14700,
+      "image": "d:\\project\\321_fish\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist\\server.exe",
+      "creation_filetime": 134363416756495387,
+      "session_id": 1
+    }
+  },
+  "console": {
+    "hwnd": 1056108,
+    "window_pid": 14072,
+    "desktop": "MoyuExit-36452-2d6371ffa3",
+    "visible": false,
+    "window_owner_identity": {
+      "pid": 14072,
+      "image": "d:\\project\\321_fish\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist\\server.exe",
+      "creation_filetime": 134363416740612226,
+      "session_id": 1
+    }
+  },
+  "sender_identity": {
+    "pid": 5028,
+    "image": "c:\\users\\liang\\.pyenv\\pyenv-win\\versions\\3.14.5\\python.exe",
+    "creation_filetime": 134363416767441212,
+    "session_id": 1
+  },
+  "event": {
+    "type": 0,
+    "group": 0,
+    "members": [
+      5028,
+      14072,
+      14700
+    ],
+    "time_ns": 1791868076883455800
+  },
+  "event_api_success": true
+}

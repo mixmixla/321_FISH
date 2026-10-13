@@ -1,0 +1,37 @@
+{
+  "task": "EXE-EXIT-01 v1.2",
+  "service_status": "FAIL",
+  "source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "source_count": 410,
+  "source_unchanged": true,
+  "binary_unchanged": true,
+  "binary_hashes_after": {
+    "server.exe": "4578d79266e3df0fef0c77142c138c1442569f00ed008631987306afbd61c463",
+    "client.exe": "dcd25aa52963f9e87723eefc49c53cc08fb8ec2fed67425b9c85126f9d1ce5f4",
+    "StartTrial.exe": "6fcf35bb164eee9f76a5725623e27b77c447bb261e4b9f8026e32f1fb39473cf"
+  },
+  "all_owned_jobs_empty": true,
+  "forced_cleanup_count": 2,
+  "main_session_exit": "BLOCKED_NATIVE_UI_UNAVAILABLE",
+  "complete_game": "UNVERIFIED",
+  "external_windows": "UNVERIFIED",
+  "physical_lan": "UNVERIFIED",
+  "global_input_or_capture_used": false,
+  "root_attach_or_detach_used": false,
+  "product_modified": false,
+  "logs": {
+    "initialize.log": {
+      "sha256": "54e4f7860eb17d05891f78cbfc8d1f7d9bce6a739b38bb25c5c906980dfeda10",
+      "size": 431
+    },
+    "sender.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    "server.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    }
+  },
+  "exit_code": 1
+}

@@ -1,0 +1,1 @@
+{"sender_pid": 30324, "nonce": "9409b383e9274b1ea8d5df24f064bb38", "attached": false, "event_count": 0, "detached": false, "status": "FAIL", "initial_console_count": 1, "initial_console_error": 0, "error_type": "OSError", "error": "[Errno 0] Sender unexpectedly has a console"}

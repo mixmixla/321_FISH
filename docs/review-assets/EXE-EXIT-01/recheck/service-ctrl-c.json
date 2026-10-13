@@ -1,0 +1,134 @@
+{
+  "case": "server-service-ctrl-c",
+  "status": "FAIL",
+  "event_count": 0,
+  "main_quit": "BLOCKED_NATIVE_UI_UNAVAILABLE",
+  "initialize": {
+    "command": [
+      "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist\\server.exe",
+      "initialize-new",
+      "--store-dir",
+      "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck\\profile-server\\store"
+    ],
+    "exit_code": 0,
+    "job_empty": true,
+    "before_cleanup": {
+      "poll": 0,
+      "job_active": 0,
+      "job_pids": []
+    }
+  },
+  "command": [
+    "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist\\server.exe",
+    "open",
+    "--store-dir",
+    "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck\\profile-server\\store"
+  ],
+  "target": {
+    "pid": 36664,
+    "image": "d:\\project\\321_fish\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist\\server.exe",
+    "creation_filetime": 134363412778662337,
+    "session_id": 1
+  },
+  "ready_tcp_rows": [
+    {
+      "pid": 33472,
+      "state": 2,
+      "local_address": "127.0.0.1",
+      "local_port": 10822,
+      "remote_address": "0.0.0.0",
+      "remote_port": 0
+    },
+    {
+      "pid": 33472,
+      "state": 2,
+      "local_address": "127.0.0.1",
+      "local_port": 10823,
+      "remote_address": "0.0.0.0",
+      "remote_port": 0
+    }
+  ],
+  "web": {
+    "ok": true,
+    "status": 200,
+    "bytes_read": 256,
+    "url": "http://127.0.0.1:10823/"
+  },
+  "sender_interpreter": {
+    "owner_executable": "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+    "owner_prefix": "D:\\Project\\321_FISH\\.venv",
+    "base_executable": "C:\\Users\\liang\\.pyenv\\pyenv-win\\versions\\3.14.5\\python.exe",
+    "base_sha256": "3adbbf2af609e206e3ca18cd55fc7c4b52f5c8bb8218dd99fd5a9e50d7a193cd",
+    "base_version": "3.14.5",
+    "stdlib_only": true,
+    "redirector_bypassed": true,
+    "project_environment_changed": false
+  },
+  "sender_command": [
+    "C:\\Users\\liang\\.pyenv\\pyenv-win\\versions\\3.14.5\\python.exe",
+    "-E",
+    "-S",
+    "-B",
+    "D:\\Project\\321_FISH\\_tmp_gui\\advance-20261013\\exit_sender.py",
+    "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck",
+    "d16f9419bd4942bfa3ea50467b489a65"
+  ],
+  "sender_created_identity": {
+    "pid": 16376,
+    "image": "c:\\users\\liang\\.pyenv\\pyenv-win\\versions\\3.14.5\\python.exe",
+    "creation_filetime": 134363412806578845,
+    "session_id": 1
+  },
+  "error_type": "OSError",
+  "error": "[Errno 0] Dedicated OS consolehost image",
+  "cleanup": [
+    {
+      "role": "sender",
+      "before_cleanup": {
+        "poll": null,
+        "job_active": 1,
+        "job_pids": [
+          16376
+        ]
+      },
+      "cleanup_forced": true,
+      "after_cleanup": {
+        "poll": 124,
+        "job_active": 0,
+        "job_pids": []
+      }
+    },
+    {
+      "role": "service",
+      "before_cleanup": {
+        "poll": null,
+        "job_active": 3,
+        "job_pids": [
+          28976,
+          33472,
+          36664
+        ]
+      },
+      "cleanup_forced": true,
+      "after_cleanup": {
+        "poll": 124,
+        "job_active": 0,
+        "job_pids": []
+      }
+    },
+    {
+      "role": "initialize",
+      "before_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "cleanup_forced": false,
+      "after_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      }
+    }
+  ]
+}

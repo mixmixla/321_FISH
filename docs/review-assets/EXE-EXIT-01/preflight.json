@@ -1,0 +1,33 @@
+{
+  "preaudit_actual_helper_hashes_match": true,
+  "helpers": {
+    "exit_native.py": "33284e300c7ac237b8a9c6f89342e2dc970f8ad02822d329b108b898870b8554",
+    "exit_sender.py": "ea992a918b7f50fba8a62a59cf0c1da760dcc975728cb3f691a78704d77676c4",
+    "exit_runtime.py": "701450c88a4036660bb5d87b1d419e52af19f8690ee3e803199710849e0af9a5"
+  },
+  "old_apps_jobs_empty": [
+    {
+      "run": "runtime",
+      "summary_sha256": "c4cd4b3cf6e99ba0c5197ad40b88fb01068a6f8eef68df4bd5abb60f14cdca7c",
+      "all_owned_jobs_empty": true
+    },
+    {
+      "run": "runtime-recheck",
+      "summary_sha256": "c71da40fa4e1e0c9757ebbecb31503157ef1df86ab983194c9c1d91ccea24872",
+      "all_owned_jobs_empty": true
+    },
+    {
+      "run": "runtime-demo-recheck",
+      "summary_sha256": "03f3ca022fa6e5414fcbae640b7cd63e87be7d83f1259daa1352629720e702c2",
+      "all_owned_jobs_empty": true
+    }
+  ],
+  "new_runtime_not_yet_started": true,
+  "command": [
+    "D:/Project/321_FISH/.venv/Scripts/python.exe",
+    "D:/Project/321_FISH/_tmp_gui/advance-20261013/exit_runtime.py"
+  ],
+  "task_version": "EXE-EXIT-01 v1.1",
+  "rebuild": false,
+  "global_capture_or_input": false
+}

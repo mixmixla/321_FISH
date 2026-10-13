@@ -1,0 +1,29 @@
+{
+  "head_doc_base": "f71438aedb229a509f741a4823bfc84ab552e5a0",
+  "source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "source_count": 410,
+  "binary_hashes": {
+    "server.exe": {
+      "sha256": "4578d79266e3df0fef0c77142c138c1442569f00ed008631987306afbd61c463",
+      "size": 25363867
+    },
+    "client.exe": {
+      "sha256": "dcd25aa52963f9e87723eefc49c53cc08fb8ec2fed67425b9c85126f9d1ce5f4",
+      "size": 27003706
+    },
+    "StartTrial.exe": {
+      "sha256": "6fcf35bb164eee9f76a5725623e27b77c447bb261e4b9f8026e32f1fb39473cf",
+      "size": 9737941
+    }
+  },
+  "desktop": "MoyuExit-36452-2d6371ffa3",
+  "ports": {
+    "tcp": 2512,
+    "web": 2513
+  },
+  "helpers": {
+    "exit_runtime_final.py": "c7b4342c1623e378ac98127665186b82e00b10fa02150a3d9a6beec8920259a8",
+    "exit_sender_metadata.py": "b6df5c6731d0148983b207db33775dbe7b038d87be20a83790f981bbb630e312",
+    "exit_native_metadata.py": "ef8ed05bf7ba1160e1b820f5625557ae806cd35b49eb2d9f50dd068203720795"
+  }
+}

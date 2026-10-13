@@ -1,0 +1,14 @@
+{
+  "original_function_sha256": "cbc07269c41de0127448227048ec5e865cb6615f3cc7787b5dbe1d892dc81583",
+  "source_sha256": "24bfee4e2f9f3767c3aeec7e4a7c930ca2d17c22dc931149144499de8ae9a15c",
+  "console_launcher_sha256": "8ef37af21f10af8e6454e36be991d5f081c72e5db40cb741d80aab6d950a5efc",
+  "detached_launcher_sha256": "297b80fc595f52fbc52d06c0b080489b8e17cf9e5a34b19109cc247291bd731c",
+  "only_changes": [
+    "function name",
+    "STARTF_USESHOWWINDOW/SW_HIDE",
+    "creation flags"
+  ],
+  "job_handle_inherited": false,
+  "assign_before_resume": true,
+  "kill_on_job_close": true
+}

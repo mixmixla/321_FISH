@@ -1,0 +1,42 @@
+{
+  "task": "EXE-EXIT-01",
+  "version": "v1.3",
+  "decision": "AI_ACCEPTED_SERVICE_EXIT_ONLY",
+  "decider": "root technical adoption based on independent reviews",
+  "utc": "2026-10-13T05:15:32.113603+00:00",
+  "document_base": "f71438aedb229a509f741a4823bfc84ab552e5a0",
+  "artifact_binding": "9803303f916b93be10a9e27239cd99583d007661",
+  "source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "source_count": 410,
+  "accepted": [
+    "same-artifact server dedicated-console single Ctrl+C natural parent exit0/full Job0",
+    "sender detach/natural0/Job0",
+    "owned loopback two ports closed before cleanup",
+    "synthetic Store inspect ok/exclusive/valid/ready after natural exit"
+  ],
+  "not_accepted": [
+    "main client actual GUI quit",
+    "compiled entry natural main-session exit",
+    "complete EXE game/invite/end/restart",
+    "external Windows/physical LAN",
+    "DPI/final visual acceptance",
+    "whole R1/production release"
+  ],
+  "original_attempts": [
+    "runtime FAIL/exit1/event0 preserved",
+    "runtime-recheck FAIL/exit1/no permit/event0 preserved"
+  ],
+  "final_attempt": "runtime-final PASS/exit0/one event/zero forced cleanup",
+  "public_raw_logs": 10,
+  "raw_empty_files": 3,
+  "helper_snapshots": 11,
+  "raw_json_structurally_equal_LF_publication": 23,
+  "source_and_binaries_unchanged": true,
+  "parent_process_exit_observed": true,
+  "runtime_child_exit_separately_waited": false,
+  "actual_console_backend": "UNDETERMINED",
+  "user_or_Pro_accepted": false,
+  "new_apps_tests_builds_active": false,
+  "independent_runtime_raw_report_sha256": "cce71824e5e0cda6153ac2cfa24db2c3e60b62e36b6c1fe3fe0d293969669d21",
+  "independent_runtime_public_LF_report_sha256": "742a4024fa96b16fb374c1e95c7b8861e20334016fc915929ea01e78aa8636ac"
+}

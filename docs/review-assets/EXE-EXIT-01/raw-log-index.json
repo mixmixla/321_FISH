@@ -1,0 +1,82 @@
+[
+  {
+    "attempt": "first",
+    "public": "logs/first_initialize.txt",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime\\initialize.log",
+    "sha256": "2c60840b08545d37e6b5a3ff26f1a2b8c302d4d8a9daf7c726f348f3caabbb54",
+    "bytes": 431,
+    "byte_exact": true
+  },
+  {
+    "attempt": "first",
+    "public": "logs/first_sender.txt",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime\\sender.log",
+    "sha256": "3ac6e2cce5f829cf2ef216132ee9788e990816742ddb1ed30a740c165fb1bfa2",
+    "bytes": 279,
+    "byte_exact": true
+  },
+  {
+    "attempt": "first",
+    "public": "logs/first_server.txt",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime\\server.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0,
+    "byte_exact": true
+  },
+  {
+    "attempt": "recheck",
+    "public": "logs/recheck_initialize.txt",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck\\initialize.log",
+    "sha256": "54e4f7860eb17d05891f78cbfc8d1f7d9bce6a739b38bb25c5c906980dfeda10",
+    "bytes": 431,
+    "byte_exact": true
+  },
+  {
+    "attempt": "recheck",
+    "public": "logs/recheck_sender.txt",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck\\sender.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0,
+    "byte_exact": true
+  },
+  {
+    "attempt": "recheck",
+    "public": "logs/recheck_server.txt",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck\\server.log",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0,
+    "byte_exact": true
+  },
+  {
+    "attempt": "final",
+    "public": "logs/final_initialize.txt",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\initialize.log",
+    "sha256": "8f3a19fb44cac896fa9d75c9f76ae5f85c07e7c685742113f0e3f8ea2731b24c",
+    "bytes": 431,
+    "byte_exact": true
+  },
+  {
+    "attempt": "final",
+    "public": "logs/final_inspect.txt",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\inspect.log",
+    "sha256": "406f0ec1e314e7141e81015a048f3bc9a9ac0ff02a1d177a1001cbad98f899e5",
+    "bytes": 425,
+    "byte_exact": true
+  },
+  {
+    "attempt": "final",
+    "public": "logs/final_sender.txt",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\sender.log",
+    "sha256": "e26e6565c0d7c252d221555526874f39cac36c26264d3fb7ae3403208b432332",
+    "bytes": 1469,
+    "byte_exact": true
+  },
+  {
+    "attempt": "final",
+    "public": "logs/final_server.txt",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\server.log",
+    "sha256": "f2b6e51c86eb82592c6b0c22a568dfc364a5d37103aabd2139fffc5499175079",
+    "bytes": 183,
+    "byte_exact": true
+  }
+]

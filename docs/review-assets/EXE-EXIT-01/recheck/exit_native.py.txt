@@ -1,0 +1,79 @@
+"""EXE-EXIT-01 only: bounded native observations; no global UI or console detach."""
+import ctypes,os
+from ctypes import wintypes
+from pathlib import Path
+k=ctypes.WinDLL('kernel32',use_last_error=True)
+u=ctypes.WinDLL('user32',use_last_error=True)
+for name,result,args in [
+ ('OpenProcess',wintypes.HANDLE,[wintypes.DWORD,wintypes.BOOL,wintypes.DWORD]),
+ ('CloseHandle',wintypes.BOOL,[wintypes.HANDLE]),
+ ('WaitForSingleObject',wintypes.DWORD,[wintypes.HANDLE,wintypes.DWORD]),
+ ('GetProcessTimes',wintypes.BOOL,[wintypes.HANDLE,*([ctypes.POINTER(wintypes.FILETIME)]*4)]),
+ ('QueryFullProcessImageNameW',wintypes.BOOL,[wintypes.HANDLE,wintypes.DWORD,wintypes.LPWSTR,ctypes.POINTER(wintypes.DWORD)]),
+ ('ProcessIdToSessionId',wintypes.BOOL,[wintypes.DWORD,ctypes.POINTER(wintypes.DWORD)]),
+ ('GetConsoleProcessList',wintypes.DWORD,[ctypes.POINTER(wintypes.DWORD),wintypes.DWORD]),
+ ('GetConsoleWindow',wintypes.HWND,[]),
+ ('AttachConsole',wintypes.BOOL,[wintypes.DWORD]),
+ ('SetConsoleCtrlHandler',wintypes.BOOL,[ctypes.c_void_p,wintypes.BOOL]),
+ ('GenerateConsoleCtrlEvent',wintypes.BOOL,[wintypes.DWORD,wintypes.DWORD]),
+ ('FreeConsole',wintypes.BOOL,[]),
+]:
+ f=getattr(k,name);f.restype=result;f.argtypes=args
+for name,result,args in [
+ ('IsWindowVisible',wintypes.BOOL,[wintypes.HWND]),
+ ('GetWindowThreadProcessId',wintypes.DWORD,[wintypes.HWND,ctypes.POINTER(wintypes.DWORD)]),
+ ('GetThreadDesktop',wintypes.HANDLE,[wintypes.DWORD]),
+ ('GetUserObjectInformationW',wintypes.BOOL,[wintypes.HANDLE,ctypes.c_int,ctypes.c_void_p,wintypes.DWORD,ctypes.POINTER(wintypes.DWORD)]),
+]:
+ f=getattr(u,name);f.restype=result;f.argtypes=args
+def require(ok,label):
+ if not ok:raise OSError(ctypes.get_last_error(),label)
+def process_identity(pid):
+ h=k.OpenProcess(0x1000|0x100000,False,pid);require(h,'Open owned process identity')
+ try:
+  require(k.WaitForSingleObject(h,0)==258,'Owned process is not running')
+  times=[wintypes.FILETIME() for _ in range(4)]
+  require(k.GetProcessTimes(h,*[ctypes.byref(t) for t in times]),'GetProcessTimes')
+  size=wintypes.DWORD(8192);buf=ctypes.create_unicode_buffer(size.value)
+  require(k.QueryFullProcessImageNameW(h,0,buf,ctypes.byref(size)),'Query process path')
+  session=wintypes.DWORD();require(k.ProcessIdToSessionId(pid,ctypes.byref(session)),'Process session')
+  return {'pid':pid,'image':os.path.normcase(str(Path(buf.value).resolve())),
+          'creation_filetime':times[0].dwLowDateTime+(times[0].dwHighDateTime<<32),'session_id':session.value}
+ finally:require(k.CloseHandle(h),'Close identity handle')
+def console_members():
+ count=8
+ while count<=65536:
+  buf=(wintypes.DWORD*count)();ctypes.set_last_error(0)
+  actual=k.GetConsoleProcessList(buf,count)
+  if actual==0:raise OSError(ctypes.get_last_error(),'No current console')
+  if actual>count:count=actual+8;continue
+  ids=sorted(int(v) for v in buf[:actual]);require(len(ids)==len(set(ids)),'Duplicate console PID')
+  return ids
+ raise RuntimeError('Unbounded console member count')
+def console_window(expected_desktop):
+ hwnd=k.GetConsoleWindow();require(hwnd,'Console HWND missing')
+ pid=wintypes.DWORD();tid=u.GetWindowThreadProcessId(hwnd,ctypes.byref(pid));require(tid,'Console window thread')
+ desk=u.GetThreadDesktop(tid);require(desk,'Console window desktop')
+ needed=wintypes.DWORD();u.GetUserObjectInformationW(desk,2,None,0,ctypes.byref(needed))
+ require(0<needed.value<=65536,'Desktop name length')
+ name=ctypes.create_unicode_buffer(needed.value//2+1)
+ require(u.GetUserObjectInformationW(desk,2,name,ctypes.sizeof(name),ctypes.byref(needed)),'Desktop name')
+ info={'hwnd':int(hwnd),'window_pid':pid.value,'desktop':name.value,'visible':bool(u.IsWindowVisible(hwnd)),
+       'host_identity':process_identity(pid.value)}
+ require(name.value==expected_desktop and not info['visible'],'Console must be hidden on exact private desktop')
+ return info
+def job_members(proc,jobs):
+ count=8
+ while count<=65536:
+  class Pids(ctypes.Structure):
+   _fields_=[('assigned',wintypes.DWORD),('count',wintypes.DWORD),('ids',ctypes.c_size_t*count)]
+  data=Pids();ctypes.set_last_error(0)
+  ok=jobs._kernel().QueryInformationJobObject(proc._job_handle,3,ctypes.byref(data),ctypes.sizeof(data),None)
+  if not ok:
+   error=ctypes.get_last_error()
+   if error==234:count=max(count*2,data.assigned+8,data.count+8);continue
+   raise OSError(error,'Owned Job list')
+  if data.count>count or data.assigned>count:count=max(data.count,data.assigned)+8;continue
+  ids=sorted(int(v) for v in data.ids[:data.count]);require(len(ids)==len(set(ids)),'Duplicate Job PID')
+  return ids
+ raise RuntimeError('Unbounded owned Job member count')

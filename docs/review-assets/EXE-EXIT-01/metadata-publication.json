@@ -1,0 +1,186 @@
+[
+  {
+    "public": "first/bind-before.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime\\bind-before.json",
+    "raw_sha256": "2477f60462b15418caebaefa9c2c839cbd8415f2575aa29b83f8cb4ab3934b5b",
+    "public_lf_sha256": "40c130b3364a0329ab77dcc71fd7397fd312015f81cb5ace7cb840e28723a2e9",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "first/launcher-proof.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime\\launcher-proof.json",
+    "raw_sha256": "0f317cea077df2e9c100c398b9b75eba64d14652a91f61e2b84c3fdbc4ade3a9",
+    "public_lf_sha256": "829486a20f339bb4dff1943f11608fafa30e5ec387e707252a2c1ba807564ea3",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "first/sender-config.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime\\sender-config.json",
+    "raw_sha256": "2cade1677d6e50df23604e052ae4f7fd16f44bebf4e8ae8d386f55e2ffe64a39",
+    "public_lf_sha256": "af4b1d67d1028b4b5afc5eab0396571baf0dcaccaa8e94edb6118b0360d5929b",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "first/sender-result.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime\\sender-result.json",
+    "raw_sha256": "3916607758918361e93f098020adceedf57e3677dec5ce74a5dca28af807e89d",
+    "public_lf_sha256": "8e8b9e8070ffb4ca02443fae90c85d87311fded589fd3db6d825f24e6d686121",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "first/service-ctrl-c.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime\\service-ctrl-c.json",
+    "raw_sha256": "ce2e4045147c0b4e97c769856c485c3d2ebebfdf7a8a376e21ee6369b2ff4d2c",
+    "public_lf_sha256": "f5cdbd8bb6b6a424af1e352c857623e87bb6d270dd363f4f33d7c826e79335ee",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "first/summary.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime\\summary.json",
+    "raw_sha256": "a92a6186d4b8f96e36118de6439de735d71db3f95b727c32bc21086902b89440",
+    "public_lf_sha256": "84a974e14b479653d2f2f5b004836a48cf64b36f6975483f3f40c3f3d63ef2dd",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "recheck/bind-before.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck\\bind-before.json",
+    "raw_sha256": "ccbf0324c292f699ede6f801740593a8b15dc102da1f7e9e568fe57986d2e265",
+    "public_lf_sha256": "1b789c09afe1c578d463189660258d0e9e8883f004f96cda7da893fe4f0bc69b",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "recheck/launcher-proof.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck\\launcher-proof.json",
+    "raw_sha256": "0f317cea077df2e9c100c398b9b75eba64d14652a91f61e2b84c3fdbc4ade3a9",
+    "public_lf_sha256": "829486a20f339bb4dff1943f11608fafa30e5ec387e707252a2c1ba807564ea3",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "recheck/sender-config.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck\\sender-config.json",
+    "raw_sha256": "f291fe941aa1bb2892340206c23f6d389e162b98f4de8f7cf271214534664f87",
+    "public_lf_sha256": "ce8df78fde0c867bbdc0c8cf496e9562d1c54c0176bb723386270ff1ef6ebfc3",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "recheck/sender-ready.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck\\sender-ready.json",
+    "raw_sha256": "18c29c453de87ef3fbbfa7b0b717051222822bf184029b663f697c0287b19bcf",
+    "public_lf_sha256": "94f3ace0d5382d303052eba4831e71659b2488ea5144202c8ed9df6acac36c44",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "recheck/service-ctrl-c.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck\\service-ctrl-c.json",
+    "raw_sha256": "fc7baa8f67f44dd7c3fe7fd6e29fe91907fc8f762405c38202a9a3b82dc8acb9",
+    "public_lf_sha256": "1ac38b8d23c4dc2b8fd07823d0d493646eb25c620a3f9156eb7c9a7c0e361fd2",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "recheck/summary.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-recheck\\summary.json",
+    "raw_sha256": "3bcebfbd7dee5b9a7c83fdf4e374b9292853949b931afb66e6e2c9a11964c4bf",
+    "public_lf_sha256": "39c7d928809d8b0c173a69a55f30e56317e85a1f8cc70e319b2af49e973596e4",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "bind-before.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\bind-before.json",
+    "raw_sha256": "6ba6739fb92959357f2eab02552e92f7f488d9df900a6add5f9f2440fada4ac5",
+    "public_lf_sha256": "7eaecff97be4332a3151697f0357bd0214814dfab681399919dcf6b591f9e7af",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "launcher-proof.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\launcher-proof.json",
+    "raw_sha256": "0f317cea077df2e9c100c398b9b75eba64d14652a91f61e2b84c3fdbc4ade3a9",
+    "public_lf_sha256": "829486a20f339bb4dff1943f11608fafa30e5ec387e707252a2c1ba807564ea3",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "sender-config.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\sender-config.json",
+    "raw_sha256": "4c5392221e5f59a3bb10de9bd1d0997845c44f41a4956b5b6d77fbb91abbf334",
+    "public_lf_sha256": "42224b05b5ee49df4cabd75ff8ed0188acadb434a3ebf0dda6850e27e0140fbd",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "sender-ready.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\sender-ready.json",
+    "raw_sha256": "9514f121b8e94bb38121eed2f0949346bbc953f7e8533386440c425b2ccc3355",
+    "public_lf_sha256": "48cd66ada8c1f4c6281464bc0e5ce92ed7b4500acbc591b200be657ab8d020e3",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "sender-permit.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\sender-permit.json",
+    "raw_sha256": "e797f037a1000c7b5fa84961bf252c2693c6f9c469639b182cb2222714ece881",
+    "public_lf_sha256": "8d3c1ab757e4841b333d292dd611e7e7d4c79bb35a1af972a09f4c0173699528",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "sender-result.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\sender-result.json",
+    "raw_sha256": "251cbeeba331721fec3e59a4779969ef52d3d9ac1707936c3648c2750473a720",
+    "public_lf_sha256": "b9c8125c8abc25cf73e52f9bf0ae01d64437b53f54193378899122ea6f8771b9",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "service-ctrl-c.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\service-ctrl-c.json",
+    "raw_sha256": "90bb98c9d979a4a579243d3c78d31c223e821c5eb9bb3b098c4b7940b2ebc435",
+    "public_lf_sha256": "eebe41550519abb7a4cd27e2b31f2592ca1e89f384cea05556652e785d4c4676",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "summary.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\runtime-final\\summary.json",
+    "raw_sha256": "899ab5a6e67f5eba47112bd30a090726a982d7cb62e18adacae17f957fd47084",
+    "public_lf_sha256": "f75e9ccea3b025a838583b349e7a907546ac00ea66739d1853ef7dc03db280ce",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "preflight.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\preflight.json",
+    "raw_sha256": "b35ad434e64e8e5a95e38beea7fd24f958a1aefd429f5a823849b1f1a04793b8",
+    "public_lf_sha256": "08de13253ad27e449a2005b81b851cca8b1d2349f93c05d49a6b43900f1a1c88",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "recheck-preflight.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\recheck-preflight.json",
+    "raw_sha256": "d4798fb57b045b5bb8fc99e09fdb60eab48cd659f5b5b535727ab751cf2875e8",
+    "public_lf_sha256": "89ed94c3b4092c4c4883a7d06f9d0a2d0ee3625723d0853f055fad80885b5240",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  },
+  {
+    "public": "final-preflight.json",
+    "raw": "D:\\Project\\321_FISH\\_tmp_gui\\exe-exit-20261013\\final-preflight.json",
+    "raw_sha256": "a7033f9794d8d799b3bd157b010e7269563aab16c777aa50bb994320167016be",
+    "public_lf_sha256": "56938886b520fb1392b84da2f91fed066893dc47d0f073a22fc8b42e62b39bfc",
+    "structured_equal": true,
+    "normalization": "CRLF to LF only"
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "head": "3877a5d4cbbbf25364303210e1f0f74b4eeac542",
+  "runtime_inputs": 379,
+  "snapshot_current_index_filtered_match": true,
+  "raw_git_blobs_match": 32,
+  "original_protected_files": 1143,
+  "original_head_index_unchanged": true,
+  "full_pending": false,
+  "upstream_main": "52d5ff00c53c2e104811048a2db55d6b53e432cc",
+  "merge_tree_preflight": "3b5b4431ba8c50a33e5621d73fcc30a6cfcad954",
+  "preflight_conflicts": 0,
+  "upstream_not_integrated": true,
+  "full_result_reference": "../integration-full/summary.json",
+  "independent_final_audit": "0 MUST / 165 public raw byte hashes verified"
+}

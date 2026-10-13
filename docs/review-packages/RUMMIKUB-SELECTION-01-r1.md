@@ -20,3 +20,8 @@ Kalah控制器由同一作者按独立Task修同文件，不混改规则/协议�
 终核0 MUST；[独立结论](../review-assets/FOLLOWUP-20261013/controller/independent-review.md)。
 最终同版full新run integration-full/session90958运行，尚无整体验收；不据领域记整体AI_ACCEPTED。
 未merge/release/EXE/LAN/用户验收；PR403未重试。
+
+
+## 后继同版阶段门禁（2026-10-13，基于08）
+
+新候选3877a5d的165文件2435P/0F/2原skip、exit0；原full FAIL/原RED与版本边界保持。详见[FOLLOWUP r1](FOLLOWUP-20261013-r1.md)。upstream52尚未整合，不能当新main验证；完整原证据独立终核与阶段交付回执见指挥中心。

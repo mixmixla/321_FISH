@@ -85,3 +85,8 @@ root已完成client.py本方1..6参数→A1..6/B9..14、弹窗room/round/game/UI
 领域后仅GATE-FIXTURE两测试更改，产品输入不变，最终full integration-full/session90958
 正在运行。旧FULL FAIL保留，未全绿不得整体AI_ACCEPTED/merge-ready。
 这些结果为合成规则/Tk事件/生产PAGE验证，不是最终EXE、自然退出或真实LAN/浏览器验收。
+
+
+## 后继同版阶段门禁（2026-10-13，基于08）
+
+新候选3877a5d的165文件2435P/0F/2原skip、exit0；原full FAIL/原RED与版本边界保持。详见[FOLLOWUP r1](FOLLOWUP-20261013-r1.md)。upstream52尚未整合，不能当新main验证；完整原证据独立终核与阶段交付回执见指挥中心。

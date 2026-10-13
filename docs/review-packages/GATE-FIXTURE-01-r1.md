@@ -16,3 +16,8 @@ summary exit2，另目录授权host运行，原件及[失败边界](../review-as
 这不是重试抹掉测试FAIL，也未放宽guard。08/282正式对照20P3F与原full FAIL全部保持。
 
 root后继client.py/整合UI构成新候选，必须新同版full，领域不能代替；尚未merge/发布。
+
+
+## 后继同版阶段门禁（2026-10-13，基于08）
+
+新候选3877a5d的165文件2435P/0F/2原skip、exit0；原full FAIL/原RED与版本边界保持。详见[FOLLOWUP r1](FOLLOWUP-20261013-r1.md)。upstream52尚未整合，不能当新main验证；完整原证据独立终核与阶段交付回执见指挥中心。

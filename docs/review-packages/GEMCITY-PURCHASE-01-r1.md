@@ -61,3 +61,8 @@ base `08d263b2a78b7a6df0b888616e2fbf44793182b8`；独立分支
 已审阅的TRIAL-EVIDENCE-REFRESH-01纯文档提交另在任务分支整合，371运行输入不变；
 该资料接受不改变full FAIL。CP4历史WinError5、完整EXE对局与
 退出、外机Windows、真实LAN、视觉/DPI等原验收缺口保持；本规则修复不关闭它们。
+
+
+## 后继同版阶段门禁（2026-10-13，基于08）
+
+新候选3877a5d的165文件2435P/0F/2原skip、exit0；原full FAIL/原RED与版本边界保持。详见[FOLLOWUP r1](FOLLOWUP-20261013-r1.md)。upstream52尚未整合，不能当新main验证；完整原证据独立终核与阶段交付回执见指挥中心。

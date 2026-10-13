@@ -60,3 +60,8 @@ Pillow只捕获owned窗口HWND；Windows私有桌面运行，截图后关闭全�
 ## 主控独立接受（2026-10-13）
 
 AI_ACCEPTED_UI_BOUNDARY_ONLY：独立Sol实际diff/111领域/raw/截图身份审查0 MUST；root亲自读185行Painter/HUD改动与两个新测试，并实际查看4组共8张配对PNG，确认正常与窄窗Blokus分页/固定操作可见、字层级清晰、HUD自身积分及隐藏数准确。只接受本修复与Blokus局部雾岸样例，不接受全局风格、47款、完整客户端/EXE/自然退出、125%/150%或发布。Tcl after诊断、近似字宽/库存缩减等覆盖限度保持。整合后的完整门禁仍待root协调，购买历史2323P/3F/2S不被此领域通过改写。
+
+
+## 后继同版阶段门禁（2026-10-13，基于08）
+
+新候选3877a5d的165文件2435P/0F/2原skip、exit0；原full FAIL/原RED与版本边界保持。详见[FOLLOWUP r1](FOLLOWUP-20261013-r1.md)。upstream52尚未整合，不能当新main验证；完整原证据独立终核与阶段交付回执见指挥中心。

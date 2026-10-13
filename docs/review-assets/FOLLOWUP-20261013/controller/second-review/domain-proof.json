@@ -1,0 +1,135 @@
+{
+  "summary_exit_code": 0,
+  "source_content_id": "b81b266a532dcaedc1e86786e57f4ead1f31e10e4e73567dbad90924d89a378b",
+  "fingerprint": "9444112b4cd357fe70bd341e0089fbaf90c904a8f005f2d33b49376e9ed57739",
+  "files": 12,
+  "rows": [
+    {
+      "file": "tests/test_flagship_board.py",
+      "status": "passed",
+      "counts": {
+        "passed": 43
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    },
+    {
+      "file": "tests/test_flagship_gui.py",
+      "status": "passed",
+      "counts": {
+        "passed": 6
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    },
+    {
+      "file": "tests/test_games_w1_new.py",
+      "status": "passed",
+      "counts": {
+        "passed": 14
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    },
+    {
+      "file": "tests/test_games_w2_logic.py",
+      "status": "passed",
+      "counts": {
+        "passed": 19
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    },
+    {
+      "file": "tests/test_gameui_compact_controls.py",
+      "status": "passed",
+      "counts": {
+        "passed": 26
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    },
+    {
+      "file": "tests/test_gameui_compact_gui.py",
+      "status": "passed",
+      "counts": {
+        "passed": 3
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    },
+    {
+      "file": "tests/test_gomoku_fx.py",
+      "status": "passed",
+      "counts": {
+        "passed": 33
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    },
+    {
+      "file": "tests/test_kalah_gui.py",
+      "status": "passed",
+      "counts": {
+        "passed": 2
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    },
+    {
+      "file": "tests/test_kalah_input.py",
+      "status": "passed",
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    },
+    {
+      "file": "tests/test_kalah_parameters.py",
+      "status": "passed",
+      "counts": {
+        "passed": 58
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    },
+    {
+      "file": "tests/test_kalah_web.py",
+      "status": "passed",
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    },
+    {
+      "file": "tests/test_rummikub_selection.py",
+      "status": "passed",
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "raw_hash_verified": true
+    }
+  ],
+  "reviewed_files": {
+    "client.py": "e6b05f0e15157776aab2c45a39e5a3e9f0c62cb4b10a3efe2178041f6d344dee",
+    "tests/test_rummikub_selection.py": "08dcc3026a901dc323bb3ddf101303ebbf670cc9ad0ecca0db2a82035d90ae01",
+    "tests/test_kalah_parameters.py": "f9303d64456673ed621fa1586c71ac01c43caa85328e23857a328cdb3a0f3c87"
+  },
+  "reviewed_files_match_domain_source": true,
+  "scope_note": "Raw domain results read-only; independent implementation review limited to client.py/controller tests, excludes own UI/PAGE changes"
+}

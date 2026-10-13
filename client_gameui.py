@@ -18,11 +18,26 @@ import math
 import time
 import random
 import re
+import base64
+import io
 
 import ui_design as _ux
 from widgets.design_controls import (game_icon_image as _game_icon_image,
                                      role_icon_image as _role_icon_image,
                                      resource_icon_image as _resource_icon_image)
+
+# 桌游对局内原创位图素材（base64 内嵌于 _art_boardgame.py，随源码打包，无外部依赖）。
+# 缺模块 / 缺 Pillow 时保持纯矢量渲染（_BG_ASSETS=None / _PILImage=None），零回归。
+try:
+    from _art_boardgame import ASSETS as _BG_ASSETS
+except Exception:
+    _BG_ASSETS = None
+try:
+    from PIL import Image as _PILImage
+    from PIL import ImageTk as _PILImageTk
+except Exception:
+    _PILImage = None
+    _PILImageTk = None
 
 # 顶栏标题前导 emoji（如「♟ 中国象棋」「🏆 P7 获胜」）统一改由左侧矢量图标承担；
 # CJK/字母数字属 \w，故只剥离标题开头的符号簇，绝不误伤正文。
@@ -718,6 +733,162 @@ def _role_img(cv, key, tint, size=18):
 def _res_img(cv, key, tint, size=16):
     return _cached_icon(cv, "_res_img_cache", key, tint, size,
                         lambda: _resource_icon_image(cv, key, tint, size))
+
+
+# ---------------------------------------------------------------------------
+# 对局内原创位图素材渲染层（P3 桌游美术升级）
+#
+# 素材由 _gen_boardgame.py 程序化生成，base64 内嵌于 _art_boardgame.py，随源码
+# 打包、无外部依赖。所有入口都满足：
+#   1) _real_cv(cv) 守卫 —— 假画布桩/缺 Pillow 一律返回 None/False，绝不调用
+#      ImageTk.PhotoImage(master=cv)，保持 headless 安全；
+#   2) 按画布缓存 PhotoImage（同键同尺寸只生成一次），避免每帧重建；
+#   3) 任何异常吞掉并回退，调用方在 False/None 时退回既有矢量画法 —— 零回归。
+# ---------------------------------------------------------------------------
+_ASSET_DEC = {}          # (key, size) -> PIL.Image（解码+缩放后，进程级共享）
+
+
+def _decode_asset(key, size=None):
+    """把 _BG_ASSETS[key] 的 data URL 解码为 PIL RGBA（size 非空时 LANCZOS 缩放）。
+    size 为 int 时按正方形缩放，为 (w,h) 元组时按该尺寸。缺模块/缺键/异常返回 None。"""
+    if _BG_ASSETS is None or _PILImage is None or key not in _BG_ASSETS:
+        return None
+    ck = (key, size)
+    img = _ASSET_DEC.get(ck)
+    if img is not None:
+        return img
+    try:
+        url = _BG_ASSETS[key]
+        data = url.split(",", 1)[1] if "," in url else url
+        img = _PILImage.open(io.BytesIO(base64.b64decode(data))).convert("RGBA")
+        if size is not None:
+            if isinstance(size, int):
+                tgt = (max(1, int(size)), max(1, int(size)))
+            else:
+                tgt = (max(1, int(size[0])), max(1, int(size[1])))
+            img = img.resize(tgt, _PILImage.Resampling.LANCZOS)
+        _ASSET_DEC[ck] = img
+        return img
+    except Exception:
+        return None
+
+
+def _asset_img(cv, key, size=None):
+    """按画布缓存一张位图素材的 PhotoImage。
+    非真画布 / 缺 Pillow / 缺素材 → None（调用方回退矢量画法）。"""
+    if not _real_cv(cv) or _PILImageTk is None or _PILImage is None:
+        return None
+    img = _decode_asset(key, size)
+    if img is None:
+        return None
+    cache = getattr(cv, "_asset_img_cache", None)
+    if not isinstance(cache, dict):
+        cache = {}
+        cv._asset_img_cache = cache
+    ck = (key, size)
+    photo = cache.get(ck)
+    if photo is None:
+        try:
+            photo = _PILImageTk.PhotoImage(img, master=cv)
+        except Exception:
+            return None
+        cache[ck] = photo
+    return photo
+
+
+def _asset_at(cv, key, x, y, size, anchor="nw"):
+    """在 (x,y) 贴一张位图素材（size 支持 int/tuple）。成功 True，否则 False。"""
+    photo = _asset_img(cv, key, size)
+    if photo is None:
+        return False
+    try:
+        cv.create_image(x, y, image=photo, anchor=anchor)
+        return True
+    except Exception:
+        return False
+
+
+def _asset_nine(cv, key, w, h, border=12):
+    """九宫格拉伸：四角原尺寸、四边单向拉伸、中心双向拉伸，合成目标 (w,h) 的
+    PhotoImage（圆角面板/卡框铺底用）。按 (key,w,h,border) 缓存，不可用返回 None。"""
+    if not _real_cv(cv) or _PILImageTk is None or _PILImage is None:
+        return None
+    w, h = int(w), int(h)
+    if w < 4 or h < 4:
+        return None
+    src = _decode_asset(key, None)
+    if src is None:
+        return None
+    cache = getattr(cv, "_asset_nine_cache", None)
+    if not isinstance(cache, dict):
+        cache = {}
+        cv._asset_nine_cache = cache
+    ck = (key, w, h, border)
+    photo = cache.get(ck)
+    if photo is not None:
+        return photo
+    try:
+        sw, sh = src.size
+        b = min(border, sw // 2, sh // 2, w // 2, h // 2)
+        if b < 1:
+            b = 1
+        mw, mh = w - 2 * b, h - 2 * b
+        out = _PILImage.new("RGBA", (w, h), (0, 0, 0, 0))
+        for sx0, sy0, dx, dy in ((0, 0, 0, 0), (sw - b, 0, w - b, 0),
+                                 (0, sh - b, 0, h - b), (sw - b, sh - b, w - b, h - b)):
+            out.paste(src.crop((sx0, sy0, sx0 + b, sy0 + b)), (dx, dy))
+        if mw > 0:
+            out.paste(src.crop((b, 0, sw - b, b)).resize(
+                (mw, b), _PILImage.Resampling.LANCZOS), (b, 0))
+            out.paste(src.crop((b, sh - b, sw - b, sh)).resize(
+                (mw, b), _PILImage.Resampling.LANCZOS), (b, h - b))
+        if mh > 0:
+            out.paste(src.crop((0, b, b, sh - b)).resize(
+                (b, mh), _PILImage.Resampling.LANCZOS), (0, b))
+            out.paste(src.crop((sw - b, b, sw, sh - b)).resize(
+                (b, mh), _PILImage.Resampling.LANCZOS), (w - b, b))
+        if mw > 0 and mh > 0:
+            out.paste(src.crop((b, b, sw - b, sh - b)).resize(
+                (mw, mh), _PILImage.Resampling.LANCZOS), (b, b))
+        photo = _PILImageTk.PhotoImage(out, master=cv)
+        cache[ck] = photo
+        return photo
+    except Exception:
+        return None
+
+
+def _asset_nine_at(cv, key, x, y, w, h, border=12, anchor="nw"):
+    """在 (x,y) 贴一张九宫格面板。成功 True，否则 False（调用方回退 _rrect）。"""
+    photo = _asset_nine(cv, key, w, h, border)
+    if photo is None:
+        return False
+    try:
+        cv.create_image(x, y, image=photo, anchor=anchor)
+        return True
+    except Exception:
+        return False
+
+
+def _asset_bg(cv, key, x0, y0, x1, y1):
+    """用位图素材在 [x0,y0,x1,y1] 内平铺铺满（毡布桌面等）。
+    成功 True；非真画布 / 缺素材返回 False（调用方保留原底色，零回归）。"""
+    photo = _asset_img(cv, key, None)
+    if photo is None:
+        return False
+    try:
+        pw, ph = int(photo.width()), int(photo.height())
+        if pw < 1 or ph < 1:
+            return False
+        ix, iy = int(math.floor(x0)), int(math.floor(y0))
+        nx = int((x1 - ix) // pw) + 2
+        ny = int((y1 - iy) // ph) + 2
+        for i in range(nx):
+            for j in range(ny):
+                cv.create_image(ix + i * pw, iy + j * ph, image=photo,
+                                anchor="nw")
+        return True
+    except Exception:
+        return False
 
 
 # E2：各游戏 private() 的角色编码 → ui_design.ROLE_ICONS 键（单源，双端复用）。
@@ -4782,6 +4953,8 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         title += f"　轮到 {nick(st['turn_uid'])} · 目标 {15} 分"
     _turn_banner(cv, w, 46, title, accent)
     ui.update(game="gemcity")
+    # P3：毡布桌面（原创位图平铺；非真画布/缺素材时保留原底色，零回归）
+    _asset_bg(cv, "felt", 0, 47, w, h)
     gcol = {"o": "#3a3a3a", "d": "#f0f0f0", "r": "#d2534f",
             "e": "#3a9b5f", "s": "#4a7de0", "g": "#e0b33c"}
     gtok = {"o": "⬛", "d": "⬜", "r": "🔴", "e": "🟢", "s": "🔵", "g": "🟡"}
@@ -4799,18 +4972,23 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         _text(cv, 18, y0 + 14, f"{tier}级", "#e8e0d0", _FONT_B, anchor="w")
         for i, cd in enumerate(cards):
             x0 = 46 + i * (cw + 6)
-            _rrect(cv, x0, y0, x0 + cw, y0 + chh, 8, "#2a2a35", "#44444f")
+            # P3：卡面用九宫格面板位图铺底（圆角描边），不可用时回退既有 _rrect
+            if not _asset_nine_at(cv, "panel", x0, y0, cw, chh, border=14):
+                _rrect(cv, x0, y0, x0 + cw, y0 + chh, 8, "#2a2a35", "#44444f")
             _text(cv, x0 + cw - 8, y0 + 14, f"+{cd.get('pts', 0)}", "#ffd75e",
                   _FONT_B, anchor="ne")
             dc = gcol.get(cd.get("disc"), "#888")
-            if _real_cv(cv):
-                cv.create_image(x0 + 17, y0 + 17, anchor="center",
-                                image=_res_img(cv, cd.get("disc"),
-                                               gdisp.get(cd.get("disc"), "#888"),
-                                               18))
-            else:
-                cv.create_oval(x0 + 8, y0 + 8, x0 + 26, y0 + 26, fill=dc,
-                               outline="#fff")
+            dk = cd.get("disc")
+            # P3：市场宝石改用原创刻面宝石位图；失败回退 E3 矢量资源图标
+            if not _asset_at(cv, f"gem_{dk}", x0 + 17, y0 + 17, 26,
+                             anchor="center"):
+                if _real_cv(cv):
+                    cv.create_image(x0 + 17, y0 + 17, anchor="center",
+                                    image=_res_img(cv, dk,
+                                                   gdisp.get(dk, "#888"), 18))
+                else:
+                    cv.create_oval(x0 + 8, y0 + 8, x0 + 26, y0 + 26, fill=dc,
+                                   outline="#fff")
             cost = cd.get("cost") or {}
             yy = y0 + 40
             for k in colors:
@@ -4833,12 +5011,14 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     _text(cv, bx, py, "宝石池：", "#e8e0d0", _FONT_B, anchor="w")
     xx = bx + 80
     for k in colors + ["g"]:
-        if _real_cv(cv):
-            cv.create_image(xx + 8, py, anchor="center",
-                            image=_res_img(cv, k, gdisp.get(k, "#888"), 16))
-        else:
-            cv.create_oval(xx, py - 8, xx + 16, py + 8, fill=gcol.get(k, "#888"),
-                           outline="")
+        # P3：宝石池改用原创刻面宝石位图；失败回退 E3 矢量资源图标
+        if not _asset_at(cv, f"gem_{k}", xx + 8, py, 20, anchor="center"):
+            if _real_cv(cv):
+                cv.create_image(xx + 8, py, anchor="center",
+                                image=_res_img(cv, k, gdisp.get(k, "#888"), 16))
+            else:
+                cv.create_oval(xx, py - 8, xx + 16, py + 8,
+                               fill=gcol.get(k, "#888"), outline="")
         _text(cv, xx + 22, py, str(bank.get(k, 0)), "#e8e8e8", _FONT_F,
               anchor="w")
         xx += 34
@@ -4869,12 +5049,15 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         tk_tok = tokens.get(str(u), {})
         xx = x0 + 8
         for k in colors:
-            if _real_cv(cv):
-                cv.create_image(xx + 6, ply + 34, anchor="center",
-                                image=_res_img(cv, k, gdisp[k], 13))
-            else:
-                cv.create_oval(xx, ply + 28, xx + 12, ply + 40,
-                               fill=gcol.get(k, "#888"), outline="")
+            # P3：玩家持有宝石改用原创刻面宝石位图；失败回退 E3 矢量资源图标
+            if not _asset_at(cv, f"gem_{k}", xx + 6, ply + 34, 16,
+                             anchor="center"):
+                if _real_cv(cv):
+                    cv.create_image(xx + 6, ply + 34, anchor="center",
+                                    image=_res_img(cv, k, gdisp[k], 13))
+                else:
+                    cv.create_oval(xx, ply + 28, xx + 12, ply + 40,
+                                   fill=gcol.get(k, "#888"), outline="")
             _text(cv, xx + 16, ply + 34, str(tk_tok.get(k, 0)), "#e8e8e8",
                   (_FONT_F[0], 8), anchor="w")
             xx += 30
@@ -5051,6 +5234,8 @@ def _p_azul(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         title += f"　第 {st.get('round', 1)} 轮 · 轮到 {nick(st['turn_uid'])}"
     _turn_banner(cv, w, 46, title, accent)
     ui.update(game="azul")
+    # P3：毡布桌面（原创位图平铺；非真画布/缺素材时保留原底色，零回归）
+    _asset_bg(cv, "felt", 0, 47, w, h)
     acol = {"r": "#d2534f", "w": "#f0f0f0", "b": "#4a7de0",
             "y": "#e0b33c", "k": "#3a3a3a"}
     offers = st.get("offers") or []
@@ -5062,28 +5247,38 @@ def _p_azul(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     bowl_cy = 60 + top_h / 3
     for i, bowl in enumerate(offers):
         bcx = w / 2 + (i - (n - 1) / 2) * (r * 2 + 8)
-        cv.create_oval(bcx - r, bowl_cy - r, bcx + r, bowl_cy + r,
-                       fill="#1f3036", outline="#4a7d8a", width=2)
+        # P3：工厂碗改用原创陶瓷碗位图；失败回退既有深青圆盘
+        if not _asset_at(cv, "azul_bowl", bcx - r, bowl_cy - r, int(r * 2)):
+            cv.create_oval(bcx - r, bowl_cy - r, bcx + r, bowl_cy + r,
+                           fill="#1f3036", outline="#4a7d8a", width=2)
         _text(cv, bcx, bowl_cy + r - 12, f"碗{i}", "#9fbfbf", (_FONT_F[0], 8))
         k = len(bowl)
         ang = 0
+        ts = max(8, int(r * 0.62))
         for x in bowl[:6]:
             c = x.get("c", "k")
             px = bcx + (r * 0.55) * math.cos(ang % 6.28)
             py = bowl_cy - 6 + (r * 0.55) * math.sin(ang % 6.28)
-            _stone(cv, px, py, r * 0.28, acol.get(c, "#888"))
+            # P3：碗内花砖改用原创花砖位图；失败回退既有圆石子
+            if not _asset_at(cv, f"azul_tile_{c}", px - ts / 2, py - ts / 2, ts):
+                _stone(cv, px, py, r * 0.28, acol.get(c, "#888"))
             ang += math.pi / 2.3
     # 中央池
     ccx, ccy = w / 2, bowl_cy + r + 30
-    cv.create_oval(ccx - r, ccy - r, ccx + r, ccy + r, fill="#17242a",
-                   outline="#7d4a4a", width=2)
+    # P3：中央池改用原创陶瓷盘位图；失败回退既有深色圆盘
+    if not _asset_at(cv, "azul_bowl", ccx - r, ccy - r, int(r * 2)):
+        cv.create_oval(ccx - r, ccy - r, ccx + r, ccy + r, fill="#17242a",
+                       outline="#7d4a4a", width=2)
     _text(cv, ccx, ccy + r - 12, "中央", "#c0a0a0", (_FONT_F[0], 8))
     k = 0
+    cs = max(7, int(r * 0.54))
     for x in center[:7]:
         c = x.get("c", "k")
         px = ccx + (r * 0.5) * math.cos(k * 1.4)
         py = ccy - 4 + (r * 0.5) * math.sin(k * 1.4)
-        _stone(cv, px, py, r * 0.24, acol.get(c, "#888"))
+        # P3：中央池花砖改用原创花砖位图；失败回退既有圆石子
+        if not _asset_at(cv, f"azul_tile_{c}", px - cs / 2, py - cs / 2, cs):
+            _stone(cv, px, py, r * 0.24, acol.get(c, "#888"))
         k += 1
     # 底部：我的 5 行 / 墙 / 地板
     rows = st.get("rows") or {}
@@ -5098,27 +5293,39 @@ def _p_azul(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     _text(cv, rw / 2, base_y + rh / 2 - 20, "花纹行", "#cfe0d8", _FONT_B)
     for i in range(5):
         cap = i + 1
-        cnt = len(myr.get(str(i), []))
+        row = myr.get(str(i), [])
+        cnt = len(row)
         x0 = 16
         yy = base_y + i * rh
+        cwid = (rw - 32) / cap
+        tsz = int(min(cwid - 3, rh * 0.5))
         for j in range(cap):
-            x = x0 + j * ((rw - 32) / cap)
+            x = x0 + j * cwid
             filled = j < cnt
-            col = acol.get(myr.get(str(i), [])[j], "#888") if filled else "#263a3a"
-            cv.create_rectangle(x, yy + rh * 0.25, x + (rw - 32) / cap - 3,
-                                yy + rh * 0.75, fill=col, outline="#4a6a6a")
+            col = acol.get(row[j], "#888") if filled else "#263a3a"
+            # P3：已落花砖改用原创花砖位图；空槽/失败回退既有方槽
+            drawn = filled and _asset_at(cv, f"azul_tile_{row[j]}",
+                                         x + (cwid - 3 - tsz) / 2,
+                                         yy + rh / 2 - tsz / 2, tsz)
+            if not drawn:
+                cv.create_rectangle(x, yy + rh * 0.25, x + cwid - 3,
+                                    yy + rh * 0.75, fill=col, outline="#4a6a6a")
     # 墙 5x5
     wlx = w * 0.40
     wcell = min(avh / 5, (w - wlx - 60) / 5)
     _text(cv, wlx + wcell * 2.5, base_y - 10, "墙（上墙落瓦）", "#cfe0d8", _FONT_B)
+    wtsz = int(wcell - 2)
     for r in range(5):
         for c in range(5):
             x0 = wlx + c * wcell
             yy0 = base_y + r * wcell
-            col = acol.get(myw.get(f"{r},{c}"), "#223236") if \
-                myw.get(f"{r},{c}") else "#223236"
-            cv.create_rectangle(x0 + 1, yy0 + 1, x0 + wcell - 1, yy0 + wcell - 1,
-                                fill=col, outline="#4a6a6a", width=1)
+            cell = myw.get(f"{r},{c}")
+            # P3：上墙花砖改用原创花砖位图；空槽/失败回退既有浅槽
+            if not (cell and _asset_at(cv, f"azul_tile_{cell}", x0 + 1,
+                                       yy0 + 1, wtsz)):
+                cv.create_rectangle(x0 + 1, yy0 + 1, x0 + wcell - 1,
+                                    yy0 + wcell - 1, fill=acol.get(cell, "#223236"),
+                                    outline="#4a6a6a", width=1)
     # 地板/分数
     fl = st.get("floor") or {}
     _text(cv, w - 14, base_y + avh / 2,

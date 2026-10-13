@@ -1,0 +1,166 @@
+{
+  "reviewer": "/root/kalah_domain_review",
+  "kind": "read_only_file_hash_and_existing_evidence_verification",
+  "production_imports": false,
+  "tests_apps_native_builds_executed": false,
+  "source_files": 411,
+  "red_source_content_id": "c037425541d17e14eacfe10a1be3efa14ec542acf9a4ddc6cec9c256305d3ab3",
+  "domain_source_content_id": "1b5fa41cf53ab7146a000a37d9116b520c1c1c92e5421b9d7f7f6df29911d561",
+  "red_to_domain_changed": [
+    "games_pkg/kalah.py"
+  ],
+  "test_sha256": "faa08c01749117ceb37f2b1066a8b7b095d857090069f4484cccb63502efae9a",
+  "baseline_kalah_sha256": "8655ba17bcc4ef36a20c1d3f46233b03df517170a6ba00126d4d33c11f89e85a",
+  "current_kalah_sha256": "d64c0edaf201cbfa2c3d344ffc69b414e16104b6e746e96e3f5e556a71db6d11",
+  "red": {
+    "exit_code": 1,
+    "failed": 11,
+    "passed": 7
+  },
+  "domain": {
+    "exit_code": 0,
+    "files": 10,
+    "passed": 150,
+    "failed": 0,
+    "skipped": 0
+  },
+  "all_raw_hashes_and_counts_match": true,
+  "all_snapshot_case_current_source_bytes_match": true,
+  "single_attempt_cleanup_valid": true,
+  "full_gate_review": "PENDING",
+  "rows": [
+    {
+      "phase": "red",
+      "file": "tests/test_kalah_terminal.py",
+      "attempt": 1,
+      "counts": {
+        "failed": 11,
+        "passed": 7
+      },
+      "exit_code": 1,
+      "cleanup_ok": true,
+      "log_sha256": "8edde1f8b30d2a64ab0b52922143cbd0e206b3d9e7ad9275b61f4f552b0e3d55",
+      "case_source_files_exact": 411
+    },
+    {
+      "phase": "domain",
+      "file": "tests/test_game_client_lifecycle.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "67ecd033ff9b6c789c9fa77a08973200a7197e96beb9a6558f7f5f9375801623",
+      "case_source_files_exact": 411
+    },
+    {
+      "phase": "domain",
+      "file": "tests/test_game_lifecycle.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 5
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "a44cbd38f88031ffbcefd3dc6c301ea15b1858063365feed0a6f92b41e8a9ed4",
+      "case_source_files_exact": 411
+    },
+    {
+      "phase": "domain",
+      "file": "tests/test_games_w2_logic.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 19
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "8aa456f061e41e011337aba46de9631ec14b47e9e7bba06e313fce4270948080",
+      "case_source_files_exact": 411
+    },
+    {
+      "phase": "domain",
+      "file": "tests/test_kalah_gui.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 2
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "9b0dcc100c6f6fef13aef7a635f7aa91102edc89a148b4c006ccba66cbce2768",
+      "case_source_files_exact": 411
+    },
+    {
+      "phase": "domain",
+      "file": "tests/test_kalah_input.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "f2feca4829cca0f79cdcd6b96e5ba6786d93f591a1339a6d411d305e02d157e2",
+      "case_source_files_exact": 411
+    },
+    {
+      "phase": "domain",
+      "file": "tests/test_kalah_parameters.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 58
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "08c8251cf384f98b5e0549b28dc220daa43407675539168511fe09d0392d7747",
+      "case_source_files_exact": 411
+    },
+    {
+      "phase": "domain",
+      "file": "tests/test_kalah_terminal.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 18
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "e1442780eb0ac3d939065282da320f03bac58d76f5eed3c0b9105cfcd6ac7ef1",
+      "case_source_files_exact": 411
+    },
+    {
+      "phase": "domain",
+      "file": "tests/test_kalah_web.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "8d2febae70ba94a0e3c00ab086bdf3c5fbbd9204b4f068ff9c5e876ced905ea4",
+      "case_source_files_exact": 411
+    },
+    {
+      "phase": "domain",
+      "file": "tests/test_rooms.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 15
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "08173de6da9de875dcb06748dd74ef6b52f379dfa68bf9f80786cdb731d52a1c",
+      "case_source_files_exact": 411
+    },
+    {
+      "phase": "domain",
+      "file": "tests/test_server_game_lifecycle.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "0c5ff1c91b65bca336e88c77144310e173d6b8b2f137bdd669ce0b3d26c92178",
+      "case_source_files_exact": 411
+    }
+  ]
+}

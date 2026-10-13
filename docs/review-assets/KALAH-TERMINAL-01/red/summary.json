@@ -1,0 +1,40 @@
+{
+  "files": 1,
+  "totals": {
+    "failed": 11,
+    "passed": 7
+  },
+  "exit_code": 1,
+  "seconds": 1.95,
+  "source_content_id": "c037425541d17e14eacfe10a1be3efa14ec542acf9a4ddc6cec9c256305d3ab3",
+  "content_fingerprint": "64c103fb221da3786506c3e2ff8202925b38d9eeafa3e9f4118fa08fa50878cc",
+  "base_commit": "2fa1c9eb5fc499c1bd424b36e2093f1f5bc84b69",
+  "runtime_inputs": 411,
+  "results": [
+    {
+      "file": "tests/test_kalah_terminal.py",
+      "log": "logs/test_kalah_terminal.log.txt",
+      "sha256": "8edde1f8b30d2a64ab0b52922143cbd0e206b3d9e7ad9275b61f4f552b0e3d55",
+      "counts": {
+        "failed": 11,
+        "passed": 7
+      },
+      "status": "failed",
+      "exit_code": 1,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    }
+  ],
+  "failures": [
+    {
+      "file": "tests/test_kalah_terminal.py",
+      "status": "failed",
+      "exit_code": 1
+    }
+  ],
+  "visual_mode_enabled": false,
+  "actual_GUI_game_acceptance": false,
+  "old_binary_source": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "old_binaries_contain_this_fix": false
+}

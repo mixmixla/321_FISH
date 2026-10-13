@@ -4,6 +4,15 @@
 review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-13（Asia/Shanghai）。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+## KALAH-TERMINAL-01 当前规则源码失败边界收口（2026-10-13）
+
+**IMPLEMENTED / CODE_DOMAIN_REVIEWED / FULL_FAILED / NOT_AI_ACCEPTED / NOT_MERGE_READY / STOP_AFTER_DELIVERY**。[Task v1.1](task-packages/KALAH-TERMINAL-01.md)/[Review r1](review-packages/KALAH-TERMINAL-01-r1.md)/[收口决定](review-assets/KALAH-TERMINAL-01/closure.json)。用户13:34北京明确仅当前Kalah必要门禁/独立审查/提交推送/清理后直接停止，旧连续推进上限已替代，不因用量reset启动新Task/构建/UI/美化。base2fa1c9e/branch fix/gemcity-purchase-20261013，root唯一规则/新test/治理写入者，原c864234/dirty/index/1143保护。
+真实RED11FAIL/7PASS/exit1保留；自然初始48子seed1经49次合法act仍playing且A空。生产仅kalah._sow 9+/4-：播子/捕获后原_check_win先判、finished关有效go_again且last5tuple保持、胜/平领域消息return不再换turn；其它规则/输入A1..6 B9..14/GUI/server/room/依赖不改。新18case RED后未动，含非terminal、真实RoomManager和4个初始合法序列。
+领域10文件150P0F0S/exit0，独立代码/领域范围0 MUST；唯一完整169文件 **2457 PASS / 2 FAIL / 20原opt-in SKIP**、exit1/836.497秒，source1b5fa41cf53ab7146a000a37d9116b520c1c1c92e5421b9d7f7f6df29911d561/411与domain/current/source/cases一致。失败为server welcome动态loopback2414 bind10013/connect10061、chat放大后first_visible1!=0；无同环境干净基线对照，不宣称历史失败。两个FAIL阻断AI_ACCEPTED与合并，独立原证据终核不等于完整通过；未重试/改skip/timeout/断言，20仅原r45(1)、visual_screenshot(1)、ux_visual_chat_shots(18)，禁危险--run-visual。
+180原日志（RED1/domain10/full169）byte/hash/singleattempt/cleanup/exit与411输入/Git LF绑定交付核。旗舰GUI raw仍Tcl after invalid-command-name诊断，pytest PASS不代表干净退出；client.py摘要无条件“轮到”为包外静态边界，当前停止批次不扩修GUI。主GUI真实退出工具BLOCKED，编译完整游戏/邀请/结束再开、外机/LAN/DPI/最终视觉未验，CP4旧WinError5保留。
+旧三EXE/ZIP只绑定9803303/source135…410，不含本修复、不是当前最终源码测试包；旧full2441与EXE-EXIT服务自然退出接受仅历史。本项没有新构建/覆盖旧包/上传产物。唯一full已结束，无本批测试/应用/构建，任务源/新test/资料/窄attrs待普通commit/push；最终leaf/remote以Git及最终检查点为准。PR403不重试，无新PR，不main push/merge/Release，不公司/真实资料/休眠机/CP4实验/安全配置/旧Goal。
+最后仅本Task Git字节/范围检查、提交普通推送/远端同SHA/clean与原dirty复核，即最终停止。没有下一READY任务；全量失败后续处理需要另行明确范围，本次不继续。
+
 ## EXE-EXIT-01 服务自然退出有限阶段交付（2026-10-13）
 
 **AI_ACCEPTED_SERVICE_EXIT_ONLY / MAIN_GUI_BLOCKED / COMPLETE_GAME_UNVERIFIED**。[Task v1.3](task-packages/EXE-EXIT-01.md)/[Review r1](review-packages/EXE-EXIT-01-r1.md)/[主控有限技术接受](review-assets/EXE-EXIT-01/adoption.json)。文档base f71438a，产物绑定9803303/source13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345/410，三EXE全部hash保持，无源码/测试/依赖/PROJECT_MEMORY修改或重建；引用SYNC唯一full2441P0F20原opt-in，不放宽skip/启用危险--run-visual。

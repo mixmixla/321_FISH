@@ -7,3 +7,4 @@ docs/review-assets/GATE-FIXTURE-01/**/*.log.txt -text -whitespace
 docs/review-assets/SYNC-LATEST-MAIN-01/**/*.log.txt -text -whitespace
 docs/review-assets/EXE-LOCAL-01/logs/*.txt -text -whitespace
 docs/review-assets/EXE-EXIT-01/logs/*.txt -text -whitespace
+docs/review-assets/KALAH-TERMINAL-01/**/*.log.txt -text -whitespace

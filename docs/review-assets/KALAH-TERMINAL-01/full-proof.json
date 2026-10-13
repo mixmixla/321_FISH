@@ -1,0 +1,2131 @@
+{
+  "reviewer": "/root/kalah_domain_review",
+  "task": "KALAH-TERMINAL-01",
+  "task_version": "v1.1",
+  "kind": "read_only_existing_evidence_and_byte_verification",
+  "status": "FULL_FAILED",
+  "ai_accepted": false,
+  "merge_ready": false,
+  "production_imports": false,
+  "tests_apps_native_builds_executed": false,
+  "source_content_id": "1b5fa41cf53ab7146a000a37d9116b520c1c1c92e5421b9d7f7f6df29911d561",
+  "source_files": 411,
+  "source_id_recomputed": true,
+  "tests_id_recomputed": true,
+  "dependency_id_recomputed": true,
+  "all_current_full_domain_source_bytes_match": true,
+  "all_full_case_source_hashes_match": true,
+  "case_source_hashes_checked": 69459,
+  "red_to_candidate_changed_source_paths": [
+    "games_pkg/kalah.py"
+  ],
+  "tests_unchanged_since_red": true,
+  "runner_sandbox_dependencies_unchanged": true,
+  "full": {
+    "files": 169,
+    "passed": 2457,
+    "failed": 2,
+    "skipped": 20,
+    "exit_code": 1,
+    "seconds": 836.497,
+    "cleanup_failures": 0
+  },
+  "domain": {
+    "files": 10,
+    "passed": 150,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "raw_logs": 169,
+  "all_raw_hashes_counts_exits_match": true,
+  "single_attempt_cleanup_valid": true,
+  "summary_progress_exact": true,
+  "run_visual": false,
+  "run_hardware": false,
+  "skip_rows": [
+    {
+      "file": "tests/test_r45.py",
+      "skipped": 1,
+      "declared_reasons": [
+        "SKIPPED [1] tests\\test_r45.py:425: 需显式启用 --run-hardware"
+      ]
+    },
+    {
+      "file": "tests/test_ux_visual_chat_shots.py",
+      "skipped": 18,
+      "declared_reasons": [
+        "SKIPPED [12] tests\\test_ux_visual_chat_shots.py:294: 需显式启用 --run-visual",
+        "SKIPPED [3] tests\\test_ux_visual_chat_shots.py:308: 需显式启用 --run-visual",
+        "SKIPPED [3] tests\\test_ux_visual_chat_shots.py: 需显式启用 --run-visual"
+      ]
+    },
+    {
+      "file": "tests/test_visual_screenshot.py",
+      "skipped": 1,
+      "declared_reasons": [
+        "SKIPPED [1] tests\\test_visual_screenshot.py: 需显式启用 --run-visual"
+      ]
+    }
+  ],
+  "failures": [
+    {
+      "file": "tests/test_server.py",
+      "test": "test_status_default_online_in_welcome",
+      "observed": "port 2414 bind WinError10013, then connect WinError10061",
+      "changed_by_task": false,
+      "causal_attribution": "UNDETERMINED_WITHOUT_BASELINE_CONTROL"
+    },
+    {
+      "file": "tests/test_ux_visual_chat_regressions.py",
+      "test": "test_short_history_is_not_clipped_after_window_grows",
+      "observed": "_first_visible is 1, expected 0 after window grows",
+      "changed_by_task": false,
+      "causal_attribution": "UNDETERMINED_WITHOUT_BASELINE_CONTROL"
+    }
+  ],
+  "flagship_gui": {
+    "passed": 6,
+    "tcl_invalid_command_after_diagnostic_present": true,
+    "natural_quit_or_visual_acceptance": false
+  },
+  "baseline_retest_executed": false,
+  "retry_executed": false,
+  "old_exe_source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "old_exe_contains_candidate_fix": false,
+  "new_build_executed": false,
+  "checker_seconds": 46.13,
+  "rows": [
+    {
+      "file": "tests/test_account_credential_commit.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 10
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "e29203da469d32b6d8ba970b6732bd87758d07fe2d27a2f3e9403b63e0763257",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_account_credential_contracts.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 32
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "df0f40b0a76ec57ba8b573e64e1141726e340a318461877013e4a5e6bec7eea3",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_account_credential_file_failures.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 2
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "0cab4cc5036d6b5547e0f961cdaa5f7bd8b94377cf50ec1a21bd891deb2dbc21",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_account_credential_regressions.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 6
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "7933198b9c5d50dcb7c7a1d9b98ae7a254c4ac8438816e50f9ae77d159adc0c9",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_account_credential_transactions.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 22
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "92cd3f628bff97221bb2e955292372a84e387d936bbdac805c07e61d2724d01e",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_account_credential_wire.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 17
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "a5880202ba6701192a6589d2d72768b173ac057adf0b187c3dc14ceeb1ca37b1",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_admin_credentials.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 24
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "39ce26ba1ebab6b7e0cfefe447b4ca9ae5137e7298e3c477665a738e31ce67db",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_admin_groups.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 14
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "6f480453b6a697742b7eec1d34c7977debafcc555bafcc93033affe9928ea56f",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_admin_groups_web.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "470b56c0eeb943f204f5af2773d93289c3ed0eb0f30fb5ca49884e589e2aef6f",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_audit_audio_callbacks.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 3
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "a1de63851679fcd358f77863410bed3a74be5943a55759b3a786a589a0a1fcae",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_audit_e2ee_limits.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 3
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "8031a8f9e06e7d8f5b8c6acd2c4e5ed70d62f70d65380a4335283eafda0bb853",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_audit_file_auth.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 18
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "7825dd8711d6996b2c47d19d8a58d61fc9082428fdf27e4545e4e0ed0e718a73",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_audit_moment_images.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 4
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "48934358413ab0a21084d717c316faae0936e8f2b8ec6d4004c59f634561b425",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_audit_preview.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 5
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "a3559c3d1176ff4974419e6d57ede95bf04ab5436c4cf9fd7c2bce11619e14bb",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_audit_server_security.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 4
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "b7849058c50ee29d00a15055c9906a56cba039d5a1f905c20709fb30cc669ce7",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_auth.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "0f0618824cb495ff18236d05dde98ba592b8220368ff17ec491df7baef164074",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_betrayal.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 11
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "a58649ca31fe9b28115558a474c43f34a5f8761ef0475fc4e580126d73cf77ff",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_boardgame_asset_img.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 3
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "010c29e1f7973801b2466a820dfefaa75255d79aa66126fbc1cf17bf64420275",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_boardgame_assets.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 3
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "379cd6558a6c2f1b9cc1e088ef721afb8d5d17950fc9081fb9cba2460a027775",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_c9_group.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 4
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "46659a20b6c4882e6f087b0d9bfc940e07b1c6b11ff677597f921f3d9fcd6d38",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_cc02_retire_core.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 20
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "62381ee793bceeda3d4b90edf03bc3cabf5e9320f6cf861dd8516ee1fa1bae5b",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_cc02_store_min.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 27
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "5edb05c02ba8f8c99a76bc0b95bc30755581115e662cf21722c2582c45ebc7a3",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_cc02_store_receipt.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 80
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "f3be20f277ca601a7430437dbefd013f9f4713ca3d0053002976291bd28bbc3f",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_cc02a_client_kick.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "914ba98b1adadb6de2b815f721dabe17af5724199970990f753aa5978fe86b46",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_cc02a_kick.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 4
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "76b5bbea194a7dbdf7665c794f2d7df2eca82d3678ba60757cfedc7f26ee009a",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_cc02a_profile.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 2
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "6dd3b21487c091b58aee258784f8bc63e5bef319ec3538eafb7b1e382edb0c5b",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_cc02a_restore.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "7ad56f27428e43bf3688c3c6d9f46537deeb8db4dc855e4284841437e024c898",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_cc02a_web_kick.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "353949a8236178d20ef1829924baa88a4dbca28c29768e1d1d47c6e1199d3468",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_cc02c_resource_async.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 14
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "fdd87d4cae218397cdf23279842cabd9d44108ee53ef9b3045a6bfb147ad8d74",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_cc02c_resource_files.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 41
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "932440fe7f6e06a9ba4b94503d00de989473fe3168ef6de96e71e67db5f980ed",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_cc02c_resource_integration.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "166df8667cf3ddbb725ee6554f4ae0ab331541de83abeb7f1518ecd410b5cae8",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_client_core.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 33
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "206811b164ef9d97e75731fb0778972ab7a106456fc94883be53508e16851da9",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_config_crashlog.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "a627885f4b9efaac136d48977c38ccc0cf413d2b07f0c2dca5d54f69518b7604",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_crypto.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 5
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "8f22f30029c7f2e324b19797f2c3feeec9e1b64d596439a1339a1d8283568e71",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_discovery.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 4
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "afa646f0bba12b33b1984b5c3dcb6c83f3c40466b6b35dfa4f6ca1b0fae9bc3a",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_drafts.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 13
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "36cb9799e5cccdff0cf9e55ff9a75d205eb9885b868122beadcf0c806e639575",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_excel_sheet.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 5
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "c8f3ce8737869e3cb2067b59642b99a676939ba18004fb9ea0463f06e04d27f7",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_excel_skin.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 2
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "ce810bf6d169a320d65ee3cee8cbbea85bc836aaefff8fc50bf5b10a94c0ca3c",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_filexfer.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "ce88aff1bdbc2308a941a2833b3bfc0daed70f51e4a4e4c8d9c78d61ea1a2fee",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_flagship_board.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 43
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "e1bccd288da57f652ac6b6a7326cb7f218406399e6402731cd2f243ce55748ac",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_flagship_game_wire.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 3
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "5047deb9b206dabec752e2f8580ead3d9cd4c4e2d4a49a3f3de78f1113e7344d",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_flagship_gui.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 6
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "f071f80b88e942f909631f2e43df457450659e6b1fa16878fe2eed088ca34e14",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": true
+    },
+    {
+      "file": "tests/test_friend_trial_start.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 36
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "293a440e785d4869c3dbff4c53e6a139a8b93b03337a34913ba232a438aa4029",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_fwd_media.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "f3515b7ae294bab1312568b5ae851b55e73da5cb33431691167d7ec58878e049",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_game_client_lifecycle.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "7ca31a921c8865a9bfb008ce2e6ec895051e458938f37c333a25461cd429776a",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_game_lifecycle.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 5
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "a44cbd38f88031ffbcefd3dc6c301ea15b1858063365feed0a6f92b41e8a9ed4",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_game_owner_recovery.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 4
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "9687366a2c0ecb1e7cc62a554816f7d09063ca0059d451b75e322bb49043269b",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 21
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "fb775c76335ecd971f2d873116f14eeb728cca4adc6c881c3ceacaf9a67421e0",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_coc.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 30
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "64faa80f4e033e1ca0aa614907517db98adb152f8474da7c7f5d87a1c5220353",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_euro.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 17
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "4e4236803ce30cc16218b8a47d58ebe3f2f6f6b9112f8ebc7db1de4cbc1f4cff",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_new.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 16
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "8bf60869b4b380f7ec95e092d5cb978769b7499c0a644902e330b0d23a70e1dd",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_w1_new.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 14
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "9feb649f25f1b4ae4cf1a9ca68063eebb80d89a9d4c05e615a38ba689506fd52",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_w2_logic.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 19
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "8ae4dd6712b9c81c7cbd4bb90938b8351b0227fadf6f1b04f6c6175f9a034912",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_w3.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 17
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "63352095a04057704cf9be1a6eda937914228527623b2ce534fef36298aae3e8",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_w3_rooms.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "0424e2574836a984d2848d9f062594b4afa2d2e56ac530569a0f8fccbc669ec0",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_w4.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 23
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "d6c1333fbab3d24cd45594611efc3d394ba34a0fd1ad7dfece8e97ab8fd291c3",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_w4b.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 15
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "ecd6a6193d99646c5acb9f2d16a45af1921de18283de50755e8f0a4b796fe611",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_w5_avalon.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "8a6eb49043411136ed63d00e5932eec21c8b7a6f36109bec2ec1cf2b07d7a391",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_w5_liar.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 11
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "ea7ab03fbe29b7b8d3273e03e532e18f43547b41f657b579d9ccaee81224b1eb",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_w5_ninja.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "67cce5cd8d28574f32360df687433721b4a13f3c2f0d90b1d2aacedb1b49ad88",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_w5_onewolf.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "67cce5cd8d28574f32360df687433721b4a13f3c2f0d90b1d2aacedb1b49ad88",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_games_w5_werewolf.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "d9a02e533b16a124af6fc5d0e49029581608102fb554b82321fe9c0fd515a35b",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_gameui_compact_controls.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 26
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "da1327c541c731a278261dd013a7c322be5bfa815c265394f8b450aa95570936",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_gameui_compact_gui.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 3
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "b9ca618ac06295b2ac719814a4b7ad0af3e21524b83d6a0ffb43fca123d36544",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_gemcity_purchase.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 21
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "1536970c835d077d7438fc352639631c699c4a2097f39d6fe580de776c4ee796",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_global_search.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "c4d95407d7fcf5e4cf612d3c7ef44a51a086b6f89bcc110c2155fcaed639dc04",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_gomoku_fx.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 33
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "fa0655f5e077f9a426c359fd854dda916d6fe65ddc87600a777c21585fa74df3",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_interaction_mode.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 5
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "61f2c2f09be20a3fe6682d79ef80a41e551afb79d5e8c732d1078c6eab43a78d",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_invis.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 4
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "98852f2050855c2e3713b2a9fc72362cfbf3441c6031d4cf518f8144c6e2fdca",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_kalah_gui.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 2
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "42c81d3fb9f9942c11b4a32b38e3f8cb519ae3b8b2844fb58fbb87d6a12579b1",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_kalah_input.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "3f154986fe33d28aa8c6f23cbf1e6cf24e1125224db93c4f2afdc3c42197c936",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_kalah_parameters.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 58
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "2b7e8e2cfc72035e8fbbd4c3c6d347a034b199b10979836d1b53e0ada3785a12",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_kalah_terminal.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 18
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "5a4dfac28275186b0d007d43647cd764e0e66c8ef55427f045ede471e458eb82",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_kalah_web.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "b1b6b6e955b7c0dda5203a77fe31e4a3c17077ae5b8765f1fdb252d5c522a35c",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_login_foreground.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "45c740c4a48ac50a103da05cb789c204784d20a895f1cfc9ffe718ad648b13d2",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_login_visibility.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "c554fb0ed759d91be4f25cd42098d1fd1f162439d8b0c4b85f13e1e6af990eb6",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_msg_list.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 25
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "49839db5ba7e3c7464fdb2a5844bc58f76b3d91570654d7cc4fb159a2433c05c",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_msglist_group.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 9
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "970670f33ab6c2d8192e66821abbf91e55090fb6bbb2abf29204e35515c4c763",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_multisession.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 5
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "27e8028389606ffbea0c9b2378e1d8f62881a8b8763126230a57ad77d62468b1",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_p0_web_security.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 9
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "28f66e1661cd9a8cfe3585d067d9859f5010cc1435e2261762e8e4199ac0d764",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_passcode_logic.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 6
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "af95d2bdf7e0edb7f31039eec4c5a0724965f0802030f7b462426b04128bcf25",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_prefs.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 9
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "5a3056882655dab7dcec9a13bed0a1dfbc5254bb82e8ca51d3afaaeacc0631ab",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_prefs_schema_audit.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 19
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "2d21c28b6d2effe663475d6decc680ec8d96175be932ffd73ec4808e97feff0a",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_protocol.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "b90db9f51b587358a2e21e9db35fce286504be287e8f1a6b79a39d7f14be41be",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r15_ghost.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 10
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "0ba0b5338040ae1904192dfff69a6afe8b469a10336b84706d09f6b43eadc1e5",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r25.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "a771050a8c7bd26dd54dbd0eac7f35b35e8eaa289735687062ff7cb5bb69c419",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r26.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 14
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "219e00f45de6f5c090563fb19775922b832a4ccd85ffe498d75c90bc056d83ce",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r27.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "3e5df6bf03ada9df4d185a1a8cd8f65d52c1af4e822766695c2aaea1cc45697a",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r28_group_mgmt.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "5c355090a9d182585eeec61ecbe3bcb2f1129a1ab2d79924493d5f18fed6c7ac",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r29.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 18
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "3b0746034b2a8a6d37e0e7a94c2879d5bec2dd2d1cb3d7d1839718a521931442",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r30.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 19
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "ddf8f805a4fa8e63d45ce6ea0b105fc276f9d9ab4874143a86a53969f22995be",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r32.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 26
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "d5ac0802a293b3c5c4309b2c00c99b0b3b91823dd5afbccc3463095bff830878",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r33.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 9
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "8235f88c4eb1cbc4f116681be1f7e6c59c55547e916db40b1ce8afbccc08ebd5",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r34.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 9
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "a97e1e35e9de98a6b74cb7c57576219989c2cf7ad16ca826fad553208516712a",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r35.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 15
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "e446c4f8a89733ec8b95bdd92614464a3b0290b6e39f64b56120674b1bf4ca87",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r36.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "15126030c501720520ca40eeaa8dcb6eb7f252f8df27eb2383bd6d43c781fdfc",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r37.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "a1ba996224c41c7f39266d7d78d0a6ddcbc26b483388d8c1dd591e31a2a5c296",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r38.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 22
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "d8f83b7f77def43f69539a18c0ce16bc7e34d32167a70d0413a34a1486adb892",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r39a.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 11
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "02dd2fc709385dbabc849950ab7fcdb3aeee6c998c1281162f5c57c188ede077",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r39b.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "42f8cf7a2615513e9719511355e97d13c8c2bd530e2645db183ac8967f7ae944",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r39c.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 17
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "da3b36c7b1d14af0f1109fabf6958364aa8ee1435116f8cb25b47a39dede2a08",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r39d.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 18
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "47ac4a6f14dd95477bb902e78ad0d8faa6ed9fb7bf44aca470821498fb6cbfab",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r41.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 21
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "53a46c53d18acc68a92e6a90ea10a5284fbad937879ea908460c411a1ef5fd0a",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r41g.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 2
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "407458256bff9f772a31eee5905a3854ca032cf3e657aaab361eea3c70c00111",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r42.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 16
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "18a5b2ecb11b4d2203f106b51c9ee476719d280098f04eaf5506a4e20a44c4bc",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r43a.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "56d4e2c2c4a7c58e8eb47443fce31c644a8c12aa208561bf6cfcad9bc0bc077e",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r43b.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 5
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "b7f45f361712bd4da2cc57cb32ce2bffdfa1d49f8bdb87fca4285e7440707d8a",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r43c.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 6
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "39d498abd87b556064f38823a9d12a75c7af3951bd417f4543f9e31dbc249a56",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r44.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 10
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "d126e7b43b9333a3fe4b6cc63a7008a0a8c0e375a121422e784dfd53920eae3f",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r45.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 17,
+        "skipped": 1
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "9718c31743cb06c285c4796a08d44db1e588103e0270357173eed514fe11ae04",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r46.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 24
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "69157bfaefa83b1c04bfbd2369616c661da794336c377c610e64ccb0e0d81c23",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r46b_web_fix.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 6
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "2109e99d6d045260b18c3d709b407dfdfe393a6bab1568bd5ac8085f1f8a7188",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r47.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 16
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "6f7f507a49b6bf84d1e78b2673a37a40a68f56403c14cd8ba458d6afc041447f",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r49.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 15
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "7d6824a79f4f740d4ee0a207e08205505118b6875983ea164a6632a12baa3b34",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r51.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 10
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "48ff21e83c87003ebd9887f4e709e80b457e34ebb25fb310f31900b0204af021",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r52.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 10
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "48ff21e83c87003ebd9887f4e709e80b457e34ebb25fb310f31900b0204af021",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r53.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "337c4818186a832a8e9d3118b68808261e694010b47134675fa50624f3267c8c",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r54.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "e691b46c4b0b2d25a34dc57b6fd72936552837650630c012d6a56fb922efb466",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r61_features.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 11
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "2ed4aabf8fdf52c24e015228ea3bbbc62dd8548c7cc037f640e4949b1d9924d1",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r64_paste_snip.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 15
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "f5eb9120f278fe8a598f77603d7903f1a06b9036620f5dc48eb938e894ec3126",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r64_sticker_packs.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 17
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "77e17ce97a61f5a39e3be9e0dceda2938b833591fadacb8ab0d95dcb5ecb3dc1",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r65_web_sticker_packs.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 11
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "c86bccf430b4c6cda5260ff92ed416871e1206fc77d2526dc375a8fcb0a24d47",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r69.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 52
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "3cccdecb7f1107e2ea98ab987070f36b06f4ce2a4cbdfbf4148e80b720b9e438",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r70.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 25
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "e4e8c86e1c4608a55911b961136a21d5dab1be7c6dedfb57457e8afed2d00591",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r71.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 6
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "bb38b45b80651f56c6e92a2b24ed49d83cbc7b1f23c092ffa29569f141fbd1a4",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r72.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 45
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "452acfdbdd336e5b6646b8ff68b0f8f81c78c7fa049bfcd4bbaee37c2a7a9e71",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_r73.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 10
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "41691d9cd7455d106d6e3d9ac19134974f722bbcd19ebc872725a1dc163f6435",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_rel01_local_trial.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 15
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "1e2c238cbdfcb29f552ed22b057e60e25ae27ddb2e56842b4930f1bc80e5fb3f",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_resource_manifest_numbers.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 35
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "f8f35aba70f8bf529a6cb329a15b2e8dbd0853fec9e239fbbb4830658cc4086f",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_cli.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 18
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "19046acf5476045eaffba483a0398a2efbaa220f0fcee384cec655affc60c6de",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_client.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 49
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "ead341a814fe8b15bba5a8915e93f9a1d917c8102cbc1a27c98cf1ffedeb9061",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_control_faults.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 10
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "70acaba40a5a0dadc3b86b29be006f08ccb73667b811bbc34fa4f4ffa414a0d3",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_gate_io.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 5
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "3e9c8ba31431dda773a1d7f5f050e5d5ff84426e3bf15be94f00ffa87951fce8",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_hub.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 20
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "0b3a026ea86fcd5924c1e4e8df977f22faafc9c83583ddfcda953855e216bb5b",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_identity.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 19
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "0ca92c2d49d35fcc7306cbb75a474a33373068d06a0f9f6a8c170e5ba76564d0",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_lifecycle.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 21
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "c0c26f78b88fb808f25d2b1750034e9256231b7b7028d44a5bc1d28a8ff85f6a",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_process_faults.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 3
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "75fc6871f317e1827451efaec9bbc5b56f2c58c095f801eea14a0454479f54b6",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_publish_io.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 17
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "e5613371f294270bbb89cef8f02c0953b640fd4ad98298e2d1a6f9666a071d32",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_reconcile.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "fee1dd1858351fcb335251a8893c4c554c35a3890484139152e1ca2a3c6b0407",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_resources.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 4
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "73ec92cc5e7f1450ba48899775d3aa57946feac072b2a1b317a850793705d8c4",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retire_recovery_store.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 72
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "d9778eb2411519b0dc379e55fbf3270fc85e8870fce1deba61dbddc03fc6e971",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retirement_status.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 61
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "d956db6971bfeedd74064c44afeba4993edfad62723429c2f51f7461b30e063e",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retirement_status_gui.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 13
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "193c7d35562d6ba059b87cf82704fb16171aa1ea40277e91c4c0623f77d406ba",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_retirement_status_wire.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 37
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "c40a3dc62aef65b0bfd8d410cce07a4fab6dad33b0aa53b52a49d48468484295",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_rooms.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 15
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "0f01f52bd54949f259abff3b6caf3dbaaee5a182727e000206ed8a0936a1f222",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_rummikub_selection.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "8b71c5e8484d3c67f4a48bbaebbb08f1921c3081211385f39f97893ea00a8c84",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_runs.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 31
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "7fe4a6c4078083a91038583112a15d7f6913b6d24a116c39d0ddd59df682a41b",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_server.py",
+      "attempt": 1,
+      "counts": {
+        "failed": 1,
+        "passed": 60
+      },
+      "exit_code": 1,
+      "cleanup_ok": true,
+      "log_sha256": "044a091eb121c2b8f2efddc2184d5f341afbc8fbcb34663597153fae2b1b7682",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_server_game_lifecycle.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "53875d7b2fbe2335ca1ac640e02df14a5b97e5bf5997486cc098ee9d367bc1cf",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_server_games.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 4
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "8138bed04e912d9f6fc1ab44c4fe0b39c0f5e2abfbccb16668b9c980b0ab8e73",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_session_cleanup.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "bb049c0032ee5135b0929ef11cff9dcfc6217b5e8e72da2deb00c61f7b782ef5",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_session_list.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "f3515b7ae294bab1312568b5ae851b55e73da5cb33431691167d7ec58878e049",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_settings_nav.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "71197dcee24b42d76ba7c33b14fcf9f5acac7fbaee4cba7b6b8e5411a44d6cd8",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_shortcuts.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 10
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "38804d17039715a1fccfa0435397e1a09146fb612a055b74a7e2650bbb43b9de",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_stars_preserve.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 37
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "f3135d5846b94767afdc4807024227528c87d2d23dace21fcfe3f07773d49649",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_test_gate.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "2b8e2cd4d9063c2065f72f7f8810f7159ae11c134ed1ec198064d1ab0d548fdc",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_test_gate_safety.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "71cbb4d9f63a7d7a4456b54dcf221d88d2da961bd5b20f047f52a10f7e07246e",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_test_gate_skips.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "649b00c2521dbd34eb343b1026f5291cfe6b411844373b39148d467197f00042",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_test_runner_exitcodes.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 4
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "f81ff64e06b6027e446bbdb2c8f0a8d7eb0e0af8425c40efb5deab9fa4a5e6bd",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_theme.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 12
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "bafc85342c973b2954dd99a5c06ee2042e0a4fddbf66cac4a34b8f0c2a8121b9",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_ux_repair.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 4
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "e820d2816182dc7321baae0728f8a9edf08e9d41296fbfd814358650d5f9ea24",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_ux_visual_chat_design.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 6
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "bee8d7fed246daba8e22ba180b9f67e692138dd5493b7cd5fffcf14de1ab4e25",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_ux_visual_chat_dpi.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 7
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "9f82fcf6be0180696a410290be528c9dca1e3fa3066687ec1937317b0fbfe12e",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_ux_visual_chat_regressions.py",
+      "attempt": 1,
+      "counts": {
+        "failed": 1,
+        "passed": 12
+      },
+      "exit_code": 1,
+      "cleanup_ok": true,
+      "log_sha256": "ee88b1e55f106b9882e9f203909f62252399b6efb3cf87f73176f10589e3fdd5",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_ux_visual_chat_shots.py",
+      "attempt": 1,
+      "counts": {
+        "skipped": 18
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "d5542130109f4afde1b1acff2ea6928ad92a7241b0b1ca1f7e7985439cf7b29f",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_ux_visual_chat_web.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "80a49dfa261a7e2ad5e7885fe00669b445b9a446a1645bf34d2354726e1e2a56",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_visual_screenshot.py",
+      "attempt": 1,
+      "counts": {
+        "skipped": 1
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "dedf62125c0bb0cb8d7d8226b2f34991650237e6d387821afb3b517c7989d37c",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_web_group_read.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 1
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "2573401ead335201db48c4605362c991791a6cd86bdc36a49818990c3c57cdda",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    },
+    {
+      "file": "tests/test_web_logout.py",
+      "attempt": 1,
+      "counts": {
+        "passed": 13
+      },
+      "exit_code": 0,
+      "cleanup_ok": true,
+      "log_sha256": "5c11bfd7d1130bdb63ce5e27ebe33b40d479aa3101b0e0a20cc21b0e34eec10b",
+      "all_case_source_files_exact": 411,
+      "tcl_invalid_command_diagnostic": false
+    }
+  ]
+}

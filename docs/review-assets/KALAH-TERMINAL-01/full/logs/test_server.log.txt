@@ -1,0 +1,60 @@
+...........................................................F.            [100%]
+================================== FAILURES ===================================
+____________________ test_status_default_online_in_welcome ____________________
+
+hub = (<server.Hub object at 0x0000022C75F49E80>, 2414, <threading.Event at 0x22c75ec6a50: set>)
+
+    def test_status_default_online_in_welcome(hub):
+        """R68：未设置过状态的用户，welcome 里 status 默认 online。"""
+        _, port, _ = hub
+>       a = TestClient(port, "alice")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_server.py:1483: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_server.py:47: in __init__
+    self.sock = socket.create_connection(("127.0.0.1", port), timeout=5)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+test_sandbox.py:188: in _guarded_create_connection
+    return _ORIGINAL_CREATE_CONNECTION(address, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\liang\.pyenv\pyenv-win\versions\3.14.5\Lib\socket.py:874: in create_connection
+    raise exceptions[0]
+C:\Users\liang\.pyenv\pyenv-win\versions\3.14.5\Lib\socket.py:859: in create_connection
+    sock.connect(sa)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <test_sandbox.GuardedSocket [closed] fd=-1, family=2, type=1, proto=0>
+address = ('127.0.0.1', 2414)
+
+    def connect(self, address):
+>       return super().connect(_guard_address(address, operation="connect"))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ConnectionRefusedError: [WinError 10061] 由于目标计算机积极拒绝，无法连接。
+
+test_sandbox.py:142: ConnectionRefusedError
+============================== warnings summary ===============================
+tests/test_server.py::test_status_default_online_in_welcome
+  D:\Project\321_FISH\.venv\Lib\site-packages\_pytest\threadexception.py:58: PytestUnhandledThreadExceptionWarning: Exception in thread Thread-156 (serve)
+  
+  Traceback (most recent call last):
+    File "C:\Users\liang\.pyenv\pyenv-win\versions\3.14.5\Lib\threading.py", line 1082, in _bootstrap_inner
+      self._context.run(self.run)
+      ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+    File "C:\Users\liang\.pyenv\pyenv-win\versions\3.14.5\Lib\threading.py", line 1024, in run
+      self._target(*self._args, **self._kwargs)
+      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    File "D:\Project\321_FISH\_tmp_gui\kalah-terminal-20261013\full\cases\test_server-1-8fe25d27\server.py", line 10525, in serve
+      srv.bind((bind_host, port))
+      ~~~~~~~~^^^^^^^^^^^^^^^^^^^
+    File "D:\Project\321_FISH\_tmp_gui\kalah-terminal-20261013\full\cases\test_server-1-8fe25d27\test_sandbox.py", line 139, in bind
+      return super().bind(_guard_address(address, operation="bind"))
+             ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  PermissionError: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnhandledThreadExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1 failed, 60 passed, 1 warning in 27.80s

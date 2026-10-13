@@ -85,16 +85,21 @@ class KalahGame(BaseGame):
                 self.cells[self._store_of(pid)] += captured
                 self.cells[opp] = 0
                 self.cells[last] = 0
+        self._check_win()
+        if self.finished:
+            go_again = False
         self.last_move = (pid, hole, last, go_again, captured)
         if go_again:
             msgs.append(f"🔁 {self._nick(pid)} 落在自己库，再走一次")
         elif captured:
             msgs.append(f"🐚 {self._nick(pid)} 收子 {captured} 入库")
-        if not go_again:
-            self._check_win()
+        if self.finished:
             if self.winner:
                 msgs.append(f"🏆 {self._nick(self.winner)} 库里子最多取胜！")
-                return msgs
+            else:
+                msgs.append("🤝 库里子数平局")
+            return msgs
+        if not go_again:
             self.turn = self.p1 if pid == self.p0 else self.p0
             msgs.insert(0, f"➡️ 轮到 {self._nick(self.turn)}")
         return msgs

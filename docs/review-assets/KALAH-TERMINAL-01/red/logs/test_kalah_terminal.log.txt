@@ -1,0 +1,302 @@
+FFFFFFFF....FF.F..                                                       [100%]
+================================== FAILURES ===================================
+________ test_final_own_store_move_finishes_before_extra_turn[win-11] _________
+
+actor = 11, outcome = 'win'
+
+    @pytest.mark.parametrize("actor", [A, B])
+    @pytest.mark.parametrize("outcome", ["win", "loss", "draw"])
+    def test_final_own_store_move_finishes_before_extra_turn(actor, outcome):
+        game, action, last, expected = _store_finish(actor, outcome)
+        messages = game.act(actor, action)
+>       _assert_terminal(game, actor, action, last, expected[:2], expected[2], messages)
+
+tests\test_kalah_terminal.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+game = <games_pkg.kalah.KalahGame object at 0x0000029F917478C0>, actor = 11
+action = {'hole': 6}, last = 6, stores = (31, 17), winner = 11
+messages = ['🔁 玩家11 落在自己库，再走一次'], captured = 0
+
+    def _assert_terminal(game, actor, action, last, stores, winner, messages, captured=0):
+>       assert game.finished is True, game.snapshot()
+E       AssertionError: {'game': 'kalah', 'status': 'playing', 'turn': 11, 'cells': [0, 0, 0, 0, 0, 0, ...], ...}
+E       assert False is True
+E        +  where False = <games_pkg.kalah.KalahGame object at 0x0000029F917478C0>.finished
+
+tests\test_kalah_terminal.py:39: AssertionError
+________ test_final_own_store_move_finishes_before_extra_turn[win-22] _________
+
+actor = 22, outcome = 'win'
+
+    @pytest.mark.parametrize("actor", [A, B])
+    @pytest.mark.parametrize("outcome", ["win", "loss", "draw"])
+    def test_final_own_store_move_finishes_before_extra_turn(actor, outcome):
+        game, action, last, expected = _store_finish(actor, outcome)
+        messages = game.act(actor, action)
+>       _assert_terminal(game, actor, action, last, expected[:2], expected[2], messages)
+
+tests\test_kalah_terminal.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+game = <games_pkg.kalah.KalahGame object at 0x0000029F918D6AD0>, actor = 22
+action = {'hole': 14}, last = 7, stores = (17, 31), winner = 22
+messages = ['🔁 玩家22 落在自己库，再走一次'], captured = 0
+
+    def _assert_terminal(game, actor, action, last, stores, winner, messages, captured=0):
+>       assert game.finished is True, game.snapshot()
+E       AssertionError: {'game': 'kalah', 'status': 'playing', 'turn': 22, 'cells': [2, 2, 2, 2, 2, 2, ...], ...}
+E       assert False is True
+E        +  where False = <games_pkg.kalah.KalahGame object at 0x0000029F918D6AD0>.finished
+
+tests\test_kalah_terminal.py:39: AssertionError
+________ test_final_own_store_move_finishes_before_extra_turn[loss-11] ________
+
+actor = 11, outcome = 'loss'
+
+    @pytest.mark.parametrize("actor", [A, B])
+    @pytest.mark.parametrize("outcome", ["win", "loss", "draw"])
+    def test_final_own_store_move_finishes_before_extra_turn(actor, outcome):
+        game, action, last, expected = _store_finish(actor, outcome)
+        messages = game.act(actor, action)
+>       _assert_terminal(game, actor, action, last, expected[:2], expected[2], messages)
+
+tests\test_kalah_terminal.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+game = <games_pkg.kalah.KalahGame object at 0x0000029F915D5810>, actor = 11
+action = {'hole': 6}, last = 6, stores = (11, 37), winner = 22
+messages = ['🔁 玩家11 落在自己库，再走一次'], captured = 0
+
+    def _assert_terminal(game, actor, action, last, stores, winner, messages, captured=0):
+>       assert game.finished is True, game.snapshot()
+E       AssertionError: {'game': 'kalah', 'status': 'playing', 'turn': 11, 'cells': [0, 0, 0, 0, 0, 0, ...], ...}
+E       assert False is True
+E        +  where False = <games_pkg.kalah.KalahGame object at 0x0000029F915D5810>.finished
+
+tests\test_kalah_terminal.py:39: AssertionError
+________ test_final_own_store_move_finishes_before_extra_turn[loss-22] ________
+
+actor = 22, outcome = 'loss'
+
+    @pytest.mark.parametrize("actor", [A, B])
+    @pytest.mark.parametrize("outcome", ["win", "loss", "draw"])
+    def test_final_own_store_move_finishes_before_extra_turn(actor, outcome):
+        game, action, last, expected = _store_finish(actor, outcome)
+        messages = game.act(actor, action)
+>       _assert_terminal(game, actor, action, last, expected[:2], expected[2], messages)
+
+tests\test_kalah_terminal.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+game = <games_pkg.kalah.KalahGame object at 0x0000029F919262C0>, actor = 22
+action = {'hole': 14}, last = 7, stores = (37, 11), winner = 11
+messages = ['🔁 玩家22 落在自己库，再走一次'], captured = 0
+
+    def _assert_terminal(game, actor, action, last, stores, winner, messages, captured=0):
+>       assert game.finished is True, game.snapshot()
+E       AssertionError: {'game': 'kalah', 'status': 'playing', 'turn': 22, 'cells': [2, 2, 2, 2, 2, 2, ...], ...}
+E       assert False is True
+E        +  where False = <games_pkg.kalah.KalahGame object at 0x0000029F919262C0>.finished
+
+tests\test_kalah_terminal.py:39: AssertionError
+________ test_final_own_store_move_finishes_before_extra_turn[draw-11] ________
+
+actor = 11, outcome = 'draw'
+
+    @pytest.mark.parametrize("actor", [A, B])
+    @pytest.mark.parametrize("outcome", ["win", "loss", "draw"])
+    def test_final_own_store_move_finishes_before_extra_turn(actor, outcome):
+        game, action, last, expected = _store_finish(actor, outcome)
+        messages = game.act(actor, action)
+>       _assert_terminal(game, actor, action, last, expected[:2], expected[2], messages)
+
+tests\test_kalah_terminal.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+game = <games_pkg.kalah.KalahGame object at 0x0000029F91925E00>, actor = 11
+action = {'hole': 6}, last = 6, stores = (24, 24), winner = None
+messages = ['🔁 玩家11 落在自己库，再走一次'], captured = 0
+
+    def _assert_terminal(game, actor, action, last, stores, winner, messages, captured=0):
+>       assert game.finished is True, game.snapshot()
+E       AssertionError: {'game': 'kalah', 'status': 'playing', 'turn': 11, 'cells': [0, 0, 0, 0, 0, 0, ...], ...}
+E       assert False is True
+E        +  where False = <games_pkg.kalah.KalahGame object at 0x0000029F91925E00>.finished
+
+tests\test_kalah_terminal.py:39: AssertionError
+________ test_final_own_store_move_finishes_before_extra_turn[draw-22] ________
+
+actor = 22, outcome = 'draw'
+
+    @pytest.mark.parametrize("actor", [A, B])
+    @pytest.mark.parametrize("outcome", ["win", "loss", "draw"])
+    def test_final_own_store_move_finishes_before_extra_turn(actor, outcome):
+        game, action, last, expected = _store_finish(actor, outcome)
+        messages = game.act(actor, action)
+>       _assert_terminal(game, actor, action, last, expected[:2], expected[2], messages)
+
+tests\test_kalah_terminal.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+game = <games_pkg.kalah.KalahGame object at 0x0000029F9191C950>, actor = 22
+action = {'hole': 14}, last = 7, stores = (24, 24), winner = None
+messages = ['🔁 玩家22 落在自己库，再走一次'], captured = 0
+
+    def _assert_terminal(game, actor, action, last, stores, winner, messages, captured=0):
+>       assert game.finished is True, game.snapshot()
+E       AssertionError: {'game': 'kalah', 'status': 'playing', 'turn': 22, 'cells': [2, 2, 2, 2, 2, 2, ...], ...}
+E       assert False is True
+E        +  where False = <games_pkg.kalah.KalahGame object at 0x0000029F9191C950>.finished
+
+tests\test_kalah_terminal.py:39: AssertionError
+____________ test_capture_draw_finishes_without_changing_turn[11] _____________
+
+actor = 11
+
+    @pytest.mark.parametrize("actor", [A, B])
+    def test_capture_draw_finishes_without_changing_turn(actor):
+        game = KalahGame([A, B], seed=1)
+        game.turn = actor
+        if actor == A:
+            game.cells = [1, 0, 0, 0, 0, 0, 20, 20, 4, 0, 0, 0, 3, 0]
+            action, last = {"hole": 1}, 1
+        else:
+            game.cells = [4, 0, 0, 0, 3, 0, 20, 20, 1, 0, 0, 0, 0, 0]
+            action, last = {"hole": 9}, 9
+        assert sum(game.cells) == 48
+        messages = game.act(actor, action)
+>       _assert_terminal(game, actor, action, last, (24, 24), None, messages, captured=4)
+
+tests\test_kalah_terminal.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+game = <games_pkg.kalah.KalahGame object at 0x0000029F9192D7B0>, actor = 11
+action = {'hole': 1}, last = 1, stores = (24, 24), winner = None
+messages = ['➡️ 轮到 玩家22', '🐚 玩家11 收子 4 入库'], captured = 4
+
+    def _assert_terminal(game, actor, action, last, stores, winner, messages, captured=0):
+        assert game.finished is True, game.snapshot()
+>       assert game.turn == actor                  # no further turn after terminal move
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 22 == 11
+E        +  where 22 = <games_pkg.kalah.KalahGame object at 0x0000029F9192D7B0>.turn
+
+tests\test_kalah_terminal.py:40: AssertionError
+____________ test_capture_draw_finishes_without_changing_turn[22] _____________
+
+actor = 22
+
+    @pytest.mark.parametrize("actor", [A, B])
+    def test_capture_draw_finishes_without_changing_turn(actor):
+        game = KalahGame([A, B], seed=1)
+        game.turn = actor
+        if actor == A:
+            game.cells = [1, 0, 0, 0, 0, 0, 20, 20, 4, 0, 0, 0, 3, 0]
+            action, last = {"hole": 1}, 1
+        else:
+            game.cells = [4, 0, 0, 0, 3, 0, 20, 20, 1, 0, 0, 0, 0, 0]
+            action, last = {"hole": 9}, 9
+        assert sum(game.cells) == 48
+        messages = game.act(actor, action)
+>       _assert_terminal(game, actor, action, last, (24, 24), None, messages, captured=4)
+
+tests\test_kalah_terminal.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+game = <games_pkg.kalah.KalahGame object at 0x0000029F9192DD00>, actor = 22
+action = {'hole': 9}, last = 9, stores = (24, 24), winner = None
+messages = ['➡️ 轮到 玩家11', '🐚 玩家22 收子 4 入库'], captured = 4
+
+    def _assert_terminal(game, actor, action, last, stores, winner, messages, captured=0):
+        assert game.finished is True, game.snapshot()
+>       assert game.turn == actor                  # no further turn after terminal move
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 11 == 22
+E        +  where 11 = <games_pkg.kalah.KalahGame object at 0x0000029F9192DD00>.turn
+
+tests\test_kalah_terminal.py:40: AssertionError
+_______ test_real_room_manager_action_returns_terminal_rule_result[11] ________
+
+actor = 11
+
+    @pytest.mark.parametrize("actor", [A, B])
+    def test_real_room_manager_action_returns_terminal_rule_result(actor):
+        manager = RoomManager({"kalah": KalahGame})
+        room = manager.create(A, "kalah")
+        manager.join(B, room.room_id)
+        manager.start(A, room.room_id)
+        game, action, last, expected = _store_finish(actor, "draw")
+        # Synthetic near-terminal position, injected only in test; real room/game paths.
+        room.gs.cells = list(game.cells)
+        room.gs.turn = actor
+        messages = manager.handle_action(actor, room.room_id, action)
+>       _assert_terminal(room.gs, actor, action, last, expected[:2], None, messages)
+
+tests\test_kalah_terminal.py:132: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+game = <games_pkg.kalah.KalahGame object at 0x0000029F916C2DD0>, actor = 11
+action = {'hole': 6}, last = 6, stores = (24, 24), winner = None
+messages = ['🔁 玩家11 落在自己库，再走一次'], captured = 0
+
+    def _assert_terminal(game, actor, action, last, stores, winner, messages, captured=0):
+>       assert game.finished is True, game.snapshot()
+E       AssertionError: {'game': 'kalah', 'status': 'playing', 'turn': 11, 'cells': [0, 0, 0, 0, 0, 0, ...], ...}
+E       assert False is True
+E        +  where False = <games_pkg.kalah.KalahGame object at 0x0000029F916C2DD0>.finished
+
+tests\test_kalah_terminal.py:39: AssertionError
+_______ test_real_room_manager_action_returns_terminal_rule_result[22] ________
+
+actor = 22
+
+    @pytest.mark.parametrize("actor", [A, B])
+    def test_real_room_manager_action_returns_terminal_rule_result(actor):
+        manager = RoomManager({"kalah": KalahGame})
+        room = manager.create(A, "kalah")
+        manager.join(B, room.room_id)
+        manager.start(A, room.room_id)
+        game, action, last, expected = _store_finish(actor, "draw")
+        # Synthetic near-terminal position, injected only in test; real room/game paths.
+        room.gs.cells = list(game.cells)
+        room.gs.turn = actor
+        messages = manager.handle_action(actor, room.room_id, action)
+>       _assert_terminal(room.gs, actor, action, last, expected[:2], None, messages)
+
+tests\test_kalah_terminal.py:132: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+game = <games_pkg.kalah.KalahGame object at 0x0000029F91663A00>, actor = 22
+action = {'hole': 14}, last = 7, stores = (24, 24), winner = None
+messages = ['🔁 玩家22 落在自己库，再走一次'], captured = 0
+
+    def _assert_terminal(game, actor, action, last, stores, winner, messages, captured=0):
+>       assert game.finished is True, game.snapshot()
+E       AssertionError: {'game': 'kalah', 'status': 'playing', 'turn': 22, 'cells': [2, 2, 2, 2, 2, 2, ...], ...}
+E       assert False is True
+E        +  where False = <games_pkg.kalah.KalahGame object at 0x0000029F91663A00>.finished
+
+tests\test_kalah_terminal.py:39: AssertionError
+_____ test_natural_public_action_sequence_never_stalls_on_empty_actor[1] ______
+
+choice_seed = 1
+
+    @pytest.mark.parametrize("choice_seed", [0, 1, 2, 3])
+    def test_natural_public_action_sequence_never_stalls_on_empty_actor(choice_seed):
+        game = KalahGame([A, B], seed=1)
+        chooser = random.Random(choice_seed)
+        for step in range(400):
+            assert sum(game.cells) == 48
+            if game.finished:
+                assert game.snapshot()["status"] == "ended" and game.ended() is not None
+                return
+            actor = game.turn
+            holes = range(6) if actor == A else range(8, 14)
+            legal = [i for i in holes if game.cells[i] > 0]
+>           assert legal, (choice_seed, step, game.snapshot())
+E           AssertionError: (1, 49, {'game': 'kalah', 'status': 'playing', 'turn': 11, 'cells': [0, 0, 0, 0, 0, 0, ...], ...})
+E           assert []
+
+tests\test_kalah_terminal.py:148: AssertionError
+11 failed, 7 passed in 0.77s

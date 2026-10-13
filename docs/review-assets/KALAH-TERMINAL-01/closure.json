@@ -1,0 +1,80 @@
+{
+  "task": "KALAH-TERMINAL-01",
+  "version": "v1.1",
+  "decision": "IMPLEMENTED_CODE_DOMAIN_REVIEWED_FULL_FAILED_NOT_AI_ACCEPTED",
+  "utc": "2026-10-13T05:55:04.808064+00:00",
+  "base_commit": "2fa1c9eb5fc499c1bd424b36e2093f1f5bc84b69",
+  "source_content_id": "1b5fa41cf53ab7146a000a37d9116b520c1c1c92e5421b9d7f7f6df29911d561",
+  "runtime_inputs": 411,
+  "production_scope": [
+    "games_pkg/kalah.py:_sow"
+  ],
+  "new_test_file": "tests/test_kalah_terminal.py",
+  "new_test_cases": 18,
+  "production_diff": "9 additions / 4 deletions",
+  "red": {
+    "failed": 11,
+    "passed": 7,
+    "exit_code": 1,
+    "retained": true,
+    "natural_seed1_after49legalactions_stalls": true
+  },
+  "domain": {
+    "files": 10,
+    "passed": 150,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "independent_scope_review_MUST": 0
+  },
+  "full": {
+    "files": 169,
+    "passed": 2457,
+    "failed": 2,
+    "original_optin_skipped": 20,
+    "exit_code": 1,
+    "seconds": 836.497
+  },
+  "failed_tests": [
+    "tests/test_server.py::test_status_default_online_in_welcome",
+    "tests/test_ux_visual_chat_regressions.py::test_short_history_is_not_clipped_after_window_grows"
+  ],
+  "failure_observations": [
+    "dynamically allocated loopback port 2414 bind WinError10013 then connect WinError10061",
+    "window resize: first_visible=1 expected0"
+  ],
+  "baseline_attribution": "UNDETERMINED: no same-environment clean-base comparison",
+  "full_retries": 0,
+  "AI_accepted": false,
+  "merge_ready": false,
+  "implementation": [
+    "terminal check after sow/capture",
+    "finished precedes extra turn/turn swap for winner/draw",
+    "effective last go_again false at terminal with five-tuple preserved",
+    "domain act msgs contain no further-turn prompt at terminal",
+    "normal turns/extra turns/wire/capture intact"
+  ],
+  "old_binary_binding": "9803303f916b93be10a9e27239cd99583d007661",
+  "old_binary_source": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "old_EXEs_not_current_source_package": true,
+  "new_build": false,
+  "remaining": [
+    "mandatory full gate has two failures",
+    "main GUI natural exit blocked by unavailable native tool",
+    "compiled UI complete game/end/restart",
+    "external Windows/physical LAN/DPI/final visual acceptance",
+    "client summary unconditional turn prompt outside current scope",
+    "Tcl after callback diagnostics retained",
+    "CP4 old WinError5 unresolved"
+  ],
+  "stop_after_current_task": true,
+  "new_task_or_build_forbidden": true,
+  "no_main_push_merge_release": true,
+  "PR_created": false,
+  "PR_block": "existing API403 not retried",
+  "review_hashes": {
+    "full-final-review.md": "b96c33e42400f95de80b79188c85bb03792ec9851957975b6c6236e0ab5c4a2c",
+    "full-proof.json": "b409bfc4a6bbc6fe5377715c1795c2a83ed29e73bfb5f62a73ca117fb5d1d073",
+    "failure-scope-review.md": "a6232ec728948b83f8a1175aed686c73769c0140700883608f4b26173c07e8c9"
+  }
+}

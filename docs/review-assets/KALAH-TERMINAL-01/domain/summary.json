@@ -1,0 +1,149 @@
+{
+  "files": 10,
+  "totals": {
+    "passed": 150
+  },
+  "exit_code": 0,
+  "seconds": 19.158,
+  "source_content_id": "1b5fa41cf53ab7146a000a37d9116b520c1c1c92e5421b9d7f7f6df29911d561",
+  "content_fingerprint": "228815724bef7c4a906f964e2e02d167d943cf8da190f3dabdf385aae59cdde0",
+  "base_commit": "2fa1c9eb5fc499c1bd424b36e2093f1f5bc84b69",
+  "runtime_inputs": 411,
+  "results": [
+    {
+      "file": "tests/test_game_client_lifecycle.py",
+      "log": "logs/test_game_client_lifecycle.log.txt",
+      "sha256": "67ecd033ff9b6c789c9fa77a08973200a7197e96beb9a6558f7f5f9375801623",
+      "counts": {
+        "passed": 12
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_game_lifecycle.py",
+      "log": "logs/test_game_lifecycle.log.txt",
+      "sha256": "a44cbd38f88031ffbcefd3dc6c301ea15b1858063365feed0a6f92b41e8a9ed4",
+      "counts": {
+        "passed": 5
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_games_w2_logic.py",
+      "log": "logs/test_games_w2_logic.log.txt",
+      "sha256": "8aa456f061e41e011337aba46de9631ec14b47e9e7bba06e313fce4270948080",
+      "counts": {
+        "passed": 19
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_gui.py",
+      "log": "logs/test_kalah_gui.log.txt",
+      "sha256": "9b0dcc100c6f6fef13aef7a635f7aa91102edc89a148b4c006ccba66cbce2768",
+      "counts": {
+        "passed": 2
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_input.py",
+      "log": "logs/test_kalah_input.log.txt",
+      "sha256": "f2feca4829cca0f79cdcd6b96e5ba6786d93f591a1339a6d411d305e02d157e2",
+      "counts": {
+        "passed": 8
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_parameters.py",
+      "log": "logs/test_kalah_parameters.log.txt",
+      "sha256": "08c8251cf384f98b5e0549b28dc220daa43407675539168511fe09d0392d7747",
+      "counts": {
+        "passed": 58
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_terminal.py",
+      "log": "logs/test_kalah_terminal.log.txt",
+      "sha256": "e1442780eb0ac3d939065282da320f03bac58d76f5eed3c0b9105cfcd6ac7ef1",
+      "counts": {
+        "passed": 18
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_web.py",
+      "log": "logs/test_kalah_web.log.txt",
+      "sha256": "8d2febae70ba94a0e3c00ab086bdf3c5fbbd9204b4f068ff9c5e876ced905ea4",
+      "counts": {
+        "passed": 1
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_rooms.py",
+      "log": "logs/test_rooms.log.txt",
+      "sha256": "08173de6da9de875dcb06748dd74ef6b52f379dfa68bf9f80786cdb731d52a1c",
+      "counts": {
+        "passed": 15
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_server_game_lifecycle.py",
+      "log": "logs/test_server_game_lifecycle.log.txt",
+      "sha256": "0c5ff1c91b65bca336e88c77144310e173d6b8b2f137bdd669ce0b3d26c92178",
+      "counts": {
+        "passed": 12
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    }
+  ],
+  "failures": [],
+  "visual_mode_enabled": false,
+  "actual_GUI_game_acceptance": false,
+  "old_binary_source": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "old_binaries_contain_this_fix": false
+}

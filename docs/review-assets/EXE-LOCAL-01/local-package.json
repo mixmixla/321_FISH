@@ -1,0 +1,37 @@
+{
+  "source_head": "9803303f916b93be10a9e27239cd99583d007661",
+  "source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "folder": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\deliverable\\321_FISH_20261013",
+  "zip": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\321_FISH_20261013.zip",
+  "zip_size": 61405712,
+  "zip_sha256": "adf9c986c3af1f811dcb012fd6b7d124e3032f43a8760aea7bb4878e0c402239",
+  "files": {
+    "StartTrial.exe": {
+      "size": 9737941,
+      "sha256": "6fcf35bb164eee9f76a5725623e27b77c447bb261e4b9f8026e32f1fb39473cf"
+    },
+    "dist/server.exe": {
+      "size": 25363867,
+      "sha256": "4578d79266e3df0fef0c77142c138c1442569f00ed008631987306afbd61c463"
+    },
+    "dist/client.exe": {
+      "size": 27003706,
+      "sha256": "dcd25aa52963f9e87723eefc49c53cc08fb8ec2fed67425b9c85126f9d1ce5f4"
+    },
+    "LICENSE": {
+      "size": 35823,
+      "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+    },
+    "README.md": {
+      "size": 695,
+      "sha256": "af090b40b47b160522ba204681b7af539bed66c0304bfdfc9e4aa8a9b5134772"
+    },
+    "验收记录.md": {
+      "size": 4414,
+      "sha256": "0b5b11f5fe12ec90a2a0154bba2ff6f19538f1c1d843b3245a04bbf9c03d0ded"
+    }
+  },
+  "no_runtime_profiles_logs_source_or_venv": true,
+  "published": false,
+  "full_game_or_external_lan_accepted": false
+}

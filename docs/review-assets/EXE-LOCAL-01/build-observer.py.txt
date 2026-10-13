@@ -1,0 +1,62 @@
+from pathlib import Path
+from datetime import datetime,timezone
+import hashlib,importlib.metadata,json,os,platform,subprocess,sys,time
+root=Path('D:/Project/321_FISH');work=root/'_tmp_gui/gate-collection-20261013'
+task=root/'_tmp_gui/exe-local-20261013';task.mkdir(exist_ok=False)
+sys.path.insert(0,str(work))
+import local_trial
+from test_gate import source_manifest
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+def save(name,data): (task/name).write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+def phase(name):
+    save('active.json',{'phase':name,'owner_pid':os.getpid(),'utc':datetime.now(timezone.utc).isoformat()})
+    print(json.dumps({'phase':name,'owner_pid':os.getpid()}),flush=True)
+head=subprocess.check_output(['git','-C',str(work),'rev-parse','HEAD'],text=True).strip()
+assert head=='9803303f916b93be10a9e27239cd99583d007661'
+entries,digest=source_manifest(work)
+assert digest=='13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345' and len(entries)==410
+assert platform.python_version()=='3.14.5'
+bind={'head':head,'tested_code_commit':'6c8bdf715cbbd544610d2edb5a97e1daed9d19d4','source_content_id':digest,
+ 'source_copy_input_manifest':entries,'python':sys.executable,'python_version':platform.python_version(),
+ 'pyinstaller':importlib.metadata.version('pyinstaller'),'platform':platform.platform(),
+ 'architecture':platform.architecture(),'root_source_unchanged_before':True,'build_started_utc':datetime.now(timezone.utc).isoformat()}
+save('bind.json',bind)
+phase('building-server-client')
+command=[sys.executable,'-B','-X','utf8',str(work/'local_trial.py'),'build','--source-dir',str(work),'--output-root',str(task/'builds')]
+started=time.monotonic()
+with (task/'build-console.log').open('wb') as log:
+    rc=subprocess.run(command,cwd=work,env=local_trial._build_env(task/'wrapper-build-profile'),stdin=subprocess.DEVNULL,
+       stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW,check=False).returncode
+record={'command':command,'exit_code':rc,'seconds':round(time.monotonic()-started,3),'log':'build-console.log','log_sha256':sha(task/'build-console.log')}
+save('double-build-command.json',record)
+summaries=list((task/'builds').glob('build-*/summary.json'));assert len(summaries)==1
+double=json.loads(summaries[0].read_text(encoding='utf-8'));source=Path(double['source_copy']);save('double-build.json',double)
+if rc or not double['build_ok']:
+    phase('double-build-failed');print(json.dumps(record),flush=True);sys.exit(rc or 5)
+copy_check=[]
+for f in entries:
+    p=source/f['path'];same=sha(p)==f['sha256']
+    if not same:assert f['path'] in ('app.ico','client.spec','server.spec'),f['path']
+    copy_check.append({'path':f['path'],'original_sha256':f['sha256'],'built_copy_sha256':sha(p),'unchanged':same})
+save('copy-after-double-build.json',copy_check)
+phase('building-StartTrial')
+command=[sys.executable,'-m','PyInstaller','--onefile','--console','--clean','--noconfirm','--name','StartTrial',
+ '--distpath',str(source/'dist'),'--workpath',str(source/'_tmp_gui/entry-work'),'--specpath',str(source/'_tmp_gui/entry-spec'),str(source/'friend_trial_start.py')]
+started=time.monotonic()
+with (task/'entry-build.log').open('wb') as log:
+    rc=subprocess.run(command,cwd=source,env=local_trial._build_env(source/'_tmp_gui/entry-build-profile'),stdin=subprocess.DEVNULL,
+       stdout=log,stderr=subprocess.STDOUT,creationflags=subprocess.CREATE_NO_WINDOW,check=False).returncode
+save('entry-build-command.json',{'command':command,'exit_code':rc,'seconds':round(time.monotonic()-started,3),
+ 'log':'entry-build.log','log_sha256':sha(task/'entry-build.log')})
+exes={}
+for name in ('server.exe','client.exe','StartTrial.exe'):
+    p=source/'dist'/name
+    if p.is_file():exes[name]={'path':str(p),'size':p.stat().st_size,'sha256':sha(p)}
+post,postid=source_manifest(work);assert postid==digest and post==entries
+result={'head':head,'source_content_id':digest,'source_copy':str(source),'build_ok':rc==0 and len(exes)==3,
+ 'exit_code':rc,'executables':exes,'runtime_inputs_unchanged':True,'input_count':len(entries),
+ 'build_log_sha256':sha(Path(double['log'])),'entry_build_log_sha256':sha(task/'entry-build.log'),
+ 'vosk_not_bundled':True,'models_not_bundled':True}
+save('build-summary.json',result);phase('build-completed' if result['build_ok'] else 'entry-build-failed')
+print(json.dumps(result,ensure_ascii=False),flush=True)
+sys.exit(0 if result['build_ok'] else rc or 5)

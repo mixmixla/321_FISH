@@ -1,0 +1,18 @@
+{
+  "client.spec": {
+    "size": 1180,
+    "sha256": "b711a9c02e9b47cab70d195de2cb9a8afe1fc65677ae98dfa5e89a9415291978"
+  },
+  "server.spec": {
+    "size": 1179,
+    "sha256": "5f7f372cb2a34dc69076ad166c0cc63f1774177754940a0a2847b3ab0520b3fb"
+  },
+  "app.ico": {
+    "size": 7005,
+    "sha256": "ffc3e48e8e8ada8d318896a5c2342ce4e556bc82fa5d2c06a64c2d619a74f895"
+  },
+  "_tmp_gui/entry-spec/StartTrial.spec": {
+    "size": 809,
+    "sha256": "536ad21529e0704edb56778697d82b172a035850289ce480ddbb860b1636acb8"
+  }
+}

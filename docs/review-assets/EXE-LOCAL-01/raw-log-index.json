@@ -1,0 +1,146 @@
+[
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\build.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/double-build.log.txt",
+    "sha256": "651ad17b747a78e2c46ebc56f6d8c6b8b3ad0612e111bc4fe510b14589e7066e",
+    "size": 18216
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\entry-build.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/entry-build.log.txt",
+    "sha256": "b4573f99e08130672c883fac041149cbdb76007e975c39c5f9c8a8594ccc1111",
+    "size": 5353
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\build-console.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/build-console.log.txt",
+    "sha256": "5eecac63f56b5a585725c899d5f4903c2773c9d18d845280da82007ef26c4508",
+    "size": 1249
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\runtime\\server-initialize.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-server-initialize.log.txt",
+    "sha256": "a0996cce016fab60e4a06e07fb83520dfb23d3cc62d55987256319bec62988f9",
+    "size": 431
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\runtime\\server-inspect.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-server-inspect.log.txt",
+    "sha256": "e2d5dad6aa04b341c86fc2412f8e534cefffc8d87bb7e64df4a7183356902339",
+    "size": 424
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\runtime\\entry-dry-run.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-entry-dry-run.log.txt",
+    "sha256": "5223aa879b40afaa633a104589ea699ba1d02547db8e4b8ea539b03702757d98",
+    "size": 1381
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\runtime\\entry-menu-zero.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-entry-menu-zero.log.txt",
+    "sha256": "70daee26e20357500ab2803a92e03693c3be3883f64ec36101e209ec92a63471",
+    "size": 236
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\runtime\\client-login-cancel.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-client-login-cancel.log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\runtime\\compiled-entry-demo.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-compiled-entry-demo.log.txt",
+    "sha256": "876b8b633a5d8ed1ae9923785f79f5262e4b722564ea94771a4d1db601ac8a38",
+    "size": 317
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\runtime-recheck\\client-login-cancel.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-recheck-client-login-cancel.log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\runtime-recheck\\compiled-entry-demo.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-recheck-compiled-entry-demo.log.txt",
+    "sha256": "23e955418ac908bed53c8f57a66e0c386ef35b76b04e286e2028d98511280c2e",
+    "size": 318
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\trial_runs\\trial-baefc53404934cca9bc2d4b07c77bbab\\alpha.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-recheck-child-alpha.log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\trial_runs\\trial-baefc53404934cca9bc2d4b07c77bbab\\beta.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-recheck-child-beta.log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\trial_runs\\trial-baefc53404934cca9bc2d4b07c77bbab\\initialize.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-recheck-child-initialize.log.txt",
+    "sha256": "d188a4dc0d19e830d49773306238509c11ec5618791a1827ceefcc0e9fd86f73",
+    "size": 431
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\trial_runs\\trial-baefc53404934cca9bc2d4b07c77bbab\\server.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-recheck-child-server.log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\runtime-demo-recheck\\compiled-entry-demo.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-demo-recheck-compiled-entry-demo.log.txt",
+    "sha256": "7c81190a792eb9ba0666d48b32f52893f533e5f4d747d2dad7518734b4544469",
+    "size": 318
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\trial_runs\\trial-ffe1e0812cee43b7a390c33cfc3ca40c\\alpha.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-demo-recheck-child-alpha.log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\trial_runs\\trial-ffe1e0812cee43b7a390c33cfc3ca40c\\beta.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-demo-recheck-child-beta.log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\trial_runs\\trial-ffe1e0812cee43b7a390c33cfc3ca40c\\initialize.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-demo-recheck-child-initialize.log.txt",
+    "sha256": "6a656d8332b577f2fef83123e013409500237bece5276b045e8eafbcf5bf456c",
+    "size": 431
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\trial_runs\\trial-ffe1e0812cee43b7a390c33cfc3ca40c\\server.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-demo-recheck-child-server.log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\trial_runs\\trial-c486af117e824782ae4d23e5adf4e96c\\alpha.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-first-child-alpha.log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\trial_runs\\trial-c486af117e824782ae4d23e5adf4e96c\\beta.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-first-child-beta.log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\trial_runs\\trial-c486af117e824782ae4d23e5adf4e96c\\initialize.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-first-child-initialize.log.txt",
+    "sha256": "a589a2c5d1c7b44250fef0254756f050adbdd2a1fafd351b009404b7c54ab949",
+    "size": 431
+  },
+  {
+    "source": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\trial_runs\\trial-c486af117e824782ae4d23e5adf4e96c\\server.log",
+    "public": "docs/review-assets/EXE-LOCAL-01/logs/runtime-first-child-server.log.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "size": 0
+  }
+]

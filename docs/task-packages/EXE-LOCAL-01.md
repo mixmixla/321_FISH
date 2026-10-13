@@ -1,4 +1,4 @@
-# EXE-LOCAL-01 v1 — 当版三EXE构建、入口与本机安全退出
+# EXE-LOCAL-01 v1.1 — 当版三EXE构建、入口与本机安全退出
 
 2026-10-13。父线程用户明确授权SYNC闭合后优先三EXE及本机安全验证。root冻结有限
 Task；只有指挥中心将SYNC同版full/独立终核闭合并登记READY后实施。当前只准备，不
@@ -54,3 +54,13 @@ EXE/ZIP/运行资料到repo，不正式发布；公开Task/Review只保存可公
 没有产品/测试/依赖改变且源码与SYNC一致时引用其full；若改变则新适用领域/full。
 AI_ACCEPTED仅实际完成部分，不当用户/Pro/发布验收；真实外机/用户交互列待办。
 允许任务分支文档/必要有限代码commit/push，PR403不重试，不共享main merge/发布。
+
+## v1.1 证据出版与实际绑定
+
+绑定交付9803303与受测源码6c8bdf7/source13514b5d…/410输入。2026-10-13用户继续已READY范围，
+只root构建/运行，安全观察失误自主修复；产品/测试/依赖/三EXE均未改。原运行4P2F与
+相关2case复核1P1F保留，最终仅compiled case复核1P0F；不得改写成一次整体全绿。
+修正仅零错误空desktop枚举、由current Job loopback表推断端口、精确归属自有Windows
+conhost；新run/profile/中文包，不重做已通过case。自有连接表含client行，只有端口
+推断另筛server loopback行。自然exit必须在Job关闭前证实，编译demo强停124仅清理。
+只对本Task logs/*.txt增-text/-whitespace以原字节出版；不豁免产品/测试白空间检查。

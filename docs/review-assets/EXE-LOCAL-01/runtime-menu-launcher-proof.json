@@ -1,0 +1,13 @@
+{
+  "original_function_sha256": "cbc07269c41de0127448227048ec5e865cb6615f3cc7787b5dbe1d892dc81583",
+  "adapted_function_sha256": "b65815ab43dbb4797824499892492bb61ba060d8806b3dc562c5a49df49ecf8d",
+  "source_file_sha256": "24bfee4e2f9f3767c3aeec7e4a7c930ca2d17c22dc931149144499de8ae9a15c",
+  "changes": [
+    "function name only",
+    "NUL stdin replaced by owned file containing 0 and Enter"
+  ],
+  "input_sha256": "74d01a0c051c963d9a9b8ab9dbeab1723f0ad8534ea9fa6a942f358d7fa011b4",
+  "input_hex": "300a0a",
+  "product_modified": false,
+  "exit_hook_injected": false
+}

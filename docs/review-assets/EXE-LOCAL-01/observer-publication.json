@@ -1,0 +1,30 @@
+[
+  {
+    "file": "observer-v1.py.txt",
+    "original_sha256": "04f11225c0bdd74adabddd14310aaa8983cd0d09d49a8238e3671a26f99efe2e",
+    "public_sha256": "04f11225c0bdd74adabddd14310aaa8983cd0d09d49a8238e3671a26f99efe2e",
+    "blank_line_padding_only": true,
+    "ast_including_source_locations_equal": true
+  },
+  {
+    "file": "observer-v2.py.txt",
+    "original_sha256": "7ea411b8781238d81f4713484af59491c0850ce68c187eff1f1d3305390f7887",
+    "public_sha256": "189a1b54253df2464be4239ca5cdabb58cd18d9077c9840471b07f5763ca8cc8",
+    "blank_line_padding_only": true,
+    "ast_including_source_locations_equal": true
+  },
+  {
+    "file": "observer-v3.py.txt",
+    "original_sha256": "43ac6597335266eaa96452c403d37cc3e0d3435a99837b317ad8520efe0b86b8",
+    "public_sha256": "846bca298152543f6e615e2773aa0986a65f9cce8e1cd72d7c2cf5b66ec90289",
+    "blank_line_padding_only": true,
+    "ast_including_source_locations_equal": true
+  },
+  {
+    "file": "build-observer.py.txt",
+    "original_sha256": "d416f19b78eebfb7eecde95cbc68c38638649b5cdef6956e9671960582b05268",
+    "public_sha256": "d416f19b78eebfb7eecde95cbc68c38638649b5cdef6956e9671960582b05268",
+    "blank_line_padding_only": true,
+    "ast_including_source_locations_equal": true
+  }
+]

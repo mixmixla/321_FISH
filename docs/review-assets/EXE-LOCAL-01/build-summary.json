@@ -1,0 +1,30 @@
+{
+  "head": "9803303f916b93be10a9e27239cd99583d007661",
+  "source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "source_copy": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source",
+  "build_ok": true,
+  "exit_code": 0,
+  "executables": {
+    "server.exe": {
+      "path": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist\\server.exe",
+      "size": 25363867,
+      "sha256": "4578d79266e3df0fef0c77142c138c1442569f00ed008631987306afbd61c463"
+    },
+    "client.exe": {
+      "path": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist\\client.exe",
+      "size": 27003706,
+      "sha256": "dcd25aa52963f9e87723eefc49c53cc08fb8ec2fed67425b9c85126f9d1ce5f4"
+    },
+    "StartTrial.exe": {
+      "path": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist\\StartTrial.exe",
+      "size": 9737941,
+      "sha256": "6fcf35bb164eee9f76a5725623e27b77c447bb261e4b9f8026e32f1fb39473cf"
+    }
+  },
+  "runtime_inputs_unchanged": true,
+  "input_count": 410,
+  "build_log_sha256": "651ad17b747a78e2c46ebc56f6d8c6b8b3ad0612e111bc4fe510b14589e7066e",
+  "entry_build_log_sha256": "b4573f99e08130672c883fac041149cbdb76007e975c39c5f9c8a8594ccc1111",
+  "vosk_not_bundled": true,
+  "models_not_bundled": true
+}

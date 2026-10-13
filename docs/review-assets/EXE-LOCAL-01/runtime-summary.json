@@ -1,0 +1,271 @@
+{
+  "head": "9803303f916b93be10a9e27239cd99583d007661",
+  "source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "bundle": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用",
+  "desktop": "MoyuEXE-27740-12345f3833",
+  "cases": [
+    {
+      "case": "server-initialize",
+      "command": [
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\dist\\server.exe",
+        "initialize-new",
+        "--store-dir",
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\runtime\\profile-server-cli\\store"
+      ],
+      "log": "server-initialize.log",
+      "identity": {
+        "pid": 28724,
+        "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\dist\\server.exe",
+        "session_id": 1,
+        "desktop": "MoyuEXE-27740-12345f3833",
+        "job_pids": [
+          28724
+        ],
+        "job_active": 1
+      },
+      "natural_before_cleanup": {
+        "exit_code": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "natural_exit": true,
+      "status": "PASS",
+      "before_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "cleanup_forced": false,
+      "cleanup_ok": true,
+      "after_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "log_sha256": "a0996cce016fab60e4a06e07fb83520dfb23d3cc62d55987256319bec62988f9"
+    },
+    {
+      "case": "server-inspect",
+      "command": [
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\dist\\server.exe",
+        "inspect",
+        "--store-dir",
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\runtime\\profile-server-cli\\store"
+      ],
+      "log": "server-inspect.log",
+      "identity": {
+        "pid": 33208,
+        "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\dist\\server.exe",
+        "session_id": 1,
+        "desktop": "MoyuEXE-27740-12345f3833",
+        "job_pids": [
+          33208
+        ],
+        "job_active": 1
+      },
+      "natural_before_cleanup": {
+        "exit_code": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "natural_exit": true,
+      "status": "PASS",
+      "before_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "cleanup_forced": false,
+      "cleanup_ok": true,
+      "after_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "log_sha256": "e2d5dad6aa04b341c86fc2412f8e534cefffc8d87bb7e64df4a7183356902339"
+    },
+    {
+      "case": "entry-dry-run",
+      "command": [
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\StartTrial.exe",
+        "--mode",
+        "demo",
+        "--dry-run",
+        "--bundle-dir",
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用"
+      ],
+      "log": "entry-dry-run.log",
+      "identity": {
+        "pid": 24112,
+        "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\StartTrial.exe",
+        "session_id": 1,
+        "desktop": "MoyuEXE-27740-12345f3833",
+        "job_pids": [
+          24112
+        ],
+        "job_active": 1
+      },
+      "natural_before_cleanup": {
+        "exit_code": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "natural_exit": true,
+      "status": "PASS",
+      "before_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "cleanup_forced": false,
+      "cleanup_ok": true,
+      "after_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "log_sha256": "5223aa879b40afaa633a104589ea699ba1d02547db8e4b8ea539b03702757d98"
+    },
+    {
+      "case": "entry-menu-zero",
+      "command": [
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\StartTrial.exe"
+      ],
+      "log": "entry-menu-zero.log",
+      "identity": {
+        "pid": 16340,
+        "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\StartTrial.exe",
+        "session_id": 1,
+        "desktop": "MoyuEXE-27740-12345f3833",
+        "job_pids": [
+          16340
+        ],
+        "job_active": 1
+      },
+      "natural_before_cleanup": {
+        "exit_code": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "natural_exit": true,
+      "status": "PASS",
+      "before_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "cleanup_forced": false,
+      "cleanup_ok": true,
+      "after_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "log_sha256": "70daee26e20357500ab2803a92e03693c3be3883f64ec36101e209ec92a63471",
+      "both_menu_prompts_observed": true,
+      "trial_directory_unchanged": true
+    },
+    {
+      "case": "client-login-cancel",
+      "log": "client-login-cancel.log",
+      "command": [
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\dist\\client.exe",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "12807"
+      ],
+      "identity": {
+        "pid": 29844,
+        "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\dist\\client.exe",
+        "session_id": 1,
+        "desktop": "MoyuEXE-27740-12345f3833",
+        "job_pids": [
+          29844
+        ],
+        "job_active": 1
+      },
+      "status": "FAIL",
+      "error_type": "AssertionError",
+      "error": "",
+      "before_cleanup": {
+        "poll": null,
+        "job_active": 1,
+        "job_pids": [
+          29844
+        ]
+      },
+      "cleanup_forced": true,
+      "cleanup_ok": true,
+      "after_cleanup": {
+        "poll": 124,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "case": "compiled-entry-demo",
+      "log": "compiled-entry-demo.log",
+      "natural_exit_claimed": false,
+      "command": [
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\StartTrial.exe",
+        "--mode",
+        "demo",
+        "--bundle-dir",
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用"
+      ],
+      "identity": {
+        "pid": 33800,
+        "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\StartTrial.exe",
+        "session_id": 1,
+        "desktop": "MoyuEXE-27740-12345f3833",
+        "job_pids": [
+          33800
+        ],
+        "job_active": 1
+      },
+      "status": "FAIL",
+      "error_type": "AssertionError",
+      "error": "compiled entry server ports not observed",
+      "before_cleanup": {
+        "poll": null,
+        "job_active": 10,
+        "job_pids": [
+          33800,
+          26688,
+          36584,
+          35808,
+          17964,
+          33544,
+          34720,
+          16240,
+          11320,
+          36640
+        ]
+      },
+      "cleanup_forced": true,
+      "cleanup_ok": true,
+      "after_cleanup": {
+        "poll": 124,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "log_sha256": "876b8b633a5d8ed1ae9923785f79f5262e4b722564ea94771a4d1db601ac8a38"
+    }
+  ],
+  "passed": 4,
+  "failed": 2,
+  "blocked": 0,
+  "runtime_inputs_unchanged": true,
+  "all_owned_jobs_empty": true,
+  "complete_game_verified": false,
+  "external_windows_verified": false,
+  "physical_lan_verified": false,
+  "main_session_natural_exit_verified": false,
+  "server_service_natural_exit_verified": false,
+  "global_input_or_capture_used": false,
+  "system_configuration_changed": false,
+  "exit_code": 1,
+  "original_summary_sha256": "c4cd4b3cf6e99ba0c5197ad40b88fb01068a6f8eef68df4bd5abb60f14cdca7c"
+}

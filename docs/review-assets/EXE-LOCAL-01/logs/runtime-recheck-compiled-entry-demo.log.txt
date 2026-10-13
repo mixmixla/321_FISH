@@ -1,0 +1,2 @@
+试用窗口已启动，请在窗口确认登录。资料只写入本次新目录：D:\Project\321_FISH\_tmp_gui\exe-local-20261013\当版 三EXE 复核2\trial_runs\trial-baefc53404934cca9bc2d4b07c77bbab
+请通过客户端红色退出按钮结束；本窗口需保持打开。Ctrl+C可停止本次试用子进程。

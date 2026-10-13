@@ -1,0 +1,23 @@
+{
+  "source_trial": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 试用\\trial_runs\\trial-c486af117e824782ae4d23e5adf4e96c",
+  "events": [
+    {
+      "type": "login",
+      "uid": 1,
+      "nick": "trial_friend_f4e96c",
+      "peer": "127.0.0.1",
+      "via": "tcp",
+      "ts": 1791864293.186,
+      "time": "2026-10-13 12:04:53"
+    },
+    {
+      "type": "login",
+      "uid": 2,
+      "nick": "trial_beta_f4e96c",
+      "peer": "127.0.0.1",
+      "via": "tcp",
+      "ts": 1791864293.196,
+      "time": "2026-10-13 12:04:53"
+    }
+  ]
+}

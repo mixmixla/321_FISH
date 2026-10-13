@@ -1,0 +1,18 @@
+{
+  "command": [
+    "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+    "-B",
+    "-X",
+    "utf8",
+    "D:\\Project\\321_FISH\\_tmp_gui\\gate-collection-20261013\\local_trial.py",
+    "build",
+    "--source-dir",
+    "D:\\Project\\321_FISH\\_tmp_gui\\gate-collection-20261013",
+    "--output-root",
+    "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds"
+  ],
+  "exit_code": 0,
+  "seconds": 76.936,
+  "log": "build-console.log",
+  "log_sha256": "5eecac63f56b5a585725c899d5f4903c2773c9d18d845280da82007ef26c4508"
+}

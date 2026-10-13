@@ -1,0 +1,227 @@
+from pathlib import Path
+from datetime import datetime,timezone
+import ctypes,hashlib,inspect,json,os,re,shutil,socket,struct,subprocess,sys,time,uuid
+from ctypes import wintypes
+root=Path('D:/Project/321_FISH');work=root/'_tmp_gui/gate-collection-20261013'
+task=root/'_tmp_gui/exe-local-20261013';repair=len(sys.argv)>1;demo_only=repair and sys.argv[1]=='repair-demo';run=task/('runtime-demo-recheck' if demo_only else 'runtime-recheck' if repair else 'runtime');run.mkdir(exist_ok=False)
+sys.path.insert(0,str(work))
+import friend_trial_process as jobs
+import friend_trial_start as entry
+import local_trial
+from test_sandbox import process_image_path,process_state
+from test_gate import source_manifest
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+build=json.loads((task/'build-summary.json').read_text(encoding='utf-8'));assert build['build_ok']
+bundle=task/('当版 三EXE 复核3' if demo_only else '当版 三EXE 复核2' if repair else '当版 三EXE 试用');(bundle/'dist').mkdir(parents=True,exist_ok=False)
+for name,r in build['executables'].items():
+    dst=bundle/name if name=='StartTrial.exe' else bundle/'dist'/name
+    shutil.copyfile(r['path'],dst);assert sha(dst)==r['sha256']
+shutil.copyfile(work/'LICENSE',bundle/'LICENSE')
+shutil.copyfile(work/'docs/朋友试用候选_2026-10-06.md',bundle/'README.md')
+(bundle/'当版验证边界.txt').write_text('2026-10-13 EXE-LOCAL-01：源码9803303/source13514b5d…，三EXE本机构建。README中的旧测试计数属于历史。当前源码全量2441 PASS/0 FAIL/20原opt-in；完整EXE游戏、主会话和服务态自然退出、非开发Windows、真实LAN、最终视觉/DPI仍未验证。仅本地候选，未发布。\n',encoding='utf-8')
+desktop='MoyuEXE-'+str(os.getpid())+'-'+uuid.uuid4().hex[:10]
+results=[]
+def save(name,value): (run/name).write_text(json.dumps(value,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+def phase(name):
+    (task/'active.json').write_text(json.dumps({'phase':name,'owner_pid':os.getpid(),'desktop':desktop,'utc':datetime.now(timezone.utc).isoformat()},indent=2)+'\n',encoding='utf-8')
+    print(json.dumps({'phase':name,'desktop':desktop}),flush=True)
+def profile(role):
+    p=run/('profile-'+role);p.mkdir()
+    for rel in ('AppData/Roaming','AppData/Local','Temp'):(p/rel).mkdir(parents=True)
+    return p
+def environment(p):
+    a,b=local_trial._ports()
+    return entry.child_environment(p,bind_host='127.0.0.1',tcp=a,web=b)
+def job_pids(proc):
+    class List(ctypes.Structure):
+        _fields_=[('assigned',wintypes.DWORD),('count',wintypes.DWORD),('ids',ctypes.c_size_t*512)]
+    x=List()
+    assert jobs._kernel().QueryInformationJobObject(proc._job_handle,3,ctypes.byref(x),ctypes.sizeof(x),None)
+    assert x.count<=512
+    return [int(v) for v in x.ids[:x.count]]
+def identity(proc,expected):
+    image=process_image_path(proc.pid)
+    assert image and os.path.normcase(image)==os.path.normcase(str(expected)),(image,expected)
+    return {'pid':proc.pid,'image':image,'session_id':proc.session_id,'desktop':desktop,'job_pids':job_pids(proc),'job_active':proc.active_count()}
+def zero_job(proc,timeout=5):
+    deadline=time.monotonic()+timeout
+    while proc.active_count() and time.monotonic()<deadline:time.sleep(.05)
+    return proc.active_count()==0
+def cleanup(proc,row):
+    row['before_cleanup']={'poll':proc.poll(),'job_active':proc.active_count(),'job_pids':job_pids(proc)}
+    row['cleanup_forced']=bool(proc.active_count())
+    if row['cleanup_forced']:row['cleanup_ok']=bool(proc.terminate_tree())
+    else:row['cleanup_ok']=True
+    row['after_cleanup']={'poll':proc.poll(),'job_active':proc.active_count(),'job_pids':job_pids(proc)}
+    assert row['cleanup_ok'] and row['after_cleanup']['job_active']==0
+    proc.close()
+def natural(role,command,env,launcher=jobs.launch_owned):
+    phase(role);row={'case':role,'command':command,'log':role+'.log'};proc=None
+    try:
+        proc=launcher(command,cwd=str(bundle),env=env,log_path=run/row['log'],desktop_name=desktop)
+        row['identity']=identity(proc,Path(command[0]));code=proc.wait(timeout=45)
+        empty=zero_job(proc);row['natural_before_cleanup']={'exit_code':code,'job_active':proc.active_count(),'job_pids':job_pids(proc)}
+        row['natural_exit']=code==0 and empty;row['status']='PASS' if row['natural_exit'] else 'FAIL'
+    except Exception as e:row.update(status='FAIL',error_type=type(e).__name__,error=str(e))
+    finally:
+        if proc is not None:cleanup(proc,row)
+        if (run/row['log']).exists():row['log_sha256']=sha(run/row['log'])
+        results.append(row);save(role+'.json',row)
+    return row
+
+# Task-only launcher adaptation: real menu stdin; process/Job/native flags and
+# suspend-before-assignment contract are byte-for-byte the existing helper.
+input_path=run/'menu-input.txt';input_path.write_bytes(b'0\n\n')
+original=inspect.getsource(jobs.launch_owned)
+assert original.count('def launch_owned(')==1 and original.count("input_file=open(os.devnull,'rb')")==1
+adapted=original.replace('def launch_owned(','def launch_menu_owned(',1).replace("input_file=open(os.devnull,'rb')","input_file=open("+repr(str(input_path))+",'rb')",1)
+(run/'owned_menu_launcher.py').write_text(adapted,encoding='utf-8')
+namespace=dict(vars(jobs));exec(compile(adapted,str(run/'owned_menu_launcher.py'),'exec'),namespace)
+save('menu-launcher-proof.json',{'original_function_sha256':hashlib.sha256(original.encode()).hexdigest(),
+ 'adapted_function_sha256':hashlib.sha256(adapted.encode()).hexdigest(),'source_file_sha256':sha(work/'friend_trial_process.py'),
+ 'changes':['function name only','NUL stdin replaced by owned file containing 0 and Enter'],
+ 'input_sha256':sha(input_path),'input_hex':input_path.read_bytes().hex(),'product_modified':False,'exit_hook_injected':False})
+
+user32=ctypes.WinDLL('user32',use_last_error=True)
+Callback=ctypes.WINFUNCTYPE(wintypes.BOOL,wintypes.HWND,wintypes.LPARAM)
+user32.EnumDesktopWindows.argtypes=[wintypes.HANDLE,Callback,wintypes.LPARAM];user32.EnumDesktopWindows.restype=wintypes.BOOL
+user32.GetWindowThreadProcessId.argtypes=[wintypes.HWND,ctypes.POINTER(wintypes.DWORD)];user32.GetWindowThreadProcessId.restype=wintypes.DWORD
+for name in ('GetWindowTextW','GetClassNameW'):
+    f=getattr(user32,name);f.argtypes=[wintypes.HWND,wintypes.LPWSTR,ctypes.c_int];f.restype=ctypes.c_int
+user32.IsWindowVisible.argtypes=[wintypes.HWND];user32.IsWindowVisible.restype=wintypes.BOOL
+user32.SendMessageTimeoutW.argtypes=[wintypes.HWND,wintypes.UINT,wintypes.WPARAM,wintypes.LPARAM,wintypes.UINT,wintypes.UINT,ctypes.POINTER(ctypes.c_size_t)]
+user32.SendMessageTimeoutW.restype=ctypes.c_size_t
+def windows(proc):
+    members=set(job_pids(proc));found=[]
+    @Callback
+    def callback(hwnd,lparam):
+        pid=wintypes.DWORD();user32.GetWindowThreadProcessId(hwnd,ctypes.byref(pid))
+        if pid.value in members:
+            title=ctypes.create_unicode_buffer(512);klass=ctypes.create_unicode_buffer(128)
+            user32.GetWindowTextW(hwnd,title,512);user32.GetClassNameW(hwnd,klass,128)
+            found.append({'hwnd':int(hwnd),'pid':int(pid.value),'title':title.value,'class':klass.value,'visible':bool(user32.IsWindowVisible(hwnd)),'image':process_image_path(pid.value)})
+        return True
+    assert proc._desktop_handle
+    ctypes.set_last_error(0)
+    ok=user32.EnumDesktopWindows(proc._desktop_handle,callback,0);error=ctypes.get_last_error()
+    if not ok and error:raise OSError(error,'Owned desktop enumeration failed')
+    return found
+def close_exact(proc,window):
+    now=windows(proc);matches=[w for w in now if w==window]
+    assert len(matches)==1 and window['visible'] and window['class']=='TkTopLevel'
+    assert os.path.normcase(window['image'])==os.path.normcase(str(bundle/'dist/client.exe'))
+    result=ctypes.c_size_t()
+    assert user32.SendMessageTimeoutW(window['hwnd'],0x10,0,0,2,3000,ctypes.byref(result))
+    return {'message':'WM_CLOSE','hwnd':window['hwnd'],'pid':window['pid'],'desktop':desktop,'target_reverified':True}
+
+if not repair:
+    phase('runtime-start')
+    cli_profile=profile('server-cli');cli_env=environment(cli_profile);store=cli_profile/'store'
+    natural('server-initialize',[str(bundle/'dist/server.exe'),'initialize-new','--store-dir',str(store)],cli_env)
+    natural('server-inspect',[str(bundle/'dist/server.exe'),'inspect','--store-dir',str(store)],cli_env)
+    natural('entry-dry-run',[str(bundle/'StartTrial.exe'),'--mode','demo','--dry-run','--bundle-dir',str(bundle)],environment(profile('entry-dry')))
+    before_trials=list((bundle/'trial_runs').glob('trial-*')) if (bundle/'trial_runs').exists() else []
+    menu=natural('entry-menu-zero',[str(bundle/'StartTrial.exe')],environment(profile('entry-menu')),namespace['launch_menu_owned'])
+    menu_text=(run/'entry-menu-zero.log').read_text(encoding='utf-8',errors='replace')
+    menu['both_menu_prompts_observed']='请选择 [1]：' in menu_text and '按回车关闭本窗口。' in menu_text
+    menu['trial_directory_unchanged']=before_trials==(list((bundle/'trial_runs').glob('trial-*')) if (bundle/'trial_runs').exists() else [])
+    if not menu['both_menu_prompts_observed'] or not menu['trial_directory_unchanged']:menu['status']='FAIL'
+    save('entry-menu-zero.json',menu)
+
+if not demo_only:
+    phase('client-login-cancel');row={'case':'client-login-cancel','log':'client-login-cancel.log'};proc=None
+    try:
+        cmd=[str(bundle/'dist/client.exe'),'--host','127.0.0.1','--port',str(local_trial._free_port())];row['command']=cmd
+        proc=jobs.launch_owned(cmd,cwd=str(bundle),env=environment(profile('login-cancel')),log_path=run/row['log'],desktop_name=desktop)
+        row['identity']=identity(proc,Path(cmd[0]));deadline=time.monotonic()+30;selected=[]
+        while time.monotonic()<deadline and proc.poll() is None:
+            all_windows=windows(proc);selected=[w for w in all_windows if w['visible'] and w['class']=='TkTopLevel' and w['title']=='内部办公助手']
+            if len(selected)==1:break
+            time.sleep(.15)
+        row['windows_before']=windows(proc)
+        if len(selected)!=1:row.update(status='BLOCKED',reason='Cannot safely identify exactly one owned login HWND')
+        else:
+            row['action']=close_exact(proc,selected[0]);code=proc.wait(timeout=20);empty=zero_job(proc)
+            row['natural_before_cleanup']={'exit_code':code,'job_active':proc.active_count(),'job_pids':job_pids(proc)}
+            row['natural_exit']=code==0 and empty;row['status']='PASS' if row['natural_exit'] else 'FAIL'
+    except Exception as e:row.update(status='FAIL',error_type=type(e).__name__,error=str(e))
+    finally:
+        if proc is not None:cleanup(proc,row)
+        if (run/row['log']).exists():row['log_sha256']=sha(run/row['log'])
+        results.append(row);save('client-login-cancel.json',row)
+
+def owned_tcp_rows(proc):
+    members=set(job_pids(proc));api=ctypes.WinDLL('iphlpapi',use_last_error=True)
+    fn=api.GetExtendedTcpTable;fn.argtypes=[ctypes.c_void_p,ctypes.POINTER(wintypes.DWORD),wintypes.BOOL,wintypes.ULONG,ctypes.c_int,wintypes.ULONG];fn.restype=wintypes.DWORD
+    size=wintypes.DWORD();rc=fn(None,ctypes.byref(size),False,2,5,0)
+    assert rc in (0,122) and size.value>=4
+    buf=ctypes.create_string_buffer(size.value);assert fn(buf,ctypes.byref(size),False,2,5,0)==0
+    raw=buf.raw;count=struct.unpack_from('<I',raw,0)[0];assert 4+count*24<=len(raw)
+    rows=[]
+    for i in range(count):
+        state,la,lp,ra,rp,pid=struct.unpack_from('<IIIIII',raw,4+i*24)
+        if pid in members:
+            rows.append({'pid':pid,'state':state,'local_address':socket.inet_ntoa(struct.pack('<I',la)),
+              'local_port':socket.ntohs(lp&0xffff),'remote_address':socket.inet_ntoa(struct.pack('<I',ra)),
+              'remote_port':socket.ntohs(rp&0xffff),'image':process_image_path(pid)})
+    return rows
+
+phase('compiled-entry-demo');row={'case':'compiled-entry-demo','log':'compiled-entry-demo.log','natural_exit_claimed':False};proc=None
+try:
+    cmd=[str(bundle/'StartTrial.exe'),'--mode','demo','--bundle-dir',str(bundle)];row['command']=cmd
+    proc=jobs.launch_owned(cmd,cwd=str(bundle),env=environment(profile('entry-demo-owner')),log_path=run/row['log'],desktop_name=desktop)
+    row['identity']=identity(proc,Path(cmd[0]));deadline=time.monotonic()+60;trial=None;ports=None
+    while time.monotonic()<deadline and proc.poll() is None:
+        trials=list((bundle/'trial_runs').glob('trial-*'))
+        if len(trials)==1:
+            trial=trials[0];log=trial/'server.log'
+            text=log.read_text(encoding='utf-8',errors='replace') if log.exists() else ''
+            rows=owned_tcp_rows(proc)
+            server_rows=[r for r in rows if r['image'] and os.path.normcase(r['image'])==os.path.normcase(str(bundle/'dist/server.exe'))]
+            listens={r['local_port'] for r in server_rows if r['state']==2 and r['local_address']=='127.0.0.1'}
+            tcp_ports={r['local_port'] for r in server_rows if r['state']==5 and r['local_address']=='127.0.0.1' and r['remote_address']=='127.0.0.1'}
+            if len(listens)==2 and len(tcp_ports)==1 and tcp_ports.issubset(listens):
+                tcp_port=next(iter(tcp_ports));ports=(tcp_port,next(iter(listens-{tcp_port})));row['owned_tcp_table']=rows;break
+        time.sleep(.2)
+    assert trial is not None and ports is not None,'compiled entry server ports not observed'
+    row['ports']={'tcp':ports[0],'web':ports[1]};row['trial_dir']=str(trial);tag=trial.name[-6:]
+    row['logins']={role:local_trial._wait_login_audit(trial/'server',nick,timeout=25) for role,nick in {'alpha':'trial_friend_'+tag,'beta':'trial_beta_'+tag}.items()}
+    row['web']=local_trial._web_probe(ports[1]);row['job_before_action']={'active':proc.active_count(),'pids':job_pids(proc)}
+    row['images']={str(pid):process_image_path(pid) for pid in job_pids(proc)}
+    expected={os.path.normcase(str(bundle/'StartTrial.exe')),os.path.normcase(str(bundle/'dist/server.exe')),os.path.normcase(str(bundle/'dist/client.exe'))}
+    console_host=os.path.normcase(str(Path(os.environ.get('SystemRoot','C:/Windows'))/'System32/conhost.exe'))
+    row['owned_console_helpers']={pid:image for pid,image in row['images'].items() if image and os.path.normcase(image)==console_host}
+    assert all(image and os.path.normcase(image) in expected|{console_host} for image in row['images'].values())
+    assert all(v['ok'] for v in row['logins'].values()) and row['web']['ok'] and proc.poll() is None
+    before=windows(proc);row['windows_before_hide']=before
+    candidates=[w for w in before if w['visible'] and w['class']=='TkTopLevel' and w['title'] in ('tk','内部办公助手') and w['image'] and os.path.normcase(w['image'])==os.path.normcase(str(bundle/'dist/client.exe'))]
+    grouped={}
+    for w in candidates:grouped.setdefault(w['pid'],[]).append(w)
+    safe=[ws[0] for ws in grouped.values() if len(ws)==1]
+    if len(safe)==2:
+        chosen=sorted(safe,key=lambda w:w['pid'])[0];row['hide_action']=close_exact(proc,chosen);time.sleep(1)
+        after=windows(proc);row['windows_after_hide']=after
+        same=[w for w in after if w['hwnd']==chosen['hwnd']]
+        row['main_close_observed_as_hide']=len(same)==1 and not same[0]['visible'] and process_state(chosen['pid'])=='running' and proc.poll() is None
+        assert row['main_close_observed_as_hide'],'targeted main WM_CLOSE did not show the frozen hide contract'
+    else:row['main_close_observed_as_hide']='BLOCKED: cannot identify two unique owned main windows'
+    row['status']='PASS';row['main_session_quit']='UNVERIFIED: custom Tk Label exit control has no safely identified external command'
+    row['server_service_natural_exit']='UNVERIFIED: no dedicated console stop helper'
+except Exception as e:row.update(status='FAIL',error_type=type(e).__name__,error=str(e))
+finally:
+    if proc is not None:cleanup(proc,row)
+    if (run/row['log']).exists():row['log_sha256']=sha(run/row['log'])
+    if 'trial_dir' in row:
+        trial=Path(row['trial_dir']);row['child_logs']={p.name:{'sha256':sha(p),'size':p.stat().st_size} for p in trial.glob('*.log')}
+        row['profiles']={role:local_trial._owned_inventory(trial/role) for role in ('server','alpha','beta') if (trial/role).is_dir()}
+    results.append(row);save('compiled-entry-demo.json',row)
+
+entries,digest=source_manifest(work);assert digest==build['source_content_id'] and len(entries)==410
+summary={'head':build['head'],'source_content_id':digest,'bundle':str(bundle),'desktop':desktop,'cases':results,
+ 'passed':sum(r['status']=='PASS' for r in results),'failed':sum(r['status']=='FAIL' for r in results),'blocked':sum(r['status']=='BLOCKED' for r in results),
+ 'runtime_inputs_unchanged':True,'all_owned_jobs_empty':all(r.get('after_cleanup',{}).get('job_active')==0 for r in results),
+ 'complete_game_verified':False,'external_windows_verified':False,'physical_lan_verified':False,'main_session_natural_exit_verified':False,
+ 'server_service_natural_exit_verified':False,'global_input_or_capture_used':False,'system_configuration_changed':False,
+ 'exit_code':1 if any(r['status']=='FAIL' for r in results) else 0}
+save('summary.json',summary);phase('runtime-completed');print(json.dumps({k:v for k,v in summary.items() if k!='cases'},ensure_ascii=False),flush=True)
+sys.exit(summary['exit_code'])

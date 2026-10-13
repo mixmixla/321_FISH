@@ -1,0 +1,11 @@
+{
+  "old_sha256": "7ea411b8781238d81f4713484af59491c0850ce68c187eff1f1d3305390f7887",
+  "new_sha256": "43ac6597335266eaa96452c403d37cc3e0d3435a99837b317ad8520efe0b86b8",
+  "observed_second_run_extra_images": "two current Job-owned C:/Windows/System32/conhost.exe",
+  "changes": [
+    "permit exactly current Job-owned SystemRoot/System32/conhost.exe console helpers in image attribution",
+    "unique third run/bundle/profile; repeat compiled-entry-demo only"
+  ],
+  "first_and_second_failures_preserved": true,
+  "product_test_dependency_or_binary_changed": false
+}

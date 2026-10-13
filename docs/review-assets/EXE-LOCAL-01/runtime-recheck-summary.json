@@ -1,0 +1,333 @@
+{
+  "head": "9803303f916b93be10a9e27239cd99583d007661",
+  "source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "bundle": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2",
+  "desktop": "MoyuEXE-20128-e1802001e3",
+  "cases": [
+    {
+      "case": "client-login-cancel",
+      "log": "client-login-cancel.log",
+      "command": [
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "5410"
+      ],
+      "identity": {
+        "pid": 32552,
+        "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe",
+        "session_id": 1,
+        "desktop": "MoyuEXE-20128-e1802001e3",
+        "job_pids": [
+          32552
+        ],
+        "job_active": 1
+      },
+      "windows_before": [
+        {
+          "hwnd": 465778,
+          "pid": 35404,
+          "title": "内部办公助手",
+          "class": "TkTopLevel",
+          "visible": true,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe"
+        },
+        {
+          "hwnd": 204096,
+          "pid": 35404,
+          "title": "tk",
+          "class": "TkTopLevel",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe"
+        },
+        {
+          "hwnd": 204130,
+          "pid": 35404,
+          "title": "TtkMonitorWindow",
+          "class": "TtkMonitorClass",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe"
+        },
+        {
+          "hwnd": 2890350,
+          "pid": 32552,
+          "title": "PyInstaller Onefile Hidden Window",
+          "class": "PyInstallerOnefileHiddenWindow",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe"
+        },
+        {
+          "hwnd": 204092,
+          "pid": 35404,
+          "title": "MSCTFIME UI",
+          "class": "MSCTFIME UI",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe"
+        },
+        {
+          "hwnd": 269672,
+          "pid": 35404,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe"
+        },
+        {
+          "hwnd": 2170010,
+          "pid": 32552,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe"
+        }
+      ],
+      "action": {
+        "message": "WM_CLOSE",
+        "hwnd": 465778,
+        "pid": 35404,
+        "desktop": "MoyuEXE-20128-e1802001e3",
+        "target_reverified": true
+      },
+      "natural_before_cleanup": {
+        "exit_code": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "natural_exit": true,
+      "status": "PASS",
+      "before_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "cleanup_forced": false,
+      "cleanup_ok": true,
+      "after_cleanup": {
+        "poll": 0,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "case": "compiled-entry-demo",
+      "log": "compiled-entry-demo.log",
+      "natural_exit_claimed": false,
+      "command": [
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\StartTrial.exe",
+        "--mode",
+        "demo",
+        "--bundle-dir",
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2"
+      ],
+      "identity": {
+        "pid": 19656,
+        "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\StartTrial.exe",
+        "session_id": 1,
+        "desktop": "MoyuEXE-20128-e1802001e3",
+        "job_pids": [
+          19656
+        ],
+        "job_active": 1
+      },
+      "owned_tcp_table": [
+        {
+          "pid": 34348,
+          "state": 5,
+          "local_address": "127.0.0.1",
+          "local_port": 6417,
+          "remote_address": "127.0.0.1",
+          "remote_port": 10493,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe"
+        },
+        {
+          "pid": 432,
+          "state": 5,
+          "local_address": "127.0.0.1",
+          "local_port": 6418,
+          "remote_address": "127.0.0.1",
+          "remote_port": 10493,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe"
+        },
+        {
+          "pid": 18424,
+          "state": 2,
+          "local_address": "127.0.0.1",
+          "local_port": 10493,
+          "remote_address": "0.0.0.0",
+          "remote_port": 0,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\server.exe"
+        },
+        {
+          "pid": 18424,
+          "state": 5,
+          "local_address": "127.0.0.1",
+          "local_port": 10493,
+          "remote_address": "127.0.0.1",
+          "remote_port": 6417,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\server.exe"
+        },
+        {
+          "pid": 18424,
+          "state": 5,
+          "local_address": "127.0.0.1",
+          "local_port": 10493,
+          "remote_address": "127.0.0.1",
+          "remote_port": 6418,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\server.exe"
+        },
+        {
+          "pid": 18424,
+          "state": 2,
+          "local_address": "127.0.0.1",
+          "local_port": 10494,
+          "remote_address": "0.0.0.0",
+          "remote_port": 0,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\server.exe"
+        }
+      ],
+      "ports": {
+        "tcp": 10493,
+        "web": 10494
+      },
+      "trial_dir": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\trial_runs\\trial-baefc53404934cca9bc2d4b07c77bbab",
+      "logins": {
+        "alpha": {
+          "ok": true,
+          "source": "client.exe",
+          "audit_dir": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\trial_runs\\trial-baefc53404934cca9bc2d4b07c77bbab\\server\\moeyu_helper\\audit",
+          "event": {
+            "type": "login",
+            "uid": 1,
+            "nick": "trial_friend_77bbab",
+            "peer": "127.0.0.1",
+            "via": "tcp",
+            "ts": 1791864736.298,
+            "time": "2026-10-13 12:12:16"
+          }
+        },
+        "beta": {
+          "ok": true,
+          "source": "client.exe",
+          "audit_dir": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\trial_runs\\trial-baefc53404934cca9bc2d4b07c77bbab\\server\\moeyu_helper\\audit",
+          "event": {
+            "type": "login",
+            "uid": 2,
+            "nick": "trial_beta_77bbab",
+            "peer": "127.0.0.1",
+            "via": "tcp",
+            "ts": 1791864736.309,
+            "time": "2026-10-13 12:12:16"
+          }
+        }
+      },
+      "web": {
+        "ok": true,
+        "status": 200,
+        "bytes_read": 256,
+        "url": "http://127.0.0.1:10494/"
+      },
+      "job_before_action": {
+        "active": 10,
+        "pids": [
+          19656,
+          15468,
+          26492,
+          31612,
+          3524,
+          18424,
+          35180,
+          432,
+          36552,
+          34348
+        ]
+      },
+      "images": {
+        "19656": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\StartTrial.exe",
+        "15468": "C:\\Windows\\System32\\conhost.exe",
+        "26492": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\StartTrial.exe",
+        "31612": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\server.exe",
+        "3524": "C:\\Windows\\System32\\conhost.exe",
+        "18424": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\server.exe",
+        "35180": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe",
+        "432": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe",
+        "36552": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe",
+        "34348": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核2\\dist\\client.exe"
+      },
+      "status": "FAIL",
+      "error_type": "AssertionError",
+      "error": "",
+      "before_cleanup": {
+        "poll": null,
+        "job_active": 10,
+        "job_pids": [
+          19656,
+          15468,
+          26492,
+          31612,
+          3524,
+          18424,
+          35180,
+          432,
+          36552,
+          34348
+        ]
+      },
+      "cleanup_forced": true,
+      "cleanup_ok": true,
+      "after_cleanup": {
+        "poll": 124,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "log_sha256": "23e955418ac908bed53c8f57a66e0c386ef35b76b04e286e2028d98511280c2e",
+      "child_logs": {
+        "alpha.log": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "beta.log": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "initialize.log": {
+          "sha256": "d188a4dc0d19e830d49773306238509c11ec5618791a1827ceefcc0e9fd86f73",
+          "size": 431
+        },
+        "server.log": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        }
+      },
+      "synthetic_profile_inventory_summary": {
+        "server": {
+          "entries": 1081,
+          "inventory_sha256": "ad940fd6ba6d20ea5467f18133c70dfac78be405beb30f70de4782d862611ab3"
+        },
+        "alpha": {
+          "entries": 1075,
+          "inventory_sha256": "b1125cbd78dc7d6db2f256dd24736c2d59bea3ca06c2ebeb6dfa0a1cb0870bbc"
+        },
+        "beta": {
+          "entries": 1075,
+          "inventory_sha256": "4f4eea8cbe4653af37e277459cc7dde844a8f9386fad8e556cca448237bd508b"
+        }
+      }
+    }
+  ],
+  "passed": 1,
+  "failed": 1,
+  "blocked": 0,
+  "runtime_inputs_unchanged": true,
+  "all_owned_jobs_empty": true,
+  "complete_game_verified": false,
+  "external_windows_verified": false,
+  "physical_lan_verified": false,
+  "main_session_natural_exit_verified": false,
+  "server_service_natural_exit_verified": false,
+  "global_input_or_capture_used": false,
+  "system_configuration_changed": false,
+  "exit_code": 1,
+  "original_summary_sha256": "c71da40fa4e1e0c9757ebbecb31503157ef1df86ab983194c9c1d91ccea24872"
+}

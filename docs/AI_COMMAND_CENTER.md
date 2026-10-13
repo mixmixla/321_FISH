@@ -4,6 +4,16 @@
 review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-13（Asia/Shanghai）。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+## EXE-LOCAL-01 有限本机验证交付（2026-10-13）
+
+**AI_ACCEPTED_BUILD_AND_LIMITED_LOCAL_PROBES / MAIN_AND_SERVICE_EXIT_UNVERIFIED**。[Task v1.1](task-packages/EXE-LOCAL-01.md) / [Review r1](review-packages/EXE-LOCAL-01-r1.md)。父线程继续READY任务，root唯一构建/应用/测试/治理执行者，两个代理只读；没有重叠应用/构建或公司/真实资料/外机/LAN/CP4操作。
+绑定交付9803303f916b93be10a9e27239cd99583d007661、受测源码6c8bdf7/source13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345/410输入，产品/测试/依赖未改，引用SYNC2441P0F20原opt-in完整门禁，不重跑或放宽skip。原项目Python3.14.5/PyInstaller6.22.3，白名单副本规范双EXE与StartTrial一体构建均exit0；仅副本两spec生成改变，其余408输入保持，app.ico字节未变。
+三EXE/source201项目模块/3主入口、内嵌26URL常量与同像素PNG实际核，归档独立0 MUST；Vosk/模型未随包，转写未验。三binary全hash在[构建身份](review-assets/EXE-LOCAL-01/build-summary.json)，干净本地包/ZIP仅ignored `_tmp_gui/exe-local-20261013/deliverable`，固定6文件，无runtime/prefs/logs/源码/venv，不发布。
+首轮4P2F/exit1（空private-desktop返回0无error、buffered stdout端口观察）；有限两项复核1P1F/exit1（login自然0、观察器误拒两自有conhost），原FAIL永久保留；最终只compiled-demo1P0F/exit0。仅修Task观察器，不改EXE/产品/测试：零错误空集、current Job loopback表端口、精确SystemRoot/System32/conhost归属分账，新run/profile/中文包，不重做已通过项。
+五项CLI/菜单/登录取消均close/强停前自然exit0且Job0；第三轮两个EXE实际TCP登录/HTTP200、主窗WM_CLOSE收起且进程仍在。编译demo最后owned Job强停124只清理，不称entry/client/server自然退出。全三轮Job0，24public原日志字节主控核；独立原运行0 MUST核9case/8子日志、410输入及12次binaryhash。仅接受这些实际完成部分，不是Pro/用户、完整R1/发布接受。
+当前无本批应用/测试/构建，主worktree `_tmp_gui/gate-collection-20261013` / fix/gemcity-purchase-20261013，仅本Task治理/证据dirty，原c864234/dirty/index/1143文件保护。文件工具曾短暂挂起已恢复，未重启系统、重复应用或改安全设置。按授权普通任务branch资料commit/push，最终leaf/回执见Git及阶段最终检查点；PR403不重试，main不push/merge/Release。
+本有限阶段结束，下一仅原运行/公开Git字节交付核查及手工验收规划；主会话红退出按钮、服务态专用console Ctrl+C、完整游戏/邀请/结束/再开、非开发Windows、实际LAN、视觉/DPI未验。UI-ROOM-ICON-01仍DRAFT，危险--run-visual继续禁用，不擅自实施。父线程自然阶段接续，14:30北京不开大任务、15:00前收尾；不恢复旧Goal或操作休眠电脑。
+
 ## SYNC-LATEST-MAIN-01 固定上游同步完成与下一任务（2026-10-13）
 
 **AI_ACCEPTED_SOURCE_SYNC_ONLY / FULL_PASSED / EXE_LOCAL_READY**。[Task v1.2](task-packages/SYNC-LATEST-MAIN-01.md) / [Review r1](review-packages/SYNC-LATEST-MAIN-01-r1.md)。父线程授权普通push及整合固定main52后新门禁，并优先当版三EXE本机安全验证；本阶段仅源码同步闭合，尚未构建EXE。

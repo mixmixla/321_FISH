@@ -1,0 +1,24 @@
+{
+  "command": [
+    "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+    "-m",
+    "PyInstaller",
+    "--onefile",
+    "--console",
+    "--clean",
+    "--noconfirm",
+    "--name",
+    "StartTrial",
+    "--distpath",
+    "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist",
+    "--workpath",
+    "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\_tmp_gui\\entry-work",
+    "--specpath",
+    "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\_tmp_gui\\entry-spec",
+    "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\friend_trial_start.py"
+  ],
+  "exit_code": 0,
+  "seconds": 12.756,
+  "log": "entry-build.log",
+  "log_sha256": "b4573f99e08130672c883fac041149cbdb76007e975c39c5f9c8a8594ccc1111"
+}

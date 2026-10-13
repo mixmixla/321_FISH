@@ -1,0 +1,11 @@
+{
+  "old_sha256": "04f11225c0bdd74adabddd14310aaa8983cd0d09d49a8238e3671a26f99efe2e",
+  "new_sha256": "7ea411b8781238d81f4713484af59491c0850ce68c187eff1f1d3305390f7887",
+  "changes": [
+    "accept zero-error empty owned desktop enumeration",
+    "infer loopback endpoints from current Job server LISTEN/ESTABLISHED rows instead of buffered stdout",
+    "unique second run/bundle/profile; repeat only affected two cases"
+  ],
+  "first_failure_preserved": true,
+  "product_test_dependency_or_binary_changed": false
+}

@@ -1,0 +1,643 @@
+{
+  "head": "9803303f916b93be10a9e27239cd99583d007661",
+  "source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "bundle": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3",
+  "desktop": "MoyuEXE-17840-b9c22108eb",
+  "cases": [
+    {
+      "case": "compiled-entry-demo",
+      "log": "compiled-entry-demo.log",
+      "natural_exit_claimed": false,
+      "command": [
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\StartTrial.exe",
+        "--mode",
+        "demo",
+        "--bundle-dir",
+        "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3"
+      ],
+      "identity": {
+        "pid": 14372,
+        "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\StartTrial.exe",
+        "session_id": 1,
+        "desktop": "MoyuEXE-17840-b9c22108eb",
+        "job_pids": [
+          14372
+        ],
+        "job_active": 1
+      },
+      "owned_tcp_table": [
+        {
+          "pid": 6404,
+          "state": 2,
+          "local_address": "127.0.0.1",
+          "local_port": 12416,
+          "remote_address": "0.0.0.0",
+          "remote_port": 0,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\server.exe"
+        },
+        {
+          "pid": 6404,
+          "state": 5,
+          "local_address": "127.0.0.1",
+          "local_port": 12416,
+          "remote_address": "127.0.0.1",
+          "remote_port": 12428,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\server.exe"
+        },
+        {
+          "pid": 6404,
+          "state": 5,
+          "local_address": "127.0.0.1",
+          "local_port": 12416,
+          "remote_address": "127.0.0.1",
+          "remote_port": 12427,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\server.exe"
+        },
+        {
+          "pid": 6404,
+          "state": 2,
+          "local_address": "127.0.0.1",
+          "local_port": 12417,
+          "remote_address": "0.0.0.0",
+          "remote_port": 0,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\server.exe"
+        },
+        {
+          "pid": 9864,
+          "state": 5,
+          "local_address": "127.0.0.1",
+          "local_port": 12427,
+          "remote_address": "127.0.0.1",
+          "remote_port": 12416,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "pid": 32692,
+          "state": 5,
+          "local_address": "127.0.0.1",
+          "local_port": 12428,
+          "remote_address": "127.0.0.1",
+          "remote_port": 12416,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        }
+      ],
+      "ports": {
+        "tcp": 12416,
+        "web": 12417
+      },
+      "trial_dir": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\trial_runs\\trial-ffe1e0812cee43b7a390c33cfc3ca40c",
+      "logins": {
+        "alpha": {
+          "ok": true,
+          "source": "client.exe",
+          "audit_dir": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\trial_runs\\trial-ffe1e0812cee43b7a390c33cfc3ca40c\\server\\moeyu_helper\\audit",
+          "event": {
+            "type": "login",
+            "uid": 2,
+            "nick": "trial_friend_3ca40c",
+            "peer": "127.0.0.1",
+            "via": "tcp",
+            "ts": 1791864985.744,
+            "time": "2026-10-13 12:16:25"
+          }
+        },
+        "beta": {
+          "ok": true,
+          "source": "client.exe",
+          "audit_dir": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\trial_runs\\trial-ffe1e0812cee43b7a390c33cfc3ca40c\\server\\moeyu_helper\\audit",
+          "event": {
+            "type": "login",
+            "uid": 1,
+            "nick": "trial_beta_3ca40c",
+            "peer": "127.0.0.1",
+            "via": "tcp",
+            "ts": 1791864985.735,
+            "time": "2026-10-13 12:16:25"
+          }
+        }
+      },
+      "web": {
+        "ok": true,
+        "status": 200,
+        "bytes_read": 256,
+        "url": "http://127.0.0.1:12417/"
+      },
+      "job_before_action": {
+        "active": 10,
+        "pids": [
+          14372,
+          30096,
+          28752,
+          35864,
+          29116,
+          6404,
+          35692,
+          32692,
+          35916,
+          9864
+        ]
+      },
+      "images": {
+        "14372": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\StartTrial.exe",
+        "30096": "C:\\Windows\\System32\\conhost.exe",
+        "28752": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\StartTrial.exe",
+        "35864": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\server.exe",
+        "29116": "C:\\Windows\\System32\\conhost.exe",
+        "6404": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\server.exe",
+        "35692": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe",
+        "32692": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe",
+        "35916": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe",
+        "9864": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+      },
+      "owned_console_helpers": {
+        "30096": "C:\\Windows\\System32\\conhost.exe",
+        "29116": "C:\\Windows\\System32\\conhost.exe"
+      },
+      "windows_before_hide": [
+        {
+          "hwnd": 335284,
+          "pid": 9864,
+          "title": "Tooltip",
+          "class": "Touch Tooltip Window",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335222,
+          "pid": 9864,
+          "title": "",
+          "class": "UAC_InputIndicatorOverlayWnd",
+          "visible": true,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 269900,
+          "pid": 9864,
+          "title": "",
+          "class": "UAC Input Indicator",
+          "visible": true,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 400738,
+          "pid": 32692,
+          "title": "年度绩效汇总_v7.xlsx - Excel",
+          "class": "TkTopLevel",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 1252350,
+          "pid": 32692,
+          "title": "内部办公助手",
+          "class": "TkTopLevel",
+          "visible": true,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 466280,
+          "pid": 9864,
+          "title": "周报数据透视_0926.xlsx - Excel",
+          "class": "TkTopLevel",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 466136,
+          "pid": 9864,
+          "title": "内部办公助手",
+          "class": "TkTopLevel",
+          "visible": true,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335322,
+          "pid": 9864,
+          "title": "TtkMonitorWindow",
+          "class": "TtkMonitorClass",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335278,
+          "pid": 32692,
+          "title": "TtkMonitorWindow",
+          "class": "TtkMonitorClass",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 728420,
+          "pid": 35916,
+          "title": "PyInstaller Onefile Hidden Window",
+          "class": "PyInstallerOnefileHiddenWindow",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 269634,
+          "pid": 35692,
+          "title": "PyInstaller Onefile Hidden Window",
+          "class": "PyInstallerOnefileHiddenWindow",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 13571070,
+          "pid": 35864,
+          "title": "PyInstaller Onefile Hidden Window",
+          "class": "PyInstallerOnefileHiddenWindow",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\server.exe"
+        },
+        {
+          "hwnd": 6888206,
+          "pid": 14372,
+          "title": "PyInstaller Onefile Hidden Window",
+          "class": "PyInstallerOnefileHiddenWindow",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\StartTrial.exe"
+        },
+        {
+          "hwnd": 335182,
+          "pid": 9864,
+          "title": "",
+          "class": "CicLoaderWndClass",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 466060,
+          "pid": 9864,
+          "title": "CiceroUIWndFrame",
+          "class": "CiceroUIWndFrame",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335412,
+          "pid": 9864,
+          "title": "TF_FloatingLangBar_WndTitle",
+          "class": "CiceroUIWndFrame",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 269610,
+          "pid": 32692,
+          "title": "MSCTFIME UI",
+          "class": "MSCTFIME UI",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335280,
+          "pid": 32692,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 400704,
+          "pid": 9864,
+          "title": "MSCTFIME UI",
+          "class": "MSCTFIME UI",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335232,
+          "pid": 9864,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335228,
+          "pid": 35916,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 269652,
+          "pid": 35692,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335124,
+          "pid": 35864,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\server.exe"
+        },
+        {
+          "hwnd": 3873766,
+          "pid": 14372,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\StartTrial.exe"
+        }
+      ],
+      "hide_action": {
+        "message": "WM_CLOSE",
+        "hwnd": 466136,
+        "pid": 9864,
+        "desktop": "MoyuEXE-17840-b9c22108eb",
+        "target_reverified": true
+      },
+      "windows_after_hide": [
+        {
+          "hwnd": 6429062,
+          "pid": 9864,
+          "title": "内部办公助手",
+          "class": "TkTopLevel",
+          "visible": true,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 11540808,
+          "pid": 9864,
+          "title": "内部办公助手",
+          "class": "TkTopLevel",
+          "visible": true,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335284,
+          "pid": 9864,
+          "title": "Tooltip",
+          "class": "Touch Tooltip Window",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335222,
+          "pid": 9864,
+          "title": "",
+          "class": "UAC_InputIndicatorOverlayWnd",
+          "visible": true,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 269900,
+          "pid": 9864,
+          "title": "",
+          "class": "UAC Input Indicator",
+          "visible": true,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 400738,
+          "pid": 32692,
+          "title": "年度绩效汇总_v7.xlsx - Excel",
+          "class": "TkTopLevel",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 1252350,
+          "pid": 32692,
+          "title": "内部办公助手",
+          "class": "TkTopLevel",
+          "visible": true,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 466280,
+          "pid": 9864,
+          "title": "周报数据透视_0926.xlsx - Excel",
+          "class": "TkTopLevel",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 466136,
+          "pid": 9864,
+          "title": "内部办公助手",
+          "class": "TkTopLevel",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335322,
+          "pid": 9864,
+          "title": "TtkMonitorWindow",
+          "class": "TtkMonitorClass",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335278,
+          "pid": 32692,
+          "title": "TtkMonitorWindow",
+          "class": "TtkMonitorClass",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 728420,
+          "pid": 35916,
+          "title": "PyInstaller Onefile Hidden Window",
+          "class": "PyInstallerOnefileHiddenWindow",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 269634,
+          "pid": 35692,
+          "title": "PyInstaller Onefile Hidden Window",
+          "class": "PyInstallerOnefileHiddenWindow",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 13571070,
+          "pid": 35864,
+          "title": "PyInstaller Onefile Hidden Window",
+          "class": "PyInstallerOnefileHiddenWindow",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\server.exe"
+        },
+        {
+          "hwnd": 6888206,
+          "pid": 14372,
+          "title": "PyInstaller Onefile Hidden Window",
+          "class": "PyInstallerOnefileHiddenWindow",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\StartTrial.exe"
+        },
+        {
+          "hwnd": 335182,
+          "pid": 9864,
+          "title": "",
+          "class": "CicLoaderWndClass",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 466060,
+          "pid": 9864,
+          "title": "CiceroUIWndFrame",
+          "class": "CiceroUIWndFrame",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335412,
+          "pid": 9864,
+          "title": "TF_FloatingLangBar_WndTitle",
+          "class": "CiceroUIWndFrame",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 269610,
+          "pid": 32692,
+          "title": "MSCTFIME UI",
+          "class": "MSCTFIME UI",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335280,
+          "pid": 32692,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335232,
+          "pid": 9864,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 400704,
+          "pid": 9864,
+          "title": "MSCTFIME UI",
+          "class": "MSCTFIME UI",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335228,
+          "pid": 35916,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 269652,
+          "pid": 35692,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\client.exe"
+        },
+        {
+          "hwnd": 335124,
+          "pid": 35864,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\dist\\server.exe"
+        },
+        {
+          "hwnd": 3873766,
+          "pid": 14372,
+          "title": "Default IME",
+          "class": "IME",
+          "visible": false,
+          "image": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\当版 三EXE 复核3\\StartTrial.exe"
+        }
+      ],
+      "main_close_observed_as_hide": true,
+      "status": "PASS",
+      "main_session_quit": "UNVERIFIED: custom Tk Label exit control has no safely identified external command",
+      "server_service_natural_exit": "UNVERIFIED: no dedicated console stop helper",
+      "before_cleanup": {
+        "poll": null,
+        "job_active": 10,
+        "job_pids": [
+          14372,
+          30096,
+          28752,
+          35864,
+          29116,
+          6404,
+          35692,
+          32692,
+          35916,
+          9864
+        ]
+      },
+      "cleanup_forced": true,
+      "cleanup_ok": true,
+      "after_cleanup": {
+        "poll": 124,
+        "job_active": 0,
+        "job_pids": []
+      },
+      "log_sha256": "7c81190a792eb9ba0666d48b32f52893f533e5f4d747d2dad7518734b4544469",
+      "child_logs": {
+        "alpha.log": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "beta.log": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        "initialize.log": {
+          "sha256": "6a656d8332b577f2fef83123e013409500237bece5276b045e8eafbcf5bf456c",
+          "size": 431
+        },
+        "server.log": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        }
+      },
+      "synthetic_profile_inventory_summary": {
+        "server": {
+          "entries": 1081,
+          "inventory_sha256": "42ac6cdfa52e92f19297c1fed757880de361c792eefbade775a48979841ad30e"
+        },
+        "alpha": {
+          "entries": 1075,
+          "inventory_sha256": "da87e3c710d7b4126a72c02e86ba977a65291e71e69b8042fdce3cb551e0058d"
+        },
+        "beta": {
+          "entries": 1075,
+          "inventory_sha256": "34c2d9c84092bdce3d183e8d6788b8222b4c568b04865c9794f0a87d91249813"
+        }
+      }
+    }
+  ],
+  "passed": 1,
+  "failed": 0,
+  "blocked": 0,
+  "runtime_inputs_unchanged": true,
+  "all_owned_jobs_empty": true,
+  "complete_game_verified": false,
+  "external_windows_verified": false,
+  "physical_lan_verified": false,
+  "main_session_natural_exit_verified": false,
+  "server_service_natural_exit_verified": false,
+  "global_input_or_capture_used": false,
+  "system_configuration_changed": false,
+  "exit_code": 0,
+  "original_summary_sha256": "03f3ca022fa6e5414fcbae640b7cd63e87be7d83f1259daa1352629720e702c2"
+}

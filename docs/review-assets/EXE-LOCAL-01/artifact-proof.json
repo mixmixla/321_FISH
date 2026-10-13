@@ -1,0 +1,2042 @@
+{
+  "schema": "EXE-LOCAL-01.artifact-review.v1",
+  "reviewer": "purchase_review GPT-6.1 Sol",
+  "method": "Read installed PyInstaller CArchive/PYZ, unmarshal code and compare full code structure except filenames; compile/AST literal evaluation and PNG decoding only; never execute embedded/project modules.",
+  "head": "9803303f916b93be10a9e27239cd99583d007661",
+  "tested_code_commit": "6c8bdf715cbbd544610d2edb5a97e1daed9d19d4",
+  "source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "source_copy": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source",
+  "python_version": "3.14.5",
+  "errors": [],
+  "input_binding": {
+    "count": 410,
+    "computed_source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+    "matches_full_inputs": true,
+    "current_mismatches": [],
+    "copy_changes": [
+      {
+        "path": "client.spec",
+        "original_sha256": "ec741e0694c8f60016feabe6fe0ff4c6c452fffebd6d90271546526d4bb4407c",
+        "generated_sha256": "b711a9c02e9b47cab70d195de2cb9a8afe1fc65677ae98dfa5e89a9415291978",
+        "generated_size": 1180
+      },
+      {
+        "path": "server.spec",
+        "original_sha256": "48ecb7603c6594b9ffff88ed693212de25aadb9a6c68d63bde8dfbc7d7d235a0",
+        "generated_sha256": "5f7f372cb2a34dc69076ad166c0cc63f1774177754940a0a2847b3ab0520b3fb",
+        "generated_size": 1179
+      }
+    ]
+  },
+  "specs": {
+    "server.spec": {
+      "sha256": "5f7f372cb2a34dc69076ad166c0cc63f1774177754940a0a2847b3ab0520b3fb",
+      "size": 1179,
+      "author_absolute_path_present": false,
+      "collect_all_vosk_present": false,
+      "Analysis": {
+        "pathex": [],
+        "binaries": [],
+        "datas": [],
+        "hiddenimports": [
+          "web",
+          "tls_cert",
+          "discovery",
+          "audit",
+          "stickers",
+          "bots",
+          "widgets.thread_window",
+          "widgets.sticker_shop",
+          "widgets.fingerprint",
+          "widgets.server_tray",
+          "pystray",
+          "PIL.Image",
+          "PIL.ImageDraw",
+          "voice_api",
+          "video_api",
+          "cryptography.hazmat.primitives.asymmetric.x25519",
+          "cryptography.hazmat.primitives.kdf.hkdf",
+          "cryptography.hazmat.primitives.ciphers.aead"
+        ],
+        "hookspath": [],
+        "hooksconfig": {},
+        "runtime_hooks": [],
+        "excludes": [],
+        "noarchive": false,
+        "optimize": 0,
+        "scripts": [
+          "server.py"
+        ]
+      },
+      "EXE": {
+        "name": "server",
+        "debug": false,
+        "bootloader_ignore_signals": false,
+        "strip": false,
+        "upx": true,
+        "upx_exclude": [],
+        "runtime_tmpdir": null,
+        "console": true,
+        "disable_windowed_traceback": false,
+        "argv_emulation": false,
+        "target_arch": null,
+        "codesign_identity": null,
+        "entitlements_file": null,
+        "icon": [
+          "D:/Project/321_FISH/_tmp_gui/exe-local-20261013/builds/build-20261013-035610-53ac3e03a4/source/app.ico"
+        ]
+      }
+    },
+    "client.spec": {
+      "sha256": "b711a9c02e9b47cab70d195de2cb9a8afe1fc65677ae98dfa5e89a9415291978",
+      "size": 1180,
+      "author_absolute_path_present": false,
+      "collect_all_vosk_present": false,
+      "Analysis": {
+        "pathex": [],
+        "binaries": [],
+        "datas": [],
+        "hiddenimports": [
+          "web",
+          "tls_cert",
+          "discovery",
+          "audit",
+          "stickers",
+          "bots",
+          "widgets.thread_window",
+          "widgets.sticker_shop",
+          "widgets.fingerprint",
+          "widgets.server_tray",
+          "pystray",
+          "PIL.Image",
+          "PIL.ImageDraw",
+          "voice_api",
+          "video_api",
+          "cryptography.hazmat.primitives.asymmetric.x25519",
+          "cryptography.hazmat.primitives.kdf.hkdf",
+          "cryptography.hazmat.primitives.ciphers.aead"
+        ],
+        "hookspath": [],
+        "hooksconfig": {},
+        "runtime_hooks": [],
+        "excludes": [],
+        "noarchive": false,
+        "optimize": 0,
+        "scripts": [
+          "client.py"
+        ]
+      },
+      "EXE": {
+        "name": "client",
+        "debug": false,
+        "bootloader_ignore_signals": false,
+        "strip": false,
+        "upx": true,
+        "upx_exclude": [],
+        "runtime_tmpdir": null,
+        "console": false,
+        "disable_windowed_traceback": false,
+        "argv_emulation": false,
+        "target_arch": null,
+        "codesign_identity": null,
+        "entitlements_file": null,
+        "icon": [
+          "D:/Project/321_FISH/_tmp_gui/exe-local-20261013/builds/build-20261013-035610-53ac3e03a4/source/app.ico"
+        ]
+      }
+    },
+    "_tmp_gui/entry-spec/StartTrial.spec": {
+      "sha256": "536ad21529e0704edb56778697d82b172a035850289ce480ddbb860b1636acb8",
+      "size": 809,
+      "author_absolute_path_present": false,
+      "collect_all_vosk_present": false,
+      "Analysis": {
+        "pathex": [],
+        "binaries": [],
+        "datas": [],
+        "hiddenimports": [],
+        "hookspath": [],
+        "hooksconfig": {},
+        "runtime_hooks": [],
+        "excludes": [],
+        "noarchive": false,
+        "optimize": 0,
+        "scripts": [
+          "D:/Project/321_FISH/_tmp_gui/exe-local-20261013/builds/build-20261013-035610-53ac3e03a4/source/friend_trial_start.py"
+        ]
+      },
+      "EXE": {
+        "name": "StartTrial",
+        "debug": false,
+        "bootloader_ignore_signals": false,
+        "strip": false,
+        "upx": true,
+        "upx_exclude": [],
+        "runtime_tmpdir": null,
+        "console": true,
+        "disable_windowed_traceback": false,
+        "argv_emulation": false,
+        "target_arch": null,
+        "codesign_identity": null,
+        "entitlements_file": null
+      }
+    }
+  },
+  "source_assets": {
+    "count": 26,
+    "records": [
+      {
+        "key": "azul_bowl",
+        "embedded_png_sha256": "dfc30643f98ce57e260c85a289fe6495e646d23e4ff179282002b6825fe26b2d",
+        "source_png_sha256": "5adc173c3fef0038af8193dc6861172d7162ccc90834aa795770ebfc309fa8e5",
+        "png_bytes_equal": false,
+        "size": [
+          128,
+          128
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "c3750186444c379cb3cdae9759412433b9aa29a11904afd18dc822a26d82b596"
+      },
+      {
+        "key": "azul_tile_b",
+        "embedded_png_sha256": "3afdf09d70b49f288a665f4cf733f7027b1e3120dd55b448702b4bc60d0587fe",
+        "source_png_sha256": "82860db24756f02a57f078addf1ea0a2eb9f9793ca970efcf1bcda38d718e5a6",
+        "png_bytes_equal": false,
+        "size": [
+          44,
+          44
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "076bcc94f8d93d312ae70f73b4f5608ae83a9460fb2d08c6e269900736952cc7"
+      },
+      {
+        "key": "azul_tile_k",
+        "embedded_png_sha256": "9e9a81ecc39e9b5aa54ecc99283c0a6da2d7130eb72d640cd26de9965613ca3c",
+        "source_png_sha256": "9d3164cc4872ac42b73bac68cbdd01b20c3c9ad5591243627d7e096f7ff63390",
+        "png_bytes_equal": false,
+        "size": [
+          44,
+          44
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "259b6704ab766a876aefc60872a3348c9f694dd983f4ecefcf0f8ba9e8db7535"
+      },
+      {
+        "key": "azul_tile_r",
+        "embedded_png_sha256": "3256cfeaff166e4b62bf5ff36c23ef64f0966af8e03da18339f908a761c219c4",
+        "source_png_sha256": "c865cb62435bdc23ea824ea3033fae94c89fd3d6868231bb9e9e776364790f94",
+        "png_bytes_equal": false,
+        "size": [
+          44,
+          44
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "e553e9dbb648133ca4de6cb7ae2e76c818ad48b0f41b4bd74781593727b38719"
+      },
+      {
+        "key": "azul_tile_w",
+        "embedded_png_sha256": "5129cb9ef59bb2b83a33d0497ae5f550ad99d62346bfbf0d10368192f507ed36",
+        "source_png_sha256": "98db53664306a83ad07a19ba7fb8e5ad1ac5f3c5c91397913e6443fafaebfb32",
+        "png_bytes_equal": false,
+        "size": [
+          44,
+          44
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "be90ff9f6abc82b9af1f4aeeb081b5cae23a1545447453c02bebbf55e42c0ca3"
+      },
+      {
+        "key": "azul_tile_y",
+        "embedded_png_sha256": "3867785aca450c70b4b72ca74dfa72e312f90a66fcffd6aa240fd74726d159fd",
+        "source_png_sha256": "537a9a60f11ebbc3d96b59e3813766b052d506287dd897483a16b56cc4ef7df3",
+        "png_bytes_equal": false,
+        "size": [
+          44,
+          44
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "a5e85e2e52650105ad8f22c5844c6bc3d29414b740292fd61890c50078ecf409"
+      },
+      {
+        "key": "card_back",
+        "embedded_png_sha256": "a06c299c7f494e05cfa9ec5590de6b6e7257df6215dc7902585c4022e2d9efaf",
+        "source_png_sha256": "87f86f551147ff48f03e4575e44dadc66d34fabc5fa3f5266b5114c2493a4469",
+        "png_bytes_equal": false,
+        "size": [
+          96,
+          136
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "54bc0d69a8acfb33c4e6f0a537a6f5583be16ac1f86bcbfe521eb1989792ef3f"
+      },
+      {
+        "key": "card_frame",
+        "embedded_png_sha256": "c3d963dead7434d7aff1f1f93ad0bf4836d5fad9bf2977596c327b4a2f58b0b7",
+        "source_png_sha256": "79149a6475dd6197c2735d4731d6b205414fd5d1f76cab93b1d7368e03de7a84",
+        "png_bytes_equal": false,
+        "size": [
+          96,
+          136
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "9cb8f44c95922d9dad80e4c65c706a37c1124350a23960844c8313b6ea572878"
+      },
+      {
+        "key": "coin",
+        "embedded_png_sha256": "9ccb6cd1e88b04d829799e556625a765c98196b18b5000a7788d526acf4511f7",
+        "source_png_sha256": "9ef7154ad5c2572aad87e812114a8245b72abd9eabf3644cbe6430f0053f39e8",
+        "png_bytes_equal": false,
+        "size": [
+          48,
+          48
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "99bdda642f2b2401455a34e33e08483d3c40807026b350c3748c86e007c8448d"
+      },
+      {
+        "key": "die_face1",
+        "embedded_png_sha256": "d0f8766c2f5f8aad99683fd08ce9a869acd184fdf55dff19b42bf80b70026701",
+        "source_png_sha256": "9caf4b6dd668a71e0f91b2ea7bca9377336b078e37b5ba7693dda42f48d738d2",
+        "png_bytes_equal": false,
+        "size": [
+          48,
+          48
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "77b6bda51d39a7c2f0f333831ac62a9b99556c4901a77e3f6cdc5273d49ab38e"
+      },
+      {
+        "key": "die_face2",
+        "embedded_png_sha256": "5626e6d6ebe50f776206f3c91fd72eedda03508f2f4dbb6a2bf5f093dc8021d7",
+        "source_png_sha256": "79c954fa41c13989291ea4733a6b9e71756a0871d647ca76e8931d0b137044bc",
+        "png_bytes_equal": false,
+        "size": [
+          48,
+          48
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "e5ab32a2cc5d797451fd68bd78c62ceaebafffe28562a14bcd40b384b371b715"
+      },
+      {
+        "key": "die_face3",
+        "embedded_png_sha256": "0564b2f0b84ec5c3e21607ee80f692c8d86c8e18ab1ccbc9424a21ebd5c92907",
+        "source_png_sha256": "d62fbfb0481db02f9c5bfdf4e309990435258f936df5feb7ec01b86c8e0f9374",
+        "png_bytes_equal": false,
+        "size": [
+          48,
+          48
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "367ede67ef7faaa0d4b679b945df54169b0674404df38df8c5e9bea97729362b"
+      },
+      {
+        "key": "die_face4",
+        "embedded_png_sha256": "c91653db430c0354b961449154f99e28443ea0686e6af03ef4fce7b0fba4512a",
+        "source_png_sha256": "164396a402283cffd7d35cfa8ac9b126175d74384d5212ce8c84f1ad200bad62",
+        "png_bytes_equal": false,
+        "size": [
+          48,
+          48
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "fbf016a7e8adaf17f7a110144b99d41fc69266eb1675e4004042090646e8a991"
+      },
+      {
+        "key": "die_face5",
+        "embedded_png_sha256": "45348d761a2b02d0b8bd787b3dcd6f75d00a4035af80840632fe5a3af4b570f1",
+        "source_png_sha256": "7661cb46efd3cae3d5a2fce20fa797dce626f7a4c3c53fc720703502c19a9566",
+        "png_bytes_equal": false,
+        "size": [
+          48,
+          48
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "d5efa7a0527e2a7a14fc9dbeb8c73801ec375e376ea40d241c85521b4ecb0568"
+      },
+      {
+        "key": "die_face6",
+        "embedded_png_sha256": "671ceab248abe9979e1e384ad6f0d5f3f4f5eee95c4fb294a24e40e261766187",
+        "source_png_sha256": "8bce203e56c760567e13ba0eb768eea00238afe338caf1700eba338859e7aa73",
+        "png_bytes_equal": false,
+        "size": [
+          48,
+          48
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "43183ce44d0a00f53910f396a89ebfed5c6b4346affc14c441eec24373ec28e3"
+      },
+      {
+        "key": "felt",
+        "embedded_png_sha256": "962ed2a9b7a763cc1d0f956d0a4e14ca35059ec512b0630a2081ada3ed7985d5",
+        "source_png_sha256": "731bd541b79a870b78833c5edb5dd5528deabcfb266c672f7fa62f37a0e8178d",
+        "png_bytes_equal": false,
+        "size": [
+          256,
+          256
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "1fbcdc06e53ef909296079394a4deb04847951af1bdcdbc4e8b467d94133f000"
+      },
+      {
+        "key": "gem_d",
+        "embedded_png_sha256": "3f439c043c6239ae9d95e88e1297cdc921d3a3e9cc1c85c89b217b1e8cb39a59",
+        "source_png_sha256": "b889d3ff7456ddcf0d0a13d72432465417d2b61b8165fc448abbc33efd000c26",
+        "png_bytes_equal": false,
+        "size": [
+          40,
+          40
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "81f15c3c2d592bb89136b61b6326700146aa0b4cd4eee84b3f2f3e404845d5a4"
+      },
+      {
+        "key": "gem_e",
+        "embedded_png_sha256": "23c2eaed863d9df9bc3771885b5148ac2bb56c5f6d1a31f7845f10dffa5d7c07",
+        "source_png_sha256": "996225a169b32e12d81141e5540b2e362b4047e76a34fb013d9f1664144a8528",
+        "png_bytes_equal": false,
+        "size": [
+          40,
+          40
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "a600002c2d4bf303f3c930ae52aaa6b7977c3d7b36a100fc6fa91cfa614c406a"
+      },
+      {
+        "key": "gem_g",
+        "embedded_png_sha256": "fa6b3d2e955c50b9ee469f490887b9d237f8197b737daebe827266d81a8fb36f",
+        "source_png_sha256": "5c456cffcb69674b739ed5318378b6400570c15efd29348cf93778de61ecb632",
+        "png_bytes_equal": false,
+        "size": [
+          40,
+          40
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "9cf38236239f60b9712ecd846fb6954dcb7721114727fae6e17d27c9b7f7d51a"
+      },
+      {
+        "key": "gem_o",
+        "embedded_png_sha256": "af22bb50450386869602627edf99cd7d3bbf95974c7c9e026a8c07230abc3b60",
+        "source_png_sha256": "7f5ed7000c128d6f91a34a897fc38df5c74c6279c9d2e2db17d19aed66ceaf2d",
+        "png_bytes_equal": false,
+        "size": [
+          40,
+          40
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "9e919cbea14ebaaf8ffff9609445043c70b686d57dbeb06e38691ca7b863a25d"
+      },
+      {
+        "key": "gem_r",
+        "embedded_png_sha256": "598bbb7228c72ba0b5b6c95b880c6a11d1e533c549281582426ce7ccad82953c",
+        "source_png_sha256": "a111ae3183fb90395a641c82c0f11944b553fe3ae3afc3a64a0183f41d66be97",
+        "png_bytes_equal": false,
+        "size": [
+          40,
+          40
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "5e6086eaf985dd05e7efedde30ba65c94abefc97e4290190ac494d0f6ab665ff"
+      },
+      {
+        "key": "gem_s",
+        "embedded_png_sha256": "cd658e132bb325bc9f6466d3dce2f010b457e840cb9c9f0c9c3bb964942089b8",
+        "source_png_sha256": "93048af5ff67575d98527f564ae59c001c306c4539fab8de6ef2ee90d20b66ed",
+        "png_bytes_equal": false,
+        "size": [
+          40,
+          40
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "a9fe0f3454ebf1ab3fe53230bfff4d2726033c02d0059c2b16938f76a53ee064"
+      },
+      {
+        "key": "panel",
+        "embedded_png_sha256": "b4d365d51c40e57d2bf50bc9a01c40694d2a406647dd3433c96998f8cc1255cd",
+        "source_png_sha256": "df28c9bf943f4f25cfb6e97790a10f1957cf875a54f8d30f5c4499e9b1681e50",
+        "png_bytes_equal": false,
+        "size": [
+          60,
+          60
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "b8f786fa274b97a3a1e359a2c93d1f9c1c3abc88d854ffdfddcf1c2f1ecf647d"
+      },
+      {
+        "key": "paper",
+        "embedded_png_sha256": "46d5ae90a74d97d3ab974402fed7ca2babd0c5619ab017eae46ff4277b79d876",
+        "source_png_sha256": "312329c36efccd2e313d0f00679f3ff42512ef35a152ac45064cbf1d382229a7",
+        "png_bytes_equal": false,
+        "size": [
+          256,
+          256
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "fc8c4dc1e9e46fed0cc4fb6b8e2a8e855e9e028c6a694bca93087ee17953a9b7"
+      },
+      {
+        "key": "token",
+        "embedded_png_sha256": "6672dc3d484caf11b047a2643d1c1db4806717dc99b178986f7c2b722df25747",
+        "source_png_sha256": "cab92405616d8f554cd8d7ccf2d5eb3da40ab68b23ce966b2edf2894e41c8b04",
+        "png_bytes_equal": false,
+        "size": [
+          40,
+          40
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "3c3aa8c9cf7d131e8dd857c2db868d1ae14a9d75d46ebaae8a1591a2cd20162b"
+      },
+      {
+        "key": "wood",
+        "embedded_png_sha256": "2898d5d138763063b612236a73a012ff296018af587aaa2740024ebb8efb6083",
+        "source_png_sha256": "66687830d50d26191e950cc60f470677808927e95128a7cc8909af47f47dd845",
+        "png_bytes_equal": false,
+        "size": [
+          256,
+          256
+        ],
+        "pixels_equal": true,
+        "rgba_sha256": "b93edcbac8abeb74bebac98b06f391d617731da0b6930fccd4211a78098cfb66"
+      }
+    ]
+  },
+  "artifacts": {
+    "server.exe": {
+      "size": 25363867,
+      "sha256": "4578d79266e3df0fef0c77142c138c1442569f00ed008631987306afbd61c463",
+      "matches_build_summary": true,
+      "pkg_entries": 1026,
+      "pyz_modules": 376,
+      "pyz_archives": [
+        "PYZ.pyz"
+      ],
+      "required_modules": {
+        "web": true,
+        "ui_design": true,
+        "games_pkg.gemcity": true
+      },
+      "binary_dependencies": [
+        "pyimod03_ctypes",
+        "pyi_rth__tkinter",
+        "PIL\\_imagingtk.cp314-win_amd64.pyd",
+        "_ctypes.pyd",
+        "_tkinter.pyd",
+        "python314.dll",
+        "tcl86t.dll",
+        "tk86t.dll"
+      ],
+      "raw_boardgame_png_entries": [],
+      "models_entries": [],
+      "vosk_modules": [],
+      "project_code_checks": [
+        {
+          "module": "_art",
+          "path": "_art.py",
+          "source_code_hash": "3ab078b08c8211d5b16600ad37031abb20e1d3b80493e329c849e7e6c363aea9",
+          "archive_code_hash": "3ab078b08c8211d5b16600ad37031abb20e1d3b80493e329c849e7e6c363aea9",
+          "equal": true
+        },
+        {
+          "module": "agent_bot",
+          "path": "agent_bot.py",
+          "source_code_hash": "7c8dabf24e5b79ce41fbd28d5b7f61bc326ed56087ecd86f98705d121bf7fb44",
+          "archive_code_hash": "7c8dabf24e5b79ce41fbd28d5b7f61bc326ed56087ecd86f98705d121bf7fb44",
+          "equal": true
+        },
+        {
+          "module": "audit",
+          "path": "audit.py",
+          "source_code_hash": "46a65f0bf1aea58f02b6459813df309b937466c5eb0cfe0719c94945147607bc",
+          "archive_code_hash": "46a65f0bf1aea58f02b6459813df309b937466c5eb0cfe0719c94945147607bc",
+          "equal": true
+        },
+        {
+          "module": "auth",
+          "path": "auth.py",
+          "source_code_hash": "eb00fcfc552ab54709132a50adac42bba00137838083098416818f85ca5a81ed",
+          "archive_code_hash": "eb00fcfc552ab54709132a50adac42bba00137838083098416818f85ca5a81ed",
+          "equal": true
+        },
+        {
+          "module": "bots",
+          "path": "bots.py",
+          "source_code_hash": "c798afe2b104e1537b5e8f59ed1b78461fb5fd091b1cf6624e74c27174fef034",
+          "archive_code_hash": "c798afe2b104e1537b5e8f59ed1b78461fb5fd091b1cf6624e74c27174fef034",
+          "equal": true
+        },
+        {
+          "module": "cloud_history",
+          "path": "cloud_history.py",
+          "source_code_hash": "e14772e8022ac906c2d46bb57d5656724557ce5663f82e30b922116799ba677e",
+          "archive_code_hash": "e14772e8022ac906c2d46bb57d5656724557ce5663f82e30b922116799ba677e",
+          "equal": true
+        },
+        {
+          "module": "config",
+          "path": "config.py",
+          "source_code_hash": "d98b3e418c85f70b96f00d53d35db029f43834b6132bf18870689770a4dbf657",
+          "archive_code_hash": "d98b3e418c85f70b96f00d53d35db029f43834b6132bf18870689770a4dbf657",
+          "equal": true
+        },
+        {
+          "module": "credential_ops",
+          "path": "credential_ops.py",
+          "source_code_hash": "96e9681a8b961829c38e947c02cec3eed1f0b500d075914cdceb2eb9a83ce4e0",
+          "archive_code_hash": "96e9681a8b961829c38e947c02cec3eed1f0b500d075914cdceb2eb9a83ce4e0",
+          "equal": true
+        },
+        {
+          "module": "crypto",
+          "path": "crypto.py",
+          "source_code_hash": "aa44069a38d27193e684a2933a7f6375fab029ba480ad7cd05a143e8b5e0a81f",
+          "archive_code_hash": "aa44069a38d27193e684a2933a7f6375fab029ba480ad7cd05a143e8b5e0a81f",
+          "equal": true
+        },
+        {
+          "module": "discovery",
+          "path": "discovery.py",
+          "source_code_hash": "a2dc9d94e09a6f5b05bab4035a3bae7c8bdd4c3242ccc5ea313d0e5bd3527bf6",
+          "archive_code_hash": "a2dc9d94e09a6f5b05bab4035a3bae7c8bdd4c3242ccc5ea313d0e5bd3527bf6",
+          "equal": true
+        },
+        {
+          "module": "filexfer",
+          "path": "filexfer.py",
+          "source_code_hash": "b93efacea1b50895f8a031220fe881a804322ba4fbcde56cdea537397aac5b85",
+          "archive_code_hash": "b93efacea1b50895f8a031220fe881a804322ba4fbcde56cdea537397aac5b85",
+          "equal": true
+        },
+        {
+          "module": "games_pkg",
+          "path": "games_pkg/__init__.py",
+          "source_code_hash": "98d9240bfda90a3df7a4680f5d553fb2dcea6da7fc20f9b45d204c1754800040",
+          "archive_code_hash": "98d9240bfda90a3df7a4680f5d553fb2dcea6da7fc20f9b45d204c1754800040",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.avalon",
+          "path": "games_pkg/avalon.py",
+          "source_code_hash": "b278206d547ac340d553aa7346620f28ba64bb1f2da3d6fab730b3b775c47766",
+          "archive_code_hash": "b278206d547ac340d553aa7346620f28ba64bb1f2da3d6fab730b3b775c47766",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.azul",
+          "path": "games_pkg/azul.py",
+          "source_code_hash": "960efad74377632dc72327d8780f86f15586a23f959f0e2f1e14986a13443bca",
+          "archive_code_hash": "960efad74377632dc72327d8780f86f15586a23f959f0e2f1e14986a13443bca",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.balatro",
+          "path": "games_pkg/balatro.py",
+          "source_code_hash": "d2aeb3922a4a679475c58d7e85c4afc3f3177b7073a7cda12423a7820664b7aa",
+          "archive_code_hash": "d2aeb3922a4a679475c58d7e85c4afc3f3177b7073a7cda12423a7820664b7aa",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.base",
+          "path": "games_pkg/base.py",
+          "source_code_hash": "c761df1528f6859dc3bf858033ce2853a26fec006cefe4b60a08b0dc4362aef6",
+          "archive_code_hash": "c761df1528f6859dc3bf858033ce2853a26fec006cefe4b60a08b0dc4362aef6",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.betrayal",
+          "path": "games_pkg/betrayal.py",
+          "source_code_hash": "f12beaaca0558eac9c70e4ce3b1545410f06a85d06c9fa7f797aa17b16641e71",
+          "archive_code_hash": "f12beaaca0558eac9c70e4ce3b1545410f06a85d06c9fa7f797aa17b16641e71",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.blackjack",
+          "path": "games_pkg/blackjack.py",
+          "source_code_hash": "047847bd8e29c659be83df82702059f21dff90499091c09b5168679b75da6c1a",
+          "archive_code_hash": "047847bd8e29c659be83df82702059f21dff90499091c09b5168679b75da6c1a",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.blokus",
+          "path": "games_pkg/blokus.py",
+          "source_code_hash": "81f594cd549df9233bac37841c3627cbbcb64cc825398857e8d6f033efd4bc68",
+          "archive_code_hash": "81f594cd549df9233bac37841c3627cbbcb64cc825398857e8d6f033efd4bc68",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.bolan",
+          "path": "games_pkg/bolan.py",
+          "source_code_hash": "2c1a6b70478957f087e1aaa101ba52a8f2d704317d3d7e9db3ade9a4ef1f4022",
+          "archive_code_hash": "2c1a6b70478957f087e1aaa101ba52a8f2d704317d3d7e9db3ade9a4ef1f4022",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.calc24",
+          "path": "games_pkg/calc24.py",
+          "source_code_hash": "485e3c47fab37c15dded1b773358414e49292c017b7699184cbcb9b45a06bc1f",
+          "archive_code_hash": "485e3c47fab37c15dded1b773358414e49292c017b7699184cbcb9b45a06bc1f",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.checkers",
+          "path": "games_pkg/checkers.py",
+          "source_code_hash": "686c2f6e10e730d0af3a47987d1958080a3a09e78f9aa6afb5d79c6201a36822",
+          "archive_code_hash": "686c2f6e10e730d0af3a47987d1958080a3a09e78f9aa6afb5d79c6201a36822",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.chengzhu",
+          "path": "games_pkg/chengzhu.py",
+          "source_code_hash": "20b3dea9390ad182f290ad94c63dfe2e4c9eb667b8720c5b2c8d487c7930e41b",
+          "archive_code_hash": "20b3dea9390ad182f290ad94c63dfe2e4c9eb667b8720c5b2c8d487c7930e41b",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.chess",
+          "path": "games_pkg/chess.py",
+          "source_code_hash": "e72d491f10bf60e3dc45f2500524a1bfbc4f2cd53aab23fec70eccd3a0d6d0a9",
+          "archive_code_hash": "e72d491f10bf60e3dc45f2500524a1bfbc4f2cd53aab23fec70eccd3a0d6d0a9",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.coc",
+          "path": "games_pkg/coc.py",
+          "source_code_hash": "62a74e3154adbf39f76c7cd4881cc5847c8dc02782ee82070321cc9c8a3e9559",
+          "archive_code_hash": "62a74e3154adbf39f76c7cd4881cc5847c8dc02782ee82070321cc9c8a3e9559",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.common_actions",
+          "path": "games_pkg/common_actions.py",
+          "source_code_hash": "13456f80e9e46c03dcb79f07dba56ef526446e65e6faf5c6b5c3dbfbc20ccc86",
+          "archive_code_hash": "13456f80e9e46c03dcb79f07dba56ef526446e65e6faf5c6b5c3dbfbc20ccc86",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.connect4",
+          "path": "games_pkg/connect4.py",
+          "source_code_hash": "0a2146862e5bd573c7dbd5565d95584927deca6f6fc023631c9733b5baaa74d6",
+          "archive_code_hash": "0a2146862e5bd573c7dbd5565d95584927deca6f6fc023631c9733b5baaa74d6",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.davinci",
+          "path": "games_pkg/davinci.py",
+          "source_code_hash": "b902c1e49f1f5f88a1e6385240037628f70b09a3cb6e8664bb8f4abc8c98c383",
+          "archive_code_hash": "b902c1e49f1f5f88a1e6385240037628f70b09a3cb6e8664bb8f4abc8c98c383",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.dou",
+          "path": "games_pkg/dou.py",
+          "source_code_hash": "1b2dc6a68f7ae47c5e2f784b258f43ed73773242951491308c8e7298500f703a",
+          "archive_code_hash": "1b2dc6a68f7ae47c5e2f784b258f43ed73773242951491308c8e7298500f703a",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.drawguess",
+          "path": "games_pkg/drawguess.py",
+          "source_code_hash": "9ca9d9ba0dfe1817ca862ca9de432f006a465bc2fe53ed88a0f85e6009b181ce",
+          "archive_code_hash": "9ca9d9ba0dfe1817ca862ca9de432f006a465bc2fe53ed88a0f85e6009b181ce",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.gemcity",
+          "path": "games_pkg/gemcity.py",
+          "source_code_hash": "4b1d49599f2cc07bbeb070c243b2999e94a47185fdee97e56e8a61edbb7b407f",
+          "archive_code_hash": "4b1d49599f2cc07bbeb070c243b2999e94a47185fdee97e56e8a61edbb7b407f",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.go",
+          "path": "games_pkg/go.py",
+          "source_code_hash": "b24c68a0cba590fc27e6e54a432ba1cb81f9e9e53c689797b4d514e1f9d55570",
+          "archive_code_hash": "b24c68a0cba590fc27e6e54a432ba1cb81f9e9e53c689797b4d514e1f9d55570",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.gomoku",
+          "path": "games_pkg/gomoku.py",
+          "source_code_hash": "8f0e6b85a7982db220ff599d3561a015e534337ed20476df3854f73a30ce37f0",
+          "archive_code_hash": "8f0e6b85a7982db220ff599d3561a015e534337ed20476df3854f73a30ce37f0",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.gongfang",
+          "path": "games_pkg/gongfang.py",
+          "source_code_hash": "94b751913cf5ac9fe998e20337d900dbc1a56446dacd612a74099b37ec7d5491",
+          "archive_code_hash": "94b751913cf5ac9fe998e20337d900dbc1a56446dacd612a74099b37ec7d5491",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.guess_number",
+          "path": "games_pkg/guess_number.py",
+          "source_code_hash": "600c02090d9a393b03f62d0126725ed162132124afcdfb76f74bfa65da0d082e",
+          "archive_code_hash": "600c02090d9a393b03f62d0126725ed162132124afcdfb76f74bfa65da0d082e",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.halloween",
+          "path": "games_pkg/halloween.py",
+          "source_code_hash": "c0124cc12c55a9c4a3d1991e3688488940d06f955e064d26d1a7146756c70aa6",
+          "archive_code_hash": "c0124cc12c55a9c4a3d1991e3688488940d06f955e064d26d1a7146756c70aa6",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.halma",
+          "path": "games_pkg/halma.py",
+          "source_code_hash": "21a8c964bf4ac773303fa0678e7d5b33af051c4bd9bcba2d3804fc6469965d2d",
+          "archive_code_hash": "21a8c964bf4ac773303fa0678e7d5b33af051c4bd9bcba2d3804fc6469965d2d",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.junqi",
+          "path": "games_pkg/junqi.py",
+          "source_code_hash": "787f821a314bd3a0ef202d9b5ebc77a823a5288f71028970ef8548e07f667e51",
+          "archive_code_hash": "787f821a314bd3a0ef202d9b5ebc77a823a5288f71028970ef8548e07f667e51",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.kaituo",
+          "path": "games_pkg/kaituo.py",
+          "source_code_hash": "b4ffb073786d2a47fd8a8f3b090cb3cef0c308c5b0ac777fe341f26d890e3332",
+          "archive_code_hash": "b4ffb073786d2a47fd8a8f3b090cb3cef0c308c5b0ac777fe341f26d890e3332",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.kalah",
+          "path": "games_pkg/kalah.py",
+          "source_code_hash": "463c1aac26aa872053a12f89fe92c8260974e6e689f7dd822c4742ece6f5712d",
+          "archive_code_hash": "463c1aac26aa872053a12f89fe92c8260974e6e689f7dd822c4742ece6f5712d",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.liar",
+          "path": "games_pkg/liar.py",
+          "source_code_hash": "dc5bd4c4f9ae184114cd673ecb27a8366f22a12cd6a643c35fc442a169c7db29",
+          "archive_code_hash": "dc5bd4c4f9ae184114cd673ecb27a8366f22a12cd6a643c35fc442a169c7db29",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.lingdi",
+          "path": "games_pkg/lingdi.py",
+          "source_code_hash": "c310f6e3aeba48154a76f5ddf6390fa74f9f2dd553bee46ef3d81f3537fd7491",
+          "archive_code_hash": "c310f6e3aeba48154a76f5ddf6390fa74f9f2dd553bee46ef3d81f3537fd7491",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.lovelove",
+          "path": "games_pkg/lovelove.py",
+          "source_code_hash": "ed3d84541aac484c5edfa2d966d4e8ec601b7d0b40075ee2e2739b00d503b04f",
+          "archive_code_hash": "ed3d84541aac484c5edfa2d966d4e8ec601b7d0b40075ee2e2739b00d503b04f",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.ludo",
+          "path": "games_pkg/ludo.py",
+          "source_code_hash": "f13130b6be8dbd57342594b105e08976612d55f9b6cf991fb4144f4d6d500c3c",
+          "archive_code_hash": "f13130b6be8dbd57342594b105e08976612d55f9b6cf991fb4144f4d6d500c3c",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.matchpairs",
+          "path": "games_pkg/matchpairs.py",
+          "source_code_hash": "570cb5cd7808094797d93e15cd11669efbc966413b43adbf38501e47a60ab88c",
+          "archive_code_hash": "570cb5cd7808094797d93e15cd11669efbc966413b43adbf38501e47a60ab88c",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.nimmt",
+          "path": "games_pkg/nimmt.py",
+          "source_code_hash": "1a9b19dbd432c256da0c5a680da815c70dd535355c319cb55c04133cfde307e3",
+          "archive_code_hash": "1a9b19dbd432c256da0c5a680da815c70dd535355c319cb55c04133cfde307e3",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.ninja",
+          "path": "games_pkg/ninja.py",
+          "source_code_hash": "12889f160a73d389f07bce5ab48ffee52d53f578706e4e11214a1975fe12eb40",
+          "archive_code_hash": "12889f160a73d389f07bce5ab48ffee52d53f578706e4e11214a1975fe12eb40",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.onewolf",
+          "path": "games_pkg/onewolf.py",
+          "source_code_hash": "a5633b7a080660a2dd6c1d87f08e8cf0df71c4692b5d7ff68f8ad5234d26c781",
+          "archive_code_hash": "a5633b7a080660a2dd6c1d87f08e8cf0df71c4692b5d7ff68f8ad5234d26c781",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.othello",
+          "path": "games_pkg/othello.py",
+          "source_code_hash": "81c33702f40596dbd0510441785a8e9dc0ab0914758e975572a561ca645ac656",
+          "archive_code_hash": "81c33702f40596dbd0510441785a8e9dc0ab0914758e975572a561ca645ac656",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.rooms",
+          "path": "games_pkg/rooms.py",
+          "source_code_hash": "efc386ad8cda941ab26cc49357d2e7329ab6856b6a026292c82ed8fef38aedfd",
+          "archive_code_hash": "efc386ad8cda941ab26cc49357d2e7329ab6856b6a026292c82ed8fef38aedfd",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.rps",
+          "path": "games_pkg/rps.py",
+          "source_code_hash": "f6e5d146eea6e625c3b54ec0a949df1fb08f9bcb39d4eaff1f5550703565a691",
+          "archive_code_hash": "f6e5d146eea6e625c3b54ec0a949df1fb08f9bcb39d4eaff1f5550703565a691",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.rummikub",
+          "path": "games_pkg/rummikub.py",
+          "source_code_hash": "16de21f1dab8c3a39e64b32165714b0396fc57c0fc73c43be3534b5e24518bbc",
+          "archive_code_hash": "16de21f1dab8c3a39e64b32165714b0396fc57c0fc73c43be3534b5e24518bbc",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.shogi",
+          "path": "games_pkg/shogi.py",
+          "source_code_hash": "85f3da3913ea462caf4112931740624da22db2c244dda78d767c26ed398c5e6c",
+          "archive_code_hash": "85f3da3913ea462caf4112931740624da22db2c244dda78d767c26ed398c5e6c",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.siji",
+          "path": "games_pkg/siji.py",
+          "source_code_hash": "c5be6b556cb1210bf64490ad9910c1b2920c9bad2f3c079b890c05fba1c0a9af",
+          "archive_code_hash": "c5be6b556cb1210bf64490ad9910c1b2920c9bad2f3c079b890c05fba1c0a9af",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.spy",
+          "path": "games_pkg/spy.py",
+          "source_code_hash": "ed69f2f8b84c29f943f181f75adda530119fcd16e3bc4f3f3cc85a39d3c8b2c4",
+          "archive_code_hash": "ed69f2f8b84c29f943f181f75adda530119fcd16e3bc4f3f3cc85a39d3c8b2c4",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.tictactoe",
+          "path": "games_pkg/tictactoe.py",
+          "source_code_hash": "82bb5805707655b1cd311675385cbb32ae0672ec1f0cb4fd0f14a44fe15d0434",
+          "archive_code_hash": "82bb5805707655b1cd311675385cbb32ae0672ec1f0cb4fd0f14a44fe15d0434",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.tielu",
+          "path": "games_pkg/tielu.py",
+          "source_code_hash": "472cdc06377c33010e2796aac4a73bf8e4d6b2f83e08e77f25a47b52b0d58d31",
+          "archive_code_hash": "472cdc06377c33010e2796aac4a73bf8e4d6b2f83e08e77f25a47b52b0d58d31",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.uno",
+          "path": "games_pkg/uno.py",
+          "source_code_hash": "1e122aac4330f2e1291f6cd8b281997024c8869bdfcd0a0f7dec2223ef4cf9a4",
+          "archive_code_hash": "1e122aac4330f2e1291f6cd8b281997024c8869bdfcd0a0f7dec2223ef4cf9a4",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.werewolf",
+          "path": "games_pkg/werewolf.py",
+          "source_code_hash": "a0b8033ec4c32149c2e59204f66f4e5fd55c16b4232c00b0b49d62e57f03c8e0",
+          "archive_code_hash": "a0b8033ec4c32149c2e59204f66f4e5fd55c16b4232c00b0b49d62e57f03c8e0",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.xiangqi",
+          "path": "games_pkg/xiangqi.py",
+          "source_code_hash": "b5378e46c7053e3b5286ce5385a2a563de6aaeb198231ad170c040f5eb506aed",
+          "archive_code_hash": "b5378e46c7053e3b5286ce5385a2a563de6aaeb198231ad170c040f5eb506aed",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.yahtzee",
+          "path": "games_pkg/yahtzee.py",
+          "source_code_hash": "da2e97ff5ca0ae5cf077f4af6135ad67ac313230b55a14040b1374442fbef944",
+          "archive_code_hash": "da2e97ff5ca0ae5cf077f4af6135ad67ac313230b55a14040b1374442fbef944",
+          "equal": true
+        },
+        {
+          "module": "protocol",
+          "path": "protocol.py",
+          "source_code_hash": "29b545203a93ad060ea289c41c0f2d5ec94598489adb7c2f2f4a8d3aa4e3cdd8",
+          "archive_code_hash": "29b545203a93ad060ea289c41c0f2d5ec94598489adb7c2f2f4a8d3aa4e3cdd8",
+          "equal": true
+        },
+        {
+          "module": "server_recovery",
+          "path": "server_recovery.py",
+          "source_code_hash": "bef31f5eec2e723d88ba2f26ff877d8e41d2a2ea2c22695b74e1ed212fd4cea9",
+          "archive_code_hash": "bef31f5eec2e723d88ba2f26ff877d8e41d2a2ea2c22695b74e1ed212fd4cea9",
+          "equal": true
+        },
+        {
+          "module": "server_store",
+          "path": "server_store.py",
+          "source_code_hash": "9b89e2cf156a9e7b3d1747ef96d25c387bb0dff2f3636ce6ab53fcde8972496e",
+          "archive_code_hash": "9b89e2cf156a9e7b3d1747ef96d25c387bb0dff2f3636ce6ab53fcde8972496e",
+          "equal": true
+        },
+        {
+          "module": "stickers",
+          "path": "stickers.py",
+          "source_code_hash": "a0a4fdbe6e54132b01286386deb7ddd05cf144e490fcd60d9b733869e8c578d6",
+          "archive_code_hash": "a0a4fdbe6e54132b01286386deb7ddd05cf144e490fcd60d9b733869e8c578d6",
+          "equal": true
+        },
+        {
+          "module": "tls_cert",
+          "path": "tls_cert.py",
+          "source_code_hash": "49664fd248c6aac8cba6665fd4f9490085ed027d1cc1d3ca66f5471b20243f92",
+          "archive_code_hash": "49664fd248c6aac8cba6665fd4f9490085ed027d1cc1d3ca66f5471b20243f92",
+          "equal": true
+        },
+        {
+          "module": "ui_design",
+          "path": "ui_design.py",
+          "source_code_hash": "88910da3dd802e87ac258a920bafe37fe5748d144805d66053e0b667b2072f6e",
+          "archive_code_hash": "88910da3dd802e87ac258a920bafe37fe5748d144805d66053e0b667b2072f6e",
+          "equal": true
+        },
+        {
+          "module": "video_api",
+          "path": "video_api.py",
+          "source_code_hash": "128d24df8d9fca82035a7df6a8fa22879c43b968d99220d2d945feb1a6fc960f",
+          "archive_code_hash": "128d24df8d9fca82035a7df6a8fa22879c43b968d99220d2d945feb1a6fc960f",
+          "equal": true
+        },
+        {
+          "module": "vmemo_api",
+          "path": "vmemo_api.py",
+          "source_code_hash": "e28d27a792941576934ae48600a092700d531865982311839e9286e9c9138f8f",
+          "archive_code_hash": "e28d27a792941576934ae48600a092700d531865982311839e9286e9c9138f8f",
+          "equal": true
+        },
+        {
+          "module": "voice_api",
+          "path": "voice_api.py",
+          "source_code_hash": "1e4a8ed4cfac997b80514c9fd5bea0c83aec7bb337d6d27d2b92c4aa273528da",
+          "archive_code_hash": "1e4a8ed4cfac997b80514c9fd5bea0c83aec7bb337d6d27d2b92c4aa273528da",
+          "equal": true
+        },
+        {
+          "module": "web",
+          "path": "web.py",
+          "source_code_hash": "a8ec6eb7f05555258c4dedeb4c3310698bc42ae521c7c5e48e2af47ef32b81c6",
+          "archive_code_hash": "a8ec6eb7f05555258c4dedeb4c3310698bc42ae521c7c5e48e2af47ef32b81c6",
+          "equal": true
+        },
+        {
+          "module": "widgets",
+          "path": "widgets/__init__.py",
+          "source_code_hash": "8250ada3e80463648d07d54fb53fe1a9baabb3c052ba491e068a4d76fceabb2d",
+          "archive_code_hash": "8250ada3e80463648d07d54fb53fe1a9baabb3c052ba491e068a4d76fceabb2d",
+          "equal": true
+        },
+        {
+          "module": "widgets.fingerprint",
+          "path": "widgets/fingerprint.py",
+          "source_code_hash": "c7c8fccf153af48dec05895d2c1e35ce9527fee41e0861b22edda3c1efe21e04",
+          "archive_code_hash": "c7c8fccf153af48dec05895d2c1e35ce9527fee41e0861b22edda3c1efe21e04",
+          "equal": true
+        },
+        {
+          "module": "widgets.server_tray",
+          "path": "widgets/server_tray.py",
+          "source_code_hash": "d9b69ec47e661e330d78c20d301e160b64622e133c250494a232b64863e2b144",
+          "archive_code_hash": "d9b69ec47e661e330d78c20d301e160b64622e133c250494a232b64863e2b144",
+          "equal": true
+        },
+        {
+          "module": "widgets.sticker_shop",
+          "path": "widgets/sticker_shop.py",
+          "source_code_hash": "ea8f2be1c33c99049165102b709c294746bea56a31a706915b85b5e6be252b01",
+          "archive_code_hash": "ea8f2be1c33c99049165102b709c294746bea56a31a706915b85b5e6be252b01",
+          "equal": true
+        },
+        {
+          "module": "widgets.thread_window",
+          "path": "widgets/thread_window.py",
+          "source_code_hash": "45721a6b06dc77afd72454d3f210f09264d9050a61d0c472166a2fb911747e26",
+          "archive_code_hash": "45721a6b06dc77afd72454d3f210f09264d9050a61d0c472166a2fb911747e26",
+          "equal": true
+        }
+      ],
+      "entry_script": {
+        "archive_name": "server",
+        "source_code_hash": "eb130f17e5ae462f8cadbec9e8afdc3723ef58cfc5b62f3c9c6450f44871a26f",
+        "archive_code_hash": "eb130f17e5ae462f8cadbec9e8afdc3723ef58cfc5b62f3c9c6450f44871a26f",
+        "equal": true
+      }
+    },
+    "client.exe": {
+      "size": 27003706,
+      "sha256": "dcd25aa52963f9e87723eefc49c53cc08fb8ec2fed67425b9c85126f9d1ce5f4",
+      "matches_build_summary": true,
+      "pkg_entries": 1027,
+      "pyz_modules": 429,
+      "pyz_archives": [
+        "PYZ.pyz"
+      ],
+      "required_modules": {
+        "_art_boardgame": true,
+        "ui_design": true,
+        "widgets.design_controls": true,
+        "widgets.msg_list": true,
+        "client_gameui": true,
+        "PIL.Image": true,
+        "PIL.ImageTk": true
+      },
+      "binary_dependencies": [
+        "pyimod03_ctypes",
+        "pyi_rth__tkinter",
+        "PIL\\_imagingtk.cp314-win_amd64.pyd",
+        "_ctypes.pyd",
+        "_tkinter.pyd",
+        "python314.dll",
+        "tcl86t.dll",
+        "tk86t.dll"
+      ],
+      "raw_boardgame_png_entries": [],
+      "models_entries": [],
+      "vosk_modules": [],
+      "project_code_checks": [
+        {
+          "module": "_art",
+          "path": "_art.py",
+          "source_code_hash": "3ab078b08c8211d5b16600ad37031abb20e1d3b80493e329c849e7e6c363aea9",
+          "archive_code_hash": "3ab078b08c8211d5b16600ad37031abb20e1d3b80493e329c849e7e6c363aea9",
+          "equal": true
+        },
+        {
+          "module": "_art_boardgame",
+          "path": "_art_boardgame.py",
+          "source_code_hash": "a8ff1194af82f8c497ee543202626b6504daa55e366c49dab24aae66d1f61c5c",
+          "archive_code_hash": "a8ff1194af82f8c497ee543202626b6504daa55e366c49dab24aae66d1f61c5c",
+          "equal": true
+        },
+        {
+          "module": "agent_bot",
+          "path": "agent_bot.py",
+          "source_code_hash": "7c8dabf24e5b79ce41fbd28d5b7f61bc326ed56087ecd86f98705d121bf7fb44",
+          "archive_code_hash": "7c8dabf24e5b79ce41fbd28d5b7f61bc326ed56087ecd86f98705d121bf7fb44",
+          "equal": true
+        },
+        {
+          "module": "audit",
+          "path": "audit.py",
+          "source_code_hash": "46a65f0bf1aea58f02b6459813df309b937466c5eb0cfe0719c94945147607bc",
+          "archive_code_hash": "46a65f0bf1aea58f02b6459813df309b937466c5eb0cfe0719c94945147607bc",
+          "equal": true
+        },
+        {
+          "module": "auth",
+          "path": "auth.py",
+          "source_code_hash": "eb00fcfc552ab54709132a50adac42bba00137838083098416818f85ca5a81ed",
+          "archive_code_hash": "eb00fcfc552ab54709132a50adac42bba00137838083098416818f85ca5a81ed",
+          "equal": true
+        },
+        {
+          "module": "boss",
+          "path": "boss.py",
+          "source_code_hash": "64ef2ce49dbd739e0ad514d6e154b0c335a902f86737d787b3aa06ce2931f918",
+          "archive_code_hash": "64ef2ce49dbd739e0ad514d6e154b0c335a902f86737d787b3aa06ce2931f918",
+          "equal": true
+        },
+        {
+          "module": "bots",
+          "path": "bots.py",
+          "source_code_hash": "c798afe2b104e1537b5e8f59ed1b78461fb5fd091b1cf6624e74c27174fef034",
+          "archive_code_hash": "c798afe2b104e1537b5e8f59ed1b78461fb5fd091b1cf6624e74c27174fef034",
+          "equal": true
+        },
+        {
+          "module": "client",
+          "path": "client.py",
+          "source_code_hash": "227cc2110013d24e94f66093520909b32d4e1a420dbb0a534fe40d49168d3333",
+          "archive_code_hash": "227cc2110013d24e94f66093520909b32d4e1a420dbb0a534fe40d49168d3333",
+          "equal": true
+        },
+        {
+          "module": "client_core",
+          "path": "client_core.py",
+          "source_code_hash": "ebfafe318f3087b026ee98352f0ba36c2706913f350d6ccf7a9044aefe852b24",
+          "archive_code_hash": "ebfafe318f3087b026ee98352f0ba36c2706913f350d6ccf7a9044aefe852b24",
+          "equal": true
+        },
+        {
+          "module": "client_gameui",
+          "path": "client_gameui.py",
+          "source_code_hash": "6cdd46c31e7337424eec7e140dfdade1595d8ab143d873842612a54df6ed1e75",
+          "archive_code_hash": "6cdd46c31e7337424eec7e140dfdade1595d8ab143d873842612a54df6ed1e75",
+          "equal": true
+        },
+        {
+          "module": "cloud_history",
+          "path": "cloud_history.py",
+          "source_code_hash": "e14772e8022ac906c2d46bb57d5656724557ce5663f82e30b922116799ba677e",
+          "archive_code_hash": "e14772e8022ac906c2d46bb57d5656724557ce5663f82e30b922116799ba677e",
+          "equal": true
+        },
+        {
+          "module": "config",
+          "path": "config.py",
+          "source_code_hash": "d98b3e418c85f70b96f00d53d35db029f43834b6132bf18870689770a4dbf657",
+          "archive_code_hash": "d98b3e418c85f70b96f00d53d35db029f43834b6132bf18870689770a4dbf657",
+          "equal": true
+        },
+        {
+          "module": "credential_ops",
+          "path": "credential_ops.py",
+          "source_code_hash": "96e9681a8b961829c38e947c02cec3eed1f0b500d075914cdceb2eb9a83ce4e0",
+          "archive_code_hash": "96e9681a8b961829c38e947c02cec3eed1f0b500d075914cdceb2eb9a83ce4e0",
+          "equal": true
+        },
+        {
+          "module": "crypto",
+          "path": "crypto.py",
+          "source_code_hash": "aa44069a38d27193e684a2933a7f6375fab029ba480ad7cd05a143e8b5e0a81f",
+          "archive_code_hash": "aa44069a38d27193e684a2933a7f6375fab029ba480ad7cd05a143e8b5e0a81f",
+          "equal": true
+        },
+        {
+          "module": "crypto_e2ee",
+          "path": "crypto_e2ee.py",
+          "source_code_hash": "adeaee6cdf38f31507d9252c79b998564086d0e8b7b929aaf3916f8e44773470",
+          "archive_code_hash": "adeaee6cdf38f31507d9252c79b998564086d0e8b7b929aaf3916f8e44773470",
+          "equal": true
+        },
+        {
+          "module": "discovery",
+          "path": "discovery.py",
+          "source_code_hash": "a2dc9d94e09a6f5b05bab4035a3bae7c8bdd4c3242ccc5ea313d0e5bd3527bf6",
+          "archive_code_hash": "a2dc9d94e09a6f5b05bab4035a3bae7c8bdd4c3242ccc5ea313d0e5bd3527bf6",
+          "equal": true
+        },
+        {
+          "module": "dpi",
+          "path": "dpi.py",
+          "source_code_hash": "19a2bdb13552470594d0995029775ae01989b2ecbccb0e63f179ccb15005004c",
+          "archive_code_hash": "19a2bdb13552470594d0995029775ae01989b2ecbccb0e63f179ccb15005004c",
+          "equal": true
+        },
+        {
+          "module": "file_client",
+          "path": "file_client.py",
+          "source_code_hash": "2e02f71ae2936f7eec53173c8f2888cffe59e3a1673ebf308496b978ebf31408",
+          "archive_code_hash": "2e02f71ae2936f7eec53173c8f2888cffe59e3a1673ebf308496b978ebf31408",
+          "equal": true
+        },
+        {
+          "module": "filexfer",
+          "path": "filexfer.py",
+          "source_code_hash": "b93efacea1b50895f8a031220fe881a804322ba4fbcde56cdea537397aac5b85",
+          "archive_code_hash": "b93efacea1b50895f8a031220fe881a804322ba4fbcde56cdea537397aac5b85",
+          "equal": true
+        },
+        {
+          "module": "games_pkg",
+          "path": "games_pkg/__init__.py",
+          "source_code_hash": "98d9240bfda90a3df7a4680f5d553fb2dcea6da7fc20f9b45d204c1754800040",
+          "archive_code_hash": "98d9240bfda90a3df7a4680f5d553fb2dcea6da7fc20f9b45d204c1754800040",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.avalon",
+          "path": "games_pkg/avalon.py",
+          "source_code_hash": "b278206d547ac340d553aa7346620f28ba64bb1f2da3d6fab730b3b775c47766",
+          "archive_code_hash": "b278206d547ac340d553aa7346620f28ba64bb1f2da3d6fab730b3b775c47766",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.azul",
+          "path": "games_pkg/azul.py",
+          "source_code_hash": "960efad74377632dc72327d8780f86f15586a23f959f0e2f1e14986a13443bca",
+          "archive_code_hash": "960efad74377632dc72327d8780f86f15586a23f959f0e2f1e14986a13443bca",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.balatro",
+          "path": "games_pkg/balatro.py",
+          "source_code_hash": "d2aeb3922a4a679475c58d7e85c4afc3f3177b7073a7cda12423a7820664b7aa",
+          "archive_code_hash": "d2aeb3922a4a679475c58d7e85c4afc3f3177b7073a7cda12423a7820664b7aa",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.base",
+          "path": "games_pkg/base.py",
+          "source_code_hash": "c761df1528f6859dc3bf858033ce2853a26fec006cefe4b60a08b0dc4362aef6",
+          "archive_code_hash": "c761df1528f6859dc3bf858033ce2853a26fec006cefe4b60a08b0dc4362aef6",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.betrayal",
+          "path": "games_pkg/betrayal.py",
+          "source_code_hash": "f12beaaca0558eac9c70e4ce3b1545410f06a85d06c9fa7f797aa17b16641e71",
+          "archive_code_hash": "f12beaaca0558eac9c70e4ce3b1545410f06a85d06c9fa7f797aa17b16641e71",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.blackjack",
+          "path": "games_pkg/blackjack.py",
+          "source_code_hash": "047847bd8e29c659be83df82702059f21dff90499091c09b5168679b75da6c1a",
+          "archive_code_hash": "047847bd8e29c659be83df82702059f21dff90499091c09b5168679b75da6c1a",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.blokus",
+          "path": "games_pkg/blokus.py",
+          "source_code_hash": "81f594cd549df9233bac37841c3627cbbcb64cc825398857e8d6f033efd4bc68",
+          "archive_code_hash": "81f594cd549df9233bac37841c3627cbbcb64cc825398857e8d6f033efd4bc68",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.bolan",
+          "path": "games_pkg/bolan.py",
+          "source_code_hash": "2c1a6b70478957f087e1aaa101ba52a8f2d704317d3d7e9db3ade9a4ef1f4022",
+          "archive_code_hash": "2c1a6b70478957f087e1aaa101ba52a8f2d704317d3d7e9db3ade9a4ef1f4022",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.calc24",
+          "path": "games_pkg/calc24.py",
+          "source_code_hash": "485e3c47fab37c15dded1b773358414e49292c017b7699184cbcb9b45a06bc1f",
+          "archive_code_hash": "485e3c47fab37c15dded1b773358414e49292c017b7699184cbcb9b45a06bc1f",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.checkers",
+          "path": "games_pkg/checkers.py",
+          "source_code_hash": "686c2f6e10e730d0af3a47987d1958080a3a09e78f9aa6afb5d79c6201a36822",
+          "archive_code_hash": "686c2f6e10e730d0af3a47987d1958080a3a09e78f9aa6afb5d79c6201a36822",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.chengzhu",
+          "path": "games_pkg/chengzhu.py",
+          "source_code_hash": "20b3dea9390ad182f290ad94c63dfe2e4c9eb667b8720c5b2c8d487c7930e41b",
+          "archive_code_hash": "20b3dea9390ad182f290ad94c63dfe2e4c9eb667b8720c5b2c8d487c7930e41b",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.chess",
+          "path": "games_pkg/chess.py",
+          "source_code_hash": "e72d491f10bf60e3dc45f2500524a1bfbc4f2cd53aab23fec70eccd3a0d6d0a9",
+          "archive_code_hash": "e72d491f10bf60e3dc45f2500524a1bfbc4f2cd53aab23fec70eccd3a0d6d0a9",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.coc",
+          "path": "games_pkg/coc.py",
+          "source_code_hash": "62a74e3154adbf39f76c7cd4881cc5847c8dc02782ee82070321cc9c8a3e9559",
+          "archive_code_hash": "62a74e3154adbf39f76c7cd4881cc5847c8dc02782ee82070321cc9c8a3e9559",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.connect4",
+          "path": "games_pkg/connect4.py",
+          "source_code_hash": "0a2146862e5bd573c7dbd5565d95584927deca6f6fc023631c9733b5baaa74d6",
+          "archive_code_hash": "0a2146862e5bd573c7dbd5565d95584927deca6f6fc023631c9733b5baaa74d6",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.davinci",
+          "path": "games_pkg/davinci.py",
+          "source_code_hash": "b902c1e49f1f5f88a1e6385240037628f70b09a3cb6e8664bb8f4abc8c98c383",
+          "archive_code_hash": "b902c1e49f1f5f88a1e6385240037628f70b09a3cb6e8664bb8f4abc8c98c383",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.dou",
+          "path": "games_pkg/dou.py",
+          "source_code_hash": "1b2dc6a68f7ae47c5e2f784b258f43ed73773242951491308c8e7298500f703a",
+          "archive_code_hash": "1b2dc6a68f7ae47c5e2f784b258f43ed73773242951491308c8e7298500f703a",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.drawguess",
+          "path": "games_pkg/drawguess.py",
+          "source_code_hash": "9ca9d9ba0dfe1817ca862ca9de432f006a465bc2fe53ed88a0f85e6009b181ce",
+          "archive_code_hash": "9ca9d9ba0dfe1817ca862ca9de432f006a465bc2fe53ed88a0f85e6009b181ce",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.gemcity",
+          "path": "games_pkg/gemcity.py",
+          "source_code_hash": "4b1d49599f2cc07bbeb070c243b2999e94a47185fdee97e56e8a61edbb7b407f",
+          "archive_code_hash": "4b1d49599f2cc07bbeb070c243b2999e94a47185fdee97e56e8a61edbb7b407f",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.go",
+          "path": "games_pkg/go.py",
+          "source_code_hash": "b24c68a0cba590fc27e6e54a432ba1cb81f9e9e53c689797b4d514e1f9d55570",
+          "archive_code_hash": "b24c68a0cba590fc27e6e54a432ba1cb81f9e9e53c689797b4d514e1f9d55570",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.gomoku",
+          "path": "games_pkg/gomoku.py",
+          "source_code_hash": "8f0e6b85a7982db220ff599d3561a015e534337ed20476df3854f73a30ce37f0",
+          "archive_code_hash": "8f0e6b85a7982db220ff599d3561a015e534337ed20476df3854f73a30ce37f0",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.gongfang",
+          "path": "games_pkg/gongfang.py",
+          "source_code_hash": "94b751913cf5ac9fe998e20337d900dbc1a56446dacd612a74099b37ec7d5491",
+          "archive_code_hash": "94b751913cf5ac9fe998e20337d900dbc1a56446dacd612a74099b37ec7d5491",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.guess_number",
+          "path": "games_pkg/guess_number.py",
+          "source_code_hash": "600c02090d9a393b03f62d0126725ed162132124afcdfb76f74bfa65da0d082e",
+          "archive_code_hash": "600c02090d9a393b03f62d0126725ed162132124afcdfb76f74bfa65da0d082e",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.halloween",
+          "path": "games_pkg/halloween.py",
+          "source_code_hash": "c0124cc12c55a9c4a3d1991e3688488940d06f955e064d26d1a7146756c70aa6",
+          "archive_code_hash": "c0124cc12c55a9c4a3d1991e3688488940d06f955e064d26d1a7146756c70aa6",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.halma",
+          "path": "games_pkg/halma.py",
+          "source_code_hash": "21a8c964bf4ac773303fa0678e7d5b33af051c4bd9bcba2d3804fc6469965d2d",
+          "archive_code_hash": "21a8c964bf4ac773303fa0678e7d5b33af051c4bd9bcba2d3804fc6469965d2d",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.junqi",
+          "path": "games_pkg/junqi.py",
+          "source_code_hash": "787f821a314bd3a0ef202d9b5ebc77a823a5288f71028970ef8548e07f667e51",
+          "archive_code_hash": "787f821a314bd3a0ef202d9b5ebc77a823a5288f71028970ef8548e07f667e51",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.kaituo",
+          "path": "games_pkg/kaituo.py",
+          "source_code_hash": "b4ffb073786d2a47fd8a8f3b090cb3cef0c308c5b0ac777fe341f26d890e3332",
+          "archive_code_hash": "b4ffb073786d2a47fd8a8f3b090cb3cef0c308c5b0ac777fe341f26d890e3332",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.kalah",
+          "path": "games_pkg/kalah.py",
+          "source_code_hash": "463c1aac26aa872053a12f89fe92c8260974e6e689f7dd822c4742ece6f5712d",
+          "archive_code_hash": "463c1aac26aa872053a12f89fe92c8260974e6e689f7dd822c4742ece6f5712d",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.liar",
+          "path": "games_pkg/liar.py",
+          "source_code_hash": "dc5bd4c4f9ae184114cd673ecb27a8366f22a12cd6a643c35fc442a169c7db29",
+          "archive_code_hash": "dc5bd4c4f9ae184114cd673ecb27a8366f22a12cd6a643c35fc442a169c7db29",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.lingdi",
+          "path": "games_pkg/lingdi.py",
+          "source_code_hash": "c310f6e3aeba48154a76f5ddf6390fa74f9f2dd553bee46ef3d81f3537fd7491",
+          "archive_code_hash": "c310f6e3aeba48154a76f5ddf6390fa74f9f2dd553bee46ef3d81f3537fd7491",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.lovelove",
+          "path": "games_pkg/lovelove.py",
+          "source_code_hash": "ed3d84541aac484c5edfa2d966d4e8ec601b7d0b40075ee2e2739b00d503b04f",
+          "archive_code_hash": "ed3d84541aac484c5edfa2d966d4e8ec601b7d0b40075ee2e2739b00d503b04f",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.ludo",
+          "path": "games_pkg/ludo.py",
+          "source_code_hash": "f13130b6be8dbd57342594b105e08976612d55f9b6cf991fb4144f4d6d500c3c",
+          "archive_code_hash": "f13130b6be8dbd57342594b105e08976612d55f9b6cf991fb4144f4d6d500c3c",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.matchpairs",
+          "path": "games_pkg/matchpairs.py",
+          "source_code_hash": "570cb5cd7808094797d93e15cd11669efbc966413b43adbf38501e47a60ab88c",
+          "archive_code_hash": "570cb5cd7808094797d93e15cd11669efbc966413b43adbf38501e47a60ab88c",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.nimmt",
+          "path": "games_pkg/nimmt.py",
+          "source_code_hash": "1a9b19dbd432c256da0c5a680da815c70dd535355c319cb55c04133cfde307e3",
+          "archive_code_hash": "1a9b19dbd432c256da0c5a680da815c70dd535355c319cb55c04133cfde307e3",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.ninja",
+          "path": "games_pkg/ninja.py",
+          "source_code_hash": "12889f160a73d389f07bce5ab48ffee52d53f578706e4e11214a1975fe12eb40",
+          "archive_code_hash": "12889f160a73d389f07bce5ab48ffee52d53f578706e4e11214a1975fe12eb40",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.onewolf",
+          "path": "games_pkg/onewolf.py",
+          "source_code_hash": "a5633b7a080660a2dd6c1d87f08e8cf0df71c4692b5d7ff68f8ad5234d26c781",
+          "archive_code_hash": "a5633b7a080660a2dd6c1d87f08e8cf0df71c4692b5d7ff68f8ad5234d26c781",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.othello",
+          "path": "games_pkg/othello.py",
+          "source_code_hash": "81c33702f40596dbd0510441785a8e9dc0ab0914758e975572a561ca645ac656",
+          "archive_code_hash": "81c33702f40596dbd0510441785a8e9dc0ab0914758e975572a561ca645ac656",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.rps",
+          "path": "games_pkg/rps.py",
+          "source_code_hash": "f6e5d146eea6e625c3b54ec0a949df1fb08f9bcb39d4eaff1f5550703565a691",
+          "archive_code_hash": "f6e5d146eea6e625c3b54ec0a949df1fb08f9bcb39d4eaff1f5550703565a691",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.rummikub",
+          "path": "games_pkg/rummikub.py",
+          "source_code_hash": "16de21f1dab8c3a39e64b32165714b0396fc57c0fc73c43be3534b5e24518bbc",
+          "archive_code_hash": "16de21f1dab8c3a39e64b32165714b0396fc57c0fc73c43be3534b5e24518bbc",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.shogi",
+          "path": "games_pkg/shogi.py",
+          "source_code_hash": "85f3da3913ea462caf4112931740624da22db2c244dda78d767c26ed398c5e6c",
+          "archive_code_hash": "85f3da3913ea462caf4112931740624da22db2c244dda78d767c26ed398c5e6c",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.siji",
+          "path": "games_pkg/siji.py",
+          "source_code_hash": "c5be6b556cb1210bf64490ad9910c1b2920c9bad2f3c079b890c05fba1c0a9af",
+          "archive_code_hash": "c5be6b556cb1210bf64490ad9910c1b2920c9bad2f3c079b890c05fba1c0a9af",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.spy",
+          "path": "games_pkg/spy.py",
+          "source_code_hash": "ed69f2f8b84c29f943f181f75adda530119fcd16e3bc4f3f3cc85a39d3c8b2c4",
+          "archive_code_hash": "ed69f2f8b84c29f943f181f75adda530119fcd16e3bc4f3f3cc85a39d3c8b2c4",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.tictactoe",
+          "path": "games_pkg/tictactoe.py",
+          "source_code_hash": "82bb5805707655b1cd311675385cbb32ae0672ec1f0cb4fd0f14a44fe15d0434",
+          "archive_code_hash": "82bb5805707655b1cd311675385cbb32ae0672ec1f0cb4fd0f14a44fe15d0434",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.tielu",
+          "path": "games_pkg/tielu.py",
+          "source_code_hash": "472cdc06377c33010e2796aac4a73bf8e4d6b2f83e08e77f25a47b52b0d58d31",
+          "archive_code_hash": "472cdc06377c33010e2796aac4a73bf8e4d6b2f83e08e77f25a47b52b0d58d31",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.uno",
+          "path": "games_pkg/uno.py",
+          "source_code_hash": "1e122aac4330f2e1291f6cd8b281997024c8869bdfcd0a0f7dec2223ef4cf9a4",
+          "archive_code_hash": "1e122aac4330f2e1291f6cd8b281997024c8869bdfcd0a0f7dec2223ef4cf9a4",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.werewolf",
+          "path": "games_pkg/werewolf.py",
+          "source_code_hash": "a0b8033ec4c32149c2e59204f66f4e5fd55c16b4232c00b0b49d62e57f03c8e0",
+          "archive_code_hash": "a0b8033ec4c32149c2e59204f66f4e5fd55c16b4232c00b0b49d62e57f03c8e0",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.xiangqi",
+          "path": "games_pkg/xiangqi.py",
+          "source_code_hash": "b5378e46c7053e3b5286ce5385a2a563de6aaeb198231ad170c040f5eb506aed",
+          "archive_code_hash": "b5378e46c7053e3b5286ce5385a2a563de6aaeb198231ad170c040f5eb506aed",
+          "equal": true
+        },
+        {
+          "module": "games_pkg.yahtzee",
+          "path": "games_pkg/yahtzee.py",
+          "source_code_hash": "da2e97ff5ca0ae5cf077f4af6135ad67ac313230b55a14040b1374442fbef944",
+          "archive_code_hash": "da2e97ff5ca0ae5cf077f4af6135ad67ac313230b55a14040b1374442fbef944",
+          "equal": true
+        },
+        {
+          "module": "geo_api",
+          "path": "geo_api.py",
+          "source_code_hash": "7b5bce291a94ffe96cf614fabfc01e4993e3d155a329444301a38350044c95e6",
+          "archive_code_hash": "7b5bce291a94ffe96cf614fabfc01e4993e3d155a329444301a38350044c95e6",
+          "equal": true
+        },
+        {
+          "module": "hotkey",
+          "path": "hotkey.py",
+          "source_code_hash": "69f08543f2bb4b976cbd3a7e7d6d9adab095717ac98ebb6e50999e82ee348355",
+          "archive_code_hash": "69f08543f2bb4b976cbd3a7e7d6d9adab095717ac98ebb6e50999e82ee348355",
+          "equal": true
+        },
+        {
+          "module": "launcher",
+          "path": "launcher.py",
+          "source_code_hash": "1b26d97c7ad917d983aab2e63af7b3115701db5f106f1694ad994454b8a7f998",
+          "archive_code_hash": "1b26d97c7ad917d983aab2e63af7b3115701db5f106f1694ad994454b8a7f998",
+          "equal": true
+        },
+        {
+          "module": "optional",
+          "path": "optional.py",
+          "source_code_hash": "e094e4085e5afca328f588b890ee1c61ed2e8cc317ed19c3bf969ce085c7cdc4",
+          "archive_code_hash": "e094e4085e5afca328f588b890ee1c61ed2e8cc317ed19c3bf969ce085c7cdc4",
+          "equal": true
+        },
+        {
+          "module": "prefs",
+          "path": "prefs.py",
+          "source_code_hash": "cde06f2904ae81b16be8d79494897335353cbf95e161c3e95222ff69cce3e8df",
+          "archive_code_hash": "cde06f2904ae81b16be8d79494897335353cbf95e161c3e95222ff69cce3e8df",
+          "equal": true
+        },
+        {
+          "module": "protocol",
+          "path": "protocol.py",
+          "source_code_hash": "29b545203a93ad060ea289c41c0f2d5ec94598489adb7c2f2f4a8d3aa4e3cdd8",
+          "archive_code_hash": "29b545203a93ad060ea289c41c0f2d5ec94598489adb7c2f2f4a8d3aa4e3cdd8",
+          "equal": true
+        },
+        {
+          "module": "retirement_status",
+          "path": "retirement_status.py",
+          "source_code_hash": "428e60780e324893cdfc227eccc6381414e9ddc23ab4ebcb2819e0122482f957",
+          "archive_code_hash": "428e60780e324893cdfc227eccc6381414e9ddc23ab4ebcb2819e0122482f957",
+          "equal": true
+        },
+        {
+          "module": "server_recovery",
+          "path": "server_recovery.py",
+          "source_code_hash": "bef31f5eec2e723d88ba2f26ff877d8e41d2a2ea2c22695b74e1ed212fd4cea9",
+          "archive_code_hash": "bef31f5eec2e723d88ba2f26ff877d8e41d2a2ea2c22695b74e1ed212fd4cea9",
+          "equal": true
+        },
+        {
+          "module": "server_store",
+          "path": "server_store.py",
+          "source_code_hash": "9b89e2cf156a9e7b3d1747ef96d25c387bb0dff2f3636ce6ab53fcde8972496e",
+          "archive_code_hash": "9b89e2cf156a9e7b3d1747ef96d25c387bb0dff2f3636ce6ab53fcde8972496e",
+          "equal": true
+        },
+        {
+          "module": "stickers",
+          "path": "stickers.py",
+          "source_code_hash": "a0a4fdbe6e54132b01286386deb7ddd05cf144e490fcd60d9b733869e8c578d6",
+          "archive_code_hash": "a0a4fdbe6e54132b01286386deb7ddd05cf144e490fcd60d9b733869e8c578d6",
+          "equal": true
+        },
+        {
+          "module": "theme",
+          "path": "theme.py",
+          "source_code_hash": "c0166b6b8de50eb71197fce13bb19e1ef9fa5c4004a98ead726992a00e60156e",
+          "archive_code_hash": "c0166b6b8de50eb71197fce13bb19e1ef9fa5c4004a98ead726992a00e60156e",
+          "equal": true
+        },
+        {
+          "module": "tkguard",
+          "path": "tkguard.py",
+          "source_code_hash": "084835b29d32c1b2a0b8db680ddfa8ff6623adca1d288c55104b5ca68ecc1ee2",
+          "archive_code_hash": "084835b29d32c1b2a0b8db680ddfa8ff6623adca1d288c55104b5ca68ecc1ee2",
+          "equal": true
+        },
+        {
+          "module": "tls_cert",
+          "path": "tls_cert.py",
+          "source_code_hash": "49664fd248c6aac8cba6665fd4f9490085ed027d1cc1d3ca66f5471b20243f92",
+          "archive_code_hash": "49664fd248c6aac8cba6665fd4f9490085ed027d1cc1d3ca66f5471b20243f92",
+          "equal": true
+        },
+        {
+          "module": "ui_design",
+          "path": "ui_design.py",
+          "source_code_hash": "88910da3dd802e87ac258a920bafe37fe5748d144805d66053e0b667b2072f6e",
+          "archive_code_hash": "88910da3dd802e87ac258a920bafe37fe5748d144805d66053e0b667b2072f6e",
+          "equal": true
+        },
+        {
+          "module": "video_api",
+          "path": "video_api.py",
+          "source_code_hash": "128d24df8d9fca82035a7df6a8fa22879c43b968d99220d2d945feb1a6fc960f",
+          "archive_code_hash": "128d24df8d9fca82035a7df6a8fa22879c43b968d99220d2d945feb1a6fc960f",
+          "equal": true
+        },
+        {
+          "module": "vmemo_api",
+          "path": "vmemo_api.py",
+          "source_code_hash": "e28d27a792941576934ae48600a092700d531865982311839e9286e9c9138f8f",
+          "archive_code_hash": "e28d27a792941576934ae48600a092700d531865982311839e9286e9c9138f8f",
+          "equal": true
+        },
+        {
+          "module": "voice_api",
+          "path": "voice_api.py",
+          "source_code_hash": "1e4a8ed4cfac997b80514c9fd5bea0c83aec7bb337d6d27d2b92c4aa273528da",
+          "archive_code_hash": "1e4a8ed4cfac997b80514c9fd5bea0c83aec7bb337d6d27d2b92c4aa273528da",
+          "equal": true
+        },
+        {
+          "module": "voice_call",
+          "path": "voice_call.py",
+          "source_code_hash": "9b1af84bb59dc0eb4608668cccc6bec3fb8c1d595a67b2011468916974f3f2f1",
+          "archive_code_hash": "9b1af84bb59dc0eb4608668cccc6bec3fb8c1d595a67b2011468916974f3f2f1",
+          "equal": true
+        },
+        {
+          "module": "voice_room",
+          "path": "voice_room.py",
+          "source_code_hash": "94d0fbf8e129639860c013a59d695b6f8029dc2705ae1e194cbdffbecb47aefd",
+          "archive_code_hash": "94d0fbf8e129639860c013a59d695b6f8029dc2705ae1e194cbdffbecb47aefd",
+          "equal": true
+        },
+        {
+          "module": "web",
+          "path": "web.py",
+          "source_code_hash": "a8ec6eb7f05555258c4dedeb4c3310698bc42ae521c7c5e48e2af47ef32b81c6",
+          "archive_code_hash": "a8ec6eb7f05555258c4dedeb4c3310698bc42ae521c7c5e48e2af47ef32b81c6",
+          "equal": true
+        },
+        {
+          "module": "widgets",
+          "path": "widgets/__init__.py",
+          "source_code_hash": "8250ada3e80463648d07d54fb53fe1a9baabb3c052ba491e068a4d76fceabb2d",
+          "archive_code_hash": "8250ada3e80463648d07d54fb53fe1a9baabb3c052ba491e068a4d76fceabb2d",
+          "equal": true
+        },
+        {
+          "module": "widgets.avatar",
+          "path": "widgets/avatar.py",
+          "source_code_hash": "37298afd332f8ce0f3b17a1627425dab4eabedb73d628991c605ae0b267f98a6",
+          "archive_code_hash": "37298afd332f8ce0f3b17a1627425dab4eabedb73d628991c605ae0b267f98a6",
+          "equal": true
+        },
+        {
+          "module": "widgets.call_window",
+          "path": "widgets/call_window.py",
+          "source_code_hash": "ec04c4461ede5c0134b881bec3d68b10d1ae1ad34e49865a9da3c991b7ae1f43",
+          "archive_code_hash": "ec04c4461ede5c0134b881bec3d68b10d1ae1ad34e49865a9da3c991b7ae1f43",
+          "equal": true
+        },
+        {
+          "module": "widgets.design_controls",
+          "path": "widgets/design_controls.py",
+          "source_code_hash": "23e3bf7c64d31b91190287d5f68169652222eb9c091e9bb113c1f8fe834294bd",
+          "archive_code_hash": "23e3bf7c64d31b91190287d5f68169652222eb9c091e9bb113c1f8fe834294bd",
+          "equal": true
+        },
+        {
+          "module": "widgets.dialogbox",
+          "path": "widgets/dialogbox.py",
+          "source_code_hash": "c4a2b89a4609c0e3afe50507f9875436cc65f162b3a15ad88067060504163d70",
+          "archive_code_hash": "c4a2b89a4609c0e3afe50507f9875436cc65f162b3a15ad88067060504163d70",
+          "equal": true
+        },
+        {
+          "module": "widgets.dropfiles",
+          "path": "widgets/dropfiles.py",
+          "source_code_hash": "a0efa18f56695ccd5fa739ae888135266afbebcea3a8c0768570ee8696680578",
+          "archive_code_hash": "a0efa18f56695ccd5fa739ae888135266afbebcea3a8c0768570ee8696680578",
+          "equal": true
+        },
+        {
+          "module": "widgets.excel_chrome",
+          "path": "widgets/excel_chrome.py",
+          "source_code_hash": "ab3c64ca93a7a398bdf0aff0a3a6fdc68b0abf2eba28117379355a05006a87a0",
+          "archive_code_hash": "ab3c64ca93a7a398bdf0aff0a3a6fdc68b0abf2eba28117379355a05006a87a0",
+          "equal": true
+        },
+        {
+          "module": "widgets.excel_sheet",
+          "path": "widgets/excel_sheet.py",
+          "source_code_hash": "404fdd1ed6e5f1e89246fb0148e8a800ff1c3f60836fa860c259e48337fa0eb1",
+          "archive_code_hash": "404fdd1ed6e5f1e89246fb0148e8a800ff1c3f60836fa860c259e48337fa0eb1",
+          "equal": true
+        },
+        {
+          "module": "widgets.fingerprint",
+          "path": "widgets/fingerprint.py",
+          "source_code_hash": "c7c8fccf153af48dec05895d2c1e35ce9527fee41e0861b22edda3c1efe21e04",
+          "archive_code_hash": "c7c8fccf153af48dec05895d2c1e35ce9527fee41e0861b22edda3c1efe21e04",
+          "equal": true
+        },
+        {
+          "module": "widgets.global_search",
+          "path": "widgets/global_search.py",
+          "source_code_hash": "d5aee39f63dec1f99aa99d0c5b081e5631cb08bc0a9dee84347ea9e9b71f381d",
+          "archive_code_hash": "d5aee39f63dec1f99aa99d0c5b081e5631cb08bc0a9dee84347ea9e9b71f381d",
+          "equal": true
+        },
+        {
+          "module": "widgets.image_wall",
+          "path": "widgets/image_wall.py",
+          "source_code_hash": "02b455eb0ea980d7e8aa2b1a85e9a1df6b726aaf683b147f69d688e8ca011839",
+          "archive_code_hash": "02b455eb0ea980d7e8aa2b1a85e9a1df6b726aaf683b147f69d688e8ca011839",
+          "equal": true
+        },
+        {
+          "module": "widgets.lightbox",
+          "path": "widgets/lightbox.py",
+          "source_code_hash": "7e117e8018fc08eeb3eb71f9e4ba9f9e9df4b2d1b5c456deec9af6caf3f6f9c4",
+          "archive_code_hash": "7e117e8018fc08eeb3eb71f9e4ba9f9e9df4b2d1b5c456deec9af6caf3f6f9c4",
+          "equal": true
+        },
+        {
+          "module": "widgets.lock_screen",
+          "path": "widgets/lock_screen.py",
+          "source_code_hash": "4173f387d64791b04a36f2d49f796481ee4ab08b66520e42d6249144b9967860",
+          "archive_code_hash": "4173f387d64791b04a36f2d49f796481ee4ab08b66520e42d6249144b9967860",
+          "equal": true
+        },
+        {
+          "module": "widgets.login_box",
+          "path": "widgets/login_box.py",
+          "source_code_hash": "2db4676fbbf7edb016fe48617e73c3d7125f9f947ef7c0108d9f71d3a4124670",
+          "archive_code_hash": "2db4676fbbf7edb016fe48617e73c3d7125f9f947ef7c0108d9f71d3a4124670",
+          "equal": true
+        },
+        {
+          "module": "widgets.lottie_label",
+          "path": "widgets/lottie_label.py",
+          "source_code_hash": "ca742884593a54a75335982ea52c0b7bdd68bdf59e751fbabb591e8bfee756f8",
+          "archive_code_hash": "ca742884593a54a75335982ea52c0b7bdd68bdf59e751fbabb591e8bfee756f8",
+          "equal": true
+        },
+        {
+          "module": "widgets.moment_list",
+          "path": "widgets/moment_list.py",
+          "source_code_hash": "84e98ae272d0cf59d554faf14a1ebc4355839e2272dc791fdb059e62a35aa890",
+          "archive_code_hash": "84e98ae272d0cf59d554faf14a1ebc4355839e2272dc791fdb059e62a35aa890",
+          "equal": true
+        },
+        {
+          "module": "widgets.msg_list",
+          "path": "widgets/msg_list.py",
+          "source_code_hash": "bfd1fa5e71a43227ed830a7df71658d921de7330c2bb02dd1a70d2ffec2c363c",
+          "archive_code_hash": "bfd1fa5e71a43227ed830a7df71658d921de7330c2bb02dd1a70d2ffec2c363c",
+          "equal": true
+        },
+        {
+          "module": "widgets.passcode",
+          "path": "widgets/passcode.py",
+          "source_code_hash": "e466ce33a7c8f88ad9efa270041ff493bbf0105c6863820c9f123382631573c8",
+          "archive_code_hash": "e466ce33a7c8f88ad9efa270041ff493bbf0105c6863820c9f123382631573c8",
+          "equal": true
+        },
+        {
+          "module": "widgets.pip_window",
+          "path": "widgets/pip_window.py",
+          "source_code_hash": "fe9beb004bf07829f99976f8c1cb0c64fa8f0b1d489df3b3f83bebad69ba7b87",
+          "archive_code_hash": "fe9beb004bf07829f99976f8c1cb0c64fa8f0b1d489df3b3f83bebad69ba7b87",
+          "equal": true
+        },
+        {
+          "module": "widgets.rich",
+          "path": "widgets/rich.py",
+          "source_code_hash": "1508a2189546fdf653878aed8ab66f573f3b86e70b5f5907bc8b98194d698685",
+          "archive_code_hash": "1508a2189546fdf653878aed8ab66f573f3b86e70b5f5907bc8b98194d698685",
+          "equal": true
+        },
+        {
+          "module": "widgets.runs",
+          "path": "widgets/runs.py",
+          "source_code_hash": "c63c33a6898e23291aa2900f7a5df82af01e7a7be0f9448fe91d969792ebeaf9",
+          "archive_code_hash": "c63c33a6898e23291aa2900f7a5df82af01e7a7be0f9448fe91d969792ebeaf9",
+          "equal": true
+        },
+        {
+          "module": "widgets.scrim",
+          "path": "widgets/scrim.py",
+          "source_code_hash": "617f16e6771476f8e096eaff807f2351f6a4edc9c0781444edd7017f0b4528d9",
+          "archive_code_hash": "617f16e6771476f8e096eaff807f2351f6a4edc9c0781444edd7017f0b4528d9",
+          "equal": true
+        },
+        {
+          "module": "widgets.server_tray",
+          "path": "widgets/server_tray.py",
+          "source_code_hash": "d9b69ec47e661e330d78c20d301e160b64622e133c250494a232b64863e2b144",
+          "archive_code_hash": "d9b69ec47e661e330d78c20d301e160b64622e133c250494a232b64863e2b144",
+          "equal": true
+        },
+        {
+          "module": "widgets.session_list",
+          "path": "widgets/session_list.py",
+          "source_code_hash": "d91fca4308d1d63adba4d4409b6013e9ddf20b169256119b5efb5a4d499c8e70",
+          "archive_code_hash": "d91fca4308d1d63adba4d4409b6013e9ddf20b169256119b5efb5a4d499c8e70",
+          "equal": true
+        },
+        {
+          "module": "widgets.snip",
+          "path": "widgets/snip.py",
+          "source_code_hash": "ef261e426c99a511bf55496e94f844b5202b92081e3257df0ae30c210f877d5e",
+          "archive_code_hash": "ef261e426c99a511bf55496e94f844b5202b92081e3257df0ae30c210f877d5e",
+          "equal": true
+        },
+        {
+          "module": "widgets.stars_panel",
+          "path": "widgets/stars_panel.py",
+          "source_code_hash": "f27021a9854aae529ece9caf09f708e0c517e62fe827600ce4a61950d7142c9d",
+          "archive_code_hash": "f27021a9854aae529ece9caf09f708e0c517e62fe827600ce4a61950d7142c9d",
+          "equal": true
+        },
+        {
+          "module": "widgets.stealth_toast",
+          "path": "widgets/stealth_toast.py",
+          "source_code_hash": "4374c7a93f06026027310378a3afb46a706804186967a102240617b4c76e1f6b",
+          "archive_code_hash": "4374c7a93f06026027310378a3afb46a706804186967a102240617b4c76e1f6b",
+          "equal": true
+        },
+        {
+          "module": "widgets.sticker_shop",
+          "path": "widgets/sticker_shop.py",
+          "source_code_hash": "ea8f2be1c33c99049165102b709c294746bea56a31a706915b85b5e6be252b01",
+          "archive_code_hash": "ea8f2be1c33c99049165102b709c294746bea56a31a706915b85b5e6be252b01",
+          "equal": true
+        },
+        {
+          "module": "widgets.task_panel",
+          "path": "widgets/task_panel.py",
+          "source_code_hash": "fe0d313c1adc2d08e89ad1fb11da90860e8a7ada1db207d0f78cd2ace2c7cc69",
+          "archive_code_hash": "fe0d313c1adc2d08e89ad1fb11da90860e8a7ada1db207d0f78cd2ace2c7cc69",
+          "equal": true
+        },
+        {
+          "module": "widgets.text_viewer",
+          "path": "widgets/text_viewer.py",
+          "source_code_hash": "1d584d4691f085c1d505d8dd20a976e234304a28398db8f7f428155fe7dfef02",
+          "archive_code_hash": "1d584d4691f085c1d505d8dd20a976e234304a28398db8f7f428155fe7dfef02",
+          "equal": true
+        },
+        {
+          "module": "widgets.thread_window",
+          "path": "widgets/thread_window.py",
+          "source_code_hash": "45721a6b06dc77afd72454d3f210f09264d9050a61d0c472166a2fb911747e26",
+          "archive_code_hash": "45721a6b06dc77afd72454d3f210f09264d9050a61d0c472166a2fb911747e26",
+          "equal": true
+        },
+        {
+          "module": "widgets.title_bar",
+          "path": "widgets/title_bar.py",
+          "source_code_hash": "b9b5c1c6698af21f76e2830473603bfcd1c4d3574df4a44e3ab41309e99c9c28",
+          "archive_code_hash": "b9b5c1c6698af21f76e2830473603bfcd1c4d3574df4a44e3ab41309e99c9c28",
+          "equal": true
+        },
+        {
+          "module": "widgets.tray",
+          "path": "widgets/tray.py",
+          "source_code_hash": "58db0c84b50d0b926bd7bee134f1b60db423326b13c7f058dd1cdee1c425be09",
+          "archive_code_hash": "58db0c84b50d0b926bd7bee134f1b60db423326b13c7f058dd1cdee1c425be09",
+          "equal": true
+        },
+        {
+          "module": "widgets.ui_fx",
+          "path": "widgets/ui_fx.py",
+          "source_code_hash": "d907b8bf8dda270bce950f30b5259939f176c537684064d6b4e0f8da984d665d",
+          "archive_code_hash": "d907b8bf8dda270bce950f30b5259939f176c537684064d6b4e0f8da984d665d",
+          "equal": true
+        },
+        {
+          "module": "widgets.vmemo_player",
+          "path": "widgets/vmemo_player.py",
+          "source_code_hash": "8f34a18917b080e8531e557731d87559203f34323f71141ef18f81c048f918a5",
+          "archive_code_hash": "8f34a18917b080e8531e557731d87559203f34323f71141ef18f81c048f918a5",
+          "equal": true
+        },
+        {
+          "module": "widgets.voice_room_window",
+          "path": "widgets/voice_room_window.py",
+          "source_code_hash": "a5968c9082105d0896711683f933a9335fba476b8d461857bbf5f86278364aeb",
+          "archive_code_hash": "a5968c9082105d0896711683f933a9335fba476b8d461857bbf5f86278364aeb",
+          "equal": true
+        }
+      ],
+      "entry_script": {
+        "archive_name": "client",
+        "source_code_hash": "227cc2110013d24e94f66093520909b32d4e1a420dbb0a534fe40d49168d3333",
+        "archive_code_hash": "227cc2110013d24e94f66093520909b32d4e1a420dbb0a534fe40d49168d3333",
+        "equal": true
+      },
+      "embedded_assets": {
+        "constant_count": 26,
+        "url_constants_equal_source": true,
+        "source_pixels_26_equal": true,
+        "full_asset_module_code_equal": true
+      }
+    },
+    "StartTrial.exe": {
+      "size": 9737941,
+      "sha256": "6fcf35bb164eee9f76a5725623e27b77c447bb261e4b9f8026e32f1fb39473cf",
+      "matches_build_summary": true,
+      "pkg_entries": 71,
+      "pyz_modules": 140,
+      "pyz_archives": [
+        "PYZ.pyz"
+      ],
+      "required_modules": {
+        "friend_trial_process": true,
+        "test_sandbox": true,
+        "ctypes": true,
+        "ctypes.wintypes": true
+      },
+      "binary_dependencies": [
+        "pyimod03_ctypes",
+        "_ctypes.pyd",
+        "python314.dll"
+      ],
+      "raw_boardgame_png_entries": [],
+      "models_entries": [],
+      "vosk_modules": [],
+      "project_code_checks": [
+        {
+          "module": "friend_trial_process",
+          "path": "friend_trial_process.py",
+          "source_code_hash": "e15076749532e2747cb6de5941c75ec06f0e8a3777eb8ea51d45777b1dede73f",
+          "archive_code_hash": "e15076749532e2747cb6de5941c75ec06f0e8a3777eb8ea51d45777b1dede73f",
+          "equal": true
+        },
+        {
+          "module": "test_sandbox",
+          "path": "test_sandbox.py",
+          "source_code_hash": "f8e5d91fbcc30486fb409dfe7d1d34bca997b75c9bcde654b92e8d4a4edbebb0",
+          "archive_code_hash": "f8e5d91fbcc30486fb409dfe7d1d34bca997b75c9bcde654b92e8d4a4edbebb0",
+          "equal": true
+        }
+      ],
+      "entry_script": {
+        "archive_name": "friend_trial_start",
+        "source_code_hash": "f7a0561799cfbc43461874ac1d9e8112c53d822ce82e900716207a3e74e1ddcc",
+        "archive_code_hash": "f7a0561799cfbc43461874ac1d9e8112c53d822ce82e900716207a3e74e1ddcc",
+        "equal": true
+      }
+    }
+  },
+  "name_resolution": {
+    "widgets.boardgame_assets_source_exists": false,
+    "widgets.boardgame_asset_img_source_exists": false,
+    "actual_runtime_art_module": "_art_boardgame",
+    "actual_runtime_asset_helpers": "client_gameui._decode_asset/_asset_img/_asset_nine"
+  },
+  "logs": {
+    "build.log": {
+      "sha256": "651ad17b747a78e2c46ebc56f6d8c6b8b3ad0612e111bc4fe510b14589e7066e",
+      "matches_record": true
+    },
+    "entry-build.log": {
+      "sha256": "b4573f99e08130672c883fac041149cbdb76007e975c39c5f9c8a8594ccc1111",
+      "matches_record": true
+    }
+  },
+  "scope": "Construction and collection only; no EXE/GUI/process/network/natural-exit run by reviewer. Vosk/model absence follows optional contract."
+}

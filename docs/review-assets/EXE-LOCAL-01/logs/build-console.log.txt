@@ -1,0 +1,28 @@
+{
+  "schema_version": "REL-01.v1.build",
+  "run_id": "build-20261013-035610-53ac3e03a4",
+  "source": "D:\\Project\\321_FISH\\_tmp_gui\\gate-collection-20261013",
+  "source_copy": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source",
+  "command": [
+    "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+    "build.py"
+  ],
+  "python": "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+  "exit_code": 0,
+  "build_ok": true,
+  "missing_executables": [],
+  "duration_seconds": 73.566,
+  "log": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\build.log",
+  "executables": {
+    "server.exe": {
+      "path": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist\\server.exe",
+      "size": 25363867,
+      "sha256": "4578d79266e3df0fef0c77142c138c1442569f00ed008631987306afbd61c463"
+    },
+    "client.exe": {
+      "path": "D:\\Project\\321_FISH\\_tmp_gui\\exe-local-20261013\\builds\\build-20261013-035610-53ac3e03a4\\source\\dist\\client.exe",
+      "size": 27003706,
+      "sha256": "dcd25aa52963f9e87723eefc49c53cc08fb8ec2fed67425b9c85126f9d1ce5f4"
+    }
+  }
+}

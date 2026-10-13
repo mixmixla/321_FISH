@@ -41,7 +41,7 @@ def _function(name):
 
 
 SCRIPT = r"""
-const fs=require('fs'),vm=require('vm');
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
 const input=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
 const checks={};
 function setup(){
@@ -52,23 +52,45 @@ function setup(){
     return dom.get(id);
   }
   for(const id of ['login','main','pwd','npwd','msgs','gpanel','globby','games'])element(id);
+  const navButtons=['chat','game','moments'].map(key=>{
+    const button=element('nav-'+key),classes=new Set(),attributes=new Map();
+    if(key==='game'){classes.add('on');attributes.set('aria-current','page');}
+    button.dataset={uxNav:key};
+    button.classes=classes;button.attributes=attributes;
+    button.classList={toggle(name,force){
+      const selected=force===undefined?!classes.has(name):Boolean(force);
+      if(selected)classes.add(name);else classes.delete(name);
+      return selected;
+    }};
+    button.setAttribute=(name,value)=>attributes.set(name,String(value));
+    button.removeAttribute=name=>attributes.delete(name);
+    return button;
+  });
   const state={token:'old',uid:1,nick:'synthetic',es:null,esRetry:null,groom:'old-room',gst:{},gpriv:{},
     glog:['old'],grooms:[],gmeta:{},gleft:{},roster:[],groups:[],convos:[],unread:{},drafts:{}};
   let reply=()=>Promise.reject(new Error('synthetic temporary network loss'));
   const context={state,URL,location:{href:'http://127.0.0.2:12345/',origin:'http://127.0.0.2:12345'},
-    document:{getElementById:element},$:s=>element(s.slice(1)),esc:String,
+    document:{getElementById:element,querySelectorAll(selector){
+      assert.equal(selector,'[data-ux-nav]');return navButtons;
+    }},$:s=>element(s.slice(1)),esc:String,
     EventSource:class{constructor(url){this.url=url;this.closed=false;sockets.push(this)}close(){this.closed=true}},
     setTimeout:fn=>{const id=timers.size+1;timers.set(id,fn);return id},clearTimeout:id=>timers.delete(id),
     showStatus:s=>statuses.push(s),fetch:(...args)=>reply(...args),renderLobby(){}};
   context.window=context;
   vm.createContext(context);vm.runInContext(input.code,context);
   if(typeof context.installSessionFetch==='function')context.installSessionFetch();
-  return{context,state,dom,sockets,timers,statuses,setReply:fn=>reply=fn};
+  return{context,state,dom,sockets,timers,statuses,navButtons,setReply:fn=>reply=fn};
 }
 async function flush(){await new Promise(resolve=>setImmediate(resolve))}
 async function main(){
   let e=setup();e.context.openStream();let old=e.state.es;
   old.onmessage({data:JSON.stringify({t:'error',code:'kicked',text:'synthetic kick'})});
+  assert.deepEqual(e.navButtons.map(button=>({key:button.dataset.uxNav,
+    selected:button.classes.has('on'),current:button.attributes.get('aria-current')||null})),[
+    {key:'chat',selected:true,current:'page'},
+    {key:'game',selected:false,current:null},
+    {key:'moments',selected:false,current:null},
+  ]);
   checks.kicked_returns_to_manual_login=e.state.token===null&&e.state.uid===0&&old.closed
     &&e.dom.get('main').style.display==='none'&&e.dom.get('login').style.display==='';
   old.onmessage({data:JSON.stringify({t:'welcome',uid:1})});old.onerror();await flush();
@@ -119,7 +141,7 @@ def test_production_web_kick_and_auth_failure_callbacks(tmp_path):
     node = shutil.which("node")
     assert node is not None, "production JavaScript validation requires Node"
     source = "\n".join(_function(name) for name in
-                       ("leaveLogin", "logout", "openStream", "renderGames", "closeLobby", "installSessionFetch"))
+                       ("leaveLogin", "logout", "openStream", "renderGames", "closeLobby", "uxSelectNavigation", "installSessionFetch"))
     data = tmp_path / "production-functions.json"
     script = tmp_path / "probe.cjs"
     data.write_text(json.dumps({"code": source}), encoding="utf-8")

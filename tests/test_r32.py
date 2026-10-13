@@ -4,7 +4,7 @@
 覆盖：
 - A3 fmt_list_time：今天 HH:MM / 昨天 / 周X / M月D日 / Y年M月D日（TG 风格）
 - A1 拖拽发送：enable_dropfiles 在 Windows 真实注册成功（非 Windows 跳过）
-- A2 输入框高度自适应：_adjust_entry_height 1→6 钳制（stub + MethodType）
+- A2 输入框高度自适应：自动 3→6 钳制，手动高度作为下限（stub + MethodType）
 - B1 会话草稿前缀：draft 非空预览变「草稿: xxx」，空则回退 preview
 - B2 表情收藏：toggle 增删 + 收藏上限 + prefs 持久化（stub 挂方法）
 - B3 图片 caption：_Row 提取 text → _cap_h 高度 > 0；锚点行高含 caption
@@ -122,8 +122,8 @@ def test_entry_height_growth_clamped(root):
 def test_entry_height_one_line(root):
     host = SimpleNamespace(entry=_mk_entry_stub(1, 6))
     _attach_adjust(host)
-    host._adjust_entry_height()          # 1 行 → 收回 1
-    assert host.entry.configured.get("height") == 1
+    host._adjust_entry_height()          # 1 行 → 收回自动下限 3
+    assert host.entry.configured.get("height") == 3
 
 
 def test_entry_height_noop_same(root):
@@ -140,8 +140,30 @@ def test_entry_height_count_exception(root):
     entry.config = lambda **kw: entry.configured.update(kw)
     host = SimpleNamespace(entry=entry)
     _attach_adjust(host)
-    host._adjust_entry_height()          # count 异常 → 回退 1
-    assert entry.configured.get("height") == 1
+    host._adjust_entry_height()          # count 异常 → 按自动下限 3 行显示
+    assert entry.configured.get("height") == 3
+
+
+@pytest.mark.parametrize("n_displaylines,manual,height,expected", [
+    (1, 2, 6, 2),                       # 手动高度可低于自动下限
+    (1, 8, 3, 8),                       # 手动高度可高于自动上限
+    (9, 4, 4, 9),                       # 内容超过手动下限时继续增高
+])
+def test_entry_height_manual_floor(root, n_displaylines, manual, height, expected):
+    host = SimpleNamespace(entry=_mk_entry_stub(n_displaylines, height),
+                           _entry_manual_lines=manual)
+    _attach_adjust(host)
+    host._adjust_entry_height()
+    assert host.entry.configured.get("height") == expected
+
+
+def test_entry_height_count_exception_keeps_manual_floor(root):
+    entry = _mk_entry_stub(1, 4)
+    entry.count = lambda *a: (_ for _ in ()).throw(RuntimeError("x"))
+    host = SimpleNamespace(entry=entry, _entry_manual_lines=5)
+    _attach_adjust(host)
+    host._adjust_entry_height()
+    assert entry.configured.get("height") == 5
 
 
 # ---------- B1：会话草稿前缀 ----------

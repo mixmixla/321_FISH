@@ -35,6 +35,9 @@
 - `games_pkg` 注册 47 个当前游戏类，`RoomManager` 管房间，`BaseGame` 的
   snapshot/private/act/tick/ended 管公开、私有与规则；桌面 painter/点击/按钮
   分别在 `client_gameui`、`client._GAME_ACTIONS`，注册不等于 UI 完整可玩。
+- GemCity购买在扣款前校验折扣后各色支付与总万能金需求；保留卡只在支付成功后移除，
+  不足拒绝保持规则状态/RNG/轮次完整不变。回归合同见 `tests/test_gemcity_purchase.py`，
+  本批证据/实际交付状态见GEMCITY-PURCHASE-01 Task/Review与指挥中心。
 - 两旗舰桌面输入以最新Core的connected/player/turn/winner和room-round上下文复查，
   五子棋交点、四子棋列输入与hover共用几何；胜线以最终board/last_move计算。GameWindow/BoardFocus
   各自持有有限after；mini/boss保存窗口对象与可见性，手动隐藏/离房可取消恢复资格。

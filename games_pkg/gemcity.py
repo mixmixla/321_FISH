@@ -146,26 +146,24 @@ class GemCityGame(BaseGame):
             raise GameRuleError("参数无效")
         if not (0 <= i < len(self.reserved[uid])):
             raise GameRuleError("保留卡无效")
-        card = self.reserved[uid].pop(i)
+        card = self.reserved[uid][i]
         self._buy_card(uid, card)
+        self.reserved[uid].pop(i)
         return self._after_buy(uid)
 
     def _buy_card(self, uid, card):
         need = {c: max(0, card["cost"][c] - self.discount[uid][c]) for c in COLORS}
-        # 检查并支付：用 token + 金兜底
+        # 彩色宝石优先支付，金只能覆盖各色缺口的总和。
+        # 整体校验通过前不改变资金或卡牌，拒绝动作保持状态不变。
+        payment = {c: min(need[c], self.tokens[uid][c]) for c in COLORS}
+        gold = sum(need[c] - payment[c] for c in COLORS)
+        if gold > self.tokens[uid]["g"]:
+            raise GameRuleError("宝石和金不足")
         for c in COLORS:
-            have = self.tokens[uid][c] + self.tokens[uid]["g"]
-            if have < need[c]:
-                raise GameRuleError(f"{COLOR_CN[c]} 不足")
-        # 支付（金优先用于最贵项，简单逐个扣）
-        for c in COLORS:
-            n = need[c]
-            use_tok = min(n, self.tokens[uid][c])
-            self.tokens[uid][c] -= use_tok
-            n -= use_tok
-            self.tokens[uid]["g"] -= n
-            self.bank[c] += use_tok
-            self.bank["g"] += n
+            self.tokens[uid][c] -= payment[c]
+            self.bank[c] += payment[c]
+        self.tokens[uid]["g"] -= gold
+        self.bank["g"] += gold
         self.discount[uid][card["disc"]] += 1
         self.cards[uid].append(card)
         self.score[uid] += card["pts"]

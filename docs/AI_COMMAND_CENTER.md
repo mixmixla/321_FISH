@@ -1,9 +1,19 @@
 # 321_FISH AI 指挥中心
 
 本文件是当前执行状态与下一任务的唯一权威。需求见 task-packages，证据和审查结论见
-review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-10（Asia/Shanghai）。
+review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-13（Asia/Shanghai）。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+## GEMCITY-PURCHASE-01 璀璨宝石购买原子性（2026-10-13）
+
+**DRAFT_DELIVERY_PREPARING / FULL_FAILED / NOT_AI_ACCEPTED / NOT_MERGE_READY**。[Task v1.1](task-packages/GEMCITY-PURCHASE-01.md)/[Review r1](review-packages/GEMCITY-PURCHASE-01-r1.md)。用户本轮授权同步、有限任务实现/测试/独立审查/commit/普通push/Draft PR，禁止merge/Release/main直接push。今日北京时间15:00（07:00 UTC）停止上限，14:30后不新开大任务；不宣称可查账户额度。
+safe fetch核main08d263b2a78b7a6df0b888616e2fbf44793182b8；干净latest-main从3c2a301 fast-forward，PR7/8均已merged。原开发HEAD c864234/branch codex/local-trial-20261003/index及1145公开入场中的1143保护文件保持，只更新原中心/投影并新增本Task/Review/合成证据；不pull/reset/stash/clean/强推或读取真实资料。
+独立worktree `_tmp_gui/gate-collection-20261013`（沿用最初诊断名）/branch fix/gemcity-purchase-20261013，base08d263b。root独占GemCity/新测试、治理/PROJECT_MEMORY；仅支付前校验总金需求、成功后移除保留卡。21行为回归原规则RED9 FAIL/12 PASS、领域7文件86 PASS/0 FAIL/0 SKIP；独立Sol代码/领域及公开原证据终核0 MUST，允许Draft交付，不是验收。
+完整门禁自然结束158文件2323 PASS/3 FAIL/2原opt-in SKIP、exit1/809.201秒；source c56eefa861bd569c11cea74cac8c202506845867a8bba061a829efce6d6bea60与领域一致，session54447已结束。失败test_cc02a_web_kick漏真实uxSelectNavigation依赖、test_r32两条旧1行断言与3行视觉行为冲突；没有同环境正式干净full对照，不能称基线已有失败。全量不得记PASS/AI_ACCEPTED。flagship GUI打印Tcl after invalid-command-name但6P，保留诊断，不当干净GUI证明。历史gate3秒超时本轮基线/全量均8P，原FAIL与未定因保留，不改timeout合同。
+baseline/RED/domain/full共167raw日志逐份hash/单attempt/cleanup/原skip全核，[证据](review-assets/GEMCITY-PURCHASE-01/evidence.json)/[边界](review-assets/GEMCITY-PURCHASE-01/boundary.json)。Task v1.1仅增窄原日志-text/-whitespace出版规则，167 Git blob SHA与raw一致；371受测输入经Git filter核到index，应用/测试冻结后未变，cached diff-check通过。当前无本批应用/测试，原旧Goal/CP4/ProcMon不恢复；EXE完整对局/退出、外机Windows、真实LAN与视觉/DPI仍待验。
+并行TRIAL-EVIDENCE-REFRESH-01已授权，独立 `_tmp_gui/trial-evidence-refresh-20261013` / docs/trial-evidence-refresh-20261013 / base08d263b；该窗只写两张游戏地图/规划、新试用验收分类、其Task/Review/static-audit，纯文档审查/commit不push/PR/运行应用或构建；root不覆盖其六文件，待SHA审阅cherry-pick。UI窗口专属client_gameui.py/对应测试（Blokus尺寸/HUD），root不改此模块。父线程已批准下一主控client.py拉密选择残留；先核独立报告后冻结Task。Web/桌面播棋第二方映射静态缺口另列候选，待有限范围确认和正式复现。构建仅root协调，无重复full。
+下一：仅暂存本任务明确路径并提交/普通push/Draft PR；3条full失败保持，后继拉密和UI/文档批次不自动替换本结果。
+
 ## UX-VISUAL-PR-01 草稿交付（2026-10-10）
 
 [Task v1](task-packages/UX-VISUAL-PR-01.md) **DRAFT_PR_CREATED / NOT_MERGE_READY**，用户要求本轮先提交PR，授权必要commit/普通branch push/Draft PR。root唯一写入，独立代理只读范围及公开资料审查，不merge/Release/部署。最新main为7d6a98cbdd8c62f5d5af4d5b9a4a7e6be0663758；已实际核PR6/7均merged，以下Oct6的PR7创建阻塞保留为历史，当前已无该创建阻塞。原开发c864234/dirty仍保留，暂停账号Goal不恢复。

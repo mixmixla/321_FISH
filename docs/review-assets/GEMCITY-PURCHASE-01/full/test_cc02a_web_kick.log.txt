@@ -1,0 +1,35 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_____________ test_production_web_kick_and_auth_failure_callbacks _____________
+
+tmp_path = WindowsPath('D:/Project/321_FISH/_tmp_gui/advance-20261013/full/basetemp/test_cc02a_web_kick-1-7c05720d/test_production_web_kick_and_a0')
+
+    def test_production_web_kick_and_auth_failure_callbacks(tmp_path):
+        node = shutil.which("node")
+        assert node is not None, "production JavaScript validation requires Node"
+        source = "\n".join(_function(name) for name in
+                           ("leaveLogin", "logout", "openStream", "renderGames", "closeLobby", "installSessionFetch"))
+        data = tmp_path / "production-functions.json"
+        script = tmp_path / "probe.cjs"
+        data.write_text(json.dumps({"code": source}), encoding="utf-8")
+        script.write_text(SCRIPT, encoding="utf-8")
+        result = subprocess.run([node, str(script), str(data)], capture_output=True,
+                                text=True, encoding="utf-8", timeout=20)
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: ReferenceError: uxSelectNavigation is not defined
+E             at closeLobby (evalmachine.<anonymous>:357:83)
+E             at leaveLogin (evalmachine.<anonymous>:11:37)
+E             at es.onmessage (evalmachine.<anonymous>:305:28)
+E             at main (D:\Project\321_FISH\_tmp_gui\advance-20261013\full\basetemp\test_cc02a_web_kick-1-7c05720d\test_production_web_kick_and_a0\probe.cjs:29:7)
+E             at Object.<anonymous> (D:\Project\321_FISH\_tmp_gui\advance-20261013\full\basetemp\test_cc02a_web_kick-1-7c05720d\test_production_web_kick_and_a0\probe.cjs:72:1)
+E             at Module._compile (node:internal/modules/cjs/loader:1761:14)
+E             at Object..js (node:internal/modules/cjs/loader:1893:10)
+E             at Module.load (node:internal/modules/cjs/loader:1481:32)
+E             at Module._load (node:internal/modules/cjs/loader:1300:12)
+E             at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['C:\\Program Files\\nodejs\\node.EXE', 'D:\\Project\\321_FISH\\_tmp_gui\\advance-20261013\\full..._load (node:internal/modules/cjs/loader:1300:12)\n    at TracingChannel.traceSync (node:diagnostics_channel:328:14)\n').returncode
+
+tests\test_cc02a_web_kick.py:129: AssertionError
+1 failed in 0.77s

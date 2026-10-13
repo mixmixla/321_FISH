@@ -1,0 +1,205 @@
+.FFFFFFF...........FF                                                    [100%]
+================================== FAILURES ===================================
+_ test_unaffordable_purchase_rejects_without_any_state_change[cost0-tokens0-discount0-reserved] _
+
+reserved = True, cost = {'o': 1}, tokens = {}, discount = {}
+
+    @pytest.mark.parametrize("reserved", [False, True], ids=["market", "reserved"])
+    @pytest.mark.parametrize("cost,tokens,discount", [
+        ({"o": 1}, {}, {}),
+        ({"o": 1, "d": 1}, {"g": 1}, {}),
+        ({"o": 2, "d": 2, "r": 1}, {"o": 1, "d": 1, "g": 2}, {}),
+        ({"o": 2, "d": 2}, {"g": 1}, {"o": 1, "d": 1}),
+    ])
+    def test_unaffordable_purchase_rejects_without_any_state_change(reserved, cost, tokens, discount):
+        game = GemCityGame([1, 2], seed=17)
+        action = _offer(game, _card(cost), reserved)
+        _fund(game, tokens)
+        game.discount[1].update(discount)
+        before = _state(game)
+        with pytest.raises(GameRuleError):
+            game.act(1, action)
+>       assert _state(game) == before
+E       AssertionError: assert {'players': [...0, ...}}, ...} == {'players': [...0, ...}}, ...}
+E         
+E         Omitting 15 identical items, use -vv to show
+E         Differing items:
+E         {'reserved': {1: [{'tier': 1, 'disc': 's', 'pts': 1, 'cost': {'o': 3, 'd': 0, 'r': 0, 'e': 0, ...}}, {'tier': 1, 'disc': 's', 'pts': 1, 'cost': {'o': 0, 'd': 3, 'r': 0, 'e': 0, ...}}], 2: []}} != {'reserved': {1: [{'tier': 1, 'disc': 's', 'pts': 1, 'cost': {'o': 3, 'd': 0, 'r': 0, 'e': 0, ...}}, {'tier': 1, 'disc...: 0, 'r': 0, 'e': 0, ...}}, {'tier': 1, 'disc': 's', 'pts': 1, 'cost': {'o': 0, 'd': 3, 'r': 0, 'e': 0, ...}}], 2: []}}
+E         Use -v to get more diff
+
+tests\test_gemcity_purchase.py:57: AssertionError
+_ test_unaffordable_purchase_rejects_without_any_state_change[cost1-tokens1-discount1-market] _
+
+reserved = False, cost = {'o': 1, 'd': 1}, tokens = {'g': 1}, discount = {}
+
+    @pytest.mark.parametrize("reserved", [False, True], ids=["market", "reserved"])
+    @pytest.mark.parametrize("cost,tokens,discount", [
+        ({"o": 1}, {}, {}),
+        ({"o": 1, "d": 1}, {"g": 1}, {}),
+        ({"o": 2, "d": 2, "r": 1}, {"o": 1, "d": 1, "g": 2}, {}),
+        ({"o": 2, "d": 2}, {"g": 1}, {"o": 1, "d": 1}),
+    ])
+    def test_unaffordable_purchase_rejects_without_any_state_change(reserved, cost, tokens, discount):
+        game = GemCityGame([1, 2], seed=17)
+        action = _offer(game, _card(cost), reserved)
+        _fund(game, tokens)
+        game.discount[1].update(discount)
+        before = _state(game)
+>       with pytest.raises(GameRuleError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GameRuleError
+
+tests\test_gemcity_purchase.py:55: Failed
+_ test_unaffordable_purchase_rejects_without_any_state_change[cost1-tokens1-discount1-reserved] _
+
+reserved = True, cost = {'o': 1, 'd': 1}, tokens = {'g': 1}, discount = {}
+
+    @pytest.mark.parametrize("reserved", [False, True], ids=["market", "reserved"])
+    @pytest.mark.parametrize("cost,tokens,discount", [
+        ({"o": 1}, {}, {}),
+        ({"o": 1, "d": 1}, {"g": 1}, {}),
+        ({"o": 2, "d": 2, "r": 1}, {"o": 1, "d": 1, "g": 2}, {}),
+        ({"o": 2, "d": 2}, {"g": 1}, {"o": 1, "d": 1}),
+    ])
+    def test_unaffordable_purchase_rejects_without_any_state_change(reserved, cost, tokens, discount):
+        game = GemCityGame([1, 2], seed=17)
+        action = _offer(game, _card(cost), reserved)
+        _fund(game, tokens)
+        game.discount[1].update(discount)
+        before = _state(game)
+>       with pytest.raises(GameRuleError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GameRuleError
+
+tests\test_gemcity_purchase.py:55: Failed
+_ test_unaffordable_purchase_rejects_without_any_state_change[cost2-tokens2-discount2-market] _
+
+reserved = False, cost = {'o': 2, 'd': 2, 'r': 1}
+tokens = {'o': 1, 'd': 1, 'g': 2}, discount = {}
+
+    @pytest.mark.parametrize("reserved", [False, True], ids=["market", "reserved"])
+    @pytest.mark.parametrize("cost,tokens,discount", [
+        ({"o": 1}, {}, {}),
+        ({"o": 1, "d": 1}, {"g": 1}, {}),
+        ({"o": 2, "d": 2, "r": 1}, {"o": 1, "d": 1, "g": 2}, {}),
+        ({"o": 2, "d": 2}, {"g": 1}, {"o": 1, "d": 1}),
+    ])
+    def test_unaffordable_purchase_rejects_without_any_state_change(reserved, cost, tokens, discount):
+        game = GemCityGame([1, 2], seed=17)
+        action = _offer(game, _card(cost), reserved)
+        _fund(game, tokens)
+        game.discount[1].update(discount)
+        before = _state(game)
+>       with pytest.raises(GameRuleError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GameRuleError
+
+tests\test_gemcity_purchase.py:55: Failed
+_ test_unaffordable_purchase_rejects_without_any_state_change[cost2-tokens2-discount2-reserved] _
+
+reserved = True, cost = {'o': 2, 'd': 2, 'r': 1}
+tokens = {'o': 1, 'd': 1, 'g': 2}, discount = {}
+
+    @pytest.mark.parametrize("reserved", [False, True], ids=["market", "reserved"])
+    @pytest.mark.parametrize("cost,tokens,discount", [
+        ({"o": 1}, {}, {}),
+        ({"o": 1, "d": 1}, {"g": 1}, {}),
+        ({"o": 2, "d": 2, "r": 1}, {"o": 1, "d": 1, "g": 2}, {}),
+        ({"o": 2, "d": 2}, {"g": 1}, {"o": 1, "d": 1}),
+    ])
+    def test_unaffordable_purchase_rejects_without_any_state_change(reserved, cost, tokens, discount):
+        game = GemCityGame([1, 2], seed=17)
+        action = _offer(game, _card(cost), reserved)
+        _fund(game, tokens)
+        game.discount[1].update(discount)
+        before = _state(game)
+>       with pytest.raises(GameRuleError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GameRuleError
+
+tests\test_gemcity_purchase.py:55: Failed
+_ test_unaffordable_purchase_rejects_without_any_state_change[cost3-tokens3-discount3-market] _
+
+reserved = False, cost = {'o': 2, 'd': 2}, tokens = {'g': 1}
+discount = {'o': 1, 'd': 1}
+
+    @pytest.mark.parametrize("reserved", [False, True], ids=["market", "reserved"])
+    @pytest.mark.parametrize("cost,tokens,discount", [
+        ({"o": 1}, {}, {}),
+        ({"o": 1, "d": 1}, {"g": 1}, {}),
+        ({"o": 2, "d": 2, "r": 1}, {"o": 1, "d": 1, "g": 2}, {}),
+        ({"o": 2, "d": 2}, {"g": 1}, {"o": 1, "d": 1}),
+    ])
+    def test_unaffordable_purchase_rejects_without_any_state_change(reserved, cost, tokens, discount):
+        game = GemCityGame([1, 2], seed=17)
+        action = _offer(game, _card(cost), reserved)
+        _fund(game, tokens)
+        game.discount[1].update(discount)
+        before = _state(game)
+>       with pytest.raises(GameRuleError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GameRuleError
+
+tests\test_gemcity_purchase.py:55: Failed
+_ test_unaffordable_purchase_rejects_without_any_state_change[cost3-tokens3-discount3-reserved] _
+
+reserved = True, cost = {'o': 2, 'd': 2}, tokens = {'g': 1}
+discount = {'o': 1, 'd': 1}
+
+    @pytest.mark.parametrize("reserved", [False, True], ids=["market", "reserved"])
+    @pytest.mark.parametrize("cost,tokens,discount", [
+        ({"o": 1}, {}, {}),
+        ({"o": 1, "d": 1}, {"g": 1}, {}),
+        ({"o": 2, "d": 2, "r": 1}, {"o": 1, "d": 1, "g": 2}, {}),
+        ({"o": 2, "d": 2}, {"g": 1}, {"o": 1, "d": 1}),
+    ])
+    def test_unaffordable_purchase_rejects_without_any_state_change(reserved, cost, tokens, discount):
+        game = GemCityGame([1, 2], seed=17)
+        action = _offer(game, _card(cost), reserved)
+        _fund(game, tokens)
+        game.discount[1].update(discount)
+        before = _state(game)
+>       with pytest.raises(GameRuleError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GameRuleError
+
+tests\test_gemcity_purchase.py:55: Failed
+_ test_room_action_keeps_rejected_purchase_intact_then_accepts_funded_card[market] _
+
+reserved = False
+
+    @pytest.mark.parametrize("reserved", [False, True], ids=["market", "reserved"])
+    def test_room_action_keeps_rejected_purchase_intact_then_accepts_funded_card(reserved):
+        manager = RoomManager({"gemcity": GemCityGame})
+        room = manager.create(1, "gemcity")
+        manager.join(2, room.room_id)
+        manager.start(1, room.room_id)
+        game = room.gs
+        action = _offer(game, _card({"o": 1, "d": 1}), reserved)
+        _fund(game, {"g": 1})
+        before = _state(game)
+>       with pytest.raises(GameRuleError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GameRuleError
+
+tests\test_gemcity_purchase.py:131: Failed
+_ test_room_action_keeps_rejected_purchase_intact_then_accepts_funded_card[reserved] _
+
+reserved = True
+
+    @pytest.mark.parametrize("reserved", [False, True], ids=["market", "reserved"])
+    def test_room_action_keeps_rejected_purchase_intact_then_accepts_funded_card(reserved):
+        manager = RoomManager({"gemcity": GemCityGame})
+        room = manager.create(1, "gemcity")
+        manager.join(2, room.room_id)
+        manager.start(1, room.room_id)
+        game = room.gs
+        action = _offer(game, _card({"o": 1, "d": 1}), reserved)
+        _fund(game, {"g": 1})
+        before = _state(game)
+>       with pytest.raises(GameRuleError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GameRuleError
+
+tests\test_gemcity_purchase.py:131: Failed
+9 failed, 12 passed in 0.96s

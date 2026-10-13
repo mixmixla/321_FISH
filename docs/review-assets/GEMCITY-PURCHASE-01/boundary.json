@@ -1,0 +1,14 @@
+{
+  "original_head": "c864234e09f97a32e3df871b5bd7c13312adeed7",
+  "original_branch": "codex/local-trial-20261003",
+  "entry_public_files": 1145,
+  "protected_unchanged": 1143,
+  "allowed_original_updates": [
+    "docs/AI_COMMAND_CENTER.md",
+    "docs/任务清单.md"
+  ],
+  "index_unchanged": true,
+  "entry_sha256": "6e20edda232fe47f4b19c587f60f5d081d06c6d9446a2c4cd78de883f757b243",
+  "candidate_inputs_matched": 371,
+  "candidate_source_id": "c56eefa861bd569c11cea74cac8c202506845867a8bba061a829efce6d6bea60"
+}

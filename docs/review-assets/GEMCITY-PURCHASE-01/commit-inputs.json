@@ -1,0 +1,12 @@
+{
+  "candidate_inputs": 371,
+  "raw_to_git_filter_inputs_match_index": true,
+  "source_content_id": "c56eefa861bd569c11cea74cac8c202506845867a8bba061a829efce6d6bea60",
+  "production_paths": [
+    "games_pkg/gemcity.py"
+  ],
+  "test_paths": [
+    "tests/test_gemcity_purchase.py"
+  ],
+  "public_raw_log_blobs_sha256_verified": 167
+}

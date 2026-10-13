@@ -1,0 +1,3780 @@
+{
+  "task": "GEMCITY-PURCHASE-01.v1",
+  "base": "08d263b2a78b7a6df0b888616e2fbf44793182b8",
+  "runs": {
+    "baseline": {
+      "run_id": "baseline",
+      "files": 1,
+      "totals": {
+        "passed": 8
+      },
+      "exit_code": 0,
+      "seconds": 24.878,
+      "source_content_id": "3c04a62cd590cd35ff4efb5ca1ef514da2240cd330868ee3e04741656cc350ee",
+      "content_fingerprint": "7c789a1c6b1348c96b0386aeee43db999ce35e742f31a4da810ffdcbf9334daf",
+      "interpreter": {
+        "path": "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+        "implementation": "cpython",
+        "version": "3.14.5",
+        "cache_tag": "cpython-314",
+        "size": 255200,
+        "sha256": "896ccf899b9d45c1c119ba35d6cce6e16cc10dd6a7f502f88fb50429a6e5cf4c"
+      },
+      "summary_sha256": "e97e5f8d2227ac54c5563a9a7ba94c1fbc7fa33b0b63d53d20b074f8dce118fd",
+      "logs": [
+        {
+          "file": "tests/test_test_gate.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 23.24s",
+          "seconds": 24.327,
+          "log_sha256": "5e1072e69c049274a6eeea7828e9bcc5fcd43908d857e76b6ef5c910ed0a7dae",
+          "log": "baseline/test_test_gate.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        }
+      ]
+    },
+    "red": {
+      "run_id": "red",
+      "files": 1,
+      "totals": {
+        "failed": 9,
+        "passed": 12
+      },
+      "exit_code": 1,
+      "seconds": 2.113,
+      "source_content_id": "b8dee606709c943095e429824867b2aa742c83403d997805866f93bc053c2059",
+      "content_fingerprint": "7c734abb72b1549e013895efaf7b745ee785ed49a9f135568050897fcd89edf1",
+      "interpreter": {
+        "path": "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+        "implementation": "cpython",
+        "version": "3.14.5",
+        "cache_tag": "cpython-314",
+        "size": 255200,
+        "sha256": "896ccf899b9d45c1c119ba35d6cce6e16cc10dd6a7f502f88fb50429a6e5cf4c"
+      },
+      "summary_sha256": "aef18f1f9a9e8eed94dedb2dc151885137c4225ee54d3c87f57d8f069dac1b12",
+      "logs": [
+        {
+          "file": "tests/test_gemcity_purchase.py",
+          "status": "failed",
+          "exit_code": 1,
+          "counts": {
+            "failed": 9,
+            "passed": 12
+          },
+          "summary": "9 failed, 12 passed in 0.96s",
+          "seconds": 1.74,
+          "log_sha256": "d37f989cee5b3c096b27aefe3fc94af011b295a28620907e55ab2222dde82b0e",
+          "log": "red/test_gemcity_purchase.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        }
+      ]
+    },
+    "domain": {
+      "run_id": "domain",
+      "files": 7,
+      "totals": {
+        "passed": 86
+      },
+      "exit_code": 0,
+      "seconds": 14.859,
+      "source_content_id": "c56eefa861bd569c11cea74cac8c202506845867a8bba061a829efce6d6bea60",
+      "content_fingerprint": "8e317a98f7e1421778c3820883a3fb80fe02a7a89cb73610b99896974a6e8173",
+      "interpreter": {
+        "path": "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+        "implementation": "cpython",
+        "version": "3.14.5",
+        "cache_tag": "cpython-314",
+        "size": 255200,
+        "sha256": "896ccf899b9d45c1c119ba35d6cce6e16cc10dd6a7f502f88fb50429a6e5cf4c"
+      },
+      "summary_sha256": "0f31a10c909409cd338e8076382537f5eda80406895c3d05d80588b70298c6cb",
+      "logs": [
+        {
+          "file": "tests/test_game_client_lifecycle.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 0.47s",
+          "seconds": 1.171,
+          "log_sha256": "67ecd033ff9b6c789c9fa77a08973200a7197e96beb9a6558f7f5f9375801623",
+          "log": "domain/test_game_client_lifecycle.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_game_lifecycle.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 5
+          },
+          "summary": "5 passed in 0.45s",
+          "seconds": 1.216,
+          "log_sha256": "81d728f03b1ffa60ac465aafdaa8b76309920fbff0e5900e90323b1d19a4537c",
+          "log": "domain/test_game_lifecycle.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_euro.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 17
+          },
+          "summary": "17 passed in 0.48s",
+          "seconds": 1.185,
+          "log_sha256": "9306fc151f61a40f4d16d499e9533489858c44b2538cfe841099b9690dfc31e5",
+          "log": "domain/test_games_euro.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_gemcity_purchase.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 21
+          },
+          "summary": "21 passed in 0.52s",
+          "seconds": 1.418,
+          "log_sha256": "ebd4cf481e29bf1d6f735dc31d1ed33a7dfc78050c7d4a840a3bda521138b674",
+          "log": "domain/test_gemcity_purchase.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_rooms.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 15
+          },
+          "summary": "15 passed in 0.49s",
+          "seconds": 1.198,
+          "log_sha256": "50fe1fd52c85f8a6cfe7bda7b8ba065ba21234bb94519232038a07daf80ceceb",
+          "log": "domain/test_rooms.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_server_game_lifecycle.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 1.30s",
+          "seconds": 2.112,
+          "log_sha256": "f27830aeba4a69ec2b2b75e3e2f006361dcd5fd48b33409313f95d839183c183",
+          "log": "domain/test_server_game_lifecycle.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_server_games.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 2.65s",
+          "seconds": 3.537,
+          "log_sha256": "ebcc48c99ffe85d72d6c5ca127284f58475c2dd45e34c70e63948ee3d29d1442",
+          "log": "domain/test_server_games.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        }
+      ]
+    },
+    "full": {
+      "run_id": "full",
+      "files": 158,
+      "totals": {
+        "passed": 2323,
+        "failed": 3,
+        "skipped": 2
+      },
+      "exit_code": 1,
+      "seconds": 809.201,
+      "source_content_id": "c56eefa861bd569c11cea74cac8c202506845867a8bba061a829efce6d6bea60",
+      "content_fingerprint": "c186853c41b6bdcf7577cf1c63a4d972ae700f88100c300292b159db60951244",
+      "interpreter": {
+        "path": "D:\\Project\\321_FISH\\.venv\\Scripts\\python.exe",
+        "implementation": "cpython",
+        "version": "3.14.5",
+        "cache_tag": "cpython-314",
+        "size": 255200,
+        "sha256": "896ccf899b9d45c1c119ba35d6cce6e16cc10dd6a7f502f88fb50429a6e5cf4c"
+      },
+      "summary_sha256": "ed4d27f4b549fa4fe2acae3e663f21f38dca6218261d4e3bdc0f883554b0a389",
+      "logs": [
+        {
+          "file": "tests/test_account_credential_commit.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 10
+          },
+          "summary": "10 passed in 3.39s",
+          "seconds": 4.116,
+          "log_sha256": "108eca31ae7797dfda96ba6120e71c917896cc56a78a93a6c58a3b56ccc16dc4",
+          "log": "full/test_account_credential_commit.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_account_credential_contracts.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 32
+          },
+          "summary": "32 passed in 0.26s",
+          "seconds": 0.959,
+          "log_sha256": "9c6fc94456c40ac3a91b58cb0161b58275bc8854d9f32b3d8fb6469425854d99",
+          "log": "full/test_account_credential_contracts.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_account_credential_file_failures.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 2
+          },
+          "summary": "2 passed in 2.55s",
+          "seconds": 3.246,
+          "log_sha256": "91ab6ab6b8aef600ff9e0bc46b0cda67e4fd13bea01ead35d0903efdb54baa34",
+          "log": "full/test_account_credential_file_failures.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_account_credential_regressions.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 6
+          },
+          "summary": "6 passed in 1.75s",
+          "seconds": 2.44,
+          "log_sha256": "72445288ca70bc951bc21af86fea3fe0e64bf473b3bf601ac05f3f931f644a98",
+          "log": "full/test_account_credential_regressions.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_account_credential_transactions.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 22
+          },
+          "summary": "22 passed in 11.37s",
+          "seconds": 12.111,
+          "log_sha256": "6c3062891c07c4000089e741a444adece0aa67b9f8944e4e4ac4f66f1ca26cbb",
+          "log": "full/test_account_credential_transactions.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_account_credential_wire.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 17
+          },
+          "summary": "17 passed in 8.90s",
+          "seconds": 9.678,
+          "log_sha256": "b266eabae5387971bc57b0c8d7abbdeca9c07d698e3acd0b8092eaa6e38bac7f",
+          "log": "full/test_account_credential_wire.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_admin_credentials.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 24
+          },
+          "summary": "24 passed in 8.70s",
+          "seconds": 9.388,
+          "log_sha256": "68df223e9428ab53e2857008d4b97f0612d35cb636438d9ea3630a64a0f07fb6",
+          "log": "full/test_admin_credentials.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_admin_groups.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 14
+          },
+          "summary": "14 passed in 8.15s",
+          "seconds": 8.871,
+          "log_sha256": "869f119eef7f8d91f181b66211e7fde31232497b53496d6f5a3b5c286c6d3cbc",
+          "log": "full/test_admin_groups.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_admin_groups_web.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 5.73s",
+          "seconds": 6.499,
+          "log_sha256": "7be5b393ed82baed157edfc6465eab879d6520ad2f9c250f19e5033861098e14",
+          "log": "full/test_admin_groups_web.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_audit_audio_callbacks.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 3
+          },
+          "summary": "3 passed in 0.65s",
+          "seconds": 1.367,
+          "log_sha256": "fa86732a4419599006d26c3671334cc8fdb3d319740cf8b5b2d85e5180652cab",
+          "log": "full/test_audit_audio_callbacks.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_audit_e2ee_limits.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 3
+          },
+          "summary": "3 passed in 0.24s",
+          "seconds": 1.138,
+          "log_sha256": "430ec0da199d69a9ffa473eaddf821e4bd62563da44baf9dbc613342bb7ad378",
+          "log": "full/test_audit_e2ee_limits.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_audit_file_auth.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 18
+          },
+          "summary": "18 passed in 1.11s",
+          "seconds": 1.835,
+          "log_sha256": "f029afdba0a56ede7a73ac21a96c2a23024c19223c0a0baf324476ec995769cb",
+          "log": "full/test_audit_file_auth.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_audit_moment_images.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 0.40s",
+          "seconds": 1.179,
+          "log_sha256": "4a9bf0e1f363356022e9ba9b1342f74df9ebdf11e88f68e856b9e116451538df",
+          "log": "full/test_audit_moment_images.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_audit_preview.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 5
+          },
+          "summary": "5 passed in 1.25s",
+          "seconds": 2.03,
+          "log_sha256": "f5cee797ad530b71c8c2e00e38a7e135b6f6a9be6d25944a9db2194473fa445d",
+          "log": "full/test_audit_preview.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_audit_server_security.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 1.72s",
+          "seconds": 2.721,
+          "log_sha256": "184a7ce10d98e06d8f6db453079b6fd5d27449083e6c6917b96f9bc832e963e9",
+          "log": "full/test_audit_server_security.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_auth.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 7
+          },
+          "summary": "7 passed in 0.70s",
+          "seconds": 1.478,
+          "log_sha256": "1339b1f1f30649e99f02a84bb13be40ba0ba031876c42f86ef859cf2d6765d6d",
+          "log": "full/test_auth.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_betrayal.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 11
+          },
+          "summary": "11 passed in 0.45s",
+          "seconds": 1.173,
+          "log_sha256": "7a5c6d77950ec24c94d4c670d0585aba72eebcfbfc55c2c2c54b38065e0341ae",
+          "log": "full/test_betrayal.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_c9_group.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 3.53s",
+          "seconds": 4.267,
+          "log_sha256": "3147b12e84c8873c028576545fc95fd712453d06e875a3f29de319bf371ac1d8",
+          "log": "full/test_c9_group.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_cc02_retire_core.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 20
+          },
+          "summary": "20 passed in 6.70s",
+          "seconds": 7.399,
+          "log_sha256": "282b8c0d5e19bca85665670caebe48fb2cf5820bc1cb53cac208722e77e64de0",
+          "log": "full/test_cc02_retire_core.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_cc02_store_min.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 27
+          },
+          "summary": "27 passed in 19.03s",
+          "seconds": 19.831,
+          "log_sha256": "ea4e2d1071f2d734bce955685f375816f99971bc66a173a0657a932c8361fc8d",
+          "log": "full/test_cc02_store_min.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_cc02_store_receipt.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 80
+          },
+          "summary": "80 passed in 10.21s",
+          "seconds": 11.229,
+          "log_sha256": "ac947bd4475ccdb151b626054e1b0a88130c2ae17a3549833443c379230f82b3",
+          "log": "full/test_cc02_store_receipt.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_cc02a_client_kick.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 3.55s",
+          "seconds": 4.432,
+          "log_sha256": "7958f27bcf099e1665cd12b2400bad093adfa04bdc54b2da43bd830b9704be6a",
+          "log": "full/test_cc02a_client_kick.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_cc02a_kick.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 0.92s",
+          "seconds": 1.726,
+          "log_sha256": "07236f3453521b027524531fa649159e9be91a540e79bb1d81b6eb4fabb9731a",
+          "log": "full/test_cc02a_kick.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_cc02a_profile.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 2
+          },
+          "summary": "2 passed in 1.02s",
+          "seconds": 1.792,
+          "log_sha256": "5a396d405ca721dd53567f8161ca9fab276db9a935051fd7155a7af5d0ed36a7",
+          "log": "full/test_cc02a_profile.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_cc02a_restore.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 1.30s",
+          "seconds": 2.305,
+          "log_sha256": "62aee4f0babc8ce4023fddafff7610c2937ffb6860f5053fd4ee7e31ef995377",
+          "log": "full/test_cc02a_restore.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_cc02a_web_kick.py",
+          "status": "failed",
+          "exit_code": 1,
+          "counts": {
+            "failed": 1
+          },
+          "summary": "1 failed in 0.77s",
+          "seconds": 1.553,
+          "log_sha256": "8f235a003e8385e65c5be672e5210e2d38b0de2cee49898b4100ff2ae86fcc9c",
+          "log": "full/test_cc02a_web_kick.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_cc02c_resource_async.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 14
+          },
+          "summary": "14 passed in 1.15s",
+          "seconds": 1.959,
+          "log_sha256": "ebfeb327078b7bcd33007e415e28031c00daa33edd5459d20f2decb8e3e76323",
+          "log": "full/test_cc02c_resource_async.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_cc02c_resource_files.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 41
+          },
+          "summary": "41 passed in 1.62s",
+          "seconds": 2.393,
+          "log_sha256": "2ac55ff35e2730a697a81230875206ceb05f828e9646ba584036900d81af96df",
+          "log": "full/test_cc02c_resource_files.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_cc02c_resource_integration.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 5.92s",
+          "seconds": 6.635,
+          "log_sha256": "33043e4e1f1868b05597b4127bd95cf304570f587d5fa980eb9afe93c764817e",
+          "log": "full/test_cc02c_resource_integration.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_client_core.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 33
+          },
+          "summary": "33 passed in 13.22s",
+          "seconds": 13.897,
+          "log_sha256": "91273e7c036fd9dd2eeba07254810533b2d014f90919285a35da992b675c1f40",
+          "log": "full/test_client_core.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_config_crashlog.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 1
+          },
+          "summary": "1 passed in 0.19s",
+          "seconds": 1.084,
+          "log_sha256": "a627885f4b9efaac136d48977c38ccc0cf413d2b07f0c2dca5d54f69518b7604",
+          "log": "full/test_config_crashlog.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_crypto.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 5
+          },
+          "summary": "5 passed in 0.28s",
+          "seconds": 1.056,
+          "log_sha256": "08893cd61d53e5b060bff2eaec1aa46e86dfba154115e993453edcfe09ff571d",
+          "log": "full/test_crypto.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_discovery.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 3.28s",
+          "seconds": 4.009,
+          "log_sha256": "46659a20b6c4882e6f087b0d9bfc940e07b1c6b11ff677597f921f3d9fcd6d38",
+          "log": "full/test_discovery.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_drafts.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 13
+          },
+          "summary": "13 passed in 1.27s",
+          "seconds": 1.997,
+          "log_sha256": "d681f3aac002487b9fc0de24d5eeacb36e8f9f1fdda780d7314ee93fb34205ff",
+          "log": "full/test_drafts.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_excel_sheet.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 5
+          },
+          "summary": "5 passed in 1.98s",
+          "seconds": 2.712,
+          "log_sha256": "801bd349cb5504434a97241b7d0ed859e81178713e40305f8b8c975415b91bf5",
+          "log": "full/test_excel_sheet.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_excel_skin.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 2
+          },
+          "summary": "2 passed in 1.83s",
+          "seconds": 2.678,
+          "log_sha256": "b17e567f6cc0fb02cc19755dab18edb6ecb99e56ff11a0821931676541b67cf4",
+          "log": "full/test_excel_skin.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_filexfer.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 7
+          },
+          "summary": "7 passed in 0.40s",
+          "seconds": 1.177,
+          "log_sha256": "6a44ac67f3984606178c8277ebbfd551311e0a64d71d16847a2ce984d7fbbb13",
+          "log": "full/test_filexfer.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_flagship_board.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 43
+          },
+          "summary": "43 passed in 1.41s",
+          "seconds": 2.148,
+          "log_sha256": "c4282c74af3ca89108350a0ca8fae9f430d019b71e02fc7b8d198d9f8a094ba2",
+          "log": "full/test_flagship_board.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_flagship_game_wire.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 3
+          },
+          "summary": "3 passed in 8.17s",
+          "seconds": 8.945,
+          "log_sha256": "377d153ca6494057227128a0af17a12bed9d29a04e99e78623d9c561548d106d",
+          "log": "full/test_flagship_game_wire.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_flagship_gui.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 6
+          },
+          "summary": "6 passed in 11.02s",
+          "seconds": 11.812,
+          "log_sha256": "4e78cd24d25674ee70ef6eed9307cba39a60a6810d40585cd3fdc6a2f8d0f489",
+          "log": "full/test_flagship_gui.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_friend_trial_start.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 36
+          },
+          "summary": "36 passed in 1.61s",
+          "seconds": 2.434,
+          "log_sha256": "0a84b10cea5e45dd954355e150c4700bee3462163ecdc523a03194f612235c57",
+          "log": "full/test_friend_trial_start.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_fwd_media.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 1.71s",
+          "seconds": 2.466,
+          "log_sha256": "4d516de25812dd309777e69c466586e3f6cb1f129922a968c96e99117570f86b",
+          "log": "full/test_fwd_media.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_game_client_lifecycle.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 0.41s",
+          "seconds": 1.134,
+          "log_sha256": "f48b4ca38f05d030365fd617f020e8df26a07feede5e9ce2cb3fbfd0eec3542c",
+          "log": "full/test_game_client_lifecycle.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_game_lifecycle.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 5
+          },
+          "summary": "5 passed in 0.50s",
+          "seconds": 1.287,
+          "log_sha256": "bf32b9f41d1f1d7e31cd13141f0849e40a21a8060fcad15aeec740f2f212cc02",
+          "log": "full/test_game_lifecycle.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_game_owner_recovery.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 0.42s",
+          "seconds": 1.126,
+          "log_sha256": "9687366a2c0ecb1e7cc62a554816f7d09063ca0059d451b75e322bb49043269b",
+          "log": "full/test_game_owner_recovery.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 21
+          },
+          "summary": "21 passed in 0.54s",
+          "seconds": 1.258,
+          "log_sha256": "4d3e893463204811b566d124c90764d3ef090ac7543904949567edea9fb2f113",
+          "log": "full/test_games.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_coc.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 30
+          },
+          "summary": "30 passed in 0.51s",
+          "seconds": 1.41,
+          "log_sha256": "a7fa94c2a7b055a2d23c09185f4bc8dbf600a58fe0cc7801408330d87676f760",
+          "log": "full/test_games_coc.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_euro.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 17
+          },
+          "summary": "17 passed in 0.48s",
+          "seconds": 1.165,
+          "log_sha256": "9306fc151f61a40f4d16d499e9533489858c44b2538cfe841099b9690dfc31e5",
+          "log": "full/test_games_euro.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_new.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 16
+          },
+          "summary": "16 passed in 0.52s",
+          "seconds": 1.216,
+          "log_sha256": "d993fe3ad7de48136e84948a052448be13ceafebf46c9baeda60134aeb3f61d2",
+          "log": "full/test_games_new.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_w1_new.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 14
+          },
+          "summary": "14 passed in 0.45s",
+          "seconds": 1.141,
+          "log_sha256": "e6ea404f03c14c779d00d0e0a94ccd8cf72ffbf428dc8019fa103f7a60a8f3e1",
+          "log": "full/test_games_w1_new.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_w2_logic.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 19
+          },
+          "summary": "19 passed in 0.46s",
+          "seconds": 1.138,
+          "log_sha256": "8ae4dd6712b9c81c7cbd4bb90938b8351b0227fadf6f1b04f6c6175f9a034912",
+          "log": "full/test_games_w2_logic.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_w3.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 17
+          },
+          "summary": "17 passed in 0.47s",
+          "seconds": 1.181,
+          "log_sha256": "2c13e983871c26ecc34732884717b747a8b95378a653382660aecea81bf72f00",
+          "log": "full/test_games_w3.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_w3_rooms.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 7
+          },
+          "summary": "7 passed in 0.47s",
+          "seconds": 1.234,
+          "log_sha256": "3df70b48e395f297b7b285c2592dd91f52043bffdc7f85ef5e3c522311a7c7bd",
+          "log": "full/test_games_w3_rooms.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_w4.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 23
+          },
+          "summary": "23 passed in 0.47s",
+          "seconds": 1.171,
+          "log_sha256": "85bb56ed8867313dc54defc0071d682cbcd2d178068ec8ccaac39c133c077c96",
+          "log": "full/test_games_w4.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_w4b.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 15
+          },
+          "summary": "15 passed in 0.45s",
+          "seconds": 1.148,
+          "log_sha256": "08173de6da9de875dcb06748dd74ef6b52f379dfa68bf9f80786cdb731d52a1c",
+          "log": "full/test_games_w4b.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_w5_avalon.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 0.44s",
+          "seconds": 1.118,
+          "log_sha256": "c8f3b27c9e12ed988386f8aa59cb5c4a2138b05d62ed2e8c4312cb9399f6217b",
+          "log": "full/test_games_w5_avalon.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_w5_liar.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 11
+          },
+          "summary": "11 passed in 0.44s",
+          "seconds": 1.209,
+          "log_sha256": "e6dc2434774c446a5e070455077ec3b1cb31543bb2efee6569b5d244cebd347b",
+          "log": "full/test_games_w5_liar.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_w5_ninja.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 0.55s",
+          "seconds": 1.378,
+          "log_sha256": "89f7318af809e4fe212fad530ed236f7a7e3a4dda0bc1075928fae991b6391ec",
+          "log": "full/test_games_w5_ninja.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_w5_onewolf.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 0.67s",
+          "seconds": 1.614,
+          "log_sha256": "2a0ee5f77657eaa0ce8f2139640794dcb9113869988ec943d5439ad3f210c32b",
+          "log": "full/test_games_w5_onewolf.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_games_w5_werewolf.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 0.48s",
+          "seconds": 1.27,
+          "log_sha256": "1a6e6f5bb4e97aa2107886c00dcf2c70d74f9ab3a36fff9fe97de75229a82c99",
+          "log": "full/test_games_w5_werewolf.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_gemcity_purchase.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 21
+          },
+          "summary": "21 passed in 0.50s",
+          "seconds": 1.2,
+          "log_sha256": "de7a0f127bf2cf40c2c04a68b258e055fdf72a66f5cad6e736ed175a058e7d64",
+          "log": "full/test_gemcity_purchase.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_global_search.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 0.26s",
+          "seconds": 0.967,
+          "log_sha256": "401687af55e52e0f9e79fd2c35c2ced68d77677829685fef398782068737bf5a",
+          "log": "full/test_global_search.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_gomoku_fx.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 33
+          },
+          "summary": "33 passed in 0.51s",
+          "seconds": 1.227,
+          "log_sha256": "e91eb5da09ee204e2e000ca52cfcdb4f2ece4da420fc7baa7167d44636d4c3f9",
+          "log": "full/test_gomoku_fx.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_interaction_mode.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 5
+          },
+          "summary": "5 passed in 2.11s",
+          "seconds": 2.93,
+          "log_sha256": "341d5ede750b4aa5b839f6e4c113158f9c096b0b603bf9e07c66dcac13066c61",
+          "log": "full/test_interaction_mode.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_invis.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 3.28s",
+          "seconds": 4.558,
+          "log_sha256": "46659a20b6c4882e6f087b0d9bfc940e07b1c6b11ff677597f921f3d9fcd6d38",
+          "log": "full/test_invis.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_login_foreground.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 0.23s",
+          "seconds": 0.988,
+          "log_sha256": "fb20512b2f489a2b2af48401fdbc4910f80fce1fc46d80d54112ab954c8b6115",
+          "log": "full/test_login_foreground.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_login_visibility.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 3.64s",
+          "seconds": 4.356,
+          "log_sha256": "1b5293ba035db0cb700dd03361057407e7303a67e034215c77d3a66573b8558e",
+          "log": "full/test_login_visibility.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_msg_list.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 25
+          },
+          "summary": "25 passed in 10.67s",
+          "seconds": 11.645,
+          "log_sha256": "157fdff867d6ac04ae9000649a6b5a96567a3b3d17199d96d6e7046786874cc3",
+          "log": "full/test_msg_list.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_msglist_group.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 9
+          },
+          "summary": "9 passed in 0.37s",
+          "seconds": 1.1,
+          "log_sha256": "970670f33ab6c2d8192e66821abbf91e55090fb6bbb2abf29204e35515c4c763",
+          "log": "full/test_msglist_group.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_multisession.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 5
+          },
+          "summary": "5 passed in 0.78s",
+          "seconds": 1.499,
+          "log_sha256": "3e9c8ba31431dda773a1d7f5f050e5d5ff84426e3bf15be94f00ffa87951fce8",
+          "log": "full/test_multisession.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_p0_web_security.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 9
+          },
+          "summary": "9 passed in 10.60s",
+          "seconds": 11.328,
+          "log_sha256": "528d7cc356d9b5c963a6eac56d49575338fe6b37376af1c6cdc8da46b454b4a5",
+          "log": "full/test_p0_web_security.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_passcode_logic.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 6
+          },
+          "summary": "6 passed in 0.27s",
+          "seconds": 1.85,
+          "log_sha256": "32612694a0ec4989aac5b372e3e5cdeedd051e5b825283e86e07d34d6b96638a",
+          "log": "full/test_passcode_logic.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_prefs.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 9
+          },
+          "summary": "9 passed in 0.38s",
+          "seconds": 1.288,
+          "log_sha256": "564f0946786ee72f0791b9d9fdf874553ef3fe52807b071f59d5855ea5c3bc34",
+          "log": "full/test_prefs.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_prefs_schema_audit.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 19
+          },
+          "summary": "19 passed in 0.40s",
+          "seconds": 1.243,
+          "log_sha256": "206be5a6ea8de02658fe3f81be7778c5310f9422d103d39b61f6b65b475132fe",
+          "log": "full/test_prefs_schema_audit.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_protocol.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 0.21s",
+          "seconds": 0.952,
+          "log_sha256": "2f2813b2f62b798b17e396016aa5814a9ed7f4d81395fd23f5cef04560c9f362",
+          "log": "full/test_protocol.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r15_ghost.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 10
+          },
+          "summary": "10 passed in 0.57s",
+          "seconds": 1.321,
+          "log_sha256": "8cc432a15e4fa270f790a844d1cff5d9617b2712e1490a7998be54b4a1e5d37f",
+          "log": "full/test_r15_ghost.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r25.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 10.01s",
+          "seconds": 10.956,
+          "log_sha256": "1aa67aa1fe39f8c65ec8d8a1b37ea5ed24b68684504ea216a0fffe758ef7e5e3",
+          "log": "full/test_r25.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r26.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 14
+          },
+          "summary": "14 passed in 7.00s",
+          "seconds": 8.039,
+          "log_sha256": "d404255fc381beb385709f46910671a4956c5a741c9eca5b3c77c53aa37b4caa",
+          "log": "full/test_r26.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r27.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 3.86s",
+          "seconds": 4.628,
+          "log_sha256": "896af71f5e26ec94eba0518f3224e833bc1cb7e1c7cb3bf21236e42cca7a2a7d",
+          "log": "full/test_r27.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r28_group_mgmt.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 7.09s",
+          "seconds": 7.804,
+          "log_sha256": "1314fd5d36ebbdc435c9099a36b5a5b337a4bcfccaba8e14b599a140b7bbdb92",
+          "log": "full/test_r28_group_mgmt.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r29.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 18
+          },
+          "summary": "18 passed in 5.95s",
+          "seconds": 6.7,
+          "log_sha256": "9591788a7ce1ec4b0fc0b8def4609d753da6fd1d7f03e31d763d868fd1c87f46",
+          "log": "full/test_r29.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r30.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 19
+          },
+          "summary": "19 passed in 5.10s",
+          "seconds": 5.879,
+          "log_sha256": "f03a55bba9fb72de039de445c035fe90cbff4f7e65490f9461b6f853d5568c13",
+          "log": "full/test_r30.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r32.py",
+          "status": "failed",
+          "exit_code": 1,
+          "counts": {
+            "failed": 2,
+            "passed": 20
+          },
+          "summary": "2 failed, 20 passed in 3.16s",
+          "seconds": 4.2,
+          "log_sha256": "8d27843090c85d951f9f3f7b93e3f08688323062672eda8f1b9a630be61e726d",
+          "log": "full/test_r32.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r33.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 9
+          },
+          "summary": "9 passed in 5.04s",
+          "seconds": 5.857,
+          "log_sha256": "7d341e0b8b71726d7c68cf3b865c6f7023595c6c129139668a74e5dd42526352",
+          "log": "full/test_r33.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r34.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 9
+          },
+          "summary": "9 passed in 6.71s",
+          "seconds": 7.617,
+          "log_sha256": "19f9a4a45a55866a12292fe30dc50fb1896244782f281031564df1883c689fa3",
+          "log": "full/test_r34.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r35.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 15
+          },
+          "summary": "15 passed in 5.97s",
+          "seconds": 6.744,
+          "log_sha256": "e446c4f8a89733ec8b95bdd92614464a3b0290b6e39f64b56120674b1bf4ca87",
+          "log": "full/test_r35.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r36.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 3.21s",
+          "seconds": 4.034,
+          "log_sha256": "a86fd364482fba646e3b100a211d36299a828907a1d0e24457bf036065ac6871",
+          "log": "full/test_r36.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r37.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 7
+          },
+          "summary": "7 passed in 3.89s",
+          "seconds": 4.732,
+          "log_sha256": "d6bff107212faa0dba3f180b6be3f585d0757ddba2ed019a3b7a90be75a32413",
+          "log": "full/test_r37.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r38.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 22
+          },
+          "summary": "22 passed in 5.56s",
+          "seconds": 6.304,
+          "log_sha256": "7e26bfa412e64c910481449f19d481c94922db170c4663867009c69e2df8cccf",
+          "log": "full/test_r38.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r39a.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 11
+          },
+          "summary": "11 passed in 5.29s",
+          "seconds": 6.121,
+          "log_sha256": "045ef96e48e64e902ee271c2230e4122ff02076142b2521aa25830c62606a348",
+          "log": "full/test_r39a.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r39b.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 7
+          },
+          "summary": "7 passed in 4.70s",
+          "seconds": 5.488,
+          "log_sha256": "1d87ab827521e9008210a1258db349a85074de317cae8858d008506009bb77b3",
+          "log": "full/test_r39b.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r39c.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 17
+          },
+          "summary": "17 passed in 2.68s",
+          "seconds": 3.518,
+          "log_sha256": "d1ad38d2e4bb7e6a59084c698c6563eba47872b33a9a6daa4819d1e3bf523c10",
+          "log": "full/test_r39c.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r39d.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 18
+          },
+          "summary": "18 passed in 4.57s",
+          "seconds": 5.316,
+          "log_sha256": "0ddf006beb6db85437e9a0ef454f63e9ef196de31fdb8a403b1f0a38910d77c5",
+          "log": "full/test_r39d.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r41.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 21
+          },
+          "summary": "21 passed in 3.06s",
+          "seconds": 3.935,
+          "log_sha256": "e341059da50014965d06204adeea55afc0fc2d650f3ea1131258b27416f65540",
+          "log": "full/test_r41.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r41g.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 2
+          },
+          "summary": "2 passed in 1.85s",
+          "seconds": 2.563,
+          "log_sha256": "d36ab2194867bedb94940f4b8c2b2f2a6da634ec015576771901f5942e467644",
+          "log": "full/test_r41g.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r42.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 16
+          },
+          "summary": "16 passed in 3.25s",
+          "seconds": 3.963,
+          "log_sha256": "98ac7d0b3a0b9b92a7120a4c253bc90e1875714c553c3cd81a97363e9c326c79",
+          "log": "full/test_r42.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r43a.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 7
+          },
+          "summary": "7 passed in 2.60s",
+          "seconds": 3.346,
+          "log_sha256": "7f1ecc5c5cf4e928b8b7ffd9acb853e035d6cd867ada8bb181544373f3026466",
+          "log": "full/test_r43a.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r43b.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 5
+          },
+          "summary": "5 passed in 1.81s",
+          "seconds": 2.619,
+          "log_sha256": "54af0b53bf8007572073ebfc14b6fd765ede24a2c05905e8ee19f7aa1f2e7b35",
+          "log": "full/test_r43b.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r43c.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 6
+          },
+          "summary": "6 passed in 0.20s",
+          "seconds": 0.932,
+          "log_sha256": "166cf6d41774e4836267f96e9af1c706b296695291233ba36b6f1fe7a7cd17d5",
+          "log": "full/test_r43c.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r44.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 10
+          },
+          "summary": "10 passed in 3.37s",
+          "seconds": 4.159,
+          "log_sha256": "4164c24e3f5aff00736ad482461db61499b752242ca93f5248f0db37916e579d",
+          "log": "full/test_r44.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r45.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 17,
+            "skipped": 1
+          },
+          "summary": "17 passed, 1 skipped in 6.66s",
+          "seconds": 7.393,
+          "log_sha256": "de846215477914982231ffa7b52651c963783908432d3f26b8e0842b5e41d57f",
+          "log": "full/test_r45.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r46.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 24
+          },
+          "summary": "24 passed in 2.78s",
+          "seconds": 3.551,
+          "log_sha256": "6d49f5f47fc61fb83fd89c612786c342b05c26bfb5c17f89a2712a26e18fece9",
+          "log": "full/test_r46.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r46b_web_fix.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 6
+          },
+          "summary": "6 passed in 3.64s",
+          "seconds": 4.339,
+          "log_sha256": "adb6447cab0bf4f816d44849507638250ee521a0a83ec25742b61000b537b183",
+          "log": "full/test_r46b_web_fix.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r47.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 16
+          },
+          "summary": "16 passed in 10.22s",
+          "seconds": 10.96,
+          "log_sha256": "b249ad7a8c936b53488a45e8b8c7a26bff9e51af82ca265fcb62e54e7f1d1ecd",
+          "log": "full/test_r47.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r49.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 15
+          },
+          "summary": "15 passed in 6.00s",
+          "seconds": 6.777,
+          "log_sha256": "bfe115635f967cf42b39737928a805d231dd5c7e6221fcd95a55e32123470cff",
+          "log": "full/test_r49.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r51.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 10
+          },
+          "summary": "10 passed in 4.84s",
+          "seconds": 5.603,
+          "log_sha256": "3e3f9af6500e84195eb19a0b3654fd9cecf84886a3d8cb20fb56fa95805933d1",
+          "log": "full/test_r51.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r52.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 10
+          },
+          "summary": "10 passed in 4.90s",
+          "seconds": 5.719,
+          "log_sha256": "436135b9f7122b0a5dae3858bf3ff9e7f7f72e5e07fab548865e4193d3b03052",
+          "log": "full/test_r52.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r53.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 7.23s",
+          "seconds": 7.981,
+          "log_sha256": "cf0b3b25b8cb6e29bde7ca4960b044fff002be02b812fcba56bbb5af7a8a3b5c",
+          "log": "full/test_r53.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r54.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 4.67s",
+          "seconds": 5.405,
+          "log_sha256": "e2dc20484c9c7d906e9a4310d6c55cd42067384b8f3c33ce901f1d5e74b1ba6f",
+          "log": "full/test_r54.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r61_features.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 11
+          },
+          "summary": "11 passed in 0.39s",
+          "seconds": 1.111,
+          "log_sha256": "ad2ad1a7847d849cbf05ea33fa5e5332d7e8de74a3b44b17fe024d347a617128",
+          "log": "full/test_r61_features.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r64_paste_snip.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 15
+          },
+          "summary": "15 passed in 1.71s",
+          "seconds": 2.44,
+          "log_sha256": "ff8b072c531d589d0bf7878a3e97bacaee99b5b7cfbb00c43f83f2a9d9454b69",
+          "log": "full/test_r64_paste_snip.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r64_sticker_packs.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 17
+          },
+          "summary": "17 passed in 9.70s",
+          "seconds": 10.433,
+          "log_sha256": "bdca2c96b5d7746d789d609cc6998f3c5179c9cc23b5c034c45a6936851f1b33",
+          "log": "full/test_r64_sticker_packs.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r65_web_sticker_packs.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 11
+          },
+          "summary": "11 passed in 6.37s",
+          "seconds": 7.126,
+          "log_sha256": "2934001269a7e3f5662ecf0b82454d089f27c2fd31a2600af771b884ac6338c2",
+          "log": "full/test_r65_web_sticker_packs.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r69.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 52
+          },
+          "summary": "52 passed in 9.29s",
+          "seconds": 10.053,
+          "log_sha256": "04b35fe2861b24d92cb3e82dba493c67f3d4c18c14774f4cce792ce663e0f236",
+          "log": "full/test_r69.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r70.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 25
+          },
+          "summary": "25 passed in 10.98s",
+          "seconds": 12.307,
+          "log_sha256": "f1c2515b51601d28a113e2fa11e81766d74a6526927743a6a035b330d9d51554",
+          "log": "full/test_r70.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r71.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 6
+          },
+          "summary": "6 passed in 4.51s",
+          "seconds": 5.356,
+          "log_sha256": "41d5ed982915e4a103bcd78f2959ddc15ebcaa416c24077bb6e7258298dacd21",
+          "log": "full/test_r71.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r72.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 45
+          },
+          "summary": "45 passed in 10.99s",
+          "seconds": 11.757,
+          "log_sha256": "77b86d611f027dd3c473fd784adc5a8877e03644ee09f3d9eb8570f375002697",
+          "log": "full/test_r72.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_r73.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 10
+          },
+          "summary": "10 passed in 2.05s",
+          "seconds": 2.908,
+          "log_sha256": "06cae4a816f3514fa5105cb83bf42389e3f82f5e82ffaacfc3598a02cd523d22",
+          "log": "full/test_r73.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_rel01_local_trial.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 15
+          },
+          "summary": "15 passed in 6.82s",
+          "seconds": 7.875,
+          "log_sha256": "9ab546125635a070e702b74c44fb269ad09162e1b47f0d16951b0b3add89b57b",
+          "log": "full/test_rel01_local_trial.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_resource_manifest_numbers.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 35
+          },
+          "summary": "35 passed in 1.48s",
+          "seconds": 2.201,
+          "log_sha256": "c6352249dabe865f0e4e3db6ae93c2545523348fc36ecc6e01aa38fab693ee5c",
+          "log": "full/test_resource_manifest_numbers.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_cli.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 18
+          },
+          "summary": "18 passed in 11.97s",
+          "seconds": 12.715,
+          "log_sha256": "959c2ef2d160c556324c9d624a963412b472181a4ad1b0236386c03170db40b4",
+          "log": "full/test_retire_recovery_cli.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_client.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 49
+          },
+          "summary": "49 passed in 3.06s",
+          "seconds": 3.872,
+          "log_sha256": "043813c5c59c43d677e1acaad223b3cca789a2d13cf9d20e3450194710b5dbf9",
+          "log": "full/test_retire_recovery_client.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_control_faults.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 10
+          },
+          "summary": "10 passed in 0.58s",
+          "seconds": 1.477,
+          "log_sha256": "7c302cc663093cb85e6550b3ad5052aabe7998fff18bd3955c5eae14fef137de",
+          "log": "full/test_retire_recovery_control_faults.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_gate_io.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 5
+          },
+          "summary": "5 passed in 0.78s",
+          "seconds": 1.676,
+          "log_sha256": "3e9c8ba31431dda773a1d7f5f050e5d5ff84426e3bf15be94f00ffa87951fce8",
+          "log": "full/test_retire_recovery_gate_io.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_hub.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 20
+          },
+          "summary": "20 passed in 7.03s",
+          "seconds": 7.818,
+          "log_sha256": "253f45b6b77c22a28885a87306590f1aee155f00df565fc6f22f87713de31d1d",
+          "log": "full/test_retire_recovery_hub.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_identity.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 19
+          },
+          "summary": "19 passed in 3.14s",
+          "seconds": 3.916,
+          "log_sha256": "28e07d680bcc39ba546957ff878fbf221f051a4f946ada5754ef5b71474d5a1f",
+          "log": "full/test_retire_recovery_identity.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_lifecycle.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 21
+          },
+          "summary": "21 passed in 8.55s",
+          "seconds": 9.307,
+          "log_sha256": "521d5aab1c22b4e77f94667aff07a88ecf2d0c6fb6c646a7148b078a02c1d72a",
+          "log": "full/test_retire_recovery_lifecycle.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_process_faults.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 3
+          },
+          "summary": "3 passed in 5.56s",
+          "seconds": 6.359,
+          "log_sha256": "e235d2d85f03fee32a5f75fd72e6d7e192e5eb55a440432a68e25ef7e1866942",
+          "log": "full/test_retire_recovery_process_faults.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_publish_io.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 17
+          },
+          "summary": "17 passed in 3.26s",
+          "seconds": 4.041,
+          "log_sha256": "a67bf240b12b68f70787514178768070ffc80eba56769bcf806b038db894fe52",
+          "log": "full/test_retire_recovery_publish_io.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_reconcile.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 4.61s",
+          "seconds": 5.474,
+          "log_sha256": "32b6c21e88f55eb087df1418e0a83d44781bcf8f766d10d0e95d4f9d51db2258",
+          "log": "full/test_retire_recovery_reconcile.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_resources.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 2.13s",
+          "seconds": 3.203,
+          "log_sha256": "82470bf381baf65ce012a9a6f87586652b0f6fe175fa2b95cae964bb23440a30",
+          "log": "full/test_retire_recovery_resources.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retire_recovery_store.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 72
+          },
+          "summary": "72 passed in 4.43s",
+          "seconds": 5.266,
+          "log_sha256": "73e4cfe49142f485bf5ed1d465ebe31680c27dcdb0e4cbccfae5cc2ab71438da",
+          "log": "full/test_retire_recovery_store.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retirement_status.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 61
+          },
+          "summary": "61 passed in 0.87s",
+          "seconds": 2.695,
+          "log_sha256": "14cf59fa9d3d68f4229498023fc95b2328467d51c7438577f4c7a0174f9745fd",
+          "log": "full/test_retirement_status.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retirement_status_gui.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 13
+          },
+          "summary": "13 passed in 8.30s",
+          "seconds": 9.673,
+          "log_sha256": "07b2d4364bd20403e3bccfc85642f0dfa122ba62270f112f4f0e2143c239e41d",
+          "log": "full/test_retirement_status_gui.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_retirement_status_wire.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 37
+          },
+          "summary": "37 passed in 14.67s",
+          "seconds": 15.694,
+          "log_sha256": "6d3ddfad52c38276e699bab329de5e887c4dc0bb01ec04abd6abe563e62fa014",
+          "log": "full/test_retirement_status_wire.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_rooms.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 15
+          },
+          "summary": "15 passed in 0.54s",
+          "seconds": 1.416,
+          "log_sha256": "d26795b10077ae50bd3980cb1790768a89a445c6e951f3b481c8578bff38f1f9",
+          "log": "full/test_rooms.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_runs.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 31
+          },
+          "summary": "31 passed in 0.49s",
+          "seconds": 1.384,
+          "log_sha256": "7fe4a6c4078083a91038583112a15d7f6913b6d24a116c39d0ddd59df682a41b",
+          "log": "full/test_runs.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_server.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 61
+          },
+          "summary": "61 passed in 25.67s",
+          "seconds": 26.591,
+          "log_sha256": "7dcb5ede088fd5561f3cd17b68381e5a977462f0a6ac47647892b6beb8a1ce07",
+          "log": "full/test_server.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_server_game_lifecycle.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 1.41s",
+          "seconds": 2.279,
+          "log_sha256": "d1bd218ac24bf1c6435951e1d621e670d195da252456e49e6bcbf7ce0c64bb0a",
+          "log": "full/test_server_game_lifecycle.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_server_games.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 2.80s",
+          "seconds": 3.598,
+          "log_sha256": "c37f2c81c98b5192bdba3ed200b570c5f1e20c4dd56915fc802315c540462ddd",
+          "log": "full/test_server_games.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_session_cleanup.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 7
+          },
+          "summary": "7 passed in 0.89s",
+          "seconds": 1.692,
+          "log_sha256": "672f28e21a89d4a3e927435e2e4b98d002f70c1c14fe2f47d54d590331cc8c9e",
+          "log": "full/test_session_cleanup.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_session_list.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 2.10s",
+          "seconds": 3.012,
+          "log_sha256": "749b9cfcca00ceb6d66adc80b2dc8dfbb6b8b5a93f59205be7da53b402241eea",
+          "log": "full/test_session_list.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_settings_nav.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 1
+          },
+          "summary": "1 passed in 6.43s",
+          "seconds": 7.26,
+          "log_sha256": "a9cc13e41b84286e0f7e2ada7089017f4d1c937a1e922d7eb76d178c2a3acdd2",
+          "log": "full/test_settings_nav.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_shortcuts.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 10
+          },
+          "summary": "10 passed in 1.25s",
+          "seconds": 1.969,
+          "log_sha256": "a52cff24e9c48d8ffec074fd5f9b6776f6795b2f266b31f952f8c945ad077a6b",
+          "log": "full/test_shortcuts.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_stars_preserve.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 37
+          },
+          "summary": "37 passed in 2.52s",
+          "seconds": 3.358,
+          "log_sha256": "6afcb5b96c85cca54857a7b8bf7377ef6eee2c140377cb4c9a18a7a44a54e92e",
+          "log": "full/test_stars_preserve.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_test_gate.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 18.32s",
+          "seconds": 19.134,
+          "log_sha256": "c98e67b0b527be19bf51287cba227f0555e46e1da3589fe98e9b291605cf9dc3",
+          "log": "full/test_test_gate.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_test_gate_safety.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 0.67s",
+          "seconds": 1.418,
+          "log_sha256": "6688d69e9c34f233ae5a207b99daab2d2c00e36548b81fd5bd10cafcea12c905",
+          "log": "full/test_test_gate_safety.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_test_gate_skips.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 8
+          },
+          "summary": "8 passed in 6.80s",
+          "seconds": 7.546,
+          "log_sha256": "4f2a391aa559d433ae279addf42f60c1fe757a28052b843a8777348ba4554d96",
+          "log": "full/test_test_gate_skips.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_test_runner_exitcodes.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 3.45s",
+          "seconds": 4.27,
+          "log_sha256": "ea1ab470c25ae0c3b8eae8569d0f2fd881f709a10b563b2b245c2bab2f4c7588",
+          "log": "full/test_test_runner_exitcodes.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_theme.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 12
+          },
+          "summary": "12 passed in 0.24s",
+          "seconds": 1.005,
+          "log_sha256": "1d41e82514333916e11ed6114b8a3c7d6aa7a83c58704972f9be3c5357a00b65",
+          "log": "full/test_theme.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_ux_repair.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 4
+          },
+          "summary": "4 passed in 4.89s",
+          "seconds": 5.709,
+          "log_sha256": "356add57a16881c804db91ea2ed43dece375a9d587b7c73588b4c3260d147a5a",
+          "log": "full/test_ux_repair.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_ux_visual_chat_design.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 6
+          },
+          "summary": "6 passed in 0.64s",
+          "seconds": 1.392,
+          "log_sha256": "56df4ea348e92a734f35180db3ba5a5d61b862910bdb43b325fe37b087573d2f",
+          "log": "full/test_ux_visual_chat_design.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_ux_visual_chat_dpi.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 7
+          },
+          "summary": "7 passed in 1.26s",
+          "seconds": 1.993,
+          "log_sha256": "35b90f0e9b75d220fd3163b088566709f5036863e565676685248df68f292b4d",
+          "log": "full/test_ux_visual_chat_dpi.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 13
+          },
+          "summary": "13 passed in 16.22s",
+          "seconds": 16.999,
+          "log_sha256": "e903998af0cd807f62aecedf396c07eee8179196a83b7ef2a3f13783c2b2a418",
+          "log": "full/test_ux_visual_chat_regressions.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_ux_visual_chat_web.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 1
+          },
+          "summary": "1 passed in 0.63s",
+          "seconds": 1.503,
+          "log_sha256": "779feb861d7f77335d0f1fe9e218c12a3bdc6f7a067807bdace745133df6a194",
+          "log": "full/test_ux_visual_chat_web.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_visual_screenshot.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "skipped": 1
+          },
+          "summary": "1 skipped in 0.17s",
+          "seconds": 0.97,
+          "log_sha256": "5fe94ab242dd3462cc1d32d9e8f13800de0bc05f92a6661362e9fc8e4909ee03",
+          "log": "full/test_visual_screenshot.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_web_group_read.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 1
+          },
+          "summary": "1 passed in 1.48s",
+          "seconds": 2.235,
+          "log_sha256": "3f5a57d191fbf8e77384ea110a620d86013d4b1cdd5eb21b8d28d561404e8d55",
+          "log": "full/test_web_group_read.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        },
+        {
+          "file": "tests/test_web_logout.py",
+          "status": "passed",
+          "exit_code": 0,
+          "counts": {
+            "passed": 13
+          },
+          "summary": "13 passed in 5.61s",
+          "seconds": 6.47,
+          "log_sha256": "616b1347a2278343f9800285554ad6f66643b6599e45282f1dab79cdf3f27341",
+          "log": "full/test_web_logout.log.txt",
+          "attempts": 1,
+          "cleanup_ok": true,
+          "unexpected_skips": [],
+          "sandbox_policy": {
+            "network": "loopback_only",
+            "wildcard_bind": "remap_to_loopback",
+            "broadcast_sendto": "remap_to_loopback_and_record",
+            "agent": "blocked",
+            "hardware": "blocked"
+          }
+        }
+      ]
+    }
+  },
+  "command_template": "D:/Project/321_FISH/.venv/Scripts/python.exe D:/Project/321_FISH/_tmp_gui/gate-collection-20261013/run.py test-all [listed files, or all for full] --run-dir D:/Project/321_FISH/_tmp_gui/advance-20261013/<run> --label <run label>",
+  "limits": [
+    "Synthetic profiles and loopback/private desktop only.",
+    "No EXE, external Windows, physical LAN or release acceptance.",
+    "Historical gate timeout remains unexplained; no timeout policy changed."
+  ]
+}

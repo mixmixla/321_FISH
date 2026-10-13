@@ -1,0 +1,39 @@
+{
+  "parents": [
+    "2e0ae8d67cf2f31e3564226aeba0495118b9cf83",
+    "52d5ff00c53c2e104811048a2db55d6b53e432cc"
+  ],
+  "upstream_changed_files": 64,
+  "upstream_exact_preserved_excluding_combined_core": 61,
+  "combined_core": [
+    "client.py",
+    "client_gameui.py",
+    "web.py"
+  ],
+  "critical_functions_ast_preserved": {
+    "client.py": [
+      "_submit_sel",
+      "_ask_params",
+      "_do_action",
+      "_kalah_parameter_action",
+      "_kalah_can_submit",
+      "_fmt_state"
+    ],
+    "client_gameui.py": [
+      "_click_kalah",
+      "_p_kalah",
+      "_p_blokus",
+      "_click_blokus",
+      "_status_hud"
+    ],
+    "games_pkg/gemcity.py": [
+      "_buy_card",
+      "_act_buy_res"
+    ]
+  },
+  "all_new_asset_tests_passed": true,
+  "screenshots_default_skip_count": 18,
+  "visual_enabled": false,
+  "generator_run": false,
+  "build_run": false
+}

@@ -1,0 +1,331 @@
+{
+  "files": 24,
+  "totals": {
+    "passed": 337,
+    "skipped": 18
+  },
+  "failures": [],
+  "exit_code": 0,
+  "seconds": 100.879,
+  "source_content_id": "13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345",
+  "content_fingerprint": "5547d18f23ce3afd629da8f79dd3f522d7766be7df7e420fd78d13e2f4936dbb",
+  "tested_code_commit": "6c8bdf715cbbd544610d2edb5a97e1daed9d19d4",
+  "base": "52d5ff00c53c2e104811048a2db55d6b53e432cc",
+  "runtime_inputs": 410,
+  "results": [
+    {
+      "file": "tests/test_boardgame_asset_img.py",
+      "log": "logs/test_boardgame_asset_img.log.txt",
+      "sha256": "2f07450727b0ba7116c042c4b96d2b0b13bf61de650eaf2d45d32bc9560a6d9a",
+      "counts": {
+        "passed": 3
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_boardgame_assets.py",
+      "log": "logs/test_boardgame_assets.log.txt",
+      "sha256": "1479cfdd8764c1abb5c780a5605d1076d89cc49f1135050e41306d1ea74ef862",
+      "counts": {
+        "passed": 3
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_flagship_board.py",
+      "log": "logs/test_flagship_board.log.txt",
+      "sha256": "28aaa9e289d92d2fc57aadf7076c2b1bbc31d78962cadca8f8e23e27f0d0a0e1",
+      "counts": {
+        "passed": 43
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_flagship_gui.py",
+      "log": "logs/test_flagship_gui.log.txt",
+      "sha256": "5d68f65e140b01b44cfef9d05af89ab2813b34008775e7a34f332d0c38d4cea6",
+      "counts": {
+        "passed": 6
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_games_euro.py",
+      "log": "logs/test_games_euro.log.txt",
+      "sha256": "bfaf7a423dbf3b752ddf135536aca08ab2e3060bb8c9f3166612bb2ea7e85b52",
+      "counts": {
+        "passed": 17
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_games_w1_new.py",
+      "log": "logs/test_games_w1_new.log.txt",
+      "sha256": "4fcf5caa1be594216c7186a5a0317fd49e019064e254cfb44530575ebc82752e",
+      "counts": {
+        "passed": 14
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_games_w2_logic.py",
+      "log": "logs/test_games_w2_logic.log.txt",
+      "sha256": "bf74d1deff721bb3ae357122200dae4536b28df93b3c73140f427ee220fcd81f",
+      "counts": {
+        "passed": 19
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_gameui_compact_controls.py",
+      "log": "logs/test_gameui_compact_controls.log.txt",
+      "sha256": "9cb0a0162a081278f7edc50439a0fe5dce1efeaae1aa0947d760071ffaaaa09f",
+      "counts": {
+        "passed": 26
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_gameui_compact_gui.py",
+      "log": "logs/test_gameui_compact_gui.log.txt",
+      "sha256": "9b6b106d567350314cf54abdfbf77f2ef76da87dd73cdc2705cd7ad4caf78482",
+      "counts": {
+        "passed": 3
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_gemcity_purchase.py",
+      "log": "logs/test_gemcity_purchase.log.txt",
+      "sha256": "4e413774deb56a70f269f7d62b5150965ae8d47a9943b690271eca7c96fd88e8",
+      "counts": {
+        "passed": 21
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_gomoku_fx.py",
+      "log": "logs/test_gomoku_fx.log.txt",
+      "sha256": "aa0320772840d1e3da13368d28135c6d0d184a4452a4876f0c147d6a184adc2c",
+      "counts": {
+        "passed": 33
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_gui.py",
+      "log": "logs/test_kalah_gui.log.txt",
+      "sha256": "1d81b7e00afd0dbdd158224ad87c954e901bf1b5eae0679a47f68a52e3e5591d",
+      "counts": {
+        "passed": 2
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_input.py",
+      "log": "logs/test_kalah_input.log.txt",
+      "sha256": "d23ce6ed781d6830cf2727d1607af8febfa6fe76a19d0d740407546e5ffbab61",
+      "counts": {
+        "passed": 8
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_parameters.py",
+      "log": "logs/test_kalah_parameters.log.txt",
+      "sha256": "d2afb2d197ee546e93b1d5faade7dec93134623acbb8f502cd88195657fb2c1e",
+      "counts": {
+        "passed": 58
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_kalah_web.py",
+      "log": "logs/test_kalah_web.log.txt",
+      "sha256": "b345c50c01d15e63dac12ced9fb763212de20bb7f3a7c2632440e8b43e834a39",
+      "counts": {
+        "passed": 1
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_msg_list.py",
+      "log": "logs/test_msg_list.log.txt",
+      "sha256": "5efda85c733ae3621fa6663cb954d45fd233630fb009ee5a86277a86e90e2875",
+      "counts": {
+        "passed": 25
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_msglist_group.py",
+      "log": "logs/test_msglist_group.log.txt",
+      "sha256": "e94dcac69869153054475d5571b74d8d6c139ce492eb291eaaeb677d66008dee",
+      "counts": {
+        "passed": 9
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_rummikub_selection.py",
+      "log": "logs/test_rummikub_selection.log.txt",
+      "sha256": "e00aa9f3fffdcf3f66ea3d9415d78e35ec7049244b83a17dcc7f9032f4cb4aab",
+      "counts": {
+        "passed": 7
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_theme.py",
+      "log": "logs/test_theme.log.txt",
+      "sha256": "f02e8e90cd319b9823f4b1b86ce969efedad01892fb2688f31fdab523ee0b42f",
+      "counts": {
+        "passed": 12
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_ux_visual_chat_design.py",
+      "log": "logs/test_ux_visual_chat_design.log.txt",
+      "sha256": "ae59d6b276ec4b30be83cae3018eca8c3e0ff22cc637f807ee45e5e8bd1fb45c",
+      "counts": {
+        "passed": 6
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_ux_visual_chat_dpi.py",
+      "log": "logs/test_ux_visual_chat_dpi.log.txt",
+      "sha256": "3e4736b01ed7ac99d7eff0a1c676d18371d45d2aa62ec407995e88e701e63cef",
+      "counts": {
+        "passed": 7
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_ux_visual_chat_regressions.py",
+      "log": "logs/test_ux_visual_chat_regressions.log.txt",
+      "sha256": "442e2c77d5bac10b34b7e55bb869419ad093eef8723c24186da4c8171b338a6f",
+      "counts": {
+        "passed": 13
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_ux_visual_chat_shots.py",
+      "log": "logs/test_ux_visual_chat_shots.log.txt",
+      "sha256": "2bd8fea1e7ac6eea8c2e1039995af145e36881a75d5fb75d7ee3aa08e8358db4",
+      "counts": {
+        "skipped": 18
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_ux_visual_chat_web.py",
+      "log": "logs/test_ux_visual_chat_web.log.txt",
+      "sha256": "f04e236a140756a8601c5fee98e861ab0eeeea06c2f332062e97abc85bb7c47d",
+      "counts": {
+        "passed": 1
+      },
+      "status": "passed",
+      "exit_code": 0,
+      "single_attempt": true,
+      "cleanup_ok": true,
+      "unexpected_skips": []
+    }
+  ],
+  "visual_mode_enabled": false,
+  "upstream_visual_optin_not_accepted": true
+}

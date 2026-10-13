@@ -4,6 +4,16 @@
 review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-13（Asia/Shanghai）。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+## SYNC-LATEST-MAIN-01 固定上游同步完成与下一任务（2026-10-13）
+
+**AI_ACCEPTED_SOURCE_SYNC_ONLY / FULL_PASSED / EXE_LOCAL_READY**。[Task v1.2](task-packages/SYNC-LATEST-MAIN-01.md) / [Review r1](review-packages/SYNC-LATEST-MAIN-01-r1.md)。父线程授权普通push及整合固定main52后新门禁，并优先当版三EXE本机安全验证；本阶段仅源码同步闭合，尚未构建EXE。
+受测代码6c8bdf715cbbd544610d2edb5a97e1daed9d19d4，普通merge parents2e0ae8d67cf2f31e3564226aeba0495118b9cf83和52d5ff00c53c2e104811048a2db55d6b53e432cc，base08d263b。本侧469/上游61非共享路径原样保留，三核心自动合并，13关键AST保持；资产/新测试完整接入。独立merge/领域与full终核均0 MUST；主控技术接受有限源码同步，不是用户/Pro、整个R1/发布接受。
+领域24文件337P0F18原opt-in，exit0/100.879秒；唯一新完整168文件2441 PASS/0 FAIL/20原opt-in，exit0/820.93秒。source13514b5d70d6e92a39f9eadd8f20ae39562d3e80570437b26f6e4ea0a2164345、410输入与domain/current/snapshot同版，原日志与public字节/singleattempt/cleanup/退出码已独立核实。20跳过仅r45一项+visual_screenshot一项+上游shots十八项；新assets两文件各3项必须且实际PASS，无环境skip。旧08的2435P/原3FAIL/RED均保留历史范围。
+主控worktree `_tmp_gui/gate-collection-20261013` / fix/gemcity-purchase-20261013；root唯一三核心/构建/治理写入者。原UI/文档/fixture/审查窗口均idle，无本批测试/应用/构建。原目录c864234/dirty的1143保护文件/index保持；不reset/clean/强推、真实资料/公司MES/PDA/休眠设备/CP4/旧Goal。之前普通push2e0ae8d已核远端；本阶段按授权普通push新merge/闭合资料，最终leaf与结果见Git和阶段最终检查点。
+下一唯一READY为[EXE-LOCAL-01 v1](task-packages/EXE-LOCAL-01.md)：绑定上述源码与410输入，原项目Python3.14.5/PyInstaller6.22.3；只在白名单源码副本规范构建server/client/StartTrial三产物，fresh合成profile/loopback/private desktop/owned Job验证入口与安全可识别的真实自然退出。client X是收起，强停仅清理；无法安全识别quit动作则待验，不注入退出钩子。本机缺可选Vosk/模型，build.py重新生成spec，明确转写未验。
+_gui_hint漏module visual marker且新shots含屏幕/Escape动作，继续禁止--run-visual；启用前另冻隔离分类/子进程证据整改。上游房间图标缺PhotoImage强引用静态确认，后继[UI-ROOM-ICON-01](task-packages/UI-ROOM-ICON-01.md)仍DRAFT，未修/未运行，不越过用户EXE优先顺序；上游文档尾空格/绝对spec路径单列，未运行美术生成器。
+父线程按自然阶段续跑，14:30北京不新开大任务、15:00北京停止。允许普通任务branch push，PR API403不重试，当前无PR；不共享main push/merge/Release。不把loopback/源码门禁称完整EXE对局、自然退出、外机Windows、真实LAN/DPI/最终视觉验收。
+
 ## FOLLOWUP-20261013 阶段交付与下一同步任务（2026-10-13）
 
 **AI_ACCEPTED_LIMITED_SOURCE_ON_08_BASE / FULL_PASSED / NEXT_SYNC_READY / NOT_LATEST_MAIN_MERGE_READY**。

@@ -4,3 +4,4 @@ docs/review-assets/FOLLOWUP-20261013/**/*.log.txt -text -whitespace
 docs/review-assets/UI-BOUNDARY-01/**/*.log.txt -text -whitespace
 docs/review-assets/KALAH-INPUT-01/**/*.log.txt -text -whitespace
 docs/review-assets/GATE-FIXTURE-01/**/*.log.txt -text -whitespace
+docs/review-assets/SYNC-LATEST-MAIN-01/**/*.log.txt -text -whitespace

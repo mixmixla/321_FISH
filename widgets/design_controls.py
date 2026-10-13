@@ -1,16 +1,18 @@
 """Native accessible buttons using the shared outline icon geometry."""
 import tkinter as tk
 from PIL import Image, ImageDraw, ImageTk
-from ui_design import ICONS, color, design_tokens
+from ui_design import (ICONS, GAME_ICONS, ROLE_ICONS, RESOURCE_ICONS,
+                       GAME_ICON_FALLBACK, ROLE_ICON_FALLBACK, RESOURCE_ICON_FALLBACK,
+                       color, design_tokens)
 
 
-def icon_image(master, name, tint, size=20):
+def _render(shapes, tint, size=20):
     scale=4
     image=Image.new('RGBA',(size*scale,size*scale))
     draw=ImageDraw.Draw(image)
     factor=size*scale/24
     width=max(1,round(design_tokens()['icons']['stroke']*factor))
-    for kind,values in ICONS[name]:
+    for kind,values in shapes:
         if kind=='line':
             points=[(x*factor,y*factor) for x,y in values]
             draw.line(points,fill=tint,width=width,joint='curve')
@@ -19,7 +21,27 @@ def icon_image(master, name, tint, size=20):
             draw.rounded_rectangle((x*factor,y*factor,(x+w)*factor,(y+h)*factor), radius=r*factor,outline=tint,width=width)
         else:
             draw.ellipse(tuple(v*factor for v in values),outline=tint,width=width)
-    return ImageTk.PhotoImage(image.resize((size,size),Image.Resampling.LANCZOS),master=master)
+    return image.resize((size,size),Image.Resampling.LANCZOS)
+
+
+def shapes_image(master, shapes, tint, size=20):
+    return ImageTk.PhotoImage(_render(shapes, tint, size), master=master)
+
+
+def icon_image(master, name, tint, size=20):
+    return shapes_image(master, ICONS[name], tint, size)
+
+
+def game_icon_image(master, name, tint, size=20):
+    return shapes_image(master, GAME_ICONS.get(name, GAME_ICON_FALLBACK), tint, size)
+
+
+def role_icon_image(master, name, tint, size=20):
+    return shapes_image(master, ROLE_ICONS.get(name, ROLE_ICON_FALLBACK), tint, size)
+
+
+def resource_icon_image(master, name, tint, size=20):
+    return shapes_image(master, RESOURCE_ICONS.get(name, RESOURCE_ICON_FALLBACK), tint, size)
 
 
 class IconButton(tk.Button):

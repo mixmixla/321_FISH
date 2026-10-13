@@ -22,7 +22,7 @@ from tkinter import font as tkfont
 
 from config import CFG                     # R70E：伪装风格白名单
 from stickers import STICKER_BY_CODE, expand_shortcodes, is_custom_sticker_text, custom_tokens
-from theme import _hex_mix                    # R39D②：气泡淡入渐混色
+from theme import _hex_mix, _is_dark          # R39D②：气泡淡入渐混色；深色判定（雾层）
 from widgets.ui_fx import ease_out            # R43C：滑入/滚动惯性的缓动插值
 from widgets.avatar import AvatarCache
 
@@ -2697,11 +2697,8 @@ class MsgList(tk.Canvas):
                     bub_x - tail, mid - tail,
                     bub_x - tail, mid + tail,
                     fill=fill, outline=""))
-        # B 仿毛玻璃：磨砂雾层（极淡白色 stipple，注释在下方文字绘制之后，
-        # 因此文字/代码/链接始终位于雾层之上，保证可读性）
-        self._item_ids.append(self.create_rectangle(
-            bub_x, bub_y, bub_x + bub_w - 1, bub_y + bub_h - 1,
-            fill="#ffffff", stipple="gray12", outline=""))
+        # B 仿毛玻璃：磨砂雾层（浅色气泡才叠极淡白点；深色气泡跳过，避免网点噪声）
+        self._frost_layer(bub_x, bub_y, bub_w, bub_h, self._bubble_fill(i, own))
         if row.disguise:                        # R70E：伪装底色/装饰（画在正文之下）
             self._draw_disguise_chrome(row, bub_x, bub_y, bub_w, bub_h, own)
         # 功能①：被引用聚合徽标（气泡外缘浮 + 点击高亮引用它的行）
@@ -3437,10 +3434,8 @@ class MsgList(tk.Canvas):
         self._item_ids.append(self._round_rect(
             bub_x, bub_y, bub_x + bub_w, bub_y + bub_h, self.BUBBLE_R,
             fill=self._bubble_fill(i, own), outline=outline))
-        # B 仿毛玻璃：磨砂雾层（极淡白色 stipple，文字绘制在其上不受影响）
-        self._item_ids.append(self.create_rectangle(
-            bub_x, bub_y, bub_x + bub_w - 1, bub_y + bub_h - 1,
-            fill="#ffffff", stipple="gray12", outline=""))
+        # B 仿毛玻璃：磨砂雾层（浅色气泡才叠极淡白点；深色气泡跳过）
+        self._frost_layer(bub_x, bub_y, bub_w, bub_h, self._bubble_fill(i, own))
         base_x, yy = bub_x + ph, bub_y + pv
         self._text(base_x, yy, text=head_t, anchor="nw", font=self._bold_font,
                    fill=color)
@@ -3451,10 +3446,8 @@ class MsgList(tk.Canvas):
             yy += self._linespace
         self._text(base_x, yy, text="双击查看", anchor="nw",
                    font=self._date_font, fill=self._pal["sys"])
-        # B 仿毛玻璃：磨砂雾层（极淡白色 stipple，置于文字之后，覆盖气泡底不遮文字）
-        self._item_ids.append(self.create_rectangle(
-            bub_x, bub_y, bub_x + bub_w - 1, bub_y + bub_h - 1,
-            fill="#ffffff", stipple="gray12", outline=""))
+        # B 仿毛玻璃：磨砂雾层（浅色气泡才叠极淡白点；深色气泡跳过）
+        self._frost_layer(bub_x, bub_y, bub_w, bub_h, self._bubble_fill(i, own))
         self._hit_back(i, y, bub_h + self.PAD_TOP)
         return bub_h + self.PAD_TOP + 4
 
@@ -4034,6 +4027,16 @@ class MsgList(tk.Canvas):
         if self._fading:
             self._fade_job = self.after(self.FADE_STEP_MS, self._fade_tick)
         self._render()                         # 渐变色随进度重绘可见行
+
+    def _frost_layer(self, bub_x: int, bub_y: int, bub_w: int, bub_h: int,
+                     bubble_fill: str) -> None:
+        """B 仿毛玻璃雾层：仅在浅色气泡上叠极淡白点营造磨砂感。
+        深色气泡（如雾岸深色）下白点会显成明显网点噪声、伤正文可读性，故直接不绘制。"""
+        if _is_dark(bubble_fill):
+            return
+        self._item_ids.append(self.create_rectangle(
+            bub_x, bub_y, bub_x + bub_w - 1, bub_y + bub_h - 1,
+            fill="#ffffff", stipple="gray12", outline=""))
 
     def _bubble_fill(self, i: int, own: bool) -> str:
         """行 i 气泡填充色：own 且在淡入期 → 背景色向气泡色按进度渐混，否则纯色。

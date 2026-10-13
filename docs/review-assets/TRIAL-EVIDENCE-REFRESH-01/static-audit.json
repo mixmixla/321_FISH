@@ -1,0 +1,869 @@
+{
+  "schema": "TRIAL-EVIDENCE-REFRESH-01.static.v1",
+  "date": "2026-10-13",
+  "base_commit": "08d263b2a78b7a6df0b888616e2fbf44793182b8",
+  "method": "Python stdlib AST/text read only; no project imports, application/test/build execution, runtime/profile or credential access",
+  "source_files": {
+    "client.py": {
+      "working_sha256": "8c819641ab066a52a6706831c7ba68058e7a19759cb5bc8846d89de12f234eaf",
+      "git_lf_sha256": "963c7c92f7f60bc9a0060c5debb2b8c2874242e4ed42301f02fbbcd3385c1690",
+      "git_content_matches": true
+    },
+    "client_gameui.py": {
+      "working_sha256": "cd644b9188e782765ca4b8808e3681e78b08af12ba4e4ca2e2dc0f62996ddc4f",
+      "git_lf_sha256": "b31753da4abb9d8dc798551d54e8a78075061dd31118c1ca4d432dd701d1a360",
+      "git_content_matches": true
+    },
+    "web.py": {
+      "working_sha256": "69d0682683aeb3d025f41f7ca43d326bef33f0b14ea961f6c8a16e0146fa9061",
+      "git_lf_sha256": "065bec083be6a728d5db53083957dcfc1ee41507f705c2baf4f36fafc5b431df",
+      "git_content_matches": true
+    },
+    "games_pkg/__init__.py": {
+      "working_sha256": "24bf2e7a84aadc4bb63882f81265ac8344d2a92e488b93fbfb2ac1e11e91bf6f",
+      "git_lf_sha256": "dc359dfacdb136f37421b7afb7e245db3c2b0ef05d59f0ad65335afd005c953b",
+      "git_content_matches": true
+    },
+    "games_pkg/kalah.py": {
+      "working_sha256": "8655ba17bcc4ef36a20c1d3f46233b03df517170a6ba00126d4d33c11f89e85a",
+      "git_lf_sha256": "1962b16a9e441d53fd3792fcb146455f2f55f2176de8f0207c3ac5915b375e3d",
+      "git_content_matches": true
+    },
+    "games_pkg/balatro.py": {
+      "working_sha256": "2eb9313edb819ca7ee57240703534ec00962f435e9936e3365a24a8dd6c35c1d",
+      "git_lf_sha256": "47fd0afbaf25675c277b95012ab8b90814915c969c80fb7f0ace0249dbe564ab",
+      "git_content_matches": true
+    },
+    "games_pkg/gemcity.py": {
+      "working_sha256": "93558aae0f1b94d181ef81606290c142433a4c5f18f9dc8d67ac6e6e2eb7e4e0",
+      "git_lf_sha256": "f8efcd1bcdeaaf04e281bbbd90c82d5731b379211016df1cadc1eed607149699",
+      "git_content_matches": true
+    }
+  },
+  "counts": {
+    "games": 47,
+    "desktop_action_keys": 47,
+    "desktop_click_keys": 20,
+    "desktop_painters": 47,
+    "web_renderers": 47,
+    "desktop_blocked_keys": 0,
+    "common_action_games": 13,
+    "desktop_current_unverified": 47,
+    "web_current_unverified": 46,
+    "web_known_unsupported": 1
+  },
+  "unsupported_set": {
+    "file": "client.py",
+    "line": 11777,
+    "keys": []
+  },
+  "common_action_games": [
+    "gomoku",
+    "connect4",
+    "othello",
+    "tictactoe",
+    "chess",
+    "xiangqi",
+    "shogi",
+    "junqi",
+    "dou",
+    "go",
+    "checkers",
+    "halma",
+    "ludo"
+  ],
+  "common_action_line": 11669,
+  "current_runtime_validation": "not_run_by_this_task",
+  "games": [
+    {
+      "key": "guess_number",
+      "label": "猜数字",
+      "desktop_buttons": [
+        "出题",
+        "猜数字"
+      ],
+      "desktop_action_line": 11466,
+      "desktop_click": null,
+      "desktop_painter_line": 4171,
+      "web_renderer_line": 4147,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "gomoku",
+      "label": "五子棋",
+      "desktop_buttons": [
+        "落子"
+      ],
+      "desktop_action_line": 11470,
+      "desktop_click": {
+        "handler": "_click_xy",
+        "line": 1490
+      },
+      "desktop_painter_line": 1907,
+      "web_renderer_line": 4174,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "历史旗舰分层实验；当版完整GUI/EXE未验"
+    },
+    {
+      "key": "rps",
+      "label": "石头剪刀布",
+      "desktop_buttons": [
+        "✊ 石头",
+        "✌️ 剪刀",
+        "✋ 布"
+      ],
+      "desktop_action_line": 11471,
+      "desktop_click": null,
+      "desktop_painter_line": 2513,
+      "web_renderer_line": 4237,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "spy",
+      "label": "谁是卧底",
+      "desktop_buttons": [
+        "描述",
+        "投票"
+      ],
+      "desktop_action_line": 11476,
+      "desktop_click": null,
+      "desktop_painter_line": 2769,
+      "web_renderer_line": 4259,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "uno",
+      "label": "UNO",
+      "desktop_buttons": [
+        "摸牌",
+        "出牌"
+      ],
+      "desktop_action_line": 11480,
+      "desktop_click": {
+        "handler": "_click_uno",
+        "line": 1493
+      },
+      "desktop_painter_line": 2399,
+      "web_renderer_line": 4522,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "blackjack",
+      "label": "21点",
+      "desktop_buttons": [
+        "要牌",
+        "停牌"
+      ],
+      "desktop_action_line": 11484,
+      "desktop_click": null,
+      "desktop_painter_line": 2472,
+      "web_renderer_line": 4570,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "drawguess",
+      "label": "你画我猜",
+      "desktop_buttons": [
+        "笔画",
+        "猜词",
+        "🗑 清空"
+      ],
+      "desktop_action_line": 11488,
+      "desktop_click": null,
+      "desktop_painter_line": 4200,
+      "web_renderer_line": 4678,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "connect4",
+      "label": "四子棋",
+      "desktop_buttons": [
+        "落子"
+      ],
+      "desktop_action_line": 11493,
+      "desktop_click": {
+        "handler": "_click_col",
+        "line": 1492
+      },
+      "desktop_painter_line": 1951,
+      "web_renderer_line": 4200,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "历史旗舰分层实验；当版完整GUI/EXE未验"
+    },
+    {
+      "key": "othello",
+      "label": "奥赛罗",
+      "desktop_buttons": [
+        "落子"
+      ],
+      "desktop_action_line": 11494,
+      "desktop_click": {
+        "handler": "_click_xy",
+        "line": 1490
+      },
+      "desktop_painter_line": 1993,
+      "web_renderer_line": 4219,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "calc24",
+      "label": "24点",
+      "desktop_buttons": [
+        "作答"
+      ],
+      "desktop_action_line": 11495,
+      "desktop_click": null,
+      "desktop_painter_line": 2580,
+      "web_renderer_line": 4588,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "matchpairs",
+      "label": "抽牌配对",
+      "desktop_buttons": [
+        "摸牌"
+      ],
+      "desktop_action_line": 11496,
+      "desktop_click": null,
+      "desktop_painter_line": 3874,
+      "web_renderer_line": 4604,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "betrayal",
+      "label": "山屋惊魂",
+      "desktop_buttons": [
+        "⬆ 上",
+        "⬇ 下",
+        "⬅ 左",
+        "➡ 右",
+        "结束回合",
+        "使用道具",
+        "攻击",
+        "全员撤离"
+      ],
+      "desktop_action_line": 11497,
+      "desktop_click": null,
+      "desktop_painter_line": 4955,
+      "web_renderer_line": 4624,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "kaituo",
+      "label": "开拓",
+      "desktop_buttons": [
+        "🎲 掷骰",
+        "🏠 布置（开局）",
+        "⛏ 建造",
+        "🔄 交换",
+        "⏭ 跳过"
+      ],
+      "desktop_action_line": 11620,
+      "desktop_click": null,
+      "desktop_painter_line": 4282,
+      "web_renderer_line": 4724,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "lingdi",
+      "label": "领地",
+      "desktop_buttons": [
+        "🏗 放置",
+        "⏭ 跳过"
+      ],
+      "desktop_action_line": 11627,
+      "desktop_click": null,
+      "desktop_painter_line": 4370,
+      "web_renderer_line": 4792,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "tielu",
+      "label": "铁路",
+      "desktop_buttons": [
+        "🚂 认领",
+        "🎫 摸2张",
+        "📜 抽票证",
+        "⏭ 跳过"
+      ],
+      "desktop_action_line": 11639,
+      "desktop_click": null,
+      "desktop_painter_line": 4453,
+      "web_renderer_line": 4821,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "gongfang",
+      "label": "工坊",
+      "desktop_buttons": [
+        "👷 工作",
+        "⏭ 过牌"
+      ],
+      "desktop_action_line": 11616,
+      "desktop_click": null,
+      "desktop_painter_line": 4521,
+      "web_renderer_line": 4852,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "chengzhu",
+      "label": "我是城主",
+      "desktop_buttons": [
+        "🏰 放置板子",
+        "⏭ 跳过"
+      ],
+      "desktop_action_line": 11605,
+      "desktop_click": null,
+      "desktop_painter_line": 4582,
+      "web_renderer_line": 4876,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "gemcity",
+      "label": "璀璨宝石",
+      "desktop_buttons": [
+        "💎 取3异色",
+        "➡ 取2同色",
+        "📥 保留",
+        "🛒 购买",
+        "♻ 购保留卡"
+      ],
+      "desktop_action_line": 11609,
+      "desktop_click": null,
+      "desktop_painter_line": 4660,
+      "web_renderer_line": 4908,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "基线购买原子性缺陷另由主控修订；本表未包含该未提交修订"
+    },
+    {
+      "key": "siji",
+      "label": "四季物语",
+      "desktop_buttons": [
+        "🎴 打出",
+        "⚙️ 激活",
+        "👑 换分"
+      ],
+      "desktop_action_line": 11634,
+      "desktop_click": null,
+      "desktop_painter_line": 4746,
+      "web_renderer_line": 4964,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "资源计数的crystal仍标为施法，存在文案不一致；视觉未验"
+    },
+    {
+      "key": "bolan",
+      "label": "波兰大选",
+      "desktop_buttons": [
+        "🗳 投放",
+        "🔥 弃2枚翻倍"
+      ],
+      "desktop_action_line": 11601,
+      "desktop_click": null,
+      "desktop_painter_line": 4803,
+      "web_renderer_line": 4994,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "azul",
+      "label": "花砖物语",
+      "desktop_buttons": [
+        "🧱 取砖",
+        "🪟 落砖",
+        "🌀 溢出地板"
+      ],
+      "desktop_action_line": 11596,
+      "desktop_click": null,
+      "desktop_painter_line": 4869,
+      "web_renderer_line": 5016,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "rummikub",
+      "label": "拉密",
+      "desktop_buttons": [
+        "🎴组新组",
+        "🔧接续",
+        "🂠摸牌",
+        "✅结束回合"
+      ],
+      "desktop_action_line": 11575,
+      "desktop_click": {
+        "handler": "_click_rummikub",
+        "line": 1497
+      },
+      "desktop_painter_line": 3510,
+      "web_renderer_line": 5057,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "yahtzee",
+      "label": "快艇骰子",
+      "desktop_buttons": [
+        "🎲 掷骰",
+        "🔁 重掷",
+        "📝 记分"
+      ],
+      "desktop_action_line": 11645,
+      "desktop_click": null,
+      "desktop_painter_line": 3616,
+      "web_renderer_line": 5097,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "nimmt",
+      "label": "牛头王",
+      "desktop_buttons": [
+        "🃏 出牌"
+      ],
+      "desktop_action_line": 11631,
+      "desktop_click": null,
+      "desktop_painter_line": 3684,
+      "web_renderer_line": 5122,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "davinci",
+      "label": "达芬奇密码",
+      "desktop_buttons": [
+        "摸明牌",
+        "摸暗牌",
+        "猜牌"
+      ],
+      "desktop_action_line": 11507,
+      "desktop_click": null,
+      "desktop_painter_line": 3757,
+      "web_renderer_line": 5146,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "kalah",
+      "label": "非洲播棋",
+      "desktop_buttons": [
+        "播子"
+      ],
+      "desktop_action_line": 11512,
+      "desktop_click": {
+        "handler": "_click_kalah",
+        "line": 1492
+      },
+      "desktop_painter_line": 2105,
+      "web_renderer_line": 5192,
+      "desktop_classification": "未验证",
+      "web_classification": "当前端不支持（第二方操作）",
+      "notes": "桌面第二方点洞/提示缺口；Web第二方洞号错误且上排为空"
+    },
+    {
+      "key": "lovelove",
+      "label": "情书",
+      "desktop_buttons": [
+        "弃牌出效果"
+      ],
+      "desktop_action_line": 11513,
+      "desktop_click": null,
+      "desktop_painter_line": 3818,
+      "web_renderer_line": 5219,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "halloween",
+      "label": "德国心脏病",
+      "desktop_buttons": [
+        "翻牌",
+        "拍铃",
+        "过"
+      ],
+      "desktop_action_line": 11516,
+      "desktop_click": null,
+      "desktop_painter_line": 3986,
+      "web_renderer_line": 5253,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "tictactoe",
+      "label": "井字棋",
+      "desktop_buttons": [
+        "落子"
+      ],
+      "desktop_action_line": 11521,
+      "desktop_click": {
+        "handler": "_click_xy",
+        "line": 1490
+      },
+      "desktop_painter_line": 2049,
+      "web_renderer_line": 5277,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "halma",
+      "label": "跳棋",
+      "desktop_buttons": [
+        "走子"
+      ],
+      "desktop_action_line": 11526,
+      "desktop_click": {
+        "handler": "_click_move",
+        "line": 1494
+      },
+      "desktop_painter_line": 2821,
+      "web_renderer_line": 5295,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "checkers",
+      "label": "国际跳棋",
+      "desktop_buttons": [
+        "走子"
+      ],
+      "desktop_action_line": 11527,
+      "desktop_click": {
+        "handler": "_click_move",
+        "line": 1494
+      },
+      "desktop_painter_line": 2913,
+      "web_renderer_line": 5320,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "blokus",
+      "label": "角斗士棋",
+      "desktop_buttons": [
+        "放置",
+        "⏭ 跳过"
+      ],
+      "desktop_action_line": 11528,
+      "desktop_click": {
+        "handler": "_click_blokus",
+        "line": 1499
+      },
+      "desktop_painter_line": 3220,
+      "web_renderer_line": 5348,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "ludo",
+      "label": "飞行棋",
+      "desktop_buttons": [
+        "掷骰",
+        "走机",
+        "结束回合"
+      ],
+      "desktop_action_line": 11532,
+      "desktop_click": {
+        "handler": "_click_ludo",
+        "line": 1496
+      },
+      "desktop_painter_line": 3364,
+      "web_renderer_line": 5399,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "xiangqi",
+      "label": "中国象棋",
+      "desktop_buttons": [
+        "走子"
+      ],
+      "desktop_action_line": 11652,
+      "desktop_click": {
+        "handler": "_click_move",
+        "line": 1491
+      },
+      "desktop_painter_line": 2232,
+      "web_renderer_line": 5494,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "chess",
+      "label": "国际象棋",
+      "desktop_buttons": [
+        "走子"
+      ],
+      "desktop_action_line": 11651,
+      "desktop_click": {
+        "handler": "_click_move",
+        "line": 1491
+      },
+      "desktop_painter_line": 2226,
+      "web_renderer_line": 5503,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "go",
+      "label": "围棋",
+      "desktop_buttons": [
+        "落子",
+        "过一手"
+      ],
+      "desktop_action_line": 11522,
+      "desktop_click": {
+        "handler": "_click_go",
+        "line": 1491
+      },
+      "desktop_painter_line": 2331,
+      "web_renderer_line": 5510,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "shogi",
+      "label": "将棋",
+      "desktop_buttons": [
+        "走子",
+        "打入"
+      ],
+      "desktop_action_line": 11655,
+      "desktop_click": {
+        "handler": "_click_shogi",
+        "line": 1496
+      },
+      "desktop_painter_line": 3129,
+      "web_renderer_line": 5546,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "junqi",
+      "label": "军棋",
+      "desktop_buttons": [
+        "走子"
+      ],
+      "desktop_action_line": 11653,
+      "desktop_click": {
+        "handler": "_click_move",
+        "line": 1495
+      },
+      "desktop_painter_line": 3017,
+      "web_renderer_line": 5584,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "dou",
+      "label": "斗兽棋",
+      "desktop_buttons": [
+        "走子"
+      ],
+      "desktop_action_line": 11654,
+      "desktop_click": {
+        "handler": "_click_move",
+        "line": 1495
+      },
+      "desktop_painter_line": 3068,
+      "web_renderer_line": 5604,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "onewolf",
+      "label": "一夜狼人",
+      "desktop_buttons": [
+        "🔮预言看一人",
+        "🔮看中心(自选)",
+        "🗡️强盗换牌",
+        "🗳️投票"
+      ],
+      "desktop_action_line": 11537,
+      "desktop_click": null,
+      "desktop_painter_line": 4101,
+      "web_renderer_line": 4291,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "werewolf",
+      "label": "狼人杀",
+      "desktop_buttons": [
+        "🔮预言验人",
+        "🐺狼人刀人",
+        "💊女巫救",
+        "☠️女巫毒",
+        "🏹猎人开枪",
+        "🗳️投票"
+      ],
+      "desktop_action_line": 11543,
+      "desktop_click": null,
+      "desktop_painter_line": 2678,
+      "web_renderer_line": 4345,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "avalon",
+      "label": "阿瓦隆",
+      "desktop_buttons": [
+        "👑提名团队",
+        "✅赞同",
+        "❌否决",
+        "✅任务成功",
+        "💥任务失败",
+        "🎯指认梅林"
+      ],
+      "desktop_action_line": 11551,
+      "desktop_click": null,
+      "desktop_painter_line": 2727,
+      "web_renderer_line": 4398,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "liar",
+      "label": "骗子酒馆",
+      "desktop_buttons": [
+        "🃏出牌",
+        "💥挑战"
+      ],
+      "desktop_action_line": 11559,
+      "desktop_click": null,
+      "desktop_painter_line": 3927,
+      "web_renderer_line": 4455,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "ninja",
+      "label": "忍者之夜",
+      "desktop_buttons": [
+        "🗡️攻击",
+        "🛡️防御",
+        "👉下一回合"
+      ],
+      "desktop_action_line": 11563,
+      "desktop_click": null,
+      "desktop_painter_line": 4047,
+      "web_renderer_line": 4489,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "coc",
+      "label": "克苏鲁呼唤",
+      "desktop_buttons": [
+        "🎭开局(KP)",
+        "🔰选卡",
+        "🎲检定",
+        "🗒️剧情(KP)",
+        "🏁结束(KP)"
+      ],
+      "desktop_action_line": 11568,
+      "desktop_click": {
+        "handler": "_click_coc_deck",
+        "line": 1493
+      },
+      "desktop_painter_line": 2603,
+      "web_renderer_line": 5623,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "当版完整GUI/EXE流程未验"
+    },
+    {
+      "key": "balatro",
+      "label": "小丑牌",
+      "desktop_buttons": [
+        "🎮 出牌",
+        "🗑 弃牌"
+      ],
+      "desktop_action_line": 11581,
+      "desktop_click": {
+        "handler": "_click_balatro",
+        "line": 1497
+      },
+      "desktop_painter_line": 5640,
+      "web_renderer_line": 5688,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "私有hand为list[dict]时通用文本join存在TypeError路径，棋盘入口仍在"
+    },
+    {
+      "key": "balatro_solo",
+      "label": "小丑牌·单人",
+      "desktop_buttons": [
+        "🎮 出牌",
+        "🗑 弃牌",
+        "🛒 逛店",
+        "▶ 继续"
+      ],
+      "desktop_action_line": 11587,
+      "desktop_click": {
+        "handler": "_click_balatro_solo",
+        "line": 1498
+      },
+      "desktop_painter_line": 5848,
+      "web_renderer_line": 5829,
+      "desktop_classification": "未验证",
+      "web_classification": "未验证",
+      "notes": "私有hand为list[dict]时通用文本join存在TypeError路径，棋盘入口仍在"
+    }
+  ]
+}

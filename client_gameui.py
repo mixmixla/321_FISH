@@ -746,19 +746,42 @@ def _res_img(cv, key, tint, size=16):
 #   3) 任何异常吞掉并回退，调用方在 False/None 时退回既有矢量画法 —— 零回归。
 # ---------------------------------------------------------------------------
 _ASSET_DEC = {}          # (key, size) -> PIL.Image（解码+缩放后，进程级共享）
+_ASSET_URL_CACHE = {}    # key -> data URL 或 None（内嵌 + 展示包合并后的解析结果）
+
+
+def _asset_url(key):
+    """解析素材 key 的 data URL：先读内嵌 `_BG_ASSETS`，缺失的键再查展示包素材
+    （`registry.package_assets()`，包素材同键优先）。为不引入 import 环，展示包在
+    此处**延迟**导入（client_gameui 不在 import 期依赖 boardgames）；任何异常吞掉
+    返回 None，让调用方回退矢量画法。结果按键缓存（含未命中 None），确定性、无副作用。"""
+    if key in _ASSET_URL_CACHE:
+        return _ASSET_URL_CACHE[key]
+    url = _BG_ASSETS.get(key) if isinstance(_BG_ASSETS, dict) else None
+    try:
+        from boardgames.registry import package_assets
+        pkg = package_assets() or {}
+        if key in pkg:
+            url = pkg[key]
+    except Exception:
+        pass
+    _ASSET_URL_CACHE[key] = url
+    return url
 
 
 def _decode_asset(key, size=None):
-    """把 _BG_ASSETS[key] 的 data URL 解码为 PIL RGBA（size 非空时 LANCZOS 缩放）。
-    size 为 int 时按正方形缩放，为 (w,h) 元组时按该尺寸。缺模块/缺键/异常返回 None。"""
-    if _BG_ASSETS is None or _PILImage is None or key not in _BG_ASSETS:
+    """把素材 data URL 解码为 PIL RGBA（size 非空时 LANCZOS 缩放）。
+    size 为 int 时按正方形缩放，为 (w,h) 元组时按该尺寸。缺模块/缺键/异常返回 None。
+    素材来源经 `_asset_url` 合并：内嵌 `_BG_ASSETS` 优先，缺键时补展示包素材。"""
+    if _PILImage is None:
         return None
     ck = (key, size)
     img = _ASSET_DEC.get(ck)
     if img is not None:
         return img
+    url = _asset_url(key)
+    if url is None:
+        return None
     try:
-        url = _BG_ASSETS[key]
         data = url.split(",", 1)[1] if "," in url else url
         img = _PILImage.open(io.BytesIO(base64.b64decode(data))).convert("RGBA")
         if size is not None:

@@ -8,20 +8,10 @@ _real_cv 守卫，失败回退矢量画法）；本模块不新增任何 ImageTk
 """
 import math
 
-import client_gameui as _cu
 from client_gameui import (
     THEME, _text, _rrect, _disc, _stone, _asset_at, _asset_nine_at, _FONT_F,
 )
 from boardgames import shell
-from boardgames.azul import _art as _azul_art
-
-# spec §7：把本包素材并入全局素材表（包优先），使 _asset_* 能解析 azul 新键。
-# 必须替换为「副本」——client_gameui._BG_ASSETS 与 _art_boardgame.ASSETS 是同一对象，
-# 就地 update 会污染共享素材表（tests/test_boardgame_assets.py 断言其恰为 29 键）。
-if isinstance(_cu._BG_ASSETS, dict):
-    _merged = dict(_cu._BG_ASSETS)
-    _merged.update(getattr(_azul_art, "ASSETS", {}) or {})
-    _cu._BG_ASSETS = _merged
 
 COLORS = ["r", "w", "b", "y", "k"]                 # 引擎墙拉丁方用色序
 ACOL = {"r": "#D2534F", "w": "#F0F0F0", "b": "#4A7DE0",

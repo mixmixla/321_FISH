@@ -6,7 +6,7 @@
 """
 from client_gameui import (
     _text, _rrect, _turn_banner, _asset_bg,
-    _FONT_B, _FONT_F, _UXC, _TXT, _WHITE, _PANEL_BD, _UXR_BIG,
+    _FONT_F, _UXC, _TXT, _PANEL_BD, _UXR_BIG,
 )
 
 TABLE_BG = "#16232E"

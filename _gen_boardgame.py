@@ -82,6 +82,16 @@ def _sample(grid, u, v):
     return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy
 
 
+def _star_pts(cx, cy, r_out, r_in, n=8, rot=-math.pi / 2):
+    """星形顶点：交替内外半径的 2n 个未缩放顶点（调用方逐点缩放）。"""
+    pts = []
+    for i in range(2 * n):
+        rr = r_out if i % 2 == 0 else r_in
+        a = rot + i * math.pi / n
+        pts.append((cx + rr * math.cos(a), cy + rr * math.sin(a)))
+    return pts
+
+
 # ---------------------------------------------------------------- A 类 · 材质底纹
 def make_wood(size=256, seed=7):
     """木纹。纵向纹理条带 + 低频扭曲，四边可平铺。"""
@@ -141,22 +151,22 @@ def make_paper(size=256, seed=23):
 
 # ---------------------------------------------------------------- B 类 · 通用组件
 def make_card_frame(w=96, h=136):
-    """卡牌正框：奶咖纸面 + 双描边 + 顶部高光。"""
+    """卡牌正框（扁平）：奶咖纸面 + 双描边 + 收敛的顶部高光。"""
     img, dr, s = _begin(w, h)
 
     def R(v):
         return v * s
 
-    dr.rounded_rectangle((R(2), R(2), R(w - 2), R(h - 2)), radius=R(10),
+    dr.rounded_rectangle((R(2), R(2), R(w - 2), R(h - 2)), radius=R(14),
                          fill=_rgba("#f6efe0"))
     sheen = Image.new("RGBA", img.size, (0, 0, 0, 0))
     ImageDraw.Draw(sheen).rounded_rectangle(
-        (R(7), R(7), R(w - 7), R(h * 0.30)), radius=R(7), fill=(255, 255, 255, 64))
+        (R(8), R(8), R(w - 8), R(h * 0.22)), radius=R(10), fill=(255, 255, 255, 64))
     img = Image.alpha_composite(img, sheen)
     dr2 = ImageDraw.Draw(img)
-    dr2.rounded_rectangle((R(7), R(7), R(w - 7), R(h - 7)), radius=R(7),
+    dr2.rounded_rectangle((R(7), R(7), R(w - 7), R(h - 7)), radius=R(10),
                           outline=_rgba("#c9b48f"), width=max(1, int(1.2 * s)))
-    dr2.rounded_rectangle((R(2), R(2), R(w - 2), R(h - 2)), radius=R(10),
+    dr2.rounded_rectangle((R(2), R(2), R(w - 2), R(h - 2)), radius=R(14),
                           outline=_rgba("#b0966e"), width=max(1, int(1.7 * s)))
     return _end(img, w, h)
 
@@ -239,14 +249,14 @@ def make_token(size=40):
 
 
 def make_panel(size=60, border=12):
-    """9-slice 面板底：圆角恰好落在 border 内，中心区域平整可拉伸。"""
+    """9-slice 面板底（浅底）：圆角恰好落在 border 内，中心区域平整可拉伸。"""
     img, dr, s = _begin(size, size)
 
     def R(v):
         return v * s
 
     dr.rounded_rectangle((R(1), R(1), R(size - 1), R(size - 1)), radius=R(border),
-                         fill=_rgba("#2a2a35"), outline=_rgba("#44444f"),
+                         fill=_rgba("#F4F8FB"), outline=_rgba("#DCE6E2"),
                          width=max(1, int(1.4 * s)))
     return _end(img, size, size)
 
@@ -293,6 +303,76 @@ def make_die_face(n, size=48):
 _AZUL = {"r": "#d2534f", "w": "#f0f0f0", "b": "#4a7de0", "y": "#e0b33c", "k": "#3a3a3a"}
 _GEM = {"o": "#3a3a3a", "d": "#eef2f4", "r": "#d2534f", "e": "#3a9b5f",
         "s": "#4a7de0", "g": "#e0b33c"}
+_AZULEJO_BG = "#F4F8FB"
+_AZULEJO_BLUE = "#3E7CB1"
+_AZULEJO_DEEP = "#2B5E8C"
+_AZULEJO_GRID = "#6FA8CE"
+_AZULEJO_PETAL = "#DCEAF4"
+
+
+def make_azulejo(size=256):
+    """现代扁平花砖：4×4 单元四瓣花 + 八角星，四边天然无缝。"""
+    img, dr, s = _begin(size, size)
+
+    def R(v):
+        return v * s
+
+    P = size // 4
+    dr.rectangle((0, 0, R(size), R(size)), fill=_rgba(_AZULEJO_BG))
+    wl = max(1, int(1.0 * s))
+    for i in range(4):
+        q = i * P
+        dr.rectangle((R(q), 0, R(q) + wl, R(size)), fill=_rgba(_AZULEJO_GRID))
+        dr.rectangle((0, R(q), R(size), R(q) + wl), fill=_rgba(_AZULEJO_GRID))
+    petal_r = 0.20 * P
+    off = 0.18 * P
+    for j in range(4):
+        for i in range(4):
+            cx = (i + 0.5) * P
+            cy = (j + 0.5) * P
+            for dx, dy in ((off, 0), (-off, 0), (0, off), (0, -off)):
+                px, py = cx + dx, cy + dy
+                dr.ellipse((R(px - petal_r), R(py - petal_r),
+                            R(px + petal_r), R(py + petal_r)),
+                           fill=_rgba(_AZULEJO_PETAL))
+            star = _star_pts(cx, cy, P * 0.30, P * 0.13, 8)
+            dr.polygon([(R(x), R(y)) for (x, y) in star], fill=_rgba(_AZULEJO_BLUE))
+            cr = 0.07 * P
+            dr.ellipse((R(cx - cr), R(cy - cr), R(cx + cr), R(cy + cr)),
+                       fill=_rgba(_AZULEJO_DEEP))
+    return _end(img, size, size)
+
+
+def make_azul_board(size=96, border=14):
+    """对局底板：浅底 + 外深描边 + 内白描边，大圆角。"""
+    img, dr, s = _begin(size, size)
+
+    def R(v):
+        return v * s
+
+    dr.rounded_rectangle((R(2), R(2), R(size - 2), R(size - 2)), radius=R(border),
+                         fill=_rgba("#EAF2F7"), outline=_rgba("#8FB6CE"),
+                         width=max(1, int(1.6 * s)))
+    dr.rounded_rectangle((R(5), R(5), R(size - 5), R(size - 5)),
+                         radius=R(border - 4), outline=_rgba("#FBFDFE"),
+                         width=max(1, int(1.2 * s)))
+    return _end(img, size, size)
+
+
+def make_azul_score_track(w=96, h=48, border=14):
+    """计分轨：深蓝底 + 外深描边 + 内浅描边，大圆角。"""
+    img, dr, s = _begin(w, h)
+
+    def R(v):
+        return v * s
+
+    dr.rounded_rectangle((R(2), R(2), R(w - 2), R(h - 2)), radius=R(border),
+                         fill=_rgba("#2E4A63"), outline=_rgba("#101E2C"),
+                         width=max(1, int(1.6 * s)))
+    dr.rounded_rectangle((R(5), R(5), R(w - 5), R(h - 5)),
+                         radius=R(border - 4), outline=_rgba("#4A7096"),
+                         width=max(1, int(1.2 * s)))
+    return _end(img, w, h)
 
 
 def make_azul_tile(hexstr, size=44):
@@ -311,7 +391,7 @@ def make_azul_tile(hexstr, size=44):
     gl = Image.new("RGBA", img.size, (0, 0, 0, 0))
     ImageDraw.Draw(gl).rounded_rectangle(
         (R(5), R(4), R(size - 5), R(size * 0.40)), radius=R(4),
-        fill=(255, 255, 255, 120 if light else 72))
+        fill=(255, 255, 255, 64 if light else 40))
     img = Image.alpha_composite(img, gl)
     ImageDraw.Draw(img).rounded_rectangle(
         (R(1), R(1), R(size - 1), R(size - 1)), radius=R(6),
@@ -320,39 +400,32 @@ def make_azul_tile(hexstr, size=44):
 
 
 def make_azul_bowl(size=128, seed=99):
-    """工厂碗（陶瓷）：浅色陶瓷口沿 + 深色内膛 + 斑点。"""
+    """工厂碗（扁平）：浅色滚边 + 深蓝内膛 + 克制高光。"""
     img, dr, s = _begin(size, size)
 
     def R(v):
         return v * s
 
-    dr.ellipse((R(2), R(2), R(size - 2), R(size - 2)), fill=_rgba("#eae4d6"))
-    dr.ellipse((R(6), R(6), R(size - 6), R(size - 6)), outline=_rgba("#fbf8f0"),
-               width=max(1, int(1.8 * s)))
-    dr.ellipse((R(size * 0.17), R(size * 0.17), R(size * 0.83), R(size * 0.83)),
-               fill=_rgba("#4a7076"))
+    c = size / 2
+    dr.ellipse((R(3), R(3), R(size - 3), R(size - 3)), fill=_rgba("#101E2C"))
+    rr = size * 0.075
+    ring = c - 6 - rr
+    for i in range(16):
+        a = i * TAU / 16
+        px = c + ring * math.cos(a)
+        py = c + ring * math.sin(a)
+        dr.ellipse((R(px - rr), R(py - rr), R(px + rr), R(py + rr)),
+                   fill=_rgba("#EAF2F7"))
+    dr.ellipse((R(6), R(6), R(size - 6), R(size - 6)), fill=_rgba("#2E4A63"))
     dr.ellipse((R(size * 0.20), R(size * 0.20), R(size * 0.80), R(size * 0.80)),
-               fill=_rgba("#2c4a50"))
-    dr.ellipse((R(size * 0.20), R(size * 0.20), R(size * 0.80), R(size * 0.80)),
-               outline=_rgba("#182a2e"), width=max(1, int(1.4 * s)))
+               outline=_rgba("#8FB6CE"), width=max(1, int(4 * s)))
+    dr.ellipse((R(size * 0.26), R(size * 0.26), R(size * 0.74), R(size * 0.74)),
+               fill=_rgba("#1E3346"))
     hl = Image.new("RGBA", img.size, (0, 0, 0, 0))
     ImageDraw.Draw(hl).ellipse(
-        (R(size * 0.26), R(size * 0.24), R(size * 0.52), R(size * 0.44)),
-        fill=(190, 220, 220, 60))
+        (R(size * 0.28), R(size * 0.26), R(size * 0.52), R(size * 0.44)),
+        fill=(255, 255, 255, 46))
     img = Image.alpha_composite(img, hl)
-    dd = ImageDraw.Draw(img)
-    rnd = random.Random(seed)
-    c = size / 2
-    for _ in range(40):
-        a = rnd.uniform(0, TAU)
-        rr = rnd.uniform(0.80, 0.97) * c
-        x = c + rr * math.cos(a)
-        y = c + rr * math.sin(a)
-        rad = rnd.uniform(0.6, 1.6)
-        dd.ellipse((R(x - rad), R(y - rad), R(x + rad), R(y + rad)),
-                   fill=(180, 175, 160, 80))
-    dd.ellipse((R(2), R(2), R(size - 2), R(size - 2)), outline=_rgba("#b9b09a"),
-               width=max(1, int(1.6 * s)))
     return _end(img, size, size)
 
 
@@ -374,16 +447,17 @@ def make_gem(hexstr, size=40):
     inn = hexagon(size * 0.28)
     dr.polygon(outer, fill=_mix(hexstr, -0.10))
     dr.polygon(inn, fill=_mix(hexstr, 0.22))
-    for i in range(6):
+    for i in range(0, 6, 2):
         dr.line((outer[i][0], outer[i][1], inn[i][0], inn[i][1]),
                 fill=_mix(hexstr, -0.30), width=max(1, int(0.9 * s)))
+    for i in range(0, 6, 2):
         dr.line((inn[i][0], inn[i][1], inn[(i + 1) % 6][0], inn[(i + 1) % 6][1]),
                 fill=_mix(hexstr, 0.38), width=max(1, int(0.9 * s)))
     dr.polygon(outer, outline=_mix(hexstr, -0.42))
     hl = Image.new("RGBA", img.size, (0, 0, 0, 0))
     ImageDraw.Draw(hl).ellipse(
         (R(c - size * 0.16), R(c - size * 0.20), R(c - size * 0.02), R(c - size * 0.06)),
-        fill=(255, 255, 255, 120 if hexstr == "#eef2f4" else 170))
+        fill=(255, 255, 255, 200 if hexstr == "#eef2f4" else 140))
     img = Image.alpha_composite(img, hl)
     return _end(img, size, size)
 
@@ -405,6 +479,9 @@ def build_all():
     for k, hx in _AZUL.items():
         assets[f"azul_tile_{k}"] = make_azul_tile(hx)
     assets["azul_bowl"] = make_azul_bowl()
+    assets["azulejo"] = make_azulejo()
+    assets["azul_board"] = make_azul_board()
+    assets["azul_score_track"] = make_azul_score_track()
     for k, hx in _GEM.items():
         assets[f"gem_{k}"] = make_gem(hx)
     return assets

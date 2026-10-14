@@ -5,7 +5,7 @@
 产物为 assets/boardgame/*.png 与内嵌模块 _art_boardgame.py。
 
 该测试断言：
-  1. _art_boardgame.ASSETS 结构（26 个键、值均为 PNG data URL）；
+  1. _art_boardgame.ASSETS 结构（29 个键、值均为 PNG data URL）；
   2. 每键解码后的像素尺寸符合生成器规格；
   3. assets/boardgame/<key>.png 源文件存在、非空，且与模块内嵌 base64 像素一致
      （源文件默认保存、内嵌为 optimize=True 压缩，故只比对解码后的像素）。
@@ -35,6 +35,9 @@ _EXPECTED_WH = {
     "token": (40, 40),
     "panel": (60, 60),
     "azul_bowl": (128, 128),
+    "azulejo": (256, 256),
+    "azul_board": (96, 96),
+    "azul_score_track": (96, 48),
 }
 for _n in range(1, 7):
     _EXPECTED_WH[f"die_face{_n}"] = (48, 48)
@@ -53,7 +56,7 @@ def _payload(data_url):
 
 def test_assets_module_exposes_exactly_expected_keys():
     assert set(_art_boardgame.ASSETS) == set(_EXPECTED_WH)
-    assert len(_art_boardgame.ASSETS) == 26
+    assert len(_art_boardgame.ASSETS) == 29
 
 
 def test_every_asset_is_decodable_png_of_expected_size():

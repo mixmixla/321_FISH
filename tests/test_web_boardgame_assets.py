@@ -32,3 +32,15 @@ def test_panel_css_and_renderers_use_bitmaps():
     # 动作契约不回归
     assert '{op:"take"' in html and '{op:"place"' in html and '{op:"floor"' in html
     assert 'op:"take2"' in html and 'op:"buy"' in html and 'op:"reserve"' in html
+
+def test_bg_img_fragment_survives_single_quoted_style_attribute():
+    # bgImg 输出的片段会被拼进单引号包裹的 style 属性（如 style='...+bgImg(...)+...'）。
+    # 若片段内含单引号（旧写法 background:url('...')），首个 ' 会提前闭合 style 属性，
+    # 导致位图不显示、后续声明（如 display:grid）丢失、DOM 结构损坏。
+    html = web._SERVED_PAGE().decode("utf-8")
+    assert "background:url('" not in html
+    m = re.search(r"function bgImg\(key,extra\)\{[^\n]*\}", html)
+    assert m, "bgImg definition not found"
+    fragment_src = m.group(0)
+    assert "'" not in fragment_src, fragment_src
+    assert "background:url(" in fragment_src

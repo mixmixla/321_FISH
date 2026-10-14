@@ -3903,7 +3903,7 @@ function resIcon(name,size){const s=RESICONSVG[name]||RESICONSVG.__fallback;if(!
 // C · 同源桌游位图子集（_art_boardgame.ASSETS → data-URI，网页端对局绘制复用）。
 const BG=JSON.parse("@@UX_BG_ASSETS@@");
 // C · 位图背景助手：命中子集键返回内联 style 片段（居中铺满、去描边），未命中返回 ""（调用方回退原绘制）。
-function bgImg(key,extra){const u=BG[key];return u?("background:url('"+u+"') center/100% 100% no-repeat;border:none;"+(extra||"")):"";}
+function bgImg(key,extra){const u=BG[key];return u?("background:url("+u+") center/100% 100% no-repeat;border:none;"+(extra||"")):"";}
 // C · 启动：有花砖底纹则将 --azulejo 注入根元素并挂 body.hasBgArt；无 DOM/无资产则静默跳过。
 (function(){try{if(typeof document==="undefined"||!document.body)return;
   if(BG["azulejo"]){document.documentElement.style.setProperty("--azulejo","url('"+BG["azulejo"]+"')");document.body.classList.add("hasBgArt");}}catch(e){}})();

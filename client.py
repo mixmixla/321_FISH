@@ -46,7 +46,7 @@ from prefs import (Prefs, StarsPreservationError, fish_add_day, fish_summary,
 from theme import (msg_colors, get_skin, names as skin_names,
                    display_name as skin_display, DEFAULT_SKIN,
                    GHOST, GHOST_PUNCH, GHOST_BLACK, ghost_palette,
-                   dialog_pal,
+                   dialog_pal, game_shell_pal,
                    chat_theme_names, chat_theme_display,
                    get_chat_theme as theme_chat_overlay)
 from widgets.msg_list import MsgList, is_image_path
@@ -11117,7 +11117,8 @@ class ChatWindow:
         """打开游戏协作面板（游戏 + 游戏内聊天 overlay）"""
         self._select_navigation('game')
         if getattr(self, "_game_win", None) is None:
-            self._game_win = GameWindow(self, pal=self._dp)
+            self._game_win = GameWindow(
+                self, pal=game_shell_pal(getattr(self, "_skin", None) or get_skin(None)))
         self._game_win.show()
 
     # ---------- 文件收发 ----------
@@ -12227,12 +12228,12 @@ class GameWindow:
 
     def _build_apple_bar(self, win) -> None:
         """苹果红绿灯标题栏：左红黄绿圆点，中居中标题，右「聊」钮；可拖动/双击最大化。"""
-        from theme import BASE, get_skin
-        sk = getattr(self.app, "_skin", None) or get_skin(None)
-        bg = sk.get("titlebar_bg", "#ececee")
-        fg = sk.get("titlebar_fg", "#1d1d1f")
-        btn_fg = sk.get("titlebar_btn", "#86868b")
-        hh = int(sk.get("titlebar_h", BASE["titlebar_h"]))
+        from theme import BASE
+        pal = self._pal
+        bg = pal.get("titlebar_bg") or pal.get("win", "#ececee")
+        fg = pal.get("titlebar_fg") or pal.get("fg", "#1d1d1f")
+        btn_fg = pal.get("titlebar_btn") or pal.get("sub", "#86868b")
+        hh = int(pal.get("titlebar_h") or BASE["titlebar_h"])
         bar = tk.Frame(win, bg=bg, height=hh)
         bar.pack(side="top", fill="x")
         bar.pack_propagate(False)
@@ -12452,29 +12453,32 @@ class GameWindow:
         self.state_text.tag_configure("mine", foreground=self._pal["self"])
         self.state_text.tag_configure("priv", foreground=self._pal["priv"])
 
-        # 动作区（顶部固定「游戏规则」按钮：入房看当前游戏，未入房看选中桌游）
-        act = tk.Frame(right, bg=self._pal["win"])
+        # 动作区（顶部固定工具行：分段控件——规则/棋盘/专注窗）
+        pal = self._pal
+        act = tk.Frame(right, bg=pal["win"])
         act.pack(fill="x", pady=(2, 0))
-        tool = tk.Frame(act, bg=self._pal["win"])
+        tool = tk.Frame(act, bg=pal["win"])
         tool.pack(fill="x")
         tk.Button(tool, text="规则", command=self._show_rules_popup,
-                  font=f, relief="flat", fg=self._pal["warn_fg"]).pack(
-                      side="left", fill="x", expand=True, padx=2)
+                  font=f, relief="flat", cursor="hand2",
+                  bg=pal.get("soft_bg", "#eef0f5"), fg=pal.get("fg", "#333333"),
+                  activebackground=pal.get("accent_hover", "#3d5be0"))\
+            .pack(side="left", fill="x", expand=True, padx=2)
         tk.Button(tool, text="棋盘", command=self._focus_board,
                   font=f, relief="flat", padx=2, cursor="hand2",
-                  bg=self._pal.get("accent", "#4f6ef2"),
-                  fg=self._pal.get("accent_fg", "#ffffff"),
-                  activebackground=self._pal.get("accent_hover", "#3d5be0"))\
+                  bg=pal.get("accent", "#4f6ef2"),
+                  fg=pal.get("accent_fg", "#ffffff"),
+                  activebackground=pal.get("accent_hover", "#3d5be0"))\
             .pack(side="left", fill="x", expand=True, padx=2)
         tk.Button(tool, text="专注窗", command=self._spawn_board_win,
                   font=f, relief="flat", padx=0, cursor="hand2",
-                  fg=self._pal["fg"], bg=self._pal.get("soft_bg", "#eef0f5"),
-                  activebackground=self._pal.get("accent_hover", "#3d5be0"))\
+                  fg=pal.get("fg", "#333333"), bg=pal.get("soft_bg", "#eef0f5"),
+                  activebackground=pal.get("accent_hover", "#3d5be0"))\
             .pack(side="left", fill="x", expand=True, padx=2)
-        self.act_btns = tk.Frame(act, bg=self._pal["win"])
+        self.act_btns = tk.Frame(act, bg=pal["win"])
         self.act_btns.pack(fill="x")
-        self.act_hint = tk.Label(act, text="", fg=self._pal["sub"], font=f, anchor="w",
-                                 bg=self._pal["win"])
+        self.act_hint = tk.Label(act, text="", fg=pal["sub"], font=f, anchor="w",
+                                 bg=pal["win"])
         self.act_hint.pack(fill="x")
 
     def _build_chat(self, win) -> None:

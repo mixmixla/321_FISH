@@ -854,6 +854,25 @@ def _is_dark(hex_color: str) -> bool:
     return (0.299 * r + 0.587 * g + 0.114 * b) < 128
 
 
+def game_shell_pal(skin):
+    """对局窗专用调色：在 dialog_pal 之上覆盖 mist-flat token 派生。"""
+    pal = dict(dialog_pal(skin))
+    panel = skin.get("panel_bg", "#ffffff") if skin else "#ffffff"
+    if _is_dark(panel):
+        pal.update({
+            "accent": "#86CDB3", "accent_fg": "#15251F", "accent_hover": "#9BDAC4",
+            "soft_bg": "#2B3C33", "border": "#395246",
+            "card": "#1E3028", "card_bg": "#1E3028",
+        })
+    else:
+        pal.update({
+            "accent": "#16796C", "accent_fg": "#FFFFFF", "accent_hover": "#11685C",
+            "soft_bg": "#EEF4F2", "border": "#DCE6E2",
+            "card": "#FFFFFF", "card_bg": "#FFFFFF",
+        })
+    return pal
+
+
 def ghost_palette(back: float = 0.0) -> dict:
     """R15+：按字幕衬底深浅生成 ghost token 表。
     back=0 → 纯挖空（气泡色=挖空色，不可见，只剩黑字悬浮）；

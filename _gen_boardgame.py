@@ -416,7 +416,7 @@ def make_azul_bowl(size=128, seed=99):
         py = c + ring * math.sin(a)
         dr.ellipse((R(px - rr), R(py - rr), R(px + rr), R(py + rr)),
                    fill=_rgba("#EAF2F7"))
-    dr.ellipse((R(6), R(6), R(size - 6), R(size - 6)), fill=_rgba("#2E4A63"))
+    dr.ellipse((R(12), R(12), R(size - 12), R(size - 12)), fill=_rgba("#2E4A63"))
     dr.ellipse((R(size * 0.20), R(size * 0.20), R(size * 0.80), R(size * 0.80)),
                outline=_rgba("#8FB6CE"), width=max(1, int(4 * s)))
     dr.ellipse((R(size * 0.26), R(size * 0.26), R(size * 0.74), R(size * 0.74)),

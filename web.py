@@ -59,8 +59,21 @@ _BG_ASSET_KEYS = ("azulejo", "azul_board", "azul_score_track", "azul_bowl",
                   "card_frame", "panel")
 
 
+def _bg_assets_all():
+    """合并素材源：内嵌美术（_art_boardgame）+ 各展示包素材（包优先）。"""
+    out = {}
+    if _bg_assets is not None and getattr(_bg_assets, "ASSETS", None):
+        out.update(_bg_assets.ASSETS)
+    try:
+        from boardgames.registry import package_assets
+        out.update(package_assets() or {})
+    except Exception:
+        pass
+    return out
+
+
 def _bg_assets_subset():
-    src = getattr(_bg_assets, "ASSETS", None) if _bg_assets is not None else None
+    src = _bg_assets_all()
     if not src:
         return {}
     return {k: src[k] for k in _BG_ASSET_KEYS if k in src}
@@ -88,6 +101,13 @@ def _SERVED_PAGE():
     _resico['__fallback'] = resource_icon_svg('', 18)
     page = page.replace('@@UX_RESOURCE_ICONS@@', _js_json_literal(_resico))
     page = page.replace('@@UX_BG_ASSETS@@', _js_json_literal(_bg_assets_subset()))
+    try:
+        from boardgames.registry import web_parts
+        _gjs, _gcss = web_parts()
+    except Exception:
+        _gjs, _gcss = "", ""
+    page = page.replace('/*@@UX_GAME_RENDERERS@@*/', _gjs)
+    page = page.replace('@@UX_GAME_CSS@@', _gcss)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -629,6 +649,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
   .compose-tools .toolmenu{left:10px;right:10px;width:auto;max-width:none;bottom:calc(100% + 8px)}
 }
 @@UX_CHAT_CSS@@
+@@UX_GAME_CSS@@
 </style>
 </head>
 <body>
@@ -6202,6 +6223,7 @@ const GRENDER={
     box.appendChild(root);
   },
 };
+/*@@UX_GAME_RENDERERS@@*/
 </script>
 </body>
 </html>

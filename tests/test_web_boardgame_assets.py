@@ -16,9 +16,21 @@ def test_served_page_has_no_placeholder_and_bg_subset():
 
 def test_missing_assets_module_degrades_to_empty(monkeypatch):
     monkeypatch.setattr(web, "_bg_assets", None)
+    monkeypatch.setattr(web, "_bg_assets_all", lambda: {})
     html = web._SERVED_PAGE().decode("utf-8")
     assert "@@UX_BG_ASSETS@@" not in html
     assert _extract_bg_literal(html) == {}
+
+def test_served_page_has_no_game_injection_placeholders():
+    html = web._SERVED_PAGE().decode("utf-8")
+    assert "@@UX_GAME_RENDERERS@@" not in html
+    assert "@@UX_GAME_CSS@@" not in html
+
+def test_bg_subset_merges_package_assets(monkeypatch):
+    monkeypatch.setattr(web, "_bg_assets_all",
+                        lambda: {"azul_table": "data:image/png;base64,AAAA"})
+    html = web._SERVED_PAGE().decode("utf-8")
+    assert "@@UX_BG_ASSETS@@" not in html
 
 def test_panel_css_and_renderers_use_bitmaps():
     html = web._SERVED_PAGE().decode("utf-8")

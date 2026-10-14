@@ -39,12 +39,12 @@ def load_all() -> None:
     global _LOADED
     if _LOADED:
         return
-    _LOADED = True
     for mod in PACKAGE_MODULES:
         try:
             importlib.import_module(mod)
         except Exception:
             continue
+    _LOADED = True
 
 
 def all_packages() -> list:

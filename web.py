@@ -53,7 +53,7 @@ def _js_json_literal(obj):
     return json.dumps(json.dumps(obj))[1:-1]
 
 
-_BG_ASSET_KEYS = ("azulejo", "azul_board", "azul_score_track", "azul_bowl",
+_BG_ASSET_KEYS = ("azulejo",
                   "azul_tile_r", "azul_tile_w", "azul_tile_b", "azul_tile_y", "azul_tile_k",
                   "azul_table", "azul_boardface", "azul_plate", "azul_track", "azul_floor",
                   "azul_wall_cell_r", "azul_wall_cell_w", "azul_wall_cell_b",

@@ -771,7 +771,7 @@ def _asset_url(key):
 def _decode_asset(key, size=None):
     """把素材 data URL 解码为 PIL RGBA（size 非空时 LANCZOS 缩放）。
     size 为 int 时按正方形缩放，为 (w,h) 元组时按该尺寸。缺模块/缺键/异常返回 None。
-    素材来源经 `_asset_url` 合并：内嵌 `_BG_ASSETS` 优先，缺键时补展示包素材。"""
+    素材来源经 `_asset_url` 合并：先读内嵌 `_BG_ASSETS`，同键的展示包素材优先覆盖。"""
     if _PILImage is None:
         return None
     ck = (key, size)
@@ -1814,16 +1814,17 @@ _PKG_PAINTERS = {}          # 展示包画师缓存：game -> fn | False（False
 
 
 def _pkg_painter(game):
-    """查展示包注册表取画师；未命中/异常返回 None。结果缓存，避免每帧 importlib。"""
+    """查展示包注册表取画师；未命中返回 None。结果缓存，避免每帧 importlib。
+    解析异常不写负缓存（下次重试）；仅缓存确定性结果（None 或画师对象）。"""
     if game in _PKG_PAINTERS:
-        return _PKG_PAINTERS[game] or None
-    fn = None
+        cached = _PKG_PAINTERS[game]
+        return None if cached is False else cached
     try:
         from boardgames import registry as _registry
         fn = _registry.desktop_painter(game)
     except Exception:
-        fn = None
-    _PKG_PAINTERS[game] = fn or False
+        return None
+    _PKG_PAINTERS[game] = fn if fn is not None else False
     return fn
 
 

@@ -150,7 +150,7 @@ def test_real_tk_bitmap_helpers_and_render():
         root.destroy()
 
 
-def test_azul_painter_consumes_azulejo_and_boards():
+def test_azul_painter_consumes_package_assets():
     if cu._BG_ASSETS is None or cu._PILImage is None or cu._PILImageTk is None:
         pytest.skip("Pillow/Tk assets unavailable")
     tk = pytest.importorskip("tkinter")
@@ -159,18 +159,17 @@ def test_azul_painter_consumes_azulejo_and_boards():
     except tk.TclError as exc:
         pytest.skip(f"Tk unavailable: {exc}")
     try:
-        cv = tk.Canvas(root, width=800, height=560)
-        cv.pack()
-        root.update_idletasks()
-        root.update()
+        cv = tk.Canvas(root, width=820, height=580)
+        cv.pack(); root.update_idletasks(); root.update()
         ui = {}
         cu.render(cv, "azul", _azul_state(), 7, lambda uid: f"P{uid}",
                   lambda m: None, lambda: None, ui, None,
                   cv.winfo_width(), cv.winfo_height())
-        assert ("azulejo", None) in getattr(cv, "_asset_img_cache", {})
+        img_keys = {k[0] for k in getattr(cv, "_asset_img_cache", {})}
         nine_keys = {k[0] for k in getattr(cv, "_asset_nine_cache", {})}
-        assert "azul_board" in nine_keys
-        assert "azul_score_track" in nine_keys
+        assert "azul_table" in img_keys or "azul_table" in nine_keys
+        assert "azul_boardface" in img_keys or "azul_boardface" in nine_keys
+        assert "azul_tile_r" in img_keys
     finally:
         try: root.destroy()
         except Exception: pass

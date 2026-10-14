@@ -522,15 +522,17 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
 /* R49 桌游：面板/按钮/卡片统一走「雾岸」Token（色·圆角·字号·禁用态），与桌面画师同源 */
 #gpanel{position:fixed;inset:0;background:rgba(16,30,26,.55);display:flex;align-items:center;justify-content:center;z-index:97}
 #gpanel .card{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:var(--r2);padding:16px;width:min(740px,94vw);max-height:90vh;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow-lg)}
+/* C · 有同源位图子集时：对局面板卡面叠一层白纱 + 花砖底纹（--azulejo 由 boot IIFE 注入）。 */
+body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.90),rgba(255,255,255,.90)),var(--azulejo);background-size:auto,256px 256px;background-repeat:no-repeat,repeat;background-position:center,top left}
 #ghead{display:flex;align-items:center;gap:8px;font-weight:700;font-size:var(--body-font,14px);color:var(--txt)}
 #gmain{overflow:auto;max-height:50vh}
 #gpriv{background:var(--side);border:1px dashed var(--line);border-radius:var(--r1);padding:8px 12px;font-size:var(--secondary-font,12px);color:var(--txt)}
 #glog{background:var(--side);border:1px solid var(--line);border-radius:var(--r1);padding:7px 12px;font-size:var(--secondary-font,12px);max-height:15vh;overflow:auto;color:var(--dim)}
-.gbtn{cursor:pointer;border:1px solid var(--line);background:var(--side);color:var(--txt);border-radius:var(--r1);padding:5px 14px;font-size:var(--secondary-font,12px);font-weight:600;box-shadow:var(--shadow-sm);transition:transform .1s,background .15s}
+.gbtn{cursor:pointer;border:1px solid var(--line);background:var(--side);color:var(--txt);border-radius:var(--r1);padding:5px 14px;font-size:var(--secondary-font,12px);font-weight:600;transition:background .15s,border-color .15s}
 .gbtn:hover{background:var(--accent);color:var(--on-accent,#fff);border-color:var(--accent)}
 .gbtn:disabled{background:var(--ux-disabled-background,var(--side));color:var(--ux-disabled-text,var(--dim));cursor:default;box-shadow:none;opacity:1}
-.gbtn.go{background:var(--accent);color:var(--on-accent,#fff);border:none;box-shadow:0 3px 10px rgba(22,121,108,.28)}
-.gbtn.go:hover{background:var(--ux-accent-hover,var(--accent));transform:translateY(-1px)}
+.gbtn.go{background:var(--accent);color:var(--on-accent,#fff);border-color:var(--accent)}
+.gbtn.go:hover{background:var(--ux-accent-hover,var(--accent))}
 .gcard{border:1px solid var(--line);border-radius:var(--r2);padding:12px;font-size:var(--secondary-font,12px);display:flex;flex-direction:column;gap:4px;overflow:hidden;background:var(--card);box-shadow:var(--shadow-sm);transition:transform .15s,box-shadow .15s}
 .gcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
 .gcard b{font-size:var(--body-font,14px)}
@@ -3900,6 +3902,11 @@ function resIcon(name,size){const s=RESICONSVG[name]||RESICONSVG.__fallback;if(!
   return s.replace('width="18"','width="'+n+'"').replace('height="18"','height="'+n+'"').replace('<svg ','<svg style="vertical-align:-3px" ');}
 // C · 同源桌游位图子集（_art_boardgame.ASSETS → data-URI，网页端对局绘制复用）。
 const BG=JSON.parse("@@UX_BG_ASSETS@@");
+// C · 位图背景助手：命中子集键返回内联 style 片段（居中铺满、去描边），未命中返回 ""（调用方回退原绘制）。
+function bgImg(key,extra){const u=BG[key];return u?("background:url('"+u+"') center/100% 100% no-repeat;border:none;"+(extra||"")):"";}
+// C · 启动：有花砖底纹则将 --azulejo 注入根元素并挂 body.hasBgArt；无 DOM/无资产则静默跳过。
+(function(){try{if(typeof document==="undefined"||!document.body)return;
+  if(BG["azulejo"]){document.documentElement.style.setProperty("--azulejo","url('"+BG["azulejo"]+"')");document.body.classList.add("hasBgArt");}}catch(e){}})();
 // 角色编码：隐藏身份游戏 private() 载荷 → ROLE_ICONS 键（与桌面端 client_gameui._ROLE_KEY 对齐）。
 const ROLENUM={werewolf:{0:"villager",1:"werewolf",2:"seer",3:"witch",4:"hunter"},
   onewolf:{0:"villager",1:"werewolf",2:"seer",3:"robber",4:"insomniac"},
@@ -4973,7 +4980,7 @@ const GRENDER={
     const C_CN=s.colors||{};
     // E3：宝石图标描边色（深浅主题通用；o/d 取中间调，避免纯黑/纯白在某一主题下不可辨）。
     const GMCOL={o:"#8a8a8a",d:"#b9c6d4",r:"#d2534f",e:"#3a9b5f",s:"#4a7de0",g:"#c9962a"};
-    const gmI=(c,sz)=>GMCOL[c]?"<span style='color:"+GMCOL[c]+"'>"+resIcon(c,sz||13)+"</span>":"";
+    const gmI=(c,sz)=>{const u=BG["gem_"+c];const n=sz||13;if(u)return "<img src='"+u+"' width='"+n+"' height='"+n+"' style='vertical-align:middle' alt=''>";return GMCOL[c]?"<span style='color:"+GMCOL[c]+"'>"+resIcon(c,n)+"</span>":"";};
     const tok=(t)=>Object.entries(t||{}).map(([c,n])=>gmI(c)+"×"+n).join("　");
     const d=document.createElement("div");
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>回合 → "+esc(gnick(s.turn_uid))
@@ -4981,7 +4988,7 @@ const GRENDER={
     let mkt="<div class='gsec'>市场</div>";
     for(let t=1;t<=3;t++){mkt+="<div style='font-size:11px'><b>"+t+"级</b>　"
       +((s.market[t]||[]).map((c,i)=>{const cost=Object.entries(c.cost).filter(e=>e[1]>0).map(e=>gmI(e[0],12)+"×"+e[1]).join(" ");
-        return "<span style='margin:0 6px'>["+i+"] "+gmI(c.disc,15)+"+"+c.pts+" "+C_CN[c.disc]+"　需"+cost+"</span>";}).join("")||"（空）")+"</div>";}
+        return "<span style='"+bgImg("panel")+"margin:0 6px;border:1px solid var(--line,#ddd);border-radius:var(--r1);padding:3px 6px;display:inline-block'>["+i+"] "+gmI(c.disc,15)+"+"+c.pts+" "+C_CN[c.disc]+"　需"+cost+"</span>";}).join("")||"（空）")+"</div>";}
     mkt+="<div class='gsec'>你的宝石</div>"+tok(s.tokens[state.uid])
       +"<div style='font-size:11px;color:var(--dim)'>永久折扣："+tok(s.discount[state.uid])
       +"　<span style='color:#c9962a'>"+resIcon("crown",12)+"</span>贵宾待邀："+(s.nobles||[]).length
@@ -5088,16 +5095,16 @@ const GRENDER={
     const CC=s.colors||{};
     const CTS={r:"#e05555",w:"#f5f2e8",b:"#4a7de0",y:"#e8b93c",k:"#3a3d42"};
     const CTS_CLS={r:"r",w:"w",b:"b",y:"y",k:"k"};
-    const azTile=t=>"<span class='vtile "+(CTS_CLS[t.c]||"w")+"' title='"+CC[t.c]+"'>"+CC[t.c]+"</span>";
+    const azTile=t=>{const u=BG["azul_tile_"+t.c];if(u)return "<img src='"+u+"' title='"+CC[t.c]+"' style='width:22px;height:22px;vertical-align:middle;margin:1px' alt=''>";return "<span class='vtile "+(CTS_CLS[t.c]||"w")+"' title='"+CC[t.c]+"'>"+CC[t.c]+"</span>";};
     const chunk=a=>a.map(x=>({c:x.c,n:x.n}));   // offers/center 已是 {c,n} 小对象
     const d=document.createElement("div");
-    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>第 "+s.round+" 轮 · 回合 → "
+    d.innerHTML="<div style='"+bgImg("azul_score_track")+"font-size:11px;color:var(--dim);border-radius:var(--r1);padding:2px 6px'>第 "+s.round+" 轮 · 回合 → "
       +esc(gnick(s.turn_uid))+"　🧱 袋剩 "+s.bag+"　"+scoreHTML(s.score)+"</div>";
     d.innerHTML+="<div class='gsec'>工厂碗</div><div style='display:flex;flex-wrap:wrap;gap:4px'>"
-      +(s.offers||[]).map((b,i)=>b.length?("<span title='碗"+(i+1)+"' style='border:1px solid var(--line,#ddd);border-radius:8px;padding:3px 5px;display:inline-block'>"
+      +(s.offers||[]).map((b,i)=>b.length?("<span title='碗"+(i+1)+"' style='border:1px solid var(--line,#ddd);"+bgImg("azul_bowl")+"border-radius:8px;padding:3px 5px;display:inline-block'>"
         +b.map(azTile).join("")+"</span>"):"<span style='color:var(--dim)'>[碗"+(i+1)+"空]</span>").join("　")
       +"</div><div style='font-size:11px'>中央："+((s.center||[]).map(azTile).join("")||"（空）")+"</div>";
-    d.innerHTML+="<div class='gsec'>我的墙</div><div style='display:grid;grid-template-columns:repeat(5,24px);gap:2px'>"
+    d.innerHTML+="<div class='gsec'>我的墙</div><div style='"+bgImg("azul_board")+"display:grid;grid-template-columns:repeat(5,24px);gap:2px'>"
       +[0,1,2,3,4].map(r=>[0,1,2,3,4].map(c=>{
         const v=(s.wall[state.uid]||{})[r+","+c];
         return "<div style='height:24px;width:24px;border-radius:3px;background:"+(v?CTS[v]:"rgba(0,0,0,.04)")

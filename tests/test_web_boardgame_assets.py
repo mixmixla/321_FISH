@@ -19,3 +19,16 @@ def test_missing_assets_module_degrades_to_empty(monkeypatch):
     html = web._SERVED_PAGE().decode("utf-8")
     assert "@@UX_BG_ASSETS@@" not in html
     assert _extract_bg_literal(html) == {}
+
+def test_panel_css_and_renderers_use_bitmaps():
+    html = web._SERVED_PAGE().decode("utf-8")
+    assert "body.hasBgArt #gpanel .card" in html
+    assert "function bgImg(" in html
+    for mark in ('bgImg("azul_bowl")', 'bgImg("azul_board")',
+                 'bgImg("azul_score_track")', 'bgImg("panel")'):
+        assert mark in html, mark
+    assert 'BG["gem_' in html
+    assert 'BG["azul_tile_' in html
+    # 动作契约不回归
+    assert '{op:"take"' in html and '{op:"place"' in html and '{op:"floor"' in html
+    assert 'op:"take2"' in html and 'op:"buy"' in html and 'op:"reserve"' in html

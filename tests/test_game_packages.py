@@ -59,3 +59,30 @@ def test_missing_ref_and_unknown_name_degrade_to_none():
                                        assets="no.such.module:ASSETS"))
     assert reg.desktop_painter("badtest") is None
     assert "badtest" not in reg.package_assets()
+
+
+def test_client_render_falls_back_to_package_painter():
+    import client_gameui as cu
+    calls = []
+    reg.register(reg.GamePackage(
+        name="faketest2", label="假包2", rules="x:y",
+        desktop="tests._fakepkg2:PAINT"))
+    mod = types.ModuleType("tests._fakepkg2")
+    mod.PAINT = lambda cv, st, me, nick, submit, repaint, ui, priv, w, h: calls.append(w)
+    sys.modules["tests._fakepkg2"] = mod
+    cu._PKG_PAINTERS.pop("faketest2", None)
+
+    class _Cv:
+        def delete(self, *a): pass
+        def create_text(self, *a, **k): pass
+        def bind(self, *a, **k): pass
+
+    cu.render(_Cv(), "faketest2", {}, 1, lambda u: str(u), lambda a: None,
+              lambda: None, {}, None, 400, 300)
+    assert calls == [400]
+
+
+def test_client_render_unknown_game_uses_generic_not_package():
+    import client_gameui as cu
+    cu._PKG_PAINTERS.pop("nope", None)
+    assert cu._pkg_painter("nope") is None

@@ -1787,12 +1787,29 @@ _CLICKS = {
 # ---------------------------------------------------------------------------
 # 统一入口
 # ---------------------------------------------------------------------------
+_PKG_PAINTERS = {}          # 展示包画师缓存：game -> fn | False（False=已确认无）
+
+
+def _pkg_painter(game):
+    """查展示包注册表取画师；未命中/异常返回 None。结果缓存，避免每帧 importlib。"""
+    if game in _PKG_PAINTERS:
+        return _PKG_PAINTERS[game] or None
+    fn = None
+    try:
+        from boardgames import registry as _registry
+        fn = _registry.desktop_painter(game)
+    except Exception:
+        fn = None
+    _PKG_PAINTERS[game] = fn or False
+    return fn
+
+
 def render(cv, game, st, me, nick, submit, repaint, ui, priv, w, h):
     if w < 80 or h < 80:
         return
     cv.delete("all")
     cv._gkey = game          # 供 _turn_banner 绘制左侧游戏矢量图标
-    painter = _PAINTERS.get(game)
+    painter = _PAINTERS.get(game) or _pkg_painter(game)
     if painter:
         painter(cv, st, me, nick, submit, repaint, ui, priv, w, h)
     else:

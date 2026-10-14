@@ -5311,8 +5311,8 @@ def _p_azul(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         title += f"　第 {st.get('round', 1)} 轮 · 轮到 {nick(st['turn_uid'])}"
     _turn_banner(cv, w, 46, title, accent)
     ui.update(game="azul")
-    # P3：毡布桌面（原创位图平铺；非真画布/缺素材时保留原底色，零回归）
-    _asset_bg(cv, "felt", 0, 47, w, h)
+    # P3：阿兹勒赫花砖壁纸底（原创位图平铺；非真画布/缺素材时保留原底色，零回归）
+    _asset_bg(cv, "azulejo", 0, 47, w, h)
     acol = {"r": "#d2534f", "w": "#f0f0f0", "b": "#4a7de0",
             "y": "#e0b33c", "k": "#3a3a3a"}
     offers = st.get("offers") or []
@@ -5328,7 +5328,7 @@ def _p_azul(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         if not _asset_at(cv, "azul_bowl", bcx - r, bowl_cy - r, int(r * 2)):
             cv.create_oval(bcx - r, bowl_cy - r, bcx + r, bowl_cy + r,
                            fill="#1f3036", outline="#4a7d8a", width=2)
-        _text(cv, bcx, bowl_cy + r - 12, f"碗{i}", "#9fbfbf", (_FONT_F[0], 8))
+        _text(cv, bcx, bowl_cy + r - 12, f"碗{i}", "#5F706A", (_FONT_F[0], 8))
         k = len(bowl)
         ang = 0
         ts = max(8, int(r * 0.62))
@@ -5346,7 +5346,7 @@ def _p_azul(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     if not _asset_at(cv, "azul_bowl", ccx - r, ccy - r, int(r * 2)):
         cv.create_oval(ccx - r, ccy - r, ccx + r, ccy + r, fill="#17242a",
                        outline="#7d4a4a", width=2)
-    _text(cv, ccx, ccy + r - 12, "中央", "#c0a0a0", (_FONT_F[0], 8))
+    _text(cv, ccx, ccy + r - 12, "中央", "#5F706A", (_FONT_F[0], 8))
     k = 0
     cs = max(7, int(r * 0.54))
     for x in center[:7]:
@@ -5364,10 +5364,19 @@ def _p_azul(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     myw = wall.get(str(me), {})
     base_y = 60 + top_h + 10
     avh = h - base_y - 24
-    # 5 行（花纹行）
     rw = w * 0.34
+    wlx = w * 0.40
+    wcell = min(avh / 5, (w - wlx - 60) / 5)
+    # P3：玩家板衬底（azul_board 九宫格浅底；失败回退既有浅色圆角面板）
+    board_x = 8
+    board_right = wlx + 5 * wcell + 8
+    if not _asset_nine_at(cv, "azul_board", board_x, base_y,
+                          board_right - board_x, avh, border=14):
+        _rrect(cv, board_x, base_y, board_right, base_y + avh, 14,
+               fill="#EAF2F7", outline="#8FB6CE")
+    # 5 行（花纹行）
     rh = math.floor(avh / 5)
-    _text(cv, rw / 2, base_y + rh / 2 - 20, "花纹行", "#cfe0d8", _FONT_B)
+    _text(cv, rw / 2, base_y + rh / 2 - 20, "花纹行", "#213336", _FONT_B)
     for i in range(5):
         cap = i + 1
         row = myr.get(str(i), [])
@@ -5379,18 +5388,16 @@ def _p_azul(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         for j in range(cap):
             x = x0 + j * cwid
             filled = j < cnt
-            col = acol.get(row[j], "#888") if filled else "#263a3a"
+            col = acol.get(row[j], "#888") if filled else "#E5F3EE"
             # P3：已落花砖改用原创花砖位图；空槽/失败回退既有方槽
             drawn = filled and _asset_at(cv, f"azul_tile_{row[j]}",
                                          x + (cwid - 3 - tsz) / 2,
                                          yy + rh / 2 - tsz / 2, tsz)
             if not drawn:
                 cv.create_rectangle(x, yy + rh * 0.25, x + cwid - 3,
-                                    yy + rh * 0.75, fill=col, outline="#4a6a6a")
+                                    yy + rh * 0.75, fill=col, outline="#8FB6CE")
     # 墙 5x5
-    wlx = w * 0.40
-    wcell = min(avh / 5, (w - wlx - 60) / 5)
-    _text(cv, wlx + wcell * 2.5, base_y - 10, "墙（上墙落瓦）", "#cfe0d8", _FONT_B)
+    _text(cv, wlx + wcell * 2.5, base_y - 10, "墙（上墙落瓦）", "#213336", _FONT_B)
     wtsz = int(wcell - 2)
     for r in range(5):
         for c in range(5):
@@ -5401,13 +5408,20 @@ def _p_azul(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             if not (cell and _asset_at(cv, f"azul_tile_{cell}", x0 + 1,
                                        yy0 + 1, wtsz)):
                 cv.create_rectangle(x0 + 1, yy0 + 1, x0 + wcell - 1,
-                                    yy0 + wcell - 1, fill=acol.get(cell, "#223236"),
-                                    outline="#4a6a6a", width=1)
+                                    yy0 + wcell - 1, fill=acol.get(cell, "#E5F3EE"),
+                                    outline="#8FB6CE", width=1)
+    # P3：右侧计分轨（azul_score_track 九宫格深蓝底；失败回退既有深蓝圆角面板）
+    track_w = max(56, int(w * 0.11))
+    track_x = board_right + 12
+    if not _asset_nine_at(cv, "azul_score_track", track_x, base_y,
+                          track_w, avh, border=14):
+        _rrect(cv, track_x, base_y, track_x + track_w, base_y + avh, 14,
+               fill="#2E4A63", outline="#101E2C")
     # 地板/分数
     fl = st.get("floor") or {}
     _text(cv, w - 14, base_y + avh / 2,
           f"地板亏 {fl.get(str(me), 0)}\n🏆 {_pscore(st, me)} 分",
-          "#ffd75e", (_FONT_F[0], 12), anchor="e")
+          "#16796C", (_FONT_F[0], 12), anchor="e")
 
 
 @_register("betrayal")

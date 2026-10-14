@@ -43,10 +43,27 @@ try:
     import _art as _art_assets            # 原创美术：登录横幅/吉祥物（内嵌 base64）
 except Exception:
     _art_assets = None
+try:
+    import _art_boardgame as _bg_assets   # 原创桌游对局位图（内嵌 base64 data-URI）
+except Exception:
+    _bg_assets = None
 
 def _js_json_literal(obj):
     """把对象编码成可嵌进 JS 双引号字符串的 JSON 文本（配合模板里的 JSON.parse("…")）。"""
     return json.dumps(json.dumps(obj))[1:-1]
+
+
+_BG_ASSET_KEYS = ("azulejo", "azul_board", "azul_score_track", "azul_bowl",
+                  "azul_tile_r", "azul_tile_w", "azul_tile_b", "azul_tile_y", "azul_tile_k",
+                  "gem_o", "gem_d", "gem_r", "gem_e", "gem_s", "gem_g",
+                  "card_frame", "panel")
+
+
+def _bg_assets_subset():
+    src = getattr(_bg_assets, "ASSETS", None) if _bg_assets is not None else None
+    if not src:
+        return {}
+    return {k: src[k] for k in _BG_ASSET_KEYS if k in src}
 
 
 def _SERVED_PAGE():
@@ -70,6 +87,7 @@ def _SERVED_PAGE():
     _resico = {k: resource_icon_svg(k, 18) for k in RESOURCE_ICONS}
     _resico['__fallback'] = resource_icon_svg('', 18)
     page = page.replace('@@UX_RESOURCE_ICONS@@', _js_json_literal(_resico))
+    page = page.replace('@@UX_BG_ASSETS@@', _js_json_literal(_bg_assets_subset()))
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -3880,6 +3898,8 @@ function rIcon(name,size){const s=ROLEICONSVG[name]||ROLEICONSVG.__fallback;if(!
 const RESICONSVG=JSON.parse("@@UX_RESOURCE_ICONS@@");
 function resIcon(name,size){const s=RESICONSVG[name]||RESICONSVG.__fallback;if(!s)return "";const n=size||18;
   return s.replace('width="18"','width="'+n+'"').replace('height="18"','height="'+n+'"').replace('<svg ','<svg style="vertical-align:-3px" ');}
+// C · 同源桌游位图子集（_art_boardgame.ASSETS → data-URI，网页端对局绘制复用）。
+const BG=JSON.parse("@@UX_BG_ASSETS@@");
 // 角色编码：隐藏身份游戏 private() 载荷 → ROLE_ICONS 键（与桌面端 client_gameui._ROLE_KEY 对齐）。
 const ROLENUM={werewolf:{0:"villager",1:"werewolf",2:"seer",3:"witch",4:"hunter"},
   onewolf:{0:"villager",1:"werewolf",2:"seer",3:"robber",4:"insomniac"},

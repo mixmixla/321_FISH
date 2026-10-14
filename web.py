@@ -55,6 +55,9 @@ def _js_json_literal(obj):
 
 _BG_ASSET_KEYS = ("azulejo", "azul_board", "azul_score_track", "azul_bowl",
                   "azul_tile_r", "azul_tile_w", "azul_tile_b", "azul_tile_y", "azul_tile_k",
+                  "azul_table", "azul_boardface", "azul_plate", "azul_track", "azul_floor",
+                  "azul_wall_cell_r", "azul_wall_cell_w", "azul_wall_cell_b",
+                  "azul_wall_cell_y", "azul_wall_cell_k",
                   "gem_o", "gem_d", "gem_r", "gem_e", "gem_s", "gem_g",
                   "card_frame", "panel")
 
@@ -5110,47 +5113,6 @@ const GRENDER={
       const dev=document.createElement("button");dev.className="gbtn";dev.textContent="🔥 弃2枚翻倍";
       dev.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"devote",r:parseInt(S.value,10)}});
       bar.append(S,place,dev);box.appendChild(bar);}
-  },
-  azul(box,s){
-    box.appendChild(gTitle("azul","花砖物语 · 拼花"));
-    const CC=s.colors||{};
-    const CTS={r:"#e05555",w:"#f5f2e8",b:"#4a7de0",y:"#e8b93c",k:"#3a3d42"};
-    const CTS_CLS={r:"r",w:"w",b:"b",y:"y",k:"k"};
-    const azTile=t=>{const u=BG["azul_tile_"+t.c];if(u)return "<img src='"+u+"' title='"+CC[t.c]+"' style='width:22px;height:22px;vertical-align:middle;margin:1px' alt=''>";return "<span class='vtile "+(CTS_CLS[t.c]||"w")+"' title='"+CC[t.c]+"'>"+CC[t.c]+"</span>";};
-    const chunk=a=>a.map(x=>({c:x.c,n:x.n}));   // offers/center 已是 {c,n} 小对象
-    const d=document.createElement("div");
-    d.innerHTML="<div style='"+bgImg("azul_score_track")+"font-size:11px;color:var(--dim);border-radius:var(--r1);padding:2px 6px'>第 "+s.round+" 轮 · 回合 → "
-      +esc(gnick(s.turn_uid))+"　🧱 袋剩 "+s.bag+"　"+scoreHTML(s.score)+"</div>";
-    d.innerHTML+="<div class='gsec'>工厂碗</div><div style='display:flex;flex-wrap:wrap;gap:4px'>"
-      +(s.offers||[]).map((b,i)=>b.length?("<span title='碗"+(i+1)+"' style='border:1px solid var(--line,#ddd);"+bgImg("azul_bowl")+"border-radius:8px;padding:3px 5px;display:inline-block'>"
-        +b.map(azTile).join("")+"</span>"):"<span style='color:var(--dim)'>[碗"+(i+1)+"空]</span>").join("　")
-      +"</div><div style='font-size:11px'>中央："+((s.center||[]).map(azTile).join("")||"（空）")+"</div>";
-    d.innerHTML+="<div class='gsec'>我的墙</div><div style='"+bgImg("azul_board")+"display:grid;grid-template-columns:repeat(5,24px);gap:2px'>"
-      +[0,1,2,3,4].map(r=>[0,1,2,3,4].map(c=>{
-        const v=(s.wall[state.uid]||{})[r+","+c];
-        return "<div style='height:24px;width:24px;border-radius:3px;background:"+(v?CTS[v]:"rgba(0,0,0,.04)")
-          +";border:1px solid "+(v?CTS[v]:"var(--line,#eee)")+"'>"+(v?CC[v]:"")+"</div>";
-      }).join("")).join("")
-      +"<div class='gsec' style='grid-column:1/-1'>我的花纹行</div>"
-      +Object.entries(s.rows[state.uid]||{}).map(([r,row])=>"<div style='grid-column:1/-1;font-size:11px'>第"+(+r+1)+"行："
-        +row.map(azTile).join("")+"（"+(+r+1-row.length)+"空）</div>").join("")
-      +"<div style='grid-column:1/-1;font-size:11px'>地板："+((s.floor[state.uid]||0))+"　分："+s.score[state.uid]+"</div>"
-      +"</div>";
-    box.appendChild(d);
-    if(s.turn_uid!==state.uid){box.appendChild(gBtn("⏸ 等待他行动",null,true));return}
-    const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-    const S=document.createElement("select");const opt=document.createElement("option");opt.value="center";opt.textContent="中央";S.appendChild(opt);
-    (s.offers||[]).forEach((b,i)=>{const o=document.createElement("option");o.value=i;o.textContent="碗"+(i+1);S.appendChild(o)});
-    const C=document.createElement("select");
-    Object.entries(CC).forEach(([k,v])=>{const o=document.createElement("option");o.value=k;o.textContent=v;C.appendChild(o)});
-    const bt=document.createElement("button");bt.className="gbtn go";bt.textContent="🧱 取砖";
-    bt.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"take",src:S.value,col:C.value}});
-    bar.append(document.createTextNode("取："),S,C,bt);box.appendChild(bar);
-    const bar2=document.createElement("div");bar2.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center";
-    const R=document.createElement("select");[0,1,2,3,4].forEach(r=>{const o=document.createElement("option");o.value=r;o.textContent="第"+(r+1)+"行";R.appendChild(o)});
-    const bp=document.createElement("button");bp.className="gbtn";bp.textContent="🪟 落砖";
-    bp.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"place",row:R.value}});
-    bar2.append(document.createTextNode("落："),R,bp,gBtn("🌀 溢出地板",{op:"floor"}));box.appendChild(bar2);
   },
   rummikub(box,s){
     box.appendChild(gTitle("rummikub","拉密 · 出牌"));

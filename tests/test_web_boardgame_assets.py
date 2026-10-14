@@ -36,8 +36,9 @@ def test_panel_css_and_renderers_use_bitmaps():
     html = web._SERVED_PAGE().decode("utf-8")
     assert "body.hasBgArt #gpanel .card" in html
     assert "function bgImg(" in html
-    for mark in ('bgImg("azul_bowl")', 'bgImg("azul_board")',
-                 'bgImg("azul_score_track")', 'bgImg("panel")'):
+    # Azul 渲染器迁入展示包后改用包内新键（由 web_parts 注入，仍在服务页内）。
+    for mark in ('bgImg("azul_table")', 'bgImg("azul_plate")',
+                 'bgImg("azul_boardface")', 'bgImg("azul_track")', 'bgImg("panel")'):
         assert mark in html, mark
     assert 'BG["gem_' in html
     assert 'BG["azul_tile_' in html
@@ -56,3 +57,21 @@ def test_bg_img_fragment_survives_single_quoted_style_attribute():
     fragment_src = m.group(0)
     assert "'" not in fragment_src, fragment_src
     assert "background:url(" in fragment_src
+
+
+def test_azul_renderer_comes_from_package_not_inline_template():
+    from web import PAGE
+    # 模板里不再内联 azul 渲染器
+    assert "azul(box,s){" not in PAGE
+    html = web._SERVED_PAGE().decode("utf-8")
+    # 由包注入
+    assert "Object.assign(GRENDER,{" in html
+    assert 'op:"take"' in html and 'op:"place"' in html and 'op:"floor"' in html
+    for k in ("azul_table", "azul_boardface", "azul_plate", "azul_track"):
+        assert k in html, k
+
+
+def test_azul_web_js_is_a_single_selfcontained_statement():
+    from boardgames.azul import web as azweb
+    assert azweb.WEB_JS.strip().startswith("Object.assign(GRENDER,{")
+    assert azweb.WEB_JS.strip().endswith(");")

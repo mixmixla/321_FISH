@@ -174,3 +174,28 @@ def test_azul_painter_consumes_azulejo_and_boards():
     finally:
         try: root.destroy()
         except Exception: pass
+
+
+def test_gemcity_painter_switches_felt_to_azulejo():
+    if cu._BG_ASSETS is None or cu._PILImage is None or cu._PILImageTk is None:
+        pytest.skip("Pillow/Tk assets unavailable")
+    tk = pytest.importorskip("tkinter")
+    try:
+        root = tk.Tk()
+    except tk.TclError as exc:
+        pytest.skip(f"Tk unavailable: {exc}")
+    try:
+        cv = tk.Canvas(root, width=800, height=560)
+        cv.pack()
+        root.update_idletasks()
+        root.update()
+        ui = {}
+        cu.render(cv, "gemcity", _gemcity_state(), 7, lambda uid: f"P{uid}",
+                  lambda m: None, lambda: None, ui, None,
+                  cv.winfo_width(), cv.winfo_height())
+        cache = getattr(cv, "_asset_img_cache", {})
+        assert ("azulejo", None) in cache
+        assert ("felt", None) not in cache
+    finally:
+        try: root.destroy()
+        except Exception: pass

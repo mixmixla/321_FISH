@@ -5030,8 +5030,8 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         title += f"　轮到 {nick(st['turn_uid'])} · 目标 {15} 分"
     _turn_banner(cv, w, 46, title, accent)
     ui.update(game="gemcity")
-    # P3：毡布桌面（原创位图平铺；非真画布/缺素材时保留原底色，零回归）
-    _asset_bg(cv, "felt", 0, 47, w, h)
+    # P3：阿兹勒赫花砖壁纸底（原创位图平铺；非真画布/缺素材时保留原底色，零回归）
+    _asset_bg(cv, "azulejo", 0, 47, w, h)
     gcol = {"o": "#3a3a3a", "d": "#f0f0f0", "r": "#d2534f",
             "e": "#3a9b5f", "s": "#4a7de0", "g": "#e0b33c"}
     gtok = {"o": "⬛", "d": "⬜", "r": "🔴", "e": "🟢", "s": "🔵", "g": "🟡"}
@@ -5046,13 +5046,13 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     y0 = 58
     for tier in ("1", "2", "3"):
         cards = market.get(tier) or []
-        _text(cv, 18, y0 + 14, f"{tier}级", "#e8e0d0", _FONT_B, anchor="w")
+        _text(cv, 18, y0 + 14, f"{tier}级", "#213336", _FONT_B, anchor="w")
         for i, cd in enumerate(cards):
             x0 = 46 + i * (cw + 6)
-            # P3：卡面用九宫格面板位图铺底（圆角描边），不可用时回退既有 _rrect
+            # P3：卡面用九宫格面板位图铺底（圆角描边），不可用时回退既有 _rrect 浅底
             if not _asset_nine_at(cv, "panel", x0, y0, cw, chh, border=14):
-                _rrect(cv, x0, y0, x0 + cw, y0 + chh, 8, "#2a2a35", "#44444f")
-            _text(cv, x0 + cw - 8, y0 + 14, f"+{cd.get('pts', 0)}", "#ffd75e",
+                _rrect(cv, x0, y0, x0 + cw, y0 + chh, 8, "#F4F8FB", "#DCE6E2")
+            _text(cv, x0 + cw - 8, y0 + 14, f"+{cd.get('pts', 0)}", "#16796C",
                   _FONT_B, anchor="ne")
             dc = gcol.get(cd.get("disc"), "#888")
             dk = cd.get("disc")
@@ -5074,10 +5074,10 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                     if _real_cv(cv):
                         cv.create_image(x0 + 15, yy, anchor="center",
                                         image=_res_img(cv, k, gdisp[k], 12))
-                        _text(cv, x0 + 25, yy, f"×{v}", "#e8e8e8",
+                        _text(cv, x0 + 25, yy, f"×{v}", "#5F706A",
                               (_FONT_F[0], 9), anchor="w")
                     else:
-                        _text(cv, x0 + 12, yy, f"{gtok[k]}×{v}", "#e8e8e8",
+                        _text(cv, x0 + 12, yy, f"{gtok[k]}×{v}", "#5F706A",
                               (_FONT_F[0], 9), anchor="w")
                     yy += 15
         y0 += chh + 14
@@ -5085,7 +5085,7 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     bank = st.get("bank") or {}
     bx = 18
     py = y0 + 6
-    _text(cv, bx, py, "宝石池：", "#e8e0d0", _FONT_B, anchor="w")
+    _text(cv, bx, py, "宝石池：", "#213336", _FONT_B, anchor="w")
     xx = bx + 80
     for k in colors + ["g"]:
         # P3：宝石池改用原创刻面宝石位图；失败回退 E3 矢量资源图标
@@ -5096,7 +5096,7 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             else:
                 cv.create_oval(xx, py - 8, xx + 16, py + 8,
                                fill=gcol.get(k, "#888"), outline="")
-        _text(cv, xx + 22, py, str(bank.get(k, 0)), "#e8e8e8", _FONT_F,
+        _text(cv, xx + 22, py, str(bank.get(k, 0)), "#5F706A", _FONT_F,
               anchor="w")
         xx += 34
     nobles = st.get("nobles") or []
@@ -5104,11 +5104,11 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         lx = bx + 4
         if _real_cv(cv):
             cv.create_image(lx, py + 24, anchor="center",
-                            image=_res_img(cv, "crown", "#ffd75e", 13))
+                            image=_res_img(cv, "crown", "#16796C", 13))
             lx += 11
         _text(cv, lx, py + 24, "贵宾 +3(" + "  ".join(
             "+".join(f"{k}{v}" for k, v in nb.items())
-            for nb in nobles[:3]) + ")", "#ffd75e", (_FONT_F[0], 9), anchor="w")
+            for nb in nobles[:3]) + ")", "#16796C", (_FONT_F[0], 9), anchor="w")
     # 玩家（宝石/折扣/分）
     n = len(players)
     gap = 8
@@ -5117,11 +5117,11 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     tokens = st.get("tokens") or {}
     for idx, u in enumerate(players):
         x0 = gap + idx * (pw + gap)
-        cv.create_rectangle(x0, ply, x0 + pw, h - 10, fill="#3a2f52",
-                            outline=_shade(accent, 0.3), width=1)
+        cv.create_rectangle(x0, ply, x0 + pw, h - 10, fill="#E5F3EE",
+                            outline="#8FB6CE", width=1)
         _text(cv, x0 + pw / 2, ply + 14, nick(u) + ("（我）" if u == me else ""),
-              "#fff", _FONT_B)
-        _text(cv, x0 + pw - 6, ply + 14, f"🏆 {_pscore(st, u)}", "#ffd75e",
+              "#213336", _FONT_B)
+        _text(cv, x0 + pw - 6, ply + 14, f"🏆 {_pscore(st, u)}", "#16796C",
               _FONT_B, anchor="e")
         tk_tok = tokens.get(str(u), {})
         xx = x0 + 8
@@ -5135,14 +5135,14 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 else:
                     cv.create_oval(xx, ply + 28, xx + 12, ply + 40,
                                    fill=gcol.get(k, "#888"), outline="")
-            _text(cv, xx + 16, ply + 34, str(tk_tok.get(k, 0)), "#e8e8e8",
+            _text(cv, xx + 16, ply + 34, str(tk_tok.get(k, 0)), "#5F706A",
                   (_FONT_F[0], 8), anchor="w")
             xx += 30
         disco = st.get("discount") or {}
         dd = disco.get(str(u), {})
         _text(cv, x0 + pw / 2, ply + 56,
               "折扣:" + " ".join(f"{k}→{dd.get(k,0)}" for k in colors),
-              "#cfe0d8", (_FONT_F[0], 8))
+              "#213336", (_FONT_F[0], 8))
 
 
 @_register("siji")

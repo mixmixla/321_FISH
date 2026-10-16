@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Azul 展示包素材生成器（程序化原创，仅风格对标，无外部素材依赖）。
+"""Azul 展示包素材生成器（22 键；在共享 artkit + geom 之上程序化原创，无外部素材）。
 
 产物：
-  boardgames/azul/assets/*.png   —— 15 个 PNG 源文件（可提交）
+  boardgames/azul/assets/*.png   —— 22 个 PNG 源文件（可提交）
   boardgames/azul/_art.py        —— base64 内嵌模块（ASSETS = {...}）
 
-用法（开发期运行一次）：
-  python -m boardgames.azul.sprites
-
-设计：本模块自包含（不 import 共享生成器），沿用 4× 超采样（SS=4）与
-_begin/_end/_mix 惯例；所有坐标在超采样画布上按 R(v)=v*SS 缩放，
-最后 LANCZOS 收敛到目标尺寸。
+用法（开发期运行一次）：python -m boardgames.azul.sprites
 """
 from __future__ import annotations
 
@@ -21,234 +16,184 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-SS = 4
+from boardgames import artkit as ak
+from boardgames import geom
+
 HERE = Path(__file__).resolve().parent
 ASSETS_DIR = HERE / "assets"
 ART_MODULE = HERE / "_art.py"
 
-# ---------------------------------------------------------------- 调色（程序化原创，仅风格对标）
-_TABLE_BG = "#16232E"
-_TABLE_STRIPE = "#1B2C3A"
-_BOARD_BG = "#F7FAFC"
-_BOARD_PETAL = "#DCEAF4"
-_BOARD_STAR = "#3E7CB1"
-_BOARD_CORE = "#2B5E8C"
-_CELL_BG = "#F2F6F8"
-_CELL_EDGE = "#DCE6E2"
+# 调色（程序化原创，仅风格对标；花砖 5 色沿用引擎）
+TILE = {"r": "#D2534F", "w": "#F0F0F0", "b": "#4A7DE0", "y": "#E0B33C",
+        "k": "#3A3A3A"}
+_ORDER = "rwbyk"                 # 墙色循环顺序（花砖 5 色）
+_WALL_BG = "#F7FAFC"
+_WALL_BLUE = "#4A7DE0"
+_WALL_DEEP = "#2B5E8C"
+_BOARD_BG = "#F6F1E7"
+_BOARD_STRIPE = "#EFE7D6"
+_BOARD_BAND = "#3E7CB1"
+_SLOT_BG = "#E4D9C3"
+_SLOT_BD = "#CDBE9C"
+_PLATE_RIM = "#2E4A63"
 _PLATE_BODY = "#F7FAFC"
-_PLATE_EDGE = "#2E4A63"
-_PLATE_RING = "#8FB6CE"
-_PLATE_BORE = "#E6EFF5"
-_TRACK_BG = "#24405A"
-_TRACK_OUT = "#101E2C"
-_TRACK_IN = "#4A7096"
+_PLATE_GOLD = "#C9A227"
+_RING_RIM = "#16232E"
+_RING_BODY = "#24405A"
+_RING_TICK = "#BBD3E6"
 _FLOOR_BG = "#F2F6F8"
-_FLOOR_EDGE = "#8FB6CE"
-_TILE = {"r": "#D2534F", "w": "#F0F0F0", "b": "#4A7DE0", "y": "#E0B33C", "k": "#3A3A3A"}
-
-
-# ---------------------------------------------------------------- 基础工具
-def _clamp(v):
-    return 0 if v < 0 else (255 if v > 255 else int(v))
-
-
-def _rgba(hexstr, a=255):
-    h = hexstr.lstrip("#")
-    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), a)
-
-
-def _mix(hexstr, f):
-    """f>0 提亮，f<0 压暗，返回带 alpha 的元组。"""
-    r, g, b, _ = _rgba(hexstr)
-    if f >= 0:
-        r = r + (255 - r) * f
-        g = g + (255 - g) * f
-        b = b + (255 - b) * f
-    else:
-        r *= (1 + f)
-        g *= (1 + f)
-        b *= (1 + f)
-    return (_clamp(r), _clamp(g), _clamp(b), 255)
-
-
-def _begin(w, h, scale=SS):
-    img = Image.new("RGBA", (w * scale, h * scale), (0, 0, 0, 0))
-    return img, ImageDraw.Draw(img), scale
-
-
-def _end(img, w, h):
-    return img.resize((w, h), Image.Resampling.LANCZOS)
-
-
-def _star_pts(cx, cy, r_out, r_in, n=8, rot=-math.pi / 2):
-    """星形顶点：交替内外半径的 2n 个未缩放顶点（调用方逐点缩放）。"""
-    pts = []
-    for i in range(2 * n):
-        rr = r_out if i % 2 == 0 else r_in
-        a = rot + i * math.pi / n
-        pts.append((cx + rr * math.cos(a), cy + rr * math.sin(a)))
-    return pts
+_FLOOR_BD = "#8FB6CE"
+_CHIP = "#F3E3B0"
 
 
 def _datauri(img):
     buf = io.BytesIO()
     img.save(buf, "PNG", optimize=True)
-    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
-    return "data:image/png;base64," + b64
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
-# ---------------------------------------------------------------- 素材
-def make_table(size=128):
-    """深蓝灰桌布 + 极淡斜纹；纹样周期整除边长，四边无缝可平铺。"""
-    img, dr, s = _begin(size, size)
-
-    def R(v):
-        return v * s
-
-    dr.rectangle((0, 0, R(size), R(size)), fill=_rgba(_TABLE_BG))
-    step = size // 8                 # 16 → 整除 128，保证平铺无缝
-    wl = max(1, int(1.0 * s))
-    for c in range(-size, 2 * size, step):
-        dr.line((R(c), 0, R(c + size), R(size)),
-                fill=_rgba(_TABLE_STRIPE), width=wl)
-    return _end(img, size, size)
+def _blank(w, h):
+    return Image.new("RGBA", (w, h), (0, 0, 0, 0))
 
 
-def make_boardface(size=256):
-    """阿兹勒赫密铺：4×4 单元（四瓣花 + 八角星 + 星芯），不画网格线。"""
-    img, dr, s = _begin(size, size)
-
-    def R(v):
-        return v * s
-
-    P = size // 4
-    dr.rectangle((0, 0, R(size), R(size)), fill=_rgba(_BOARD_BG))
-    petal_r = 0.20 * P
-    off = 0.18 * P                  # 花瓣最大外扩 off+petal_r=0.38P < 半单元宽 0.5P
-    for j in range(4):
-        for i in range(4):
-            cx = (i + 0.5) * P
-            cy = (j + 0.5) * P
-            for dx, dy in ((off, 0), (-off, 0), (0, off), (0, -off)):
-                px, py = cx + dx, cy + dy
-                dr.ellipse((R(px - petal_r), R(py - petal_r),
-                            R(px + petal_r), R(py + petal_r)),
-                           fill=_rgba(_BOARD_PETAL))
-            star = _star_pts(cx, cy, P * 0.30, P * 0.13, 8)
-            dr.polygon([(R(x), R(y)) for (x, y) in star], fill=_rgba(_BOARD_STAR))
-            cr = 0.07 * P
-            dr.ellipse((R(cx - cr), R(cy - cr), R(cx + cr), R(cy + cr)),
-                       fill=_rgba(_BOARD_CORE))
-    return _end(img, size, size)
+def make_wall_bg(size=512):
+    """瓷砖墙背景：4×4 大尺度阿兹勒赫，蓝/白两色，周期 128 整除 512 ⇒ 无缝。"""
+    return ak.ornament_tile(size, _WALL_BG, _WALL_BLUE, _WALL_DEEP, cells=4)
 
 
-def make_plate(size=128):
-    """亮色陶瓷盘：深边 → 盘身 → 内环 → 内膛 → 克制高光；四角透明（RGBA）。"""
-    img, dr, s = _begin(size, size)
-
-    def R(v):
-        return v * s
-
-    dr.ellipse((R(3), R(3), R(size - 3), R(size - 3)), fill=_rgba(_PLATE_EDGE))
-    dr.ellipse((R(5), R(5), R(size - 5), R(size - 5)), fill=_rgba(_PLATE_BODY))
-    dr.ellipse((R(size * 0.20), R(size * 0.20), R(size * 0.80), R(size * 0.80)),
-               outline=_rgba(_PLATE_RING), width=max(1, int(4 * s)))
-    dr.ellipse((R(size * 0.26), R(size * 0.26), R(size * 0.74), R(size * 0.74)),
-               fill=_rgba(_PLATE_BORE))
-    hl = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    ImageDraw.Draw(hl).ellipse(
-        (R(size * 0.28), R(size * 0.26), R(size * 0.52), R(size * 0.44)),
-        fill=(255, 255, 255, 46))
-    img = Image.alpha_composite(img, hl)
-    return _end(img, size, size)
+def make_plate(size=160, center=False):
+    """陶瓷工厂盘：深蓝厚边 + 盘面 + 内环 + 底部投影；中央池加金边。"""
+    img = _blank(size, size)
+    r = size * 0.44
+    img = ak.shadow(img, (size * 0.06, size * 0.09, size * 0.94, size * 0.94),
+                    r * 0.5, spread=4, alpha=80, offset=(0, 2))
+    img = ak.disc(img, (size * 0.05, size * 0.05, size * 0.95, size * 0.95),
+                  _PLATE_RIM, _PLATE_BODY,
+                  ring=_PLATE_GOLD if center else _WALL_DEEP)
+    return img
 
 
-def make_track(w=96, h=48, border=14):
-    """计分轨底：深蓝 + 外深/内浅描边，大圆角，供九宫格拉伸（刻度由画布端绘制）。"""
-    img, dr, s = _begin(w, h)
-
-    def R(v):
-        return v * s
-
-    dr.rounded_rectangle((R(2), R(2), R(w - 2), R(h - 2)), radius=R(border),
-                         fill=_rgba(_TRACK_BG), outline=_rgba(_TRACK_OUT),
-                         width=max(1, int(1.6 * s)))
-    dr.rounded_rectangle((R(5), R(5), R(w - 5), R(h - 5)), radius=R(border - 4),
-                         outline=_rgba(_TRACK_IN), width=max(1, int(1.2 * s)))
-    return _end(img, w, h)
+def make_tile(color, size=48):
+    """立体花砖：上亮下暗的竖向渐变 + 斜边内缘。"""
+    return ak.gem(_blank(size, size), (2, 2, size - 2, size - 2), TILE[color],
+                  shape="tile")
 
 
-def make_floor(size=48):
-    """地板槽：浅底 + 描边，圆角。"""
-    img, dr, s = _begin(size, size)
+def make_marker(color, size=40):
+    """计分轨玩家棋子（瓷盘外形 + 该色实心）。"""
+    return ak.gem(_blank(size, size), (2, 2, size - 2, size - 2), TILE[color],
+                  shape="marker")
 
-    def R(v):
-        return v * s
 
-    dr.rounded_rectangle((R(2), R(2), R(size - 2), R(size - 2)), radius=R(8),
-                         fill=_rgba(_FLOOR_BG), outline=_rgba(_FLOOR_EDGE),
-                         width=max(1, int(1.6 * s)))
-    return _end(img, size, size)
+def make_chip(size=64):
+    """分数筹码：深色轮缘 + 实色圆面 + 浅描内环（超采样后收敛）。"""
+    img, _dr, s = ak.canvas(size, size)
+    img = ak.chip(img, (3, 3, size - 3, size - 3), _CHIP, s=s)
+    return ak.finish(img, size, size)
 
 
 def make_wall_cell(color, size=48):
-    """空墙格：米白底 + 内描边 + 该色淡印星纹（alpha≈64，示意该格花色）。"""
-    img, dr, s = _begin(size, size)
-
-    def R(v):
-        return v * s
-
-    dr.rounded_rectangle((R(2), R(2), R(size - 2), R(size - 2)), radius=R(7),
-                         fill=_rgba(_CELL_BG))
-    dr.rounded_rectangle((R(6), R(6), R(size - 6), R(size - 6)), radius=R(5),
-                         outline=_rgba(_CELL_EDGE), width=max(1, int(1.4 * s)))
-    r, g, b, _ = _rgba(_TILE[color])
-    tint = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    star = _star_pts(size / 2, size / 2, size * 0.22, size * 0.10, 8)
-    ImageDraw.Draw(tint).polygon([(R(x), R(y)) for (x, y) in star],
-                                 fill=(r, g, b, 64))
-    img = Image.alpha_composite(img, tint)
-    return _end(img, size, size)
+    """墙位预印目标色：内凹槽 + 该色淡印八角星（alpha≈70）。"""
+    img = _blank(size, size)
+    box = (2, 2, size - 2, size - 2)
+    img = ak.recess(img, box, size * 0.16, _SLOT_BG, depth=2)
+    dr = ImageDraw.Draw(img)
+    pts = ak._star_pts(size / 2.0, size / 2.0, size * 0.26, size * 0.12, 8)
+    r, g, b, _ = ak.color(TILE[color])
+    dr.polygon(pts, fill=(r, g, b, 70))
+    return img
 
 
-def make_tile(color, size=44):
-    """圆角花砖（较旧版更饱和）：主体该色 + 顶部高光 alpha 64 + 外描边 _mix(color,-0.30)。"""
-    hexstr = _TILE[color]
-    img, dr, s = _begin(size, size)
-
-    def R(v):
-        return v * s
-
-    dr.rounded_rectangle((R(1), R(1), R(size - 1), R(size - 1)), radius=R(6),
-                         fill=_rgba(hexstr))
-    gl = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    ImageDraw.Draw(gl).rounded_rectangle(
-        (R(5), R(4), R(size - 5), R(size * 0.42)), radius=R(4),
-        fill=(255, 255, 255, 64))
-    img = Image.alpha_composite(img, gl)
-    ImageDraw.Draw(img).rounded_rectangle(
-        (R(1), R(1), R(size - 1), R(size - 1)), radius=R(6),
-        outline=_mix(hexstr, -0.30), width=max(1, int(1.5 * s)))
-    return _end(img, size, size)
+def make_floor(size=48):
+    """地板槽：内凹 + 冷灰描边，提示「扣分行」。"""
+    img = _blank(size, size)
+    return ak.recess(img, (2, 2, size - 2, size - 2), size * 0.14, _FLOOR_BG, depth=3)
 
 
-# ---------------------------------------------------------------- 汇总 / 输出
+def make_board(w=384, h=288):
+    """玩家板：奶油底 + 细斜纹 + 左侧彩布边 + 铭牌照 + 5 条花纹凹槽
+    + 5×5 墙位（预印目标色）+ 底部 7 格地板线；用 geom 保证与落子坐标一致。"""
+    img, _dr, s = ak.canvas(w, h)
+    img = ak.linen(img, (0, 0, w, h), w * 0.05, _BOARD_BG, s=s, amount=5, seed=11)
+    dr = ImageDraw.Draw(img)
+    step = w / 32.0
+    for k in range(-1, 33):
+        dr.line((k * step * s, 0, (k * step + h) * s, h * s),
+                fill=ak.color(_BOARD_STRIPE), width=1)
+    band = w * 0.008
+    for i, c in enumerate(_ORDER):
+        dr.rectangle((i * band * s, 0, (i + 1) * band * s, h * s),
+                     fill=ak.color(TILE[c]))
+    img = ak.rrect_bevel(img, geom.nameplate(w, h), h * 0.035, "#E7DCC4",
+                         s=s, depth=2)
+    for i in range(geom.ROWS_N):
+        for j in range(i + 1):
+            x, y, cs = geom.row_slot(i, j, w, h)
+            img = ak.recess(img, (x, y, x + cs, y + cs), cs * 0.16, _SLOT_BG,
+                            s=s, depth=2)
+    for r in range(geom.WALL_N):
+        for c in range(geom.WALL_N):
+            x, y, cs = geom.wall_slot(r, c, w, h)
+            img = ak.recess(img, (x, y, x + cs, y + cs), cs * 0.16, _SLOT_BG,
+                            s=s, depth=2)
+            rr, gg, bb, _ = ak.color(TILE[_ORDER[(c - r) % 5]])
+            ImageDraw.Draw(img).polygon(
+                ak._star_pts((x + cs / 2.0) * s, (y + cs / 2.0) * s,
+                             cs * 0.26 * s, cs * 0.12 * s, 8), fill=(rr, gg, bb, 46))
+    for i in range(geom.FLOOR_N):
+        x, y, cs = geom.floor_slot(i, w, h)
+        img = ak.recess(img, (x, y, x + cs, y + cs), cs * 0.14, _FLOOR_BG,
+                        s=s, depth=2)
+    wx0, wy0, _wx1, wy1 = geom.wall_band(w, h)
+    ImageDraw.Draw(img).line((wx0 * 0.985 * s, wy0 * s, wx0 * 0.985 * s, wy1 * s),
+                             fill=ak.color(_SLOT_BD), width=max(1, int(1.4 * s)))
+    m = Image.new("L", img.size, 0)
+    ImageDraw.Draw(m).rounded_rectangle((0, 0, img.size[0] - 1, img.size[1] - 1),
+                                        radius=int(round(w * 0.05 * s)), fill=255)
+    img.putalpha(m)                       # 统一裁圆角（内部全部不透明）
+    return ak.finish(img, w, h)
+
+
+def make_track_ring(size=512, steps=30):
+    """圆形计分轨：外环厚边 + 31 格刻度（每 5 格加重、更长）。"""
+    img, _dr, s = ak.canvas(size, size)
+    img = ak.disc(img, (size * 0.04, size * 0.04, size * 0.96, size * 0.96),
+                  _RING_RIM, _RING_BODY, s=s, ring="#4A7096", highlight=False)
+    dr = ImageDraw.Draw(img)
+    cx = cy = size / 2.0
+    r_in, r_out = size * 0.30, size * 0.42
+    for v in range(steps + 1):
+        heavy = v % 5 == 0
+        a = -math.pi / 2 + (v / float(steps)) * 2 * math.pi
+        ln = (r_out - r_in) * (1.0 if heavy else 0.55)
+        x0, y0 = cx + r_in * math.cos(a), cy + r_in * math.sin(a)
+        x1, y1 = cx + (r_in + ln) * math.cos(a), cy + (r_in + ln) * math.sin(a)
+        dr.line((x0 * s, y0 * s, x1 * s, y1 * s),
+                fill=ak.color(_RING_TICK if heavy else "#6E90AE"),
+                width=max(1, int((2.4 if heavy else 1.4) * s)))
+    return ak.finish(img, size, size)
+
+
 def _build_images():
+    """22 键 → PIL 图像（键序无关）。"""
     imgs = {
-        "azul_table": make_table(),
-        "azul_boardface": make_boardface(),
-        "azul_plate": make_plate(),
-        "azul_track": make_track(),
+        "azul_wall_bg": make_wall_bg(),
+        "azul_plate": make_plate(center=False),
+        "azul_plate_center": make_plate(center=True),
+        "azul_board": make_board(),
+        "azul_chip": make_chip(),
+        "azul_track_ring": make_track_ring(),
         "azul_floor": make_floor(),
     }
-    for c in "rwbyk":
-        imgs[f"azul_wall_cell_{c}"] = make_wall_cell(c)
+    for c in _ORDER:
         imgs[f"azul_tile_{c}"] = make_tile(c)
+        imgs[f"azul_wall_cell_{c}"] = make_wall_cell(c)
+        imgs[f"azul_marker_{c}"] = make_marker(c)
     return imgs
 
 
 def build_all():
-    """返回 15 个素材的 PNG data URI（键序无关）。"""
+    """返回全部素材的 PNG data URI（供测试与内嵌校验）。"""
     return {key: _datauri(img) for key, img in _build_images().items()}
 
 

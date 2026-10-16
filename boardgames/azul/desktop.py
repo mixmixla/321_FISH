@@ -1,46 +1,81 @@
 # -*- coding: utf-8 -*-
-"""Azul 展示包桌面画师（spec §10 版面）。
+"""Azul 展示包桌面画师（spec §7 BGA 版面）。
 
-深色桌面底 + 浅色玩家板：工厂盘/中央池（环形均布）+ 花纹行 + 5×5 墙 + 地板线 + 计分轨。
+信息条 / 左列工厂盘（竖排网格）+ 列底中央池 / 中部自己一块大板 + 对手缩略小板
+/ 右侧圆形计分轨 + 分数清单。
 
-保持既有回退与 headless 契约：所有位图入口走 client_gameui 的 _asset_*（天然带
-_real_cv 守卫，失败回退矢量画法）；本模块不新增任何 ImageTk.PhotoImage(master=cv)。
+- 所有位图入口走 `boardgames.shell` 的组件（其内部再走 client_gameui 的
+  `_asset_*`，失败逐项矢量回退）；本模块不新增任何 `ImageTk.PhotoImage(master=cv)`。
+- 素材键一律经 `KEYS` / 关键字参数外置，`boardgames/shell.py` 源码内不出现 `azul_`。
 """
-import math
-
-from client_gameui import (
-    THEME, _text, _rrect, _disc, _stone, _asset_at, _asset_nine_at, _FONT_F,
-)
-from boardgames import shell
+from client_gameui import THEME, _text, _FONT_F
+from boardgames import geom, shell
 
 COLORS = ["r", "w", "b", "y", "k"]                 # 引擎墙拉丁方用色序
 ACOL = {"r": "#D2534F", "w": "#F0F0F0", "b": "#4A7DE0",
-        "y": "#E0B33C", "k": "#3A3A3A"}            # 花砖实色（回退用）
-_EMPTY = "#E5F3EE"                                 # 空槽浅底
-_SLOT_BD = "#CBE0EA"                               # 槽描边
+        "y": "#E0B33C", "k": "#3A3A3A"}            # 花砖实色（矢量回退用）
+_MARKERS = "rwbyk"                                 # 计分棋子色序（按玩家序号轮转）
+KEYS = {                                           # 角色 → Azul 素材键（含 {c} 模板）
+    "board": "azul_board",
+    "tile": "azul_tile_{c}",
+    "wall_cell": "azul_wall_cell_{c}",
+    "floor": "azul_floor",
+    "chip": "azul_chip",
+    "color": ACOL,
+}
 
 
-def _plate(cv, cx, cy, r):
-    """亮色陶瓷盘：azul_plate 位图（失败回退 _disc）。"""
-    if not _asset_at(cv, "azul_plate", cx - r, cy - r, int(r * 2)):
-        _disc(cv, cx, cy, r, "#F7FAFC", outline="#2E4A63")
+def _wall_target(r, c):
+    """墙格 (r, c) 应落的花色：引擎拉丁方 `_wall_col(ci, row) = (ci + row) % 5`。"""
+    return COLORS[(c - r) % 5]
 
 
-def _tiles(cv, cx, cy, r, items):
-    """盘内花砖沿盘心小环均匀摆放（失败回退 _stone）。"""
-    show = list(items[:8])
-    m = len(show)
-    if not m:
+def _marker_map(players):
+    """uid → 计分棋子色键（按座位顺序轮转 rwbyk；双端同源，桌面与网页一致）。
+
+    键用 `str(uid)`：引擎 status 的 `score` 即为 `{str(uid): ...}`，shell.score_ring
+    也按 `score` 的同一键集查表（`mk.get(uid) or mk.get(str(uid))`）。
+    """
+    return {str(u): _MARKERS[i % len(_MARKERS)] for i, u in enumerate(players or [])}
+
+
+def _paint_boards(cv, lay, players, me, rows_st, wall_st, fl_st, score, nick):
+    """中部玩家板区：自己一块大板（active + 地板计数）+ 对手缩略小板。
+
+    `me` 不在 `players` 里（旁观）时退化为 `layout` 的均匀网格，不做高亮。
+    """
+    cx0, cy0, cx1, cy1 = lay["center"]
+    cw_all, ch_all = cx1 - cx0, cy1 - cy0
+    if players and me in players:
+        me_w = min(cw_all * 0.55, ch_all * geom.BOARD_W / float(geom.BOARD_H))
+        others = [u for u in players if u != me]
+        o_x0 = cx0 + me_w + 8.0
+        o_w = max(1.0, cx1 - o_x0)
+        ocols = 2 if o_w >= 380.0 else 1
+        orows = max(1, (len(others) + ocols - 1) // ocols)
+        o_cw, o_ch = o_w / ocols, ch_all / orows
+        compact = o_cw < 190.0
+        shell.board_panel(cv, cx0, cy0, me_w, ch_all, nick(me),
+                          rows_st.get(str(me), {}), wall_st.get(str(me), {}),
+                          [], score.get(str(me), 0), KEYS,
+                          wall_expected=_wall_target, active=True,
+                          note=f"地板 {int(fl_st.get(str(me), 0))}")
+        for i, u in enumerate(others):
+            c, r = i % ocols, i // ocols
+            shell.board_panel(cv, o_x0 + c * o_cw, cy0 + r * o_ch, o_cw, o_ch,
+                              nick(u), rows_st.get(str(u), {}),
+                              wall_st.get(str(u), {}), [], score.get(str(u), 0),
+                              KEYS, wall_expected=_wall_target, compact=compact)
         return
-    ts = max(6, int(min(r * 0.62, 22)))
-    ring = r * 0.52
-    for k, it in enumerate(show):
-        c = it.get("c", "k") if isinstance(it, dict) else it
-        a = -math.pi / 2 + k * 2 * math.pi / m
-        px = cx + ring * math.cos(a)
-        py = cy + ring * math.sin(a)
-        if not _asset_at(cv, f"azul_tile_{c}", px - ts / 2, py - ts / 2, ts):
-            _stone(cv, px, py, ts * 0.42, ACOL.get(c, "#888"))
+    cols, rows = lay["cols"], lay["rows"]
+    cell_w, cell_h = lay["cell"]
+    compact = cell_w < 190.0
+    for i, u in enumerate(players):
+        c, r = i % cols, i // cols
+        shell.board_panel(cv, cx0 + c * cell_w, cy0 + r * cell_h, cell_w, cell_h,
+                          nick(u), rows_st.get(str(u), {}), wall_st.get(str(u), {}),
+                          [], score.get(str(u), 0), KEYS,
+                          wall_expected=_wall_target, compact=compact)
 
 
 def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
@@ -51,126 +86,62 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     elif st.get("turn_uid") is not None:
         title += f"　第 {st.get('round', 1)} 轮 · 轮到 {nick(st['turn_uid'])}"
 
-    # 1) 标题横幅  2) 深色桌面底
     shell.header(cv, w, title, accent)
     ui.update(game="azul")
-    shell.table(cv, w, h)
 
     players = st.get("players") or []
     score = st.get("score") or {}
-    top_h, base_y, avh, rw, wlx, wcell = shell.layout(w, h)
-
-    # 8) 玩家面板：工厂带右上；宽不足时缩窄
-    panel_w = min(190.0, max(120.0, w * 0.22))
-    fac_right = w - panel_w - 20
-    shell.player_panel(cv, w - panel_w - 8, shell.HEADER_H + 8, panel_w,
-                       [(u, score.get(str(u), 0)) for u in players], me, nick)
-
-    # 3/4) 工厂盘 + 中央池（环形均布，中央独立成盘）
+    rows_st = st.get("rows") or {}
+    wall_st = st.get("wall") or {}
+    fl_st = st.get("floor") or {}
     offers = st.get("offers") or []
     center = st.get("center") or []
-    cx_f = max(90.0, fac_right / 2)
-    cy_f = shell.HEADER_H + top_h / 2
-    ring = max(34.0, min(top_h * 0.30, cx_f * 0.72, 96.0))
-    pr = max(16.0, min(ring * 0.52, 34.0))
-    n = len(offers)
+    turn_uid = st.get("turn_uid")
+
+    # 1) 桌面底（无缝瓷砖墙，失败回退纯色）+ 分区几何
+    shell.table(cv, w, h, bg_key="azul_wall_bg")
+    lay = shell.layout(w, h, n_players=len(players))
+
+    # 2) 信息条：第 N 轮 · 轮到谁 · 袋剩 + 各玩家分数筹码
+    shell.info_bar(cv, w, lay["info"][1], shell.INFO_H, st.get("round", 1),
+                   nick(turn_uid) if turn_uid is not None else "—",
+                   st.get("bag", 0), score, me,
+                   bg_key="azul_wall_bg", chip_key="azul_chip")
+
+    # 3) 左列：工厂盘竖排网格（≤3 个单列，否则双列）+ 列底中央池
+    lx0, ly0, lx1, ly1 = lay["left"]
+    lh = ly1 - ly0
+    pool_zone = lh * 0.30
+    grid_h = max(1.0, lh - pool_zone)
+    n_f = len(offers)
+    fcols = 1 if n_f <= 3 else 2
+    frows = max(1, (n_f + fcols - 1) // fcols)
+    fcw, fch = (lx1 - lx0) / fcols, grid_h / frows
+    fr = max(10.0, min(fcw, fch) * 0.42)
+    _text(cv, lx0 + 6.0, ly0 + 8.0, "工厂盘", "#EAF2F7", (_FONT_F[0], 8), anchor="w")
     for i, bowl in enumerate(offers):
-        a = -math.pi / 2 + i * 2 * math.pi / max(n, 1)
-        px = cx_f + ring * math.cos(a)
-        py = cy_f + ring * math.sin(a)
-        _plate(cv, px, py, pr)
-        _tiles(cv, px, py, pr, bowl)
-    cr = max(18.0, min(ring * 0.52, 30.0))
-    _plate(cv, cx_f, cy_f, cr)
-    _tiles(cv, cx_f, cy_f, cr, center)
+        c, r = i % fcols, i // fcols
+        shell.factory_disc(cv, lx0 + fcw * (c + 0.5), ly0 + fch * (r + 0.5) + 8.0,
+                           fr, bowl, plate_key="azul_plate",
+                           tile_key="azul_tile_{c}", colors=ACOL)
+    pr = max(10.0, min((lx1 - lx0) * 0.42, pool_zone * 0.36))
+    pcx = (lx0 + lx1) / 2.0
+    pcy = ly0 + grid_h + pool_zone / 2.0
+    _text(cv, pcx, pcy - pr - 7.0, "中央池", "#EAF2F7", (_FONT_F[0], 8))
+    shell.factory_disc(cv, pcx, pcy, pr, center, plate_key="azul_plate_center",
+                       tile_key="azul_tile_{c}", center=True, colors=ACOL)
 
-    # 5) 玩家板：花纹行 + 5×5 墙
-    bx = 8
-    floor_h = 20.0
-    wall_gap = 6.0
-    wall_h = max(40.0, avh - floor_h - wall_gap)
-    wc = min(wcell, wall_h / 5)
-    bw = (wlx + 5 * wc + 8) - bx
-    if not _asset_nine_at(cv, "azul_boardface", bx, base_y, bw, avh, border=14):
-        _rrect(cv, bx, base_y, bx + bw, base_y + avh, 14,
-               fill="#EAF2F7", outline="#8FB6CE")
+    # 4) 中部：所有玩家板（自己大板高亮 + 对手缩略）
+    _paint_boards(cv, lay, players, me, rows_st, wall_st, fl_st, score, nick)
 
-    rows = st.get("rows") or {}
-    myr = rows.get(str(me), {}) or {}
-    wall = st.get("wall") or {}
-    myw = wall.get(str(me), {}) or {}
-    top = base_y + wall_gap
-    rh = wall_h / 5
-    slot = max(10.0, min((wlx - bx - 30) / 5, rh * 0.62))
-    for i in range(5):
-        cyy = top + i * rh + rh / 2
-        _text(cv, bx + 15, cyy, str(i + 1), "#7F98A8", (_FONT_F[0], 8))  # 行首容量
-        row = myr.get(str(i), []) or []
-        for j in range(i + 1):
-            x = bx + 24 + j * slot
-            y = cyy - slot / 2
-            if j < len(row):
-                c = row[j]
-                if not _asset_at(cv, f"azul_tile_{c}", x + 1, y + 1, int(slot - 2)):
-                    cv.create_rectangle(x, y, x + slot, y + slot,
-                                        fill=ACOL.get(c, "#888"), outline=_SLOT_BD)
-            else:
-                _rrect(cv, x + 1, y + 1, x + slot - 1, y + slot - 1, 4,
-                       fill=_EMPTY, outline=_SLOT_BD)
-
-    inner = int(wc - 4)
-    for r in range(5):
-        for c in range(5):
-            x0 = wlx + c * wc + 2
-            y0 = top + r * rh + 2
-            cell = myw.get(f"{r},{c}")
-            if cell:
-                if not _asset_at(cv, f"azul_tile_{cell}", x0, y0, inner):
-                    cv.create_rectangle(x0, y0, x0 + inner, y0 + inner,
-                                        fill=ACOL.get(cell, "#888"), outline=_SLOT_BD)
-            else:
-                exp = COLORS[(c - r) % 5]      # 该格应有的花色（引擎拉丁方）
-                if not _asset_at(cv, f"azul_wall_cell_{exp}", x0, y0, inner):
-                    cv.create_rectangle(x0, y0, x0 + inner, y0 + inner,
-                                        fill=_EMPTY, outline=_SLOT_BD)
-
-    # 6) 地板线 7 格
-    fl = st.get("floor") or {}
-    fcell = min((bw - 16) / 7, floor_h - 2)
-    fy = base_y + avh - floor_h + 1
-    for i in range(7):
-        fx = bx + 8 + i * fcell
-        if not _asset_at(cv, "azul_floor", fx + 1, fy + 1, int(fcell - 2)):
-            cv.create_rectangle(fx + 1, fy + 1, fx + fcell - 1, fy + fcell - 1,
-                                fill="#EDF3F7", outline="#8FB6CE")
-    _text(cv, bx + 8 + 7 * fcell + 6, fy + fcell / 2,
-          f"地板 {fl.get(str(me), 0)}", "#5F706A", (_FONT_F[0], 8), anchor="w")
-
-    # 7) 计分轨：0..30 刻度（每 5 格加重）+ 各玩家棋子（自己 accent 高亮）
-    track_x = bx + bw + 12
-    track_w = min(96.0, w - 12 - track_x)
-    if track_w >= 44:
-        if not _asset_nine_at(cv, "azul_track", track_x, base_y, track_w, avh,
-                              border=14):
-            _rrect(cv, track_x, base_y, track_x + track_w, base_y + avh, 14,
-                   fill="#24405A", outline="#101E2C")
-        ty0 = base_y + 14
-        ty1 = base_y + avh - 14
-        for v in range(0, 31):
-            ty = ty1 - (v / 30.0) * (ty1 - ty0)
-            heavy = v % 5 == 0
-            cv.create_line(track_x + 6, ty, track_x + (20 if heavy else 13), ty,
-                           fill="#BBD3E6" if heavy else "#6E90AE",
-                           width=2 if heavy else 1)
-            if heavy:
-                _text(cv, track_x + 24, ty, str(v), "#EAF2F7",
-                      (_FONT_F[0], 7), anchor="w")
-        for u in players:
-            v = max(0, min(30, int(score.get(str(u), 0))))
-            ty = ty1 - (v / 30.0) * (ty1 - ty0)
-            px = track_x + track_w - 13
-            _disc(cv, px, ty, 6, accent if u == me else "#C9D8E6",
-                  outline="#0E1B28")
-            if u == me:
-                cv.create_oval(px - 8, ty - 8, px + 8, ty + 8,
-                               outline="#FFD977", width=2)
+    # 5) 右侧：圆形计分轨（31 刻度）+ 分数清单（沿用既有 player_panel）
+    rx0, ry0, rx1, ry1 = lay["right"]
+    rwide = rx1 - rx0
+    rr = max(24.0, min(rwide * 0.42, (ry1 - ry0) * 0.36))
+    ccx, ccy = (rx0 + rx1) / 2.0, ry0 + 18.0 + rr
+    _text(cv, ccx, ry0 + 8.0, "计分轨（0–30）", "#EAF2F7", (_FONT_F[0], 8))
+    shell.score_ring(cv, ccx, ccy, rr, score, me, _marker_map(players),
+                     ring_key="azul_track_ring", marker_key="azul_marker_{c}",
+                     steps=30, colors=ACOL)
+    shell.player_panel(cv, rx0 + 8.0, ccy + rr + 12.0, max(60.0, rwide - 16.0),
+                       [(u, score.get(str(u), 0)) for u in players], me, nick)

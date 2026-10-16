@@ -3,7 +3,7 @@ from PyInstaller.utils.hooks import collect_all
 
 datas = [('C:/Users/Administrator/Documents/trae_projects/AI/learn_demos/321_局域网摸鱼助手_聊天文件游戏/models/vosk', 'models/vosk')]
 binaries = []
-hiddenimports = ['web', 'tls_cert', 'discovery', 'audit', 'stickers', 'bots', 'widgets.thread_window', 'widgets.sticker_shop', 'widgets.fingerprint', 'widgets.server_tray', 'pystray', 'PIL.Image', 'PIL.ImageDraw', 'voice_api', 'video_api', 'cryptography.hazmat.primitives.asymmetric.x25519', 'cryptography.hazmat.primitives.kdf.hkdf', 'cryptography.hazmat.primitives.ciphers.aead']
+hiddenimports = ['web', 'tls_cert', 'discovery', 'audit', 'stickers', 'bots', 'widgets.thread_window', 'widgets.sticker_shop', 'widgets.fingerprint', 'widgets.server_tray', 'pystray', 'PIL.Image', 'PIL.ImageDraw', 'voice_api', 'video_api', 'cryptography.hazmat.primitives.asymmetric.x25519', 'cryptography.hazmat.primitives.kdf.hkdf', 'cryptography.hazmat.primitives.ciphers.aead', 'boardgames', 'boardgames.registry', 'boardgames.shell', 'boardgames.azul', 'boardgames.azul.desktop', 'boardgames.azul.web', 'boardgames.azul._art']
 tmp_ret = collect_all('vosk')
 datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]
 

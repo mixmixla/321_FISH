@@ -167,9 +167,15 @@ def test_azul_painter_consumes_package_assets():
                   cv.winfo_width(), cv.winfo_height())
         img_keys = {k[0] for k in getattr(cv, "_asset_img_cache", {})}
         nine_keys = {k[0] for k in getattr(cv, "_asset_nine_cache", {})}
-        assert "azul_table" in img_keys or "azul_table" in nine_keys
-        assert "azul_boardface" in img_keys or "azul_boardface" in nine_keys
-        assert "azul_tile_r" in img_keys
+        assert "azul_wall_bg" in img_keys       # 桌面底：无缝瓷砖墙（_asset_bg 走 img 缓存）
+        assert "azul_board" in img_keys         # 玩家板面（元组尺寸 → 非正方形拉伸）
+        assert "azul_plate" in img_keys         # 工厂盘
+        assert "azul_plate_center" in img_keys  # 中央池
+        assert "azul_track_ring" in img_keys    # 圆形计分轨
+        assert "azul_marker_r" in img_keys      # 计分棋子（uid 7 → "r"）
+        assert "azul_chip" in img_keys          # 分数筹码（信息条 + 板面铭牌行）
+        assert "azul_floor" in img_keys         # 地板槽
+        assert "azul_tile_r" in img_keys        # 花砖（自己第 1 行有红砖、工厂盘里也有）
     finally:
         try: root.destroy()
         except Exception: pass
@@ -198,3 +204,53 @@ def test_gemcity_painter_switches_felt_to_azulejo():
     finally:
         try: root.destroy()
         except Exception: pass
+
+
+# ------------------------------------------------- headless 键序遥测（新画师契约）
+class _ProbeCanvas:
+    """接收任意绘制调用的画布桩：只兜住属性、不做记录断言。"""
+
+    def __init__(self):
+        self.calls = []
+
+    def __getattr__(self, name):
+        def _call(*a, **k):
+            self.calls.append(name)
+            return None
+        return _call
+
+
+def test_azul_headless_painter_requests_all_new_keys(monkeypatch):
+    """无 Tk / 无显示也验证：Azul 画师确实按新键集取材，且不再请求旧三键（本批仍生成、仅供网页端）。
+
+    shell 组件是 `from client_gameui import _asset_at` 的**直接引用**，故必须同时
+    打桩 `boardgames.shell` 与 `client_gameui` 两处，否则拿不到调用遥测。
+    """
+    from boardgames import shell as bshell
+
+    asked = []
+
+    def _rec_at(cv, key, x, y, size, anchor="nw"):
+        asked.append(key)
+        return False                     # 立刻失败 → 矢量回退，不触碰 ImageTk
+
+    def _rec_bg(cv, key, x0, y0, x1, y1):
+        asked.append(key)
+        return False
+
+    monkeypatch.setattr(bshell, "_asset_at", _rec_at)
+    monkeypatch.setattr(bshell, "_asset_bg", _rec_bg)
+    monkeypatch.setattr(cu, "_asset_at", _rec_at)
+    monkeypatch.setattr(cu, "_asset_bg", _rec_bg)
+    # 顶栏矢量游戏图标走 widgets.design_controls.game_icon_image（非 _asset_* 路径），
+    # 桩画布非真 Tk、无 tk.call，故短路 `_banner_icon`，使本遥测不依赖 Tk。
+    monkeypatch.setattr(cu, "_banner_icon", lambda *a, **k: None)
+    cv = _ProbeCanvas()
+    cu.render(cv, "azul", _azul_state(), 7, lambda uid: f"P{uid}",
+              lambda msg: None, lambda: None, {}, None, 900, 640)
+    for k in ("azul_wall_bg", "azul_board", "azul_plate", "azul_plate_center",
+              "azul_track_ring", "azul_marker_r", "azul_chip", "azul_floor",
+              "azul_tile_r", "azul_wall_cell_b"):
+        assert k in asked, k
+    for k in ("azul_table", "azul_boardface", "azul_track"):
+        assert k not in asked, k

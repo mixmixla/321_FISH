@@ -55,9 +55,11 @@ def _js_json_literal(obj):
 
 _BG_ASSET_KEYS = ("azulejo",
                   "azul_tile_r", "azul_tile_w", "azul_tile_b", "azul_tile_y", "azul_tile_k",
-                  "azul_table", "azul_boardface", "azul_plate", "azul_track", "azul_floor",
+                  "azul_plate", "azul_floor",
                   "azul_wall_cell_r", "azul_wall_cell_w", "azul_wall_cell_b",
                   "azul_wall_cell_y", "azul_wall_cell_k",
+                  "azul_wall_bg", "azul_board", "azul_plate_center", "azul_track_ring", "azul_chip",
+                  "azul_marker_r", "azul_marker_w", "azul_marker_b", "azul_marker_y", "azul_marker_k",
                   "gem_o", "gem_d", "gem_r", "gem_e", "gem_s", "gem_g",
                   "card_frame", "panel")
 

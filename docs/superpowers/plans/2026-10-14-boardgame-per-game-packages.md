@@ -462,9 +462,7 @@ git commit -m "feat(web): add game renderer/CSS injection points and merge packa
 
 ---
 
-## Task 4: Azul 素材层（sprites + 生成产
-
-物）
+## Task 4: Azul 素材层（sprites + 生成产物）
 
 **Files:**
 - Create: `boardgames/azul/sprites.py`, `boardgames/azul/_art.py`（生成）, `boardgames/azul/assets/*.png`（生成）

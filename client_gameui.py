@@ -1294,14 +1294,112 @@ def handle_click(ui, x, y):
         fn(ui, x, y)
 
 
+def _azul_src_at(ui, x, y):
+    """花砖物语取砖命中：热区由 Azul 画师按绘制坐标登记，取最近一片砖。
+
+    热区为 `(x0,y0,x1,y1,src,col)`，`src` 是工厂盘序号或 "center"。返回 (src, col)；
+    同盘多片同色砖各占一个热区，故抓任意一片都归到同一色（近者优先，不串色）。
+    """
+    best = None
+    for (x0, y0, x1, y1, src, col) in ui.get("azul_src") or ():
+        d = (x - (x0 + x1) / 2.0) ** 2 + (y - (y0 + y1) / 2.0) ** 2
+        rr = max(x1 - x0, y1 - y0) / 2.0 + 6.0
+        if d <= rr * rr and (best is None or d < best[0]):
+            best = (d, src, col)
+    return None if best is None else (best[1], best[2])
+
+
+def _azul_dst_at(ui, x, y):
+    """花砖物语落砖命中：花纹行带半开区间（上含下不含），地板线返回 row = -1。"""
+    for (x0, y0, x1, y1, row) in ui.get("azul_dst") or ():
+        if x0 <= x <= x1 and y0 <= y < y1:
+            return row
+    return None
+
+
+def _azul_can_drag(ui) -> bool:
+    """拖砖门禁：已连接、对局进行中、本人在玩家席（非观战）、轮到自己且未终局。"""
+    room, st = ui.get("room") or {}, ui.get("state") or {}
+    me = ui.get("me")
+    return bool(ui.get("connected") and room.get("status") == "playing"
+                and me is not None and me in (st.get("players") or [])
+                and st.get("winner_uid") is None
+                and st.get("turn_uid") is not None and st.get("turn_uid") == me)
+
+
+def _azul_repaint(ui) -> None:
+    fn = ui.get("repaint")
+    if fn is None:
+        return
+    try:
+        fn()
+    except Exception:
+        pass
+
+
+def _azul_drag(cv, ui, x, y, phase) -> None:
+    """花砖物语取砖拖拽：按下抓砖 → 松开落到花纹行/地板，一次手势发 take + place。
+
+    取砖热区/落砖热区/合法落点由画师写入 ui（画与命中同源）；松开处非法（空白、
+    异色行、墙格已占）则整手取消，不发任何动作。动作契约不变：仍走既有
+    take / place / floor 三个 op，服务端仍是唯一裁定者。
+    """
+    if phase == "down":
+        ui.pop("_azul_drag", None)
+        if not _azul_can_drag(ui):
+            return
+        hit = _azul_src_at(ui, x, y)
+        if hit is None:
+            return
+        ui["_azul_drag"] = {"src": hit[0], "col": hit[1], "x": x, "y": y, "row": None}
+        _azul_repaint(ui)
+        return
+    d = ui.get("_azul_drag")
+    if not d:
+        return
+    if phase == "up":
+        row = _azul_dst_at(ui, x, y)
+        ok = row is not None and (row < 0 or row in (ui.get("azul_ok") or ()))
+        src, col = d.get("src"), d.get("col")
+        submit = ui.get("submit")
+        ui.pop("_azul_drag", None)
+        ui.pop("azul_ok", None)
+        if not ok or submit is None:
+            _azul_repaint(ui)
+            return
+        submit({"op": "take", "src": src, "col": col})       # 先取
+        submit({"op": "floor"} if row < 0                    # 再落：地板 / 花纹行
+               else {"op": "place", "row": row})
+        _azul_repaint(ui)
+        return
+    row = _azul_dst_at(ui, x, y)
+    if row != d.get("row"):
+        d["row"], d["x"], d["y"] = row, x, y
+        _azul_repaint(ui)
+        return
+    gx, gy = d.get("gx"), d.get("gy")                        # 目标未变：只平移幽灵砖
+    if cv is None or gx is None:
+        return
+    try:
+        cv.move("azul_ghost", x - gx, y - gy)
+        d["gx"], d["gy"] = x, y
+    except Exception:
+        d.pop("gx", None)
+        d.pop("gy", None)
+
+
 def handle_drag(cv, ui, x, y, phase):
-    """鼠标拖拽作画：仅"你画我猜"画手在作画阶段生效。
+    """鼠标拖拽分发：花砖物语取砖落砖（`_azul_drag`）/ "你画我猜"画手作画。
 
     phase："down" 起笔 / "move" 续笔 / "up" 收笔。widget 坐标经 dg_map
     换算回 400×300 逻辑坐标后逐段作为 stroke 发送，与 Web 端一致；同时
     本地即时描线（tag=dg_ink）避免等待心跳回包。
     """
-    if ui.get("game") != "drawguess":
+    game = ui.get("game")
+    if game == "azul":
+        _azul_drag(cv, ui, x, y, phase)
+        return
+    if game != "drawguess":
         return
     st = ui.get("state") or {}
     if (st.get("status") or st.get("phase")) != "drawing" \

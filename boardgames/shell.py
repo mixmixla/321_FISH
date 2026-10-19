@@ -148,6 +148,8 @@ def board_panel(cv, x, y, w, h, name, rows, wall, floor, score, keys, *,
     color（色键→十六进制，供矢量回退））；缺键或缺位图时逐项矢量回退。
     wall_expected(r, c)：空格应显的目标色键（由调用方给，shell 不掺入拉丁方规则）。
     compact=True 时略去花纹行号文字（窄板）；note 为可选角标（如「地板 N」）。
+    返回板面几何 `{"bx","by","bw","bh"}`（4:3 内接后的实际矩形，居中内缩后的原点），
+    供调用方按 geom.row_band/floor_band 反算热区（画与命中同源，不重复缩放公式）。
     """
     pal = _key(keys, "color") or {}
     bw = min(w, h * geom.BOARD_W / float(geom.BOARD_H))
@@ -221,6 +223,7 @@ def board_panel(cv, x, y, w, h, name, rows, wall, floor, score, keys, *,
                outline="#C9A227")
     _text(cv, sx_ + cs2 / 2.0, sy_ + cs2 / 2.0, str(score), "#2B3A46",
           (_FONT_F[0], 9))
+    return {"bx": bx, "by": by, "bw": bw, "bh": bh}
 
 
 def score_ring(cv, cx, cy, r, scores, me, markers=None, *, ring_key=None,

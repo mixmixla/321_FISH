@@ -11595,9 +11595,8 @@ _GAME_ACTIONS = {
         ("▶ 继续", {"fixed": {"op": "next"}}, "商店结束，进下一盲注"),
     ],
     # ---- CC-03 桌面交互补齐：11 款此前被拦截的桌游 ----
+    # azul 取砖/落砖改走棋盘拖拽（client_gameui._azul_drag），不再弹输入窗。
     "azul": [
-        ("🧱 取砖", {"op": "take", "key": None, "kind": "srccol"}, "输入 来源 颜色，如 center r 或 0 b"),
-        ("🪟 落砖", {"op": "place", "key": "row", "kind": "int"}, "输入花纹行 0~4"),
         ("🌀 溢出地板", {"fixed": {"op": "floor"}}, "本回合取的砖全部溢出（地板扣分）"),
     ],
     "bolan": [
@@ -11672,6 +11671,11 @@ for _cg in ("gomoku", "connect4", "othello", "tictactoe", "chess", "xiangqi",
             "shogi", "junqi", "dou", "go", "checkers", "halma", "ludo"):
     _GAME_ACTIONS[_cg] = list(_GAME_ACTIONS.get(_cg, [])) + list(_COMMON_ACTION_BTNS)
 
+# 棋盘直操类游戏的首屏引导（无按钮可指时告诉玩家怎么操作）
+_GAME_HINTS = {
+    "azul": "拖动：从工厂盘 / 中央池抓起花砖，拖到自己的花纹行或地板线松手",
+}
+
 # 参数动作的友好输入窗：kind -> callable(win, title, hint, label) -> str|None
 def _KIND_INPUTS():
     from widgets import dialogbox as _db
@@ -11694,8 +11698,7 @@ def _KIND_INPUTS():
         "ludomove": lambda w, t, h: _one(w, t, h, "机号 0~3"),
         "blok": lambda w, t, h: _one(w, t, h, "拼块名 方向号 x y"),
         "ninjaattack": lambda w, t, h: _one(w, t, h, "目标 uid"),
-        # ---- CC-03 桌面补齐新增输入类 ----
-        "srccol": lambda w, t, h: _one(w, t, h, "来源 颜色"),
+        # ---- CC-03 桌面补齐新增输入类（花砖物语已改棋盘拖拽，无输入类）----
         "dxyrot": lambda w, t, h: _one(w, t, h, "板号 x y [方向]"),
         "colors": lambda w, t, h: _one(w, t, h, "三种颜色"),
         "tieridx": lambda w, t, h: _one(w, t, h, "层 序号"),
@@ -12194,15 +12197,25 @@ class GameWindow:
             win.attributes("-alpha", 0.95)
         except tk.TclError:
             pass
-        win.attributes("-topmost", True)
+        # 不置顶：对局窗被系统 topmost 钉住时切到别的程序压不掉它（摸鱼藏不起来），
+        # 跨窗层级一律交给老板键收起事务（见 _capture_collapse_snapshot）。
         try:
             win.title(self.app._camo_title())   # 窗口标题跟随伪装名（与托盘一致）
         except Exception:
             pass
         win.configure(bg=self._pal["win"])
         f = (FONT_FAMILY, FONT_SIZE)
-        win.geometry(f"760x600+{_screen_w(win) - 800}+40")
-        win.minsize(640, 480)                      # 可自由调整大小（不少于该值防卡片塌缩）
+        # 默认给足尺寸：左栏要同时装下「桌游卡网格 + 规则 + 房间列表」，
+        # 原来 760x600 时房间列表被挤成一条缝，新刷出的房间要手动放大才点得到。
+        sw = _screen_w(win)
+        try:
+            sh = win.winfo_screenheight()
+        except Exception:
+            sh = 1080
+        gw = min(1060, max(860, sw - 160))
+        gh = min(760, max(600, sh - 160))
+        win.geometry(f"{gw}x{gh}+{max(0, sw - gw - 40)}+40")
+        win.minsize(860, 600)                      # 可自由调整大小（不少于该值防卡片塌缩）
         win.resizable(True, True)
         self.win = win
         # 苹果风一致性：无边框 + 自绘红绿灯标题栏（与主窗同款，去掉原生 −□✕）
@@ -12253,12 +12266,17 @@ class GameWindow:
             dot.bind("<Enter>", lambda _e, d=dot, s=sym, c=col:
                      d.config(text=s, fg=c))
             dot.bind("<Leave>", lambda _e, d=dot: d.config(text="●"))
-        # 居中标题
-        tk.Label(bar, text="🀄 桌游 · 协作大厅", bg=bg, fg=fg, font=(FONT_FAMILY, 11),
-                 anchor="center").pack(side="left", fill="x", expand=True)
+        # 居中标题（双击最大化/还原——居中 Label 横向铺满标题栏中段，
+        # 只把双击绑在 bar 上会导致「双击标题文字没反应」，故 Label 一并绑）
+        title = tk.Label(bar, text="🀄 桌游 · 协作大厅", bg=bg, fg=fg,
+                         font=(FONT_FAMILY, 11), anchor="center")
+        title.pack(side="left", fill="x", expand=True)
         # 右侧「聊」钮
-        tk.Label(bar, text="聊", width=3, font=(FONT_FAMILY, 10), bg=bg, fg=btn_fg,
-                 cursor="hand2").pack(side="right", padx=(0, 8))
+        chat = tk.Label(bar, text="聊", width=3, font=(FONT_FAMILY, 10), bg=bg,
+                        fg=btn_fg, cursor="hand2")
+        chat.pack(side="right", padx=(0, 8))
+        for w in (bar, title, chat):          # 标题栏任意处双击 → 最大化/还原
+            w.bind("<Double-Button-1>", lambda _e: self._bar_max())
         self._apple_bar = bar
 
     def _build_plain_bar(self, win) -> None:
@@ -12268,6 +12286,8 @@ class GameWindow:
         self.title_label = tk.Label(bar, text="🀄 桌游 · 协作大厅", bg=self._pal["win"],
                                     fg=self._pal["sub"], font=(FONT_FAMILY, 11))
         self.title_label.pack(side="left", padx=8, pady=2)
+        for w in (bar, self.title_label):     # 双击条内任意处 → 最大化/还原
+            w.bind("<Double-Button-1>", lambda _e: self._bar_max())
         tk.Button(bar, text="—", width=2, command=self.hide,
                   font=(FONT_FAMILY, 10), relief="flat", fg=self._pal["sub"],
                   bg=self._pal["win"]).pack(side="right")
@@ -12333,7 +12353,10 @@ class GameWindow:
         tk.Label(left, text="桌游 · 双击创建", fg=self._pal["sub"], font=f, anchor="w",
                  bg=self._pal["win"]).pack(fill="x")
         wrap, self.game_inner = self._scroll_area(left, height=self._game_zone_h)
-        wrap.pack(fill="both", expand=True)
+        # 高度锁定为 2 行桌游卡（不再 expand）：剩余纵向空间全部让给房间列表。
+        # 原先桌游区与房间列表都 expand，房间列表被挤成一条缝，新刷出的房间
+        # 要手动放大窗口才点得到。
+        wrap.pack(fill="x")
         self.game_inner.bind("<Configure>", lambda e: self._apply_game_grid())
 
         # 规则说明内嵌：点选桌游卡片即显示该游戏规则
@@ -13346,11 +13369,13 @@ class GameWindow:
 
     # ---------- 动作区 ----------
     def _focus_board(self) -> None:
-        """「进入棋盘」：把对局浮窗置顶到最前，聚焦图形画布并刷新到最新状态。"""
+        """「进入棋盘」：把对局浮窗提到本进程最前（lift），聚焦画布并刷新到最新状态。
+
+        不强制置顶：对局窗一旦 topmost，切到别的程序时压不下去，摸鱼场景藏不起来
+        （用户反馈）；跨窗可见性统一由老板键收起事务负责，不在这里抢系统顶层。
+        """
         try:
             self.win.lift()
-            self.win.attributes("-topmost", True)
-            self.win.after(100, lambda: self.win.attributes("-topmost", True))
             self.game_cv.focus_set()
             self._render_canvas()          # 立即重绘棋盘到当前最新状态
         except Exception:
@@ -13369,7 +13394,7 @@ class GameWindow:
     def _rebuild_actions(self, game: str | None) -> None:
         for w in self.act_btns.winfo_children():
             w.destroy()
-        self.act_hint.config(text="")
+        self.act_hint.config(text=_GAME_HINTS.get(game) or "")
         if not game or (self.core.game_room or {}).get("status") != "playing":
             return
         desktop_status, desktop_note = _desktop_game_status(game)
@@ -13613,14 +13638,6 @@ class GameWindow:
                 return {"op": "place", "piece": parts[0], "oi": int(parts[1]),
                         "x": int(parts[2]), "y": int(parts[3])}
             # ---- CC-03 桌面补齐新增解析 ----
-            if kind == "srccol":       # 花砖物语：来源 颜色
-                parts = text.split()
-                if len(parts) < 2:
-                    return None
-                src = parts[0]
-                if src.lower() != "center":
-                    src = int(src)
-                return {"src": src, "col": parts[1].lower()}
             if kind == "dxyrot":       # 我是城主：板号 x y [方向]
                 parts = text.split()
                 if len(parts) < 3:
@@ -13869,7 +13886,7 @@ class BoardFocusWindow:
             win.attributes("-alpha", 0.97)
         except tk.TclError:
             pass
-        win.attributes("-topmost", True)
+        # 不置顶（同对局窗）：专注窗钉在系统顶层时切程序压不掉，藏不起来。
         win.configure(bg=self._pal["win"])
         f = (FONT_FAMILY, FONT_SIZE)
         sw = _screen_w(self.app.root)
@@ -13992,9 +14009,7 @@ class BoardFocusWindow:
             if reason != "collapse":
                 self._restore_allowed = True
             self.win.deiconify()
-            self.win.lift()
-            self.win.attributes("-topmost", True)
-            self.win.after(80, lambda: self.win.attributes("-topmost", True))
+            self.win.lift()                # 只在本进程内提前，不抢系统顶层
             self.redraw(force=True)
         except tk.TclError:
             pass

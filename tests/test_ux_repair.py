@@ -102,3 +102,81 @@ def test_lobby_rebuild_same_columns_and_resize_preserves_selection():
         if gw is not None:
             gw.close()
         root.destroy()
+
+
+def _lobby_app(root):
+    """构造真实 GameWindow 所需的最小 app 替身（与上面同一套 synthetic core）。"""
+    import client
+    from test_flagship_gui import _fake_game_core
+    core = _fake_game_core()
+    core.game_room = core.game_state = None
+    core.game_meta = {}
+    return SimpleNamespace(root=root, core=core, _dp=client._DEFAULT_PAL,
+                           _frameless=False, _skin={},
+                           _camo_title=lambda: "UX synthetic")
+
+
+def test_lobby_leaves_room_list_the_leftover_height():
+    """大厅左栏：桌游区锁定 2 行高，剩余纵向空间全部归房间列表。
+
+    回归点：原来桌游区与房间列表都 expand，默认窗下房间列表被挤成一条缝，
+    新刷出的房间要手动放大窗口才点得到。
+    """
+    import tkinter as tk
+    import client
+    try:
+        root = tk.Tk()
+    except tk.TclError:
+        pytest.skip("no display")
+    gw = None
+    try:
+        app = _lobby_app(root)
+        gw = client.GameWindow(app, pal=client._DEFAULT_PAL)
+        gw.win.geometry("1000x720")
+        gw.win.deiconify()                          # 未映射的控件 winfo_height 恒为 1
+        root.update()
+        root.update_idletasks()
+        game_canvas = gw._scroll_regions[0][0]      # 桌游卡网格
+        room_canvas = gw._scroll_regions[1][0]      # 房间列表
+        gh, rh = game_canvas.winfo_height(), room_canvas.winfo_height()
+        assert gh <= gw._game_zone_h + 6, f"桌游区不应再被拉高：{gh}"
+        assert rh >= 150, f"房间列表应吃掉剩余空间：{rh}"
+    finally:
+        if gw is not None:
+            gw.close()
+        root.destroy()
+
+
+def test_title_bar_double_click_toggles_maximize():
+    """双击标题栏任意处（含居中的标题文字）→ 最大化/还原。
+
+    回归点：双击原先只绑在标题栏 Frame 上，而居中 Label 横向铺满中段，
+    双击标题文字没反应。
+    """
+    import tkinter as tk
+    import client
+    try:
+        root = tk.Tk()
+    except tk.TclError:
+        pytest.skip("no display")
+    gw = None
+    try:
+        app = _lobby_app(root)
+        gw = client.GameWindow(app, pal=client._DEFAULT_PAL)
+        gw._build_apple_bar(gw.win)                 # frameless 路径：自绘红绿灯标题栏
+        root.update_idletasks()
+        bar = gw._apple_bar
+        assert "<Double-Button-1>" in bar.bind()
+        titles = [w for w in bar.winfo_children()
+                  if isinstance(w, tk.Label) and "桌游" in str(w.cget("text"))]
+        assert titles, "标题栏缺少居中标题"
+        assert all("<Double-Button-1>" in w.bind() for w in titles), \
+            "居中标题未绑双击 → 双击标题文字无反应"
+        gw._bar_max()
+        assert gw._bar_maxed is True
+        gw._bar_max()
+        assert gw._bar_maxed is False
+    finally:
+        if gw is not None:
+            gw.close()
+        root.destroy()

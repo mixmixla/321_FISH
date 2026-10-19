@@ -146,7 +146,8 @@ def _paint_drag(cv, ui, src_hits, dst_hits, rows_st, wall_st, me):
     d["gx"], d["gy"] = gx, gy
 
 
-def _paint_boards(cv, lay, players, me, rows_st, wall_st, fl_st, score, nick):
+def _paint_boards(cv, lay, players, me, rows_st, wall_st, fl_st, fl_tiles_st,
+                  score, nick):
     """中部玩家板区：自己一块大板（active + 地板计数）+ 对手缩略小板。
 
     `me` 不在 `players` 里（旁观）时退化为 `layout` 的均匀网格，不做高亮。
@@ -165,14 +166,15 @@ def _paint_boards(cv, lay, players, me, rows_st, wall_st, fl_st, score, nick):
         compact = o_cw < 190.0
         mine = shell.board_panel(cv, cx0, cy0, me_w, ch_all, nick(me),
                                  rows_st.get(str(me), {}), wall_st.get(str(me), {}),
-                                 [], score.get(str(me), 0), KEYS,
-                                 wall_expected=_wall_target, active=True,
+                                 fl_tiles_st.get(str(me), []), score.get(str(me), 0),
+                                 KEYS, wall_expected=_wall_target, active=True,
                                  note=f"地板 {int(fl_st.get(str(me), 0))}")
         for i, u in enumerate(others):
             c, r = i % ocols, i // ocols
             shell.board_panel(cv, o_x0 + c * o_cw, cy0 + r * o_ch, o_cw, o_ch,
                               nick(u), rows_st.get(str(u), {}),
-                              wall_st.get(str(u), {}), [], score.get(str(u), 0),
+                              wall_st.get(str(u), {}), fl_tiles_st.get(str(u), []),
+                              score.get(str(u), 0),
                               KEYS, wall_expected=_wall_target, compact=compact)
         return mine
     cols, rows = lay["cols"], lay["rows"]
@@ -182,7 +184,7 @@ def _paint_boards(cv, lay, players, me, rows_st, wall_st, fl_st, score, nick):
         c, r = i % cols, i // cols
         shell.board_panel(cv, cx0 + c * cell_w, cy0 + r * cell_h, cell_w, cell_h,
                           nick(u), rows_st.get(str(u), {}), wall_st.get(str(u), {}),
-                          [], score.get(str(u), 0), KEYS,
+                          fl_tiles_st.get(str(u), []), score.get(str(u), 0), KEYS,
                           wall_expected=_wall_target, compact=compact)
     return None
 
@@ -191,9 +193,12 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["azul"][1]
     title = "🧱 花砖物语·拼花"
     if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 墙分最高"
+        ws = st.get("winners") or [st["winner_uid"]]
+        title = "🏆 " + "、".join(nick(u) for u in ws) + " 墙分最高"
     elif st.get("turn_uid") is not None:
         title += f"　第 {st.get('round', 1)} 轮 · 轮到 {nick(st['turn_uid'])}"
+        if st.get("start_uid") is not None:
+            title += f"　⭐先手 {nick(st['start_uid'])}"
 
     shell.header(cv, w, title, accent)
     ui.update(game="azul")
@@ -203,6 +208,7 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     rows_st = st.get("rows") or {}
     wall_st = st.get("wall") or {}
     fl_st = st.get("floor") or {}
+    fl_tiles_st = st.get("floor_tiles") or {}
     offers = st.get("offers") or []
     center = st.get("center") or []
     turn_uid = st.get("turn_uid")
@@ -251,7 +257,8 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     ui["azul_src"] = src_hits
 
     # 4) 中部：所有玩家板（自己大板高亮 + 对手缩略）
-    mine = _paint_boards(cv, lay, players, me, rows_st, wall_st, fl_st, score, nick)
+    mine = _paint_boards(cv, lay, players, me, rows_st, wall_st, fl_st,
+                         fl_tiles_st, score, nick)
     dst_hits = _dst_hits(mine)
     ui["azul_dst"] = dst_hits
     ui.pop("azul_ok", None)

@@ -140,7 +140,8 @@ def _create_text_args(cv):
     return [a + (k.get("text"),) for n, a, k in cv.calls if n == "create_text"]
 
 
-def test_board_panel_compact_skips_row_labels_and_keeps_note():
+def test_board_panel_has_no_row_labels_and_keeps_note():
+    """BGA 式板面：不再画 1~5 行号；空地板槽显示 -1/-1/-2/-2/-2/-3/-3。"""
     compact = _Stub()
     shell.board_panel(compact, 0, 0, 384, 288, "P7", rows={}, wall={}, floor=[],
                       score=0, keys=FAKE_KEYS, active=False, compact=True,
@@ -148,12 +149,14 @@ def test_board_panel_compact_skips_row_labels_and_keeps_note():
     txt = [str(v) for a in _create_text_args(compact) for v in a]
     assert "1" not in txt and "2" not in txt and "5" not in txt
     assert any("地板 3" in t for t in txt)
+    assert "-1" in txt and "-2" in txt and "-3" in txt   # 地板扣分刻度
 
     wide = _Stub()
     shell.board_panel(wide, 0, 0, 384, 288, "P7", rows={}, wall={}, floor=[],
                       score=0, keys=FAKE_KEYS, active=False)
     wtxt = [str(v) for a in _create_text_args(wide) for v in a]
-    assert "1" in wtxt and "5" in wtxt
+    assert "1" not in wtxt and "5" not in wtxt           # 宽板同样不画行号
+    assert "-1" in wtxt and "-3" in wtxt
 
 
 def test_shell_does_not_hardcode_azul_keys():

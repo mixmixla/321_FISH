@@ -147,11 +147,34 @@ def test_lobby_leaves_room_list_the_leftover_height():
         root.destroy()
 
 
+def test_tile_drag_does_not_move_the_window():
+    """画布拖拽不应带走整窗：窗口拖动只绑在标题栏，Toplevel 本身不绑。
+
+    回归点：_make_draggable(Toplevel) 会经 bindtags 传播，画布上的花砖拖拽
+    被当成窗口拖动，拖砖时整窗跟着指针跑。
+    """
+    import tkinter as tk
+    import client
+    try:
+        root = tk.Tk()
+    except tk.TclError:
+        pytest.skip("no display")
+    gw = None
+    try:
+        app = _lobby_app(root)
+        gw = client.GameWindow(app, pal=client._DEFAULT_PAL)
+        root.update_idletasks()
+        assert "<Button-1>" not in gw.win.bind(), "Toplevel 不应绑窗口拖动"
+        assert "<Button-1>" in gw._plain_bar.bind(), "标题栏应保留拖动整窗"
+        assert "<B1-Motion>" in gw.game_cv.bind(), "画布应保留游戏拖拽交互"
+    finally:
+        if gw is not None:
+            gw.close()
+        root.destroy()
+
+
 def test_title_bar_double_click_toggles_maximize():
     """双击标题栏任意处（含居中的标题文字）→ 最大化/还原。
-
-    回归点：双击原先只绑在标题栏 Frame 上，而居中 Label 横向铺满中段，
-    双击标题文字没反应。
     """
     import tkinter as tk
     import client

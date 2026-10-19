@@ -26,7 +26,8 @@ def _azul_one_full_turn(g, uid, src=0, col=None):
 
 def test_azul_take_place_and_advance():
     g = AzulGame([1, 2], seed=1)
-    assert g.round == 1 and len(g.offers) == 2
+    assert g.round == 1 and len(g.offers) == 5      # 2 人：2×2+1 座工厂盘
+    assert all(len(b) == 4 for b in g.offers)
     _azul_one_full_turn(g, 1, 0)
     assert g.turn == 1
 

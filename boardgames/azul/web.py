@@ -22,13 +22,17 @@ azul(box,s){
   const CTS_CLS={r:"r",w:"w",b:"b",y:"y",k:"k"};
   // 墙空格应有色：引擎拉丁方 _wall_col(ci,row)=(ci+row)%5 ⇒ 格 (r,c) 应为 COLORS[(c-r)%5]
   const wallColor=(r,c)=>COLORS[(((c-r)%5)+5)%5];
-  const azTile=t=>{
+  // 取砖热区：每片砖带 data-azsrc（工厂碗序号 / center）与 data-azcol（色键）。
+  // src 为空表示只是展示（花纹行里的砖），不参与拖拽。
+  const azTile=(t,src)=>{
     const c=(t&&t.c)?t.c:t;
+    const ds=(src==null)?"":" data-azsrc='"+src+"'";
     const u=BG["azul_tile_"+c];
-    if(u)return "<img src='"+u+"' title='"+CC[c]+"' style='width:20px;height:20px;vertical-align:middle;margin:1px' alt=''>";
-    return "<span class='vtile "+(CTS_CLS[c]||"w")+"' title='"+CC[c]+"'>"+CC[c]+"</span>";};
+    if(u)return "<img class='aztile' data-azcol='"+c+"'"+ds+" src='"+u+"' title='"+CC[c]+"' style='width:20px;height:20px;vertical-align:middle;margin:1px' alt=''>";
+    return "<span class='vtile aztile "+(CTS_CLS[c]||"w")+"' data-azcol='"+c+"'"+ds+" title='"+CC[c]+"'>"+CC[c]+"</span>";};
   const players=s.players||[];
   const score=s.score||{},rowsAll=s.rows||{},wallAll=s.wall||{},floorAll=s.floor||{};
+  const floorTilesAll=s.floor_tiles||{};
   const marker={};players.forEach((u,i)=>{marker[String(u)]=MARKERS[i%MARKERS.length]});
   const me=state.uid;
   const nickOf=u=>gnick(u);
@@ -44,13 +48,15 @@ azul(box,s){
     +"<img src='"+(BG["azul_chip"]||"")+"' alt=''>"
     +"<span"+(u===me?" class='azme'":"")+">"+esc(nickOf(u))+" "+(score[String(u)]||0)+"</span></span>")).join("");
   d.innerHTML="<div class='azinfo'>第 "+s.round+" 轮 · 回合 → "+esc(nickOf(s.turn_uid))
-    +"　🧱 袋剩 "+s.bag+"　"+chips+"</div>";
+    +"　🧱 袋剩 "+s.bag
+    +(s.start_uid!=null?"　⭐先手 "+esc(nickOf(s.start_uid)):"")
+    +"　"+chips+"</div>";
 
   // 2) 左列：工厂盘（azul_plate）+ 中央池（azul_plate_center）
   const plates=(s.offers||[]).map((b,i)=>b.length
-    ?("<span class='azplate' style='"+bgImg("azul_plate")+"'>"+b.map(azTile).join("")+"</span>")
+    ?("<span class='azplate' style='"+bgImg("azul_plate")+"'>"+b.map(t=>azTile(t,i)).join("")+"</span>")
     :"<span class='azempty'>[碗"+(i+1)+"空]</span>").join("");
-  const center=(s.center||[]).map(azTile).join("");
+  const center=(s.center||[]).map(t=>azTile(t,"center")).join("");
   d.innerHTML+="<div class='azleft'><div class='gsec'>工厂盘</div>"+plates
     +"<div class='gsec'>中央池</div><span class='azplate azplate-c' style='"+bgImg("azul_plate_center")+"'>"
     +(center||"<span class='azempty'>（空）</span>")+"</span></div>";
@@ -58,16 +64,20 @@ azul(box,s){
   // 3) 中部：所有玩家板（自己大板高亮、对手缩略）
   const boards=players.map(u=>{
     const rows=rowsAll[String(u)]||{},wall=wallAll[String(u)]||{};
+    const mine=(u===me);
     let left="";
     for(let r=0;r<5;r++){
       const row=rows[String(r)]||[];
+      const k=Math.min(row.length,r+1);
       let slots="";
       for(let i=0;i<r+1;i++){
-        slots+=(i<row.length)
-          ?"<span class='azslot'>"+azTile(row[i])+"</span>"
+        const idx=i-(r+1-k);          // 右对齐：砖只出现在最右 k 格
+        slots+=(idx>=0&&idx<k)
+          ?"<span class='azslot'>"+azTile(row[idx])+"</span>"
           :"<span class='azslot azslot-e'></span>";
       }
-      left+="<div class='azrow'><span class='azrowcap'>"+(r+1)+"</span><span class='azrowslots'>"+slots+"</span></div>";
+      left+="<div class='azrow"+(mine?" azdrop":"")+"'"+(mine?" data-azdrop='"+r+"'":"")+">"
+        +"<span class='azrowcap'>"+(r+1)+"</span><span class='azrowslots'>"+slots+"</span></div>";
     }
     let wallHtml="";
     for(let r=0;r<5;r++){
@@ -80,11 +90,15 @@ azul(box,s){
       }
       wallHtml+="</div>";
     }
-    const mine=(u===me);
+    const floorTiles=(floorTilesAll[String(u)]||[]).map(azTile).join("");
+    const floorLine=mine
+      ?"<div class='azfloor azdrop' data-azdrop='-1' title='拖到这里＝全部溢出地板'>"
+       +"<span>地板（拖到这里溢出）</span><span class='azfloors'>"+floorTiles+"</span>"
+       +"<b>"+(floorAll[String(u)]||0)+"</b></div>":"";
     return "<div class='azboard"+(mine?" me":"")+"' style='"+bgImg("azul_board")+"'>"
       +"<div class='azbhead'>"+esc(nickOf(u))+"<span class='azbs'>"+(score[String(u)]||0)+"</span>"
-      +"<span class='azbf'>地板 "+(floorAll[String(u)]||0)+"</span></div>"
-      +"<div class='azbbody'><div>"+left+"</div><div>"+wallHtml+"</div></div></div>";
+      +(mine?"":"<span class='azbf'>地板 "+(floorAll[String(u)]||0)+"</span>")+"</div>"
+      +"<div class='azbbody'><div>"+left+"</div><div>"+wallHtml+"</div></div>"+floorLine+"</div>";
   }).join("");
   d.innerHTML+="<div class='azboards'><div class='gsec'>玩家板</div>"+boards+"</div>";
 
@@ -118,21 +132,74 @@ azul(box,s){
   d.innerHTML+="<div class='azfoot'>地板："+(floorAll[String(me)]||0)+"　分："+(score[String(me)]||0)+"</div>";
   box.appendChild(d);
 
-  // 6) 动作条（契约不变：take / place / floor）
+  // 6) 拖拽取砖（契约不变：take 先、place/floor 再）
+  //    从工厂盘 / 中央池抓起一片砖，拖到自己的花纹行或地板线松手即出牌。
+  //    落点先按引擎同一规则本地预检，非法落点整手取消，不发动作。
+  const rowsMe=rowsAll[String(me)]||{},wallMe=wallAll[String(me)]||{};
+  const canRow=(r,col)=>{
+    const row=rowsMe[String(r)]||[];
+    if(row.length&&row[0]!==col)return false;
+    const ci=COLORS.indexOf(col);
+    if(ci<0)return false;
+    const v=wallMe[r+","+((ci+r)%5)];
+    return v==null||v==="";
+  };
+  const canDrag=()=>s.turn_uid===me&&s.winner_uid==null;
+  const colCss={r:"#D2534F",w:"#F0F0F0",b:"#4A7DE0",y:"#E0B33C",k:"#3A3A3A"};
+  const ghost=document.createElement("div");
+  ghost.className="azghost";ghost.style.display="none";
+  d.appendChild(ghost);
+  let drag=null;
+  const clearMark=()=>{d.querySelectorAll(".azok,.azbad,.azsel").forEach(x=>
+    x.classList.remove("azok","azbad","azsel"))};
+  const endDrag=()=>{drag=null;ghost.style.display="none";clearMark()};
+  d.addEventListener("pointerdown",e=>{
+    const t=e.target.closest?e.target.closest("[data-azsrc]"):null;
+    if(!t||!canDrag())return;
+    e.preventDefault();
+    drag={src:t.getAttribute("data-azsrc"),col:t.getAttribute("data-azcol")};
+    d.querySelectorAll("[data-azdrop]").forEach(z=>{
+      const r=+z.getAttribute("data-azdrop");
+      z.classList.add((r<0||canRow(r,drag.col))?"azok":"azbad");
+    });
+    ghost.style.background=colCss[drag.col]||"#888";
+    ghost.style.display="block";
+    ghost.style.left=(e.clientX-13)+"px";ghost.style.top=(e.clientY-13)+"px";
+    try{d.setPointerCapture(e.pointerId)}catch(_e){}
+  });
+  d.addEventListener("pointermove",e=>{
+    if(!drag)return;
+    ghost.style.left=(e.clientX-13)+"px";ghost.style.top=(e.clientY-13)+"px";
+    const el=document.elementFromPoint(e.clientX,e.clientY);
+    const z=el&&el.closest?el.closest("[data-azdrop]"):null;
+    d.querySelectorAll(".azsel").forEach(x=>x.classList.remove("azsel"));
+    if(z&&z.classList.contains("azok"))z.classList.add("azsel");
+  });
+  const drop=e=>{
+    if(!drag)return;
+    const dd=drag;drag=null;
+    ghost.style.display="none";
+    const el=document.elementFromPoint(e.clientX,e.clientY);
+    const z=el&&el.closest?el.closest("[data-azdrop]"):null;
+    const r=z?+z.getAttribute("data-azdrop"):null;
+    const ok=(r!==null)&&(r<0||canRow(r,dd.col));
+    clearMark();
+    if(!ok)return;
+    gameAPI("action",{room_id:state.groom,action:{op:"take",src:dd.src,col:dd.col}})
+      .then(x=>{if(x&&x.ok)gameAPI("action",{room_id:state.groom,
+        action:(r<0?{op:"floor"}:{op:"place",row:r})});});
+  };
+  d.addEventListener("pointerup",drop);
+  d.addEventListener("pointercancel",endDrag);
   if(s.turn_uid!==me){box.appendChild(gBtn("⏸ 等待他行动",null,true));return}
-  const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-  const S=document.createElement("select");const opt=document.createElement("option");opt.value="center";opt.textContent="中央";S.appendChild(opt);
-  (s.offers||[]).forEach((b,i)=>{const o=document.createElement("option");o.value=i;o.textContent="碗"+(i+1);S.appendChild(o)});
-  const C=document.createElement("select");
-  Object.entries(CC).forEach(([k,v])=>{const o=document.createElement("option");o.value=k;o.textContent=v;C.appendChild(o)});
-  const bt=document.createElement("button");bt.className="gbtn go";bt.textContent="🧱 取砖";
-  bt.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"take",src:S.value,col:C.value}});
-  bar.append(document.createTextNode("取："),S,C,bt);box.appendChild(bar);
-  const bar2=document.createElement("div");bar2.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center";
-  const R=document.createElement("select");[0,1,2,3,4].forEach(r=>{const o=document.createElement("option");o.value=r;o.textContent="第"+(r+1)+"行";R.appendChild(o)});
-  const bp=document.createElement("button");bp.className="gbtn";bp.textContent="🪟 落砖";
-  bp.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"place",row:R.value}});
-  bar2.append(document.createTextNode("落："),R,bp,gBtn("🌀 溢出地板",{op:"floor"}));box.appendChild(bar2);
+  const tip=document.createElement("div");
+  tip.className="aztip";
+  tip.textContent="拖动：从工厂盘 / 中央池抓起花砖，拖到自己的花纹行或地板线松手";
+  box.appendChild(tip);
+  const bar=document.createElement("div");
+  bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px";
+  bar.appendChild(gBtn("🌀 溢出地板",{op:"floor"}));
+  box.appendChild(bar);
 },
 });
 """
@@ -161,7 +228,7 @@ WEB_CSS = r"""
 .azbbody{display:flex;gap:10px}
 .azrow{display:flex;align-items:center;gap:4px;margin:1px 0}
 .azrowcap{width:14px;text-align:center;color:#5a6b78;font-size:10px}
-.azrowslots{display:inline-flex}
+.azrowslots{display:inline-flex;width:110px;justify-content:flex-end}
 .azslot{display:inline-block;width:20px;height:20px;margin:1px;vertical-align:middle}
 .azslot-e{background:rgba(0,0,0,.06);border-radius:3px}
 .azwrow{display:flex}
@@ -170,6 +237,20 @@ WEB_CSS = r"""
 .azring{position:absolute;inset:0;width:100%;height:100%}
 .azslist{font-size:11px;color:#e8f0f6;margin-top:4px}
 .azsl{padding:1px 2px}
+/* 拖拽取砖：可抓砖 + 可落行/地板高亮 + 跟随指针的幽灵砖 */
+.aztile{cursor:grab;touch-action:none}
+.azdrop{border-radius:4px;outline:1px dashed transparent;outline-offset:1px;
+  transition:outline-color .1s,background .1s}
+.azdrop.azok{outline-color:#7fe0a8;background:rgba(127,224,168,.14)}
+.azdrop.azbad{opacity:.55}
+.azdrop.azsel{outline-style:solid;outline-color:#FFD977;background:rgba(255,217,119,.22)}
+.azfloor{display:flex;align-items:center;gap:8px;margin-top:5px;padding:3px 8px;
+  border-radius:4px;background:rgba(0,0,0,.10);font-size:11px;color:#5a6b78}
+.azfloor b{color:#8a6d1f}
+.azfloors{display:inline-flex;align-items:center;gap:1px}
+.azghost{position:fixed;width:26px;height:26px;border-radius:50%;pointer-events:none;
+  border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.45);z-index:99;display:none}
+.aztip{font-size:11px;color:var(--dim);margin-top:6px}
 @media (max-width:820px){.azgrid{grid-template-columns:1fr;
   grid-template-areas:"info" "left" "boards" "right"}}
 """

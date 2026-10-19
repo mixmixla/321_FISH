@@ -61,6 +61,15 @@ def test_geometry_is_contained_and_ordered():
         prev = x
 
 
+def test_pattern_rows_are_right_aligned_to_the_wall_side():
+    """Azul 规则：花纹行从右往左填、右端那片最后上墙 → 各行贴齐墙带一侧。"""
+    W, H = geom.BOARD_W, geom.BOARD_H
+    band = geom.row_band(0, W, H)
+    for i in range(geom.ROWS_N):
+        x, _y, s = geom.row_slot(i, i, W, H)      # 该行最右一格
+        assert abs((x + s) - band[2]) < 1e-6, i
+
+
 def test_scaling_is_exactly_linear():
     W, H = geom.BOARD_W, geom.BOARD_H
     for fn, args in ((geom.nameplate, ()), (geom.row_band, (3,)),

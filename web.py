@@ -547,6 +547,10 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
 /* R49 桌游：面板/按钮/卡片统一走「雾岸」Token（色·圆角·字号·禁用态），与桌面画师同源 */
 #gpanel{position:fixed;inset:0;background:rgba(16,30,26,.55);display:flex;align-items:center;justify-content:center;z-index:97}
 #gpanel .card{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:var(--r2);padding:16px;width:min(740px,94vw);max-height:90vh;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow-lg)}
+/* 放大对局：接近全屏，棋盘区吃掉剩余高度（小窗口玩花砖太挤） */
+#gpanel .card.full{width:98vw;max-width:98vw;height:96vh;max-height:96vh}
+#gpanel .card.full #gmain{max-height:none;flex:1 1 auto}
+#gpanel .card.full #glog{max-height:12vh}
 /* C · 有同源位图子集时：对局面板卡面叠一层白纱 + 花砖底纹（--azulejo 由 boot IIFE 注入）。 */
 body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.90),rgba(255,255,255,.90)),var(--azulejo);background-size:auto,256px 256px;background-repeat:no-repeat,repeat;background-position:center,top left}
 #ghead{display:flex;align-items:center;gap:8px;font-weight:700;font-size:var(--body-font,14px);color:var(--txt)}
@@ -4146,6 +4150,7 @@ function openGamePanel(rid){uxSelectNavigation('game');
   let p=$("#gpanel");if(p)p.remove();
   p=document.createElement("div");p.id="gpanel";
   const c=document.createElement("div");c.className="card";
+  if(state.gfull)c.classList.add("full");       // 保持上次的放大状态
   c.innerHTML="<div id='ghead'></div><div id='gmain'></div>"
     +"<div id='gpriv' style='display:none'></div><div id='glog'></div>";
   p.appendChild(c);document.body.appendChild(p);
@@ -4194,6 +4199,11 @@ function renderGamePanel(){
       head.appendChild(gHeadBtn("▶ 开始对局",()=>gameAPI("start",{room_id:room.room_id})));
     head.appendChild(gHeadBtn("🚪 离开",()=>gameAPI("leave",{room_id:room.room_id},true)));
   }
+  head.appendChild(gHeadBtn(state.gfull?"⛶ 还原":"⛶ 放大",()=>{
+    state.gfull=!state.gfull;
+    const card=document.querySelector("#gpanel .card");
+    if(card)card.classList.toggle("full",!!state.gfull);
+    renderGamePanel();}));
   head.appendChild(gHeadBtn("✕",hideGamePanel));
   const lb=$("#glog");lb.innerHTML="";(state.glog||[]).forEach(gLog);
   const main=$("#gmain"),priv=$("#gpriv");

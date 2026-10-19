@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
-"""花砖物语·拼花（致敬 Azul）：5 色瓷砖。每回合若干工厂碗供选，玩家从一座碗（或中央）
-拿取某色的全部瓷砖，填入自己的 5 排花纹行；排满一排即落一块上墙并计分，积压则掉地作负分。
-终局：有玩家铺满整行(5格)或瓷砖袋耗尽即结束，按墙分-地板分定胜负（整行+2 / 整列+7 奖励）。"""
+"""花砖物语·拼花（致敬 Azul）：5 色瓷砖。
+
+规则按官方/BGA 对齐：
+- 工厂盘数量 = 2×人数+1（2/3/4 人 → 5/7/9），每盘发 4 片；袋空时用盒盖弃砖回填。
+- 每人从一盘取走某色全部，余砖进中央；首取中央者拿起始玩家标记（占地板一格 -1），
+  并成为下一轮先手。
+- 花纹行从右往左填；行满只在**回合末 Wall-tiling 阶段**统一上墙计分，不立即上墙。
+- 每轮末按地板格扣分并清空地板；终局额外分：整行 +2 / 整列 +7 / 某色集齐 5 片 +10。
+- 有人在 Wall-tiling 后拼满整行 → 对局在该轮结束时结束（不在中途截断）。
+"""
 from games_pkg.base import BaseGame, GameRuleError
 
 COLORS = ["r", "w", "b", "y", "k"]          # 红 白 蓝 黄 黑
 COLOR_CN = {"r": "红", "w": "白", "b": "蓝", "y": "黄", "k": "黑"}
 ROWS = 5                                     # 花纹行/墙共 5 行
 ROW_PENALTY = [-1, -1, -2, -2, -2, -3, -3]   # 地板亏分（按超额度封顶 7）
+MARKER = "*"                                 # 地板里的起始玩家标记占位
 
 
 def _wall_col(color_idx: int, row: int) -> int:
@@ -23,18 +31,22 @@ class AzulGame(BaseGame):
     def __init__(self, players, seed=None):
         super().__init__(players, seed)
         self.bag = self._seed_bag()
-        self.offers = []          # 每座工厂碗（list of colors）
-        self.center = []          # 中央待取区
+        self.lid = []            # 盒盖：本局弃砖；袋空时回填
+        self.offers = []         # 每座工厂盘（list of colors）
+        self.center = []         # 中央待取区
         self.center_first_taken = False
-        self.rows = {u: {i: [] for i in range(ROWS)} for u in players}   # 花纹行（未满）
+        self.rows = {u: {i: [] for i in range(ROWS)} for u in players}   # 花纹行（未满/已满）
         self.wall = {u: {(r, c): None for r in range(ROWS) for c in range(ROWS)}
                      for u in players}                                   # 墙
-        self.floor = {u: 0 for u in players}
-        self.pending = None       # 当前行动者刚取走的瓷砖
+        self.floor = {u: [] for u in players}    # 地板砖色；MARKER 表示起始玩家标记
+        self.pending = None      # 当前行动者刚取走的瓷砖
         self.turn = 0
         self.round = 1
         self.score = {u: 0 for u in players}
+        self.start_uid = players[0] if players else None   # 本轮先手
+        self.marker_uid = None   # 起始玩家标记持有者（None = 仍在中央）
         self.winner = None
+        self.winners = []
         self._replenish()
 
     # ---------- 组装 ----------
@@ -45,20 +57,26 @@ class AzulGame(BaseGame):
         self.rng.shuffle(bag)
         return bag
 
+    def _refill_bag(self):
+        """袋空 → 用盒盖弃砖回填（官方 Preparing the next round）。"""
+        if not self.bag and self.lid:
+            self.bag = list(self.lid)
+            self.lid = []
+            self.rng.shuffle(self.bag)
+
     def _replenish(self):
-        if not any(x for x in self.offers) and not self.center:
-            pass                  # 正常整轮刷新前先清场
-        n = len(self.players)
+        self._refill_bag()
+        n_f = 2 * len(self.players) + 1
         self.offers = []
-        for _ in range(n):
+        for _ in range(n_f):
             bowl = []
             for _ in range(4):
                 if self.bag:
                     bowl.append(self.bag.pop())
-            if bowl:
-                self.offers.append(bowl)
+            self.offers.append(bowl)     # 砖不够时允许出现空盘
         self.center = []
         self.center_first_taken = False
+        self.marker_uid = None           # 标记放回中央，等首取者拿
 
     def _cur(self):
         return self.players[self.turn]
@@ -103,9 +121,10 @@ class AzulGame(BaseGame):
                 f"取走 {COLOR_CN[col]}×{k}"]
         if src == "center":
             if not self.center_first_taken:
-                self.floor[uid] += 1
                 self.center_first_taken = True
-                msgs.append("（首取中央：地板 -1）")
+                self.marker_uid = uid
+                self._to_floor(uid, [MARKER])
+                msgs.append("（首取中央：拿起始玩家标记，地板 -1）")
             self.center.extend(source_list)   # 已被取空
         else:
             self.center.extend(source_list)   # 留下的进中央
@@ -113,17 +132,22 @@ class AzulGame(BaseGame):
         self.pending = taken
         return msgs + [f"💬 请选择花纹行(0~4)落砖，或点 '溢出到地板'"]
 
+    def _to_floor(self, uid, tiles):
+        """地板从左侧起填；满 7 格后多余砖回盒盖（官方 Floor line）。"""
+        room = max(0, 7 - len(self.floor[uid]))
+        tiles = list(tiles)
+        self.floor[uid].extend(tiles[:room])
+        self.lid.extend(x for x in tiles[room:] if x != MARKER)
+
     def _place(self, uid, action):
         if self.pending is None:
             raise GameRuleError("先取砖再落砖")
         taken = self.pending
         m = int(action.get("row", -1))
         if m == -1:
-            floor_lost = min(len(taken), 2)
-            self.floor[uid] += len(taken)
-            self.pending = None
-            self._advance(uid)
-            return [f"🌀 {self._nick(uid)} 将 {len(taken)} 片全部溢出（地板 -{len(taken)}）"]
+            self._to_floor(uid, taken)
+            msgs = [f"🌀 {self._nick(uid)} 将 {len(taken)} 片全部溢出（地板）"]
+            return msgs + self._after_place(uid)
         if not (0 <= m < ROWS):
             raise GameRuleError("行号无效")
         col = taken[0]
@@ -132,24 +156,75 @@ class AzulGame(BaseGame):
             raise GameRuleError("此色在本行墙格已占用")
         row = self.rows[uid][m]
         cap = m + 1
+        if len(row) >= cap:
+            raise GameRuleError("此行已满，等回合末上墙")
         if row and row[0] != col:
             raise GameRuleError("此行只能放同一种颜色")
         fill = min(len(taken), cap - len(row))
-        placed = taken[:fill]
-        row.extend(placed)
+        row.extend(taken[:fill])
         overflow = taken[fill:]
-        self.floor[uid] += len(overflow) if len(overflow) <= 2 else 2
         msgs = [f"🧱 {self._nick(uid)} 落 {COLOR_CN[col]}×{fill} 于第 {m + 1} 行"]
         if overflow:
+            self._to_floor(uid, overflow)
             msgs.append(f"（溢出 {len(overflow)} 片 → 地板）")
-        if len(row) == cap:                     # 行满 → 上墙
-            self.rows[uid][m] = []
-            self.wall[uid][(m, cell_col)] = col
-            pts = self._score_cell(uid, m, cell_col)
-            self.score[uid] += pts
-            msgs.append(f"✨ 第 {m + 1} 行铺满上墙，+{pts} 分")
+        if len(row) == cap:
+            msgs.append("（本行已满，回合末统一上墙）")
+        return msgs + self._after_place(uid)
+
+    def _after_place(self, uid):
+        """一次落砖结束：移交回合；工厂与中央都空 → 进入回合末 Wall-tiling。"""
         self.pending = None
-        msgs += self._round_or_next(uid)
+        self.turn = (self.turn + 1) % len(self.players)
+        if not any(self.offers) and not self.center:
+            return self._end_round()
+        return []
+
+    # ---------- 回合末 Wall-tiling ----------
+    def _apply_floor(self, uid):
+        """按地板格扣分并清空（0 分保底）；返回 (扣分, 扣前, 扣后)。"""
+        cnt = min(len(self.floor[uid]), 7)
+        loss = -sum(ROW_PENALTY[:cnt])
+        before = self.score[uid]
+        self.score[uid] = max(0, before - loss)
+        self.lid.extend(x for x in self.floor[uid] if x != MARKER)
+        self.floor[uid] = []
+        return loss, before, self.score[uid]
+
+    def _end_round(self):
+        """Wall-tiling：满行统一上墙计分 → 地板结算 → 终局判定 / 下一轮。"""
+        msgs = ["—— 回合结束，统一上墙 ——"]
+        for u in self.players:
+            for r in range(ROWS):
+                row = self.rows[u][r]
+                if len(row) < r + 1:            # 未满行保留到下一轮
+                    continue
+                col = row[0]
+                c = _wall_col(COLORS.index(col), r)
+                if self.wall[u][(r, c)] is None:
+                    self.wall[u][(r, c)] = col
+                    pts = self._score_cell(u, r, c)
+                    self.score[u] += pts
+                    msgs.append(f"✨ {self._nick(u)} 第 {r + 1} 行上墙，+{pts} 分")
+                self.lid.extend(row[:-1])       # 其余同色砖进盒盖
+                self.rows[u][r] = []
+            loss, before, after = self._apply_floor(u)
+            if loss:
+                msgs.append(f"🧹 {self._nick(u)} 地板 -{loss} 分（{before}→{after}）")
+        if self._any_full_row():
+            self._finish()
+            msgs.append("🏁 有人拼满整行，对局结束")
+            return msgs
+        if self.marker_uid is not None:
+            self.start_uid = self.marker_uid     # 标记持有者先手下一轮
+        self.round += 1
+        self.turn = (self.players.index(self.start_uid)
+                     if self.start_uid in self.players else 0)
+        self._replenish()
+        if not any(self.offers):                 # 袋与盒盖都空：无砖可发，直接终局
+            self._finish()
+            msgs.append("🏁 瓷砖耗尽，对局结束")
+            return msgs
+        msgs.append(f"—— 第 {self.round} 轮，重置瓷砖 ——")
         return msgs
 
     def _score_cell(self, uid, r, c):
@@ -168,51 +243,30 @@ class AzulGame(BaseGame):
                 rr += dr
         return pts
 
+    def _full_rows(self, uid):
+        w = self.wall[uid]
+        return sum(1 for r in range(ROWS)
+                   if all(w[(r, c)] is not None for c in range(ROWS)))
+
     def _any_full_row(self):
-        return any(all(self.wall[uid][(r, c)] is not None for c in range(ROWS))
-                   for uid in self.players for r in range(ROWS))
-
-    def _round_or_next(self, uid):
-        msg = []
-        if self._any_full_row():                # 有人拼满一行 → 结束
-            self._finish()
-            return ["🏁 有人拼满整行，对局结束"]
-        if any(x for x in self.offers) or self.center:
-            self.turn = (self.turn + 1) % len(self.players)
-            self.pending = None
-            return []
-        # 整轮结束 → 补砖
-        if not self.bag:
-            self._finish()
-            return [f"🏁 瓷砖袋耗尽，对局结束"]
-        self.round += 1
-        self._replenish()
-        self.turn = (self.turn + 1) % len(self.players)
-        return [f"—— 第 {self.round} 轮，重置瓷砖 ——"]
-
-    def _advance(self, uid):
-        self.turn = (self.turn + 1) % len(self.players)
-        self.pending = None
-        if not any(x for x in self.offers) and not self.center:
-            if not self.bag:
-                self._finish()
-            else:
-                self.round += 1
-                self._replenish()
+        return any(self._full_rows(u) for u in self.players)
 
     def _finish(self):
+        """终局加分（整行 +2 / 整列 +7 / 集齐一色 +10）并定胜负。"""
         for u in self.players:
             w = self.wall[u]
-            bonus = 0
-            for r in range(ROWS):
-                if all(w[(r, c)] is not None for c in range(ROWS)):
-                    bonus += 2
-            for c in range(ROWS):
-                if all(w[(r, c)] is not None for r in range(ROWS)):
-                    bonus += 7
-            self.score[u] += bonus - min(self.floor[u], 7)
+            rows_done = self._full_rows(u)
+            cols_done = sum(1 for c in range(ROWS)
+                            if all(w[(r, c)] is not None for r in range(ROWS)))
+            colors_done = sum(1 for col in COLORS
+                              if sum(1 for cell in w.values() if cell == col) == ROWS)
+            self.score[u] += 2 * rows_done + 7 * cols_done + 10 * colors_done
         hi = max(self.score.values())
         leaders = [u for u in self.players if self.score[u] == hi]
+        if len(leaders) > 1:                    # 平局先比完整行数
+            best = max(self._full_rows(u) for u in leaders)
+            leaders = [u for u in leaders if self._full_rows(u) == best]
+        self.winners = leaders                  # 仍平 → 共享胜利
         self.winner = leaders[0]
 
     def snapshot(self):
@@ -226,21 +280,36 @@ class AzulGame(BaseGame):
                      for u in self.players},
             "wall": {str(u): {f"{r},{c}": self.wall[u][(r, c)] for (r, c) in self.wall[u]}
                      for u in self.players},
-            "floor": {str(u): self.floor[u] for u in self.players},
+            "floor": {str(u): len(self.floor[u]) for u in self.players},
+            "floor_tiles": {str(u): [x for x in self.floor[u] if x != MARKER]
+                            for u in self.players},
             "score": {str(u): self.score[u] for u in self.players},
             "bag": len(self.bag), "players": list(self.players),
-            "winner_uid": self.winner,
+            "pending": list(self.pending) if self.pending else None,
+            "start_uid": self.start_uid, "marker_uid": self.marker_uid,
+            "winner_uid": self.winner, "winners": list(self.winners),
         }
 
     def ended(self):
         if self.winner:
+            if len(self.winners) > 1:
+                names = "、".join(self._nick(u) for u in self.winners)
+                return {"winner_uid": self.winner,
+                        "detail": f"平局：{names} 并列墙分最高"}
             return {"winner_uid": self.winner,
                     "detail": f"{self._nick(self.winner)} 墙分最高"}
         return None
 
     def player_left(self, uid):
-        if uid in self.players and self.players[self.turn] == uid:
-            self.turn = (self.turn + 1) % len(self.players)
+        if uid in self.players:
+            if self.start_uid == uid:
+                nxt = (self.players.index(uid) + 1) % len(self.players)
+                self.start_uid = self.players[nxt]
+            if self.marker_uid == uid:
+                self.marker_uid = None
+            if self.players[self.turn] == uid:
+                self.turn = (self.turn + 1) % len(self.players)
+            self.turn %= len(self.players)
         return []
 
     def _nick(self, uid):

@@ -270,9 +270,15 @@ def _flash_window(hwnd: int) -> None:
         pass                      # 非交互/无桌面上层环境：闪烁失败可忽略
 
 
-def _make_draggable(win, threshold=0):
+def _make_draggable(win, threshold=0, target=None):
     """让浮层窗口可被鼠标拖动移动。threshold>0 时按下超过 3px 才视为拖动
-    （给带点击事件的浮层用，避免点击与拖动冲突）。失败静默降级。"""
+    （给带点击事件的浮层用，避免点击与拖动冲突）。失败静默降级。
+
+    `target` 是真正被移动的窗口，默认就是 `win`。只想让标题栏拖动整窗时，
+    把标题栏当 `win`、Toplevel 当 `target`：直接绑 Toplevel 会经 bindtags
+    传播，把画布/卡片上的拖拽（如花砖取砖）也当成窗口拖动。
+    """
+    tar = target or win
     st = {"ax": None, "ay": None, "wx": None, "wy": None, "dx": 0, "dy": 0}
     def _nodes(w):
         yield w
@@ -289,7 +295,7 @@ def _make_draggable(win, threshold=0):
         # 否则拖动中系统返回旧坐标会被拉回 / 飘）。参考主窗 TitleBar 的稳健写法。
         st["ax"], st["ay"] = e.x_root, e.y_root
         try:
-            st["wx"], st["wy"] = win.winfo_x(), win.winfo_y()
+            st["wx"], st["wy"] = tar.winfo_x(), tar.winfo_y()
         except Exception:
             st["wx"] = st["wy"] = None
         st["dx"] = st["dy"] = 0
@@ -303,7 +309,7 @@ def _make_draggable(win, threshold=0):
         _curs(e.widget, "fleur")
         nwx = st["wx"] + dx; nwy = st["wy"] + dy
         try:
-            win.geometry(f"+{nwx}+{nwy}")
+            tar.geometry(f"+{nwx}+{nwy}")
         except Exception:
             pass
     def _rel(e):
@@ -12231,7 +12237,11 @@ class GameWindow:
         else:
             self._build_plain_bar(win)
 
-        _make_draggable(self.win)
+        # 只让标题栏拖动整窗。直接绑 Toplevel 会经 bindtags 传播，画布上的
+        # 花砖/棋子拖拽也会把整窗拖走（用户反馈「拖砖能把窗口拖拽走」）。
+        drag_bar = (getattr(self, "_apple_bar", None)
+                    or getattr(self, "_plain_bar", None))
+        _make_draggable(drag_bar or self.win, target=self.win)
 
         body = tk.Frame(win, bg=self._pal["win"])
         body.pack(fill="both", expand=True, padx=4, pady=(2, 0))
@@ -12283,6 +12293,7 @@ class GameWindow:
         """原生边框兜底：仅标题 + 迷你「聊/隐藏」工具钮。"""
         bar = tk.Frame(win, bg=self._pal["win"])
         bar.pack(fill="x")
+        self._plain_bar = bar
         self.title_label = tk.Label(bar, text="🀄 桌游 · 协作大厅", bg=self._pal["win"],
                                     fg=self._pal["sub"], font=(FONT_FAMILY, 11))
         self.title_label.pack(side="left", padx=8, pady=2)
@@ -13909,7 +13920,9 @@ class BoardFocusWindow:
                   fg=self._pal["sub"], bg=self._pal["win"],
                   activebackground=self._pal.get("soft_bg", "#eef0f5")
                   ).pack(side="right")
-        _make_draggable(win)
+        # 只让顶部条拖动整窗：绑 Toplevel 会把画布上的拖拽（花砖取砖 /
+        # 你画我猜作画）也当成窗口拖动。
+        _make_draggable(bar, target=win)
 
         # 棋盘画布：独占全部剩余空间，随窗口拉伸；事件全部转发到渲染/交互核心
         cv = tk.Canvas(win, bg=self._pal["win"], highlightthickness=0)

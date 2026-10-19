@@ -105,6 +105,22 @@ def test_azul_web_js_compiles_in_node(tmp_path):
     assert r.returncode == 0, r.stderr
 
 
+def test_web_has_enlarge_button_and_azul_drag_wiring():
+    """网页端：对局面板可一键放大；花砖支持拖拽取砖（不再只靠下拉框）。"""
+    html = web._SERVED_PAGE().decode("utf-8")
+    assert "state.gfull" in html and "card.full" in html
+    assert "⛶ 放大" in html and "⛶ 还原" in html
+    from boardgames.azul import web as azweb
+    js = azweb.WEB_JS
+    for mark in ("data-azsrc", "data-azdrop", "pointerdown", "pointerup",
+                 "azghost", "canRow"):
+        assert mark in js, mark
+    assert 'op:"take"' in js and 'op:"place"' in js and 'op:"floor"' in js
+    css = azweb.WEB_CSS
+    for mark in (".azghost", ".azdrop.azok", ".azdrop.azsel", ".aztile"):
+        assert mark in css, mark
+
+
 def test_subset_no_longer_serves_legacy_azul_keys():
     html = web._SERVED_PAGE().decode("utf-8")
     bg = _extract_bg_literal(html)

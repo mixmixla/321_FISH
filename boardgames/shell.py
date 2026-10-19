@@ -22,6 +22,7 @@ SLOT_BG = "#E4D9C3"
 SLOT_BD = "#CDBE9C"
 NAME_FG = "#2B3A46"
 ROW_FG = "#9AA6B0"
+_FLOOR_PEN = ("-1", "-1", "-2", "-2", "-2", "-3", "-3")   # BGA 式地板扣分刻度
 
 
 def _key(keys, role, color=None):
@@ -164,20 +165,19 @@ def board_panel(cv, x, y, w, h, name, rows, wall, floor, score, keys, *,
                fill="", outline=_UXC["accent"], width=2)
     np_ = geom.nameplate(bw, bh)
     _text(cv, bx + np_[0] + bw * 0.02, by + (np_[1] + np_[3]) / 2.0, str(name),
-          NAME_FG, (_FONT_F[0], 9), anchor="w")
+          NAME_FG, (_FONT_F[0], 8 if compact else 9), anchor="w")
     if note:
         _text(cv, bx + bw * 0.5, by + bh * 0.972, str(note),
               ROW_FG, (_FONT_F[0], 8))
     for i in range(geom.ROWS_N):
-        band = geom.row_band(i, bw, bh)
-        if not compact:
-            _text(cv, bx + bw * 0.03, by + (band[1] + band[3]) / 2.0, str(i + 1),
-                  ROW_FG, (_FONT_F[0], 8))
         row = _row_items(rows, i)
+        k = min(len(row), i + 1)
         for j in range(i + 1):
             sx, sy, cs = geom.row_slot(i, j, bw, bh)
             px, py = bx + sx, by + sy
-            c = row[j] if j < len(row) else None
+            # 砖从右往左填（规则：右端先放、最后上墙）→ 只有最右 k 格有砖
+            idx = j - (i + 1 - k)
+            c = row[idx] if 0 <= idx < k else None
             tkey = _key(keys, "tile", c) if c else None
             if c and tkey and _asset_at(cv, tkey, px, py, max(4, int(cs))):
                 continue
@@ -210,10 +210,12 @@ def board_panel(cv, x, y, w, h, name, rows, wall, floor, score, keys, *,
         if c and tkey and _asset_at(cv, tkey, px, py, max(4, int(cs))):
             continue
         fkey = _key(keys, "floor")
-        if fkey and _asset_at(cv, fkey, px, py, max(4, int(cs))):
-            continue
-        _rrect(cv, px + 1, py + 1, px + cs - 1, py + cs - 1, cs * 0.16,
-               fill=pal.get(c, SLOT_BG) if c else SLOT_BG, outline=SLOT_BD)
+        if not (fkey and _asset_at(cv, fkey, px, py, max(4, int(cs)))):
+            _rrect(cv, px + 1, py + 1, px + cs - 1, py + cs - 1, cs * 0.16,
+                   fill=pal.get(c, SLOT_BG) if c else SLOT_BG, outline=SLOT_BD)
+        if not c:                       # 空槽显示该格扣分（-1/-1/-2… 与 BGA 同）
+            _text(cv, px + cs / 2.0, py + cs * 0.70, _FLOOR_PEN[i],
+                  "#7A6A48", (_FONT_F[0], max(6, int(cs * 0.36))))
     cs2 = min(bh * 0.18, bw * 0.14)
     sx_ = bx + bw - cs2 - 4.0
     sy_ = by + np_[1] + np_[3] / 2.0 - cs2 / 2.0

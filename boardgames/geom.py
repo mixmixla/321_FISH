@@ -63,7 +63,7 @@ def row_slot(i, j, w, h):
     n = i + 1
     s = row_cell_size(i, w, h)[0]
     step = s * _ROW_STEP_F
-    off = ((x1 - x0) - (step * n - (step - s))) / 2.0     # 整行居中
+    off = (x1 - x0) - (step * n - (step - s))    # 右对齐：砖从右往左填、右端那片上墙
     pitch = (y1 - y0) / ROWS_N
     return (x0 + off + j * step, y0 + i * pitch + (pitch - s) / 2.0, s)
 

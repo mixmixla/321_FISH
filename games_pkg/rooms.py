@@ -20,11 +20,13 @@ class RoomStatus(str, Enum):
 
 
 class Room:
-    def __init__(self, room_id: str, game_cls, owner_uid: int) -> None:
+    def __init__(self, room_id: str, game_cls, owner_uid: int,
+                 options: dict | None = None) -> None:
         self.room_id = room_id
         self.game_cls = game_cls
         self.game_name = game_cls.name
         self.owner_uid = owner_uid
+        self.options = dict(options or {})
         self.status = RoomStatus.CREATED
         self.players: list = []          # 座位顺序
         self.spectators: set = set()
@@ -43,6 +45,7 @@ class Room:
             "status": self.status.value,
             "owner_uid": self.owner_uid, "players": list(self.players),
             "spectators": sorted(self.spectators), "round": self.round_no,
+            "options": dict(self.options),
         }
 
 
@@ -57,12 +60,14 @@ class RoomManager:
         self.lock = threading.RLock()
 
     # ---- 生命周期 ----
-    def create(self, uid: int, game: str) -> Room:
+    def create(self, uid: int, game: str, options: dict | None = None) -> Room:
         with self.lock:
             if game not in self.registry:
                 raise GameRuleError(f"未知游戏: {game}")
+            game_cls = self.registry[game]
             room_id = f"g{next(self._seq)}"
-            room = Room(room_id, self.registry[game], uid)
+            room = Room(room_id, game_cls, uid,
+                        options=self._validated_options(game_cls, options))
             room.players.append(uid)
             self.rooms[room_id] = room
             return room
@@ -143,7 +148,10 @@ class RoomManager:
                 raise GameRuleError(
                     f"至少需要 {room.game_cls.min_players} 人"
                     f"（当前 {len(room.players)} 人，其余可点观战）")
-            gs = room.game_cls(room.players, seed=self._seed_for(room))
+            gs = (room.game_cls(room.players, seed=self._seed_for(room),
+                                options=dict(room.options))
+                  if getattr(room.game_cls, "OPTIONS", None)
+                  else room.game_cls(room.players, seed=self._seed_for(room)))
             if getattr(gs, "name", None) in COMMON_ACTION_GAMES:
                 gs = CommonActionsGame(gs)      # 叠加 认输/悔棋/求和 通用动作层
             room.gs = gs
@@ -193,6 +201,29 @@ class RoomManager:
             return self.rooms.get(room_id)
 
     # ---- 内部 ----
+    @staticmethod
+    def _validated_options(game_cls, options: dict | None) -> dict:
+        """合并默认值并校验 CREATE 的 options；未知参数忽略以兼容旧客户端。"""
+        allowed = getattr(game_cls, "OPTIONS", None) or {}
+        if not allowed:
+            return {}
+        if options is not None and not isinstance(options, dict):
+            raise GameRuleError("房间参数格式错误")
+        merged = dict(getattr(game_cls, "DEFAULT_OPTIONS", {}) or {})
+        for key, value in (options or {}).items():
+            choices = allowed.get(key)
+            if choices is None:
+                continue
+            try:
+                ivalue = int(value)
+            except (TypeError, ValueError):
+                raise GameRuleError(f"{key} 必须为整数")
+            if ivalue not in choices:
+                raise GameRuleError(
+                    f"{key} 仅支持 {'/'.join(map(str, choices))}")
+            merged[key] = ivalue
+        return merged
+
     def _get(self, room_id: str) -> Room:
         room = self.rooms.get(room_id)
         if room is None:

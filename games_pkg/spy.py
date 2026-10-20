@@ -158,6 +158,55 @@ class SpyGame(BaseGame):
             counts[t] = counts.get(t, 0) + 1
         return counts
 
+    def player_left(self, uid: int) -> list:
+        """掉线者视作退出：清理座位/词面，避免描述或投票等不到他而卡死。"""
+        if uid not in self.players:
+            return []
+        msgs = [f"{self._nick(uid)} 离开了游戏"]
+        was_alive = uid in self.alive
+        alive_idx = self.alive.index(uid) if was_alive else None
+        self.players.remove(uid)
+        self.scores.pop(uid, None)
+        if was_alive:
+            self.alive.remove(uid)
+            self.words.pop(uid, None)
+            if self.phase == "describing":
+                if alive_idx < self.speaker_idx:
+                    self.speaker_idx -= 1
+                if not self.alive:
+                    self.phase = "reveal"
+                    return msgs
+                if self.speaker_idx >= len(self.alive):
+                    self.phase = "voting"
+                    self.votes = {}
+                    msgs.append("描述完毕，开始投票（投给可疑的人，不能投自己）")
+            elif self.phase == "voting":
+                self.votes.pop(uid, None)
+                for voter, target in list(self.votes.items()):
+                    if target == uid:           # 投给已离场者的票作废，需重投
+                        del self.votes[voter]
+                if not self.alive or len(self.votes) == len(self.alive):
+                    msgs.extend(self._check())
+                    return msgs
+        if self.phase == "reveal" or not self.alive:
+            return msgs
+        if self.spy_uid not in self.alive:
+            self.winner_uid = None              # 卧底离场/被淘汰：平民胜
+            self.loser_uid = self.spy_uid
+            for u in self.alive:
+                self.scores[u] += 1
+            msgs.append("🎉 卧底被投出，平民获胜！")
+            msgs.append(f"本轮词面：平民「{WORD_PAIRS[self.pair_idx][0]}」 vs 卧底「{WORD_PAIRS[self.pair_idx][1]}」")
+            self.phase = "reveal"
+        elif len(self.alive) <= 2:
+            self.winner_uid = self.spy_uid
+            self.loser_uid = None
+            self.scores[self.spy_uid] += 1
+            msgs.append("🕵️ 卧底成功潜伏到最后，卧底获胜！")
+            msgs.append(f"本轮词面：平民「{WORD_PAIRS[self.pair_idx][0]}」 vs 卧底「{WORD_PAIRS[self.pair_idx][1]}」")
+            self.phase = "reveal"
+        return msgs
+
     def ended(self):
         if self.phase == "reveal":
             return {"winner_uid": self.winner_uid,

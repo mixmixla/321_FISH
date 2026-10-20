@@ -45,8 +45,8 @@ class OthelloGame(BaseGame):
     def act(self, uid: int, action: dict) -> list:
         if self.winner_uid is not None:
             raise GameRuleError("本局已结束，请开新局")
-        if self.pass_next:
-            raise GameRuleError("对方无处可下，对方已让过")
+        # 注意：pass_next=True 表示「对手刚被让过、当前玩家继续落子」，
+        # 不能再拦当前玩家（否则让过后永远无法落子）。
         if uid != self.players[self.turn]:
             raise GameRuleError("还没轮到你")
         try:

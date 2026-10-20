@@ -28,6 +28,7 @@ class LingdiGame(BaseGame):
         self.score = {u: 0 for u in players}
         self.closed_uid = None
         self.winner = None
+        self.final_scored = False
         self._draw()
 
     def _random_tile(self):
@@ -68,7 +69,7 @@ class LingdiGame(BaseGame):
 
     # ---------- 动作 ----------
     def act(self, uid, action):
-        if self.winner:
+        if self.winner is not None:
             raise GameRuleError("本局已结束")
         if self.current is None:
             raise GameRuleError("牌堆已尽，对局结束")
@@ -90,38 +91,46 @@ class LingdiGame(BaseGame):
             raise GameRuleError("该位置已有板块")
         if not (0 <= r < SIZE and 0 <= c < SIZE):
             raise GameRuleError("越界")
-        # 必须与至少一块已放板块相邻，且共享边地型相等
+        # 必须与至少一块已放板块相邻，且共享边地型相等：
+        # 新板块的 d 边要与邻板块相对边 OPP[d] 相同。
         nbs = self._neighbors(r, c)
         if self.board and not nbs:
             raise GameRuleError("必须与已放板块相邻")
-        for d, nb in nbs:
-            br, bc = nb
-            opp = OPP[d]
-            if self.board[(br, bc)]["edges"][d] != self.current["edges"][opp]:
+        for d, (br, bc) in nbs.items():
+            if self.board[(br, bc)]["edges"][OPP[d]] != self.current["edges"][d]:
                 raise GameRuleError("相邻地型不匹配")
         # 放置
         edges = dict(self.current["edges"])
         self.board[(r, c)] = {"edges": edges, "owner": None}
         self.placed += 1
         msgs = [f"🏗 {self._nick(uid)} 放置板块 ({r},{c}) {self._feat_short(edges)}"]
-        # 放米宝
+        # 放米宝：先校验，失败则回滚整块板块，避免白拿板块/半状态
         pos = action.get("meeple")  # "r,c" 或 None
-        if pos and self.meeples[uid] > 0:
-            if pos == "self":
-                pos = f"{r},{c}"
-            mr, mc = pos.split(",")
-            mr, mc = int(mr), int(mc)
-            if (mr, mc) not in self.board:
-                raise GameRuleError("米宝位置无板块")
-            if self.board[(mr, mc)]["owner"] is not None:
-                raise GameRuleError("该区已有米宝")
-            reg, closed = self._region(mr, mc)
-            if any(self.board[x]["owner"] not in (None, uid) for x in reg):
-                raise GameRuleError("该连通区已有其他玩家米宝")
+        if pos:
+            try:
+                if self.meeples[uid] <= 0:
+                    raise GameRuleError("米宝已用完")
+                if pos == "self":
+                    pos = f"{r},{c}"
+                try:
+                    mr, mc = (int(x) for x in str(pos).split(","))
+                except (TypeError, ValueError):
+                    raise GameRuleError("米宝坐标无效")
+                if (mr, mc) not in self.board:
+                    raise GameRuleError("米宝位置无板块")
+                if self.board[(mr, mc)]["owner"] is not None:
+                    raise GameRuleError("该区已有米宝")
+                reg, closed = self._region(mr, mc)
+                if any(self.board[x]["owner"] not in (None, uid) for x in reg):
+                    raise GameRuleError("该连通区已有其他玩家米宝")
+            except GameRuleError:
+                del self.board[(r, c)]
+                self.placed -= 1
+                raise
             self.board[(mr, mc)]["owner"] = uid
             self.meeples[uid] -= 1
             msgs.append(f"🧑‍🌾 {self._nick(uid)} 在 ({mr},{mc}) 放米宝")
-            self._score_regions()
+        self._score_regions()
         self._next_turn()
         return msgs
 
@@ -130,7 +139,8 @@ class LingdiGame(BaseGame):
         return [f"⏭ {self._nick(uid)} 跳过"]
 
     def _next_turn(self):
-        if self._draw():                 # 牌堆尽 → 结算存量
+        self._draw()
+        if self.current is None:         # 牌堆尽（且最后一块已放）→ 终局只结算一次
             self._final_scoring()
             return
         # 若手牌板块无处可放则自动跳过（简化：仍轮转）
@@ -166,6 +176,9 @@ class LingdiGame(BaseGame):
         self._check_end()
 
     def _final_scoring(self):
+        if self.final_scored:
+            return
+        self.final_scored = True
         seen = set()
         for (r, c), cell in self.board.items():
             if cell["owner"] is None or (r, c) in seen:
@@ -206,7 +219,7 @@ class LingdiGame(BaseGame):
         }
 
     def ended(self):
-        if self.winner:
+        if self.winner is not None:
             return {"winner_uid": self.winner,
                     "detail": f"{self._nick(self.winner)} 领地得分最高胜出"}
         return None

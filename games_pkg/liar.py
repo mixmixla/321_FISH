@@ -98,9 +98,16 @@ class LiarGame(BaseGame):
         if claim not in VALUES:
             raise GameRuleError("报数需在 0~9 之间")
         cards.remove(val)
-        # 从手牌补一张（若池中有牌），保证手牌不空
-        if len(cards) < HAND and self.deck_pool:
-            cards.append(self.deck_pool.pop())
+        # 桌面中央已有未挑战的牌：先压入弃牌堆，否则这张牌会凭空消失
+        if self.pending:
+            self.discard.append(self.pending["val"])
+        # 从手牌补一张，保证手牌不空；牌池空时把弃牌洗回，避免所有人无牌可出卡死
+        if len(cards) < HAND:
+            if self.deck_pool:
+                cards.append(self.deck_pool.pop())
+            elif self.discard:
+                self.rng.shuffle(self.discard)
+                cards.append(self.discard.pop())
         self.pending = {"uid": uid, "claim": claim, "val": val}
         self.turn_idx = (self.turn_idx + 1) % len(self.players)
         self._skip_dead()
@@ -132,6 +139,33 @@ class LiarGame(BaseGame):
         if self.winner is None:
             return None
         return {"winner_uid": self.winner, "detail": self.detail or f"{self._nick(self.winner)} 获胜"}
+
+    def player_left(self, uid):
+        """掉线者退出：清理座位/手牌并跳过其回合，避免轮到他时无人能行动。"""
+        if uid not in self.players:
+            return []
+        msgs = [f"{self._nick(uid)} 离开了游戏"]
+        old_idx = self.players.index(uid)
+        self.players.remove(uid)
+        self.hand.pop(uid, None)
+        self.drink.pop(uid, None)
+        self.out.discard(uid)
+        if self.pending and self.pending["uid"] == uid:
+            self.discard.append(self.pending["val"])
+            self.pending = None
+        if not self.players or self.winner is not None:
+            return msgs
+        if old_idx < self.turn_idx:
+            self.turn_idx -= 1
+        elif old_idx == self.turn_idx:
+            self.turn_idx %= len(self.players)
+        alive = [p for p in self.players if p not in self.out]
+        if len(alive) == 1:
+            self.winner = alive[0]
+            self.detail = "最后留在桌上的玩家获胜"
+            return msgs
+        self._skip_dead()
+        return msgs
 
     def _nick(self, uid):
         return f"玩家{uid}"

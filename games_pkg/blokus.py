@@ -85,41 +85,19 @@ class BlokusGame(BaseGame):
         self.winner = None
 
     # ---- 规则判定 ----
-    def _cell_ok(self, uid, r, c):
-        """放置规则：与己方角对角至少一次，与己方同边不得相邻。"""
-        diag_contact = False
-        for dr, dc in DIAG:
-            if (r + dr, c + dc) in self.board and self.board[(r + dr, c + dc)] == uid:
-                diag_contact = True
-        for dr, dc in ORTHO:
-            if (r + dr, c + dc) in self.board and self.board[(r + dr, c + dc)] == uid:
-                return False
-        return diag_contact
+    def _diag_contact(self, uid, r, c):
+        return any(self.board.get((r + dr, c + dc)) == uid for dr, dc in DIAG)
 
-    def _can_place(self, uid, name, cells, first):
-        for (r, c) in cells:
-            if not (0 <= r < BOARD and 0 <= c < BOARD):
-                continue
-            if (r, c) in self.board:
-                continue
-            covered = True
-            for (ar, ac) in cells:
-                rr, cc = r + ar, c + ac
-                if not (0 <= rr < BOARD and 0 <= cc < BOARD) or (rr, cc) in self.board:
-                    covered = False
-                    break
-            if not covered:
-                continue
-            if first:
-                if (r, c) not in {(0, 0), (0, BOARD - 1), (BOARD - 1, 0), (BOARD - 1, BOARD - 1)}:
-                    continue
-                return (r, c)
-            if self._cell_ok(uid, r, c) and not any((r + dr, c + dc) in self.board
-                                                    for (dr, dc) in ORTHO):
-                continue
-            if self._cell_ok(uid, r, c):
-                return (r, c)
-        return None
+    def _ortho_contact(self, uid, r, c):
+        return any(self.board.get((r + dr, c + dc)) == uid for dr, dc in ORTHO)
+
+    def _advance_turn(self):
+        """轮到下一个还有拼块的玩家；全部用完则终局。"""
+        for _ in range(self.n):
+            self.turn = (self.turn + 1) % self.n
+            if self.bag[self.players[self.turn]]:
+                return None
+        return self._finish("所有玩家拼块用完，对局结束")
 
     # ---- 动作 ----
     def act(self, uid, action):
@@ -135,11 +113,14 @@ class BlokusGame(BaseGame):
         raise GameRuleError("未知操作")
 
     def _pass(self):
-        self.pass_seq += 1
         old = self.turn
-        self.turn = (self.turn + 1) % self.n
-        if self.pass_seq >= self.n:
+        self.pass_seq += 1
+        active = sum(1 for p in self.players if self.bag[p])
+        if self.pass_seq >= max(1, active):
             return [self._finish("所有玩家连续跳过，对局结束")]
+        msg = self._advance_turn()
+        if msg:
+            return [msg]
         return [f"⏭️ {self._nick(self.players[old])} 跳过"]
 
     def _place(self, uid, action):
@@ -172,9 +153,10 @@ class BlokusGame(BaseGame):
                        for (r, c) in placed_cells):
                 raise GameRuleError("首块必须触及一个棋盘角")
         else:
-            for (rr, cc) in placed_cells:
-                if not self._cell_ok(uid, rr, cc):
-                    raise GameRuleError("必须与己方角对角相连且不能同边相邻")
+            if not any(self._diag_contact(uid, rr, cc) for (rr, cc) in placed_cells):
+                raise GameRuleError("必须与己方角对角相连")
+            if any(self._ortho_contact(uid, rr, cc) for (rr, cc) in placed_cells):
+                raise GameRuleError("不能与己方同边相邻")
         for (rr, cc) in placed_cells:
             self.board[(rr, cc)] = uid
         del self.bag[uid][name]
@@ -182,10 +164,10 @@ class BlokusGame(BaseGame):
         self.last_action = (uid, name)
         self.last_move = [[rr, cc] for (rr, cc) in placed_cells]
         msgs = [f"🧩 {self._nick(uid)} 放置拼块「{name}」"]
-        if not self.bag[uid]:
-            return msgs + [self._finish(f"{self._nick(uid)} 拼块放完，对局结束")]
         self.pass_seq = 0
-        self.turn = (self.turn + 1) % self.n
+        done = self._advance_turn()
+        if done:
+            msgs.append(done)
         return msgs
 
     def _finish(self, why):

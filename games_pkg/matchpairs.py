@@ -79,6 +79,8 @@ class MatchPairsGame(BaseGame):
             return ["仅剩你可配对，其余玩家皆已安全"]
         card = self.rng.choice(self.hands[target])
         self.hands[target].remove(card)
+        if not self.hands[target]:
+            self.safe.add(target)            # 被摸空手也是安全，快照/名册要一致
         self.hands[uid].append(card)
         peer = [c for c in self.hands[uid] if c[0] == card[0] and c != card]
         if peer:
@@ -153,7 +155,10 @@ class MatchPairsGame(BaseGame):
             if target != uid:
                 self.hands[target].extend(hand)
                 self.hands[target] = _drop_pairs(self.hands[target])
-                self.safe.discard(target)
+                if self.hands[target]:
+                    self.safe.discard(target)
+                else:
+                    self.safe.add(target)
         # 重排轮次：当前玩家若已走/空手则落到下一个有牌者
         if (self.turn >= len(self.players)
                 or self.players[self.turn] not in self.hands

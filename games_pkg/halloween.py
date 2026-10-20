@@ -41,17 +41,6 @@ class HalloweenGame(BaseGame):
     def _is_slapable(self):
         return SLAP_N in self.counts
 
-    def _check_end(self):
-        for u in self.players:
-            if self.turn == u and not self.stack[u]:
-                self.finished = True
-                hi = max(self.score[u] for u in self.players)
-                leaders = [u for u in self.players if self.score[u] == hi]
-                if len(leaders) == 1:
-                    self.winner = leaders[0]
-                return
-        return
-
     def act(self, uid, action):
         if self.winner or self.finished:
             raise GameRuleError("本局已结束")
@@ -93,6 +82,8 @@ class HalloweenGame(BaseGame):
         msgs = [f"🫲 {self._nick(uid)} 翻开 {FRUITS[f]}（桌上 {FRUITS[f]}×{self.counts[f]}）"]
         if self._is_slapable():
             msgs.append("🔔 桌上有凑齐 5 个的水果！可拍铃收牌！")
+        if not self.stack[uid]:
+            msgs.append("🏁 这是你的最后一张牌，本回合结束后结算")
         return msgs
 
     def _slap(self, uid):
@@ -105,6 +96,13 @@ class HalloweenGame(BaseGame):
             self.counts = [0] * len(FRUITS)
             self.have_flipped = False          # 再走一次
             self.last = ("slap_ok", uid, got)
+            if not self.stack[uid]:
+                self._settle()
+                out = [f"🔔 {self._nick(uid)} 拍铃抢到 {got} 张！",
+                       "🏁 手牌翻完，按收牌数结算"]
+                if self.winner:
+                    out.append(f"🏆 {self._nick(self.winner)} 收牌最多获胜！")
+                return out
             msgs = [f"🔔 {self._nick(uid)} 拍铃抢到 {got} 张！再翻一次"]
             return msgs
         # 拍空
@@ -114,6 +112,13 @@ class HalloweenGame(BaseGame):
         return [f"🙅 {self._nick(uid)} 拍铃扑空（没有 5 张）！扣 1 分"] + [f"➡️ 轮到 {self._nick(self.turn)}"]
 
     def _end_turn(self, why):
+        if not self.stack[self.turn]:
+            self._settle()
+            out = [f"⏭️ {self._nick(self.turn)} {why}",
+                   "🏁 手牌翻完，按收牌数结算"]
+            if self.winner:
+                out.append(f"🏆 {self._nick(self.winner)} 收牌最多获胜！")
+            return out
         msgs = [f"⏭️ {self._nick(self.turn)} {why}"]
         self._next_turn()
         if self.winner:
@@ -154,14 +159,17 @@ class HalloweenGame(BaseGame):
         return None
 
     def player_left(self, uid):
-        if uid == self.turn:
-            self._next_turn()
+        was_turn = (uid == self.turn)
+        idx = self.players.index(uid) if uid in self.players else 0
+        self.stack.pop(uid, None)
         self.players = [u for u in self.players if u in self.stack]
-        if len(self.players) <= 1 and not self.winner:
-            if self.players:
-                self.winner = self.players[0]
+        if len(self.players) <= 1:
+            self.winner = self.players[0] if self.players else None
             self.finished = True
             return [f"💨 {self._nick(uid)} 离开，终局"]
+        if was_turn:
+            self.turn = self.players[idx % len(self.players)]
+            self.have_flipped = False
         return [f"💨 {self._nick(uid)} 离开了对局"]
 
     def _nick(self, uid):

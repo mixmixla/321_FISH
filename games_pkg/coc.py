@@ -47,17 +47,18 @@ def check_level(roll: int, skill: int) -> str:
     """
     if not (0 <= roll <= 100):
         raise ValueError(f"d100 必须在 0~100 之间，收到 {roll}")
-    if roll == 1 or roll <= 5:
+    if roll == 1:
+        return "大成功"
+    if roll > skill:
+        # 投掷高于技能值：固定阈值不能把失败判成困难/普通成功
+        return "大失败" if roll >= 96 else "失败"
+    if roll <= 5:
         return "大成功"
     if roll <= 20:
         return "极难成功"
     if roll <= 50:
         return "困难成功"
-    if roll <= skill:
-        return "普通成功"
-    if roll >= 96 and roll > skill:
-        return "大失败"
-    return "失败"
+    return "普通成功"
 
 
 def roll_d100(rng):
@@ -73,7 +74,7 @@ def resolve_check(skill: int, rng) -> tuple:
 class CocGame(BaseGame):
     name = "coc"
     min_players = 2
-    max_players = None
+    max_players = len(CHARS)        # 预设调查员卡有限，超员会导致永远选不完卡
 
     def __init__(self, players, seed=None):
         super().__init__(players, seed)

@@ -38,8 +38,18 @@ class DaVinCiGame(BaseGame):
         self.last_action = None
         self.winner = None
         self.phase = "playing"
+        self._drawn_this_turn = False
 
     # ---- 工具 ----
+    def _advance_turn(self):
+        """轮到下一个仍在场的玩家（跳过已被淘汰者）。"""
+        for _ in range(len(self.players)):
+            self.order_uid = (self.order_uid + 1) % len(self.players)
+            u = self.players[self.order_uid]
+            if u in self.hands:
+                self.turn = u
+                self._drawn_this_turn = False
+                return
     def _row_uid(self, u):
         return [r for r in self.hands[u] if not r["open"]]
 
@@ -80,10 +90,13 @@ class DaVinCiGame(BaseGame):
         raise GameRuleError("未知操作")
 
     def _draw(self, uid, action):
+        if self._drawn_this_turn:
+            raise GameRuleError("本回合已摸牌")
         if not self.draw:
             raise GameRuleError("牌堆已空，无法摸牌")
         visible = action.get("open", True)
         v = self.draw.pop()
+        self._drawn_this_turn = True
         row = self.hands[uid]
         newtile = {"v": v, "open": bool(visible), "pos": len(row), "removed": False}
         row.append(newtile)
@@ -100,6 +113,8 @@ class DaVinCiGame(BaseGame):
         return msgs
 
     def _guess(self, uid, action):
+        if not self._drawn_this_turn and self.draw:
+            raise GameRuleError("请先摸牌")
         target = action.get("target")
         pos = action.get("pos")
         val = action.get("val")
@@ -147,9 +162,7 @@ class DaVinCiGame(BaseGame):
         if self.winner:
             msgs.append(f"🏆 {self._nick(self.winner)} 笑到最后，成为最后的达芬奇！")
         else:
-            # 移交回合
-            self.order_uid = (self.order_uid + 1) % len(self.players)
-            self.turn = self.players[self.order_uid]
+            self._advance_turn()
         return msgs
 
     def snapshot(self):
@@ -181,8 +194,7 @@ class DaVinCiGame(BaseGame):
         if uid in self.hands:
             del self.hands[uid]
         if uid == self.turn:
-            self.order_uid = (self.order_uid + 1) % len(self.players)
-            self.turn = self.players[self.order_uid]
+            self._advance_turn()
         self._check_elim()
         return [f"💨 {self._nick(uid)} 离开了对局"]
 

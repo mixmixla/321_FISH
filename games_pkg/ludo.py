@@ -133,8 +133,12 @@ class LudoGame(BaseGame):
                     self.winner = u
                     msgs.append(f"🏆 {self._nick(u)} 四架机全部到达，获胜！")
                     return msgs
+        extra = self.dice == 6              # 掷出 6 可再掷一次
         self.dice = None
         self.need_roll = True
+        if not extra:                       # 普通点数：走完即移交回合
+            self.turn = (self.turn + 1) % len(self.players)
+            msgs.append(f"➡️ 轮到 {self._nick(self.players[self.turn])}")
         return msgs
 
     def _end_turn_msgs(self, why):

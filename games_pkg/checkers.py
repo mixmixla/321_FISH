@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """国际跳棋（致敬 Checkers/Draughts）：8x8，双方各 12 子，普通子只能斜向前移一格、可斜跳吃子，
-王可任意斜线行走。把对方子吃光或令其无路可走者胜。休闲版：不强制优先吃子。"""
+王可任意斜线行走（飞王，可远距离吃子）。把对方子吃光或令其无路可走者胜。
+休闲版：不强制吃子、不强制连跳（一次动作只走/吃一步）。"""
 from games_pkg.base import BaseGame, GameRuleError
 
 N = 8
@@ -69,32 +70,47 @@ class CheckersGame(BaseGame):
         if cell == 0 or not self._me(cell):
             raise GameRuleError("只能移动己方棋子")
         dx, dy = tx - fx, ty - fy
-        if not (abs(dx) == abs(dy)):
+        if dx == 0 or abs(dx) != abs(dy):
             raise GameRuleError("只能斜向移动")
-        step = abs(dx)
-        if self._is_man(cell) and dy * self._dir(cell) < 0:
-            raise GameRuleError("普通子不能后退")
-        if self._is_man(cell) and step == 2 and self.board[fy + dy // 2][fx + dx // 2] == 0:
-            raise GameRuleError("非法")
-        if step > 2 and self._is_man(cell):
-            raise GameRuleError("普通子只能走/吃一步以内")
         if self.board[ty][tx] != 0:
             raise GameRuleError("目标格已有棋子")
-        # 吃子判定
         captures = 0
-        if step == 2:
-            midx, midy = (fx + tx) // 2, (fy + ty) // 2
-            mid = self.board[midy][midx]
-            if not self._enemy(mid) or mid == 0:
-                raise GameRuleError("中间没有可吃的对方子")
-            self.board[midy][midx] = 0
-            captures = 1
-        elif step > 1:
-            # 王走多格，途中须为空
-            sx, sy = dx // step, dy // step
-            for k in range(1, step):
-                if self.board[fy + sy * k][fx + sx * k] != 0:
-                    raise GameRuleError("路径被挡")
+        if self._is_man(cell):
+            if dy * self._dir(cell) < 0:
+                raise GameRuleError("普通子不能后退")
+            step = abs(dx)
+            if step == 1:
+                pass
+            elif step == 2:
+                midx, midy = (fx + tx) // 2, (fy + ty) // 2
+                mid = self.board[midy][midx]
+                if mid == 0 or not self._enemy(mid):
+                    raise GameRuleError("中间没有可吃的对方子")
+                self.board[midy][midx] = 0
+                captures = 1
+            else:
+                raise GameRuleError("普通子只能走/吃一步以内")
+        else:
+            # 飞王：沿对角逐格扫描；第一枚棋子若是敌子且落点在它之后，
+            # 即为一吃（可远距离），否则只能是纯移动。
+            sx = 1 if dx > 0 else -1
+            sy = 1 if dy > 0 else -1
+            scan = []
+            nx, ny = fx + sx, fy + sy
+            while (nx, ny) != (tx, ty):
+                scan.append((nx, ny))
+                nx += sx
+                ny += sy
+            first = next(((ax, ay) for (ax, ay) in scan
+                          if self.board[ay][ax] != 0), None)
+            if first is not None:
+                if not self._enemy(self.board[first[1]][first[0]]):
+                    raise GameRuleError("路径被己方棋子挡住")
+                idx = scan.index(first)
+                if any(self.board[ay][ax] != 0 for (ax, ay) in scan[idx + 1:]):
+                    raise GameRuleError("吃子路径被挡")
+                self.board[first[1]][first[0]] = 0
+                captures = 1
         self.board[fy][fx] = 0
         # 升王
         if self._is_man(cell):
@@ -123,33 +139,11 @@ class CheckersGame(BaseGame):
         return msgs
 
     def _has_move(self):
-        """当前玩家是否还有合法走/吃"""
-        me0, me1 = ((BLACK_MAN, BLACK_KING) if self.turn == 0
-                    else (RED_MAN, RED_KING))
+        """当前玩家是否还有合法走/吃（含吃子；漏掉吃子会误判无路可走）。"""
         for y in range(N):
             for x in range(N):
-                c = self.board[y][x]
-                if c not in (me0, me1):
-                    continue
-                if not self._is_man(c):
-                    for dx in (-1, 1):
-                        for dy in (-1, 1):
-                            nx, ny = x + dx, y + dy
-                            found = False
-                            step = 1
-                            while 0 <= nx < N and 0 <= ny < N and self.board[ny][nx] == 0:
-                                found = True
-                                step += 1
-                                nx += dx
-                                ny += dy
-                            if found:
-                                return True
-                else:
-                    d = self._dir(c)
-                    for dx in (-1, 1):
-                        nx, ny = x + dx, y + d
-                        if 0 <= nx < N and 0 <= ny < N and self.board[ny][nx] == 0:
-                            return True
+                if self._me(self.board[y][x]) and self._targets(x, y):
+                    return True
         return False
 
     def _targets(self, x, y):
@@ -171,30 +165,23 @@ class CheckersGame(BaseGame):
                     if 0 <= jx < N and 0 <= jy < N and self.board[jy][jx] == 0:
                         out.append([jx, jy])
         else:
-            # 王走法须与 act 保持一致：1 格可走、连续空格≥3 格可走；
-            # 恰好 2 格被 act 当作吃子检查（要求中间有敌子），故不提示；
-            # 只有紧邻的敌子才可跳吃（落点在 2 格外）。
+            # 飞王：空格可一路走；遇敌子则可落到它之后的任意空格（远距离吃）。
             for dx in (-1, 1):
                 for dy in (-1, 1):
                     nx, ny = x + dx, y + dy
-                    step = 1
-                    while 0 <= nx < N and 0 <= ny < N:
-                        c = self.board[ny][nx]
-                        if c == 0:
-                            if step != 2:
-                                out.append([nx, ny])
-                            step += 1
-                            nx += dx
-                            ny += dy
-                        elif self._enemy(c):
-                            if step == 1:
-                                jx, jy = nx + dx, ny + dy
-                                if (0 <= jx < N and 0 <= jy < N
-                                        and self.board[jy][jx] == 0):
-                                    out.append([jx, jy])
-                            break
-                        else:
-                            break
+                    while (0 <= nx < N and 0 <= ny < N
+                           and self.board[ny][nx] == 0):
+                        out.append([nx, ny])
+                        nx += dx
+                        ny += dy
+                    if (0 <= nx < N and 0 <= ny < N
+                            and self._enemy(self.board[ny][nx])):
+                        jx, jy = nx + dx, ny + dy
+                        while (0 <= jx < N and 0 <= jy < N
+                               and self.board[jy][jx] == 0):
+                            out.append([jx, jy])
+                            jx += dx
+                            jy += dy
         return out
 
     def snapshot(self):

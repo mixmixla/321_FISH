@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""牛头王（致敬 6 Nimmt）：104 张牌。4 列桌面递增排列。每轮所有人暗选一张，按牌面升序依次落列：
-落到「比它小且最接近」的列尾；若比所有列头都小，则须吞一整列当负分并自起新列；
-落列后该列超过 6 张，则列主吞其余 5 张。十轮后牛头最少者胜。"""
+"""牛头王（致敬 6 Nimmt）：104 张牌。4 列桌面递增排列，每列最多 5 张。每轮所有人暗选一张，
+按牌面升序依次落列：落到「比它小且最接近」的列尾；若比所有列头都小，则须吞一整列当负分
+并自起新列；落列使该列达到 6 张时，列主吞前 5 张、新牌成为该列唯一一张。十轮后牛头最少者胜。"""
 from games_pkg.base import BaseGame, GameRuleError
 
 N_CARDS = 104
@@ -89,14 +89,12 @@ class NimmtGame(BaseGame):
                 msgs.append(f"🔻 {self._nick(uid)} 出 {card}，吞下第 {ti + 1} 列（-{bh} 牛头）起新列")
             else:
                 self.table[best].append(card)
-                if len(self.table[best]) > 6:
-                    # 超出 6 张 → 列主吞前面 5 张
-                    taken = self.table[best][: -1]
+                if len(self.table[best]) > 5:          # 第 6 张 → 吞前 5 张
+                    taken = self.table[best][:-1]
                     bh = sum(heads(x) for x in taken)
                     self.bulls[uid] += bh
-                    if len(taken) == 5:
-                        last = self.table[best][-1]
-                        self.table[best] = [last]
+                    last = self.table[best][-1]
+                    self.table[best] = [last]
                     msgs.append(f"⚡ {self._nick(uid)} 出 {card} 拉爆第 {best + 1} 列（-{bh} 牛头）")
         self.choices = {}
         self.round += 1

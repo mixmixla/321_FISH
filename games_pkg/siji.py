@@ -78,6 +78,10 @@ class SijiGame(BaseGame):
             return
         self.season += 1
         self.turns_left = TURNS_PER_SEASON * len(self.players)
+        # 新一季：引擎卡恢复可激活（规则为「本季一次」）
+        for u in self.players:
+            for card in self.engine[u]:
+                card["played"] = False
         self.hand = {u: self._draw_hand() for u in self.players}
         self.turn = 0
 
@@ -90,9 +94,10 @@ class SijiGame(BaseGame):
             raise GameRuleError("手牌无效")
         if len(self.engine[uid]) >= MAX_ENGINE:
             raise GameRuleError("引擎已满（最多 6 张）")
-        card = self.hand[uid].pop(idx)
+        card = self.hand[uid][idx]
         if self.crystal[uid] < card["cost"]:
             raise GameRuleError(f"水晶不足，需 {card['cost']}")
+        self.hand[uid].pop(idx)
         self.crystal[uid] -= card["cost"]
         self.engine[uid].append(dict(card, played=False))
         self._next()
@@ -156,7 +161,29 @@ class SijiGame(BaseGame):
         return None
 
     def player_left(self, uid):
-        return []
+        if uid not in self.players:
+            return []
+        msgs = [f"👋 {self._nick(uid)} 离开了对局"]
+        n = len(self.players)
+        idx = self.players.index(uid)
+        # 该玩家本赛季剩余的行动次数：从当前回合起按座次轮转
+        dist = (idx - self.turn) % n
+        remaining = 0 if dist >= self.turns_left else \
+            (self.turns_left - dist + n - 1) // n
+        self.players.remove(uid)
+        self.hand.pop(uid, None)
+        self.engine.pop(uid, None)
+        for pool in (self.crystal, self.gold, self.vp):
+            pool.pop(uid, None)
+        if idx < self.turn:
+            self.turn -= 1
+        self.turns_left -= remaining
+        if not self.players or self.winner:
+            return msgs
+        self.turn %= len(self.players)
+        if self.turns_left <= 0:
+            self._next_season()
+        return msgs
 
     def _nick(self, uid):
         return f"玩家{uid}"

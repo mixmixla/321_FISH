@@ -10132,7 +10132,9 @@ class Hub:
     def _game_list_payload(self) -> dict:
         return {"t": "game_list", "games": [
             {"name": n, "label": m["label"], "min": m["min"], "max": m["max"],
-             "desc": m.get("desc", ""), "rules": m.get("rules", "")}
+             "desc": m.get("desc", ""), "rules": m.get("rules", ""),
+             "options": m.get("options", {}),
+             "default_options": m.get("default_options", {})}
             for n, m in GAME_META.items()],
             "rooms": self.rooms.list_rooms()}
 
@@ -10277,8 +10279,11 @@ class Hub:
 
     def _on_game_create(self, sess: Session, header: dict) -> None:
         game = (header.get("game") or "").strip()
+        options = header.get("options")
+        if not isinstance(options, dict):
+            options = None
         try:
-            room = self.rooms.create(sess.uid, game)
+            room = self.rooms.create(sess.uid, game, options=options)
         except GameRuleError as exc:
             self._error(sess, "game", str(exc))
             return

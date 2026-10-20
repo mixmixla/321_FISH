@@ -85,7 +85,7 @@ class KaituoGame(BaseGame):
 
     # ---------- 动作 ----------
     def act(self, uid, action):
-        if self.winner:
+        if self.winner is not None:
             raise GameRuleError("本局已结束")
         if uid != self.players[self.turn]:
             raise GameRuleError("还没轮到你")
@@ -166,6 +166,10 @@ class KaituoGame(BaseGame):
                 raise GameRuleError("道路必须与你的村庄/道路相连")
             self._pay(uid, cost)
             self.roads[e] = uid
+            pts = self._score(uid)
+            if pts >= WIN_PTS:
+                self.winner = uid
+                return [f"🏆 {self._nick(uid)} 建造道路，总分 {pts}，达成 {WIN_PTS} 分获胜！"]
             self._advance(uid)
             return [f"🛣 {self._nick(uid)} 建造道路"]
         if kind in ("settle", "city"):
@@ -196,7 +200,10 @@ class KaituoGame(BaseGame):
         give, want = action.get("give"), action.get("want")
         if give not in self.res[uid] or want not in self.res[uid] or give == want:
             raise GameRuleError("资源类型无效")
-        amt = int(action.get("n") or 4)
+        try:
+            amt = int(action.get("n") or 4)
+        except (TypeError, ValueError):
+            raise GameRuleError("交换数量无效")
         if amt < 4:
             raise GameRuleError("港口 4:1 最少换 4 个")
         if self.res[uid][give] < amt:
@@ -207,7 +214,7 @@ class KaituoGame(BaseGame):
         return [f"🔄 {self._nick(uid)} {amt}{RES_CN[give]} → 1{RES_CN[want]}"]
 
     def _advance(self, uid):
-        if self.winner:
+        if self.winner is not None:
             return
         self.turn = (self.turn + 1) % len(self.players)
 
@@ -221,31 +228,41 @@ class KaituoGame(BaseGame):
         return total + self._longest_road(uid)
 
     def _longest_road(self, uid):
+        """最长路奖励：仅唯一最长者且长度 >= 5 时得 2 分（并列均不得分）。"""
+        return 2 if self._longest_road_owner() == uid else 0
+
+    def _longest_road_len(self, uid):
         mine = [e for e, o in self.roads.items() if o == uid]
         if not mine:
             return 0
+        adj = {}
+        for a, b in mine:
+            adj.setdefault(a, []).append(b)
+            adj.setdefault(b, []).append(a)
         best = 0
-        verts = set(x for e in mine for x in e)
-        mem = {}
 
-        def dfs(v, prev):
-            key = (v, prev)
-            if key in mem:
-                return mem[key]
-            m = 0
-            for e in mine:
-                if e[0] != v and e[1] != v:
+        def dfs(v, seen):
+            nonlocal best
+            best = max(best, len(seen))
+            for nxt in adj.get(v, []):
+                e = tuple(sorted((v, nxt)))
+                if e in seen:
                     continue
-                nxt = e[1] if e[0] == v else e[0]
-                if nxt == prev:
-                    continue
-                m = max(m, 1 + dfs(nxt, v))
-            mem[key] = m
-            return m
+                seen.add(e)
+                dfs(nxt, seen)
+                seen.discard(e)
 
-        for v in verts:
-            best = max(best, dfs(v, None))
-        return 2 if best >= 5 else 0
+        for v in list(adj):
+            dfs(v, set())
+        return best
+
+    def _longest_road_owner(self):
+        lens = {u: self._longest_road_len(u) for u in self.players}
+        hi = max(lens.values()) if lens else 0
+        if hi < 5:
+            return None
+        leaders = [u for u in self.players if lens[u] == hi]
+        return leaders[0] if len(leaders) == 1 else None
 
     def _parse_v(self, action):
         try:
@@ -281,7 +298,7 @@ class KaituoGame(BaseGame):
         }
 
     def ended(self):
-        if self.winner:
+        if self.winner is not None:
             return {"winner_uid": self.winner,
                     "detail": f"{self._nick(self.winner)} 率先达成 {WIN_PTS} 分"}
         return None

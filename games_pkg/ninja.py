@@ -24,6 +24,7 @@ class NinjaNightGame(BaseGame):
         self._last_report = None
         self.winner = None
         self.detail = None
+        self.over = False
 
     def snapshot(self):
         return {
@@ -33,7 +34,7 @@ class NinjaNightGame(BaseGame):
             "hp": {str(u): self.hp[u] for u in self.players},
             "picked": list(self.moves.keys()),
             "last": self._last_report if self.phase == "resolve" else None,
-            "winner": self.winner, "done": self.winner is not None,
+            "winner": self.winner, "done": self.over,
         }
 
     def private(self, uid):
@@ -42,7 +43,7 @@ class NinjaNightGame(BaseGame):
         return {"hp": self.hp[uid]}
 
     def act(self, uid, action):
-        if self.winner is not None:
+        if self.over:
             raise GameRuleError("本局已结束")
         if uid not in self.alive:
             raise GameRuleError("你已出局")
@@ -102,6 +103,7 @@ class NinjaNightGame(BaseGame):
         self.phase = "resolve"
         self._last_report = log
         if len(self.alive) <= 1:
+            self.over = True
             self.winner = next(iter(self.alive), None)
             self.detail = (f"{self._nick(self.winner)} 成为最后存活的忍者" if self.winner is not None else "全部出局，无人获胜")
             log.append("🏁 " + self.detail)
@@ -113,11 +115,35 @@ class NinjaNightGame(BaseGame):
         return []
 
     def ended(self):
-        if self.winner is None and self.phase == "resolve":
-            return None   # 待下一回合
-        if self.winner is None:
+        if not self.over:
             return None
         return {"winner_uid": self.winner, "detail": self.detail}
+
+    def player_left(self, uid):
+        """掉线者退出：清掉其行动，若因此凑齐本轮则立即结算，避免永远等不齐。"""
+        if uid not in self.players:
+            return []
+        msgs = [f"{self._nick(uid)} 离开了游戏"]
+        was_alive = uid in self.alive
+        self.players.remove(uid)
+        self.alive.discard(uid)
+        self.hp.pop(uid, None)
+        self.moves.pop(uid, None)
+        if self.over:
+            return msgs
+        if was_alive:
+            if self.phase == "pick":
+                alive = [p for p in self.players if p in self.alive]
+                if alive and len(self.moves) == len(alive):
+                    msgs.extend(self._resolve())
+                    return msgs
+            if len(self.alive) <= 1:
+                self.over = True
+                self.winner = next(iter(self.alive), None)
+                self.detail = (f"{self._nick(self.winner)} 成为最后存活的忍者"
+                               if self.winner is not None else "全部出局，无人获胜")
+                msgs.append("🏁 " + self.detail)
+        return msgs
 
     def _nick(self, uid):
         return f"玩家{uid}"

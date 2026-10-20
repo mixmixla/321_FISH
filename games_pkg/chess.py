@@ -216,7 +216,7 @@ class ChessGame(BaseGame):
         return True
 
     def act(self, uid, action):
-        if self.winner:
+        if self.winner or self.result == "draw":
             raise GameRuleError("本局已结束")
         if uid != self.players[self.turn]:
             raise GameRuleError("还没轮到你")
@@ -233,6 +233,12 @@ class ChessGame(BaseGame):
             raise GameRuleError("只能移动己方棋子")
         if (tx, ty) not in self._move_gen(fx, fy, pl):
             raise GameRuleError("该棋子不能这样走")
+
+        # 保存现场：自将校验失败时整体回滚，避免留下半状态
+        before = [row[:] for row in self.board]
+        before_k = dict(self.kpos)
+        before_cast = {k: list(v) for k, v in self.cast.items()}
+        before_ep = self.ep
 
         enp, promo, castle = False, None, None
         if _t(cell) == P and self.ep and (tx, ty) == self.ep:
@@ -258,25 +264,34 @@ class ChessGame(BaseGame):
                     self.board[row][5], self.board[row][7] = self.board[row][7], 0
                 else:
                     self.board[row][3], self.board[row][0] = self.board[row][0], 0
-        # 更新易位权
-        if _t(cell) == K or fx == 0 or fx == 7:
-            if _t(cell) == K:
-                self.cast[pl] = [False, False]
-            if fx == 0 or (tx == 0):
+        # 更新易位权：王/车移动，或车被吃
+        if _t(cell) == K:
+            self.cast[pl] = [False, False]
+        elif _t(cell) == R:
+            home = 7 if pl == 0 else 0
+            if fy == home and fx == 0:
                 self.cast[pl][1] = False
-            if fx == 7 or (tx == 7):
+            if fy == home and fx == 7:
                 self.cast[pl][0] = False
+        if captured and _t(captured) == R:
+            opp = 1 - pl
+            home = 7 if opp == 0 else 0
+            if ty == home and tx == 0:
+                self.cast[opp][1] = False
+            if ty == home and tx == 7:
+                self.cast[opp][0] = False
         # 吃过路兵记录
         self.ep = None
         if _t(cell) == P and abs(ty - fy) == 2:
             self.ep = (tx, (fy + ty) // 2)
 
-        # 将军自检：(上面模拟后) 若己方王被将军则撤销
-        if _t(cell) == K:
-            pass
+        # 将军自检：非法则整体回滚（棋子、王位、易位权、吃过路兵格）
         if self._in_check(pl):
+            self.board = before
+            self.kpos = before_k
+            self.cast = before_cast
+            self.ep = before_ep
             raise GameRuleError("不能把己方王置于被将军")
-        # 规范回滚路径不更新对象，直接允许
 
         # 结果文案
         msgs = [f"♟ {self._nick(uid)} {CN[cell]} ({fx},{fy})→({tx},{ty})"]

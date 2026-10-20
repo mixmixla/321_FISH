@@ -134,8 +134,12 @@ class ShogiGame(BaseGame):
             for xx in range(N):
                 if self.board[yy][xx] != 0:
                     continue
-                # 香/桂/兵不能落在最后一行(成不了且立即死)
-                if t in (L, N_, P):
+                # 香/兵不能落在最后一行；桂不能落在最后两行（否则永远无子可走）
+                if t == N_:
+                    last2 = (N - 2, N - 1) if pl == 0 else (0, 1)
+                    if yy in last2:
+                        continue
+                elif t in (L, P):
                     last = N - 1 if pl == 0 else 0
                     if yy == last:
                         continue

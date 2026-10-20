@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-"""五子棋：15x15，两人对战，多人观战。"""
+"""五子棋：15x15，两人对战，多人观战。
+
+规则对齐 BGA 默认（Board size 15x15 / Variant Standard / Opening rule None）：
+- 黑先（座位 0），轮流在空交叉点落子。
+- **恰好 5 子**连线（横/竖/斜）取胜；连成 6 子及以上不算赢。
+- 棋盘下满仍无人成五 → 平局。
+"""
 from games_pkg.base import BaseGame, GameRuleError
 
 SIZE = 15
@@ -56,6 +62,7 @@ class GomokuGame(BaseGame):
         return []
 
     def _check_win(self, x: int, y: int, stone: int) -> bool:
+        """BGA Standard：该方向上**恰好** 5 颗连续同色才算赢（6+ 不算）。"""
         for dx, dy in DIRS:
             cnt = 1
             for s in (1, -1):
@@ -64,7 +71,7 @@ class GomokuGame(BaseGame):
                     cnt += 1
                     nx += dx * s
                     ny += dy * s
-            if cnt >= 5:
+            if cnt == 5:
                 return True
         return False
 

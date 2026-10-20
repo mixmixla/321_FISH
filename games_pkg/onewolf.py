@@ -109,7 +109,10 @@ class OneNightWolfGame(BaseGame):
                 self.acted.add(uid)
                 msgs = [f"🔮 {self._nick(uid)} 窥看了 {self._nick(t)}"]
             elif "look_center" in action:
-                a, b = action["look_center"]
+                try:
+                    a, b = (int(x) for x in action["look_center"])
+                except (TypeError, ValueError):
+                    raise GameRuleError("中心索引需 0~2 且不同")
                 if not (0 <= a < len(self.center) and 0 <= b < len(self.center) and a != b):
                     raise GameRuleError("中心索引需 0~2 且不同")
                 self._seer_cen[uid] = (a, b)
@@ -118,6 +121,10 @@ class OneNightWolfGame(BaseGame):
             else:
                 raise GameRuleError("预言家需 look_one 或 look_center")
         elif role == ROBBER:
+            # 夜晚顺序：预言家先行动，强盗随后换牌，避免换牌后看到错误身份
+            seers = [u for u in self.players if self.original.get(u) == SEER]
+            if any(u not in self.acted for u in seers):
+                raise GameRuleError("请等预言家先行动")
             t = action.get("rob")
             if t not in self.players or t == uid:
                 raise GameRuleError("非法目标")
@@ -134,6 +141,8 @@ class OneNightWolfGame(BaseGame):
 
     # ---- 投票 ----
     def _vote(self, uid, action):
+        if uid not in self.players:
+            raise GameRuleError("你不在对局中")
         if uid in self.votes:
             raise GameRuleError("你已经投过票")
         t = action.get("target")

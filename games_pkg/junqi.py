@@ -78,12 +78,14 @@ class JunqiGame(BaseGame):
             raise GameRuleError("坐标必须为整数")
         if not (0 <= fx < COLS and 0 <= fy < ROWS and 0 <= tx < COLS and 0 <= ty < ROWS):
             raise GameRuleError("越界")
-        me = self._side_mask(self.board[fy][fx])
+        code = self.board[fy][fx]
+        if code == EMPTY:
+            raise GameRuleError("该位置没有棋子")
+        me = self._side_mask(code)
         if me != self.turn:
             raise GameRuleError("只能移动己方棋子")
         if (tx, ty) not in self._adj(fx, fy):
             raise GameRuleError("只能走相邻一格")
-        code = self.board[fy][fx]
         rank = _rank(code)
         if rank in (FLAG, MINE):
             raise GameRuleError(f"{CN[rank]} 不能移动")

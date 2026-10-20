@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""斗兽棋：7x9。象/狮/虎/豹/狼/狗/猫/鼠 八种，大克小(鼠吃象特殊)，狮虎可隔河跳、鼠可入河。
-营(陷阱)削弱入营的敌方、占据敌营即获胜。"""
+"""斗兽棋：7x9。象/狮/虎/豹/狼/狗/猫/鼠 八种，大克小(鼠吃象特殊)，狮虎可隔河竖跳、鼠可入河。
+占据敌营即获胜；陷阱削弱暂未启用。"""
 from games_pkg.base import BaseGame, GameRuleError
 
 COLS, ROWS = 7, 9
@@ -78,12 +78,12 @@ class DouGame(BaseGame):
         # 吃子判定
         if target:
             oa = target[1]
-            # 鼠入河时不能吃陆上动物(简化：河内鼠只受河内规则)
-            weff = self._effective(a, fx, fy)
-            oe = self._effective(oa, tx, ty)
+            # 水陆之间不能吃子：水中鼠不被岸上动物吃，也不能吃岸上动物
+            if self._in_water(fx, fy) != self._in_water(tx, ty):
+                raise GameRuleError("水陆之间不能吃子")
             special = a == MOUSE and oa == ELEPHANT and not self._in_water(fx, fy)
-            wins = (weff > oe) or special
-            loses = weff < oe and not special
+            wins = (a > oa) or special
+            loses = a < oa and not special
             if not wins and not loses:      # 平级兑掉
                 self.board.pop((fx, fy))
                 self.board.pop((tx, ty))
@@ -101,21 +101,12 @@ class DouGame(BaseGame):
         return [f"🐾 {self._nick(uid)} {CN[a]} ({fx},{fy})→({tx},{ty})" +
                 (f"，吃掉 {CN[target[1]]}" if target else "")]
 
-    def _effective(self, a, x, y):
-        """落入敌方陷阱则降为最低(可被任何动物吃)"""
-        if a == MOUSE:
-            return a
-        if (x, y) in BLACK_TRAPS or (x, y) in (TRAPS_BLACK):
-            # 非我方营的陷阱会削弱
-            if (x, y) in HOMES.values():
-                pass
-        # 标准：位于敌方营/陷阱旁被削弱。此处简化：已在对方营则敌可吃(由占领判定覆盖)
-        return a
-
     def _in_water(self, x, y):
         return (x, y) in WATER
 
     def _can_move(self, a, fx, fy, tx, ty):
+        if (tx, ty) in WATER and a != MOUSE:      # 只有鼠能入水
+            return False
         if abs(fx - tx) + abs(fy - ty) > 1:
             # 狮虎隔河竖跳
             return self._jump(a, fx, fy, tx, ty)

@@ -99,8 +99,10 @@ class AvalonGame(BaseGame):
             raise GameRuleError("当前无需你行动")
         if uid in self.acted:
             raise GameRuleError("你已经行动过了")
+        phase = self.phase
         msgs = self._do(uid, action)
-        self.acted.append(uid)
+        if self.phase == phase:          # 阶段切换时新阶段从零开始，不能记成本阶段已行动
+            self.acted.append(uid)
         msgs.extend(self._advance())
         return msgs
 
@@ -110,7 +112,10 @@ class AvalonGame(BaseGame):
             team = action.get("team")
             if not isinstance(team, (list, tuple)) or len(team) != self._quest_size():
                 raise GameRuleError(f"需提名 {self._quest_size()} 人")
-            team = [int(t) for t in team]
+            try:
+                team = [int(t) for t in team]
+            except (TypeError, ValueError):
+                raise GameRuleError("团队数据无效")
             if len(set(team)) != len(team):
                 raise GameRuleError("团队不能重复")
             if any(t not in self.players for t in team):
@@ -119,6 +124,7 @@ class AvalonGame(BaseGame):
             self.votes = {}
             self.phase = "teamvote"
             self.need = list(self.players)[:]
+            self.acted = []                  # 领袖也要参与团队投票
             return [f"👑 {nk(uid)} 提议团队：{'、'.join(nk(t) for t in sorted(team))}，请全体投票"]
         if self.phase == "teamvote":
             ok = bool(action.get("approve"))
@@ -129,7 +135,10 @@ class AvalonGame(BaseGame):
             self.quest_votes[uid] = good
             return [f"🃏 {nk(uid)} 任务结果：{'成功' if good else '失败'}"]
         if self.phase == "final":
-            t = int(action.get("target"))
+            try:
+                t = int(action.get("target"))
+            except (TypeError, ValueError):
+                raise GameRuleError("非法指认目标")
             if t not in self.players:
                 raise GameRuleError("非法指认目标")
             self.winner = True if (t != self.merlin_uid) else False
@@ -178,10 +187,16 @@ class AvalonGame(BaseGame):
             self.phase = "done"
             msgs.append(self.detail)
         elif sues >= 3:
-            self.phase = "final"
-            self.need = [self.assassin_uid]
-            self.acted = []
-            msgs.append("🎯 好人方已达成 3 次成功！刺客请指认谁是梅林")
+            if self.assassin_uid is None or self.assassin_uid not in self.players:
+                self.winner = True
+                self.detail = "刺客已离场，无人指认梅林，好人获胜"
+                self.phase = "done"
+                msgs.append(self.detail)
+            else:
+                self.phase = "final"
+                self.need = [self.assassin_uid]
+                self.acted = []
+                msgs.append("🎯 好人方已达成 3 次成功！刺客请指认谁是梅林")
         else:
             self._next_quest()
         return msgs
@@ -197,6 +212,51 @@ class AvalonGame(BaseGame):
             return None
         return {"winner_uid": None, "winner": self.winner,
                 "detail": self.detail or ("🛡️ 好人获胜" if self.winner else "🗡️ 坏人获胜")}
+
+    def player_left(self, uid):
+        """掉线善后：剔除该玩家并把等待中的提名/投票/任务推进到可继续的状态。"""
+        if uid not in self.players:
+            return []
+        msgs = [f"👋 {self._nick(uid)} 离开了对局"]
+        idx = self.players.index(uid)
+        was_leader = (idx == self.leader_idx)
+        self.players.remove(uid)
+        self.evil_uids.discard(uid)
+        if self.merlin_uid == uid:
+            self.merlin_uid = None
+        if self.assassin_uid == uid:
+            self.assassin_uid = None
+        self.need = [u for u in self.need if u != uid]
+        self.acted = [u for u in self.acted if u != uid]
+        self.votes.pop(uid, None)
+        self.quest_votes.pop(uid, None)
+        self.team = [u for u in self.team if u != uid]
+        if not self.players:
+            return msgs
+        if idx < self.leader_idx:
+            self.leader_idx -= 1
+        self.leader_idx %= len(self.players)
+        if self.winner is not None or self.phase == "done":
+            return msgs
+        if self.phase == "final":
+            if self.assassin_uid is None:
+                self.winner = True
+                self.detail = "刺客离场，无人指认梅林，好人获胜"
+                self.phase = "done"
+                self.need = []
+            elif self.assassin_uid not in self.need:
+                self.need = [self.assassin_uid]
+            return msgs
+        if self.phase == "nominate":
+            if was_leader or not self.need:
+                self._need_leader()
+            return msgs
+        if self.phase in ("teamvote", "quest"):
+            if all(u in (self.votes if self.phase == "teamvote"
+                         else self.quest_votes) for u in self.need) \
+                    and not any(u not in self.acted for u in self.need):
+                msgs.extend(self._advance())
+        return msgs
 
     def _nick(self, uid):
         return f"玩家{uid}"

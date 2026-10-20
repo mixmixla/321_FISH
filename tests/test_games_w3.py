@@ -142,12 +142,18 @@ def _checkers_pos(board_map, turn=0, players=(1, 2)):
 
 
 def test_checkers_king_hint_consistent_with_act():
-    """复审场景：王(2,3) 与敌子(4,5)，提示不得给出 act 无法执行的落点"""
+    """飞王：沿空斜线任意距离可走；隔一枚敌子可远距离吃。提示与 act 一致。"""
     g = _checkers_pos({(2, 3): 3, (4, 5): 2}, turn=0)
     hints = {tuple(t) for t in g._targets(2, 3)}
-    for bad in [(5, 6), (0, 1), (4, 1), (0, 5)]:
-        assert bad not in hints
-    assert (3, 4) in hints
+    for ok in [(3, 4), (0, 1), (4, 1), (0, 5), (5, 6)]:
+        assert ok in hints, ok
+        h = _checkers_pos({(2, 3): 3, (4, 5): 2}, turn=0)
+        h.act(1, {"fx": 2, "fy": 3, "tx": ok[0], "ty": ok[1]})
+        assert h.board[ok[1]][ok[0]] == 3
+    # 远距离吃：(4,5) 的敌子被吃掉
+    h = _checkers_pos({(2, 3): 3, (4, 5): 2}, turn=0)
+    h.act(1, {"fx": 2, "fy": 3, "tx": 5, "ty": 6})
+    assert h.board[5][4] == 0 and h.board[6][5] == 3
 
 
 def test_checkers_hints_match_act():

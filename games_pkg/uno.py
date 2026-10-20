@@ -129,16 +129,18 @@ class UnoGame(BaseGame):
         return msgs
 
     def _apply_first_card_effect(self):
-        """首牌若是功能牌也生效（简化：仅方向/跳过/抽牌）"""
+        """首牌若是功能牌也生效（首家承担 +2/跳过，方向牌在 2 人局视作跳过）。"""
         top = self.discard[-1]
         if top["kind"] == "action":
             if top["value"] == "reverse":
-                self.direction = -1 if len(self.players) > 2 else self.direction
+                if len(self.players) > 2:
+                    self.direction = -1
+                else:
+                    self.current_idx = (self.current_idx + 1) % len(self.players)
             elif top["value"] == "skip":
                 self.current_idx = (self.current_idx + self.direction) % len(self.players)
             elif top["value"] == "draw2":
-                nxt = (self.current_idx + self.direction) % len(self.players)
-                self._give_cards(nxt, 2)
+                self._give_cards(self.players[self.current_idx], 2)   # 首家抽 2
                 self.current_idx = (self.current_idx + self.direction) % len(self.players)
 
     # ---- 出牌/摸牌 ----
@@ -192,11 +194,11 @@ class UnoGame(BaseGame):
                 self.direction *= -1
                 msgs.append("方向反转")
         elif card["value"] == "draw2":
-            self._give_cards(nxt, 2)
+            self._give_cards(self.players[nxt], 2)
             msgs.append(f"{self._nick(self.players[nxt])} 抽 2 张并跳过")
             self.current_idx = (self.current_idx + self.direction) % len(self.players)
         if card["kind"] == "wild" and card["value"] == "wild4":
-            self._give_cards(nxt, 4)
+            self._give_cards(self.players[nxt], 4)
             msgs.append(f"{self._nick(self.players[nxt])} 抽 4 张并跳过")
             self.current_idx = (self.current_idx + self.direction) % len(self.players)
 

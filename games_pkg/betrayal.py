@@ -115,6 +115,8 @@ class BetrayalGame(BaseGame):
     def act(self, uid: int, action: dict) -> list:
         if self.ended():
             raise GameRuleError("本局已结束，请开新局")
+        if uid in self.dead:
+            raise GameRuleError("阵亡者无法行动")
         if not self.players or uid != self.players[self.turn_idx]:
             raise GameRuleError("还没轮到你")
         if "move" in action:
@@ -381,6 +383,13 @@ class BetrayalGame(BaseGame):
         elif idx < self.turn_idx:
             self.turn_idx -= 1
         if was_current and not self._result and self.players:
+            n = len(self.players)
+            for _ in range(n):                     # 跳过阵亡的继任者
+                if self.players[self.turn_idx] not in self.dead:
+                    break
+                self.turn_idx = (self.turn_idx + 1) % n
+            if self.players[self.turn_idx] in self.dead:
+                return msgs
             cur = self.players[self.turn_idx]      # 继任者直接获得新回合，不再推进
             self.steps_left = self.stats[cur]["speed"]
             self.attack_used = False

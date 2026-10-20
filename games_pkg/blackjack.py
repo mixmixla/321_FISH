@@ -65,9 +65,20 @@ class BlackjackGame(BaseGame):
         raise GameRuleError("未知动作")
 
     def _hand_value(self, hand) -> int:
+        """A 先按 11 计；超过 21 时逐张降为 1（结果与出牌顺序无关）。"""
         total = 0
+        aces = 0
         for _, rank in hand:
-            total += _value(rank, total)
+            if rank == "A":
+                aces += 1
+                total += 11
+            elif rank in ("J", "Q", "K"):
+                total += 10
+            else:
+                total += int(rank)
+        while total > 21 and aces:
+            total -= 10
+            aces -= 1
         return total
 
     # ---- 开局 ----
@@ -89,7 +100,7 @@ class BlackjackGame(BaseGame):
         # 庄家明牌 A 或 10 点时可提前检查 blackjack
         msgs = [f"第 {self.round} 局开始，每人 2 张牌（固定下注 1 分）"]
         if self._hand_value(self.dealer) == 21:
-            self._settle(announce=True)
+            msgs += self._settle(announce=True)
         return msgs
 
     def _next_player(self) -> int | None:

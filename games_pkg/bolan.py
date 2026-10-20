@@ -60,13 +60,16 @@ class BolanGame(BaseGame):
             r = int(action["r"])
         except (TypeError, ValueError):
             raise GameRuleError("选区无效")
+        if not (0 <= r < N_REGIONS):
+            raise GameRuleError("选区越界")
         if self.influence[uid] < 2:
             raise GameRuleError("弃子翻倍需 2 枚影响力")
         # 简化：弃 2 枚 → 该区视作 +1 加权分（以等效票体现）
         self.influence[uid] -= 2
         for _ in range(2):
             self.board[r][uid] += 1
-        return [f"🔥 {self._nick(uid)} 在「{REG_CN[r]}」弃 2 枚翻倍影响力"]
+        msgs = [f"🔥 {self._nick(uid)} 在「{REG_CN[r]}」弃 2 枚翻倍影响力"]
+        return self._advance(uid, msgs)
 
     def _advance(self, uid, msgs):
         n = len(self.players)
@@ -119,7 +122,23 @@ class BolanGame(BaseGame):
         return None
 
     def player_left(self, uid):
-        return []
+        if uid not in self.players:
+            return []
+        msgs = [f"👋 {self._nick(uid)} 离开了对局"]
+        idx = self.players.index(uid)
+        self.players.remove(uid)
+        self.influence.pop(uid, None)
+        self.score.pop(uid, None)
+        for r in self.board:
+            self.board[r].pop(uid, None)
+        for r in self.used:
+            self.used[r].discard(uid)
+        if not self.players or self.winner:
+            return msgs
+        if idx < self.turn:
+            self.turn -= 1
+        self.turn %= len(self.players)
+        return msgs
 
     def _nick(self, uid):
         return f"玩家{uid}"

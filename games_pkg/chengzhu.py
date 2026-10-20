@@ -51,7 +51,7 @@ class ChengZhuGame(BaseGame):
         return None
 
     def act(self, uid, action):
-        if self.winner:
+        if self.winner is not None:
             raise GameRuleError("本局已结束")
         uid_picker = self._current_picker()
         if uid_picker is None:
@@ -64,8 +64,9 @@ class ChengZhuGame(BaseGame):
             self._round_check()
             return []
 
-        dom = self._pick_dom(uid, action)      # 返回选择的板块
-        placed = self._place(uid, dom, action)
+        idx, dom = self._pick_dom(uid, action)   # 先只读取，放置失败不能吞掉板块
+        self._place(uid, dom, action)
+        self.market.pop(idx)
         self.pick_idx += 1
         self._round_check()
         return [f"🏰 {self._nick(uid)} 拼装板块（{dom['A']['terr']}/{dom['B']['terr']}）"]
@@ -77,7 +78,7 @@ class ChengZhuGame(BaseGame):
             raise GameRuleError("板块编号无效")
         if not (0 <= idx < len(self.market)):
             raise GameRuleError("板块不存在")
-        return self.market.pop(idx)
+        return idx, self.market[idx]
 
     def _place(self, uid, dom, action):
         if self.placed[uid] >= DOM_PER_PLAYER:
@@ -108,12 +109,13 @@ class ChengZhuGame(BaseGame):
         self.placed[uid] += 1
 
     def _round_check(self):
-        n = len(self.players)
-        if self.pick_idx >= n:
-            if not self.market and not self.piles:
-                self._finish()
-                return
+        if self.pick_idx < len(self.pick_order):
+            return
+        # 每人落满 DOM_PER_PLAYER 块即终局；牌堆耗尽也结束（可能有人少放）
+        if self.piles and any(self.placed[u] < DOM_PER_PLAYER for u in self.players):
             self._refill()
+            return
+        self._finish()
 
     def _regions_score(self, uid):
         cells = self.grid[uid]
@@ -160,7 +162,7 @@ class ChengZhuGame(BaseGame):
         }
 
     def ended(self):
-        if self.winner:
+        if self.winner is not None:
             return {"winner_uid": self.winner,
                     "detail": f"{self._nick(self.winner)} 领地得分最高"}
         return None

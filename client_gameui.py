@@ -2777,7 +2777,7 @@ def _xiangqi_chess(cv, st, me, nick, submit, repaint, ui, priv, w, h, kind="xian
 def _p_go(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["go"][1]
     n = st.get("size") or 19
-    title = "⚫⚪ 围棋"
+    title = f"⚫⚪ 围棋·{n}路" + ("·单人" if st.get("solo") else "")
     if st.get("winner_uid") is not None:
         title = f"🏆 {nick(st['winner_uid'])} 获胜"
     elif st.get("over"):
@@ -2839,6 +2839,10 @@ def _p_go(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
     _anim_need(ui, repaint, gap=0.04, cap=180)
+
+
+# 单人练习复用围棋画师：棋盘/落子/动效一致。
+_PAINTERS["go_solo"] = _p_go
 
 
 @_register("uno")

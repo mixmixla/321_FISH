@@ -11531,6 +11531,10 @@ _GAME_ACTIONS = {
         ("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）"),
         ("过一手", {"fixed": {"pass": True}}, "弃一手（轮流连续过则终局）"),
     ],
+    "go_solo": [
+        ("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）"),
+        ("过一手", {"fixed": {"pass": True}}, "连续两次过则终局，电脑会自动应手"),
+    ],
     "halma": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（直移或隔子直跳）")],
     "checkers": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（斜移/斜跳吃子）")],
     "blokus": [
@@ -11680,6 +11684,7 @@ for _cg in ("gomoku", "connect4", "othello", "tictactoe", "chess", "xiangqi",
 # 棋盘直操类游戏的首屏引导（无按钮可指时告诉玩家怎么操作）
 _GAME_HINTS = {
     "azul": "拖动：从工厂盘 / 中央池抓起花砖，拖到自己的花纹行或地板线松手",
+    "go_solo": "单人练习：点击交叉点落子，电脑会自动应手；连续两次「过一手」终局",
 }
 
 # 参数动作的友好输入窗：kind -> callable(win, title, hint, label) -> str|None
@@ -11742,6 +11747,7 @@ _GAME_ICON = {
     "nimmt": "🐂", "azul": "🧱", "kaituo": "⛏️",
     "lingdi": "🗺️", "tielu": "🚂", "gongfang": "🏗️", "chengzhu": "🏰",
     "gemcity": "💎", "siji": "🍀", "bolan": "🌊", "tictactoe": "⭕",
+    "go_solo": "🤖",
     "balatro": "🃏",
     "balatro_solo": "🃏",
 }
@@ -11772,6 +11778,7 @@ _GAME_GRAD = {
     "ninja": ("#33415a", "#1d2736"),
     "xiangqi": ("#5a4a2d", "#3d3018"), "chess": ("#39424e", "#232a33"),
     "go": ("#33415a", "#1d2736"), "shogi": ("#5d4592", "#3a2d63"),
+    "go_solo": ("#5b8def", "#3b6fd4"),
     "junqi": ("#5b8def", "#3b6fd4"), "dou": ("#4f7a54", "#37603c"),
     "coc": ("#1f5236", "#123022"),
     "balatro": ("#5b1f2a", "#2a1030"),
@@ -11799,6 +11806,8 @@ def _desktop_game_status(name: str) -> tuple[str, str]:
 
 
 def _nick_of(core, uid: int) -> str:
+    if uid == -1:                      # 单人练习的电脑方
+        return "电脑"
     u = core.roster.get(uid)
     return u["nick"] if u else f"玩家{uid}"
 
@@ -12101,6 +12110,9 @@ class _RoomCard(_CardBase):
                          cursor="hand2", pal=pal)
         meta = core.game_meta.get(room["game"], {})
         label = meta.get("label", room["game"])
+        room_size = (room.get("options") or {}).get("size")
+        if room_size:
+            label = f"{label}·{room_size}路"
         me = core.uid
         owner = room.get("owner_uid")
         host_nick = _nick_of(core, owner) if owner else "?"
@@ -12726,7 +12738,28 @@ class GameWindow:
         self._sel_game = name
         self._highlight_game()
         self._render_rules()
-        self.core.game_create(name)
+        options = None
+        meta = self.core.game_meta.get(name) or {}
+        sizes = (meta.get("options") or {}).get("size") or []
+        if len(sizes) > 1:                       # 围棋：创建时选 9/13/19 路
+            from widgets import dialogbox
+            default = (meta.get("default_options") or {}).get("size") or sizes[-1]
+            raw = dialogbox.ask_string(
+                "围棋棋盘", f"棋盘路数（{'/'.join(map(str, sizes))}）：",
+                parent=self.win, initialvalue=str(default))
+            if raw is None:
+                return
+            try:
+                size = int(raw.strip())
+            except ValueError:
+                size = None
+            if size not in sizes:
+                dialogbox.show_message(
+                    "围棋棋盘", f"只支持 {'/'.join(map(str, sizes))} 路",
+                    parent=self.win)
+                return
+            options = {"size": size}
+        self.core.game_create(name, options)
 
     def _render_rules(self) -> None:
         m = self.core.game_meta.get(self._sel_game or "")
@@ -12831,6 +12864,9 @@ class GameWindow:
             return
         label = self.core.game_meta.get(room.get("game"), {}).get("label",
                                                                   room.get("game"))
+        room_size = (room.get("options") or {}).get("size")
+        if room_size:
+            label = f"{label}·{room_size}路"
         status = {"created": "大厅", "playing": "对局中", "ended": "结算中"}.get(
             room.get("status"), room.get("status", ""))
         me = self.core.uid
@@ -13817,6 +13853,8 @@ class GameWindow:
 
     # ---------- 工具 ----------
     def _nick(self, uid: int) -> str:
+        if uid == -1:                      # 单人练习的电脑方
+            return "电脑"
         u = self.core.roster.get(uid)
         return u["nick"] if u else f"玩家{uid}"
 

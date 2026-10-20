@@ -2853,8 +2853,11 @@ class ClientCore:
     def game_list(self) -> bool:
         return self._send_frame({"t": MsgType.GAME_LIST.value})
 
-    def game_create(self, game: str) -> bool:
-        return self._send_frame({"t": MsgType.GAME_CREATE.value, "game": game})
+    def game_create(self, game: str, options: dict | None = None) -> bool:
+        frame = {"t": MsgType.GAME_CREATE.value, "game": game}
+        if isinstance(options, dict) and options:
+            frame["options"] = options
+        return self._send_frame(frame)
 
     def game_join(self, room_id: str) -> bool:
         return self._game_reentry(MsgType.GAME_JOIN, room_id)

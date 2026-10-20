@@ -55,9 +55,11 @@ class YahtzeeGame(BaseGame):
         self.total_rounds = 13 * len(players)
         self.dice = [1, 1, 1, 1, 1]
         self.rolls_left = 0          # 当回合剩余可重掷次数
+        self.rolled = False          # 本回合是否已掷过骰
         self.category = None         # 本回合是否已记分
         self.scores = {u: {cat: None for cat in CATS} for u in players}
         self.totals = {u: 0 for u in players}
+        self.bonus_awarded = {u: False for u in players}
         self.done = None
 
     def _cur(self):
@@ -81,12 +83,13 @@ class YahtzeeGame(BaseGame):
         raise GameRuleError("未知动作")
 
     def _roll(self, uid):
-        if self.scores[uid]["1"] is not None:
+        if self._turn_done(uid):
             # 玩家牌全部填过 → 直接下一家
             self._next()
             return [f"⏭ {self._nick(uid)} 已填满分类"]
         self.dice = [self.rng.randint(1, 6) for _ in range(5)]
         self.rolls_left = 2
+        self.rolled = True
         self.category = None
         return [f"🎲 {self._nick(uid)} 掷骰：" + " ".join(str(d) for d in self.dice)
                 + "（可再重掷 2 次）"]
@@ -113,6 +116,8 @@ class YahtzeeGame(BaseGame):
     def _score(self, uid, action):
         if self.category:
             raise GameRuleError("本回合已记分")
+        if not self.rolled:
+            raise GameRuleError("请先掷骰")
         cat = action.get("cat")
         if cat not in CATS:
             raise GameRuleError("分类无效")
@@ -122,12 +127,15 @@ class YahtzeeGame(BaseGame):
         self.scores[uid][cat] = pts
         self.totals[uid] += pts
         self.category = True
-        hi = [c for c in "123456" if self.scores[uid][c] is not None]
-        bonus = 35 if len(hi) == 6 and sum(self.scores[uid][c] for c in hi) >= 63 else 0
-        if bonus:
-            self.totals[uid] += bonus
+        bonus = 0
+        if not self.bonus_awarded[uid]:
+            hi = [c for c in "123456" if self.scores[uid][c] is not None]
+            if len(hi) == 6 and sum(self.scores[uid][c] for c in hi) >= 63:
+                bonus = 35
+                self.bonus_awarded[uid] = True
+                self.totals[uid] += bonus
         msgs = [f"📝 {self._nick(uid)} 记 {CAT_CN[cat]} = {pts} 分"
-                + (f"，上区≥63 奖励 +35" if bonus else "")]
+                + (f"，上区≥63 奖励 +{bonus}" if bonus else "")]
         self._next()
         return msgs
 
@@ -137,6 +145,7 @@ class YahtzeeGame(BaseGame):
         self.turn = (self.turn + 1) % len(self.players)
         self.round += 1
         self.rolls_left = 0
+        self.rolled = False
         self.category = None
         if self.round > self.total_rounds or all(self._turn_done(u) for u in self.players):
             hi = max(self.totals[u] for u in self.players)

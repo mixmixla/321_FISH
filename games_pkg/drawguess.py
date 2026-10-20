@@ -86,6 +86,8 @@ class DrawGuessGame(BaseGame):
     def _guess(self, uid: int, text) -> list:
         if self.phase != "drawing":
             raise GameRuleError("当前不是猜词环节")
+        if uid not in self.players:
+            raise GameRuleError("你不在本局")
         if uid == self.players[self.drawer_idx]:
             raise GameRuleError("画手不能猜自己的词")
         text = str(text).strip()
@@ -112,6 +114,30 @@ class DrawGuessGame(BaseGame):
             self.round_end_at = now + self.gap
             return [f"时间到！答案是「{self.word}」，无人猜中"]
         return []
+
+    def player_left(self, uid: int) -> list:
+        """掉线者退出：若正是画手则立即换人重开本轮，避免整轮无人能画。"""
+        if uid not in self.players:
+            return []
+        idx = self.players.index(uid)
+        was_drawer = idx == self.drawer_idx
+        self.players.remove(uid)
+        self.scores.pop(uid, None)
+        msgs = [f"{self._nick(uid)} 离开了游戏"]
+        if not self.players:
+            self.phase = "round_end"
+            self.round_end_at = float("inf")
+            return msgs
+        if idx < self.drawer_idx:
+            self.drawer_idx -= 1
+        elif idx == self.drawer_idx:
+            self.drawer_idx %= len(self.players)
+        if was_drawer:
+            # 退座后 drawer_idx 已指向下一位；_start_round 会再 +1，先退一格抵消
+            self.drawer_idx = (self.drawer_idx - 1) % len(self.players)
+            if self.phase == "drawing":
+                msgs.extend(self._start_round())
+        return msgs
 
     def ended(self):
         return None

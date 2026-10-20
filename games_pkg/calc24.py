@@ -125,6 +125,14 @@ class Calc24Game(BaseGame):
                     "detail": "平局：" + "、".join(self._nick(u) for u in winners)}
         return None
 
+    def player_left(self, uid: int) -> list:
+        """掉线者退出计分，避免已离场者仍被结算成最终胜者。"""
+        if uid not in self.players:
+            return []
+        self.players.remove(uid)
+        self.scores.pop(uid, None)
+        return [f"{self._nick(uid)} 离开了游戏"]
+
     def _nick(self, uid: int) -> str:
         return f"玩家{uid}"
 
@@ -238,6 +246,8 @@ def _all_values(nums) -> list:
 
 
 def _p2(x, y, op):
+    if x is None or y is None:          # 中间结果可能是除零失败的 None
+        return None
     x = Fraction(x)
     y = Fraction(y)
     try:
@@ -272,7 +282,7 @@ def _solve_seq(vals) -> dict | None:
             evals = [
                 _p2(_p2(a, b, o1), _p2(c, d, o2), o3),   # (a·b)·(c·d)
                 _p2(a, _p2(b, _p2(c, d, o2), o3), o1),   # a·(b·(c·d))
-                _p2(_p2(a, _p2(b, c, o2), o3), d, o1),   # (a·(b·c))·d
+                _p2(_p2(a, _p2(b, c, o2), o1), d, o3),   # (a·(b·c))·d
                 _p2(_p2(_p2(a, b, o1), c, o2), d, o3),   # ((a·b)·c)·d
                 _p2(a, _p2(_p2(b, c, o2), d, o3), o1),   # a·((b·c)·d)
             ]

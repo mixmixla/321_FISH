@@ -38,18 +38,19 @@ class TieluGame(BaseGame):
         self.mine = {u: [] for u in players}      # 认领的线路 (a,b,len)
         self.tickets = {u: [] for u in players}   # 私有票证 (a,b,value)
         for u in players:
-            for _ in range(2):
-                t = self.rng.choice(TICKETS)
+            for t in self.rng.sample(TICKETS, 2):  # 起手两张不能重复
                 self.tickets[u].append(list(t))
         self.routes_total = len(self.route_deck)
         self.turn = 0
         self.winner = None
+        self.trigger_uid = None   # 达到 END_TARGET 的玩家；其余人各补一回合
+        self.extra = []
 
     def _edges(self, uid):
         return [(a, b) for (a, b, _c, _l) in self.mine[uid]]
 
     def act(self, uid, action):
-        if self.winner:
+        if self.winner is not None:
             raise GameRuleError("本局已结束")
         if uid != self.players[self.turn]:
             raise GameRuleError("还没轮到你")
@@ -61,7 +62,7 @@ class TieluGame(BaseGame):
         if op == "ticket":
             return self._act_ticket(uid)
         if op == "skip":
-            self.turn = (self.turn + 1) % len(self.players)
+            self._advance()
             return [f"⏭ {self._nick(uid)} 结束回合"]
         raise GameRuleError("未知动作")
 
@@ -73,7 +74,7 @@ class TieluGame(BaseGame):
             c = self.rng.choice(COLORS)
             self.hand[uid][c] += 1
             got.append(COLOR_CN[c])
-        self.turn = (self.turn + 1) % len(self.players)
+        self._advance()
         return [f"🎫 {self._nick(uid)} 摸车票卡：{'、'.join(got)}"]
 
     def _act_claim(self, uid, action):
@@ -99,17 +100,33 @@ class TieluGame(BaseGame):
         score = self._score(uid)
         msgs = [f"🚂 {self._nick(uid)} 认领 {CITY_CN[a]}→{CITY_CN[b]}（{COLOR_CN[color]}×{length}），"
                 f"长度分 {score}"]
-        self.turn = (self.turn + 1) % len(self.players)
+        if score >= END_TARGET and self.trigger_uid is None:
+            # 达标即触发终局：其余玩家依次各补一回合，再按票证结算
+            self.trigger_uid = uid
+            idx = self.players.index(uid)
+            n = len(self.players)
+            self.extra = [self.players[(idx + k) % n] for k in range(1, n)]
+        self._advance()
         return msgs
 
     def _act_ticket(self, uid):
-        avail = [t for t in TICKETS if t not in self.tickets[uid]]
+        held = {tuple(t) for t in self.tickets[uid]}
+        avail = [t for t in TICKETS if t not in held]
         if not avail:
             raise GameRuleError("无更多票证")
         t = list(self.rng.choice(avail))
         self.tickets[uid].append(t)
-        self.turn = (self.turn + 1) % len(self.players)
+        self._advance()
         return [f"📜 {self._nick(uid)} 抽到票证：{CITY_CN[t[0]]}→{CITY_CN[t[1]]}（+{t[2]}）"]
+
+    def _advance(self):
+        if self.trigger_uid is not None:
+            if self.extra:
+                self.turn = self.players.index(self.extra.pop(0))
+                return
+            self._finalize()
+            return
+        self.turn = (self.turn + 1) % len(self.players)
 
     def _score(self, uid):
         return sum(l for (_a, _b, l) in self.mine[uid])
@@ -138,14 +155,15 @@ class TieluGame(BaseGame):
         return s
 
     def _finalize(self):
+        self.extra = []
         best = max(self._total(u) for u in self.players)
         leaders = [u for u in self.players if self._total(u) == best]
         self.winner = leaders[0]
 
     def ended(self):
-        if not self.route_deck:
-            if self.winner is None:
-                self._finalize()
+        if self.winner is None and not self.route_deck and not self.extra:
+            self._finalize()
+        if self.winner is not None:
             return {"winner_uid": self.winner,
                     "detail": f"{self._nick(self.winner)} 票证结算后总分最高"}
         return None
@@ -168,7 +186,8 @@ class TieluGame(BaseGame):
             "route_left": len(self.route_deck), "routes": routes,
             "hand_count": {str(u): sum(self.hand[u].values()) for u in self.players},
             "score": {str(u): self._score(u) for u in self.players},
-            "turn_uid": None if not self.route_deck else self.players[self.turn],
+            "turn_uid": (None if (self.winner is not None or not self.route_deck)
+                         else self.players[self.turn]),
             "players": list(self.players), "winner_uid": self.winner,
         }
 

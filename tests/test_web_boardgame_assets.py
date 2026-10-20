@@ -121,6 +121,15 @@ def test_web_has_enlarge_button_and_azul_drag_wiring():
         assert mark in css, mark
 
 
+def test_gomoku_web_renderer_gates_input_and_shows_coordinates():
+    """五子棋网页端：只在自己回合点空点落子，并显示 A~O / 1~15 坐标。"""
+    html = web._SERVED_PAGE().decode("utf-8")
+    assert "gomoku(box,s){" in html
+    assert "s.turn_uid===state.uid" in html          # 只在自己回合可点
+    assert "s.board[y][x])return" in html           # 已有棋子的点不提交
+    assert "String.fromCharCode(65+i)" in html      # 列坐标 A~O
+
+
 def test_subset_no_longer_serves_legacy_azul_keys():
     html = web._SERVED_PAGE().decode("utf-8")
     bg = _extract_bg_literal(html)

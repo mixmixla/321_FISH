@@ -96,7 +96,7 @@ class WerewolfGame(BaseGame):
             raise GameRuleError("你已经行动过了")
         msgs = self._do(uid, action)
         self.acted.append(uid)
-        msgs.extend(self._advance())
+        msgs.extend(self._pump())
         return msgs
 
     def _do(self, uid, action):
@@ -150,6 +150,17 @@ class WerewolfGame(BaseGame):
         raise GameRuleError("未知阶段")
 
     # ---- 推进状态机 ----
+    def _pump(self):
+        """连续推进：跳过无人可行动的阶段（预言家/女巫/狼人已出局），避免夜晚卡死。"""
+        msgs = []
+        for _ in range(12):
+            if self.phase == "done":
+                break
+            if self.need and any(u not in self.acted for u in self.need):
+                break
+            msgs.extend(self._advance())
+        return msgs
+
     def _advance(self):
         if self.phase == "done":
             return []
@@ -317,7 +328,7 @@ class WerewolfGame(BaseGame):
             msgs.append("剩余玩家不足，对局结束")
             return msgs
         if not self._maybe_end():
-            self._advance()
+            msgs.extend(self._pump())
         return msgs
 
     def _nick(self, uid):

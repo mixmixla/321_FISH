@@ -37,7 +37,7 @@ from games_pkg.blokus import BlokusGame
 from games_pkg.ludo import LudoGame
 from games_pkg.xiangqi import XiangQiGame
 from games_pkg.chess import ChessGame
-from games_pkg.go import GoGame
+from games_pkg.go import GoGame, GoSoloGame
 from games_pkg.shogi import ShogiGame
 from games_pkg.junqi import JunqiGame
 from games_pkg.dou import DouGame
@@ -61,6 +61,7 @@ def _label(name: str) -> str:
         "davinci": "达芬奇密码", "kalah": "非洲播棋", "lovelove": "情书", "halloween": "德国心脏病",
         "tictactoe": "井字棋", "halma": "跳棋", "checkers": "国际跳棋", "blokus": "角斗士棋", "ludo": "飞行棋",
         "xiangqi": "中国象棋", "chess": "国际象棋", "go": "围棋", "shogi": "将棋",
+        "go_solo": "围棋·单人",
         "junqi": "军棋", "dou": "斗兽棋",
         "onewolf": "一夜狼人",
         "werewolf": "狼人杀",
@@ -111,7 +112,8 @@ def _desc(name: str) -> str:
         "ludo": "掷骰起飞冲关，先到终点四机胜",
         "xiangqi": "红黑对弈，将死或困毙对方胜",
         "chess": "白先黑后，标准规则将死对方胜",
-        "go": "黑白落子围地，目数多者胜",
+        "go": "9/13/19 路可选，黑白围地目数多者胜",
+        "go_solo": "9 路围棋，和电脑练手（你执黑）",
         "shogi": "吃掉对方玉将即为胜",
         "junqi": "明棋孰强，扛军旗者胜",
         "dou": "八兽相克，占敌营者胜",
@@ -131,8 +133,8 @@ def _rules(name: str) -> str:
     return {
         "guess_number": "房主先出题（1~100 数字），其他人轮流猜；出题人提示“大了/小了”，"
                         "猜中者得 1 分，下一轮换人出题。",
-        "gomoku": "两人轮流落子（输入坐标 x,y，从 0 开始），横/竖/斜先连成 5 子者胜；"
-                  "对局结束可再来一局。",
+        "gomoku": "两人轮流点击交叉点落子（黑先），横/竖/斜恰好连成 5 子者胜"
+                  "（连成 6 子及以上不算）；棋盘下满无人成五则平局。",
         "rps": "每轮同时出拳：✊ 石头赢 ✌️ 剪刀、✌️ 剪刀赢 ✋ 布、✋ 布赢 ✊ 石头；"
                "胜者得 1 分，平局重出。",
         "spy": "每人抽到词（卧底是不同词），轮流描述但不能说出词；每轮投票淘汰疑似卧底，"
@@ -186,9 +188,10 @@ def _rules(name: str) -> str:
         "yahtzee": "每回合掷 5 枚骰子，最多重掷 2 次(可任意保留)，然后挑一个尚未填写的分类记分："
                    "上区 1~6 点(按该面色面累加)、三条/四条(满则求和)、葫芦 25、小顺 30、大顺 40、"
                    "快艇(5同)50、任意(求和)。13 项全填后按总分行最高者胜，上区满 63 加发 35。",
-        "nimmt": "104 张牌各带 1~7 个牛头，桌面排 4 列递增。十轮每轮全员暗选一张，按牌面升序"
-                 "依次落列：落到「比它小且最接近」的列尾；若比所有列头都小，须吞一整列(负分)并"
-                 "自起新列；落列使该列超 6 张则列主吞前 5 张。十轮后牛头最少者胜。",
+        "nimmt": "104 张牌各带 1~7 个牛头，桌面排 4 列递增（每列最多 5 张）。十轮每轮全员"
+                 "暗选一张，按牌面升序依次落列：落到「比它小且最接近」的列尾；若比所有列头"
+                 "都小，须吞一整列(负分)并自起新列；落列使该列达到 6 张则列主吞前 5 张。"
+                 "十轮后牛头最少者胜。",
         "davinci": "每人按数字升序竖一排牌(0~11，另有 2 张黑色反间谍，猜它须按“黑”才中)、露一张。"
                    "轮流摸 1 张(可选明/暗)并按值插位，随后可猜一位对手手牌的数字——猜中该牌翻开(永久"
                    "公开)、猜错则自己刚摸的牌翻开。所有牌被翻开的玩家出局，最后存活者胜。",
@@ -219,9 +222,12 @@ def _rules(name: str) -> str:
         "chess": "白方先行。兵直进斜吃、首步可两格、可吃过路兵与升变；车/象/后直线/斜线走，"
                   "马走日、王走一格并支持王车易位。任何一步不得让己方王处于被将军；"
                   "将死对方获胜，对方无子可动(不被将)则平局。",
-        "go": "9x9 棋盘，黑白轮流在空位落子。相邻同色连成团，团无「气」(贴邻空点)即被提掉；"
-               "不允许自杀落点，且禁止立即复原成前一手棋局面的打劫提回。双方都可选择「过」，"
-               "连续两次过即终局：按各色子数 + 被该色完全包围的空地目数合计，目数多者胜。",
+        "go": "创建房间时可选 9 / 13 / 19 路。黑白轮流在空位落子，相邻同色连成团，团无「气」"
+               "(贴邻空点)即被提掉；不允许自杀落点，且禁止立即复原成前一手棋局面的打劫提回。"
+               "双方都可选择「过」，连续两次过即终局：按各色子数 + 被该色完全包围的空地目数合计；"
+               "白方贴目（9 路 6.5 目，13/19 路 7.5 目），目数多者胜。",
+        "go_solo": "单人练习：你执黑先行，电脑执白（MCTS 搜索应手）。点击交叉点落子，"
+                   "「过一手」连续两次即终局；按各色子数 + 包围空地目数计分，目数多者胜。",
         "shogi": "9x9。玉将/飞车/角行/金/银/桂/香/步兵。被吃掉的子进入持子，可任一己方回合一手"
                   "打入空位。深入对方后三排时步兵/香/桂/银升为金，飞车成龙、角行成马。"
                   "吃掉对方玉将即获胜。",
@@ -282,7 +288,7 @@ GAME_TYPES = {
                 AzulGame, RummikubGame, YahtzeeGame, NimmtGame,
                 DaVinCiGame, KalahGame, LoveLoveGame, HalloweenGame,
                 TicTacToeGame, HalmaGame, CheckersGame, BlokusGame, LudoGame,
-                XiangQiGame, ChessGame, GoGame, ShogiGame,
+                XiangQiGame, ChessGame, GoGame, GoSoloGame, ShogiGame,
                 JunqiGame, DouGame,
                 OneNightWolfGame, WerewolfGame, AvalonGame,
                 LiarGame, NinjaNightGame, CocGame, BalatroGame,
@@ -291,6 +297,8 @@ GAME_TYPES = {
 
 GAME_META = {
     name: {"min": cls.min_players, "max": cls.max_players, "label": _label(name),
-           "desc": _desc(name), "rules": _rules(name)}
+           "desc": _desc(name), "rules": _rules(name),
+           "options": {k: list(v) for k, v in getattr(cls, "OPTIONS", {}).items()},
+           "default_options": dict(getattr(cls, "DEFAULT_OPTIONS", {}) or {})}
     for name, cls in GAME_TYPES.items()
 }

@@ -50,8 +50,8 @@ class GuessNumberGame(BaseGame):
     def _set_secret(self, uid: int, secret) -> list:
         if uid != self.players[self.owner_idx]:
             raise GameRuleError("只有本轮出题者能设数字")
-        if self.status not in ("await_secret", "playing"):
-            raise GameRuleError("本局已结束，等待下一轮")
+        if self.status != "await_secret":
+            raise GameRuleError("本轮数字已设定或已结束")
         try:
             n = int(secret)
         except (TypeError, ValueError):

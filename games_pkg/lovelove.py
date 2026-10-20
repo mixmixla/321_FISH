@@ -73,20 +73,26 @@ class LoveLoveGame(BaseGame):
         except (TypeError, ValueError):
             raise GameRuleError("出牌无效")
         hand = self.hand[uid]
-        if play is None or play != hand:
-            raise GameRuleError("你只能弃当前那张牌")
+        drawn = self.deck[-1] if self.deck else None
+        # 摸 1 弃 1：手里两张牌都可弃，弃完另一张留下
+        if play != hand and play != drawn:
+            raise GameRuleError("你只能弃手中两张牌之一")
+        # 强制：持 7+8 必须弃 7
+        if play != COUNT and {hand, drawn} == {COUNT, PRINCE_SS}:
+            raise GameRuleError("持伯爵夫人与公主时必须弃伯爵夫人")
         return self._resolve(uid, play, action)
 
     def _resolve(self, uid, play, action):
         msgs = []
-        # 强制：持 7+8 必须弃 7
-        drawn = self.deck.pop() if self.deck else None
-        if drawn is not None:
-            self.hand[uid] = drawn
-        else:
-            self.hand[uid] = None
+        if not self.deck:
+            # 牌堆已空：本回合不再摸牌出牌，直接按现有手牌比大小
             self.game_over = True
             msgs.append("🏃 牌堆已空，按手中牌值比高低")
+            self._after(uid, msgs, 0)
+            return msgs
+        hand = self.hand[uid]
+        drawn = self.deck.pop()
+        self.hand[uid] = hand if play == drawn else drawn
         # 弃掉 play
         self._table_card = play
         self.discard.append((uid, play))
@@ -104,17 +110,23 @@ class LoveLoveGame(BaseGame):
 
     def _effect(self, uid, play, action):
         msgs = []
+        # 指向型效果：统一校验目标；侍女护体对所有他人牌免疫
+        if play in (1, 2, 3, 5, 6):
+            target = action.get("target")
+            if play == PRINCE:
+                if target not in self.alive:
+                    return msgs
+            elif target not in self.alive or target == uid:
+                return msgs
+            if target in self.miss:
+                msgs.append(f"🛡️ {self._nick(target)} 有侍女护体，免疫本次效果")
+                return msgs
         if play == 1:                       # 护卫：猜一张牌值
             target = action.get("target")
             val = action.get("val")
             try:
                 val = int(val)
             except (TypeError, ValueError):
-                return msgs
-            if target not in self.alive or target == uid:
-                return msgs
-            if target in self.miss:
-                msgs.append(f"🛡️ {self._nick(target)} 有侍女护体，免疫本次猜牌")
                 return msgs
             if self.hand[target] == val:
                 self._eliminate(target, f"被护卫猜中牌面 {val}")
@@ -128,33 +140,33 @@ class LoveLoveGame(BaseGame):
                             (f"（{self.hand[target]}）"))
         elif play == 3:                     # 男爵：比点
             target = action.get("target")
-            if target in self.alive and target != uid:
-                if self.hand[uid] > self.hand[target]:
-                    self._eliminate(target, "男爵比点落败")
-                    msgs.append(f"⚔️ {self._nick(uid)} 比 {self._nick(target)} 大，{self._nick(target)} 出局")
-                elif self.hand[uid] < self.hand[target]:
-                    self._eliminate(uid, "男爵比点落败")
-                    msgs.append(f"⚔️ {self._nick(target)} 比 {self._nick(uid)} 大，{self._nick(uid)} 出局")
-                else:
-                    msgs.append(f"🤝 比点平手，无事发生")
-        elif play == 5:                     # 王子：令一人弃而重抽
+            if self.hand[uid] > self.hand[target]:
+                self._eliminate(target, "男爵比点落败")
+                msgs.append(f"⚔️ {self._nick(uid)} 比 {self._nick(target)} 大，{self._nick(target)} 出局")
+            elif self.hand[uid] < self.hand[target]:
+                self._eliminate(uid, "男爵比点落败")
+                msgs.append(f"⚔️ {self._nick(target)} 比 {self._nick(uid)} 大，{self._nick(uid)} 出局")
+            else:
+                msgs.append(f"🤝 比点平手，无事发生")
+        elif play == 4:                     # 侍女：本回合及他人回合内免疫
+            self.miss.add(uid)
+            msgs.append(f"🛡️ {self._nick(uid)} 受到侍女保护，直到下次轮到自己")
+        elif play == 5:                     # 王子：令一人弃而重抽（可指定自己）
             target = action.get("target")
-            if target in self.alive and target != uid:
-                old = self.hand[target]
-                if old == PRINCE_SS:
-                    self._eliminate(target, "被王子强制丢弃了公主")
-                    msgs.append(f"👑 {self._nick(target)} 王子令其弃公主，出局")
+            old = self.hand[target]
+            if old == PRINCE_SS:
+                self._eliminate(target, "被王子强制丢弃了公主")
+                msgs.append(f"👑 {self._nick(target)} 王子令其弃公主，出局")
+            else:
+                if self.deck:
+                    self.hand[target] = self.deck.pop()
                 else:
-                    if self.deck:
-                        self.hand[target] = self.deck.pop()
-                    else:
-                        self.hand[target] = None
-                    msgs.append(f"🌪️ {self._nick(uid)} 令 {self._nick(target)} 弃 {_names(old)} 重抽")
+                    self.hand[target] = None
+                msgs.append(f"🌪️ {self._nick(uid)} 令 {self._nick(target)} 弃 {_names(old)} 重抽")
         elif play == 6:                     # 国王：换手
             target = action.get("target")
-            if target in self.alive and target != uid:
-                self.hand[uid], self.hand[target] = self.hand[target], self.hand[uid]
-                msgs.append(f"🤲 {self._nick(uid)} 与 {self._nick(target)} 交换手牌")
+            self.hand[uid], self.hand[target] = self.hand[target], self.hand[uid]
+            msgs.append(f"🤲 {self._nick(uid)} 与 {self._nick(target)} 交换手牌")
         elif play == 7:                     # 伯爵夫人（仅当拿+8强制弃）——本身无效果
             msgs.append(f"👵 伯爵夫人弃牌，无效果")
         return msgs
@@ -171,6 +183,9 @@ class LoveLoveGame(BaseGame):
             self.game_over = True
             msgs.append(f"🏆 {self._nick(self.winner)} 成为最后的倾慕者！")
             return
+        # 牌堆摸完：本轮直接比手牌，避免下一位无牌可抽
+        if not self.deck:
+            self.game_over = True
         if self.game_over:
             # 牌堆空比手中牌高
             best = max((self.hand[u] or 0) for u in self.alive)
@@ -182,15 +197,18 @@ class LoveLoveGame(BaseGame):
                 self.game_over = True
                 msgs.append("🏆 手牌同点，共同获胜")
             return
-        # 前进到下一存活者（可能因出局跳过）
-        k = 0
-        while k < len(self.alive):
-            self.turn_idx += 1
-            if self.cur in self.alive:
+        # 前进到下一存活者（按座位顺序，跳过刚出局的人，不能倒退）
+        start = self.players.index(uid) if uid in self.players else -1
+        nxt = self.cur
+        for step in range(1, len(self.players) + 1):
+            cand = self.players[(start + step) % len(self.players)]
+            if cand in self.alive:
+                nxt = cand
+                self.turn_idx = self.alive.index(cand)
                 break
-            k += 1
-        self.miss = set()
-        msgs.append(f"➡️ 轮到 {self._nick(self.cur)}")
+        # 侍女保护持续到该玩家下次轮到自己为止
+        self.miss.discard(nxt)
+        msgs.append(f"➡️ 轮到 {self._nick(nxt)}")
 
     def snapshot(self):
         return {
@@ -213,13 +231,28 @@ class LoveLoveGame(BaseGame):
         return None
 
     def player_left(self, uid):
+        if uid not in self.players:
+            return []
+        prev = self.cur if self.alive else None
+        was_cur = (prev == uid)
         if uid in self.alive:
             self.alive.remove(uid)
-        if uid == self.cur:
-            self.turn_idx = max(0, self.turn_idx - 1)
-        if len(self.alive) <= 1 and not self.winner:
-            if self.alive:
-                self.winner = self.alive[0]
+        self.miss.discard(uid)
+        if not self.alive:
+            self.game_over = True
+            return [f"💨 {self._nick(uid)} 离开了对局"]
+        if prev is not None and not was_cur and prev in self.alive:
+            self.turn_idx = self.alive.index(prev)
+        elif was_cur:
+            # 当前玩家离场：按座位顺序交给下一位存活者
+            start = self.players.index(uid)
+            for step in range(1, len(self.players) + 1):
+                cand = self.players[(start + step) % len(self.players)]
+                if cand in self.alive:
+                    self.turn_idx = self.alive.index(cand)
+                    break
+        if len(self.alive) == 1 and not self.winner:
+            self.winner = self.alive[0]
             self.game_over = True
             return [f"💨 {self._nick(uid)} 离开，{self._nick(self.winner)} 胜"]
         return [f"💨 {self._nick(uid)} 离开了对局"]

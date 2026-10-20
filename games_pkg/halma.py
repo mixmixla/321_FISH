@@ -30,10 +30,10 @@ def _arm_cells(i):
             for x in range(N):
                 if (N - 1 - y) + abs(x - C) <= ARM_CRIT:
                     cells.add((x, y))
-    else:           # 左：(N-1-x) + |y-C| <= CRIT
+    else:           # 左：x + |y-C| <= CRIT
         for x in range(0, C + 1):
             for y in range(N):
-                if (N - 1 - x) + abs(y - C) <= ARM_CRIT:
+                if x + abs(y - C) <= ARM_CRIT:
                     cells.add((x, y))
     return cells
 
@@ -46,6 +46,11 @@ for _i in range(ARMS):
 VALID = set()
 for c in ARM_CELLS:
     VALID |= c
+# 中央连接区：四营尖角之间的小孔必须可走，否则 4 营满座（16×4=64 格）时
+# 开局棋盘被占满，3~4 人局任何一方都无子可动。
+CENTER_GAPS = {(C - 1, C - 1), (C + 1, C - 1), (C - 1, C + 1),
+               (C + 1, C + 1), (C, C)}
+VALID |= CENTER_GAPS
 
 DIRS = [(dx, dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1) if (dx, dy) != (0, 0)]
 
@@ -177,6 +182,25 @@ class HalmaGame(BaseGame):
             return {"winner_uid": self.winner,
                     "detail": f"{self._nick(self.winner)} 率先全部抵达对岸"}
         return None
+
+    def player_left(self, uid):
+        if uid not in self.players:
+            return []
+        idx = self.players.index(uid)
+        self.arm_of.pop(uid, None)
+        # 离场者的棋子一并移出，避免永远占住营区格子
+        self.board = {k: v for k, v in self.board.items() if v[0] != uid}
+        self.players.remove(uid)
+        self.n = len(self.players)
+        if not self.players:
+            return [f"💨 {self._nick(uid)} 离开了对局"]
+        if self.turn > idx:
+            self.turn -= 1
+        self.turn %= self.n
+        if self.n < self.min_players and self.winner is None:
+            self.winner = self.players[self.turn]
+            return [f"💨 {self._nick(uid)} 离开，{self._nick(self.winner)} 获胜"]
+        return [f"💨 {self._nick(uid)} 离开了对局"]
 
     def _nick(self, uid):
         return f"玩家{uid}"

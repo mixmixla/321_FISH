@@ -122,11 +122,14 @@ class RummikubGame(BaseGame):
             raise GameRuleError("行号无效")
         if not (0 <= row < len(self.table)):
             raise GameRuleError("行不存在")
+        if not self.initial_ok[uid]:
+            raise GameRuleError(f"首次上牌需先一次性出 ≥{INIT_SUM} 点")
         new = list(self.table[row]) + ids
         if RummikubGame.classify(new) is None:
             raise GameRuleError("接续后不构成群或顺")
-        self.table[row] = new
+        # 先校验手牌，再改桌面：失败时不留半状态
         self._apply_rack(uid, ids)
+        self.table[row] = new
         self.placed_turn += 1
         self.drawn_turn = False
         if not self.rack[uid]:
@@ -182,11 +185,24 @@ class RummikubGame(BaseGame):
         return None
 
     def player_left(self, uid):
-        if uid in self.players and self.players[self.turn] == uid:
-            self.turn = (self.turn + 1) % len(self.players)
-            self.placed_turn = 0
-        # 简化：掉线手牌不并入，交给其他玩家均衡处理由房间层接管
-        return []
+        if uid not in self.players:
+            return []
+        idx = self.players.index(uid)
+        # 手牌退回牌袋，避免留下无人可打却仍占座位的玩家
+        self.bag.extend(self.rack.pop(uid, []))
+        self.initial_ok.pop(uid, None)
+        self.players.remove(uid)
+        self.placed_turn = 0
+        self.drawn_turn = False
+        if not self.players:
+            return [f"💨 {self._nick(uid)} 离开了对局"]
+        if self.turn > idx:
+            self.turn -= 1
+        self.turn %= len(self.players)
+        if len(self.players) < self.min_players and self.winner is None:
+            self.winner = self.players[0]
+            return [f"💨 {self._nick(uid)} 离开，{self._nick(self.winner)} 获胜"]
+        return [f"💨 {self._nick(uid)} 离开了对局"]
 
     def _nick(self, uid):
         return f"玩家{uid}"

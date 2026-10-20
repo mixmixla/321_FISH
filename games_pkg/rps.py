@@ -56,6 +56,9 @@ class RpsGame(BaseGame):
             raise GameRuleError("出拳须为 0/1/2")
         if c not in (0, 1, 2):
             raise GameRuleError("出拳须为 0(✊)/1(✋)/2(✌️)")
+        if not self.submitted:
+            # 本轮第一手才开始计时；否则 tick 会因初始 deadline=0 立刻判定未出拳者负
+            self.round_end_at = time.time() + self.timeout
         self.submitted[uid] = c
         if len(self.submitted) == len(self.players):
             self._resolve()

@@ -4049,7 +4049,8 @@ function pokerCard(cs){
   const red=(suit==="♥"||suit==="♦");
   return vcardHTML({cls:"sm "+(red?"red":"blk"),cor:rank,sym:suit,title:cs});
 }
-function gnick(u){if(state.gnicks[u])return state.gnicks[u];
+function gnick(u){if(u===-1)return "电脑";
+  if(state.gnicks[u])return state.gnicks[u];
   const r=(state.roster||[]).find(x=>x.uid===u);return r?(r.nick||("玩家"+u)):("玩家"+u)}
 function scoreHTML(sc){return "🏆 "+Object.entries(sc||{}).map(([u,v])=>esc(gnick(+u))+" "+v).join("　")}
 function gameAPI(op,extra,quiet){
@@ -4072,8 +4073,9 @@ function renderGames(){                        // 侧栏房间速览
   state.grooms.forEach(r=>{
     const m=state.gmeta[r.game]||{};
     const st={created:"等待",playing:"对局中",ended:"已结束"}[r.status]||r.status;
+    const rn=(m.label||r.game)+((r.options&&r.options.size)?"·"+r.options.size+"路":"");
     const d=document.createElement("div");d.className="item";
-    d.innerHTML="🎮 "+esc(m.label||r.game)+"（"+esc(r.room_id)+"）"
+    d.innerHTML="🎮 "+esc(rn)+"（"+esc(r.room_id)+"）"
       +"<span style='color:var(--dim);font-size:10px'> "+st+" "+(r.players||[]).length+"人</span>";
     const inR=(r.players||[]).includes(state.uid)||(r.spectators||[]).includes(state.uid);
     d.onclick=()=>{if(!inR&&r.status==="created")gameAPI("join",{room_id:r.room_id});
@@ -4119,8 +4121,20 @@ function renderLobby(){
       +"<b style='font-size:14px;color:#3d3a54'>"+esc(g.label||name)+"</b>"
       +"<span style='color:var(--dim);font-size:11px'>"+esc(g.desc||"")+"</span>"
       +"<span style='color:var(--dim);font-size:10px'>👥 "+g.min+"~"+(g.max||"∞")+" 人</span>";
+    let optSel=null;                                  // 围棋等：创建前选棋盘路数
+    const sizes=(g.options&&g.options.size)||[];
+    if(sizes.length>1){
+      optSel=document.createElement("select");
+      optSel.style.cssText="margin:2px 0 4px;padding:3px 6px;border-radius:8px;border:1px solid var(--line);background:#fff;color:#3d3a54;font-size:12px";
+      const def=(g.default_options&&g.default_options.size)||sizes[sizes.length-1];
+      sizes.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n+" 路";
+        if(n===def)o.selected=true;optSel.appendChild(o);});
+      c.appendChild(optSel);
+    }
     const b=document.createElement("button");b.className="gbtn go";b.textContent="创建房间";
-    b.onclick=()=>{gameAPI("create",{game:name});closeLobby()};
+    b.onclick=()=>{const payload={game:name};
+      if(optSel)payload.options={size:parseInt(optSel.value,10)};
+      gameAPI("create",payload);closeLobby()};
     c.appendChild(b);grid.appendChild(c);});
   gb.appendChild(grid);
   const rb=$("#glRooms");rb.innerHTML="";
@@ -4128,13 +4142,14 @@ function renderLobby(){
   state.grooms.forEach(r=>{
     const m=state.gmeta[r.game]||{};
     const inR=(r.players||[]).includes(state.uid)||(r.spectators||[]).includes(state.uid);
+    const rn=(m.label||r.game)+((r.options&&r.options.size)?"·"+r.options.size+"路":"");
     const st=inR?"你已在内":({created:"等待开局面 "+(r.players||[]).length+" 人",
       playing:"对局中 · 观战 "+(r.spectators||[]).length+" 人",ended:"已结束"}[r.status]||r.status);
     const row=document.createElement("div");
     row.style.cssText="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line,#eee);font-size:12px";
     row.innerHTML="<span style='display:inline-flex;align-items:center;gap:6px'>"
       +"<span style='display:inline-flex;color:var(--accent)'>"+gIcon(r.game,18)+"</span>"
-      +"<b>"+esc(m.label||r.game)+"</b>（"+esc(r.room_id)+"）</span>"
+      +"<b>"+esc(rn)+"</b>（"+esc(r.room_id)+"）</span>"
       +"<span style='color:var(--dim)'>"+st+"</span>";
     const b=document.createElement("button");b.className="gbtn";
     b.textContent=inR?"进入":(r.status==="created"?"加入":"观战");
@@ -4190,7 +4205,8 @@ function renderGamePanel(){
   const meta=state.gmeta[gname]||{};
   const title=document.createElement("span");title.style.cssText="display:flex;align-items:center;gap:6px";
   if(room){title.appendChild(gImg(gname,20));}
-  title.appendChild(document.createTextNode(room?((meta.label||gname)+" · "+room.room_id+" · "
+  const roomSz=(room&&room.options&&room.options.size)?"·"+room.options.size+"路":"";
+  title.appendChild(document.createTextNode(room?((meta.label||gname)+roomSz+" · "+room.room_id+" · "
     +({created:"等待中",playing:"对局中",ended:"已结束"}[room.status]||room.status)):"已离开房间…"));
   head.appendChild(title);
   const sp=document.createElement("span");sp.style.flex="1";head.appendChild(sp);
@@ -4273,29 +4289,40 @@ const GRENDER={
     box.appendChild(bar);
   },
   gomoku(box,s){
-    const n=s.board.length,cell=24,pad=12,W=n*cell+pad*2;
+    const n=s.board.length,cell=24,pad=26,W=n*cell+pad*2;
     const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:4px;font-size:13px";
     info.innerHTML=(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 获胜"
       :(s.draw?"平局":"轮到 "+esc(gnick(s.turn_uid))+(s.turn_uid===state.uid?"（你执子）":"")));
     box.appendChild(info);
+    const mine=s.winner_uid==null&&!s.draw&&s.turn_uid===state.uid;
     const cv=document.createElement("canvas");cv.width=W;cv.height=W;
-    cv.style.cssText="display:block;margin:0 auto;background:#d9a45b;border-radius:6px;cursor:pointer";
+    cv.style.cssText="display:block;margin:0 auto;background:#d9a45b;border-radius:6px;cursor:"
+      +(mine?"pointer":"default");
     box.appendChild(cv);
     const ctx=cv.getContext("2d");
+    // 坐标：列 A~O、行 1~15（BGA 默认显示坐标）
+    ctx.fillStyle="#5a3d16";ctx.font="11px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+    for(let i=0;i<n;i++){
+      ctx.fillText(String.fromCharCode(65+i),pad+i*cell,pad-14);
+      ctx.fillText(String(i+1),pad-16,pad+i*cell);}
     ctx.strokeStyle="#6b4a1b";
     for(let i=0;i<n;i++){
       ctx.beginPath();ctx.moveTo(pad+i*cell,pad);ctx.lineTo(pad+i*cell,W-pad);ctx.stroke();
       ctx.beginPath();ctx.moveTo(pad,pad+i*cell);ctx.lineTo(W-pad,pad+i*cell);ctx.stroke();}
+    // 天元/星位
+    ctx.fillStyle="#5a3d16";
+    for(const h of [[3,3],[11,3],[3,11],[11,11],[7,7]]){
+      if(h[0]<n&&h[1]<n){ctx.beginPath();ctx.arc(pad+h[0]*cell,pad+h[1]*cell,3,0,7);ctx.fill();}}
     for(let y=0;y<n;y++)for(let x=0;x<n;x++){const v=s.board[y][x];if(!v)continue;
       ctx.beginPath();ctx.arc(pad+x*cell,pad+y*cell,cell*0.42,0,7);
       ctx.fillStyle=v===1?"#111":"#fff";ctx.fill();ctx.stroke();}
     if(s.last_move){ctx.beginPath();
       ctx.arc(pad+s.last_move[0]*cell,pad+s.last_move[1]*cell,3,0,7);
       ctx.fillStyle="#e33";ctx.fill();}
-    if(s.winner_uid==null&&!s.draw)
+    if(mine)
       cv.onclick=e=>{const r=cv.getBoundingClientRect();
         const x=Math.round((e.clientX-r.left-pad)/cell),y=Math.round((e.clientY-r.top-pad)/cell);
-        if(x<0||y<0||x>=n||y>=n)return;
+        if(x<0||y<0||x>=n||y>=n||s.board[y][x])return;
         gameAPI("action",{room_id:state.groom,action:{x:x,y:y}});};
   },
   connect4(box,s){
@@ -5600,13 +5627,14 @@ const GRENDER={
       code=>sym[code],onMove);
   },
   go(box,s){
-    const n=s.size||9;
+    const n=s.size||19;
     const cell=26, pad=8, W=n*cell+pad*2;
-    const sc=s.scores||[0,0];
+    const sc=s.scores||{};
+    const sb=sc[1]!=null?sc[1]:(sc["1"]||0), sw=sc[2]!=null?sc[2]:(sc["2"]||0);
     const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:4px;font-size:13px";
     info.innerHTML=(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 胜"
       :(s.over?"终局　":"轮到 "+esc(gnick(s.turn_uid))+(s.turn_uid===state.uid?"（你）":""))
-      +`　⚫ ${sc[0]} ⚪ ${sc[1]}`);
+      +`　⚫ ${sb} ⚪ ${sw}`);
     box.appendChild(info);
     const cv=document.createElement("canvas");cv.width=W;cv.height=W;
     cv.style.cssText="display:block;margin:0 auto;background:#d9a45b;border-radius:6px;cursor:pointer";
@@ -5635,6 +5663,7 @@ const GRENDER={
     if(!s.over&&s.winner_uid==null)bar.appendChild(gBtn("👋 过",()=>gameAPI("action",{room_id:state.groom,action:{pass:true}})));
     box.appendChild(bar);
   },
+  go_solo(box,s){ GRENDER.go(box,s); },
   shogi(box,s){
     const sym={1:"玉",2:"飛",3:"角",4:"金",5:"銀",6:"桂",7:"香",8:"歩",9:"龍",10:"馬",
                11:"玉",12:"飛",13:"角",14:"金",15:"銀",16:"桂",17:"香",18:"歩",19:"龍",20:"馬"};
@@ -6805,6 +6834,9 @@ class _Handler(BaseHTTPRequestHandler):
         header = {"t": t.value}
         if key == "game":
             header["game"] = str(body.get("game") or "")[:24]
+            opts = body.get("options")
+            if isinstance(opts, dict):
+                header["options"] = opts
         if key == "room_id":
             header["room_id"] = str(body.get("room_id") or "")[:16]
         if op == "action":

@@ -47,7 +47,7 @@ class GemCityGame(BaseGame):
         self.nobles_cards = {u: [] for u in players}
         self.turn = 0
         self.trigger_uid = None
-        self.extra = set()
+        self.extra = []          # 触发终局后仍需行动（按回合顺序）的玩家
         self.winner = None
 
     def _make_card(self, tier):
@@ -63,7 +63,7 @@ class GemCityGame(BaseGame):
 
     # ---------- 动作 ----------
     def act(self, uid, action):
-        if self.winner:
+        if self.winner is not None:
             raise GameRuleError("本局已结束")
         if uid != self.players[self.turn]:
             raise GameRuleError("还没轮到你")
@@ -169,9 +169,9 @@ class GemCityGame(BaseGame):
         self.score[uid] += card["pts"]
 
     def _after_buy(self, uid):
-        # 贵宾邀请
+        # 贵宾邀请（遍历副本：边遍历边删会漏掉后一张达标的贵宾）
         nobles_msg = ""
-        for nob in self.nobles_left:
+        for nob in list(self.nobles_left):
             if all(self.discount[uid][c] >= v for c, v in nob.items()):
                 self.nobles_left.remove(nob)
                 self.nobles_cards[uid].append(3)
@@ -183,21 +183,20 @@ class GemCityGame(BaseGame):
 
     def _check_win(self, uid):
         if self.score[uid] >= WIN_PTS and self.trigger_uid is None:
-            self.trigger_uid = uid           # 达标：其余人各补一回合
-            self.extra = set(self.players) - {uid}
+            self.trigger_uid = uid           # 达标：当轮结束（其后玩家各补一回合）
+            idx = self.players.index(uid)
+            n = len(self.players)
+            self.extra = [self.players[(idx + k) % n] for k in range(1, n)]
 
     def _advance(self):
         n = len(self.players)
-        if not self.trigger_uid:
+        if self.trigger_uid is None:
             self.turn = (self.turn + 1) % n
             return
-        # 触发终局：依次走完 extra 集合中的玩家
-        for step in range(1, n + 1):
-            nxt = self.players[(self.players.index(self.trigger_uid) + step) % n]
-            if nxt in self.extra:
-                self.turn = self.players.index(nxt)
-                self.extra.discard(nxt)
-                return
+        # 触发终局：按回合顺序走完 extra 中的玩家后结算
+        if self.extra:
+            self.turn = self.players.index(self.extra.pop(0))
+            return
         self._finish()
 
     def _refill(self, tier):
@@ -230,7 +229,7 @@ class GemCityGame(BaseGame):
                 "nobles": self.nobles_cards.get(uid, [])}
 
     def ended(self):
-        if self.winner:
+        if self.winner is not None:
             return {"winner_uid": self.winner,
                     "detail": f"{self._nick(self.winner)} 总分最高胜出"}
         return None

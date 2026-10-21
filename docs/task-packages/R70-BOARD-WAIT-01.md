@@ -18,4 +18,8 @@
 
 需求/范围仍v1；受控真实RED1F1P、最小等待修复、最终同字节领域114P、独立代码0 MUST及唯一组合full r70-wait-full-20261021-214111-6d59409cd3 2971P0F20原skip/exit0已完成，该检查点最终独立原件/资料审查待完成，现已完成见下。历史inventory失败/原分支79bf保留，尚未推送/合并；当前状态与恢复入口以AI_COMMAND_CENTER为准。
 
-最终独立原件/资料终审0 MUST，主控有限AI_ACCEPTED_INVENTORY_AND_BOARD_WAIT_ONLY；本地完成、集成待执行，非完整R3。历史失败与frozen inventoryref79bf保留，集成与下一阶段仅依指挥中心当前记录。
+最终独立原件/资料终审0 MUST，主控有限AI_ACCEPTED_INVENTORY_AND_BOARD_WAIT_ONLY；本地完成、集成前状态（现已集成，见下），非完整R3。历史失败与frozen inventoryref79bf保留，集成与下一阶段仅依指挥中心当前记录。
+
+## 集成检查点
+
+严格清单与R70等待契约组合已有限AI接受并经正常开发分支push、main安全FF，远端核main及保留开发分支同 `47d5a692674fd403ed1c2ba3d3016f8f06251dbf`；本回执纯资料且源码490输入不变，最终leaf以Gitrefs/本地delivery为准。原inventory分支79bf及双failed原件保持；完整R3 GUI/自然退出/LAN/新EXE仍未测，不发布。

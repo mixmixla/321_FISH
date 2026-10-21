@@ -1,6 +1,6 @@
 # R3-INVENTORY-STRICT-01 v1.2 — 正式预检清单枚举失败可见
 
-> 历史独立候选检查点：下列FULL_FAILED/NOT_ACCEPTED/未推合是原批次事实，原件保留。当前已由独立R70-BOARD-WAIT-01确定性诊断/最小修复和组合门禁关闭阻塞，有限AI接受、集成待执行；当前恢复入口见[指挥中心](../AI_COMMAND_CENTER.md)及[R70审查](../review-packages/R70-BOARD-WAIT-01-r1.md)。原inventory分支79bf不移动。
+> 历史独立候选检查点：下列FULL_FAILED/NOT_ACCEPTED/未推合是原批次事实，原件保留。当前已由独立R70-BOARD-WAIT-01确定性诊断/最小修复和组合门禁关闭阻塞，有限AI接受并安全集成main（代码与验收树47d5a692674fd403ed1c2ba3d3016f8f06251dbf）；当前恢复入口见[指挥中心](../AI_COMMAND_CENTER.md)及[R70审查](../review-packages/R70-BOARD-WAIT-01-r1.md)。原inventory分支79bf不移动。
 
 2026-10-21冻结READY；当前FULL_FAILED_GATE_BLOCKED / NOT_AI_ACCEPTED / NOT_MERGE_READY。用户明确推进；base/main8fc927d4236e588fdb70a7dc40681ab0cff10816 fresh fetch同SHA/clean；fix/inventory-strict-20261021。root唯一实现/执行/文档写入，gate_review独立只读，普通模型/Standard。本周仅代码/测试/项目文档/脱敏摘要公开与正常安全集成授权，排除raw/用户名/私人资料/密钥/profile/二进制，不发布/强推/绕保护/删分支。
 
@@ -31,3 +31,5 @@
 ## R70组合关闭阻塞（后续检查点）
 
 独立R70代码9d6d1de92998e85d73923ff91acb45a46ee0320f，从79bf依赖分支推进且不改inventory代码/测试；受控真实RED确认原wait提前选合法中间榜单，保留所有语义断言后最小整改。组合唯一full r70-wait-full-20261021-214111-6d59409cd3 213文件2971P0F20原skip/exit0、490输入当前/领域/snapshot相同，最终独立原件/资料0 MUST。主控仅有限AI接受两项组合，尚待安全集成，不改变本文件原双failed结果及旧control未复现事实。
+
+后续集成事实：组合候选main及保留R70分支已核 `47d5a692674fd403ed1c2ba3d3016f8f06251dbf`，原冻结inventory分支仍79bf；本回执只更新资料，不改原两次失败证据/断言/代码。

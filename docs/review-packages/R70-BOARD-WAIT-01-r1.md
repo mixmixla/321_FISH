@@ -1,6 +1,6 @@
 # R70-BOARD-WAIT-01 r1 — 榜单等待的确定性诊断与组合门禁
 
-2026-10-21 **AI_ACCEPTED_INVENTORY_AND_BOARD_WAIT_ONLY / FULL_PASSED / MERGE_PENDING / NOT_R3_ACCEPTED**。
+2026-10-21 **AI_ACCEPTED_INVENTORY_AND_BOARD_WAIT_ONLY / FULL_PASSED / MERGED_NORMAL_FAST_FORWARD / NOT_R3_ACCEPTED**。
 [Task v1](../task-packages/R70-BOARD-WAIT-01.md)。base/main `8fc927d4236e588fdb70a7dc40681ab0cff10816`；依赖 inventory 原分支/检查点 `79bf27b1a7dd8e7ced907a31d4f6cdde760195ec` 保持不变，原两次失败门禁及全部原件保留。
 新分支 `fix/r70-board-wait-20261021` 从依赖候选分出，仅本项独立代码提交；root唯一写入/执行，gate_review独立只读，普通模型/Standard。本周授权只公开代码、测试、项目文档和脱敏摘要，不包含原始日志、用户名、私人数据、密钥或二进制，不发布。
 
@@ -30,6 +30,10 @@ Bob-first：实际Bob收到100/3（观察索引18）→Alice收到真实100/7（
 原inventory双failed full及base/候选未复现control全部保留，原分支仍79bf；本次组合绿不抹去历史。无新EXE、无活动测试/构建、无本轮远端写入，GUI等未测不升级。公开[脱敏结果/213 log哈希索引](../review-assets/R70-BOARD-WAIT-01/evidence.json)，原raw/完整summary/timeline只留本地。
 该检查点下一独立终审全部原件与当前资料；满足质量后依本周授权审全新history和14路径，fresh检查远端/保护/required checks再安全推合。候选未上传，不宣称CI通过。
 
-## 独立终审与有限AI验收
+## 独立终审与有限AI验收（集成前记录）
 
 独立终审0 MUST：原213门禁日志/清理/源码绑定与双受控轨迹、原inventory双失败记录、14公开路径和四提交历史核对通过。有限AI接受仅覆盖严格清单维护及R70等待契约，完整R3仍未验收。 主控据此仅AI接受严格清单维护和R70等待契约两项组合；不是用户/Pro/完整R3验收。原inventory分支79bf及所有failed原件保留，其单项历史状态未被改成PASS。下一仅审准确14路径及全部新commit history，fresh核远端/保护/required checks后正常安全推合；尚未远端写入，不发布。
+
+## 安全集成回执
+
+独立终审0 MUST后审准确14路径及全部main后6提交，fresh核main仍8fc927d、protected=false/required checks off、rulesets空；普通push保留开发分支并FF合并main。ls-remote核两远端ref同 `47d5a692674fd403ed1c2ba3d3016f8f06251dbf`，本地main/开发分支同树，490源码与唯一full副本同字节。未强推/绕保护/删除分支/发布；该提交check-runs/status contexts/Actions均0，aggregate pending且无可见CI，不当作CI PASS。本回执为纯资料，后续leaf以Gitrefs和本地delivery为准。原inventory双failed及79bf冻结ref保留，有限接受仅两项。

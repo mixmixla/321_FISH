@@ -2697,7 +2697,7 @@
   "current_resolution": {
     "task": "R70-BOARD-WAIT-01",
     "review": "docs/review-packages/R70-BOARD-WAIT-01-r1.md",
-    "status": "AI_ACCEPTED_COMBINED_CANDIDATE_MERGE_PENDING",
+    "status": "AI_ACCEPTED_COMBINED_AND_MERGED_NORMAL_FF",
     "code_commit": "9d6d1de92998e85d73923ff91acb45a46ee0320f",
     "combined_full": "r70-wait-full-20261021-214111-6d59409cd3",
     "combined_totals": {
@@ -2706,6 +2706,7 @@
     },
     "original_inventory_branch_sha": "79bf27b1a7dd8e7ced907a31d4f6cdde760195ec",
     "original_failed_records_preserved": true,
-    "scope": "Current combined acceptance; original independent candidate failure/blocked fields above are historical and remain unchanged."
+    "scope": "Current combined acceptance; original independent candidate failure/blocked fields above are historical and remain unchanged.",
+    "integrated_main_verified_commit": "47d5a692674fd403ed1c2ba3d3016f8f06251dbf"
   }
 }

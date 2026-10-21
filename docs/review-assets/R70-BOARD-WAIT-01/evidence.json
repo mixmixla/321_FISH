@@ -1,6 +1,6 @@
 {
   "task": "R70-BOARD-WAIT-01 v1",
-  "status": "AI_ACCEPTED_INVENTORY_AND_BOARD_WAIT_ONLY_MERGE_PENDING_NOT_R3_ACCEPTED",
+  "status": "AI_ACCEPTED_INVENTORY_AND_BOARD_WAIT_ONLY_MERGED_NOT_R3_ACCEPTED",
   "base_main": "8fc927d4236e588fdb70a7dc40681ab0cff10816",
   "dependency_inventory_checkpoint": "79bf27b1a7dd8e7ced907a31d4f6cdde760195ec",
   "inventory_branch_preserved": "fix/inventory-strict-20261021",
@@ -2518,7 +2518,7 @@
   ],
   "proposed_public_file_count": 14,
   "public_boundary": "Only code/tests/project docs/sanitized summaries. No original runtime logs/full summaries/home/usernames/private data/keys/profiles/binaries.",
-  "remote_writes_this_task": false,
+  "remote_writes_this_task": true,
   "not_tested": [
     "complete native GUI",
     "natural application exit",
@@ -2529,5 +2529,19 @@
     "non-development machine"
   ],
   "next_candidate": "DRAFT R3-STRICT-PREFLIGHT-01: current strict inventory driver, existing identical-hash package, real EXE startup/wire/owned cleanup; no unrelated rebuild.",
-  "acceptance_scope": "Strict inventory maintenance plus original R70 asynchronous wait contract; original inventory failed records remain historical facts."
+  "acceptance_scope": "Strict inventory maintenance plus original R70 asynchronous wait contract; original inventory failed records remain historical facts.",
+  "delivery": {
+    "integrated_main_verified_commit": "47d5a692674fd403ed1c2ba3d3016f8f06251dbf",
+    "remote_development_verified_commit": "47d5a692674fd403ed1c2ba3d3016f8f06251dbf",
+    "method": "normal_push_and_fast_forward",
+    "branch_retained": true,
+    "force_push_or_protection_bypass": false,
+    "visible_ci_on_integrated_commit": {
+      "check_runs": 0,
+      "status_contexts": 0,
+      "workflow_runs": 0,
+      "zero_visible_ci_is_not_ci_passed": true
+    },
+    "receipt_commit": "See current Git refs; receipt is docs-only and follows the verified integrated tree."
+  }
 }

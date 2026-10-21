@@ -1,7 +1,7 @@
 {
   "task": "R3-WIRE-SMOKE-01 v1.1",
   "technical_status": "AI_ACCEPTED_WIRE_PREFLIGHT_ONLY",
-  "delivery": "LOCAL_ACCEPTED_DISCLOSURE_AUDITED_NOT_YET_PUSHED",
+  "delivery": "MERGED_NORMAL_FAST_FORWARD",
   "base_commit": "13e7d21b753bbcd99de1ba81eca69eb40abf1971",
   "code_commit": "93bc7cbf68027e0a9fbfa101ac5d9e3ef3d056f5",
   "branch": "feature/r3-wire-smoke-20261021",
@@ -2488,5 +2488,22 @@
     "reviewer": "gate_review",
     "code_domain_controllers_actual_exe_full_documents": "0 MUST",
     "acceptance_scope": "Default bounded encrypted loopback wire preflight and failure/resource handling only; not full R3"
+  },
+  "integration": {
+    "first_integrated_commit": "39b6f1038d16abd9c10995e7794992a955d4f2b0",
+    "remote_main_and_feature_verified_same": true,
+    "normal_fast_forward": true,
+    "force_push": false,
+    "branch_deleted": false,
+    "release": false,
+    "visible_ci_at_first_integration": {
+      "check_runs": 0,
+      "statuses": 0,
+      "actions_runs": 0,
+      "meaning": "No visible CI, not CI passed"
+    },
+    "receipt_leaf": "Final exact leaf is available in Git refs and local ignored delivery-receipt.json; this same-scope docs receipt does not alter the 488 verified inputs",
+    "policy_record_sha256": "d97b36018d0f8c5a9b5db4f6e22693fac4ccc439a858f89eb15acbe1aaa7d644",
+    "ci_record_sha256": "f4361d84b2c843a36af3d8fbd948666b2397defdcbf5ecde8f03df327e89960f"
   }
 }

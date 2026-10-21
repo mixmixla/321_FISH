@@ -29,3 +29,7 @@ welcome两peer共用同一个阶段截止；每个chat/整棋终局重开/离房
 代码93bc7cbf68027e0a9fbfa101ac5d9e3ef3d056f5，最终RED19F/领域84P，实际EXE正0/明确超时注入负1及两次各4Job清理通过。唯一full wire-full-20261021-185108-b66afa85c5：211文件2958P0F20原skip/exit0，488输入dcf9dfb850acd8530274165b6984655ef457ccc077d438978ffe1cdacbd18757。见[Review r1](../review-packages/R3-WIRE-SMOKE-01-r1.md)/结构化索引；最终独立终审与披露审计待完成，不是R3接受。
 
 独立最终原件/资料审查0 MUST，主控仅AI_ACCEPTED_WIRE_PREFLIGHT_ONLY；最终门禁已完成，普通push/安全集成尚待执行，GUI/自然退出/LAN仍未验。
+
+## 正常集成回执
+
+再次fresh fetch核main仍13e7d21b753bbcd99de1ba81eca69eb40abf1971，protected=false/required checks off/rulesets=[]；按用户本周明确有界合并授权正常push分支/本地FF/普通push main，ls-remote核main与保留开发分支同 `39b6f1038d16abd9c10995e7794992a955d4f2b0`。无强推/绕保护/删分支/发布。该提交check-runs/statuses/Actions均0，无可见CI不等于CI PASS。准确9路径及全部新history已审，原件/用户名/私密/密钥/profile/EXE未公开；488源码逐hash保持（checkout行尾变化仅在当前/原snapshot归一化均严格同Git blob后恢复已验证raw字节），不重跑full。后续仅同范围五份文档/摘要补此回执，最终leaf完整SHA以Gitrefs/本地delivery-receipt为准，无循环修改自指SHA。完整GUI/自然应用退出/LAN/其它DPI等边界不变。

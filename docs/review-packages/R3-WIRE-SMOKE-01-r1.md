@@ -1,6 +1,6 @@
 # R3-WIRE-SMOKE-01 r1 — 正式协议预检
 
-2026-10-21：**AI_ACCEPTED_WIRE_PREFLIGHT_ONLY / FULL_PASSED / NOT_MERGED / NOT_R3_ACCEPTED**。
+2026-10-21：**AI_ACCEPTED_WIRE_PREFLIGHT_ONLY / FULL_PASSED / MERGED / NOT_R3_ACCEPTED**。
 [Task v1.1](../task-packages/R3-WIRE-SMOKE-01.md) / [脱敏结构化证据](../review-assets/R3-WIRE-SMOKE-01/evidence.json)。root唯一实现/执行/资料写入，gate_review独立只读，普通模型/Standard；本周有界公开/正常集成许可适用，未授权发布。
 
 ## 问题与有限实现
@@ -53,3 +53,7 @@ raw socket先持有再connect，两个peer先登记、finally逐资源关闭，�
 ## 独立最终技术接受
 
 gate_review从最终211文件原件、原sandbox JSON、source/hash、实际EXE正负与9公开路径/全部新history独立复核0 MUST，主控据证据仅AI_ACCEPTED_WIRE_PREFLIGHT_ONLY。原阶段“待终审”是当时检查点，现已闭合。源码/依赖/测试/命令/环境冻结，纯文档接受记录不重跑full；公开审计和正常集成前再次核所有新history与fresh远端，不把接受等同已合并或R3完成。
+
+## 正常集成回执
+
+再次fresh fetch核main仍13e7d21b753bbcd99de1ba81eca69eb40abf1971，protected=false/required checks off/rulesets=[]；按用户本周明确有界合并授权正常push分支/本地FF/普通push main，ls-remote核main与保留开发分支同 `39b6f1038d16abd9c10995e7794992a955d4f2b0`。无强推/绕保护/删分支/发布。该提交check-runs/statuses/Actions均0，无可见CI不等于CI PASS。准确9路径及全部新history已审，原件/用户名/私密/密钥/profile/EXE未公开；488源码逐hash保持（checkout行尾变化仅在当前/原snapshot归一化均严格同Git blob后恢复已验证raw字节），不重跑full。后续仅同范围五份文档/摘要补此回执，最终leaf完整SHA以Gitrefs/本地delivery-receipt为准，无循环修改自指SHA。完整GUI/自然应用退出/LAN/其它DPI等边界不变。

@@ -1,0 +1,251 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+_ test_gate_copies_boardgames_and_refuses_changed_resume[module-change-tracked] _
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/test-gate/gate-boardgames-red-20261021-103840-6ff2fee53d/basetemp/test_gate_boardgames-1-eea991a0/test_gate_copies_boardgames_an0')
+tracked = True, changed = 'boardgames/azul/desktop.py'
+
+    @pytest.mark.parametrize("tracked", [True, False], ids=["tracked", "untracked"])
+    @pytest.mark.parametrize("changed", ["boardgames/azul/desktop.py",
+                                        "boardgames/azul/assets/nested/tile.png"],
+                             ids=["module-change", "asset-change"])
+    def test_gate_copies_boardgames_and_refuses_changed_resume(tmp_path, tracked, changed):
+        source = tmp_path / "candidate"
+        files = {
+            "helper.py": b"VALUE = 42\n",
+            "boardgames/__init__.py": b"",
+            "boardgames/azul/__init__.py": b"",
+            "boardgames/azul/desktop.py": b"VALUE = 42\n",
+            # Synthetic asset bytes: the child reads exact bytes, without image decoding.
+            "boardgames/azul/assets/nested/tile.png": b"synthetic-tile-bytes",
+            "boardgames/azul/assets/prefs.json": b"synthetic-private-prefs",
+            "boardgames/azul/assets/history/private.py": b"synthetic-private-history",
+            "boardgames/azul/web_tls/private.pem": b"synthetic-private-key",
+            "boardgames/azul/__pycache__/private.py": b"synthetic-cache",
+            "tests/test_package.py": (
+                b"from pathlib import Path\n"
+                b"from importlib.resources import files\n"
+                b"from boardgames.azul.desktop import VALUE\n"
+                b"def test_package():\n"
+                b"    assert VALUE == 42\n"
+                b"    assert files('boardgames.azul').joinpath(\n"
+                b"        'assets/nested/tile.png').read_bytes() == b'synthetic-tile-bytes'\n"
+                b"    assert not Path('boardgames/azul/assets/prefs.json').exists()\n"
+                b"    assert not Path('boardgames/azul/assets/history').exists()\n"
+                b"    assert not Path('boardgames/azul/web_tls').exists()\n"
+            ),
+        }
+        for name, content in files.items():
+            path = source / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+    
+        # A real Git index distinguishes tracked inputs from newly added files.
+        # No user identity, commit, hooks, or network is needed.
+        git = shutil.which("git")
+        assert git, "Git is required for tracked/untracked snapshot parity"
+        for args in (("init", "-q"), ("add", "--", "." if tracked else "helper.py")):
+            result = subprocess.run([git, "-C", str(source), *args],
+                                    capture_output=True, text=True)
+            assert result.returncode == 0, result.stdout + result.stderr
+    
+        run_dir = tmp_path / "run"
+        command = [sys.executable, str(ROOT / "test_gate.py"), "--source-dir", str(source),
+                   "--run-dir", str(run_dir), "tests/test_package.py"]
+        first = subprocess.run(command, cwd=ROOT, capture_output=True,
+                               text=True, encoding="utf-8", timeout=40)
+>       assert first.returncode == 0, first.stdout + first.stderr
+E       AssertionError: {"event": "file", "index": 1, "total": 1, "file": "tests/test_package.py", "status": "collection", "exit_code": 2, "seconds": 0.715, "summary": "1 error in 0.17s"}
+E         GATE {"run_id": "run", "run_dir": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-red-20261021-103840-6ff2fee53d\\basetemp\\test_gate_boardgames-1-eea991a0\\test_gate_copies_boardgames_an0\\run", "files": 1, "totals": {"errors": 1}, "failures": ["tests/test_package.py"], "exit_code": 1, "seconds": 0.724, "source_content_id": "4a3ea77c853dd99fe467a7ae5061e6530afefc709a6a6d9267a54e15fdc8e810", "content_fingerprint": "0788628df292ea5774fb9a364bcadddf9be03384cbf063553a4217dfe46513ee"}
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['D:\\project\\321_FISH\\.venv\\Scripts\\python.exe', 'D:\\project\\321_FISH\\_tmp_gui\\test-gat...e15fdc8e810", "content_fingerprint": "0788628df292ea5774fb9a364bcadddf9be03384cbf063553a4217dfe46513ee"}\n', stderr='').returncode
+
+tests\test_gate_boardgames.py:66: AssertionError
+_ test_gate_copies_boardgames_and_refuses_changed_resume[module-change-untracked] _
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/test-gate/gate-boardgames-red-20261021-103840-6ff2fee53d/basetemp/test_gate_boardgames-1-eea991a0/test_gate_copies_boardgames_an1')
+tracked = False, changed = 'boardgames/azul/desktop.py'
+
+    @pytest.mark.parametrize("tracked", [True, False], ids=["tracked", "untracked"])
+    @pytest.mark.parametrize("changed", ["boardgames/azul/desktop.py",
+                                        "boardgames/azul/assets/nested/tile.png"],
+                             ids=["module-change", "asset-change"])
+    def test_gate_copies_boardgames_and_refuses_changed_resume(tmp_path, tracked, changed):
+        source = tmp_path / "candidate"
+        files = {
+            "helper.py": b"VALUE = 42\n",
+            "boardgames/__init__.py": b"",
+            "boardgames/azul/__init__.py": b"",
+            "boardgames/azul/desktop.py": b"VALUE = 42\n",
+            # Synthetic asset bytes: the child reads exact bytes, without image decoding.
+            "boardgames/azul/assets/nested/tile.png": b"synthetic-tile-bytes",
+            "boardgames/azul/assets/prefs.json": b"synthetic-private-prefs",
+            "boardgames/azul/assets/history/private.py": b"synthetic-private-history",
+            "boardgames/azul/web_tls/private.pem": b"synthetic-private-key",
+            "boardgames/azul/__pycache__/private.py": b"synthetic-cache",
+            "tests/test_package.py": (
+                b"from pathlib import Path\n"
+                b"from importlib.resources import files\n"
+                b"from boardgames.azul.desktop import VALUE\n"
+                b"def test_package():\n"
+                b"    assert VALUE == 42\n"
+                b"    assert files('boardgames.azul').joinpath(\n"
+                b"        'assets/nested/tile.png').read_bytes() == b'synthetic-tile-bytes'\n"
+                b"    assert not Path('boardgames/azul/assets/prefs.json').exists()\n"
+                b"    assert not Path('boardgames/azul/assets/history').exists()\n"
+                b"    assert not Path('boardgames/azul/web_tls').exists()\n"
+            ),
+        }
+        for name, content in files.items():
+            path = source / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+    
+        # A real Git index distinguishes tracked inputs from newly added files.
+        # No user identity, commit, hooks, or network is needed.
+        git = shutil.which("git")
+        assert git, "Git is required for tracked/untracked snapshot parity"
+        for args in (("init", "-q"), ("add", "--", "." if tracked else "helper.py")):
+            result = subprocess.run([git, "-C", str(source), *args],
+                                    capture_output=True, text=True)
+            assert result.returncode == 0, result.stdout + result.stderr
+    
+        run_dir = tmp_path / "run"
+        command = [sys.executable, str(ROOT / "test_gate.py"), "--source-dir", str(source),
+                   "--run-dir", str(run_dir), "tests/test_package.py"]
+        first = subprocess.run(command, cwd=ROOT, capture_output=True,
+                               text=True, encoding="utf-8", timeout=40)
+>       assert first.returncode == 0, first.stdout + first.stderr
+E       AssertionError: {"event": "file", "index": 1, "total": 1, "file": "tests/test_package.py", "status": "collection", "exit_code": 2, "seconds": 0.723, "summary": "1 error in 0.17s"}
+E         GATE {"run_id": "run", "run_dir": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-red-20261021-103840-6ff2fee53d\\basetemp\\test_gate_boardgames-1-eea991a0\\test_gate_copies_boardgames_an1\\run", "files": 1, "totals": {"errors": 1}, "failures": ["tests/test_package.py"], "exit_code": 1, "seconds": 0.733, "source_content_id": "4a3ea77c853dd99fe467a7ae5061e6530afefc709a6a6d9267a54e15fdc8e810", "content_fingerprint": "5639f9e2f03d8546ab6d02699d68388c502dc517a54ea6e012c62f8896425e2a"}
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['D:\\project\\321_FISH\\.venv\\Scripts\\python.exe', 'D:\\project\\321_FISH\\_tmp_gui\\test-gat...e15fdc8e810", "content_fingerprint": "5639f9e2f03d8546ab6d02699d68388c502dc517a54ea6e012c62f8896425e2a"}\n', stderr='').returncode
+
+tests\test_gate_boardgames.py:66: AssertionError
+_ test_gate_copies_boardgames_and_refuses_changed_resume[asset-change-tracked] _
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/test-gate/gate-boardgames-red-20261021-103840-6ff2fee53d/basetemp/test_gate_boardgames-1-eea991a0/test_gate_copies_boardgames_an2')
+tracked = True, changed = 'boardgames/azul/assets/nested/tile.png'
+
+    @pytest.mark.parametrize("tracked", [True, False], ids=["tracked", "untracked"])
+    @pytest.mark.parametrize("changed", ["boardgames/azul/desktop.py",
+                                        "boardgames/azul/assets/nested/tile.png"],
+                             ids=["module-change", "asset-change"])
+    def test_gate_copies_boardgames_and_refuses_changed_resume(tmp_path, tracked, changed):
+        source = tmp_path / "candidate"
+        files = {
+            "helper.py": b"VALUE = 42\n",
+            "boardgames/__init__.py": b"",
+            "boardgames/azul/__init__.py": b"",
+            "boardgames/azul/desktop.py": b"VALUE = 42\n",
+            # Synthetic asset bytes: the child reads exact bytes, without image decoding.
+            "boardgames/azul/assets/nested/tile.png": b"synthetic-tile-bytes",
+            "boardgames/azul/assets/prefs.json": b"synthetic-private-prefs",
+            "boardgames/azul/assets/history/private.py": b"synthetic-private-history",
+            "boardgames/azul/web_tls/private.pem": b"synthetic-private-key",
+            "boardgames/azul/__pycache__/private.py": b"synthetic-cache",
+            "tests/test_package.py": (
+                b"from pathlib import Path\n"
+                b"from importlib.resources import files\n"
+                b"from boardgames.azul.desktop import VALUE\n"
+                b"def test_package():\n"
+                b"    assert VALUE == 42\n"
+                b"    assert files('boardgames.azul').joinpath(\n"
+                b"        'assets/nested/tile.png').read_bytes() == b'synthetic-tile-bytes'\n"
+                b"    assert not Path('boardgames/azul/assets/prefs.json').exists()\n"
+                b"    assert not Path('boardgames/azul/assets/history').exists()\n"
+                b"    assert not Path('boardgames/azul/web_tls').exists()\n"
+            ),
+        }
+        for name, content in files.items():
+            path = source / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+    
+        # A real Git index distinguishes tracked inputs from newly added files.
+        # No user identity, commit, hooks, or network is needed.
+        git = shutil.which("git")
+        assert git, "Git is required for tracked/untracked snapshot parity"
+        for args in (("init", "-q"), ("add", "--", "." if tracked else "helper.py")):
+            result = subprocess.run([git, "-C", str(source), *args],
+                                    capture_output=True, text=True)
+            assert result.returncode == 0, result.stdout + result.stderr
+    
+        run_dir = tmp_path / "run"
+        command = [sys.executable, str(ROOT / "test_gate.py"), "--source-dir", str(source),
+                   "--run-dir", str(run_dir), "tests/test_package.py"]
+        first = subprocess.run(command, cwd=ROOT, capture_output=True,
+                               text=True, encoding="utf-8", timeout=40)
+>       assert first.returncode == 0, first.stdout + first.stderr
+E       AssertionError: {"event": "file", "index": 1, "total": 1, "file": "tests/test_package.py", "status": "collection", "exit_code": 2, "seconds": 0.69, "summary": "1 error in 0.17s"}
+E         GATE {"run_id": "run", "run_dir": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-red-20261021-103840-6ff2fee53d\\basetemp\\test_gate_boardgames-1-eea991a0\\test_gate_copies_boardgames_an2\\run", "files": 1, "totals": {"errors": 1}, "failures": ["tests/test_package.py"], "exit_code": 1, "seconds": 0.698, "source_content_id": "4a3ea77c853dd99fe467a7ae5061e6530afefc709a6a6d9267a54e15fdc8e810", "content_fingerprint": "afc7b2004b25a941cd6b5d4f64a7f7f063b80b1fbfe94f16090e7dfc319e6fda"}
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['D:\\project\\321_FISH\\.venv\\Scripts\\python.exe', 'D:\\project\\321_FISH\\_tmp_gui\\test-gat...e15fdc8e810", "content_fingerprint": "afc7b2004b25a941cd6b5d4f64a7f7f063b80b1fbfe94f16090e7dfc319e6fda"}\n', stderr='').returncode
+
+tests\test_gate_boardgames.py:66: AssertionError
+_ test_gate_copies_boardgames_and_refuses_changed_resume[asset-change-untracked] _
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/test-gate/gate-boardgames-red-20261021-103840-6ff2fee53d/basetemp/test_gate_boardgames-1-eea991a0/test_gate_copies_boardgames_an3')
+tracked = False, changed = 'boardgames/azul/assets/nested/tile.png'
+
+    @pytest.mark.parametrize("tracked", [True, False], ids=["tracked", "untracked"])
+    @pytest.mark.parametrize("changed", ["boardgames/azul/desktop.py",
+                                        "boardgames/azul/assets/nested/tile.png"],
+                             ids=["module-change", "asset-change"])
+    def test_gate_copies_boardgames_and_refuses_changed_resume(tmp_path, tracked, changed):
+        source = tmp_path / "candidate"
+        files = {
+            "helper.py": b"VALUE = 42\n",
+            "boardgames/__init__.py": b"",
+            "boardgames/azul/__init__.py": b"",
+            "boardgames/azul/desktop.py": b"VALUE = 42\n",
+            # Synthetic asset bytes: the child reads exact bytes, without image decoding.
+            "boardgames/azul/assets/nested/tile.png": b"synthetic-tile-bytes",
+            "boardgames/azul/assets/prefs.json": b"synthetic-private-prefs",
+            "boardgames/azul/assets/history/private.py": b"synthetic-private-history",
+            "boardgames/azul/web_tls/private.pem": b"synthetic-private-key",
+            "boardgames/azul/__pycache__/private.py": b"synthetic-cache",
+            "tests/test_package.py": (
+                b"from pathlib import Path\n"
+                b"from importlib.resources import files\n"
+                b"from boardgames.azul.desktop import VALUE\n"
+                b"def test_package():\n"
+                b"    assert VALUE == 42\n"
+                b"    assert files('boardgames.azul').joinpath(\n"
+                b"        'assets/nested/tile.png').read_bytes() == b'synthetic-tile-bytes'\n"
+                b"    assert not Path('boardgames/azul/assets/prefs.json').exists()\n"
+                b"    assert not Path('boardgames/azul/assets/history').exists()\n"
+                b"    assert not Path('boardgames/azul/web_tls').exists()\n"
+            ),
+        }
+        for name, content in files.items():
+            path = source / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content)
+    
+        # A real Git index distinguishes tracked inputs from newly added files.
+        # No user identity, commit, hooks, or network is needed.
+        git = shutil.which("git")
+        assert git, "Git is required for tracked/untracked snapshot parity"
+        for args in (("init", "-q"), ("add", "--", "." if tracked else "helper.py")):
+            result = subprocess.run([git, "-C", str(source), *args],
+                                    capture_output=True, text=True)
+            assert result.returncode == 0, result.stdout + result.stderr
+    
+        run_dir = tmp_path / "run"
+        command = [sys.executable, str(ROOT / "test_gate.py"), "--source-dir", str(source),
+                   "--run-dir", str(run_dir), "tests/test_package.py"]
+        first = subprocess.run(command, cwd=ROOT, capture_output=True,
+                               text=True, encoding="utf-8", timeout=40)
+>       assert first.returncode == 0, first.stdout + first.stderr
+E       AssertionError: {"event": "file", "index": 1, "total": 1, "file": "tests/test_package.py", "status": "collection", "exit_code": 2, "seconds": 0.715, "summary": "1 error in 0.17s"}
+E         GATE {"run_id": "run", "run_dir": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-red-20261021-103840-6ff2fee53d\\basetemp\\test_gate_boardgames-1-eea991a0\\test_gate_copies_boardgames_an3\\run", "files": 1, "totals": {"errors": 1}, "failures": ["tests/test_package.py"], "exit_code": 1, "seconds": 0.724, "source_content_id": "4a3ea77c853dd99fe467a7ae5061e6530afefc709a6a6d9267a54e15fdc8e810", "content_fingerprint": "aec8211ed917c260763f7509385e20711c5c72c37040a73b50d0b07523ebe3ef"}
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['D:\\project\\321_FISH\\.venv\\Scripts\\python.exe', 'D:\\project\\321_FISH\\_tmp_gui\\test-gat...e15fdc8e810", "content_fingerprint": "aec8211ed917c260763f7509385e20711c5c72c37040a73b50d0b07523ebe3ef"}\n', stderr='').returncode
+
+tests\test_gate_boardgames.py:66: AssertionError
+4 failed in 4.57s

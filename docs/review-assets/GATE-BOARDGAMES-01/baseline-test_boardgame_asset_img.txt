@@ -1,0 +1,91 @@
+..FF.F                                                                   [100%]
+================================== FAILURES ===================================
+___________________ test_real_tk_bitmap_helpers_and_render ____________________
+
+    def test_real_tk_bitmap_helpers_and_render():
+        if cu._BG_ASSETS is None or cu._PILImage is None or cu._PILImageTk is None:
+            pytest.skip("Pillow / ImageTk / 内嵌素材模块不可用")
+        tk = pytest.importorskip("tkinter")
+        try:
+            root = tk.Tk()
+        except tk.TclError as exc:
+            pytest.skip(f"Tk unavailable: {exc}")
+        root.geometry("820x600+40+40")
+        root.deiconify()
+        cv = tk.Canvas(root, width=800, height=560, highlightthickness=0)
+        cv.pack(fill="both", expand=True)
+        try:
+            root.update_idletasks()
+            root.update()
+            # 1) 旗舰对局渲染：画布上出现 image item（位图 / 矢量图标）
+            for game, state in (("azul", _azul_state()),
+                                ("gemcity", _gemcity_state())):
+                ui = {}
+                cu.render(cv, game, state, 7, lambda uid: f"P{uid}",
+                          lambda msg: None, lambda: None, ui, None,
+                          cv.winfo_width(), cv.winfo_height())
+                items = cv.find_all()
+                assert items, f"{game}: 画布为空"
+                types = {}
+                for it in items:
+                    t = cv.type(it)
+                    types[t] = types.get(t, 0) + 1
+>               assert types.get("image", 0) > 0, f"{game}: 未绘制任何位图/图标"
+E               AssertionError: azul: 未绘制任何位图/图标
+E               assert 0 > 0
+E                +  where 0 = <built-in method get of dict object at 0x000001E7EB42F340>('image', 0)
+E                +    where <built-in method get of dict object at 0x000001E7EB42F340> = {'rectangle': 32, 'text': 5}.get
+
+tests\test_boardgame_asset_img.py:139: AssertionError
+__________________ test_azul_painter_consumes_package_assets __________________
+
+    def test_azul_painter_consumes_package_assets():
+        if cu._BG_ASSETS is None or cu._PILImage is None or cu._PILImageTk is None:
+            pytest.skip("Pillow/Tk assets unavailable")
+        tk = pytest.importorskip("tkinter")
+        try:
+            root = tk.Tk()
+        except tk.TclError as exc:
+            pytest.skip(f"Tk unavailable: {exc}")
+        try:
+            cv = tk.Canvas(root, width=820, height=580)
+            cv.pack(); root.update_idletasks(); root.update()
+            ui = {}
+            cu.render(cv, "azul", _azul_state(), 7, lambda uid: f"P{uid}",
+                      lambda m: None, lambda: None, ui, None,
+                      cv.winfo_width(), cv.winfo_height())
+            img_keys = {k[0] for k in getattr(cv, "_asset_img_cache", {})}
+            nine_keys = {k[0] for k in getattr(cv, "_asset_nine_cache", {})}
+>           assert "azul_wall_bg" in img_keys       # 桌面底：无缝瓷砖墙（_asset_bg 走 img 缓存）
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: assert 'azul_wall_bg' in set()
+
+tests\test_boardgame_asset_img.py:170: AssertionError
+______________ test_azul_headless_painter_requests_all_new_keys _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001E7EB5AA060>
+
+    def test_azul_headless_painter_requests_all_new_keys(monkeypatch):
+        """无 Tk / 无显示也验证：Azul 画师确实按新键集取材，且不再请求旧三键（本批仍生成、仅供网页端）。
+    
+        shell 组件是 `from client_gameui import _asset_at` 的**直接引用**，故必须同时
+        打桩 `boardgames.shell` 与 `client_gameui` 两处，否则拿不到调用遥测。
+        """
+>       from boardgames import shell as bshell
+
+tests\test_boardgame_asset_img.py:229: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'boardgames'
+globals = {'__name__': 'test_boardgame_asset_img', '__doc__': '原始桌游对局美术（P3）的渲染层接入契约。\n\n覆盖两条路径：\n  1. 真 Tk Canvas —— _asset_img/... '__package__': '', '__loader__': <_pytest.assertion.rewrite.AssertionRewritingHook object at 0x000001E7E83606E0>, ...}
+locals = None, fromlist = ('shell',), level = 0
+
+    def _guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if level == 0 and _is_agent_module(name):
+            _blocked_agent(name, "import")
+>       module = _ORIGINAL_IMPORT(name, globals, locals, fromlist, level)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ModuleNotFoundError: No module named 'boardgames'
+
+test_sandbox.py:242: ModuleNotFoundError
+3 failed, 3 passed in 1.52s

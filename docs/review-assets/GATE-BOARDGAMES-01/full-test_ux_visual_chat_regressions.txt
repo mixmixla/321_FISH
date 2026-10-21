@@ -1,0 +1,26 @@
+...........F.                                                            [100%]
+================================== FAILURES ===================================
+____________ test_short_history_is_not_clipped_after_window_grows _____________
+
+app = <client.ChatWindow object at 0x00000236F2CC7B60>
+
+    def test_short_history_is_not_clipped_after_window_grows(app):
+        samples=[(2,'小周','上午的任务都处理好了，分享一下今天的计划。'),
+                 (1,'我','收到。我把重点整理进工作表，下午一起看。'),
+                 (3,'陈同学','会议是 15:00，我先准备好资料。'),
+                 (2,'小周','这是一条比较长的消息，用来检查中文换行、消息留白和窗口缩小时的阅读体验。')]
+        rows=[{'seq':i,'uid':uid,'nick':nick,'channel':'public','text':text,'ts':1791518400+i*60} for i,(uid,nick,text) in enumerate(samples,1)]
+        app.msg_list.load(rows,me_uid=1)
+        app.root.update()
+        app.root.geometry('1000x700')
+        for _ in range(5):
+            app.root.update()
+            time.sleep(.02)
+>       assert app.msg_list._cum[-1]<app.msg_list.winfo_height()
+E       assert 490 < 325
+E        +  where 325 = winfo_height()
+E        +    where winfo_height = <widgets.msg_list.MsgList object .!frame4.!frame3.!frame3.!msglist>.winfo_height
+E        +      where <widgets.msg_list.MsgList object .!frame4.!frame3.!frame3.!msglist> = <client.ChatWindow object at 0x00000236F2CC7B60>.msg_list
+
+tests\test_ux_visual_chat_regressions.py:126: AssertionError
+1 failed, 12 passed in 11.90s

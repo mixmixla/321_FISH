@@ -1,9 +1,37 @@
 # 321_FISH AI 指挥中心
 
 本文件是当前执行状态与下一任务的唯一权威。需求见 task-packages，证据和审查结论见
-review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-13（Asia/Shanghai）。
+review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-21（UTC；以下旧记录保留原时区）。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+
+## GATE-BOARDGAMES-01 新机基线与当前有限任务（2026-10-21）
+
+**IMPLEMENTED / CODE_DOMAIN_REVIEWED / FULL_FAILED / NOT_AI_ACCEPTED / NOT_MERGE_READY / STOP_AFTER_DELIVERY**。[Task v1](task-packages/GATE-BOARDGAMES-01.md) / [Review r1](review-packages/GATE-BOARDGAMES-01-r1.md)。
+用户本轮授权DESKTOP-S0Q0M83的 `D:\project\321_FISH` 新克隆、小增量本地开发；本聊天唯一实现/治理执行者，
+gate_review独立只读审查0 MUST；未恢复旧Goal/heartbeat，无push/PR/发布或其它项目修改。
+base/clone origin/main84444b5，入场clean；分支 `fix/gate-boardgames-20261021`，代码提交 `10caf9f`，
+后继仅本Task资料/证据；最终leaf见Git log。主干10月14–21日已增加展示包/Azul/规则/私有状态，
+10月13日旧收口/失败及CC原Review保持历史，不借旧证据证明新候选。
+
+环境：Windows10 19045 / pwsh7.6.7 / 官方完整Python3.14.5 ZIP / 项目`.venv`与锁定requirements；
+官方SHA256核对、Tk8.6和pip check通过。解释器在ignored `_tmp_gui/bootstrap-20261021/python`，
+是`.venv`base、须保留；系统Python3.13.5/系统PATH/注册表未改，无系统软件安装。
+干净主干原五文件26P3F0S/exit1；根因runner未收boardgames，Azul降级/ModuleNotFoundError。
+新4case在原runner4F/exit1；只补包Python/包内assets收集，原敏感排除/reparse/沙盒/skip保持。
+领域10文件79P0F0S/exit0；原Azul真实Tk6项全PASS。所有原失败保留在Review/public evidence。
+
+唯一full：205文件，2904 PASS / 1 FAIL / 20 SKIP，exit1，756.94秒；source `1772c5a70fc8a8b8d1c3c050f046a1edd087da581813c3eeeea0f0a4f8e9acc8` / 482输入，
+与领域/当前/snapshot一致。205条原log SHA/单attempt/cleanup已独立核验，默认opt-in跳过、无unexpected skip，
+不启用危险visual/hardware，不以mock替代Tk/子门禁。原run `_tmp_gui/test-gate/gate-boardgames-full-20261021-104115-300e65f5f5`。
+当前完整验收阻碍：test_short_history_is_not_clipped_after_window_grows 第126行490<325失败；
+未做同环境干净base完整对照，根因未定，不归为历史/环境问题；原FAIL保留，未重试/改断言/skip。
+代码/领域审查无MUST不能抵消full失败，NOT_AI_ACCEPTED/NOT_MERGE_READY。结论仅本Task技术范围，非用户/Pro/整个R1或发布验收；外机/物理LAN/完整EXE交互/GUI自然退出/DPI仍未验。
+
+本轮终点：源码已本地提交，最终资料/原证据核对后本地提交即停止，无活动应用/测试/构建或待恢复进程。
+下一建议：先就本次全量具体失败另冻窄任务；本轮不扩大功能，也不将失败归为旧基线。
+恢复入口：本节 → Task/Review → Git status/log与实际进程；不依据旧READY/旧Goal重复启动。
+
 ## KALAH-TERMINAL-01 当前规则源码失败边界收口（2026-10-13）
 
 **IMPLEMENTED / CODE_DOMAIN_REVIEWED / FULL_FAILED / NOT_AI_ACCEPTED / NOT_MERGE_READY / STOP_AFTER_DELIVERY**。[Task v1.1](task-packages/KALAH-TERMINAL-01.md)/[Review r1](review-packages/KALAH-TERMINAL-01-r1.md)/[收口决定](review-assets/KALAH-TERMINAL-01/closure.json)。用户13:34北京明确仅当前Kalah必要门禁/独立审查/提交推送/清理后直接停止，旧连续推进上限已替代，不因用量reset启动新Task/构建/UI/美化。base2fa1c9e/branch fix/gemcity-purchase-20261013，root唯一规则/新test/治理写入者，原c864234/dirty/index/1143保护。

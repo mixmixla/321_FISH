@@ -20,6 +20,10 @@
 
 ## Architecture
 
+- `boardgames/` 是惰性加载的桌游展示包，含共用registry/shell/artkit/geom与Azul桌面/Web/包内PNG；
+  规则仍在 `games_pkg/`。隔离门禁源码输入须包含这两个包、widgets与静态资产，
+  新增未跟踪Python/包内assets同样参与快照和恢复指纹；不能只复制旧的两个Python包。
+
 - 雾岸聊天视觉候选以 `docs/design/UX-01.tokens.json` 为语义源，`ui_design.py` 编译导出供Tk与内嵌Web共用；线性图标来自同一几何，默认不透明，显式旧皮肤保留。DPI声明先于tray/Tk，当前为SYSTEM_AWARE，禁用开关不读写Tk scaling；实际视觉/DPI/EXE验收范围见指挥中心，不把原型或单测当整体验收。
 
 - `client.py:ChatWindow` 管 Tk UI；`client_core.py:ClientCore` 管网络、状态、API 与

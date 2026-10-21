@@ -1,0 +1,58 @@
+{
+  "code_commit": "10caf9f",
+  "base": "84444b5aea305f1d179b2f07c9ace132fa78071b",
+  "source_content_id": "1772c5a70fc8a8b8d1c3c050f046a1edd087da581813c3eeeea0f0a4f8e9acc8",
+  "source_inputs": 482,
+  "checks": {
+    "all_205_files_completed": true,
+    "same_inputs_as_domain": true,
+    "current_inputs_unchanged": true,
+    "current_source_id_matches": true,
+    "single_attempt_each": true,
+    "owned_cleanup_each": true,
+    "raw_logs_match": true,
+    "snapshot_matches": true,
+    "no_unexpected_skips": true,
+    "no_visual_or_hardware": true
+  },
+  "full_exit_code": 1,
+  "totals": {
+    "passed": 2904,
+    "skipped": 20,
+    "failed": 1
+  },
+  "full_seconds": 756.94,
+  "full_summary_sha256": "156fffc0934ae6cc527b3c22b7307e91513cac22a340f714b9ff5c5a5ef1b2f5",
+  "skipped_files": [
+    {
+      "file": "tests/test_r45.py",
+      "counts": {
+        "passed": 17,
+        "skipped": 1
+      },
+      "summary": "17 passed, 1 skipped in 6.92s"
+    },
+    {
+      "file": "tests/test_ux_visual_chat_shots.py",
+      "counts": {
+        "skipped": 18
+      },
+      "summary": "18 skipped in 0.13s"
+    },
+    {
+      "file": "tests/test_visual_screenshot.py",
+      "counts": {
+        "skipped": 1
+      },
+      "summary": "1 skipped in 0.14s"
+    }
+  ],
+  "failures": [
+    {
+      "file": "tests/test_ux_visual_chat_regressions.py",
+      "status": "failed",
+      "exit_code": 1,
+      "summary": "1 failed, 12 passed in 11.90s"
+    }
+  ]
+}

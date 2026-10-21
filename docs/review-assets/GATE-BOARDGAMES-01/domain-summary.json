@@ -1,0 +1,979 @@
+{
+  "schema_version": "VB-01.v1",
+  "run_id": "gate-boardgames-domain-20261021-103925-e788d08cd2",
+  "run_dir": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2",
+  "source_origin": "D:\\project\\321_FISH",
+  "source_snapshot": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\source",
+  "source_content_id": "1772c5a70fc8a8b8d1c3c050f046a1edd087da581813c3eeeea0f0a4f8e9acc8",
+  "tests_content_id": "c740865c2680ca5102f3960d473ccc1b19c9b4fe4e5671fd63ad1f9daf620693",
+  "dependency_content_id": "e5a759a0dfe3f9753a3d8fba0abec730982c2a460890dd35a0e8514400dd3741",
+  "content_fingerprint": "0caad991d81fc37cfca45e1faeccc9c46d4ef5070fb272ca90ee94ca0941bd20",
+  "interpreter": {
+    "path": "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+    "implementation": "cpython",
+    "version": "3.14.5",
+    "cache_tag": "cpython-314",
+    "size": 255200,
+    "sha256": "896ccf899b9d45c1c119ba35d6cce6e16cc10dd6a7f502f88fb50429a6e5cf4c"
+  },
+  "runner_tool_sha256": "aec66d5de16f1c26d723dcadba39ef337cbd75eb73f3565fc3ff19a3843e3c43",
+  "sandbox_tool_sha256": "be55bc624290253c937ee68baac68081eb02978e5a672dd2f1acaf5a383c6cfa",
+  "desktop": {
+    "available": true,
+    "required": true,
+    "session_id": 1
+  },
+  "command_template": [
+    "{interpreter}",
+    "-m",
+    "pytest",
+    "-q",
+    "-rs",
+    "-p",
+    "test_sandbox",
+    "{test_file}",
+    "--basetemp",
+    "{basetemp}",
+    "-o",
+    "faulthandler_timeout=60",
+    "{capture_mode}"
+  ],
+  "environment": {
+    "allowed_inherited_keys": [
+      "ALLUSERSPROFILE",
+      "APPDATA",
+      "COMMONPROGRAMFILES",
+      "COMMONPROGRAMFILES(X86)",
+      "COMMONPROGRAMW6432",
+      "COMSPEC",
+      "HOMEDRIVE",
+      "HOMEPATH",
+      "LANG",
+      "LC_ALL",
+      "LC_CTYPE",
+      "LOCALAPPDATA",
+      "NUMBER_OF_PROCESSORS",
+      "OS",
+      "PATH",
+      "PATHEXT",
+      "PROCESSOR_ARCHITECTURE",
+      "PROCESSOR_IDENTIFIER",
+      "PROCESSOR_LEVEL",
+      "PROCESSOR_REVISION",
+      "PROGRAMDATA",
+      "PROGRAMFILES",
+      "PROGRAMFILES(X86)",
+      "PROGRAMW6432",
+      "PSMODULEPATH",
+      "PUBLIC",
+      "SYSTEMDRIVE",
+      "SYSTEMROOT",
+      "TEMP",
+      "TMP",
+      "USERDOMAIN",
+      "USERNAME",
+      "USERPROFILE",
+      "WINDIR"
+    ],
+    "cleared_inherited_keys": [
+      "ASL.LOG",
+      "BROWSER_USE_ACCESS_EXECUTOR_ID",
+      "BROWSER_USE_ACCESS_PIPE_PATH",
+      "BROWSER_USE_ACCESS_VERIFYING_IDENTITY",
+      "BROWSER_USE_AVAILABLE_BACKENDS",
+      "BROWSER_USE_TINYSKY_ENABLED",
+      "CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS",
+      "CODEX_APP_TOOLS_PIPE_PATH",
+      "CODEX_CI",
+      "CODEX_ELECTRON_RESOURCES_PATH",
+      "CODEX_INTERNAL_ORIGINATOR_OVERRIDE",
+      "CODEX_PERMISSION_PROFILE",
+      "CODEX_SAGE_BACKFILL_TRACKER_TAB_REUSE",
+      "CODEX_SANDBOX_NETWORK_DISABLED",
+      "CODEX_SESSION_ID",
+      "CODEX_SHELL",
+      "CODEX_TASK_WORKSPACE_NODE",
+      "CODEX_TASK_WORKSPACE_VERIFYING_IDENTITY",
+      "CODEX_TECTONIC_PATH",
+      "CODEX_THREAD_ID",
+      "CODEX_TOOL_CALL_ID",
+      "CODEX_VERSION",
+      "CODEX_WINDOWS_SANDBOX_PACKAGE_FAMILY",
+      "COLORTERM",
+      "COMPUTERNAME",
+      "DISABLE_AUTO_UPDATE",
+      "DRIVERDATA",
+      "GH_PAGER",
+      "GIT_PAGER",
+      "LOGONSERVER",
+      "LOG_FORMAT",
+      "NODE_REPL_NODE_MODULE_DIRS",
+      "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S",
+      "NODE_REPL_TRUSTED_CODE_PATHS",
+      "NODE_REPL_TRUSTED_SERVICES",
+      "NO_COLOR",
+      "ONEDRIVE",
+      "PAGER",
+      "POWERSHELL_DISTRIBUTION_CHANNEL",
+      "RUST_LOG",
+      "SHELL",
+      "TERM",
+      "USERDOMAIN_ROAMINGPROFILE",
+      "ZSH_TMUX_AUTOSTART",
+      "ZSH_TMUX_AUTOSTARTED"
+    ],
+    "identity_fingerprint": "caf4d6482edf5f5103e5b958196b3622e7101dfae32ff3290c4177783661c958",
+    "profile_root": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\profile",
+    "cwd_root": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\source",
+    "network": "loopback_only",
+    "agent": "blocked",
+    "hardware": "blocked",
+    "desktop": null
+  },
+  "sandbox_policy": {
+    "source_copy": "git_tracked_plus_current_tests",
+    "runtime_data_excluded": [
+      ".git",
+      ".pytest_cache",
+      ".venv",
+      "__pycache__",
+      "_tmp_gui",
+      "audit",
+      "crash.log",
+      "crash.log.1",
+      "downloads",
+      "history",
+      "models",
+      "prefs.json",
+      "server_state",
+      "web_files",
+      "web_tls"
+    ],
+    "network": "loopback_only",
+    "agent": "blocked",
+    "hardware": "blocked",
+    "gui": "private_Windows_desktop_when_available"
+  },
+  "files": 10,
+  "failures": [],
+  "cleanup_failures": [],
+  "totals": {
+    "passed": 79
+  },
+  "seconds": 34.467,
+  "exit_code": 0,
+  "started_at": "2026-10-21T02:39:27.590+00:00",
+  "ended_at": "2026-10-21T02:40:02.059+00:00",
+  "results": [
+    {
+      "file": "tests/test_azul_package_assets.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T02:39:27.828+00:00",
+          "pid": 40712,
+          "session_id": 1,
+          "log": "logs/test_azul_package_assets.attempt1.log",
+          "sandbox_report": "sandbox/test_azul_package_assets.attempt1.json",
+          "basetemp": "basetemp/test_azul_package_assets-1-8f707a39",
+          "source_cwd": "cases/test_azul_package_assets-1-fc4d75db",
+          "profile": "profiles/test_azul_package_assets-1-74541ea4",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_azul_package_assets.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\basetemp\\test_azul_package_assets-1-8f707a39",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ],
+          "gui": false,
+          "desktop": null,
+          "ended_at": "2026-10-21T02:39:29.154+00:00",
+          "exit_code": 0,
+          "seconds": 1.327,
+          "summary": "25 passed in 0.76s",
+          "counts": {
+            "passed": 25
+          },
+          "log_sha256": "0657770ca1b35d29d06b4f278fde4b0ee6e77eb45fb8ab4acf63d9ac9480ec1d",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": null,
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792550368.255713,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "25 passed in 0.76s",
+      "counts": {
+        "passed": 25
+      },
+      "ended_at": "2026-10-21T02:39:29.154+00:00",
+      "seconds": 1.327,
+      "log": "logs/test_azul_package_assets.attempt1.log",
+      "log_sha256": "0657770ca1b35d29d06b4f278fde4b0ee6e77eb45fb8ab4acf63d9ac9480ec1d",
+      "sandbox_report": "sandbox/test_azul_package_assets.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_boardgame_asset_img.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T02:39:29.553+00:00",
+          "pid": 42004,
+          "session_id": 1,
+          "log": "logs/test_boardgame_asset_img.attempt1.log",
+          "sandbox_report": "sandbox/test_boardgame_asset_img.attempt1.json",
+          "basetemp": "basetemp/test_boardgame_asset_img-1-a2876b14",
+          "source_cwd": "cases/test_boardgame_asset_img-1-acb5c0ed",
+          "profile": "profiles/test_boardgame_asset_img-1-7d72b2fd",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_boardgame_asset_img.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\basetemp\\test_boardgame_asset_img-1-a2876b14",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=sys"
+          ],
+          "gui": true,
+          "desktop": "MoyuGate-40540-4e51ffdb1b",
+          "ended_at": "2026-10-21T02:39:32.150+00:00",
+          "exit_code": 0,
+          "seconds": 2.597,
+          "summary": "6 passed in 2.07s",
+          "counts": {
+            "passed": 6
+          },
+          "log_sha256": "8276215cfa5c36be59c0d6440aea904b391866b999ef0931b336b460ce7fc870",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": "MoyuGate-40540-4e51ffdb1b",
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792550369.9462733,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "6 passed in 2.07s",
+      "counts": {
+        "passed": 6
+      },
+      "ended_at": "2026-10-21T02:39:32.150+00:00",
+      "seconds": 2.597,
+      "log": "logs/test_boardgame_asset_img.attempt1.log",
+      "log_sha256": "8276215cfa5c36be59c0d6440aea904b391866b999ef0931b336b460ce7fc870",
+      "sandbox_report": "sandbox/test_boardgame_asset_img.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_game_packages.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T02:39:32.429+00:00",
+          "pid": 22540,
+          "session_id": 1,
+          "log": "logs/test_game_packages.attempt1.log",
+          "sandbox_report": "sandbox/test_game_packages.attempt1.json",
+          "basetemp": "basetemp/test_game_packages-1-12567612",
+          "source_cwd": "cases/test_game_packages-1-43747c43",
+          "profile": "profiles/test_game_packages-1-3a70885b",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_game_packages.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\basetemp\\test_game_packages-1-12567612",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ],
+          "gui": false,
+          "desktop": null,
+          "ended_at": "2026-10-21T02:39:33.957+00:00",
+          "exit_code": 0,
+          "seconds": 1.528,
+          "summary": "5 passed in 1.01s",
+          "counts": {
+            "passed": 5
+          },
+          "log_sha256": "ddbd8c160799f892f08e72b697a66a6c0e6f47e7a8e894e692d240cd79f08cee",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": null,
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792550372.8185987,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "5 passed in 1.01s",
+      "counts": {
+        "passed": 5
+      },
+      "ended_at": "2026-10-21T02:39:33.957+00:00",
+      "seconds": 1.528,
+      "log": "logs/test_game_packages.attempt1.log",
+      "log_sha256": "ddbd8c160799f892f08e72b697a66a6c0e6f47e7a8e894e692d240cd79f08cee",
+      "sandbox_report": "sandbox/test_game_packages.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_game_shell_pal.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T02:39:34.365+00:00",
+          "pid": 25280,
+          "session_id": 1,
+          "log": "logs/test_game_shell_pal.attempt1.log",
+          "sandbox_report": "sandbox/test_game_shell_pal.attempt1.json",
+          "basetemp": "basetemp/test_game_shell_pal-1-1d266779",
+          "source_cwd": "cases/test_game_shell_pal-1-b04f0518",
+          "profile": "profiles/test_game_shell_pal-1-4abe31a7",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_game_shell_pal.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\basetemp\\test_game_shell_pal-1-1d266779",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ],
+          "gui": false,
+          "desktop": null,
+          "ended_at": "2026-10-21T02:39:35.000+00:00",
+          "exit_code": 0,
+          "seconds": 0.634,
+          "summary": "4 passed in 0.13s",
+          "counts": {
+            "passed": 4
+          },
+          "log_sha256": "fc5c7f5861f2fc169d3716d61b93d2db1560f11376a8255b3fd4d98b6bbf4749",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": null,
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792550374.7574737,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "4 passed in 0.13s",
+      "counts": {
+        "passed": 4
+      },
+      "ended_at": "2026-10-21T02:39:35.000+00:00",
+      "seconds": 0.634,
+      "log": "logs/test_game_shell_pal.attempt1.log",
+      "log_sha256": "fc5c7f5861f2fc169d3716d61b93d2db1560f11376a8255b3fd4d98b6bbf4749",
+      "sandbox_report": "sandbox/test_game_shell_pal.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_game_shell_wiring.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T02:39:35.398+00:00",
+          "pid": 40952,
+          "session_id": 1,
+          "log": "logs/test_game_shell_wiring.attempt1.log",
+          "sandbox_report": "sandbox/test_game_shell_wiring.attempt1.json",
+          "basetemp": "basetemp/test_game_shell_wiring-1-cecc2366",
+          "source_cwd": "cases/test_game_shell_wiring-1-b5b0daf2",
+          "profile": "profiles/test_game_shell_wiring-1-1b451667",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_game_shell_wiring.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\basetemp\\test_game_shell_wiring-1-cecc2366",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=sys"
+          ],
+          "gui": true,
+          "desktop": "MoyuGate-40540-5c85727d29",
+          "ended_at": "2026-10-21T02:39:38.214+00:00",
+          "exit_code": 0,
+          "seconds": 2.817,
+          "summary": "1 passed in 2.30s",
+          "counts": {
+            "passed": 1
+          },
+          "log_sha256": "68227e737c0e85c458b333a3c49b834303896eb49873913dae47622256f86ddf",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": "MoyuGate-40540-5c85727d29",
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792550375.7860408,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "1 passed in 2.30s",
+      "counts": {
+        "passed": 1
+      },
+      "ended_at": "2026-10-21T02:39:38.214+00:00",
+      "seconds": 2.817,
+      "log": "logs/test_game_shell_wiring.attempt1.log",
+      "log_sha256": "68227e737c0e85c458b333a3c49b834303896eb49873913dae47622256f86ddf",
+      "sandbox_report": "sandbox/test_game_shell_wiring.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_gameui_compact_gui.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T02:39:38.889+00:00",
+          "pid": 11960,
+          "session_id": 1,
+          "log": "logs/test_gameui_compact_gui.attempt1.log",
+          "sandbox_report": "sandbox/test_gameui_compact_gui.attempt1.json",
+          "basetemp": "basetemp/test_gameui_compact_gui-1-28d270d7",
+          "source_cwd": "cases/test_gameui_compact_gui-1-3dc040f0",
+          "profile": "profiles/test_gameui_compact_gui-1-945253be",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_gameui_compact_gui.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\basetemp\\test_gameui_compact_gui-1-28d270d7",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=sys"
+          ],
+          "gui": true,
+          "desktop": "MoyuGate-40540-c07d9133d1",
+          "ended_at": "2026-10-21T02:39:41.660+00:00",
+          "exit_code": 0,
+          "seconds": 2.771,
+          "summary": "3 passed in 2.20s",
+          "counts": {
+            "passed": 3
+          },
+          "log_sha256": "a091f510a5130797faf92e31a833fdbf96559147524b6541ede294e21db7602b",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": "MoyuGate-40540-c07d9133d1",
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792550379.3144772,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "3 passed in 2.20s",
+      "counts": {
+        "passed": 3
+      },
+      "ended_at": "2026-10-21T02:39:41.660+00:00",
+      "seconds": 2.771,
+      "log": "logs/test_gameui_compact_gui.attempt1.log",
+      "log_sha256": "a091f510a5130797faf92e31a833fdbf96559147524b6541ede294e21db7602b",
+      "sandbox_report": "sandbox/test_gameui_compact_gui.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_gate_boardgames.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T02:39:41.872+00:00",
+          "pid": 9504,
+          "session_id": 1,
+          "log": "logs/test_gate_boardgames.attempt1.log",
+          "sandbox_report": "sandbox/test_gate_boardgames.attempt1.json",
+          "basetemp": "basetemp/test_gate_boardgames-1-34804625",
+          "source_cwd": "cases/test_gate_boardgames-1-43c9f0b1",
+          "profile": "profiles/test_gate_boardgames-1-e40a51ad",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_gate_boardgames.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\basetemp\\test_gate_boardgames-1-34804625",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ],
+          "gui": false,
+          "desktop": null,
+          "ended_at": "2026-10-21T02:39:47.599+00:00",
+          "exit_code": 0,
+          "seconds": 5.727,
+          "summary": "4 passed in 5.21s",
+          "counts": {
+            "passed": 4
+          },
+          "log_sha256": "24f7ae21a0c70750d67af21961f03bd58c3cd174c1655511af17c4659ad91a46",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": null,
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792550382.265486,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "4 passed in 5.21s",
+      "counts": {
+        "passed": 4
+      },
+      "ended_at": "2026-10-21T02:39:47.599+00:00",
+      "seconds": 5.727,
+      "log": "logs/test_gate_boardgames.attempt1.log",
+      "log_sha256": "24f7ae21a0c70750d67af21961f03bd58c3cd174c1655511af17c4659ad91a46",
+      "sandbox_report": "sandbox/test_gate_boardgames.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_rooms.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T02:39:47.872+00:00",
+          "pid": 41232,
+          "session_id": 1,
+          "log": "logs/test_rooms.attempt1.log",
+          "sandbox_report": "sandbox/test_rooms.attempt1.json",
+          "basetemp": "basetemp/test_rooms-1-11ad9c22",
+          "source_cwd": "cases/test_rooms-1-0a4acbce",
+          "profile": "profiles/test_rooms-1-75bbb3f2",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_rooms.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\basetemp\\test_rooms-1-11ad9c22",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ],
+          "gui": false,
+          "desktop": null,
+          "ended_at": "2026-10-21T02:39:48.949+00:00",
+          "exit_code": 0,
+          "seconds": 1.077,
+          "summary": "15 passed in 0.57s",
+          "counts": {
+            "passed": 15
+          },
+          "log_sha256": "853c1dcb707224f2622fc55c855d64779c06e00615757802ae20b66f681e0c28",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": null,
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792550388.2538285,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "15 passed in 0.57s",
+      "counts": {
+        "passed": 15
+      },
+      "ended_at": "2026-10-21T02:39:48.949+00:00",
+      "seconds": 1.077,
+      "log": "logs/test_rooms.attempt1.log",
+      "log_sha256": "853c1dcb707224f2622fc55c855d64779c06e00615757802ae20b66f681e0c28",
+      "sandbox_report": "sandbox/test_rooms.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_test_gate.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T02:39:49.219+00:00",
+          "pid": 27920,
+          "session_id": 1,
+          "log": "logs/test_test_gate.attempt1.log",
+          "sandbox_report": "sandbox/test_test_gate.attempt1.json",
+          "basetemp": "basetemp/test_test_gate-1-7bf0de31",
+          "source_cwd": "cases/test_test_gate-1-cfd48e4e",
+          "profile": "profiles/test_test_gate-1-2c902c51",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_test_gate.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\basetemp\\test_test_gate-1-7bf0de31",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ],
+          "gui": false,
+          "desktop": null,
+          "ended_at": "2026-10-21T02:40:00.930+00:00",
+          "exit_code": 0,
+          "seconds": 11.711,
+          "summary": "8 passed in 11.19s",
+          "counts": {
+            "passed": 8
+          },
+          "log_sha256": "4194e135dddf5526f9f8ad6f66830827be9fca39b80cd85f4c364571b94ed01c",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": null,
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792550389.6232948,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "8 passed in 11.19s",
+      "counts": {
+        "passed": 8
+      },
+      "ended_at": "2026-10-21T02:40:00.930+00:00",
+      "seconds": 11.711,
+      "log": "logs/test_test_gate.attempt1.log",
+      "log_sha256": "4194e135dddf5526f9f8ad6f66830827be9fca39b80cd85f4c364571b94ed01c",
+      "sandbox_report": "sandbox/test_test_gate.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_test_gate_safety.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T02:40:01.175+00:00",
+          "pid": 24140,
+          "session_id": 1,
+          "log": "logs/test_test_gate_safety.attempt1.log",
+          "sandbox_report": "sandbox/test_test_gate_safety.attempt1.json",
+          "basetemp": "basetemp/test_test_gate_safety-1-9cd8af5d",
+          "source_cwd": "cases/test_test_gate_safety-1-e63345eb",
+          "profile": "profiles/test_test_gate_safety-1-051fa6f4",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_test_gate_safety.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\gate-boardgames-domain-20261021-103925-e788d08cd2\\basetemp\\test_test_gate_safety-1-9cd8af5d",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ],
+          "gui": false,
+          "desktop": null,
+          "ended_at": "2026-10-21T02:40:02.057+00:00",
+          "exit_code": 0,
+          "seconds": 0.882,
+          "summary": "8 passed in 0.38s",
+          "counts": {
+            "passed": 8
+          },
+          "log_sha256": "32b0d2f8ac1fc03bebd8d9016a4c121a887f0eba008a1ca56db56284a9d252b7",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": null,
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792550401.5578437,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "8 passed in 0.38s",
+      "counts": {
+        "passed": 8
+      },
+      "ended_at": "2026-10-21T02:40:02.057+00:00",
+      "seconds": 0.882,
+      "log": "logs/test_test_gate_safety.attempt1.log",
+      "log_sha256": "32b0d2f8ac1fc03bebd8d9016a4c121a887f0eba008a1ca56db56284a9d252b7",
+      "sandbox_report": "sandbox/test_test_gate_safety.attempt1.json",
+      "unexpected_skips": []
+    }
+  ]
+}

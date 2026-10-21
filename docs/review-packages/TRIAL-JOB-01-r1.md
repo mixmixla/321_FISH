@@ -1,6 +1,6 @@
 # TRIAL-JOB-01 r1 — 标准自主 EXE 预检的 Job 所有权
 
-2026-10-21：**AI_ACCEPTED_JOB_ONLY / FULL_PASSED / STANDARD_EXE_PREFLIGHT_PASSED / R3_GUI_NOT_RUN**。
+2026-10-21：**AI_ACCEPTED_JOB_ONLY / FULL_PASSED / STANDARD_EXE_PREFLIGHT_PASSED / PUSH_APPROVAL_BLOCKED / R3_GUI_NOT_RUN**。
 [Task v1](../task-packages/TRIAL-JOB-01.md)。当前用户要求自主验收并继续一个不依赖GUI放行的小增量；本轮只此项，不扩产品功能或发布。
 
 ## 选择与改动
@@ -54,3 +54,10 @@ runtime副本479项前后同9d8d9625ad67db943be4a54659fad8ec24b4fc969e426d4c42ba
 gate_review独立预审/最终测试绑定/领域/正式EXE及完整207原件/公开历史/输入/资料终审均0 MUST。主控据此记录AI_ACCEPTED_JOB_ONLY，仅默认owned Job预检/清理和本批资料；不是用户/Pro、完整R3或发布接受。冻结源保持，不再重测。
 用户已授权质量达标正常push/merge，集成前fetch检查新改动与保护/required checks，不强推/绕过、不删开发分支、不发布；无可见CI不能记CI PASS。最终资料leaf/远端SHA在Git与本轮回执记录。
 恢复：指挥中心本Task→Task/本Review→Git/实际进程→上述原summary及公开SHA；full/EXE运行结束后不重复启动。达到本Task有限终点停止，不恢复旧Goal、不扩大功能，R3GUI未测单独保留。
+
+## 远端交付阻碍（最终检查点）
+
+源码975c09b和资料1e42b7d已本地提交。普通push到origin refs/heads/fix/trial-owned-job-20261021在进程创建前被自动审批拒绝：认为本批40个新资料文件及本地构建/运行日志、绝对路径元数据的GitHub披露授权不够明确。
+补充对最终42个Git blob逐项审计：549处绝对路径全部在用户已授权D:/project/321_FISH内，无越界/遍历、个人Users路径/姓名/私钥/token或二进制/实际runtime文件；标准预检只公开新合成profile根和数量，不含prefs/audit正文。
+据新证据仅重试同一普通push一次，自动审批再次拒绝，并明确即使无秘密/个人路径/二进制，仍要求对这42个源码/测试/治理证据与日志的具体外部披露明确授权。停止该动作，不换工具或PR/API绕过；尚未push/设置upstream/合并。
+拒绝后ls-remote确认main仍ade446e639713297774fea3e7898f8dbb523a4ac，目标分支不存在；本地源/测试/门禁/独立接受不受影响。需要用户明确同意把此42文件（含合成测试日志和项目绝对路径元数据）公开推送至https://github.com/mixmixla/321_FISH.git，然后再依既有质量条件集成。最终阻碍记录leaf见本地Git。

@@ -1,0 +1,454 @@
+{
+  "task": "R3-PACKAGE-WIRE-01 v1",
+  "technical_status": "AI_ACCEPTED_RELOCATED_PREFLIGHT_ONLY",
+  "delivery": "LOCAL_ACCEPTED_AUDITED_NOT_YET_PUSHED",
+  "base_commit": "cd4818313ee58c76565d068d9523eb3f10d86ce8",
+  "branch": "feature/r3-package-wire-20261021",
+  "product_code_tests_dependencies_build_changed": false,
+  "full_repeated": false,
+  "source_inputs": 488,
+  "source_content_id": "dcf9dfb850acd8530274165b6984655ef457ccc077d438978ffe1cdacbd18757",
+  "reused_full": {
+    "run_id": "wire-full-20261021-185108-b66afa85c5",
+    "files": 211,
+    "totals": {
+      "passed": 2958,
+      "skipped": 20
+    },
+    "exit_code": 0,
+    "seconds": 774.173,
+    "summary_sha256": "4d27c337d5abfda46d37960404cf0232106459f49e2978675fdce8d191864a42",
+    "manifest_sha256": "98c0ca0f76187f9830ff63de92368904d42a677278ece49b31fe5b54cf5d04c2",
+    "source_inputs": 488,
+    "source_content_id": "dcf9dfb850acd8530274165b6984655ef457ccc077d438978ffe1cdacbd18757"
+  },
+  "package_build": {
+    "base": "2e2115647940a4025e99f7fcdd112e1fdc9ae416",
+    "source_inputs": 487,
+    "source_content_id": "0a1d29967852b737d3aafa4ea8800d94da3e0747713bc616939e8ea7076052b7",
+    "subsequent_external_harness_code_in_old_exes": false
+  },
+  "original_package_relative_path": "_tmp_gui/r3-rebuild-20261021/bundle-main2e21156-pending-gui",
+  "relocated_package_relative_path": "_tmp_gui/r3-package-wire-20261021/搬移验收 空格/便携包 321 FISH",
+  "package_files": [
+    {
+      "path": "LICENSE",
+      "size": 35823,
+      "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+    },
+    {
+      "path": "README.md",
+      "size": 1201,
+      "sha256": "3a6e558edd1c0bac3f0af9b2a65048c341bb3101a18ec6b2d24ea0d9eb07f4d9"
+    },
+    {
+      "path": "SHA256SUMS.txt",
+      "size": 485,
+      "sha256": "136c5e35873a50379ea586e938abcd54f593e639076400db1ff6bf2ad7b4f9df"
+    },
+    {
+      "path": "StartTrial.exe",
+      "size": 9738961,
+      "sha256": "aaa37fe82b003da011046e6402f69a9c91b06c5f6323d156822ec94e0d169bff"
+    },
+    {
+      "path": "VERIFICATION.json",
+      "size": 921,
+      "sha256": "88a6c6dc71277ee73c7a936c85bfde3af4572fba9a7a67d942ca1a1ebedbc6e7"
+    },
+    {
+      "path": "dist/client.exe",
+      "size": 27344653,
+      "sha256": "ee2208a24b9e69deff0307b8fe0c88618ec8b896d1ed6b1ef55a2412a3e9d0ab"
+    },
+    {
+      "path": "dist/server.exe",
+      "size": 26084183,
+      "sha256": "cbd87c141c1dd50f1e8df8ed87856ec743f94f1e69e466751a66a6e4efce1cb4"
+    }
+  ],
+  "copy_keeps_exact_seven_and_original_unchanged": true,
+  "package_formal_manifest": {
+    "inputs": 1,
+    "source_content_id": "d5d14b5fdabd336a1f0fc164fe0b8de7382471c588da44a6d95b216761905d70",
+    "only_path": "SHA256SUMS.txt",
+    "meaning": "Limited fallback manifest, not a seven-file or source-build identity. Independent whole-package hashes above bind all seven files."
+  },
+  "checks": {
+    "root488_unchanged_and_bound_to_existing_full": true,
+    "old487_business_code_same_except_external_harness": true,
+    "original_copy_exact7_unchanged": true,
+    "formal_cli_process_exit0": true,
+    "all5_startup_and_afterwait": true,
+    "wire7steps_2socketclose": true,
+    "4_inner_owned_jobs_zero_closed": true,
+    "3_driver_cli_jobs_zero_closed": true,
+    "all_actual_safe_flags": true,
+    "actual_exe_commands_point_to_relocated_package": true,
+    "unrelated_cwd_no_files_and_sentinel_preserved": true,
+    "first_controller_failure_before_any_process_preserved": true,
+    "limited1item_manifest_not_full_package_source": true,
+    "2_compiled_cli_exit0_without_bundle_override": true,
+    "dry_plan_uses_exe_location_not_cwd": true,
+    "original_and_copy_have_no_source_or_venv": true,
+    "package_actual_build_base_unchanged": true,
+    "raw_audit_actual_client1_2_and_wire3_4": true,
+    "formal_printed_summary_matches_raw_file": true,
+    "formal_profiles_initially_no_files_and_single_capture_scoped_after": true,
+    "strict_complete_profile_recheck_matches_all_captured_hashes": true
+  },
+  "controller_attempts": [
+    {
+      "attempt": 1,
+      "status": "FAILED_BEFORE_PROCESS_LAUNCH",
+      "error_type": "KeyError",
+      "reason": "Case-sensitive dictionary SystemRoot lookup; actual OS environment key SYSTEMROOT",
+      "processes_started": 0
+    },
+    {
+      "attempt": 2,
+      "status": "PASSED",
+      "formal_exe_runs": 1,
+      "compiled_cli_checks": 2,
+      "correction": "Case-insensitive environment key lookup; preserved original failure/copy and fresh attempt-2 runtime directories"
+    }
+  ],
+  "actual_formal": {
+    "run_id": "run-20261021-112319-f614b290c5",
+    "actual_cli_process_exit_code": 0,
+    "initialize_exit_code": 0,
+    "http_status": 200,
+    "actual_client_login_uids": [
+      1,
+      2
+    ],
+    "wire_peer_uids": [
+      3,
+      4
+    ],
+    "wire": {
+      "ok": true,
+      "timed_out": false,
+      "stage": "connect4_leave",
+      "steps": [
+        {
+          "name": "welcome",
+          "uids": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "chat",
+          "sender": "REL_wire_a",
+          "seq": 1
+        },
+        {
+          "name": "chat",
+          "sender": "REL_wire_b",
+          "seq": 2
+        },
+        {
+          "name": "gomoku",
+          "moves": 9,
+          "room_id": "g1",
+          "round": 1,
+          "next_round": 2
+        },
+        {
+          "name": "gomoku_leave",
+          "room_id": "g1"
+        },
+        {
+          "name": "connect4",
+          "moves": 7,
+          "room_id": "g2",
+          "round": 1,
+          "next_round": 2
+        },
+        {
+          "name": "connect4_leave",
+          "room_id": "g2"
+        }
+      ],
+      "cleanup": [
+        {
+          "nick": "REL_wire_a",
+          "ok": true
+        },
+        {
+          "nick": "REL_wire_b",
+          "ok": true
+        }
+      ],
+      "cleanup_ok": true,
+      "gui_accepted": false,
+      "natural_exit_verified": false,
+      "physical_lan_verified": false,
+      "seconds": 6.206
+    },
+    "safe_flags": {
+      "MOYU_BIND_HOST": "127.0.0.1",
+      "MOYU_DISCOVERY": "0",
+      "MOYU_TRAY": "0",
+      "MOYU_GLOBAL_HOTKEYS": "0",
+      "MOYU_HARDWARE": "0",
+      "MOYU_WEB_HTTPS": "0"
+    },
+    "actual_exe_afterwait_running_and_expected_images": true
+  },
+  "compiled_cli": [
+    {
+      "role": "entry-help",
+      "exit_code": 0,
+      "log_sha256": "bc4280903f6331b394301a7b28cdcb12a740d3ccd1f230411b51b0bb709dcb0f"
+    },
+    {
+      "role": "entry-plan",
+      "exit_code": 0,
+      "log_sha256": "dcee1a651a58469de4e24db2916caece2645b030115b726f427266ba09c69dbe"
+    }
+  ],
+  "jobs": [
+    {
+      "role": "client",
+      "ok": true,
+      "close_ok": true,
+      "active_before": 2,
+      "active_after": 0
+    },
+    {
+      "role": "client_beta",
+      "ok": true,
+      "close_ok": true,
+      "active_before": 2,
+      "active_after": 0
+    },
+    {
+      "role": "server",
+      "ok": true,
+      "close_ok": true,
+      "active_before": 3,
+      "active_after": 0
+    },
+    {
+      "role": "initialize",
+      "ok": true,
+      "close_ok": true,
+      "active_before": 0,
+      "active_after": 0
+    },
+    {
+      "role": "formal-cli",
+      "root_exit_code": 0,
+      "ok": true,
+      "close_ok": true,
+      "active_before": 1,
+      "active_after": 0
+    },
+    {
+      "role": "entry-help",
+      "root_exit_code": 0,
+      "ok": true,
+      "close_ok": true,
+      "active_before": 1,
+      "active_after": 0
+    },
+    {
+      "role": "entry-plan",
+      "root_exit_code": 0,
+      "ok": true,
+      "close_ok": true,
+      "active_before": 1,
+      "active_after": 0
+    }
+  ],
+  "profile_counts": [
+    {
+      "role": "server",
+      "files_before": 0,
+      "files_after_including_onefile_runtime": 1020,
+      "one_time_controller_inventory_equal_after_cleanup": true,
+      "complete_strict_recheck_file_count": 1020
+    },
+    {
+      "role": "client",
+      "files_before": 0,
+      "files_after_including_onefile_runtime": 1020,
+      "one_time_controller_inventory_equal_after_cleanup": true,
+      "complete_strict_recheck_file_count": 1020
+    },
+    {
+      "role": "client_beta",
+      "files_before": 0,
+      "files_after_including_onefile_runtime": 1020,
+      "one_time_controller_inventory_equal_after_cleanup": true,
+      "complete_strict_recheck_file_count": 1020
+    }
+  ],
+  "driver_profile_counts": [
+    {
+      "role": "formal-cli",
+      "before_files": 0,
+      "after_files": 0
+    },
+    {
+      "role": "entry-help",
+      "before_files": 0,
+      "after_files": 0
+    },
+    {
+      "role": "entry-plan",
+      "before_files": 0,
+      "after_files": 0
+    }
+  ],
+  "raw_evidence_hash_index": [
+    {
+      "label": "baseline",
+      "sha256": "81c1a5fe0927764bbb652d5d38c64bf151396f452f48d31422332c5083b86427"
+    },
+    {
+      "label": "first_controller_failure",
+      "sha256": "6fb0307d82a81876af5df9cb17c244cdb017afa260a3982c72a9f666f01549fa"
+    },
+    {
+      "label": "recovery",
+      "sha256": "1b02566314b7b8cf5ccb0bfb363dfe4318072bed4c344bcb3ad731105510d5b2"
+    },
+    {
+      "label": "actual_execution",
+      "sha256": "556c882ae928e12bbd079332c7144d9984430b2a18c003fee9d8946494d642f4"
+    },
+    {
+      "label": "formal_summary",
+      "sha256": "3c43c56983482d3af2403ebdecfd6d7f360ff37feace472fa9ec23cca4800129"
+    },
+    {
+      "label": "formal_cli_output",
+      "sha256": "e6b2d47cbd924d417f0aa079c2e2ee966ad9b18aec9e240a944df5275ea177f7"
+    },
+    {
+      "label": "entry_help",
+      "sha256": "bc4280903f6331b394301a7b28cdcb12a740d3ccd1f230411b51b0bb709dcb0f"
+    },
+    {
+      "label": "entry_plan",
+      "sha256": "dcee1a651a58469de4e24db2916caece2645b030115b726f427266ba09c69dbe"
+    },
+    {
+      "label": "controller1",
+      "sha256": "ccac4a89b9d29da372e52bcbbf6ebd256906789ab6f1cd94b7c63536908f4b39"
+    },
+    {
+      "label": "controller2",
+      "sha256": "1dbc84be7ed6f6327ad549723ec43a369ff840335ae6b68ee5a493a73ee4ceb4"
+    },
+    {
+      "label": "initial_post_observation",
+      "sha256": "95c93cd0b798362b12dcf47986508d47c6a5414b9b7e5885e5cb19eed7b45d28"
+    },
+    {
+      "label": "restricted_visibility_probe",
+      "sha256": "2a905d5e62000cd6e4a77a76d84648682e2aff4bb8e160f61c463386db39cc47"
+    },
+    {
+      "label": "complete_visibility_probe",
+      "sha256": "b7afaad838d269cb545e267605adb8f6def07f8bd0360698694b3e9fa5cc1cdc"
+    },
+    {
+      "label": "visibility_followup",
+      "sha256": "84832b4af8428f993a023d5cad72a1eefdbe78120ad40077c06fea0bc24a1443"
+    }
+  ],
+  "raw_audit_hashes": [
+    {
+      "name": "audit-20261021.jsonl",
+      "sha256": "ed5e8f542584ebca49f1b4ad93f5c06161b7ab66a3029eb2f855bd87ac2549fd"
+    }
+  ],
+  "controller_provenance": "Controller snapshots captured after their respective executions; provenance, not cryptographic execution attestation",
+  "proposed_public_files": [
+    {
+      "path": "docs/task-packages/R3-PACKAGE-WIRE-01.md",
+      "category": "Frozen finite scope and controller recovery checkpoint"
+    },
+    {
+      "path": "docs/review-packages/R3-PACKAGE-WIRE-01-r1.md",
+      "category": "Actual relocated package evidence, review and limits"
+    },
+    {
+      "path": "docs/review-assets/R3-PACKAGE-WIRE-01/evidence.json",
+      "category": "Sanitized structured results and raw evidence hash index"
+    },
+    {
+      "path": "docs/AI_COMMAND_CENTER.md",
+      "category": "Authoritative recovery/next candidate"
+    },
+    {
+      "path": "docs/任务清单.md",
+      "category": "Generated roadmap projection"
+    }
+  ],
+  "proposed_public_file_count": 5,
+  "not_tested": [
+    "Complete native GUI",
+    "Natural client/open-server exit",
+    "Complete compiled StartTrial demo",
+    "Physical LAN/multiple machines",
+    "Other real DPI/Windows",
+    "Hardware/STT",
+    "Non-development machine with original build/project absent",
+    "Whole-system file access trace"
+  ],
+  "next_candidate": {
+    "id": "R3-ENTRY-WIRE-01",
+    "status": "DRAFT_NOT_IMPLEMENTED",
+    "priority": "P1",
+    "scope": "Bounded actual compiled StartTrial --mode demo orchestration startup on the relocated package; reuse wire probe after its real server/two clients login and verify owner Job cleanup. No GUI/natural-exit/LAN acceptance or new product feature.",
+    "dependencies": "This same-hash package and reviewed current wire probe; independently freeze a finite Task/controller and identify only its fresh ports/profiles/owned processes."
+  },
+  "public_boundary": "Only five project documents/sanitized structured results and hashes. No original logs/full summaries/controllers/profiles/EXEs/usernames/private data/keys; audit all new history; no release.",
+  "profile_visibility": {
+    "summary_sha256": "3c43c56983482d3af2403ebdecfd6d7f360ff37feace472fa9ec23cca4800129",
+    "restricted_enumeration": "INCOMPLETE; WinError5 during strict traversal, rglob silently skips inaccessible descendants",
+    "restricted_partial_rglob_counts": [
+      5,
+      4,
+      4
+    ],
+    "complete_authorized_recheck": [
+      {
+        "role": "server",
+        "strict_complete": true,
+        "file_count": 1020,
+        "all_paths_sizes_hashes_equal_original_snapshot": true
+      },
+      {
+        "role": "client",
+        "strict_complete": true,
+        "file_count": 1020,
+        "all_paths_sizes_hashes_equal_original_snapshot": true
+      },
+      {
+        "role": "client_beta",
+        "strict_complete": true,
+        "file_count": 1020,
+        "all_paths_sizes_hashes_equal_original_snapshot": true
+      }
+    ],
+    "known_original_runtime_file_direct_reads_match_in_both_contexts": true,
+    "physical_deletion_established": false,
+    "continuous_stability_claimed": false,
+    "acl_changed": false,
+    "original_snapshots_and_failed_attribution_preserved_with_correction": true,
+    "followup_record_sha256": "84832b4af8428f993a023d5cad72a1eefdbe78120ad40077c06fea0bc24a1443"
+  },
+  "deferred_observation": "Path.rglob can suppress inaccessible-directory enumeration errors. Restricted partial enumeration must not establish completeness; a separately frozen strict inventory diagnostic improvement may be considered later. No product change in this acceptance batch.",
+  "independent_review": {
+    "reviewer": "gate_review",
+    "pre_execution_and_recovery": "0 MUST",
+    "final_raw_evidence_and_5docs": "0 MUST",
+    "acceptance_scope": "Relocated same-hash seven-file package, current external formal preflight and compiled help/dry-run path parsing only. Not full GUI, natural exit, LAN, or complete compiled demo."
+  }
+}

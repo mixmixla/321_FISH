@@ -1,6 +1,6 @@
 # TK-GAME-AFTER-01 r1 — 游戏窗口自有定时任务销毁
 
-2026-10-21：**AI_ACCEPTED_GAME_WINDOW_TIMERS_ONLY / FULL_PASSED / PUSH_APPROVAL_BLOCKED / NOT_MERGED / R3_GUI_NOT_RUN**。
+2026-10-21：**AI_ACCEPTED_GAME_WINDOW_TIMERS_ONLY / FULL_PASSED / MERGED / R3_GUI_NOT_RUN**。
 [Task v1.1](../task-packages/TK-GAME-AFTER-01.md) / [结构化结果与原件hash索引](../review-assets/TK-GAME-AFTER-01/evidence.json)。root实现，gate_review独立只读；本轮只一个小增量，普通模型/Standard。
 
 ## 根因与最小实现
@@ -46,9 +46,15 @@ gate_review代码/领域及最终full/资料独立终审均0 MUST；已逐项核
 执行环境曾短暂transport disconnected，fetch/审查命令在CreateProcess前失败；连接恢复后只恢复原只读核验，无重复full、无测试原件覆盖。gate_review依据原件完成终审0 MUST，主控记录AI_ACCEPTED_GAME_WINDOW_TIMERS_ONLY。新批明确10文件：2个代码/测试、8个文档/技能/结构化结果索引；索引没有绝对机器路径，新增行无个人Users路径/姓名/私钥/token，无新原raw、完整summary、profile或二进制。公开范围审计、投影SHA、相对链接和diffcheck通过。
 本地完整资料leaf见Git；source485冻结不变。fresh fetch已核origin/main仍8f1595d及origin正确，后续普通push/安全集成按适用授权与审批，实际结果另记回执；不将候选状态冒充已合并。
 
-## 公开交付阻碍（最终检查点）
+## 公开交付阻碍（历史检查点，现已解除）
 
 源码ab4a12eab0cf1896319916f312dbf0a92839f357与资料bf82d7898eb52a369bb52df4a8520bdc5897b442已本地提交，完整source485仍与最终full一致。正常push命令`git push -u origin fix/tk-destroy-callbacks-20261021`在CreateProcess前被自动安全审批拒绝，未执行。审批明确：用户此前具体许可只覆盖早先42文件；新10文件代码/测试/文档批次需要具体payload和目的地公开授权。
 立即停止该动作，不重试、不换工具/PR/API旁路，也未合并main。拒绝后ls-remote核远端新分支不存在，main与旧trial分支均8f1595d77da3b2bfd531a1c535930de7b6bbf39f；先前42文件已完成集成不受影响。技术全量/独立接受保持，不当外部交付成功。
 待用户明确允许将本批10文件（2代码/测试、8文档/技能/结构化结果与SHA索引；没有新增原raw/完整summary/绝对机路径/profile/凭据/EXE）公开推送到https://github.com/mixmixla/321_FISH.git并安全合并main。公开仓库内容可供所有人读取，这是本次需批准的披露边界。最终阻碍记录是纯文档，不改冻结源码；完整本地leaf见Git与ignored delivery-receipt。
 恢复：指挥中心→本Task/Review→git status/log→remote核对→同源原full和独立0 MUST；无源码变化不重跑full。收到新的具体授权且范围未增加后，按规则仅恢复原正常push；若再拒立即停，不强推/发布。
+
+## 具体授权后的集成回执
+
+用户随后明确批准本批10文件公开推送至mixmixla/321_FISH并合并main。恢复核HEAD1b3d543/clean、原10文件无扩大，485冻结输入仍与原full逐hash相同。此前拒绝的原普通push据新授权只恢复一次并成功，设置origin同名upstream；没有用PR/API或其它路线绕过。
+fresh fetch核main仍8f1595d，GitHub读取protected=false、required checks off/empty、rulesets=[]；候选check-runs/statuses/Actions runs均0，不称CI PASS。正常FF推送main，之后ls-remote核main与fix/tk-destroy-callbacks-20261021均1b3d543300a488eda442d53efaaab269e4ab0734，本地main同步且工作区clean。未强推/绕过保护/删分支/发布。
+后续只在同10路径内更新四份集成回执文档，未改源码/测试/依赖/环境，不重跑全量；本段准确记录已验证候选1b3d543，回执自身leaf与最终远端完整SHA以Gitrefs及本地delivery-receipt核对。原8组证据与有限接受边界保持，完整GUI/新EXE/自然退出/LAN/其它DPI仍未测。此任务已收口，不在本轮追加开发。

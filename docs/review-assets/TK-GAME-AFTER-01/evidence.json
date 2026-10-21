@@ -3150,13 +3150,39 @@
     "scope": "Only GameWindow.close owned poll and three game-list retry timers; not complete GUI, natural exit or release."
   },
   "delivery": {
-    "state": "PUSH_APPROVAL_BLOCKED_NOT_MERGED",
-    "operation": "git push -u origin fix/tk-destroy-callbacks-20261021",
-    "outcome": "Rejected by automatic safety approval before CreateProcess; not executed; no retry or alternate route.",
-    "reason": "Specific public disclosure consent covered only the earlier 42-file batch, not this new 10-file payload and GitHub destination.",
-    "candidate_commit": "bf82d7898eb52a369bb52df4a8520bdc5897b442",
-    "main_last_verified": "8f1595d77da3b2bfd531a1c535930de7b6bbf39f",
-    "remote_new_branch_exists": false,
-    "requested_consent": "Publish the separate 10-file code/test/docs/hash-index batch to mixmixla/321_FISH and safely integrate main."
-  }
+    "state": "MERGED_AFTER_SPECIFIC_10_FILE_APPROVAL",
+    "approved_candidate": "1b3d543300a488eda442d53efaaab269e4ab0734",
+    "main_verified": "1b3d543300a488eda442d53efaaab269e4ab0734",
+    "branch_verified": "1b3d543300a488eda442d53efaaab269e4ab0734",
+    "branch": "fix/tk-destroy-callbacks-20261021",
+    "specific_approved_files": 10,
+    "retry_of_previously_denied_push": 1,
+    "normal_push": true,
+    "normal_fast_forward": true,
+    "protection": false,
+    "required_checks": [],
+    "rulesets": [],
+    "visible_ci": {
+      "check_runs": 0,
+      "statuses": 0,
+      "workflow_runs": 0,
+      "claimed_ci_pass": false
+    },
+    "source_changed_after_full": false,
+    "full_repeated": false,
+    "force_push_or_release": false,
+    "receipt_note": "This records the confirmed candidate integration. The subsequent documentation-only receipt leaf is read from Git refs; no new files or runtime artifacts are added."
+  },
+  "delivery_history": [
+    {
+      "state": "PUSH_APPROVAL_BLOCKED_NOT_MERGED",
+      "operation": "git push -u origin fix/tk-destroy-callbacks-20261021",
+      "outcome": "Rejected by automatic safety approval before CreateProcess; not executed; no retry or alternate route.",
+      "reason": "Specific public disclosure consent covered only the earlier 42-file batch, not this new 10-file payload and GitHub destination.",
+      "candidate_commit": "bf82d7898eb52a369bb52df4a8520bdc5897b442",
+      "main_last_verified": "8f1595d77da3b2bfd531a1c535930de7b6bbf39f",
+      "remote_new_branch_exists": false,
+      "requested_consent": "Publish the separate 10-file code/test/docs/hash-index batch to mixmixla/321_FISH and safely integrate main."
+    }
+  ]
 }

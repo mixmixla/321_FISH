@@ -1,3 +1,20 @@
+# R3-LOCAL-01 v2 — 最新源码重建与有限产物预检
+
+2026-10-21 READY_BUILD；当前范围由用户明确授权。base/main2e2115647940a4025e99f7fcdd112e1fdc9ae416，fresh fetch同SHA/clean，feature/r3-rebuild-20261021；root唯一执行与资料写入，gate_review独立只读，普通模型/Standard。原v1历史证据保留在下方，不当本次产物证明。
+
+1. 绑定Boss唯一full的487输入/source0a1d29967852b737d3aafa4ea8800d94da3e0747713bc616939e8ea7076052b7（210文件2939P0F20原skip/exit0），先核当前每字节。复用local_trial.py build白名单及OS-only环境，在全新ignored r3-rebuild目录构建server/client，同副本依现有朋友候选样例构建StartTrial；无新依赖/模型/系统安装、无应用/测试/构建/harness改动，不重复全量。记录副本完整/子集差异、build正常再生成spec、三EXE/hash/PYZ与可选能力缺口。
+2. 不用v1旧adapter。正式local_trial.py run默认已采用suspended→unnamed owned Job→resume，使用本次EXE、fresh合成三profile、private desktop/127.0.0.1随机端口，核显式initialize自然0、HTTP200、两实际client.exe TCP登录、同时存活/映像/源前后不变、每Job前后数量/close_ok。客户端和open server由owned Job强停，只记归属清理，不记自然退出。失败保留原件，不用重复覆盖。
+3. 在另一个全新合成profile/owned server.exe上做有限真实加密TCP协议探针：两个任务级网络客户端hello/welcome，双向公共聊天；五子棋/四子棋create/join/start/合法落子到胜负/结束回CREATED/第二局/离房。复用已有wire测试断言语义，逐步匹配room/round/board，不能把旧队列事件当当前确认。无需Tk/界面操作，不冒充实际两个client.exe UI操作或完整GUI。本地控制器执行前独立审查，所有资源finally收尾；只关闭自身socket/拥有的Job，不用数值PID杀进程/改系统网络。若不支持某步骤如实留失败/未测，不扩产品功能。
+4. StartTrial.exe实际help/demo dry-run，owned Job/fresh profile/OS-only环境；不是实际compiled demo全流程。待验包精确7文件：根StartTrial.exe、dist/server.exe、dist/client.exe、LICENSE、README.md、VERIFICATION.json、SHA256SUMS.txt；三EXE同构建hash，不带源码/profile/store/audit/密钥/log，不压缩/上传/发布，不称搬移后完整demo已验。
+5. 当前ALL_TOOLS无node_repl/cua/sky/native desktop入口；不绕行自造OS输入/截图。完整大厅/邀请接受/可视落子/自然红退出、物理LAN/多机/其它真实DPI/硬件/完整STT未测；进程/协议/组件不代替GUI。缺Vosk/model只记缺口，不宣称语音转写可用。
+6. 原始构建/运行日志、完整summary及profile仅本地ignored；本周有界许可仅推送项目文档和脱敏结构化摘要/hash（本批拟5路径：现Task、现Review、现中心/投影、R3资产新增rebuild-20261021.json）。旧v1原件不重写或再上传。所有新文件/全部新commit history审计，不含用户名/私密/密钥/二进制；独立证据审查0 MUST后正常push/安全FF，fresh fetch/保护/required checks照常核，遇拒停、不强推/绕保护/发布/删分支。
+
+终点：本次三EXE与正式双客户端预检、可支持协议/CLI、7文件待验包/证据独立接受并准确交付；不升级完整R3。提供下一项有价值且不依赖人工GUI的DRAFT候选，未冻结不实施；持续推进按价值而非消耗额度，不无界扩张。恢复先AI_COMMAND_CENTER当前v2→本Task/Review→Git/本地baseline/活动进程，build或run仍活时不得重复启动。
+
+---
+
+## 以下是 v1 历史冻结，不作为当前运行约束
+
 # R3-LOCAL-01 v1 — 有限本机产物验收
 
 2026-10-21 冻结；入场READY_BUILD / GUI_TOOL_BLOCKED。当前用户已授权集成前三项并继续有限 R3，不新增重大功能、不发布。执行状态以指挥中心为准。

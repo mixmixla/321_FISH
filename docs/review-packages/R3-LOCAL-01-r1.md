@@ -1,3 +1,42 @@
+# R3-LOCAL-01 r1 — v2 最新源码产物刷新
+
+2026-10-21 **AI_ACCEPTED_BUILD_PREFLIGHT_WIRE_ONLY / READY_FOR_INTEGRATION / NOT_R3_ACCEPTED**。
+[当前Task v2](../task-packages/R3-LOCAL-01.md) / [本次脱敏结构化摘要与原件hash索引](../review-assets/R3-LOCAL-01/rebuild-20261021.json)。root唯一执行/资料写入，gate_review独立只读，普通模型/Standard。以下旧v1历史原样保留，旧原件不作为本次新EXE证明。
+
+## 本次源码与三产物
+
+base/main `2e2115647940a4025e99f7fcdd112e1fdc9ae416`，fresh fetch核同SHA/clean，新分支feature/r3-rebuild-20261021。复用Boss唯一full `boss-timer-full-20261021-172649-12db730620`：210文件2939P0F20原skip/exit0，487输入 `0a1d29967852b737d3aafa4ea8800d94da3e0747713bc616939e8ea7076052b7`；本批无应用/测试/构建/harness/依赖代码变更，不重复full。
+`local_trial.py build --source-dir . --output-root _tmp_gui/r3-rebuild-20261021`实际exit0/50.604s，run `build-20261021-095153-7b5c83262b`；同白名单副本按朋友候选现有PyInstaller样例构建StartTrial，实际exit0/9.076s。副本487原输入全部存在，485原字节不变，只client.spec/server.spec正常再生成且各SHA留索引，app.ico不变。32桌游输入、两EXE必需PYZ模块核在；client PYZ含Boss新helper/GameWindow调度/Mini Destroy符号，不能据此声称完整界面通过。
+runtime非Git fallback只重新发现483输入 `dc151b377bed85914754d0eb36d4e6eae38eb589257adcd564dff50498eea133`，未重新发现.python-version/app.ico/tests/_run_all.py/tests/_smoke_excel_skin.py四项，但四文件仍存在并已在完整487映射逐hash核；完整绑定和483运行前后不变证据分别记录，不混用。
+
+| 产物 | bytes | SHA256 |
+| --- | ---: | --- |
+| server.exe | 26084183 | `cbd87c141c1dd50f1e8df8ed87856ec743f94f1e69e466751a66a6e4efce1cb4` |
+| client.exe | 27344653 | `ee2208a24b9e69deff0307b8fe0c88618ec8b896d1ed6b1ef55a2412a3e9d0ab` |
+| StartTrial.exe | 9738961 | `aaa37fe82b003da011046e6402f69a9c91b06c5f6323d156822ec94e0d169bff` |
+
+已有Python3.14.5/PyInstaller6.22.3，无软件/依赖/模型安装。Vosk和模型均缺，语音转写未验证，构建成功不代表完整功能可用。
+
+## 正式双EXE与独立协议
+
+正式无adapter命令 `local_trial.py run --source-dir <本次build/source> --run-root _tmp_gui/r3-rebuild-20261021/preflight`，实际run `run-20261021-095310-b2a8476d44`/exit0；直接默认suspended→owned unnamed Job→resume。fresh三profile、private desktop/loopback、禁发现/托盘/热键/设备/HTTPS：显式initialize自然root0、HTTP200、两个实际client.exe登录audit uid1/2、短时双方和server存活且映像匹配。4Job cleanup全部active_after0/close_ok，483源前后相同/profile scoped；client/open server是Job强停，不算自然退出或GUI登录。
+独立协议run `wire-20261021-100233-7ea434c6c8`/exit0，实际本次server.exe显式initialize/open/HTTP200/映像与构建SHA前后匹配；两任务级客户端真实加密TCP握手/welcome UID，唯一合成聊天双方echo同seq且递增。五子棋9手/四子棋7手双方每步严格room/round/stone count/turn/winner，真实ENDED→CREATED且state=None→round+1空棋盘→双方离房确认/列表缺房。9步均通过，两socket/reader已关闭，2Job全归零close。没有源码Hub替代EXE，也没有操控实际client.exe界面；仅有限协议验收。
+StartTrial实际help/demo dry-run run `cli-20261021-100234-3018361445`/exit0，两根退出码0，2Job清理后0/close成功；清理前仍各1个active条目，不能写成整树自然退出。没有运行完整compiled demo。共8个本批owned Job结果原样记录，强停与自然root退出分开。
+任务级控制器仅本地；执行前独立审查发现并关闭两MUST：entry缺产物时summary与实际exit5一致；socket.close异常仍finally join reader并报告失败。构建/CLI/协议各执行一次成功，无失败重试或旧full重跑。原始构建/运行/控制器日志与完整summary/profile只在ignored根，公开仅结构化结果与hash，不复制原件。
+
+## 本地待验包、限制与下一候选
+
+本地 `_tmp_gui/r3-rebuild-20261021/bundle-main2e21156-pending-gui` 精确7文件：StartTrial.exe、dist/server.exe、dist/client.exe、LICENSE、README.md、VERIFICATION.json、SHA256SUMS.txt。三EXE同原构建hash；无源码/profile/store/audit/密钥/日志，未压缩/上传/发布。SHA256SUMS覆盖另六文件，自身hash由公开结构化索引保存。包只是搬移同hash产物，未运行搬移后完整demo。
+当前ALL_TOOLS再次核无node_repl/cua/sky/native desktop工具，不绕行输入/截图。完整大厅/邀请接受/可视对局/红色自然退出、物理LAN/多机/其它Windows与真实DPI、硬件、STT未测。已有组件/协议不冒充完整GUI或R3/M1通过，不要求用户现在人工补验才能继续独立工作。
+下一候选 **R3-WIRE-SMOKE-01 DRAFT**：正式local_trial.run仍只有启动/登录/HTTP探针，将本批已证实可行的真实EXE聊天/两棋生命周期探针纳入正式预检，补错误传播、错序/旧轮次拒绝和全部资源清理回归。它不依赖人工GUI、不增加产品功能；需独立Task冻结后才实施，本批不改源。
+
+## 公开与恢复
+
+本周有界授权只公开5路径：现Task、现Review、现AI_COMMAND_CENTER/任务清单、rebuild-20261021.json。全部新文件及新commit history审计，排除raw/完整summary/控制器源码/profile/EXE/本机用户名/私密数据/密钥；旧v1原件不重写或再上传。gate_review最终独立证据/资料审查0 MUST，主控仅记AI_ACCEPTED_BUILD_PREFLIGHT_WIRE_ONLY；5路径新增文件/添加行与全新history公开审计通过，尚未推送或合并。审查通过后正常push/安全FF，fresh fetch/保护/required checks照常核，安全拒绝即停、不强推/绕过/删分支/发布；无可见CI不当CI通过。
+当前所有构建/预检/CLI/协议均结束，无活动测试，不重启已完成操作。恢复：AI_COMMAND_CENTER当前v2→Task/本Review→Git→本地baseline/各summary/实际进程。精确本地路径、原件hash和本次产物见结构化摘要；以下为v1历史。
+
+---
+
 # R3-LOCAL-01 r1 — 有限构建与真实双 EXE 启动预检
 
 2026-10-21：**AI_ACCEPTED_BUILD_PREFLIGHT_ONLY / BUILD_PASSED / DUAL_EXE_PREFLIGHT_PASSED / GUI_TOOL_BLOCKED / NOT_R3_ACCEPTED**。

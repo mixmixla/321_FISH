@@ -1,0 +1,537 @@
+{
+  "task": "R3-LOCAL-01 v2",
+  "status": "AI_ACCEPTED_BUILD_PREFLIGHT_WIRE_ONLY",
+  "delivery": "READY_FOR_NORMAL_PUSH_AND_SAFE_INTEGRATION",
+  "base_commit": "2e2115647940a4025e99f7fcdd112e1fdc9ae416",
+  "branch": "feature/r3-rebuild-20261021",
+  "source_binding": {
+    "full_source_content_id": "0a1d29967852b737d3aafa4ea8800d94da3e0747713bc616939e8ea7076052b7",
+    "full_inputs": 487,
+    "reused_full_run": "boss-timer-full-20261021-172649-12db730620",
+    "reused_full_summary_sha256": "bb72b9290aa9fa644fabbc276dcb88d71fa31808099f7004a0eb06cb170260f2",
+    "full_result": {
+      "passed": 2939,
+      "failed": 0,
+      "original_skipped": 20
+    },
+    "full_repeated": false,
+    "copy_unchanged_inputs": 485,
+    "generated_spec_deltas": [
+      {
+        "path": "client.spec",
+        "original_sha256": "2d814b6bbe67c8b6508f10a688c6d948d15c8ab4c815e5963316e37a46b6e347",
+        "generated_sha256": "d8976b26a68d42f048bab512d9b4ee1f5d0e88b7a50908844878232730a3e3c5"
+      },
+      {
+        "path": "server.spec",
+        "original_sha256": "e925b66ba6066d181e89b24a647d2295226104a5ddbe80ff7191e3ba337641f5",
+        "generated_sha256": "2dc5459a3bd76a583265e28a8f86f94459c30014652dacc2b3f7403cb59c8f77"
+      }
+    ],
+    "runtime_subset_count": 483,
+    "runtime_content_id": "dc151b377bed85914754d0eb36d4e6eae38eb589257adcd564dff50498eea133",
+    "not_rediscovered_by_non_git_fallback": [
+      ".python-version",
+      "app.ico",
+      "tests/_run_all.py",
+      "tests/_smoke_excel_skin.py"
+    ],
+    "all_original_inputs_exist_in_copy": true,
+    "root_raw_source_unchanged": true
+  },
+  "build": {
+    "run_id": "build-20261021-095153-7b5c83262b",
+    "server_client_exit_code": 0,
+    "server_client_seconds": 50.604,
+    "entry_exit_code": 0,
+    "entry_builder_exit_code": 0,
+    "entry_seconds": 9.076,
+    "artifacts": {
+      "server.exe": {
+        "size": 26084183,
+        "sha256": "cbd87c141c1dd50f1e8df8ed87856ec743f94f1e69e466751a66a6e4efce1cb4"
+      },
+      "client.exe": {
+        "size": 27344653,
+        "sha256": "ee2208a24b9e69deff0307b8fe0c88618ec8b896d1ed6b1ef55a2412a3e9d0ab"
+      },
+      "StartTrial.exe": {
+        "size": 9738961,
+        "sha256": "aaa37fe82b003da011046e6402f69a9c91b06c5f6323d156822ec94e0d169bff"
+      }
+    },
+    "archives": {
+      "server": {
+        "boardgame_modules": [
+          "boardgames",
+          "boardgames.azul",
+          "boardgames.azul._art",
+          "boardgames.azul.desktop",
+          "boardgames.azul.web",
+          "boardgames.geom",
+          "boardgames.registry",
+          "boardgames.shell"
+        ]
+      },
+      "client": {
+        "boardgame_modules": [
+          "boardgames",
+          "boardgames.azul",
+          "boardgames.azul._art",
+          "boardgames.azul.desktop",
+          "boardgames.azul.web",
+          "boardgames.geom",
+          "boardgames.registry",
+          "boardgames.shell"
+        ],
+        "recent_timer_fix_symbols_present": {
+          "boss_owned_helpers": true,
+          "game_owned_helper": true,
+          "mini_destroy_handler": true
+        }
+      }
+    },
+    "boardgame_input_count": 32,
+    "optional": {
+      "vosk_package_found": false,
+      "model_in_copy": false,
+      "speech_transcription_verified": false
+    }
+  },
+  "formal_preflight": {
+    "run_id": "run-20261021-095310-b2a8476d44",
+    "exit_code": 0,
+    "initialize_natural_root_exit_code": 0,
+    "tcp_listen": true,
+    "http_status": 200,
+    "actual_client_exe_logins": 2,
+    "audit_uids": [
+      1,
+      2
+    ],
+    "both_clients_and_server_running_expected_images": true,
+    "source_before_after_unchanged": true,
+    "profile_paths_scoped": true,
+    "gui_login_interaction": false,
+    "natural_client_or_open_server_exit_verified": false
+  },
+  "wire": {
+    "run_id": "wire-20261021-100233-7ea434c6c8",
+    "exit_code": 0,
+    "steps": [
+      {
+        "step": "initializer_natural_exit",
+        "ok": true,
+        "exit_code": 0
+      },
+      {
+        "step": "actual_server_exe_http200",
+        "ok": true
+      },
+      {
+        "step": "two_encrypted_tcp_welcome",
+        "ok": true,
+        "uids": [
+          1,
+          2
+        ]
+      },
+      {
+        "step": "chat_echo_to_both",
+        "ok": true,
+        "sender": "wire-alpha",
+        "seq": 1
+      },
+      {
+        "step": "chat_echo_to_both",
+        "ok": true,
+        "sender": "wire-beta",
+        "seq": 2
+      },
+      {
+        "step": "finish_reset_restart",
+        "ok": true,
+        "game": "gomoku",
+        "moves": 9,
+        "room_id": "g1",
+        "first_round": 1,
+        "second_round": 2
+      },
+      {
+        "step": "leave_and_room_removed",
+        "ok": true,
+        "game": "gomoku",
+        "room_id": "g1"
+      },
+      {
+        "step": "finish_reset_restart",
+        "ok": true,
+        "game": "connect4",
+        "moves": 7,
+        "room_id": "g2",
+        "first_round": 1,
+        "second_round": 2
+      },
+      {
+        "step": "leave_and_room_removed",
+        "ok": true,
+        "game": "connect4",
+        "room_id": "g2"
+      }
+    ],
+    "server_hash_matches_build_before_after": true,
+    "sockets_and_threads_closed": true,
+    "source_before_after_unchanged": true,
+    "actual_client_exe_control": false,
+    "source_hub_used": false,
+    "gui_accepted": false
+  },
+  "entry_cli": {
+    "run_id": "cli-20261021-100234-3018361445",
+    "exit_code": 0,
+    "probes": [
+      {
+        "label": "help",
+        "root_exit_code": 0
+      },
+      {
+        "label": "demo-dry-run",
+        "root_exit_code": 0
+      }
+    ],
+    "actual_demo_run": false,
+    "dry_run": {
+      "mode": "demo",
+      "address": "127.0.0.1",
+      "fresh_only": true,
+      "network_settings_changed": false,
+      "firewall_changes": false,
+      "real_data_import": false,
+      "external_windows_and_real_lan_verified": false
+    }
+  },
+  "profile_boot_log_scan": [
+    {
+      "role": "server",
+      "boot_lines_only": true,
+      "traceback_occurrences": 0,
+      "invalid_command_occurrences": 0
+    },
+    {
+      "role": "client",
+      "boot_lines_only": true,
+      "traceback_occurrences": 0,
+      "invalid_command_occurrences": 0
+    },
+    {
+      "role": "client_beta",
+      "boot_lines_only": true,
+      "traceback_occurrences": 0,
+      "invalid_command_occurrences": 0
+    }
+  ],
+  "all_eight_owned_jobs": {
+    "preflight_client": {
+      "attempted": true,
+      "ok": true,
+      "close_ok": true,
+      "ownership": "unnamed Job; suspended assignment; kill-on-close",
+      "active_before": 2,
+      "active_after": 0,
+      "state": "exited"
+    },
+    "preflight_client_beta": {
+      "attempted": true,
+      "ok": true,
+      "close_ok": true,
+      "ownership": "unnamed Job; suspended assignment; kill-on-close",
+      "active_before": 2,
+      "active_after": 0,
+      "state": "exited"
+    },
+    "preflight_server": {
+      "attempted": true,
+      "ok": true,
+      "close_ok": true,
+      "ownership": "unnamed Job; suspended assignment; kill-on-close",
+      "active_before": 3,
+      "active_after": 0,
+      "state": "exited"
+    },
+    "preflight_initialize": {
+      "attempted": true,
+      "ok": true,
+      "close_ok": true,
+      "ownership": "unnamed Job; suspended assignment; kill-on-close",
+      "active_before": 0,
+      "active_after": 0,
+      "state": "exited"
+    },
+    "protocol_server": {
+      "attempted": true,
+      "ok": true,
+      "close_ok": true,
+      "ownership": "unnamed Job; suspended assignment; kill-on-close",
+      "active_before": 3,
+      "active_after": 0,
+      "state": "exited"
+    },
+    "protocol_initialize": {
+      "attempted": true,
+      "ok": true,
+      "close_ok": true,
+      "ownership": "unnamed Job; suspended assignment; kill-on-close",
+      "active_before": 0,
+      "active_after": 0,
+      "state": "exited"
+    },
+    "entry_help": {
+      "attempted": true,
+      "ok": true,
+      "close_ok": true,
+      "ownership": "unnamed Job; suspended assignment; kill-on-close",
+      "active_before": 1,
+      "active_after": 0,
+      "state": "exited"
+    },
+    "entry_demo-dry-run": {
+      "attempted": true,
+      "ok": true,
+      "close_ok": true,
+      "ownership": "unnamed Job; suspended assignment; kill-on-close",
+      "active_before": 1,
+      "active_after": 0,
+      "state": "exited"
+    }
+  },
+  "cleanup_natural_exit_boundary": "Job termination proves ownership cleanup only; client/open server natural exit is NOT verified. CLI root0 with active Job entries before cleanup does not mean the entire tree naturally exited.",
+  "bundle": {
+    "relative_path": "_tmp_gui/r3-rebuild-20261021/bundle-main2e21156-pending-gui",
+    "files": [
+      {
+        "path": "LICENSE",
+        "size": 35823,
+        "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+      },
+      {
+        "path": "README.md",
+        "size": 1201,
+        "sha256": "3a6e558edd1c0bac3f0af9b2a65048c341bb3101a18ec6b2d24ea0d9eb07f4d9"
+      },
+      {
+        "path": "SHA256SUMS.txt",
+        "size": 485,
+        "sha256": "136c5e35873a50379ea586e938abcd54f593e639076400db1ff6bf2ad7b4f9df"
+      },
+      {
+        "path": "StartTrial.exe",
+        "size": 9738961,
+        "sha256": "aaa37fe82b003da011046e6402f69a9c91b06c5f6323d156822ec94e0d169bff"
+      },
+      {
+        "path": "VERIFICATION.json",
+        "size": 921,
+        "sha256": "88a6c6dc71277ee73c7a936c85bfde3af4572fba9a7a67d942ca1a1ebedbc6e7"
+      },
+      {
+        "path": "dist/client.exe",
+        "size": 27344653,
+        "sha256": "ee2208a24b9e69deff0307b8fe0c88618ec8b896d1ed6b1ef55a2412a3e9d0ab"
+      },
+      {
+        "path": "dist/server.exe",
+        "size": 26084183,
+        "sha256": "cbd87c141c1dd50f1e8df8ed87856ec743f94f1e69e466751a66a6e4efce1cb4"
+      }
+    ],
+    "exact_seven": true,
+    "hash_list_covers_other_six_files": true,
+    "relocated_complete_demo_run": false,
+    "binaries_uploaded": false
+  },
+  "local_evidence_hash_index": [
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/build-20261021-095153-7b5c83262b/summary.json",
+      "size": 1183,
+      "sha256": "fb77176aff580f74ec940530f5cf45a1acee361705048f99249511326932fcb0"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/build-20261021-095153-7b5c83262b/build.log",
+      "size": 19174,
+      "sha256": "e93159158841db300dd9fc4992eeb00c93e4023832bba98e6feef1c82380d30e"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/build-20261021-095153-7b5c83262b/entry-build-summary.json",
+      "size": 1179,
+      "sha256": "195863490a16d7390327d9d36f4d20bc2b2c672a6669841bb9f4a66d9d0396dd"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/build-20261021-095153-7b5c83262b/entry-build.log",
+      "size": 5285,
+      "sha256": "8e904e28db9d6a34311c1986623dbcafb4227132b7ddc3535a491fa981ff9c9b"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/build-20261021-095153-7b5c83262b/source-verification.json",
+      "size": 1678,
+      "sha256": "2379b203ad3a531f57647531314617d8ea550c2a4129fe8b6c1938e104725836"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/preflight/run-20261021-095310-b2a8476d44/summary.json",
+      "size": 751647,
+      "sha256": "451b10e097ce2ac1e8f20609ab5473172db66ce6722a1fd9fd7eff4770e768cd"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/protocol/wire-20261021-100233-7ea434c6c8/summary.json",
+      "size": 4164,
+      "sha256": "6d97725fd9738e5e0a613bdb0cc661728b7a9c7338b5fd9a93a27d2c0b3f9620"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/entry-cli/cli-20261021-100234-3018361445/summary.json",
+      "size": 3653,
+      "sha256": "70117f0489971a3a392826cf33d92ff82c97bf6d9c8bab40eef82b4f0b995aa7"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/baseline.json",
+      "size": 79611,
+      "sha256": "8c7e26a786fc9fac065d0d049734287a33a15def89c0c686b18109c110534b0e"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/preflight/run-20261021-095310-b2a8476d44/initialize.log",
+      "size": 431,
+      "sha256": "ecef0be5094fe491b246f453b22f92d368de97f9fe4cc9c88e3d26987873bd16"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/preflight/run-20261021-095310-b2a8476d44/server.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/preflight/run-20261021-095310-b2a8476d44/client.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/preflight/run-20261021-095310-b2a8476d44/client_beta.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/protocol/wire-20261021-100233-7ea434c6c8/initialize.log",
+      "size": 431,
+      "sha256": "1e1992a9932a54255d1af511d95dcc91ec5b2ec73fa72ad0df74b5726daf3517"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/protocol/wire-20261021-100233-7ea434c6c8/server.log",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/entry-cli/cli-20261021-100234-3018361445/help.txt",
+      "size": 482,
+      "sha256": "bc4280903f6331b394301a7b28cdcb12a740d3ccd1f230411b51b0bb709dcb0f"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/entry-cli/cli-20261021-100234-3018361445/demo-dry-run.txt",
+      "size": 1423,
+      "sha256": "0aab41adcb02da6914f234ca52e67287f188017ca43cfbae2fd2f7503f972125"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/controller-entry-build.log",
+      "size": 1067,
+      "sha256": "d7e1fffc182bc39cc374b31a0c01d8fcc24e099f0b64ff461214ae23ad0a3b36"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/controller-entry-cli.log",
+      "size": 59,
+      "sha256": "a3edd55951b5253059bb3799506fdae193d7ed486a6e0898c345b2d2e1f7e346"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/controller-protocol.log",
+      "size": 92,
+      "sha256": "681f735b10185c87431dcf9ea79d48bebf59db66266f7d6a4c4aa5eccff672c4"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/preflight/run-20261021-095310-b2a8476d44/profile-server/moeyu_helper/crash.log",
+      "size": 34,
+      "sha256": "4a28741546b8d330b9f39fa6144726f66fd8cd900a68712344669ba28e4e1423"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/preflight/run-20261021-095310-b2a8476d44/profile-client/moeyu_helper/crash.log",
+      "size": 128,
+      "sha256": "18981c5c9bab578801ac50a52632933214b6f48d7d9656c59e127a87a5be6319"
+    },
+    {
+      "path": "_tmp_gui/r3-rebuild-20261021/preflight/run-20261021-095310-b2a8476d44/profile-client-beta/moeyu_helper/crash.log",
+      "size": 128,
+      "sha256": "6dce747f2b8e9571529f4ff6eec628ddead6a1f05aed4d3479e991c2d1cd87a4"
+    }
+  ],
+  "proposed_public_files": [
+    {
+      "path": "docs/task-packages/R3-LOCAL-01.md",
+      "category": "Versioned scope; v1 historical text retained"
+    },
+    {
+      "path": "docs/review-packages/R3-LOCAL-01-r1.md",
+      "category": "Current v2 evidence/review and prior v1 history"
+    },
+    {
+      "path": "docs/AI_COMMAND_CENTER.md",
+      "category": "Current recovery checkpoint and DRAFT next candidate"
+    },
+    {
+      "path": "docs/任务清单.md",
+      "category": "Generated roadmap projection"
+    },
+    {
+      "path": "docs/review-assets/R3-LOCAL-01/rebuild-20261021.json",
+      "category": "Sanitized counts/probes/artifact hashes/local evidence hash index; no raw"
+    }
+  ],
+  "proposed_public_file_count": 5,
+  "not_tested": [
+    "Complete native GUI/lobby/invitation/visible game interactions",
+    "Natural red-button client exit and open-server natural exit",
+    "Relocated bundle complete compiled demo",
+    "Physical LAN/multiple machines/other Windows",
+    "Other real DPI",
+    "Hardware",
+    "Speech transcription"
+  ],
+  "next_candidate": {
+    "id": "R3-WIRE-SMOKE-01",
+    "status": "DRAFT_NOT_IMPLEMENTED",
+    "reason": "Formal local_trial.run currently checks startup/login/HTTP but not chat or complete game lifecycle; this batch proves a bounded actual-EXE protocol route independent of GUI.",
+    "scope": "Promote bounded encrypted TCP chat/two flagship lifecycle probe into formal preflight with failure propagation and resource cleanup regression. No new product feature.",
+    "dependencies": "This reviewed build/protocol evidence; freeze a separate Task before implementation. Real server.exe and isolated profiles/Job; GUI not required."
+  },
+  "public_boundary": "Only these five project documentation/sanitized JSON paths; no new controller source, raw logs, full summaries, profiles, binaries, usernames, private data, keys, or release. Audit all new commit history.",
+  "controller_source_provenance": {
+    "capture_phase": "After execution; sources reviewed before execution and not edited afterwards. This is provenance, not cryptographic execution attestation.",
+    "sources": [
+      {
+        "name": "r3v2_entry.py",
+        "sha256": "02c30ca9545dd047a0cd527b4d3e9bfecc18b34b4f0f32ddcfc9f9abe3942bcc",
+        "local_snapshot": "_tmp_gui/r3-rebuild-20261021/controllers/r3v2_entry.py"
+      },
+      {
+        "name": "r3v2_protocol.py",
+        "sha256": "0e8abfae35744963880f79d5e7e237ff69a6c19494987c23d3cc885cef2e8735",
+        "local_snapshot": "_tmp_gui/r3-rebuild-20261021/controllers/r3v2_protocol.py"
+      },
+      {
+        "name": "r3v2_launch.py",
+        "sha256": "bf2b77d19bb822bb24aa7ccea28555fef042492b393712b28cac8b9fc3f6a258",
+        "local_snapshot": "_tmp_gui/r3-rebuild-20261021/controllers/r3v2_launch.py"
+      }
+    ],
+    "source_files_public": false
+  },
+  "independent_review": {
+    "reviewer": "gate_review",
+    "pre_execution_must_open": 0,
+    "final_evidence_must_open": 0,
+    "scope": "Build/source/artifact binding, formal EXE startup, separate actual server wire protocol, CLI and seven-file layout only; not full GUI/R3/natural application exit",
+    "full_repeated": false
+  }
+}

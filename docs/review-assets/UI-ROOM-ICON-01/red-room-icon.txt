@@ -1,0 +1,165 @@
+FFFFinvalid command name "2770786679360_bind_all"
+    while executing
+"2770786679360_bind_all"
+    ("after" script)
+invalid command name "2770786588928_bind_all"
+    while executing
+"2770786588928_bind_all"
+    ("after" script)
+F                                                                    [100%]
+================================== FAILURES ===================================
+_________ test_room_icon_survives_collection_and_native_click[known] __________
+
+root = <tkinter.Tk object .>, game = 'tictactoe'
+
+    @pytest.mark.parametrize('game',['tictactoe','unknown-game'],ids=['known','fallback'])
+    def test_room_icon_survives_collection_and_native_click(root, game):
+        selected=[]
+        item=card(root,room(game=game),selected.append)
+        settle(root)
+>       name=assert_live(root,item)
+             ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_room_icon_lifecycle.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+root = <tkinter.Tk object .>, card = <client._RoomCard object .!_roomcard>
+
+    def assert_live(root, card):
+        name=str(card._room_icon.cget('image'))
+>       assert name in image_names(root), f'Label retains {name}, but Tcl image was deleted'
+E       AssertionError: Label retains pyimage1, but Tcl image was deleted
+E       assert 'pyimage1' in {'::tk::icons::error', '::tk::icons::information', '::tk::icons::question', '::tk::icons::warning'}
+E        +  where {'::tk::icons::error', '::tk::icons::information', '::tk::icons::question', '::tk::icons::warning'} = image_names(<tkinter.Tk object .>)
+
+tests\test_room_icon_lifecycle.py:29: AssertionError
+________ test_room_icon_survives_collection_and_native_click[fallback] ________
+
+root = <tkinter.Tk object .>, game = 'unknown-game'
+
+    @pytest.mark.parametrize('game',['tictactoe','unknown-game'],ids=['known','fallback'])
+    def test_room_icon_survives_collection_and_native_click(root, game):
+        selected=[]
+        item=card(root,room(game=game),selected.append)
+        settle(root)
+>       name=assert_live(root,item)
+             ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_room_icon_lifecycle.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+root = <tkinter.Tk object .>, card = <client._RoomCard object .!_roomcard>
+
+    def assert_live(root, card):
+        name=str(card._room_icon.cget('image'))
+>       assert name in image_names(root), f'Label retains {name}, but Tcl image was deleted'
+E       AssertionError: Label retains pyimage2, but Tcl image was deleted
+E       assert 'pyimage2' in {'::tk::icons::error', '::tk::icons::information', '::tk::icons::question', '::tk::icons::warning'}
+E        +  where {'::tk::icons::error', '::tk::icons::information', '::tk::icons::question', '::tk::icons::warning'} = image_names(<tkinter.Tk object .>)
+
+tests\test_room_icon_lifecycle.py:29: AssertionError
+_________ test_duplicate_room_cards_have_independent_image_lifetimes __________
+
+root = <tkinter.Tk object .>
+
+    def test_duplicate_room_cards_have_independent_image_lifetimes(root):
+        before=image_names(root)
+        first=card(root)
+        second=card(root)
+        settle(root)
+>       first_name=assert_live(root,first)
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_room_icon_lifecycle.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+root = <tkinter.Tk object .>, card = <client._RoomCard object .!_roomcard>
+
+    def assert_live(root, card):
+        name=str(card._room_icon.cget('image'))
+>       assert name in image_names(root), f'Label retains {name}, but Tcl image was deleted'
+E       AssertionError: Label retains pyimage3, but Tcl image was deleted
+E       assert 'pyimage3' in {'::tk::icons::error', '::tk::icons::information', '::tk::icons::question', '::tk::icons::warning'}
+E        +  where {'::tk::icons::error', '::tk::icons::information', '::tk::icons::question', '::tk::icons::warning'} = image_names(<tkinter.Tk object .>)
+
+tests\test_room_icon_lifecycle.py:29: AssertionError
+_______ test_production_room_refresh_and_container_rebuild_do_not_leak ________
+
+root = <tkinter.Tk object .>
+
+    def test_production_room_refresh_and_container_rebuild_do_not_leak(root):
+        before=image_names(root)
+        # Component host uses the real production filter/refresh/highlight methods;
+        # no fake image, patched factory or network/application side effects.
+        lobby=GameWindow.__new__(GameWindow)
+        lobby.core=core()
+        lobby._pal=_DEFAULT_PAL
+        lobby._sel_room=1
+        lobby.filter_var=tk.StringVar(root,value='全部')
+        lobby.sort_var=tk.StringVar(root,value='默认')
+        lobby.room_cards={}
+        lobby.room_inner=tk.Frame(root)
+        lobby.room_inner.pack(fill='both',expand=True)
+        old_refs=[]
+        old_names=set()
+        for index in range(12):
+            lobby.core.game_rooms=[room(1,status=('created' if index%2 else 'playing')),
+                                  room(2,game='unknown-game')]
+>           lobby._refresh_rooms()
+
+tests\test_room_icon_lifecycle.py:120: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+client.py:12694: in _refresh_rooms
+    self._highlight_room()
+client.py:12738: in _highlight_room
+    card.set_selected(rid == self._sel_room)
+client.py:11987: in set_selected
+    self._paint(hover=False)
+client.py:12185: in _paint
+    w.configure(bg=bg)
+..\..\..\..\bootstrap-20261021\python\Lib\tkinter\__init__.py:1842: in configure
+    return self._configure('configure', cnf, kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <tkinter.Label object .!frame.!_roomcard.!frame.!label>
+cmd = 'configure', cnf = {'bg': '#ffe3d0'}, kw = {'bg': '#ffe3d0'}
+
+    def _configure(self, cmd, cnf, kw):
+        """Internal function."""
+        if kw:
+            cnf = _cnfmerge((cnf, kw))
+        elif cnf:
+            cnf = _cnfmerge(cnf)
+        if cnf is None:
+            return self._getconfigure(_flatten((self._w, cmd)))
+        if isinstance(cnf, str):
+            return self._getconfigure1(_flatten((self._w, cmd, '-'+cnf)))
+>       self.tk.call(_flatten((self._w, cmd)) + self._options(cnf))
+E       _tkinter.TclError: image "pyimage5" doesn't exist
+
+..\..\..\..\bootstrap-20261021\python\Lib\tkinter\__init__.py:1826: TclError
+_________ test_room_icon_uses_its_own_interpreter_after_root_rebuild __________
+
+    def test_room_icon_uses_its_own_interpreter_after_root_rebuild():
+        root=tk.Tk()
+        root.geometry('700x500')
+        first=card(root)
+        settle(root)
+        try:
+>           assert_live(root,first)
+
+tests\test_room_icon_lifecycle.py:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+root = <tkinter.Tk object .>, card = <client._RoomCard object .!_roomcard>
+
+    def assert_live(root, card):
+        name=str(card._room_icon.cget('image'))
+>       assert name in image_names(root), f'Label retains {name}, but Tcl image was deleted'
+E       AssertionError: Label retains pyimage7, but Tcl image was deleted
+E       assert 'pyimage7' in {'::tk::icons::error', '::tk::icons::information', '::tk::icons::question', '::tk::icons::warning'}
+E        +  where {'::tk::icons::error', '::tk::icons::information', '::tk::icons::question', '::tk::icons::warning'} = image_names(<tkinter.Tk object .>)
+
+tests\test_room_icon_lifecycle.py:29: AssertionError
+5 failed in 3.45s

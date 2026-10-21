@@ -20,6 +20,9 @@
 
 ## Architecture
 
+- `_RoomCard`按卡片持有自己的`ImageTk.PhotoImage`；Tk Label的image名字不保活Python图片。
+  正常销毁并释放卡片后在Tk主线程回收，刷新不可依赖全局图片缓存或共享Tk守卫来延寿。
+
 - `boardgames/` 是惰性加载的桌游展示包，含共用registry/shell/artkit/geom与Azul桌面/Web/包内PNG；
   规则仍在 `games_pkg/`。隔离门禁源码输入须包含这两个包、widgets与静态资产，
   新增未跟踪Python/包内assets同样参与快照和恢复指纹；不能只复制旧的两个Python包。

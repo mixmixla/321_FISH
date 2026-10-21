@@ -1,7 +1,7 @@
 {
   "task": "R3-LOCAL-01 v2",
   "status": "AI_ACCEPTED_BUILD_PREFLIGHT_WIRE_ONLY",
-  "delivery": "READY_FOR_NORMAL_PUSH_AND_SAFE_INTEGRATION",
+  "delivery": "MERGED_PROJECT_DOCUMENTATION_ONLY",
   "base_commit": "2e2115647940a4025e99f7fcdd112e1fdc9ae416",
   "branch": "feature/r3-rebuild-20261021",
   "source_binding": {
@@ -533,5 +533,26 @@
     "final_evidence_must_open": 0,
     "scope": "Build/source/artifact binding, formal EXE startup, separate actual server wire protocol, CLI and seven-file layout only; not full GUI/R3/natural application exit",
     "full_repeated": false
+  },
+  "integration_receipt": {
+    "verified_candidate": "75829777b2bd4acb9378bd017ed043f25fa22c86",
+    "verified_main": "75829777b2bd4acb9378bd017ed043f25fa22c86",
+    "verified_development_branch": "75829777b2bd4acb9378bd017ed043f25fa22c86",
+    "normal_push": true,
+    "normal_fast_forward": true,
+    "source_inputs_unchanged": 487,
+    "public_paths": 5,
+    "protected": false,
+    "required_checks": [],
+    "rulesets": [],
+    "visible_ci": {
+      "check_runs": 0,
+      "statuses": 0,
+      "workflow_runs": 0,
+      "claimed_ci_pass": false
+    },
+    "raw_logs_controllers_profiles_binaries_private_data_uploaded": false,
+    "force_push_branch_deletion_or_release": false,
+    "receipt_note": "A subsequent four-document receipt stays within these five paths; use Git refs/local delivery receipt for final receipt leaf SHA. No source/build/run changed or repeated."
   }
 }

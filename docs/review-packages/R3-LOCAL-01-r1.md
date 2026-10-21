@@ -1,6 +1,6 @@
 # R3-LOCAL-01 r1 — v2 最新源码产物刷新
 
-2026-10-21 **AI_ACCEPTED_BUILD_PREFLIGHT_WIRE_ONLY / READY_FOR_INTEGRATION / NOT_R3_ACCEPTED**。
+2026-10-21 **AI_ACCEPTED_BUILD_PREFLIGHT_WIRE_ONLY / MERGED / NOT_R3_ACCEPTED**。
 [当前Task v2](../task-packages/R3-LOCAL-01.md) / [本次脱敏结构化摘要与原件hash索引](../review-assets/R3-LOCAL-01/rebuild-20261021.json)。root唯一执行/资料写入，gate_review独立只读，普通模型/Standard。以下旧v1历史原样保留，旧原件不作为本次新EXE证明。
 
 ## 本次源码与三产物
@@ -32,8 +32,13 @@ StartTrial实际help/demo dry-run run `cli-20261021-100234-3018361445`/exit0，�
 
 ## 公开与恢复
 
-本周有界授权只公开5路径：现Task、现Review、现AI_COMMAND_CENTER/任务清单、rebuild-20261021.json。全部新文件及新commit history审计，排除raw/完整summary/控制器源码/profile/EXE/本机用户名/私密数据/密钥；旧v1原件不重写或再上传。gate_review最终独立证据/资料审查0 MUST，主控仅记AI_ACCEPTED_BUILD_PREFLIGHT_WIRE_ONLY；5路径新增文件/添加行与全新history公开审计通过，尚未推送或合并。审查通过后正常push/安全FF，fresh fetch/保护/required checks照常核，安全拒绝即停、不强推/绕过/删分支/发布；无可见CI不当CI通过。
+本周有界授权只公开5路径：现Task、现Review、现AI_COMMAND_CENTER/任务清单、rebuild-20261021.json。全部新文件及新commit history审计，排除raw/完整summary/控制器源码/profile/EXE/本机用户名/私密数据/密钥；旧v1原件不重写或再上传。gate_review最终独立证据/资料审查0 MUST，主控仅记AI_ACCEPTED_BUILD_PREFLIGHT_WIRE_ONLY；5路径新增文件/添加行与全新history公开审计通过，初接受检查点尚未推送；后续已正常集成，未发布。审查通过后正常push/安全FF，fresh fetch/保护/required checks照常核，安全拒绝即停、不强推/绕过/删分支/发布；无可见CI不当CI通过。
 当前所有构建/预检/CLI/协议均结束，无活动测试，不重启已完成操作。恢复：AI_COMMAND_CENTER当前v2→Task/本Review→Git→本地baseline/各summary/实际进程。精确本地路径、原件hash和本次产物见结构化摘要；以下为v1历史。
+
+## v2 正常集成回执
+
+独立终审0 MUST后仅提交5个项目文档/脱敏JSON，审计唯一新提交的完整新增JSON与历史添加行，准确路径不增；按本周有界授权普通push并设置同名upstream。fresh fetch核main仍2e21156，GitHub无保护/required checks/rulesets后正常FF，ls-remote核main与feature/r3-rebuild-20261021均75829777b2bd4acb9378bd017ed043f25fa22c86；本地main同步/clean，487原raw输入仍匹配，不重跑full或构建/预检。
+候选check-runs/statuses/Actions各0，不是CI通过。未强推/绕保护/提PR/删除分支/发布，没有原始日志/控制器源码/profile/EXE/用户名/私密/密钥进入新增历史。随后只同5路径中的4份文档补本回执，最终leaf完整SHA以Gitrefs/本地delivery-receipt为准，包和所有原件仍留本地，不升级完整GUI/自然退出/R3。下一DRAFT候选保持，未实施。
 
 ---
 

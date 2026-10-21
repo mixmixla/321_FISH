@@ -5,6 +5,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## TK-BOSS-AFTER-01 Boss 自有任务收口（2026-10-21）
+
+**AI_ACCEPTED_BOSS_TIMERS_ONLY / FULL_PASSED / READY_FOR_INTEGRATION / R3_GUI_NOT_RUN**。[Task v1.1](task-packages/TK-BOSS-AFTER-01.md) / [Review r1](review-packages/TK-BOSS-AFTER-01-r1.md)。
+base/main7ff225763caa2360f571b6de3beec654f32fa77d，分支fix/boss-timer-lifetime-20261021，代码46e25087b588cbc10e38b6550ce7e468e178d347；root唯一写入，gate_review独立只读，普通模型/Standard。用户本周有界公开/合并许可：只代码/测试/项目文档/脱敏摘要，排除raw/本机用户名/私密/密钥/profile/EXE，不发布；全新history与9路径待最后审计。
+独立单root真实诊断：close276.19ms后窗口/两Tcl命令消失但2after pending，mainloop4190.81ms/37heartbeat，两sentinel跨1500/3000ms，自然1543.83/3042.11ms bgerror。1P只观察器有效，旧1700ms负结果保留。最小boss.py31+/4-只owner自有ID，执行先移除，close/Destroy取消，子Destroy严格过滤；真实延迟/hide/live排程不变，不修活体多tick/show策略或正式quit。
+原同字节9case RED8F1P，领域7文件101P0F0S/独立0 MUST。唯一full boss-timer-full-20261021-172649-12db730620：210文件2939P0F20原opt-in S/exit0/760.527s；487输入source0a1d29967852b737d3aafa4ea8800d94da3e0747713bc616939e8ea7076052b7，当前/领域/snapshot匹配、RED仅boss.py差异、旧209 counts全保持，仅增9P。全210原log/单attempt/exit/cleanup/skip和15后验已核，详Review/公开hash索引。full已结束，无活动测试；gate_review最终原件/资料独立终审0 MUST，主控只接受Boss自有timer生命周期，准确9路径及全部新提交history公开审计通过；不重跑full。
+旗舰invalid-command诊断计数0不推断其它退出路径；完整native GUI/新EXE/自然应用退出/物理LAN/其它DPI/硬件未测，R3不升级。下一动作本地资料提交→复核全部新history→按授权正常push/安全FF并核远端SHA/CI，不强推/绕保护/删分支/发布。下一批P1新源码构建+正式owned Job预检，P2有受支持native GUI后有限R3；不继续追未证实噪声。
+恢复先本段/Task/Review/Git/唯一full原summary与实际进程，源码变动再核影响，不重复全量。当前未推送/合并，实际远端以fresh核验为准。
+
 ## TK-MINI-AFTER-01 MiniBar 自有任务收口（2026-10-21）
 
 **AI_ACCEPTED_MINI_TIMER_ONLY / FULL_PASSED / MERGED / R3_GUI_NOT_RUN**。[Task v1.2](task-packages/TK-MINI-AFTER-01.md) / [Review r1](review-packages/TK-MINI-AFTER-01-r1.md)。

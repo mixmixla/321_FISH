@@ -126,3 +126,5 @@ ChatWindow.quit_app已有全局取消，组件销毁诊断不能直接推导正�
 
 MiniBar owner Destroy回归应同时覆盖父root销毁和tooltip子Destroy：只取消自身更新ID，隐藏仍更新。
 验证销毁期间重入时，真实tick更新后还须复查销毁标记，避免向仍活解释器重新排已死widget回调。
+
+Boss定时销毁验证必须跨真实1500ms置顶解除及3000ms更新，root heartbeat/截止哨兵证明观察有效，close在同一mainloop内执行；核窗口、Tcl command与pending脚本三者。跟踪ID应在执行前释放，owner Destroy取消自身，皮肤子Destroy不取消，真实tick重入close不得重新排死widget。

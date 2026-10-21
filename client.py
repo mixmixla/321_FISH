@@ -12201,6 +12201,7 @@ class GameWindow:
         self.core = app.core
         self._pal = pal or _DEFAULT_PAL
         self._closed = False
+        self._after_jobs: set[str] = set()
         self._hide_reason = None
         self._restore_allowed = True
         self._chat_open = False
@@ -12217,11 +12218,11 @@ class GameWindow:
         self.room_cards: dict = {}
         self._build()
         self.win.protocol("WM_DELETE_WINDOW", self.hide)
-        self.win.after(200, self._poll)
+        self._schedule_after(200, self._poll)
         self.core.game_list()
         # 首帧可能抢在 GAME_LIST 回复前：延时补发几次，自愈空列表
         for _delay in (600, 1800, 3500):
-            self.win.after(_delay, lambda c=self.core: c.game_list())
+            self._schedule_after(_delay, self.core.game_list)
 
     # ---------- UI ----------
     def _build(self) -> None:
@@ -12563,6 +12564,18 @@ class GameWindow:
                   font=f, padx=6).pack(side="left")
 
     # ---------- 事件轮询（状态快照驱动，不抢主窗队列） ----------
+    def _schedule_after(self, delay: int, callback) -> None:
+        if self._closed:
+            return
+
+        def run():
+            self._after_jobs.discard(job)
+            if not self._closed:
+                callback()
+
+        job = self.win.after(delay, run)
+        self._after_jobs.add(job)
+
     def _poll(self) -> None:
         if self._closed:
             return
@@ -12570,7 +12583,7 @@ class GameWindow:
             self._sync()
         except Exception:
             pass
-        self.win.after(200, self._poll)
+        self._schedule_after(200, self._poll)
 
     def _sync(self) -> None:
         core = self.core
@@ -13910,6 +13923,14 @@ class GameWindow:
 
     def close(self) -> None:
         self._closed = True
+        # Cancel through the widget that registered these Tcl commands.
+        # Other windows' timers and hide/show polling remain independent.
+        for job in tuple(self._after_jobs):
+            try:
+                self.win.after_cancel(job)
+            except tk.TclError:
+                pass
+        self._after_jobs.clear()
         self._restore_allowed = False
         try:
             self._cancel_repaint(self._cv_ui)

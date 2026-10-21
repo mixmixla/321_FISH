@@ -1,0 +1,3374 @@
+{
+  "task": "TK-MINI-AFTER-01 v1.2",
+  "technical_status": "AI_ACCEPTED_MINI_TIMER_ONLY",
+  "delivery": "READY_FOR_NORMAL_PUSH_AND_SAFE_INTEGRATION_UNDER_BOUNDED_SCOPE",
+  "base_commit": "f057efa1a6d21c23f3fc8b448459eb7ec3389f50",
+  "code_commit": "b4c9de2c7056f77c4aeb8dc1e0fed3625ac83435",
+  "branch": "fix/mini-timer-lifetime-20261021",
+  "source_inputs": 486,
+  "source_content_id": "f90cf605a636fe3890b98a5bcf01b02ace50f46f8e0abc0a8a1df5aa43b9bff3",
+  "client_sha256": "30d8b8c497fab1d2513a972d3d5e205a26c04e60be854ca3a4580aa9d1491eee",
+  "test_sha256": "edab67973f4ea55797f272ded47e72b4d18fae63aa021a98ea15819f92345c3d",
+  "checks": {
+    "full_exit0_no_failure": true,
+    "209_files": true,
+    "486_inputs": true,
+    "domain_same_source": true,
+    "current_same_source": true,
+    "snapshot_same_source": true,
+    "red_only_client_difference": true,
+    "same_final_red_test_bytes": true,
+    "prior_delta_only_client_and_new_test": true,
+    "prior208_counts_unchanged": true,
+    "new_eight_cases": true,
+    "no_visual_hardware_or_extra_pytest_args": true,
+    "all209_complete_raw_hash_exit_cleanup_plus_one_interrupted": true,
+    "original125_completed_rows_unchanged": true,
+    "interrupted_partial_raw_unchanged": true,
+    "no_unexpected_skips": true,
+    "original20_opt_in_only": true
+  },
+  "proposed_public_files": [
+    {
+      "path": "client.py",
+      "category": "Product: MiniBar owner update timer only, 18 additions/2 removals"
+    },
+    {
+      "path": "tests/test_mini_timer_lifetime.py",
+      "category": "Eight real Tk regression cases with synthetic core"
+    },
+    {
+      "path": "docs/task-packages/TK-MINI-AFTER-01.md",
+      "category": "Frozen scope and observed diagnostic boundaries"
+    },
+    {
+      "path": "docs/review-packages/TK-MINI-AFTER-01-r1.md",
+      "category": "Reproduction, outcomes, review and acceptance limits"
+    },
+    {
+      "path": "docs/review-assets/TK-MINI-AFTER-01/evidence.json",
+      "category": "Structured result/hash index only; no raw logs or machine paths"
+    },
+    {
+      "path": "docs/AI_COMMAND_CENTER.md",
+      "category": "Current local checkpoint and next priorities"
+    },
+    {
+      "path": "docs/任务清单.md",
+      "category": "Generated command-center projection"
+    },
+    {
+      "path": "PROJECT_MEMORY.md",
+      "category": "Stable MiniBar destruction ownership fact"
+    },
+    {
+      "path": ".agents/skills/fish-assistant-dev/references/development.md",
+      "category": "Stable component validation guidance"
+    }
+  ],
+  "proposed_public_file_count": 9,
+  "runs": {
+    "ownership_probe": {
+      "run_id": "mini-boss-diagnosis-20261021-163734-09d8744468",
+      "files": 1,
+      "totals": {
+        "failed": 1,
+        "passed": 1
+      },
+      "exit_code": 1,
+      "seconds": 5.741,
+      "source_inputs": 487,
+      "source_content_id": "f156874e1bad60ad90e8a95f29eba3451750a167d92fb0335d2bae2d7d6f5954",
+      "summary_sha256": "fb5e460b2fe5fdb53a034c0bd8bec79d1a634fda8d59b83f47d920214a2b8d6c",
+      "manifest_sha256": "016b7eefe3cab56dae650b534d79a868de28d9ad7a7c1444936e9adf3702de4e",
+      "logs": [
+        {
+          "file": "tests/test_mini_boss_diagnosis.py",
+          "log_sha256": "a47e81b0498c11f6fabd158f129fe4294b7ef027c94cf96c8d5e6b0220f546d7"
+        }
+      ]
+    },
+    "red": {
+      "run_id": "mini-timer-red-20261021-163833-e850928527",
+      "files": 1,
+      "totals": {
+        "failed": 6,
+        "passed": 2
+      },
+      "exit_code": 1,
+      "seconds": 8.898,
+      "source_inputs": 486,
+      "source_content_id": "ebf289bbae567a80e5a01c6b7407b6ad81a1c90eb059d382be236360c1864c04",
+      "summary_sha256": "beedb826f7c78419fbd23dc738c0c025a3eade89deafb9a8b130de0fc4205518",
+      "manifest_sha256": "f6c7ac731e7babedf73e83992fe356c648325a6b1fcbb6ea23d19c29afb6bad8",
+      "logs": [
+        {
+          "file": "tests/test_mini_timer_lifetime.py",
+          "log_sha256": "652635021f9cef0037920a1dcf845746b8863d18f1960c9965e3c81b30cac81a"
+        }
+      ]
+    },
+    "domain": {
+      "run_id": "mini-timer-domain-20261021-163934-79ce6a7bc8",
+      "files": 7,
+      "totals": {
+        "passed": 56
+      },
+      "exit_code": 0,
+      "seconds": 45.479,
+      "source_inputs": 486,
+      "source_content_id": "f90cf605a636fe3890b98a5bcf01b02ace50f46f8e0abc0a8a1df5aa43b9bff3",
+      "summary_sha256": "dbb9d4c783779bb1ac8680529cb37fc5635de8a0fd882255ba471239072b1a98",
+      "manifest_sha256": "4ccc43bc7bf8b9731f9f5251a60b5e2bbfd7995bdce4cebbea2a229be9e2cc52",
+      "logs": [
+        {
+          "file": "tests/test_flagship_gui.py",
+          "log_sha256": "b543b35c6c7c0d05f1f70df53a03a45b346993021a95ce2941b06044e66116be"
+        },
+        {
+          "file": "tests/test_game_window_timer_lifetime.py",
+          "log_sha256": "6c215e85540a0880a971875d1342d59429b4a43b84af8eb932791d3b0fa0071b"
+        },
+        {
+          "file": "tests/test_mini_timer_lifetime.py",
+          "log_sha256": "629d8df6fc6c65c0c5238f8b9e818b1290e0d3149f373900211d12fbfc91feb7"
+        },
+        {
+          "file": "tests/test_r61_features.py",
+          "log_sha256": "ad2ad1a7847d849cbf05ea33fa5e5332d7e8de74a3b44b17fe024d347a617128"
+        },
+        {
+          "file": "tests/test_room_icon_lifecycle.py",
+          "log_sha256": "0f38e26dcc8d6fdcc4bf5b701880775c6ac5f379809e9397a8c7c829ac183030"
+        },
+        {
+          "file": "tests/test_ux_repair.py",
+          "log_sha256": "78a4a8e740baf870ffbdec80d2d17ac2296bc4788457b14c8a4cef609ecc02b8"
+        },
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "log_sha256": "9c014bdc9911717cb2e0e2cd3df4bd124be1b9a71a9c31df3f4adacfd042f9fe"
+        }
+      ]
+    },
+    "full": {
+      "run_id": "mini-timer-full-20261021-164222-11a3ea9ec6",
+      "files": 209,
+      "totals": {
+        "passed": 2930,
+        "skipped": 20
+      },
+      "exit_code": 0,
+      "seconds": 379.331,
+      "source_inputs": 486,
+      "source_content_id": "f90cf605a636fe3890b98a5bcf01b02ace50f46f8e0abc0a8a1df5aa43b9bff3",
+      "summary_sha256": "8dba727ee341219a27f4b52e1839897b0fbe4b671f103a796bcf51f2ed35ea49",
+      "manifest_sha256": "3f4e7fd6217de9758f4405078bbc951632c028d4be85b67b0e620ded9e4c93b1",
+      "logs": [
+        {
+          "file": "tests/test_account_credential_commit.py",
+          "log_sha256": "c5e92c3b2a517ea5b5efee8202349902da8106f91564aae2e62bc8b76abd29b4"
+        },
+        {
+          "file": "tests/test_account_credential_contracts.py",
+          "log_sha256": "0efdd83b276b2aaf558598912c5f1e87bd64ec23eba849f1ae17ce089d8519f8"
+        },
+        {
+          "file": "tests/test_account_credential_file_failures.py",
+          "log_sha256": "71da5511ac3d813f05195b835fb5704c89b991ad8a546b68a30f084c33d0cc00"
+        },
+        {
+          "file": "tests/test_account_credential_regressions.py",
+          "log_sha256": "22da45629a01bd45e44e116d1e7be6e9559b402af56f5eafca5aa0c84e51a58f"
+        },
+        {
+          "file": "tests/test_account_credential_transactions.py",
+          "log_sha256": "7e6addfb660d8e29b5862fb19f9d5027a8066a4195d43ff8eaf9161691812f81"
+        },
+        {
+          "file": "tests/test_account_credential_wire.py",
+          "log_sha256": "5beedd443bc0f63544128a80bdb42a80d4db0d4efd462e64f5644f10d0f60fcd"
+        },
+        {
+          "file": "tests/test_admin_credentials.py",
+          "log_sha256": "9da765718ae1c7cc3fadb4a0ee4f477ba9eb858de89ba90b8b09c8266ee91095"
+        },
+        {
+          "file": "tests/test_admin_groups.py",
+          "log_sha256": "315adafe6ecc618e803d3e25f29e798a413f7fb10a0576a46d1b1ac100943bd6"
+        },
+        {
+          "file": "tests/test_admin_groups_web.py",
+          "log_sha256": "d7de70297722eb0d7d0059a0b7c9ce1c8500ead8c404ee50e305dc71ba20e0d7"
+        },
+        {
+          "file": "tests/test_artkit.py",
+          "log_sha256": "b45c8157cd9538f1194a069fdff2debb83b1efbfc39728108aebde091011ed9e"
+        },
+        {
+          "file": "tests/test_audit_audio_callbacks.py",
+          "log_sha256": "89343a492c88de438b2995d56f91757591611c6ae2e89118280693a0177d58b3"
+        },
+        {
+          "file": "tests/test_audit_e2ee_limits.py",
+          "log_sha256": "98797cbac84ee269c692db47ff9098abf976c5e269dfc5e68b53b97ed9dce383"
+        },
+        {
+          "file": "tests/test_audit_file_auth.py",
+          "log_sha256": "f1125a5262e2e0d9dd4a8d4a4a552483b47591843c0ff279cfbe8c3cec5808e0"
+        },
+        {
+          "file": "tests/test_audit_moment_images.py",
+          "log_sha256": "1591b71dc003d4e209e5612b428180c6122bbf2345b5b2c7e02096bb1bc45f98"
+        },
+        {
+          "file": "tests/test_audit_preview.py",
+          "log_sha256": "e8c2a1790dcd00aee5c4fa2eb7256210074c4a7b9f79a63e63aa5283bc349017"
+        },
+        {
+          "file": "tests/test_audit_server_security.py",
+          "log_sha256": "9df735d9fa1db1ae06b0ce3e008a88182152b817172dc280790bce307c3dfab8"
+        },
+        {
+          "file": "tests/test_auth.py",
+          "log_sha256": "0f0618824cb495ff18236d05dde98ba592b8220368ff17ec491df7baef164074"
+        },
+        {
+          "file": "tests/test_azul_drag.py",
+          "log_sha256": "facc1a9e6d814a98af7be90c249bbbbc788bb68809c117e15d112dcc7f959ec0"
+        },
+        {
+          "file": "tests/test_azul_package_assets.py",
+          "log_sha256": "fa965978fe7322f9477cdcf092e8ccd7e2736c0ce002ed19b5f25c224bba9856"
+        },
+        {
+          "file": "tests/test_azul_rules.py",
+          "log_sha256": "9b014d3818a800a270ec32003019787f8e49482ffaea708a8ed92b4b8f7ad414"
+        },
+        {
+          "file": "tests/test_batch2_rules.py",
+          "log_sha256": "aee98a15420bd28843e8a3965b1f5ccc014a4bd59daf8d14263cffc4cae4bb58"
+        },
+        {
+          "file": "tests/test_batch3_rules.py",
+          "log_sha256": "64d490aa699d3e095b5a7b1d2d7a606186ab85e9c887bcb5b5a14a5765e3c752"
+        },
+        {
+          "file": "tests/test_batch4a_rules.py",
+          "log_sha256": "d55bad0005da44c420a85cb393734a06584b29e2a47176952aaa1143026f5b30"
+        },
+        {
+          "file": "tests/test_batch4b_rules.py",
+          "log_sha256": "d55bad0005da44c420a85cb393734a06584b29e2a47176952aaa1143026f5b30"
+        },
+        {
+          "file": "tests/test_batch4c_rules.py",
+          "log_sha256": "ab509c91d9cfcd70790c6dc0931396178db3896d9c5b1b2eb79670dc45f5e3e1"
+        },
+        {
+          "file": "tests/test_batch4d_rules.py",
+          "log_sha256": "7e4db162573ac313c2c06b9a729ed7b451d11f03bffe71ee9d2dfc670460b279"
+        },
+        {
+          "file": "tests/test_betrayal.py",
+          "log_sha256": "89d84363b6abbf9952f34d956789894c4f690b0e4c63ee8db412fd584568caee"
+        },
+        {
+          "file": "tests/test_blokus_rules.py",
+          "log_sha256": "b3ff4f782702364307922e4600cff5417a5c94ab4601f181286fe8b91fb29f1e"
+        },
+        {
+          "file": "tests/test_board_geom.py",
+          "log_sha256": "be4b543a72b079f58eeea785d8df444f11e661ba3c3cf0d8235b9c00ee12e97b"
+        },
+        {
+          "file": "tests/test_boardgame_asset_img.py",
+          "log_sha256": "3868ba31b9fb8e415d427c957501a720488472805f7b9512f10c017cef66bdb2"
+        },
+        {
+          "file": "tests/test_boardgame_assets.py",
+          "log_sha256": "4e50020dfc04d371f83dca66990ab74d6674d497c347de5dcddcd6dbb9ca57be"
+        },
+        {
+          "file": "tests/test_c9_group.py",
+          "log_sha256": "99f460773912d7b28b97c3f3ae3e1e7cd1c55c30a2a90af02a9f740ce2ac0ed0"
+        },
+        {
+          "file": "tests/test_cc02_retire_core.py",
+          "log_sha256": "6170f8e9626bdd036641999c46acdd7d6ffa2404005f201fb51ec255e345d11c"
+        },
+        {
+          "file": "tests/test_cc02_store_min.py",
+          "log_sha256": "7b5a516d844126481fceb9f2c79a81bb12199ee29f1686dd2853ff4ec7954603"
+        },
+        {
+          "file": "tests/test_cc02_store_receipt.py",
+          "log_sha256": "476c2cf0490e5e0c3f53ec97d02a492e8cb818b4c0fbf89ebdbe367b8c063008"
+        },
+        {
+          "file": "tests/test_cc02a_client_kick.py",
+          "log_sha256": "ee8f4ddc0a6ccd51f8fa6a6039adf7880c5af62da976faf281714a51064eed11"
+        },
+        {
+          "file": "tests/test_cc02a_kick.py",
+          "log_sha256": "214b2f2033681d53673f5433831339d89e7a48d713a6a44e9af5057df9e29844"
+        },
+        {
+          "file": "tests/test_cc02a_profile.py",
+          "log_sha256": "b50d6bdc175f9e184da7a4646f61cb17e25f4fdca62e713cccfb9441f256614e"
+        },
+        {
+          "file": "tests/test_cc02a_restore.py",
+          "log_sha256": "3de2cfe9190a2ee16d95d1c629642756a077cadd26a616c0b43c4cb64e436453"
+        },
+        {
+          "file": "tests/test_cc02a_web_kick.py",
+          "log_sha256": "b1b6b6e955b7c0dda5203a77fe31e4a3c17077ae5b8765f1fdb252d5c522a35c"
+        },
+        {
+          "file": "tests/test_cc02c_resource_async.py",
+          "log_sha256": "284952bc9054d0403d5e2313fc05dd84a785eed6af8382fe0340872be0b625b9"
+        },
+        {
+          "file": "tests/test_cc02c_resource_files.py",
+          "log_sha256": "45556e99e3e2b17ae66722dc9b8510cd14d6e43e715cb0ba2ef4d8f7a3f0fe59"
+        },
+        {
+          "file": "tests/test_cc02c_resource_integration.py",
+          "log_sha256": "c1576db6c41dc7e32aa8357ce93fa63c677685be7d986c8a9dabba684df1ca0d"
+        },
+        {
+          "file": "tests/test_checkers_rules.py",
+          "log_sha256": "60738f70dec0c9b02ae57bb066a73b913e49ba391365911aec7738bf6e429ed0"
+        },
+        {
+          "file": "tests/test_client_core.py",
+          "log_sha256": "0f919dc0b96f02586196cbc0ac3725196535e18d27eb3ce2d06f52af4e639f13"
+        },
+        {
+          "file": "tests/test_config_crashlog.py",
+          "log_sha256": "85e10415ad73f4d61a8714b9917f3fd220ee0e5cbcb555a1ae80b7f1bf9cb8ab"
+        },
+        {
+          "file": "tests/test_crypto.py",
+          "log_sha256": "9d002306b5334fa98e9280210368581b5ab22f2c03705af9e2f86a86a9883118"
+        },
+        {
+          "file": "tests/test_discovery.py",
+          "log_sha256": "8de84ac955ace913f0630fa2efe4fc394fa4b99c6fd2079b5ec5bacb643081a7"
+        },
+        {
+          "file": "tests/test_drafts.py",
+          "log_sha256": "89f5b119d260ff3b8ed634ff5612eb7e212b27db96f77a12fc24b74c3aab7bcb"
+        },
+        {
+          "file": "tests/test_excel_sheet.py",
+          "log_sha256": "bef1e1293e86ea851411ed66a8264ffcd36b8e21d062b50e917807860d9d68bc"
+        },
+        {
+          "file": "tests/test_excel_skin.py",
+          "log_sha256": "87a5d7deb053aca11a93276e647871877212040f34a54f3d63c55e7792074e86"
+        },
+        {
+          "file": "tests/test_filexfer.py",
+          "log_sha256": "7296a481ec573413faa63e1a9c7bda678c377e394463a10771b5e5c3fec24a97"
+        },
+        {
+          "file": "tests/test_fix_deadlock_selfcheck.py",
+          "log_sha256": "2f77ac61f747dea58928b6f852f56bf20da1142fc442cb4c6464ca69308a0255"
+        },
+        {
+          "file": "tests/test_flagship_board.py",
+          "log_sha256": "764bc59c0fe1334ac30a31ff807155bd76c5505b3bb7ae2bf866bbc648627f81"
+        },
+        {
+          "file": "tests/test_flagship_game_wire.py",
+          "log_sha256": "984be1e2526c627ad092e94c7e57257b6067fedc3cbe01df6f0590d0e7ce557b"
+        },
+        {
+          "file": "tests/test_flagship_gui.py",
+          "log_sha256": "a476793786eeb3ebd956eec651c3f6be12801c2c039fe2a9a653a571eb81272a"
+        },
+        {
+          "file": "tests/test_friend_trial_start.py",
+          "log_sha256": "3f5965c854e761309ddd810aa9b39db9d01d715ee824ddff22782f7b44f1bdec"
+        },
+        {
+          "file": "tests/test_fwd_media.py",
+          "log_sha256": "4fb8eed0ef009d86faf19a01613a29ac1353271255ee0c31cb4da826216f6b12"
+        },
+        {
+          "file": "tests/test_game_client_lifecycle.py",
+          "log_sha256": "c5f488af6339c9060d4fc19eae79911004cd56f4ffda4a20b5606c5eb1110931"
+        },
+        {
+          "file": "tests/test_game_lifecycle.py",
+          "log_sha256": "6fd199362623d2521feb1274661a67487e710bceb3c8344c5491fe4a8b05b053"
+        },
+        {
+          "file": "tests/test_game_owner_recovery.py",
+          "log_sha256": "c1b78183c99c303d11614953ab5cbf6a271b8b02e9a62fde181df0e2440b8c39"
+        },
+        {
+          "file": "tests/test_game_packages.py",
+          "log_sha256": "4aff0d243a3c7bb8b3ff0d798d1dd7e8ec41328c0dd24e032198723d5e3da1cf"
+        },
+        {
+          "file": "tests/test_game_shell_pal.py",
+          "log_sha256": "7784827e96ce475c3203b816a2f9486195a2dc2e19d6a7c1d0baaf4431ca545d"
+        },
+        {
+          "file": "tests/test_game_shell_wiring.py",
+          "log_sha256": "edfbe512ab5943799cf48447d110ec71dc2a90f7b8e906f1ba9c86ccf7b8a94e"
+        },
+        {
+          "file": "tests/test_game_window_timer_lifetime.py",
+          "log_sha256": "f78092f90a248c37f69a37540ce89958a2bd2f802f3e5040c032b1ce48918fde"
+        },
+        {
+          "file": "tests/test_games.py",
+          "log_sha256": "9d85938b18f0b19320322c944b571cead63093a02bb5103e3d26a90cf5664d60"
+        },
+        {
+          "file": "tests/test_games_coc.py",
+          "log_sha256": "d1c3584c9ae5969c07791f7b364dc5aa93f4bcd728d098b2fa770e3fa63e1236"
+        },
+        {
+          "file": "tests/test_games_euro.py",
+          "log_sha256": "0751c87019b89b0434ad9598d11813b4bdab7cd5aa296c89eda3267cc8586670"
+        },
+        {
+          "file": "tests/test_games_new.py",
+          "log_sha256": "a8964e4b9662d2f62b7bbddf721d8f9a7b46dd08d38fb8fdc211e347e6ac56ce"
+        },
+        {
+          "file": "tests/test_games_w1_new.py",
+          "log_sha256": "1589b5134ee55d1dcc578af9a906c01e57e20655d794dd4bd55a114a8a1d97cc"
+        },
+        {
+          "file": "tests/test_games_w2_logic.py",
+          "log_sha256": "7c7cedddf5fa2c283784feaa92679b1bf4a7e6aa671c6d242c90c798fe07f184"
+        },
+        {
+          "file": "tests/test_games_w3.py",
+          "log_sha256": "53e04222182e30f77c03d53abcb78530c3ea11c73c326bfb131184de3bcebd32"
+        },
+        {
+          "file": "tests/test_games_w3_rooms.py",
+          "log_sha256": "460269d001961146d9e801b359cfd363fa63ed3ce7ea056072de32d86f00f692"
+        },
+        {
+          "file": "tests/test_games_w4.py",
+          "log_sha256": "65392c56d1532c00ea82ca3841bf9c2275ab45a2015fca91ba79b7bac50202ed"
+        },
+        {
+          "file": "tests/test_games_w4b.py",
+          "log_sha256": "3b6569e7132c0509f731128b8f4c39eabc6d417688a0fda2d02ba0f05cc83b73"
+        },
+        {
+          "file": "tests/test_games_w5_avalon.py",
+          "log_sha256": "1efd69ad6582a1258409ea25ee9acbbb2f8bd4833012eef779586928adcfee15"
+        },
+        {
+          "file": "tests/test_games_w5_liar.py",
+          "log_sha256": "bcaa5c311a95429b9811ab02b228b0b6e76f8c7f43257693e0f3f8b6acbd24ef"
+        },
+        {
+          "file": "tests/test_games_w5_ninja.py",
+          "log_sha256": "d26403ec694504e7969cecf47b94ff073cfcf2bd86600d15c3dc8fd86a8c0504"
+        },
+        {
+          "file": "tests/test_games_w5_onewolf.py",
+          "log_sha256": "1efd69ad6582a1258409ea25ee9acbbb2f8bd4833012eef779586928adcfee15"
+        },
+        {
+          "file": "tests/test_games_w5_werewolf.py",
+          "log_sha256": "1efd69ad6582a1258409ea25ee9acbbb2f8bd4833012eef779586928adcfee15"
+        },
+        {
+          "file": "tests/test_gameui_compact_controls.py",
+          "log_sha256": "436405957d7b3724a05b352717e3a4a0937283248bc2fcd7aab55beeb82b6dad"
+        },
+        {
+          "file": "tests/test_gameui_compact_gui.py",
+          "log_sha256": "ec77a074be2ed226ae59e148e61e114546a4c6b7cdedc86b16ee97ecc4049f3d"
+        },
+        {
+          "file": "tests/test_gate_boardgames.py",
+          "log_sha256": "854aa21c5e8bcf9e0e88c0625ddc2f8eb716f7fc789da16e2b9db3f4764d6f9a"
+        },
+        {
+          "file": "tests/test_gemcity_purchase.py",
+          "log_sha256": "6c670733c0714a939608a2a57f48c694bf451312022b6e3146a607a09cb6e175"
+        },
+        {
+          "file": "tests/test_global_search.py",
+          "log_sha256": "1d41e82514333916e11ed6114b8a3c7d6aa7a83c58704972f9be3c5357a00b65"
+        },
+        {
+          "file": "tests/test_go_size.py",
+          "log_sha256": "ab692c13a8748b0c1e967511385f98123c1cff94e0f81ed40cbb002a36ce3fe8"
+        },
+        {
+          "file": "tests/test_go_solo.py",
+          "log_sha256": "a23aaca44321374751b7ac26406c652ef64caec26fff2376c0215db9aa204f49"
+        },
+        {
+          "file": "tests/test_gomoku_fx.py",
+          "log_sha256": "5ef91212df65cc83f62517a8ba438f30768e6a5756228dc790a0bbc02701d4c6"
+        },
+        {
+          "file": "tests/test_gomoku_rules.py",
+          "log_sha256": "06e8a1ecb8036de545f1f73dfad4b48ba49efde27628991fecbe934119652bff"
+        },
+        {
+          "file": "tests/test_interaction_mode.py",
+          "log_sha256": "0cb2bdbabcbc8ddac2f31cb0ebc3d0e8bed02669d4de4d6c147c9d4c92a0a21d"
+        },
+        {
+          "file": "tests/test_invis.py",
+          "log_sha256": "7b570c8850d5a5d45de66141b7df69952431512334c5d2081a4c6611edec4a24"
+        },
+        {
+          "file": "tests/test_kalah_gui.py",
+          "log_sha256": "56f2d9fd8a94de165c1848f85eddc9e7924bbe8dae044be76b3720c5db0f8d88"
+        },
+        {
+          "file": "tests/test_kalah_input.py",
+          "log_sha256": "71cbb4d9f63a7d7a4456b54dcf221d88d2da961bd5b20f047f52a10f7e07246e"
+        },
+        {
+          "file": "tests/test_kalah_parameters.py",
+          "log_sha256": "2114034c2661bb51ba6119623deffcbb879a75a9106f8cfc7501c8ca1db0394b"
+        },
+        {
+          "file": "tests/test_kalah_terminal.py",
+          "log_sha256": "9338f7a1ceb12b1e3cff784f6964e93407e95efbc9192f460bf382130ff8eee9"
+        },
+        {
+          "file": "tests/test_kalah_web.py",
+          "log_sha256": "146d19e02d1378b105c1e5940aad665dab08e1f5c8544cf88ff5ed55ec290793"
+        },
+        {
+          "file": "tests/test_legal_hint_desktop.py",
+          "log_sha256": "642404456f3b209c232e9da78f30c010d7dcc57d0c7b83511e2c0c3028c3786d"
+        },
+        {
+          "file": "tests/test_legal_moves_a.py",
+          "log_sha256": "9b014d3818a800a270ec32003019787f8e49482ffaea708a8ed92b4b8f7ad414"
+        },
+        {
+          "file": "tests/test_legal_moves_b.py",
+          "log_sha256": "356c02df74ff05e656c0e9f24930b8a92e89b62ec50f8319a98034dcbb628bff"
+        },
+        {
+          "file": "tests/test_legal_moves_c.py",
+          "log_sha256": "9ecdc746bd42fe699c825065c594cb8293627ba24004a555fc5207165ef2c5d4"
+        },
+        {
+          "file": "tests/test_legal_moves_wire.py",
+          "log_sha256": "f44d48315587765e9c4d2aefd5414d5790d014ab992a457afa1b1fa1cb909790"
+        },
+        {
+          "file": "tests/test_local_trial_job_ownership.py",
+          "log_sha256": "c7c7b50e50e91071663e315c2fb3d81ac9332370321e0b5c9f6ffe287597505b"
+        },
+        {
+          "file": "tests/test_login_foreground.py",
+          "log_sha256": "b2bc16342fb503f6b5f84be812a9c87003dbaa2dcf79f436e5694308b43b92a4"
+        },
+        {
+          "file": "tests/test_login_visibility.py",
+          "log_sha256": "452d000f52bc9e4023ca63be4e4b68e1cf66fb35bbfec5e04b31f6627db9c011"
+        },
+        {
+          "file": "tests/test_ludo_rules.py",
+          "log_sha256": "c7e01c95cc8fb0936c063d309318f42b2ef7c6575dcc72733404f4dc1da8fc55"
+        },
+        {
+          "file": "tests/test_mini_timer_lifetime.py",
+          "log_sha256": "ed2f922ac224d1ec3f9478e6ba589603422805df012cf1a9865cfdb17b24bc60"
+        },
+        {
+          "file": "tests/test_msg_list.py",
+          "log_sha256": "c3b20a56dacea333a8bedb175caf15b87c3187fc1041d06e25278b1c9ad03144"
+        },
+        {
+          "file": "tests/test_msglist_group.py",
+          "log_sha256": "c42ac1cd152a0b2939ab169431772dda22be2a5c46b666148e95c5990be1cf67"
+        },
+        {
+          "file": "tests/test_multisession.py",
+          "log_sha256": "68565c2dc4ab145876d6a2e339963170dbdf1fa640eb5a86ba3000024fd59b95"
+        },
+        {
+          "file": "tests/test_othello_rules.py",
+          "log_sha256": "6fd199362623d2521feb1274661a67487e710bceb3c8344c5491fe4a8b05b053"
+        },
+        {
+          "file": "tests/test_p0_web_security.py",
+          "log_sha256": "7494b29caca255239c54653fb1cc6ec81b75b7944156f67538949008beeeb987"
+        },
+        {
+          "file": "tests/test_passcode_logic.py",
+          "log_sha256": "f7e3f7d69f010843c3e2b989b4630e527920cf0e55ebcd5bed125ef9d6375cc1"
+        },
+        {
+          "file": "tests/test_polish_round.py",
+          "log_sha256": "2fe2d6bf2eeae5b20ecabbfdd19356b54426d070ee762b8da686867661cd3fd5"
+        },
+        {
+          "file": "tests/test_prefs.py",
+          "log_sha256": "301e084cf644dbcce07014eb2d30f7ee2573d464e55c930936d11469aae5fff9"
+        },
+        {
+          "file": "tests/test_prefs_schema_audit.py",
+          "log_sha256": "174fe6eeccef2bc2113dba39be47d1f57b11055df0f59370e3f9016ef1e1ac57"
+        },
+        {
+          "file": "tests/test_privacy_leak.py",
+          "log_sha256": "64f3a97b10bf6b6bc12f15fe2177502752cd01e6dd1d2a88a1ae9d001130f905"
+        },
+        {
+          "file": "tests/test_protocol.py",
+          "log_sha256": "c8e9b216111119da97a643b594f9c354d22b858a7bb1cd71e1cdc76938ba59cb"
+        },
+        {
+          "file": "tests/test_r15_ghost.py",
+          "log_sha256": "476af3abcc632c5ad6c1fb1899a45c2138adc07bf15e4a16cb373feda63d2314"
+        },
+        {
+          "file": "tests/test_r25.py",
+          "log_sha256": "7e223118b294f83b9503d05e408af3ebbf52e830b72dada76110a87357fc345e"
+        },
+        {
+          "file": "tests/test_r26.py",
+          "log_sha256": "7978112a791f46b9d2791b736514f110cf84eb1e680eb92f34e4dd34297d1db1"
+        },
+        {
+          "file": "tests/test_r27.py",
+          "log_sha256": "e3b20380849650f6cdb2962733b987a46a6e815c228328ea81043880db4059e4"
+        },
+        {
+          "file": "tests/test_r28_group_mgmt.py",
+          "log_sha256": "b5d3ad04ec28133911e49ef927c32ac7cb3b059e14a84b2519bd90c0b8581eb3"
+        },
+        {
+          "file": "tests/test_r29.py",
+          "log_sha256": "fe49b6fb92570aec3307be762a9ca8507ca5ef9233dd4c80093e34defe34f1d9"
+        },
+        {
+          "file": "tests/test_r30.py",
+          "log_sha256": "5c1039606628f38c8d732f1bc71309f26c2dbb7b43f2f58f96645864f020fc46"
+        },
+        {
+          "file": "tests/test_r32.py",
+          "log_sha256": "818a8b517f5d55e43f6f66198fd95777db5e6f984d2232ffc6d39ede1dd0422e"
+        },
+        {
+          "file": "tests/test_r33.py",
+          "log_sha256": "97195f43314f9d6388983c6ce52aa89ec4b0b6f4385f4b82283ac373c8134d23"
+        },
+        {
+          "file": "tests/test_r34.py",
+          "log_sha256": "04c60765baf104e8afa336a2e7e849e9c10e57c051bae6e815b23f5d910ce9f0"
+        },
+        {
+          "file": "tests/test_r35.py",
+          "log_sha256": "1f573f76c4bceb505d20213b5190fdf16b6618ae6317506f11edaf9c41db1749"
+        },
+        {
+          "file": "tests/test_r36.py",
+          "log_sha256": "199b12acab08868047feb1b63549e689671a80e88a614d0ca2793fa4ade02cc0"
+        },
+        {
+          "file": "tests/test_r37.py",
+          "log_sha256": "b9f21a1eb78b0ec8e5ba753a2a41f610448bcc57a4604f0fae10cf00a726aced"
+        },
+        {
+          "file": "tests/test_r38.py",
+          "log_sha256": "99966f734750705d6d1904681855f4c2b836a520add9220ec62be9299b86ed16"
+        },
+        {
+          "file": "tests/test_r39a.py",
+          "log_sha256": "920931882ddf5b0ec28a528d3d9e1e4267cbbaf18ef72f10f5f05eaa22805744"
+        },
+        {
+          "file": "tests/test_r39b.py",
+          "log_sha256": "fc8da65e7542a9e4c432cf159f0edae3d928afd59cd0d0cf6ef23ded62e58c20"
+        },
+        {
+          "file": "tests/test_r39c.py",
+          "log_sha256": "6f7ae827576da429f3dd734a1af36a04bcd7e828831028fa082b64738d6a5f9a"
+        },
+        {
+          "file": "tests/test_r39d.py",
+          "log_sha256": "85a412e92e0d9f489483cfb2f72049b2115e4617cbc4dd7d7478c6c872080b1c"
+        },
+        {
+          "file": "tests/test_r41.py",
+          "log_sha256": "8bf4cab4dcf5a10a0573c1ddb8854f61f231cbb32517092512e4fca5181bb5be"
+        },
+        {
+          "file": "tests/test_r41g.py",
+          "log_sha256": "9fd3ca8fee272d45d2216bb48f5123257f5b2b0f2c29cb4437fc1484fad1577c"
+        },
+        {
+          "file": "tests/test_r42.py",
+          "log_sha256": "87e3a1131fa276986a753734c97611752347f8d206925cf9f5492c750f4ecb3d"
+        },
+        {
+          "file": "tests/test_r43a.py",
+          "log_sha256": "4c49637d852c87a7fee1089154749b9e188f5cd1175d7ef088aa1a575004f628"
+        },
+        {
+          "file": "tests/test_r43b.py",
+          "log_sha256": "d3fc71cb8b270b7e16e0262de035dbe827c753c0e0018db0a2d2cd55d83f78c7"
+        },
+        {
+          "file": "tests/test_r43c.py",
+          "log_sha256": "f8e95087bf757a8661f89fc142e28da63cdeb2fbb2f8ffb03250b9ae973c39b5"
+        },
+        {
+          "file": "tests/test_r44.py",
+          "log_sha256": "aae9036b981a6f8b93fc76e2b1edd301bfc7befe8ed0b5577f7d52182f1ff926"
+        },
+        {
+          "file": "tests/test_r45.py",
+          "log_sha256": "26342367c796e6a9878c9e68f622bb24843773346a368f62af5643eed31afbf4"
+        },
+        {
+          "file": "tests/test_r46.py",
+          "log_sha256": "26eaab2d453740039f1d0b50c8b1299fe97ad521cbed55910fcf626caae94485"
+        },
+        {
+          "file": "tests/test_r46b_web_fix.py",
+          "log_sha256": "a548014408a993f63f8f299e5a72ce7176ddabeba2303c7cf2581e4d586de633"
+        },
+        {
+          "file": "tests/test_r47.py",
+          "log_sha256": "8b9370780679e7422fc7a7da509b85ddabd312aac37d21ae1afd8ed2d7660e4a"
+        },
+        {
+          "file": "tests/test_r49.py",
+          "log_sha256": "c93b9e54baed78b5644e720e2e64a5dbecc66c141b8507d606d4a8260d39ef04"
+        },
+        {
+          "file": "tests/test_r51.py",
+          "log_sha256": "b9676fa1c1c0aed6cd9394d3eb099ef89f63c7a6e2e832cf6ec2d9c38517b2f1"
+        },
+        {
+          "file": "tests/test_r52.py",
+          "log_sha256": "7ea1527816990cac75b75415f132ad10a4fd94bc42177021a4d32e06e6511abe"
+        },
+        {
+          "file": "tests/test_r53.py",
+          "log_sha256": "64956726b82a45a910ef4977965028ee8013dc0ae54c3b60019d29d064114876"
+        },
+        {
+          "file": "tests/test_r54.py",
+          "log_sha256": "613272c8c1acb6df0561d832705e019cf6a0e92134193d0545a7ba2197e25af9"
+        },
+        {
+          "file": "tests/test_r61_features.py",
+          "log_sha256": "054b27640f302b657da25090156095a2b0359698e9ca2082bf0730e085649595"
+        },
+        {
+          "file": "tests/test_r64_paste_snip.py",
+          "log_sha256": "aaff6d964a6bda120cc3b603f0b5ff7cf8bc24a4b37d282f7c16e7eaedb91422"
+        },
+        {
+          "file": "tests/test_r64_sticker_packs.py",
+          "log_sha256": "e15725643b12653d5388dfed55259b527f7f6bfd8fb6926720bc5c10656a625c"
+        },
+        {
+          "file": "tests/test_r65_web_sticker_packs.py",
+          "log_sha256": "3e10e6bc4f1b7c9aea7e88e61a37d7f2ff908048978dd07f09965e86816b8af6"
+        },
+        {
+          "file": "tests/test_r69.py",
+          "log_sha256": "7d66012d1232cd4bd76405a26e1847d967540ac4795cecf4bada1765bc13f4ff"
+        },
+        {
+          "file": "tests/test_r70.py",
+          "log_sha256": "0fd245abbfa337e9f17e0743f2e63a78aa0afd3abed3ec1be8f05ab8d7c507a5"
+        },
+        {
+          "file": "tests/test_r71.py",
+          "log_sha256": "8d812c405084af023d3b1a5fa1586ca0c1dd0fdea4dd09434c6948724c1c84f3"
+        },
+        {
+          "file": "tests/test_r72.py",
+          "log_sha256": "59e6bd2bda4adffb4ae361d04bd6b14fbe4f03b44b22d4f702c481a099badc41"
+        },
+        {
+          "file": "tests/test_r73.py",
+          "log_sha256": "ec24c36e36e0cd93a0421d9586603e32c4b11a4e445e57c23c986f165ada83ff"
+        },
+        {
+          "file": "tests/test_rel01_local_trial.py",
+          "log_sha256": "2fb88e8b13b77b26507339d6385206fd5bbcaf7c7d9fd7acab734a686aea04df"
+        },
+        {
+          "file": "tests/test_resource_manifest_numbers.py",
+          "log_sha256": "099d541d80a19e9dc3a1699d5654d8bffc9cd895d8d8143b1b4de78550b96817"
+        },
+        {
+          "file": "tests/test_retire_recovery_cli.py",
+          "log_sha256": "2feb471e6aeef23ef9eafeb939e746997e880d91dfadb29bc694e38133398753"
+        },
+        {
+          "file": "tests/test_retire_recovery_client.py",
+          "log_sha256": "7f0eda307de2b3f1b57e5877f1dcbf529788621e05e2b1d49289ae0df3155d9a"
+        },
+        {
+          "file": "tests/test_retire_recovery_control_faults.py",
+          "log_sha256": "46123987267099f0dd012759920aed4d2ee827e4fac2b6753d5799138474376b"
+        },
+        {
+          "file": "tests/test_retire_recovery_gate_io.py",
+          "log_sha256": "3dd5fe1cbcd96302aa2ec85d0885693195b6ce4dfd623dbeb664ddf779f37ee2"
+        },
+        {
+          "file": "tests/test_retire_recovery_hub.py",
+          "log_sha256": "a0f20e16b92329c28085f2901a6f67fa35969a69d8bcd0143144de562ee6e6a0"
+        },
+        {
+          "file": "tests/test_retire_recovery_identity.py",
+          "log_sha256": "23fea023af16c73c197fa471664d76cb98c63320bcb914b30e9cfcef3e9b6bad"
+        },
+        {
+          "file": "tests/test_retire_recovery_lifecycle.py",
+          "log_sha256": "f81e075efebf8ea7f042644de7a67ec69ec872b4470235d7d6b2d70a3ed3b455"
+        },
+        {
+          "file": "tests/test_retire_recovery_process_faults.py",
+          "log_sha256": "4a1b3455dbaba98583494c60702e1555f57337cea76a09932510c5e6df7d178b"
+        },
+        {
+          "file": "tests/test_retire_recovery_publish_io.py",
+          "log_sha256": "590d378a15a59124f3d82ca0531b5085a754df539d9a6c951008f55baf0c190d"
+        },
+        {
+          "file": "tests/test_retire_recovery_reconcile.py",
+          "log_sha256": "fee1dd1858351fcb335251a8893c4c554c35a3890484139152e1ca2a3c6b0407"
+        },
+        {
+          "file": "tests/test_retire_recovery_resources.py",
+          "log_sha256": "e5fb06b46e343816e8fe5bf902f6723f355f7fb4cd91488cab703cc06976b7a2"
+        },
+        {
+          "file": "tests/test_retire_recovery_store.py",
+          "log_sha256": "227e7ce0033403695a99c40691727e3c5c88262f384b4a675801e5ebecb9f7fc"
+        },
+        {
+          "file": "tests/test_retirement_status.py",
+          "log_sha256": "516485ecf1f542ee2598df3e0624ab04944cebed011d70173f698e811e9af445"
+        },
+        {
+          "file": "tests/test_retirement_status_gui.py",
+          "log_sha256": "6ac7920717510012714809fe84da8c8766b0c65cc97df8402d51b0edba6efbfb"
+        },
+        {
+          "file": "tests/test_retirement_status_wire.py",
+          "log_sha256": "4e04b698061d6475822ff54bd3741df4639ad3ea07bf02492f0d089358f879d9"
+        },
+        {
+          "file": "tests/test_room_icon_lifecycle.py",
+          "log_sha256": "1b6089201a5d284db482974bd257435dd87674bc0205339d2e02cfee68cbeccf"
+        },
+        {
+          "file": "tests/test_rooms.py",
+          "log_sha256": "d26795b10077ae50bd3980cb1790768a89a445c6e951f3b481c8578bff38f1f9"
+        },
+        {
+          "file": "tests/test_rule_gaps_a.py",
+          "log_sha256": "4b2189107e3aecd9740e7d7fb00a71b83a9238f3e2a5320fb86c4d8f91bc6636"
+        },
+        {
+          "file": "tests/test_rule_gaps_b.py",
+          "log_sha256": "89f7318af809e4fe212fad530ed236f7a7e3a4dda0bc1075928fae991b6391ec"
+        },
+        {
+          "file": "tests/test_rule_gaps_c.py",
+          "log_sha256": "0751c87019b89b0434ad9598d11813b4bdab7cd5aa296c89eda3267cc8586670"
+        },
+        {
+          "file": "tests/test_rule_gaps_d.py",
+          "log_sha256": "8a4c40de4d2b879aad75d46f5f706ec0d5a2da90c78d2e8a5a4c6968b4e4a324"
+        },
+        {
+          "file": "tests/test_rummikub_selection.py",
+          "log_sha256": "b0acdafb6e3196f3f5bde90f29bde6367e90b2dab2e8cd3eb4229bde0d9d7aa2"
+        },
+        {
+          "file": "tests/test_runs.py",
+          "log_sha256": "a1409f9d6b2189ec07ad1af1b02554c44c7051226e87fe1e61ad31c8fb54c6fc"
+        },
+        {
+          "file": "tests/test_server.py",
+          "log_sha256": "5be1d132155296ebbdec6e615f0a010f11e86490cfb82b97107cfa2f4b430c78"
+        },
+        {
+          "file": "tests/test_server_game_lifecycle.py",
+          "log_sha256": "3e0a9308c54e7d3102fc9ddd63d03118986eceab4b6bfa7987f52df3e39b00df"
+        },
+        {
+          "file": "tests/test_server_games.py",
+          "log_sha256": "6cca0c55fc781291f57a7ebceb91d9f81ad7f29b00ab0646b80524226e1cb338"
+        },
+        {
+          "file": "tests/test_session_cleanup.py",
+          "log_sha256": "0c7880b1031e65a5fe0498cb0fb3ce8984c4888289891fca2cad211b4b8b3687"
+        },
+        {
+          "file": "tests/test_session_list.py",
+          "log_sha256": "fee8704b695d62033b116723e022a1664c014b3808602db4b731396ba9bc5f83"
+        },
+        {
+          "file": "tests/test_settings_nav.py",
+          "log_sha256": "cf802f9b4bee8de81e332c8bb92edcc0e3c247fd8caab896b74a05dff467882a"
+        },
+        {
+          "file": "tests/test_shell_components.py",
+          "log_sha256": "d377223f0e89124918d60b8e8e23a06cb8e85dc68a8abc6ca70a5b3448f065bf"
+        },
+        {
+          "file": "tests/test_shortcuts.py",
+          "log_sha256": "ba117163b6949c1a9728a84a28389ea751ecb8dc84b9e89e5173100b1e1f0f6d"
+        },
+        {
+          "file": "tests/test_stars_preserve.py",
+          "log_sha256": "bae110cf14580061ca69a46f91a4ea9303942a82a8cc2aee8d742b5ffb0a6d6c"
+        },
+        {
+          "file": "tests/test_test_gate.py",
+          "log_sha256": "b25facaf04510e0347c757b19ad4d50095820fe649f9bdcce668e772bd052b97"
+        },
+        {
+          "file": "tests/test_test_gate_safety.py",
+          "log_sha256": "0076a6512c962b4e3c3cdfaa1222d1f145691fcd20c4628f1643293dd6095eee"
+        },
+        {
+          "file": "tests/test_test_gate_skips.py",
+          "log_sha256": "4609fbace0b04f98dc6593d26da244c94e0c1d0b62ca91de28c05392662ba4b1"
+        },
+        {
+          "file": "tests/test_test_runner_exitcodes.py",
+          "log_sha256": "26c466777e7857739586a4b11cba9f4c8fa5d58fe3b2ef789fa3a408810879a9"
+        },
+        {
+          "file": "tests/test_theme.py",
+          "log_sha256": "4dd269bbcb7bc29822ef659a2e1594358c00007d2c901f30a23ebe59131fb525"
+        },
+        {
+          "file": "tests/test_ux_repair.py",
+          "log_sha256": "86fd7442e1b3cdedd7561d9603786fb7a0fcbb526edfe978ee9c932e58c52359"
+        },
+        {
+          "file": "tests/test_ux_visual_chat_design.py",
+          "log_sha256": "c463de96db76f8c370b043267e21df6bd8871df975e34b555e5b6a70ae59cc77"
+        },
+        {
+          "file": "tests/test_ux_visual_chat_dpi.py",
+          "log_sha256": "164f9ba46f84c62945f00cbdd8d48a053147302dfaa0b6bbd5c88712aca8867f"
+        },
+        {
+          "file": "tests/test_ux_visual_chat_regressions.py",
+          "log_sha256": "3a5c341c5779cf2ac41e098d5a84994d4a057946c472f188e53b2c107278853a"
+        },
+        {
+          "file": "tests/test_ux_visual_chat_shots.py",
+          "log_sha256": "d8e2582241340a413ea37502fbe1a62b8a22d2bf7933104b21d0aa1b9be9bda1"
+        },
+        {
+          "file": "tests/test_ux_visual_chat_web.py",
+          "log_sha256": "cac8f2444c91387fbd4c6b3dfeebcac4afaf6000faff0f8746230c740f460d7a"
+        },
+        {
+          "file": "tests/test_visual_screenshot.py",
+          "log_sha256": "3f0e8c1d753fa2a483980b5d3e7f006447211d6615cde69061a0d56257a99f60"
+        },
+        {
+          "file": "tests/test_web_boardgame_assets.py",
+          "log_sha256": "659c7916385f9bf454612dce08b810e349e74aa5f302261e307679558d8e36b9"
+        },
+        {
+          "file": "tests/test_web_group_read.py",
+          "log_sha256": "f13502c364c7c5981599f49b51ae86b9bcde2070ec75fb61ff1b7aa15833cd9f"
+        },
+        {
+          "file": "tests/test_web_logout.py",
+          "log_sha256": "2b326101cedd451ef97825a6024310b8bc59754c3586ea53b7ea94be449cfd0e"
+        }
+      ],
+      "seconds_meaning": "Resumed segment only; see same_run_recovery for wall time"
+    }
+  },
+  "full_logs": [
+    {
+      "file": "tests/test_account_credential_commit.py",
+      "counts": {
+        "passed": 10
+      },
+      "log_sha256": "c5e92c3b2a517ea5b5efee8202349902da8106f91564aae2e62bc8b76abd29b4",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_account_credential_contracts.py",
+      "counts": {
+        "passed": 32
+      },
+      "log_sha256": "0efdd83b276b2aaf558598912c5f1e87bd64ec23eba849f1ae17ce089d8519f8",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_account_credential_file_failures.py",
+      "counts": {
+        "passed": 2
+      },
+      "log_sha256": "71da5511ac3d813f05195b835fb5704c89b991ad8a546b68a30f084c33d0cc00",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_account_credential_regressions.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "22da45629a01bd45e44e116d1e7be6e9559b402af56f5eafca5aa0c84e51a58f",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_account_credential_transactions.py",
+      "counts": {
+        "passed": 22
+      },
+      "log_sha256": "7e6addfb660d8e29b5862fb19f9d5027a8066a4195d43ff8eaf9161691812f81",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_account_credential_wire.py",
+      "counts": {
+        "passed": 17
+      },
+      "log_sha256": "5beedd443bc0f63544128a80bdb42a80d4db0d4efd462e64f5644f10d0f60fcd",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_admin_credentials.py",
+      "counts": {
+        "passed": 24
+      },
+      "log_sha256": "9da765718ae1c7cc3fadb4a0ee4f477ba9eb858de89ba90b8b09c8266ee91095",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_admin_groups.py",
+      "counts": {
+        "passed": 14
+      },
+      "log_sha256": "315adafe6ecc618e803d3e25f29e798a413f7fb10a0576a46d1b1ac100943bd6",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_admin_groups_web.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "d7de70297722eb0d7d0059a0b7c9ce1c8500ead8c404ee50e305dc71ba20e0d7",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_artkit.py",
+      "counts": {
+        "passed": 16
+      },
+      "log_sha256": "b45c8157cd9538f1194a069fdff2debb83b1efbfc39728108aebde091011ed9e",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_audit_audio_callbacks.py",
+      "counts": {
+        "passed": 3
+      },
+      "log_sha256": "89343a492c88de438b2995d56f91757591611c6ae2e89118280693a0177d58b3",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_audit_e2ee_limits.py",
+      "counts": {
+        "passed": 3
+      },
+      "log_sha256": "98797cbac84ee269c692db47ff9098abf976c5e269dfc5e68b53b97ed9dce383",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_audit_file_auth.py",
+      "counts": {
+        "passed": 18
+      },
+      "log_sha256": "f1125a5262e2e0d9dd4a8d4a4a552483b47591843c0ff279cfbe8c3cec5808e0",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_audit_moment_images.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "1591b71dc003d4e209e5612b428180c6122bbf2345b5b2c7e02096bb1bc45f98",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_audit_preview.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "e8c2a1790dcd00aee5c4fa2eb7256210074c4a7b9f79a63e63aa5283bc349017",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_audit_server_security.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "9df735d9fa1db1ae06b0ce3e008a88182152b817172dc280790bce307c3dfab8",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_auth.py",
+      "counts": {
+        "passed": 7
+      },
+      "log_sha256": "0f0618824cb495ff18236d05dde98ba592b8220368ff17ec491df7baef164074",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_azul_drag.py",
+      "counts": {
+        "passed": 44
+      },
+      "log_sha256": "facc1a9e6d814a98af7be90c249bbbbc788bb68809c117e15d112dcc7f959ec0",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_azul_package_assets.py",
+      "counts": {
+        "passed": 25
+      },
+      "log_sha256": "fa965978fe7322f9477cdcf092e8ccd7e2736c0ce002ed19b5f25c224bba9856",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_azul_rules.py",
+      "counts": {
+        "passed": 16
+      },
+      "log_sha256": "9b014d3818a800a270ec32003019787f8e49482ffaea708a8ed92b4b8f7ad414",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_batch2_rules.py",
+      "counts": {
+        "passed": 10
+      },
+      "log_sha256": "aee98a15420bd28843e8a3965b1f5ccc014a4bd59daf8d14263cffc4cae4bb58",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_batch3_rules.py",
+      "counts": {
+        "passed": 11
+      },
+      "log_sha256": "64d490aa699d3e095b5a7b1d2d7a606186ab85e9c887bcb5b5a14a5765e3c752",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_batch4a_rules.py",
+      "counts": {
+        "passed": 23
+      },
+      "log_sha256": "d55bad0005da44c420a85cb393734a06584b29e2a47176952aaa1143026f5b30",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_batch4b_rules.py",
+      "counts": {
+        "passed": 23
+      },
+      "log_sha256": "d55bad0005da44c420a85cb393734a06584b29e2a47176952aaa1143026f5b30",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_batch4c_rules.py",
+      "counts": {
+        "passed": 30
+      },
+      "log_sha256": "ab509c91d9cfcd70790c6dc0931396178db3896d9c5b1b2eb79670dc45f5e3e1",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_batch4d_rules.py",
+      "counts": {
+        "passed": 35
+      },
+      "log_sha256": "7e4db162573ac313c2c06b9a729ed7b451d11f03bffe71ee9d2dfc670460b279",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_betrayal.py",
+      "counts": {
+        "passed": 11
+      },
+      "log_sha256": "89d84363b6abbf9952f34d956789894c4f690b0e4c63ee8db412fd584568caee",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_blokus_rules.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "b3ff4f782702364307922e4600cff5417a5c94ab4601f181286fe8b91fb29f1e",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_board_geom.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "be4b543a72b079f58eeea785d8df444f11e661ba3c3cf0d8235b9c00ee12e97b",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_boardgame_asset_img.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "3868ba31b9fb8e415d427c957501a720488472805f7b9512f10c017cef66bdb2",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_boardgame_assets.py",
+      "counts": {
+        "passed": 3
+      },
+      "log_sha256": "4e50020dfc04d371f83dca66990ab74d6674d497c347de5dcddcd6dbb9ca57be",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_c9_group.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "99f460773912d7b28b97c3f3ae3e1e7cd1c55c30a2a90af02a9f740ce2ac0ed0",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_cc02_retire_core.py",
+      "counts": {
+        "passed": 20
+      },
+      "log_sha256": "6170f8e9626bdd036641999c46acdd7d6ffa2404005f201fb51ec255e345d11c",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_cc02_store_min.py",
+      "counts": {
+        "passed": 27
+      },
+      "log_sha256": "7b5a516d844126481fceb9f2c79a81bb12199ee29f1686dd2853ff4ec7954603",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_cc02_store_receipt.py",
+      "counts": {
+        "passed": 80
+      },
+      "log_sha256": "476c2cf0490e5e0c3f53ec97d02a492e8cb818b4c0fbf89ebdbe367b8c063008",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_cc02a_client_kick.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "ee8f4ddc0a6ccd51f8fa6a6039adf7880c5af62da976faf281714a51064eed11",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_cc02a_kick.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "214b2f2033681d53673f5433831339d89e7a48d713a6a44e9af5057df9e29844",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_cc02a_profile.py",
+      "counts": {
+        "passed": 2
+      },
+      "log_sha256": "b50d6bdc175f9e184da7a4646f61cb17e25f4fdca62e713cccfb9441f256614e",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_cc02a_restore.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "3de2cfe9190a2ee16d95d1c629642756a077cadd26a616c0b43c4cb64e436453",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_cc02a_web_kick.py",
+      "counts": {
+        "passed": 1
+      },
+      "log_sha256": "b1b6b6e955b7c0dda5203a77fe31e4a3c17077ae5b8765f1fdb252d5c522a35c",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_cc02c_resource_async.py",
+      "counts": {
+        "passed": 14
+      },
+      "log_sha256": "284952bc9054d0403d5e2313fc05dd84a785eed6af8382fe0340872be0b625b9",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_cc02c_resource_files.py",
+      "counts": {
+        "passed": 41
+      },
+      "log_sha256": "45556e99e3e2b17ae66722dc9b8510cd14d6e43e715cb0ba2ef4d8f7a3f0fe59",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_cc02c_resource_integration.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "c1576db6c41dc7e32aa8357ce93fa63c677685be7d986c8a9dabba684df1ca0d",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_checkers_rules.py",
+      "counts": {
+        "passed": 10
+      },
+      "log_sha256": "60738f70dec0c9b02ae57bb066a73b913e49ba391365911aec7738bf6e429ed0",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_client_core.py",
+      "counts": {
+        "passed": 33
+      },
+      "log_sha256": "0f919dc0b96f02586196cbc0ac3725196535e18d27eb3ce2d06f52af4e639f13",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_config_crashlog.py",
+      "counts": {
+        "passed": 1
+      },
+      "log_sha256": "85e10415ad73f4d61a8714b9917f3fd220ee0e5cbcb555a1ae80b7f1bf9cb8ab",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_crypto.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "9d002306b5334fa98e9280210368581b5ab22f2c03705af9e2f86a86a9883118",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_discovery.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "8de84ac955ace913f0630fa2efe4fc394fa4b99c6fd2079b5ec5bacb643081a7",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_drafts.py",
+      "counts": {
+        "passed": 13
+      },
+      "log_sha256": "89f5b119d260ff3b8ed634ff5612eb7e212b27db96f77a12fc24b74c3aab7bcb",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_excel_sheet.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "bef1e1293e86ea851411ed66a8264ffcd36b8e21d062b50e917807860d9d68bc",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_excel_skin.py",
+      "counts": {
+        "passed": 2
+      },
+      "log_sha256": "87a5d7deb053aca11a93276e647871877212040f34a54f3d63c55e7792074e86",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_filexfer.py",
+      "counts": {
+        "passed": 7
+      },
+      "log_sha256": "7296a481ec573413faa63e1a9c7bda678c377e394463a10771b5e5c3fec24a97",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_fix_deadlock_selfcheck.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "2f77ac61f747dea58928b6f852f56bf20da1142fc442cb4c6464ca69308a0255",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_flagship_board.py",
+      "counts": {
+        "passed": 43
+      },
+      "log_sha256": "764bc59c0fe1334ac30a31ff807155bd76c5505b3bb7ae2bf866bbc648627f81",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_flagship_game_wire.py",
+      "counts": {
+        "passed": 3
+      },
+      "log_sha256": "984be1e2526c627ad092e94c7e57257b6067fedc3cbe01df6f0590d0e7ce557b",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_flagship_gui.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "a476793786eeb3ebd956eec651c3f6be12801c2c039fe2a9a653a571eb81272a",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_friend_trial_start.py",
+      "counts": {
+        "passed": 36
+      },
+      "log_sha256": "3f5965c854e761309ddd810aa9b39db9d01d715ee824ddff22782f7b44f1bdec",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_fwd_media.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "4fb8eed0ef009d86faf19a01613a29ac1353271255ee0c31cb4da826216f6b12",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_game_client_lifecycle.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "c5f488af6339c9060d4fc19eae79911004cd56f4ffda4a20b5606c5eb1110931",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_game_lifecycle.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "6fd199362623d2521feb1274661a67487e710bceb3c8344c5491fe4a8b05b053",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_game_owner_recovery.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "c1b78183c99c303d11614953ab5cbf6a271b8b02e9a62fde181df0e2440b8c39",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_game_packages.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "4aff0d243a3c7bb8b3ff0d798d1dd7e8ec41328c0dd24e032198723d5e3da1cf",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_game_shell_pal.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "7784827e96ce475c3203b816a2f9486195a2dc2e19d6a7c1d0baaf4431ca545d",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_game_shell_wiring.py",
+      "counts": {
+        "passed": 1
+      },
+      "log_sha256": "edfbe512ab5943799cf48447d110ec71dc2a90f7b8e906f1ba9c86ccf7b8a94e",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_game_window_timer_lifetime.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "f78092f90a248c37f69a37540ce89958a2bd2f802f3e5040c032b1ce48918fde",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games.py",
+      "counts": {
+        "passed": 21
+      },
+      "log_sha256": "9d85938b18f0b19320322c944b571cead63093a02bb5103e3d26a90cf5664d60",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_coc.py",
+      "counts": {
+        "passed": 30
+      },
+      "log_sha256": "d1c3584c9ae5969c07791f7b364dc5aa93f4bcd728d098b2fa770e3fa63e1236",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_euro.py",
+      "counts": {
+        "passed": 17
+      },
+      "log_sha256": "0751c87019b89b0434ad9598d11813b4bdab7cd5aa296c89eda3267cc8586670",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_new.py",
+      "counts": {
+        "passed": 16
+      },
+      "log_sha256": "a8964e4b9662d2f62b7bbddf721d8f9a7b46dd08d38fb8fdc211e347e6ac56ce",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_w1_new.py",
+      "counts": {
+        "passed": 14
+      },
+      "log_sha256": "1589b5134ee55d1dcc578af9a906c01e57e20655d794dd4bd55a114a8a1d97cc",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_w2_logic.py",
+      "counts": {
+        "passed": 19
+      },
+      "log_sha256": "7c7cedddf5fa2c283784feaa92679b1bf4a7e6aa671c6d242c90c798fe07f184",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_w3.py",
+      "counts": {
+        "passed": 17
+      },
+      "log_sha256": "53e04222182e30f77c03d53abcb78530c3ea11c73c326bfb131184de3bcebd32",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_w3_rooms.py",
+      "counts": {
+        "passed": 7
+      },
+      "log_sha256": "460269d001961146d9e801b359cfd363fa63ed3ce7ea056072de32d86f00f692",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_w4.py",
+      "counts": {
+        "passed": 23
+      },
+      "log_sha256": "65392c56d1532c00ea82ca3841bf9c2275ab45a2015fca91ba79b7bac50202ed",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_w4b.py",
+      "counts": {
+        "passed": 15
+      },
+      "log_sha256": "3b6569e7132c0509f731128b8f4c39eabc6d417688a0fda2d02ba0f05cc83b73",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_w5_avalon.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "1efd69ad6582a1258409ea25ee9acbbb2f8bd4833012eef779586928adcfee15",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_w5_liar.py",
+      "counts": {
+        "passed": 11
+      },
+      "log_sha256": "bcaa5c311a95429b9811ab02b228b0b6e76f8c7f43257693e0f3f8b6acbd24ef",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_w5_ninja.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "d26403ec694504e7969cecf47b94ff073cfcf2bd86600d15c3dc8fd86a8c0504",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_w5_onewolf.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "1efd69ad6582a1258409ea25ee9acbbb2f8bd4833012eef779586928adcfee15",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_games_w5_werewolf.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "1efd69ad6582a1258409ea25ee9acbbb2f8bd4833012eef779586928adcfee15",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_gameui_compact_controls.py",
+      "counts": {
+        "passed": 26
+      },
+      "log_sha256": "436405957d7b3724a05b352717e3a4a0937283248bc2fcd7aab55beeb82b6dad",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_gameui_compact_gui.py",
+      "counts": {
+        "passed": 3
+      },
+      "log_sha256": "ec77a074be2ed226ae59e148e61e114546a4c6b7cdedc86b16ee97ecc4049f3d",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_gate_boardgames.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "854aa21c5e8bcf9e0e88c0625ddc2f8eb716f7fc789da16e2b9db3f4764d6f9a",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_gemcity_purchase.py",
+      "counts": {
+        "passed": 21
+      },
+      "log_sha256": "6c670733c0714a939608a2a57f48c694bf451312022b6e3146a607a09cb6e175",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_global_search.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "1d41e82514333916e11ed6114b8a3c7d6aa7a83c58704972f9be3c5357a00b65",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_go_size.py",
+      "counts": {
+        "passed": 10
+      },
+      "log_sha256": "ab692c13a8748b0c1e967511385f98123c1cff94e0f81ed40cbb002a36ce3fe8",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_go_solo.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "a23aaca44321374751b7ac26406c652ef64caec26fff2376c0215db9aa204f49",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_gomoku_fx.py",
+      "counts": {
+        "passed": 33
+      },
+      "log_sha256": "5ef91212df65cc83f62517a8ba438f30768e6a5756228dc790a0bbc02701d4c6",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_gomoku_rules.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "06e8a1ecb8036de545f1f73dfad4b48ba49efde27628991fecbe934119652bff",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_interaction_mode.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "0cb2bdbabcbc8ddac2f31cb0ebc3d0e8bed02669d4de4d6c147c9d4c92a0a21d",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_invis.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "7b570c8850d5a5d45de66141b7df69952431512334c5d2081a4c6611edec4a24",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_kalah_gui.py",
+      "counts": {
+        "passed": 2
+      },
+      "log_sha256": "56f2d9fd8a94de165c1848f85eddc9e7924bbe8dae044be76b3720c5db0f8d88",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_kalah_input.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "71cbb4d9f63a7d7a4456b54dcf221d88d2da961bd5b20f047f52a10f7e07246e",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_kalah_parameters.py",
+      "counts": {
+        "passed": 58
+      },
+      "log_sha256": "2114034c2661bb51ba6119623deffcbb879a75a9106f8cfc7501c8ca1db0394b",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_kalah_terminal.py",
+      "counts": {
+        "passed": 18
+      },
+      "log_sha256": "9338f7a1ceb12b1e3cff784f6964e93407e95efbc9192f460bf382130ff8eee9",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_kalah_web.py",
+      "counts": {
+        "passed": 1
+      },
+      "log_sha256": "146d19e02d1378b105c1e5940aad665dab08e1f5c8544cf88ff5ed55ec290793",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_legal_hint_desktop.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "642404456f3b209c232e9da78f30c010d7dcc57d0c7b83511e2c0c3028c3786d",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_legal_moves_a.py",
+      "counts": {
+        "passed": 16
+      },
+      "log_sha256": "9b014d3818a800a270ec32003019787f8e49482ffaea708a8ed92b4b8f7ad414",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_legal_moves_b.py",
+      "counts": {
+        "passed": 18
+      },
+      "log_sha256": "356c02df74ff05e656c0e9f24930b8a92e89b62ec50f8319a98034dcbb628bff",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_legal_moves_c.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "9ecdc746bd42fe699c825065c594cb8293627ba24004a555fc5207165ef2c5d4",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_legal_moves_wire.py",
+      "counts": {
+        "passed": 1
+      },
+      "log_sha256": "f44d48315587765e9c4d2aefd5414d5790d014ab992a457afa1b1fa1cb909790",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_local_trial_job_ownership.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "c7c7b50e50e91071663e315c2fb3d81ac9332370321e0b5c9f6ffe287597505b",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_login_foreground.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "b2bc16342fb503f6b5f84be812a9c87003dbaa2dcf79f436e5694308b43b92a4",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_login_visibility.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "452d000f52bc9e4023ca63be4e4b68e1cf66fb35bbfec5e04b31f6627db9c011",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ludo_rules.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "c7e01c95cc8fb0936c063d309318f42b2ef7c6575dcc72733404f4dc1da8fc55",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_mini_timer_lifetime.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "ed2f922ac224d1ec3f9478e6ba589603422805df012cf1a9865cfdb17b24bc60",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_msg_list.py",
+      "counts": {
+        "passed": 25
+      },
+      "log_sha256": "c3b20a56dacea333a8bedb175caf15b87c3187fc1041d06e25278b1c9ad03144",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_msglist_group.py",
+      "counts": {
+        "passed": 9
+      },
+      "log_sha256": "c42ac1cd152a0b2939ab169431772dda22be2a5c46b666148e95c5990be1cf67",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_multisession.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "68565c2dc4ab145876d6a2e339963170dbdf1fa640eb5a86ba3000024fd59b95",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_othello_rules.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "6fd199362623d2521feb1274661a67487e710bceb3c8344c5491fe4a8b05b053",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_p0_web_security.py",
+      "counts": {
+        "passed": 9
+      },
+      "log_sha256": "7494b29caca255239c54653fb1cc6ec81b75b7944156f67538949008beeeb987",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_passcode_logic.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "f7e3f7d69f010843c3e2b989b4630e527920cf0e55ebcd5bed125ef9d6375cc1",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_polish_round.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "2fe2d6bf2eeae5b20ecabbfdd19356b54426d070ee762b8da686867661cd3fd5",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_prefs.py",
+      "counts": {
+        "passed": 9
+      },
+      "log_sha256": "301e084cf644dbcce07014eb2d30f7ee2573d464e55c930936d11469aae5fff9",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_prefs_schema_audit.py",
+      "counts": {
+        "passed": 19
+      },
+      "log_sha256": "174fe6eeccef2bc2113dba39be47d1f57b11055df0f59370e3f9016ef1e1ac57",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_privacy_leak.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "64f3a97b10bf6b6bc12f15fe2177502752cd01e6dd1d2a88a1ae9d001130f905",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_protocol.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "c8e9b216111119da97a643b594f9c354d22b858a7bb1cd71e1cdc76938ba59cb",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r15_ghost.py",
+      "counts": {
+        "passed": 10
+      },
+      "log_sha256": "476af3abcc632c5ad6c1fb1899a45c2138adc07bf15e4a16cb373feda63d2314",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r25.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "7e223118b294f83b9503d05e408af3ebbf52e830b72dada76110a87357fc345e",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r26.py",
+      "counts": {
+        "passed": 14
+      },
+      "log_sha256": "7978112a791f46b9d2791b736514f110cf84eb1e680eb92f34e4dd34297d1db1",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r27.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "e3b20380849650f6cdb2962733b987a46a6e815c228328ea81043880db4059e4",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r28_group_mgmt.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "b5d3ad04ec28133911e49ef927c32ac7cb3b059e14a84b2519bd90c0b8581eb3",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r29.py",
+      "counts": {
+        "passed": 18
+      },
+      "log_sha256": "fe49b6fb92570aec3307be762a9ca8507ca5ef9233dd4c80093e34defe34f1d9",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r30.py",
+      "counts": {
+        "passed": 19
+      },
+      "log_sha256": "5c1039606628f38c8d732f1bc71309f26c2dbb7b43f2f58f96645864f020fc46",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r32.py",
+      "counts": {
+        "passed": 26
+      },
+      "log_sha256": "818a8b517f5d55e43f6f66198fd95777db5e6f984d2232ffc6d39ede1dd0422e",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r33.py",
+      "counts": {
+        "passed": 9
+      },
+      "log_sha256": "97195f43314f9d6388983c6ce52aa89ec4b0b6f4385f4b82283ac373c8134d23",
+      "total_attempts": 2,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r34.py",
+      "counts": {
+        "passed": 9
+      },
+      "log_sha256": "04c60765baf104e8afa336a2e7e849e9c10e57c051bae6e815b23f5d910ce9f0",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r35.py",
+      "counts": {
+        "passed": 15
+      },
+      "log_sha256": "1f573f76c4bceb505d20213b5190fdf16b6618ae6317506f11edaf9c41db1749",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r36.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "199b12acab08868047feb1b63549e689671a80e88a614d0ca2793fa4ade02cc0",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r37.py",
+      "counts": {
+        "passed": 7
+      },
+      "log_sha256": "b9f21a1eb78b0ec8e5ba753a2a41f610448bcc57a4604f0fae10cf00a726aced",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r38.py",
+      "counts": {
+        "passed": 22
+      },
+      "log_sha256": "99966f734750705d6d1904681855f4c2b836a520add9220ec62be9299b86ed16",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r39a.py",
+      "counts": {
+        "passed": 11
+      },
+      "log_sha256": "920931882ddf5b0ec28a528d3d9e1e4267cbbaf18ef72f10f5f05eaa22805744",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r39b.py",
+      "counts": {
+        "passed": 7
+      },
+      "log_sha256": "fc8da65e7542a9e4c432cf159f0edae3d928afd59cd0d0cf6ef23ded62e58c20",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r39c.py",
+      "counts": {
+        "passed": 17
+      },
+      "log_sha256": "6f7ae827576da429f3dd734a1af36a04bcd7e828831028fa082b64738d6a5f9a",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r39d.py",
+      "counts": {
+        "passed": 18
+      },
+      "log_sha256": "85a412e92e0d9f489483cfb2f72049b2115e4617cbc4dd7d7478c6c872080b1c",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r41.py",
+      "counts": {
+        "passed": 21
+      },
+      "log_sha256": "8bf4cab4dcf5a10a0573c1ddb8854f61f231cbb32517092512e4fca5181bb5be",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r41g.py",
+      "counts": {
+        "passed": 2
+      },
+      "log_sha256": "9fd3ca8fee272d45d2216bb48f5123257f5b2b0f2c29cb4437fc1484fad1577c",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r42.py",
+      "counts": {
+        "passed": 16
+      },
+      "log_sha256": "87e3a1131fa276986a753734c97611752347f8d206925cf9f5492c750f4ecb3d",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r43a.py",
+      "counts": {
+        "passed": 7
+      },
+      "log_sha256": "4c49637d852c87a7fee1089154749b9e188f5cd1175d7ef088aa1a575004f628",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r43b.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "d3fc71cb8b270b7e16e0262de035dbe827c753c0e0018db0a2d2cd55d83f78c7",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r43c.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "f8e95087bf757a8661f89fc142e28da63cdeb2fbb2f8ffb03250b9ae973c39b5",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r44.py",
+      "counts": {
+        "passed": 10
+      },
+      "log_sha256": "aae9036b981a6f8b93fc76e2b1edd301bfc7befe8ed0b5577f7d52182f1ff926",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r45.py",
+      "counts": {
+        "passed": 17,
+        "skipped": 1
+      },
+      "log_sha256": "26342367c796e6a9878c9e68f622bb24843773346a368f62af5643eed31afbf4",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r46.py",
+      "counts": {
+        "passed": 24
+      },
+      "log_sha256": "26eaab2d453740039f1d0b50c8b1299fe97ad521cbed55910fcf626caae94485",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r46b_web_fix.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "a548014408a993f63f8f299e5a72ce7176ddabeba2303c7cf2581e4d586de633",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r47.py",
+      "counts": {
+        "passed": 16
+      },
+      "log_sha256": "8b9370780679e7422fc7a7da509b85ddabd312aac37d21ae1afd8ed2d7660e4a",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r49.py",
+      "counts": {
+        "passed": 15
+      },
+      "log_sha256": "c93b9e54baed78b5644e720e2e64a5dbecc66c141b8507d606d4a8260d39ef04",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r51.py",
+      "counts": {
+        "passed": 10
+      },
+      "log_sha256": "b9676fa1c1c0aed6cd9394d3eb099ef89f63c7a6e2e832cf6ec2d9c38517b2f1",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r52.py",
+      "counts": {
+        "passed": 10
+      },
+      "log_sha256": "7ea1527816990cac75b75415f132ad10a4fd94bc42177021a4d32e06e6511abe",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r53.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "64956726b82a45a910ef4977965028ee8013dc0ae54c3b60019d29d064114876",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r54.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "613272c8c1acb6df0561d832705e019cf6a0e92134193d0545a7ba2197e25af9",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r61_features.py",
+      "counts": {
+        "passed": 11
+      },
+      "log_sha256": "054b27640f302b657da25090156095a2b0359698e9ca2082bf0730e085649595",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r64_paste_snip.py",
+      "counts": {
+        "passed": 15
+      },
+      "log_sha256": "aaff6d964a6bda120cc3b603f0b5ff7cf8bc24a4b37d282f7c16e7eaedb91422",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r64_sticker_packs.py",
+      "counts": {
+        "passed": 17
+      },
+      "log_sha256": "e15725643b12653d5388dfed55259b527f7f6bfd8fb6926720bc5c10656a625c",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r65_web_sticker_packs.py",
+      "counts": {
+        "passed": 11
+      },
+      "log_sha256": "3e10e6bc4f1b7c9aea7e88e61a37d7f2ff908048978dd07f09965e86816b8af6",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r69.py",
+      "counts": {
+        "passed": 52
+      },
+      "log_sha256": "7d66012d1232cd4bd76405a26e1847d967540ac4795cecf4bada1765bc13f4ff",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r70.py",
+      "counts": {
+        "passed": 25
+      },
+      "log_sha256": "0fd245abbfa337e9f17e0743f2e63a78aa0afd3abed3ec1be8f05ab8d7c507a5",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r71.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "8d812c405084af023d3b1a5fa1586ca0c1dd0fdea4dd09434c6948724c1c84f3",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r72.py",
+      "counts": {
+        "passed": 45
+      },
+      "log_sha256": "59e6bd2bda4adffb4ae361d04bd6b14fbe4f03b44b22d4f702c481a099badc41",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_r73.py",
+      "counts": {
+        "passed": 10
+      },
+      "log_sha256": "ec24c36e36e0cd93a0421d9586603e32c4b11a4e445e57c23c986f165ada83ff",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_rel01_local_trial.py",
+      "counts": {
+        "passed": 15
+      },
+      "log_sha256": "2fb88e8b13b77b26507339d6385206fd5bbcaf7c7d9fd7acab734a686aea04df",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_resource_manifest_numbers.py",
+      "counts": {
+        "passed": 35
+      },
+      "log_sha256": "099d541d80a19e9dc3a1699d5654d8bffc9cd895d8d8143b1b4de78550b96817",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_cli.py",
+      "counts": {
+        "passed": 18
+      },
+      "log_sha256": "2feb471e6aeef23ef9eafeb939e746997e880d91dfadb29bc694e38133398753",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_client.py",
+      "counts": {
+        "passed": 49
+      },
+      "log_sha256": "7f0eda307de2b3f1b57e5877f1dcbf529788621e05e2b1d49289ae0df3155d9a",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_control_faults.py",
+      "counts": {
+        "passed": 10
+      },
+      "log_sha256": "46123987267099f0dd012759920aed4d2ee827e4fac2b6753d5799138474376b",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_gate_io.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "3dd5fe1cbcd96302aa2ec85d0885693195b6ce4dfd623dbeb664ddf779f37ee2",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_hub.py",
+      "counts": {
+        "passed": 20
+      },
+      "log_sha256": "a0f20e16b92329c28085f2901a6f67fa35969a69d8bcd0143144de562ee6e6a0",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_identity.py",
+      "counts": {
+        "passed": 19
+      },
+      "log_sha256": "23fea023af16c73c197fa471664d76cb98c63320bcb914b30e9cfcef3e9b6bad",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_lifecycle.py",
+      "counts": {
+        "passed": 21
+      },
+      "log_sha256": "f81e075efebf8ea7f042644de7a67ec69ec872b4470235d7d6b2d70a3ed3b455",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_process_faults.py",
+      "counts": {
+        "passed": 3
+      },
+      "log_sha256": "4a1b3455dbaba98583494c60702e1555f57337cea76a09932510c5e6df7d178b",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_publish_io.py",
+      "counts": {
+        "passed": 17
+      },
+      "log_sha256": "590d378a15a59124f3d82ca0531b5085a754df539d9a6c951008f55baf0c190d",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_reconcile.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "fee1dd1858351fcb335251a8893c4c554c35a3890484139152e1ca2a3c6b0407",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_resources.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "e5fb06b46e343816e8fe5bf902f6723f355f7fb4cd91488cab703cc06976b7a2",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retire_recovery_store.py",
+      "counts": {
+        "passed": 72
+      },
+      "log_sha256": "227e7ce0033403695a99c40691727e3c5c88262f384b4a675801e5ebecb9f7fc",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retirement_status.py",
+      "counts": {
+        "passed": 61
+      },
+      "log_sha256": "516485ecf1f542ee2598df3e0624ab04944cebed011d70173f698e811e9af445",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retirement_status_gui.py",
+      "counts": {
+        "passed": 13
+      },
+      "log_sha256": "6ac7920717510012714809fe84da8c8766b0c65cc97df8402d51b0edba6efbfb",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_retirement_status_wire.py",
+      "counts": {
+        "passed": 37
+      },
+      "log_sha256": "4e04b698061d6475822ff54bd3741df4639ad3ea07bf02492f0d089358f879d9",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_room_icon_lifecycle.py",
+      "counts": {
+        "passed": 5
+      },
+      "log_sha256": "1b6089201a5d284db482974bd257435dd87674bc0205339d2e02cfee68cbeccf",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_rooms.py",
+      "counts": {
+        "passed": 15
+      },
+      "log_sha256": "d26795b10077ae50bd3980cb1790768a89a445c6e951f3b481c8578bff38f1f9",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_rule_gaps_a.py",
+      "counts": {
+        "passed": 9
+      },
+      "log_sha256": "4b2189107e3aecd9740e7d7fb00a71b83a9238f3e2a5320fb86c4d8f91bc6636",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_rule_gaps_b.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "89f7318af809e4fe212fad530ed236f7a7e3a4dda0bc1075928fae991b6391ec",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_rule_gaps_c.py",
+      "counts": {
+        "passed": 17
+      },
+      "log_sha256": "0751c87019b89b0434ad9598d11813b4bdab7cd5aa296c89eda3267cc8586670",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_rule_gaps_d.py",
+      "counts": {
+        "passed": 9
+      },
+      "log_sha256": "8a4c40de4d2b879aad75d46f5f706ec0d5a2da90c78d2e8a5a4c6968b4e4a324",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_rummikub_selection.py",
+      "counts": {
+        "passed": 7
+      },
+      "log_sha256": "b0acdafb6e3196f3f5bde90f29bde6367e90b2dab2e8cd3eb4229bde0d9d7aa2",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_runs.py",
+      "counts": {
+        "passed": 31
+      },
+      "log_sha256": "a1409f9d6b2189ec07ad1af1b02554c44c7051226e87fe1e61ad31c8fb54c6fc",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_server.py",
+      "counts": {
+        "passed": 61
+      },
+      "log_sha256": "5be1d132155296ebbdec6e615f0a010f11e86490cfb82b97107cfa2f4b430c78",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_server_game_lifecycle.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "3e0a9308c54e7d3102fc9ddd63d03118986eceab4b6bfa7987f52df3e39b00df",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_server_games.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "6cca0c55fc781291f57a7ebceb91d9f81ad7f29b00ab0646b80524226e1cb338",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_session_cleanup.py",
+      "counts": {
+        "passed": 7
+      },
+      "log_sha256": "0c7880b1031e65a5fe0498cb0fb3ce8984c4888289891fca2cad211b4b8b3687",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_session_list.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "fee8704b695d62033b116723e022a1664c014b3808602db4b731396ba9bc5f83",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_settings_nav.py",
+      "counts": {
+        "passed": 1
+      },
+      "log_sha256": "cf802f9b4bee8de81e332c8bb92edcc0e3c247fd8caab896b74a05dff467882a",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_shell_components.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "d377223f0e89124918d60b8e8e23a06cb8e85dc68a8abc6ca70a5b3448f065bf",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_shortcuts.py",
+      "counts": {
+        "passed": 10
+      },
+      "log_sha256": "ba117163b6949c1a9728a84a28389ea751ecb8dc84b9e89e5173100b1e1f0f6d",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_stars_preserve.py",
+      "counts": {
+        "passed": 37
+      },
+      "log_sha256": "bae110cf14580061ca69a46f91a4ea9303942a82a8cc2aee8d742b5ffb0a6d6c",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_test_gate.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "b25facaf04510e0347c757b19ad4d50095820fe649f9bdcce668e772bd052b97",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_test_gate_safety.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "0076a6512c962b4e3c3cdfaa1222d1f145691fcd20c4628f1643293dd6095eee",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_test_gate_skips.py",
+      "counts": {
+        "passed": 8
+      },
+      "log_sha256": "4609fbace0b04f98dc6593d26da244c94e0c1d0b62ca91de28c05392662ba4b1",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_test_runner_exitcodes.py",
+      "counts": {
+        "passed": 4
+      },
+      "log_sha256": "26c466777e7857739586a4b11cba9f4c8fa5d58fe3b2ef789fa3a408810879a9",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_theme.py",
+      "counts": {
+        "passed": 12
+      },
+      "log_sha256": "4dd269bbcb7bc29822ef659a2e1594358c00007d2c901f30a23ebe59131fb525",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ux_repair.py",
+      "counts": {
+        "passed": 7
+      },
+      "log_sha256": "86fd7442e1b3cdedd7561d9603786fb7a0fcbb526edfe978ee9c932e58c52359",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ux_visual_chat_design.py",
+      "counts": {
+        "passed": 6
+      },
+      "log_sha256": "c463de96db76f8c370b043267e21df6bd8871df975e34b555e5b6a70ae59cc77",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ux_visual_chat_dpi.py",
+      "counts": {
+        "passed": 7
+      },
+      "log_sha256": "164f9ba46f84c62945f00cbdd8d48a053147302dfaa0b6bbd5c88712aca8867f",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ux_visual_chat_regressions.py",
+      "counts": {
+        "passed": 13
+      },
+      "log_sha256": "3a5c341c5779cf2ac41e098d5a84994d4a057946c472f188e53b2c107278853a",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ux_visual_chat_shots.py",
+      "counts": {
+        "skipped": 18
+      },
+      "log_sha256": "d8e2582241340a413ea37502fbe1a62b8a22d2bf7933104b21d0aa1b9be9bda1",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_ux_visual_chat_web.py",
+      "counts": {
+        "passed": 1
+      },
+      "log_sha256": "cac8f2444c91387fbd4c6b3dfeebcac4afaf6000faff0f8746230c740f460d7a",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_visual_screenshot.py",
+      "counts": {
+        "skipped": 1
+      },
+      "log_sha256": "3f0e8c1d753fa2a483980b5d3e7f006447211d6615cde69061a0d56257a99f60",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_web_boardgame_assets.py",
+      "counts": {
+        "passed": 13
+      },
+      "log_sha256": "659c7916385f9bf454612dce08b810e349e74aa5f302261e307679558d8e36b9",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_web_group_read.py",
+      "counts": {
+        "passed": 1
+      },
+      "log_sha256": "f13502c364c7c5981599f49b51ae86b9bcde2070ec75fb61ff1b7aa15833cd9f",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    },
+    {
+      "file": "tests/test_web_logout.py",
+      "counts": {
+        "passed": 13
+      },
+      "log_sha256": "2b326101cedd451ef97825a6024310b8bc59754c3586ea53b7ea94be449cfd0e",
+      "total_attempts": 1,
+      "complete_attempts": 1,
+      "exit_code": 0,
+      "cleanup_ok": true
+    }
+  ],
+  "skips": [
+    {
+      "file": "tests/test_r45.py",
+      "skipped": 1
+    },
+    {
+      "file": "tests/test_ux_visual_chat_shots.py",
+      "skipped": 18
+    },
+    {
+      "file": "tests/test_visual_screenshot.py",
+      "skipped": 1
+    }
+  ],
+  "remaining_flagship_diagnostics": 3,
+  "same_run_recovery": {
+    "resumed": true,
+    "completed_files_not_repeated": 125,
+    "remaining_files_at_resume": 84,
+    "interrupted_attempts": [
+      {
+        "file": "tests/test_r33.py",
+        "attempt": 1,
+        "status": "interrupted",
+        "completed_exit_code": null,
+        "log_sha256": "ab5df625bc76dbd4e163bed2dd888df828f90159bb93556525c31821b6541d46",
+        "reason": "Parent and child were proven exited after exec transport loss; no complete pytest result. Framework cleanup flag is not a completed-attempt verification."
+      }
+    ],
+    "summary_seconds_meaning": "Resumed segment only",
+    "run_start_to_end_wall_seconds": 992.523,
+    "wall_includes_disconnection_and_diagnosis": true
+  },
+  "diagnostic_limits": {
+    "mini": "Original pending _update produced one natural invalid-command bgerror.",
+    "boss": "Two pending commands observed; zero bgerror during 1700ms window. Probe expectation failed and is retained; no Boss repair or full attribution claim.",
+    "initial_domain_entry": "A misspelled nonexistent test_r61_details.py was refused before tests started. Correct test_r61_features.py was then verified and used."
+  },
+  "not_tested": [
+    "Complete native GUI",
+    "Newly built EXE",
+    "Natural application red-button exit",
+    "Physical LAN/multiple machines",
+    "Other real DPI",
+    "Hardware"
+  ],
+  "next_batch_priorities": [
+    {
+      "priority": 1,
+      "task": "Boss isolated single-interpreter diagnosis through real 1500ms show and 3000ms tick deadlines; trace command existence, pending IDs and bgerror.",
+      "dependency": "Local base from this reviewed source; read original 1P1F probe. Do not assume all lambda diagnostics belong to Boss. Only repair one real defect if reproduced."
+    },
+    {
+      "priority": 2,
+      "task": "Complete frozen finite R3 native GUI acceptance on fresh synthetic data.",
+      "dependency": "Supported native GUI tools must be available. New EXE must be built from final source and bound to it. Protocol/component tests do not replace GUI/LAN."
+    }
+  ],
+  "evidence_policy": "Structured summaries and hashes only. Original raw logs/manifests/summaries remain local under _tmp_gui/test-gate/<run_id>; no profiles, runtime data, machine usernames, credentials, EXE or absolute machine paths are included. New bounded weekly consent applies to reviewed code/tests/project docs/sanitized summaries; old ten-file consent is not reused. All new commit history must be audited; no release.",
+  "independent_review": {
+    "reviewer": "gate_review",
+    "must_fix": 0,
+    "scope": "MiniBar owned 1000ms update destruction only; includes same-run resume verification; not Boss, native GUI, EXE or natural application exit."
+  }
+}

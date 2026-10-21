@@ -5,6 +5,17 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## TK-MINI-AFTER-01 MiniBar 自有任务收口（2026-10-21）
+
+**AI_ACCEPTED_MINI_TIMER_ONLY / FULL_PASSED / READY_FOR_INTEGRATION / R3_GUI_NOT_RUN**。[Task v1.2](task-packages/TK-MINI-AFTER-01.md) / [Review r1](review-packages/TK-MINI-AFTER-01-r1.md)。
+base/main f057efa1a6d21c23f3fc8b448459eb7ec3389f50，分支fix/mini-timer-lifetime-20261021，代码b4c9de2c7056f77c4aeb8dc1e0fed3625ac83435；root唯一写入，gate_review独立只读。MiniBar18+/2-，仅owner Destroy取消自有更新，hide/show/tooltip/其它窗口保持。
+单root Mini实际_update失效已确认，原8case RED6F2P；首修8P，领域7文件56P0F0S/独立0 MUST。归属probe1P1F：Boss两pending但1700ms无bgerror，未满足预期，原失败保留不猜全部归属。一次入口误拼测试文件名被runner测试前拒绝，查实际路径后领域通过；无掩盖。
+唯一full mini-timer-full-20261021-164222-11a3ea9ec6：最终209文件2930P0F20原opt-in S/exit0，486输入source f90cf605a636fe3890b98a5bcf01b02ace50f46f8e0abc0a8a1df5aa43b9bff3，领域/当前/snapshot相同；旧208各counts不变，仅增8P。连接断开后原driver/child确认退出，同run --resume只续84，125完成行/原hash/attempt完全不变。r33 attempt1中断无完整exit、attempt2完整，其余208单完整attempt；原partial保留。summary.seconds 379.331仅续跑段，原run墙钟992.523含断线诊断，非连续耗时。209完整raw/退出/cleanup/skip/1中断原件/125行不变及17后验已核，原件/公开结构化hash索引见Review。
+full已结束，gate_review最终原件/125行/中断续跑/资料独立终审0 MUST；9文件和全部新提交历史公开边界审计通过。下一动作正常本地资料提交/普通push/安全集成。用户在full期间明确新授本周有界持续push/merge权限，仅代码/测试/项目文档/脱敏摘要；Task v1.1只改交付条件，v1.2明确同run中断续跑，未另起full。准确9路径及类别已列Review/索引，排除raw/完整summary/本机用户名/私密数据/profile/凭据/EXE，不复用旧10许可。通过后正常push/安全合并，fresh fetch核变更/保护/required checks，遇拒停不旁路、不发布；此时尚无push/merge尝试。
+旗舰领域3lambda/full3处诊断与Boss真实影响待独立定位；完整native GUI/新EXE/正常红退出/物理LAN/其它DPI/硬件未测，旧EXE不含此修，R3不升级。
+批次终点停止此实现。下一P1：Boss单独解释器按1500/3000ms真实时序核command/pending/bgerror，依赖本批已审源和原probe，不依赖native GUI；P2：受支持GUI工具恢复后新EXE有限R3。没有已证实缺陷则记录不制造改动，不凑额度/重复full，不声称剩余周额度可见。
+恢复先本段/Task/Review/Git/原summary和实际进程；禁止重复全量。远端main基线已合并f057，当前新批仍在本地待终审/集成，实际远端以fresh只读核验为准。
+
 ## TK-GAME-AFTER-01 自有定时任务收口（2026-10-21）
 
 **AI_ACCEPTED_GAME_WINDOW_TIMERS_ONLY / FULL_PASSED / MERGED / R3_GUI_NOT_RUN**。[Task v1.1](task-packages/TK-GAME-AFTER-01.md) / [Review r1](review-packages/TK-GAME-AFTER-01-r1.md)。

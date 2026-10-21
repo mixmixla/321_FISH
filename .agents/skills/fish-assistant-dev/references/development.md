@@ -123,3 +123,6 @@ GameWindow.close只取消自己拥有的poll/延迟列表请求，不清空解�
 销毁类问题先在同一存活root核真实after脚本与bgerror，区分Tcl命令已删除与Python_closed guard；
 检查新增闭包回收时另核root-owned bind_all引用，不把既有全局绑定保留误算本修复泄漏。
 ChatWindow.quit_app已有全局取消，组件销毁诊断不能直接推导正式自然退出失败或通过。
+
+MiniBar owner Destroy回归应同时覆盖父root销毁和tooltip子Destroy：只取消自身更新ID，隐藏仍更新。
+验证销毁期间重入时，真实tick更新后还须复查销毁标记，避免向仍活解释器重新排已死widget回调。

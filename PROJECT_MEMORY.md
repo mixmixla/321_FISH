@@ -237,3 +237,5 @@
 - `local_trial.py run` 的标准启动器复用 `friend_trial_process.launch_owned`：子进程先 suspended、归入私有 unnamed Job 后 resume。清理以持有 Job 为所有权依据，记录 active_before/active_after/close_ok；查询、终止或关闭失败不得报成功。Job 强停只证明清理，不证明客户端或服务器自然退出。
 
 - GameWindow的200ms poll和三次延迟game_list补发由自身after集合拥有：执行前移除ID，close经原widget取消，hide/show保留任务，closed后不重排。该合同不涵盖MiniBar/Boss、直接win.destroy或BoardFocus after_idle；既有root全局MouseWheel绑定仍可保留GameWindow至root.destroy，不能把调度闭包释放等同全部窗口引用释放。
+
+- MiniBar自己的1000ms更新ID在owner真实Destroy时取消；子tooltip Destroy不取消owner更新，hide/show保留单循环，tick前后销毁标记防重入重排。组件清理合同不等于完整应用自然退出或Boss回调已验证。

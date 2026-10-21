@@ -8,4 +8,8 @@
 
 有限验收和独立审查结论见 [Review r1](../review-packages/R3-STRICT-PREFLIGHT-01-r1.md) 与 [脱敏索引](../review-assets/R3-STRICT-PREFLIGHT-01/evidence.json)。公开仅本 Task、Review、脱敏索引、现有 AI_COMMAND_CENTER 和任务清单；全部新增历史审计后按本周有界授权正常推送与安全快进 main，不上传原始证据/包，不发布、不强推。若检查不满足则停止集成。
 
-独立只读终审核原 summary、七文件 SHA/校验单、五份拟公开资料与任务优先级：**0 MUST**。主控仅 AI_ACCEPTED_ACTUAL_OLD_BUILD_EXE_PREFLIGHT_ONLY；正式质量通过不等于远端集成，Git/CI 回执待后补。
+独立只读终审核原 summary、七文件 SHA/校验单、五份拟公开资料与任务优先级：**0 MUST**。主控仅 AI_ACCEPTED_ACTUAL_OLD_BUILD_EXE_PREFLIGHT_ONLY；质量验收与集成分别核实，实际 Git/CI 回执如下。
+
+## 安全集成回执
+
+fresh fetch/只读 API 核入场远端 main 仍为 `6add1065c3ebc6f43242ca2b85fbb331be009680`，main protected=false、rulesets=[]；仅五份文档/脱敏摘要，全部新增历史中无源码、原始日志、用户名、私密数据、密钥或二进制。独立终审0 MUST后普通推送开发分支，再本地 `--ff-only` 与普通 push main；远端两个分支均完整核为首次集成提交 `485478b7b7b23a4d168b037ed510af4c7b26e1e7`。该 SHA 的 GitHub check-runs、status contexts、Actions runs 均0；aggregate status pending/total0 不等于 CI PASS。未强推、绕保护、发布或删分支。此纯资料回执作为同五路径后续 leaf 单独提交，最终 main SHA 以 Git refs 和本地 delivery-receipt 为准；产品包、实际 run 和源码全量不重做。

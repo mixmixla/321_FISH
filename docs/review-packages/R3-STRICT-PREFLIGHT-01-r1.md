@@ -10,4 +10,8 @@
 
 ## 独立终审
 
-独立审查者只读重算原 summary SHA、包七文件 size/SHA、校验单六项、原始运行的 TCP/HTTP/双登录/wire/owned Job/严格清单，并审五份公开文件及现有 backlog：**0 MUST**。可有限 AI 接受当前工具驱动旧构建 EXE 正向预检，不接受完整 R3；公开内容不含原始日志、用户名、私密数据、密钥或二进制。提交、推送、安全集成与 CI 状态另核。
+独立审查者只读重算原 summary SHA、包七文件 size/SHA、校验单六项、原始运行的 TCP/HTTP/双登录/wire/owned Job/严格清单，并审五份公开文件及现有 backlog：**0 MUST**。可有限 AI 接受当前工具驱动旧构建 EXE 正向预检，不接受完整 R3；公开内容不含原始日志、用户名、私密数据、密钥或二进制。提交、推送、安全集成与 CI 状态如下另核。
+
+## 安全集成回执
+
+fresh fetch/只读 API 核入场远端 main 仍为 `6add1065c3ebc6f43242ca2b85fbb331be009680`，main protected=false、rulesets=[]；仅五份文档/脱敏摘要，全部新增历史中无源码、原始日志、用户名、私密数据、密钥或二进制。独立终审0 MUST后普通推送开发分支，再本地 `--ff-only` 与普通 push main；远端两个分支均完整核为首次集成提交 `485478b7b7b23a4d168b037ed510af4c7b26e1e7`。该 SHA 的 GitHub check-runs、status contexts、Actions runs 均0；aggregate status pending/total0 不等于 CI PASS。未强推、绕保护、发布或删分支。此纯资料回执作为同五路径后续 leaf 单独提交，最终 main SHA 以 Git refs 和本地 delivery-receipt 为准；产品包、实际 run 和源码全量不重做。

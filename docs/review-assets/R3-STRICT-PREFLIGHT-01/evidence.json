@@ -133,5 +133,17 @@
   "independent_review": {
     "must": 0,
     "scope": "raw run, seven-file hashes, five public documents and limits"
+  },
+  "delivery": {
+    "status": "NORMAL_FAST_FORWARD_INTEGRATED",
+    "first_integrated_commit": "485478b7b7b23a4d168b037ed510af4c7b26e1e7",
+    "remote_main_and_development_verified_same_commit": true,
+    "final_receipt_commit": "see current Git refs after docs-only receipt",
+    "visible_github_check_runs": 0,
+    "visible_github_status_contexts": 0,
+    "visible_github_workflow_runs": 0,
+    "ci_interpretation": "No visible CI, not CI pass",
+    "binary_uploaded": false,
+    "version_released": false
   }
 }

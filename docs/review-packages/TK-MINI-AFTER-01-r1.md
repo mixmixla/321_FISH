@@ -1,7 +1,7 @@
 # TK-MINI-AFTER-01 r1 — MiniBar 更新任务销毁
 
-2026-10-21：**AI_ACCEPTED_MINI_TIMER_ONLY / FULL_PASSED / READY_FOR_INTEGRATION / R3_GUI_NOT_RUN**。
-[Task v1.2](../task-packages/TK-MINI-AFTER-01.md) / [结构化结果与原件hash索引](../review-assets/TK-MINI-AFTER-01/evidence.json)。root实现，gate_review独立只读；普通模型/Standard。本批只一个小缺陷；此检查点尚未push/merge/发布。用户在唯一full期间新增本周有界持续公开/合并授权，仅验收代码、测试、项目文档、脱敏摘要，不含raw/本机用户名/私人数据/密钥，不发布；不复用旧10文件许可。交付权限变化未改源码或重启full；Task v1.2另记环境中断后同run续跑。
+2026-10-21：**AI_ACCEPTED_MINI_TIMER_ONLY / FULL_PASSED / MERGED / R3_GUI_NOT_RUN**。
+[Task v1.2](../task-packages/TK-MINI-AFTER-01.md) / [结构化结果与原件hash索引](../review-assets/TK-MINI-AFTER-01/evidence.json)。root实现，gate_review独立只读；普通模型/Standard。本批只一个小缺陷；初验收检查点尚未push/merge；后续已按授权集成，未发布。用户在唯一full期间新增本周有界持续公开/合并授权，仅验收代码、测试、项目文档、脱敏摘要，不含raw/本机用户名/私人数据/密钥，不发布；不复用旧10文件许可。交付权限变化未改源码或重启full；Task v1.2另记环境中断后同run续跑。
 
 ## 复现、归属与修复
 
@@ -35,9 +35,9 @@ summary SHA `8dba727ee341219a27f4b52e1839897b0fbe4b671f103a796bcf51f2ed35ea49`�
 下一批P1：Boss独立单进程/单解释器走真实1500ms置顶和3000ms tick时序，核command存在性/归属与bgerror；依赖本批已审源码和原probe，不依赖缺失native GUI。若无真实缺陷只记录，不为日志凑改动。P2：受支持native GUI工具恢复后，按有限R3清单构建新源码EXE并完成合成双客户端完整大厅/对局/聊天/自然退出；组件/协议不替代。物理LAN/其它DPI仍需对应真实环境，不能借机改网络安全设置或伪造通过。
 按价值分批形成检查点，不以周额度耗尽为目标，不声称可读取剩余额度；此Task到本地交付终点停止实现，由后续调度选择下一批。
 
-## 准确拟公开清单（本批尚未推送）
+## 准确公开清单（保持九文件边界）
 
-共9文件，仅以下路径和类别；使用用户新的本周有界授权，原10文件具体许可不复用。没有新原始日志/完整summary、绝对机器路径索引、本机用户名、运行profile、凭据、EXE或用户真实数据。全部新增文件及所有新提交历史均须审计；此检查点尚未push/merge尝试，也没有重试任何已拒操作。通过独立终审与公开边界检查后正常push/安全集成，fresh fetch/保护/required checks照常核，遇安全拒绝即停，不换路线，不强推/发布。
+共9文件，仅以下路径和类别；使用用户新的本周有界授权，原10文件具体许可不复用。没有新原始日志/完整summary、绝对机器路径索引、本机用户名、运行profile、凭据、EXE或用户真实数据。全部新增文件及所有新提交历史均须审计；初验收时尚无push/merge尝试；后续普通交付见本回执，没有重试任何已拒操作。通过独立终审与公开边界检查后正常push/安全集成，fresh fetch/保护/required checks照常核，遇安全拒绝即停，不换路线，不强推/发布。
 
 | 完整仓库相对路径 | 内容类别 |
 | --- | --- |
@@ -57,3 +57,9 @@ summary SHA `8dba727ee341219a27f4b52e1839897b0fbe4b671f103a796bcf51f2ed35ea49`�
 
 gate_review从原件核最终full、125完成行不变、r33两个attempt的边界、完整raw/退出/清理/skip及486当前/快照/领域绑定，独立终审0 MUST；原probe负结果/错误入口均保留，不改历史。主控只接受MiniBar组件定时生命周期，不升级Boss、GUI、自然应用退出、EXE或R3。
 准确9文件及全部新提交历史/新文件blob审计：仅代码/测试/项目文档/结构化脱敏结果与SHA索引，没有新增raw日志、原始完整summary、机器用户名、私人数据、密钥、profile或二进制；索引无绝对机器路径，投影/链接/diffcheck通过。用户本周有界持续公开/集成授权适用；正常push/安全合并前fresh fetch核变化/保护/checks，拒绝立即停，无旁路/强推/发布。完整候选leaf见Git，源码486仍冻结，不为资料改动重跑full。
+
+## 正常集成回执
+
+独立有限接受与9文件/全部新提交历史公开审计通过后，按用户新的本周有界授权正常push同名分支，设置upstream。fresh fetch核main仍f057efa，GitHub确认protected=false、required checks off/empty、rulesets=[]；候选check-runs0/statuses0/Actions runs0，不称CI通过。
+普通FF集成后ls-remote核main与fix/mini-timer-lifetime-20261021均cf68030fbce42ad18bdf1991eadc8302b4a49e50，本地main同步、工作区clean。没有强推、绕过保护、PR、删除分支或发布。完整代码b4c9de2及资料cf68030保留可追溯链。
+此后仅同9文件范围内更新四份纯文档集成回执，未改486输入/测试/环境，不重跑full；本段记录已核候选cf68030，回执自身leaf及最终远端完整SHA由Gitrefs/本地delivery-receipt记录。原1次中断+同run续跑、125行不变、完整209验证及Boss/GUI/EXE/LAN等未测边界不变。此批终点停止实现，下一批优先级与依赖如上，由后续调度继续有价值工作。

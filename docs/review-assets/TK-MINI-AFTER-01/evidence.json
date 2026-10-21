@@ -1,7 +1,7 @@
 {
   "task": "TK-MINI-AFTER-01 v1.2",
   "technical_status": "AI_ACCEPTED_MINI_TIMER_ONLY",
-  "delivery": "READY_FOR_NORMAL_PUSH_AND_SAFE_INTEGRATION_UNDER_BOUNDED_SCOPE",
+  "delivery": "MERGED_UNDER_BOUNDED_WEEKLY_PUBLIC_SCOPE",
   "base_commit": "f057efa1a6d21c23f3fc8b448459eb7ec3389f50",
   "code_commit": "b4c9de2c7056f77c4aeb8dc1e0fed3625ac83435",
   "branch": "fix/mini-timer-lifetime-20261021",
@@ -3370,5 +3370,25 @@
     "reviewer": "gate_review",
     "must_fix": 0,
     "scope": "MiniBar owned 1000ms update destruction only; includes same-run resume verification; not Boss, native GUI, EXE or natural application exit."
+  },
+  "integration_receipt": {
+    "verified_candidate": "cf68030fbce42ad18bdf1991eadc8302b4a49e50",
+    "verified_main": "cf68030fbce42ad18bdf1991eadc8302b4a49e50",
+    "verified_branch": "cf68030fbce42ad18bdf1991eadc8302b4a49e50",
+    "normal_push": true,
+    "normal_fast_forward": true,
+    "public_file_count": 9,
+    "protection": false,
+    "required_checks": [],
+    "rulesets": [],
+    "visible_ci": {
+      "check_runs": 0,
+      "statuses": 0,
+      "workflow_runs": 0,
+      "claimed_ci_pass": false
+    },
+    "force_push_or_release": false,
+    "new_raw_profiles_exe_or_machine_usernames": false,
+    "receipt_note": "Subsequent four-document receipt stays in the same nine paths; source remains unchanged. Read latest receipt leaf and final remote SHA from Git refs."
   }
 }

@@ -28,3 +28,8 @@
 原1020文件是当时capture，不承诺持续稳定。默认受限strict遍历WinError5/rglob部分枚举不能证明Temp删除；正常验收上下文完整strict1020且全路径/size/SHA同capture，补充双权限观察和纠正记录，原summary/初post文字原件均保留，不重跑或改ACL/产品。
 
 独立最终原件/五docs终审0 MUST，主控仅AI_ACCEPTED_RELOCATED_PREFLIGHT_ONLY。首控制器失败原件保留，源码/full/build不重跑；普通push/安全集成尚待执行。
+
+## 正常集成回执
+
+fresh API/随后fetch核main仍cd4818313ee58c76565d068d9523eb3f10d86ce8，protected=false/required checks off/rulesets=[]；准确五路径及全部新history审计通过，按用户本周有界许可普通push开发分支、本地FF、普通push main，ls-remote核两者同 `6a92887611f5ac3fef02982d4c04405f9ecf5478`。无强推/绕保护/删分支/发布。候选check-runs/statuses/Actions均0（status pending/total0），无可见CI不等于CI PASS，原API记录SHA已绑定索引。
+后续仅同五路径追加此回执，最终leaf完整SHA以Gitrefs/本地delivery-receipt为准；原包/副本七文件及根488保持，不重跑full/build/EXE。GUI/自然退出/LAN/完整compiled demo等未测范围不变。

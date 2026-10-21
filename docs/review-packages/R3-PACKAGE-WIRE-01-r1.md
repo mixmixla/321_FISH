@@ -1,6 +1,6 @@
 # R3-PACKAGE-WIRE-01 r1 — 七文件包搬移预检
 
-2026-10-21 **AI_ACCEPTED_RELOCATED_PREFLIGHT_ONLY / NOT_MERGED / NOT_R3_ACCEPTED**。
+2026-10-21 **AI_ACCEPTED_RELOCATED_PREFLIGHT_ONLY / MERGED / NOT_R3_ACCEPTED**。
 [Task v1](../task-packages/R3-PACKAGE-WIRE-01.md) / [脱敏结果/hash索引](../review-assets/R3-PACKAGE-WIRE-01/evidence.json)。base/main `cd4818313ee58c76565d068d9523eb3f10d86ce8`，feature/r3-package-wire-20261021；root唯一执行/写入，gate_review独立只读，普通模型/Standard。本周有界公开及正常集成许可适用，不发布。
 
 ## 真实版本与最小范围
@@ -42,3 +42,8 @@ actual CLI/process0，initialize0、HTTP200，原audit确认实际双client uid1
 ## 独立最终技术接受
 
 gate_review独立核原包/副本全七hash、首控制器零进程失败及恢复分类、正式actual EXE/原audit/两个compiled CLI、全部七Job/隔离inventory/根488、五docs公开范围，最终0 MUST。主控仅AI_ACCEPTED_RELOCATED_PREFLIGHT_ONLY；前段待终审是历史检查点，现闭合。完整GUI/自然退出/LAN/完整compiled demo等不接受。纯资料不重跑full/build，正常集成尚待fresh远端/保护及全部newhistory核查；不把接受当合并或发布。
+
+## 正常集成回执
+
+fresh API/随后fetch核main仍cd4818313ee58c76565d068d9523eb3f10d86ce8，protected=false/required checks off/rulesets=[]；准确五路径及全部新history审计通过，按用户本周有界许可普通push开发分支、本地FF、普通push main，ls-remote核两者同 `6a92887611f5ac3fef02982d4c04405f9ecf5478`。无强推/绕保护/删分支/发布。候选check-runs/statuses/Actions均0（status pending/total0），无可见CI不等于CI PASS，原API记录SHA已绑定索引。
+后续仅同五路径追加此回执，最终leaf完整SHA以Gitrefs/本地delivery-receipt为准；原包/副本七文件及根488保持，不重跑full/build/EXE。GUI/自然退出/LAN/完整compiled demo等未测范围不变。

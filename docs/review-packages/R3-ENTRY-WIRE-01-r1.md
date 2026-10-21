@@ -1,6 +1,6 @@
 # R3-ENTRY-WIRE-01 r1 — compiled实际编排与owner死亡清理
 
-2026-10-21 **AI_ACCEPTED_ENTRY_WIRE_OWNER_DEATH_ONLY / NOT_MERGED / NOT_R3_ACCEPTED**。
+2026-10-21 **AI_ACCEPTED_ENTRY_WIRE_OWNER_DEATH_ONLY / MERGED / NOT_R3_ACCEPTED**。
 [Task v1](../task-packages/R3-ENTRY-WIRE-01.md) / [脱敏结果/hash索引](../review-assets/R3-ENTRY-WIRE-01/evidence.json)。base/main60569347ed3cf93a787a9e6b54bab226c3f4d77e，feature/r3-entry-wire-20261021；root唯一写入/执行，gate_review独立只读，普通模型/Standard。
 
 ## 版本与执行路线
@@ -33,4 +33,9 @@
 
 ## 最终独立审查及有限接受
 
-gate_review独立只读核实际原件、四操作边界checkpoint、成员句柄与worker身份、wire与原audit、全hash/strict清单、同源full及公开五路径，最终0 MUST。主控仅AI_ACCEPTED_ENTRY_WIRE_OWNER_DEATH_ONLY；没有本范围产品缺陷，不修改源码或重复full/build。完整GUI/自然退出/正常finally/完整demo/LAN等仍未测；提交后审全部newhistory，再fresh核远端保护与安全普通集成，当前未推送/合并。
+gate_review独立只读核实际原件、四操作边界checkpoint、成员句柄与worker身份、wire与原audit、全hash/strict清单、同源full及公开五路径，最终0 MUST。主控仅AI_ACCEPTED_ENTRY_WIRE_OWNER_DEATH_ONLY；没有本范围产品缺陷，不修改源码或重复full/build。完整GUI/自然退出/正常finally/完整demo/LAN等仍未测；提交后审全部newhistory，再fresh核远端保护与安全普通集成，终审当时尚未推送/合并，实际集成见下节。
+
+## 正常集成回执
+
+fresh API/随后fetch核main仍60569347ed3cf93a787a9e6b54bab226c3f4d77e，protected=false/required checks off/rulesets=[]；准确五路径及全部新history审计通过，按用户本周有界许可普通push开发分支、本地FF、普通push main，ls-remote核两者同 `dce21358762c67259e27d0a28c8cf0a17303441b`。无强推/绕保护/删分支/发布。候选check-runs/statuses/Actions均0（status pending/total0），无可见CI不等于CI PASS，原API记录SHA已绑定索引。
+后续仅同五路径追加此回执，最终leaf完整SHA以Gitrefs/本地delivery-receipt为准；原包/副本七文件及根488保持，不重跑full/build/EXE。GUI/自然退出/LAN/正常完整compiled demo/finally等未测范围不变。

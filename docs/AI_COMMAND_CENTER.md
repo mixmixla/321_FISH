@@ -7,11 +7,11 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## R3-ENTRY-WIRE-01 compiled入口编排（2026-10-21）
 
-**AI_ACCEPTED_ENTRY_WIRE_OWNER_DEATH_ONLY / NOT_MERGED / NOT_R3_ACCEPTED**。[Task v1](task-packages/R3-ENTRY-WIRE-01.md) / [Review r1](review-packages/R3-ENTRY-WIRE-01-r1.md) / [脱敏索引](review-assets/R3-ENTRY-WIRE-01/evidence.json)。base/main60569347ed3cf93a787a9e6b54bab226c3f4d77e，feature/r3-entry-wire-20261021；root唯一资料写入/执行，gate_review独立只读，普通模型/Standard。
+**AI_ACCEPTED_ENTRY_WIRE_OWNER_DEATH_ONLY / MERGED / NOT_R3_ACCEPTED**。[Task v1](task-packages/R3-ENTRY-WIRE-01.md) / [Review r1](review-packages/R3-ENTRY-WIRE-01-r1.md) / [脱敏索引](review-assets/R3-ENTRY-WIRE-01/evidence.json)。base/main60569347ed3cf93a787a9e6b54bab226c3f4d77e，feature/r3-entry-wire-20261021；root唯一资料写入/执行，gate_review独立只读，普通模型/Standard。
 纯验收：根488/sourcedcf9dfb850acd8530274165b6984655ef457ccc077d438978ffe1cdacbd18757保持，沿用2958P0F20原skip/exit0 full，不重跑构建/全量/help-dryrun。新同hash七文件包旧base2e21156/487/source0a1d，后续wire只是外部工具，不冒称旧EXE含新harness。原包/副本七输入保持，仅新trial_runs树/空cwd硬验，strict直接walk/stat/hash时点清单。
 compiled真实--mode demo/--nick一次自行初始化/open server/双client随机port编排，actual client1/2 audit；Job成员+自己的已建立TCP连接/监听被动识别，仅own端点HTTP200，复用_wire_probe双peer3/4/双chat/两棋七步/6.17s/两socketclose。未捕获独立initializer退出码，不虚构。八应用映像属于新包，另两所属conhost。
 稳定worker句柄父关系/同Job/映像复核后注入125，四x-mode checkpoint保留。outer尚未强停/关闭，10成员已全部句柄signaled/active0，worker与bootloader均125，独立sentinel仍活；外部fallback=False。outer随后0→0/close，sentinel单独强制3→0/close，不算自然退出。entry session-summary缺失为强杀预期，不能当finally成功证据。
-97585已结束，无活动EXE/测试。执行前3 MUST关闭后独立0 MUST，实际原件/最终五docs终审0 MUST，当前仅本地AI接受，提交后再核全部newhistory；尚未推送/合并。原件_tmp_gui/r3-entry-wire-20261021含baseline/四checkpoint/execution/logs/controller；下一独立终审/公开审计→正常push/安全FF/fresh保护/远端SHA核实。
+97585已结束，无活动EXE/测试。执行前3 MUST关闭后独立0 MUST，实际原件/最终五docs终审0 MUST并有限AI接受，提交后再次审全部newhistory/fresh远端与保护配置，已普通push/安全FF；远端main/保留开发分支同dce21358762c67259e27d0a28c8cf0a17303441b。protected=false/required checks off/rulesets=[]；候选CI三类0，不当PASS；无强推/绕保护/删分支/发布。同五docs补本回执，最终leaf完整SHA见Gitrefs/本地delivery-receipt；根488/七包hash保持，不重跑full/build/EXE。原件_tmp_gui/r3-entry-wire-20261021含baseline/四checkpoint/execution/logs/controller；后续仅补同五docs集成回执并fresh核远端/CI，不重复EXE/full/build。
 准确5docs/脱敏摘要，本周有界许可，全部newhistory需审，无raw/完整inventory/用户名/私密/密钥/profile/EXE，不强推/绕保护/删分支/发布，无CI不当PASS。GUI/自然退出/LAN/其它DPI/硬件/STT/正常完整demo/finally/非开发机未测，R3不升级。下一P1 R3-INVENTORY-STRICT-01 DRAFT：既有inventory受限rglob漏项fail-closed小改进，单独红绿/领域/审查/适用门禁，不造新框架；本批不实施。恢复先本段/Task/Review/Git/baseline/四checkpoint/execution与实际进程，不重复已有验证。
 
 ## R3-PACKAGE-WIRE-01 七文件包搬移（2026-10-21）

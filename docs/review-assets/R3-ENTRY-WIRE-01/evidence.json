@@ -1,7 +1,7 @@
 {
   "task": "R3-ENTRY-WIRE-01 v1",
   "technical_status": "AI_ACCEPTED_ENTRY_WIRE_OWNER_DEATH_ONLY",
-  "delivery": "LOCAL_ACCEPTED_AUDITED_NOT_YET_PUSHED",
+  "delivery": "MERGED_NORMAL_FAST_FORWARD",
   "base_commit": "60569347ed3cf93a787a9e6b54bab226c3f4d77e",
   "branch": "feature/r3-entry-wire-20261021",
   "product_code_tests_dependencies_build_changed": false,
@@ -325,5 +325,23 @@
     "pre_execution": "0 MUST after three fixes",
     "final_raw_evidence_and_5docs": "0 MUST",
     "acceptance_scope": "Actual compiled entry orchestration, existing wire probe, and child Job cleanup after intentional owner worker termination only. Not natural exit, normal finally, complete GUI, LAN or complete compiled demo."
+  },
+  "integration": {
+    "first_integrated_commit": "dce21358762c67259e27d0a28c8cf0a17303441b",
+    "remote_main_and_feature_verified_same": true,
+    "normal_fast_forward": true,
+    "force_push": false,
+    "branch_deleted": false,
+    "release": false,
+    "pre_policy_record_sha256": "45f4451648ade5e15e71a6a5d1bbfa1fd11464f9b63328accb50ba134b06e946",
+    "candidate_ci_record_sha256": "dcb98cc6007919378b2b61ac0a226d89b0f777c62efc93a631b9a25134751678",
+    "visible_ci": {
+      "check_runs": 0,
+      "statuses": 0,
+      "actions_runs": 0,
+      "status_state": "pending"
+    },
+    "ci_meaning": "No visible CI, not CI passed",
+    "final_receipt_leaf": "Final full SHA is available from Git refs and ignored local delivery-receipt.json; following receipt changes only these same five docs, not the 488 source inputs or package."
   }
 }

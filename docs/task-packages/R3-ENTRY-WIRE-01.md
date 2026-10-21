@@ -27,4 +27,9 @@ friend_trial_start正式支持--mode demo、--nick；demo先新profile，initial
 
 控制器一次实际运行exit0；compiled入口自己编排双client登录/HTTP200，复用wire7步/6.17s/2socketclose。稳定worker句柄注入125后，outer尚未强停即10成员归零/全句柄signaled，bootloader125，sentinel仍活；outer释放0→0，sentinel单独3→0，fallback=False。四原checkpoint保留，session-summary缺失属强杀预期而非自然finally。根488/原七/副本七保持，无代码/full/build变更，见[Review r1](../review-packages/R3-ENTRY-WIRE-01-r1.md)。
 
-实际原件和最终五docs经gate_review独立终审0 MUST，主控仅AI_ACCEPTED_ENTRY_WIRE_OWNER_DEATH_ONLY，未升级R3。当前本地接受，提交后审全部newhistory并核fresh远端/保护，再正常push/安全FF；原件保留，不重复full/build/EXE。
+实际原件和最终五docs经gate_review独立终审0 MUST，主控仅AI_ACCEPTED_ENTRY_WIRE_OWNER_DEATH_ONLY，未升级R3。终审时仅本地接受；随后审全部newhistory并核fresh远端/保护，已正常push/安全FF，详下节；原件保留，不重复full/build/EXE。
+
+## 正常集成回执
+
+fresh API/随后fetch核main仍60569347ed3cf93a787a9e6b54bab226c3f4d77e，protected=false/required checks off/rulesets=[]；准确五路径及全部新history审计通过，按用户本周有界许可普通push开发分支、本地FF、普通push main，ls-remote核两者同 `dce21358762c67259e27d0a28c8cf0a17303441b`。无强推/绕保护/删分支/发布。候选check-runs/statuses/Actions均0（status pending/total0），无可见CI不等于CI PASS，原API记录SHA已绑定索引。
+后续仅同五路径追加此回执，最终leaf完整SHA以Gitrefs/本地delivery-receipt为准；原包/副本七文件及根488保持，不重跑full/build/EXE。GUI/自然退出/LAN/正常完整compiled demo/finally等未测范围不变。

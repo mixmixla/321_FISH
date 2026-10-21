@@ -1,0 +1,137 @@
+{
+  "task": "R3-STRICT-PREFLIGHT-01 v1",
+  "base_commit": "6add1065c3ebc6f43242ca2b85fbb331be009680",
+  "branch": "feature/r3-strict-preflight-20261021",
+  "status": "AI_ACCEPTED_ACTUAL_OLD_BUILD_EXE_PREFLIGHT_ONLY",
+  "harness_is_current_main": true,
+  "package_build_base": "2e2115647940a4025e99f7fcdd112e1fdc9ae416",
+  "package_rebuilt": false,
+  "package_copy_relative": "_tmp_gui/r3-strict-preflight-20261021/package-2e21156",
+  "package_files": [
+    {
+      "path": "LICENSE",
+      "size": 35823,
+      "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+    },
+    {
+      "path": "README.md",
+      "size": 1201,
+      "sha256": "3a6e558edd1c0bac3f0af9b2a65048c341bb3101a18ec6b2d24ea0d9eb07f4d9"
+    },
+    {
+      "path": "SHA256SUMS.txt",
+      "size": 485,
+      "sha256": "136c5e35873a50379ea586e938abcd54f593e639076400db1ff6bf2ad7b4f9df"
+    },
+    {
+      "path": "StartTrial.exe",
+      "size": 9738961,
+      "sha256": "aaa37fe82b003da011046e6402f69a9c91b06c5f6323d156822ec94e0d169bff"
+    },
+    {
+      "path": "VERIFICATION.json",
+      "size": 921,
+      "sha256": "88a6c6dc71277ee73c7a936c85bfde3af4572fba9a7a67d942ca1a1ebedbc6e7"
+    },
+    {
+      "path": "dist/server.exe",
+      "size": 26084183,
+      "sha256": "cbd87c141c1dd50f1e8df8ed87856ec743f94f1e69e466751a66a6e4efce1cb4"
+    },
+    {
+      "path": "dist/client.exe",
+      "size": 27344653,
+      "sha256": "ee2208a24b9e69deff0307b8fe0c88618ec8b896d1ed6b1ef55a2412a3e9d0ab"
+    }
+  ],
+  "seven_file_hashes_match_original_and_six_checksum_entries": true,
+  "formal_run_relative": "_tmp_gui/r3-strict-preflight-20261021/runs/run-20261021-141629-740d2eb77b",
+  "formal_summary_sha256": "96df4c882d9e9094de38a775c7aceb842ef0f2ed874cd19b9373ede7d8402818",
+  "actual_exit_code": 0,
+  "private_desktop_available": true,
+  "probes": {
+    "initialize": true,
+    "tcp_listen": true,
+    "web": true,
+    "login": true,
+    "login_beta": true,
+    "wire": true
+  },
+  "wire_steps": [
+    "welcome",
+    "chat",
+    "chat",
+    "gomoku",
+    "gomoku_leave",
+    "connect4",
+    "connect4_leave"
+  ],
+  "wire_peer_cleanup": [
+    true,
+    true
+  ],
+  "processes_running_after_wait": {
+    "server": true,
+    "client": true,
+    "client_beta": true
+  },
+  "owned_job_cleanup": {
+    "initialize": {
+      "active_before": 0,
+      "active_after": 0,
+      "close_ok": true
+    },
+    "server": {
+      "active_before": 3,
+      "active_after": 0,
+      "close_ok": true
+    },
+    "client": {
+      "active_before": 2,
+      "active_after": 0,
+      "close_ok": true
+    },
+    "client_beta": {
+      "active_before": 2,
+      "active_after": 0,
+      "close_ok": true
+    }
+  },
+  "cleanup_ok": true,
+  "strict_profile_inventories": {
+    "server": {
+      "before": 5,
+      "after": 1081
+    },
+    "client": {
+      "before": 5,
+      "after": 1076
+    },
+    "client_beta": {
+      "before": 5,
+      "after": 1076
+    }
+  },
+  "profile_paths_scoped": true,
+  "profile_inventory_error": null,
+  "formal_source_manifest": {
+    "entries": 1,
+    "sha256": "d5d14b5fdabd336a1f0fc164fe0b8de7382471c588da44a6d95b216761905d70",
+    "scope": "approved source manifest only; seven package hashes independently checked"
+  },
+  "full_source_gate_repeated": false,
+  "product_code_or_tests_changed": false,
+  "accepted_scope": "actual old-build EXE startup, two logins, loopback protocol, strict profile inventory and owned cleanup only",
+  "not_tested": [
+    "complete native GUI",
+    "natural application exit",
+    "physical LAN",
+    "other DPI or Windows",
+    "new EXE build",
+    "non-development machine"
+  ],
+  "independent_review": {
+    "must": 0,
+    "scope": "raw run, seven-file hashes, five public documents and limits"
+  }
+}

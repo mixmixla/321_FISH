@@ -7,14 +7,14 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## TK-GAME-AFTER-01 自有定时任务收口（2026-10-21）
 
-**AI_ACCEPTED_GAME_WINDOW_TIMERS_ONLY / FULL_PASSED / LOCAL_ONLY / R3_GUI_NOT_RUN**。[Task v1.1](task-packages/TK-GAME-AFTER-01.md) / [Review r1](review-packages/TK-GAME-AFTER-01-r1.md)。
+**AI_ACCEPTED_GAME_WINDOW_TIMERS_ONLY / FULL_PASSED / PUSH_APPROVAL_BLOCKED / NOT_MERGED / R3_GUI_NOT_RUN**。[Task v1.1](task-packages/TK-GAME-AFTER-01.md) / [Review r1](review-packages/TK-GAME-AFTER-01-r1.md)。
 上一批42文件已获具体公开许可，普通push/FF并核main与旧fix分支8f1595d77da3b2bfd531a1c535930de7b6bbf39f；旧PUSH_APPROVAL_BLOCKED已解除。无可见CI不是CI通过，未发布/删分支。
 本批独立分支fix/tk-destroy-callbacks-20261021从该main创建，代码ab4a12eab0cf1896319916f312dbf0a92839f357，root唯一写入，gate_review独立只读；client仅24+/3-，只清GameWindow.close自有poll/3补发。
 同一存活root真实RED5F1P，close留4脚本且自然报poll/lambda失效。首修5P1F保留；独立新旧probe均证明root全局wheel引用既有，新4闭包已释放、rootdestroy整对象回收，Task v1.1精化防新增泄漏边界，不混修wheel/MiniBar/Boss/guard。
 最终同字节485输入RED仍5F1P，仅client与green不同；此前481省略4输入的旧副本原件保留。领域8文件93P0F0S，正式代码/领域独立0 MUST。
 唯一full tk-game-full-20261021-155942-cebee2ec16，208文件2922P0F20原opt-in S/exit0/755.466s，485输入source 1b2ddbc38fe87056c8a8c5af1eee95f3f9e13ba53faade07e92a6ef25c16ab86；领域/当前/snapshot逐hash相同，旧207各计数不变。208raw/单attempt/cleanup/退出/skip/15后验全部核，原件及公开结构化hash索引见Review。
-当前full已结束，gate_review最终原件/资料独立终审0 MUST；无重复全量。新批审计10文件（2code/test+8docs/结构化索引），投影/链接/diffcheck和数据边界通过，source485不变。连接曾短暂transport断开后恢复，失败fetch未创建进程，后续fetch已成功且main仍8f1595d。下一动作本地资料提交/普通push与安全集成，适用授权与安全检查允许才执行，遇拒停，原42许可不替代新披露检查。
-新批仅代码/测试/必要上下文和结构化hash索引，不新增公开原raw、大summary、绝对机器路径/profile/凭据/EXE；旧证据原样保留。
+当前full已结束，gate_review最终原件/资料独立终审0 MUST；无重复全量。新批审计10文件（2code/test+8docs/结构化索引），投影/链接/diffcheck和数据边界通过，source485不变。连接曾短暂transport断开后恢复，失败fetch未创建进程，后续fetch已成功且main仍8f1595d。代码ab4a12e与资料bf82d7898eb52a369bb52df4a8520bdc5897b442已本地提交。普通git push -u origin fix/tk-destroy-callbacks-20261021在CreateProcess前被自动安全审批拒绝：认为用户具体公开许可只覆盖旧42文件，新的10文件缺少具体payload/destination授权。命令未执行，立即停远端写入，无重试/旁路/合并；不是测试或代码失败。需要用户明确允许将本批10文件（代码、测试、项目文档、结构化结果与SHA索引，无新raw/profile/EXE）公开推送至mixmixla/321_FISH并安全集成main。下一动作等该具体授权；收到后先核最新Git/remote/本批范围，再仅按规则恢复原操作。
+新批仍仅10个代码/测试/必要上下文和结构化hash索引文件，不新增公开原raw、大summary、绝对机器路径/profile/凭据/EXE；旧证据原样保留。拒绝后远端目标分支未创建，main及前一批fix分支仍8f1595d77da3b2bfd531a1c535930de7b6bbf39f；完整本地leaf见Git和ignored回执，未发布。
 仍5处旗舰_update/lambda诊断与root全局wheel保留未修，正式quit_app已有全局cancel，不能称红退出已修或失败。无native GUI工具，不绕输入/截图；GUI/新EXE（旧产物不含此修）/自然退出/物理LAN/其它DPI/硬件仍未测，R3不放行。
 Task到此停止，下一阶段建议另冻结剩余MiniBar/Boss回调诊断，再补有限R3；不自动扩任务或启动Goal。恢复先本段/Task/Review、Git/实际进程和原fullsummary，禁止重复全量。
 

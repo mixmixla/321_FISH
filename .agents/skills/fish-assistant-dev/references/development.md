@@ -96,6 +96,8 @@ ExcelSheet/ExcelChrome 通常自动收集，仍需实际打包验证后才能声
 正式清理记录Job前后数量与close_ok，任一查询/终止/关闭失败均返回非成功。持有Job而非旧PID决定清理所有权；
 根进程自然退出与Job计数归零分别取证，强制Job清理不能算GUI或服务自然退出。
 
+当前本地候选未验收/未合并，状态以指挥中心为准。正式profile清单使用严格scandir/不跟随stat，枚举或分类失败不能当空目录或文件删除；rglob和os.walk都可能压掉部分错误。启动前失败不launch，运行后先清自有Job，均非0并保存本地错误阶段/errno/filename；原诊断/profile清单不得公开，只公开脱敏摘要。根项固定首位，其余正常结果按相对路径全局排序/hash，时点清单不等于持续磁盘快照。
+
 ## 少量朋友便携入口
 
 `friend_trial_start.py` 与 `friend_trial_process.py` 可编译为console `StartTrial.exe`，和 `dist/client.exe`、`dist/server.exe` 一起分发。

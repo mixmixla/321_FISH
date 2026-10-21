@@ -5,6 +5,17 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## R3-INVENTORY-STRICT-01 正式清单失败可见（2026-10-21）
+
+**FULL_FAILED_GATE_BLOCKED / NOT_AI_ACCEPTED / NOT_MERGE_READY / NOT_R3_ACCEPTED**。[Task v1.2](task-packages/R3-INVENTORY-STRICT-01.md) / [Review r1](review-packages/R3-INVENTORY-STRICT-01-r1.md) / [脱敏索引](review-assets/R3-INVENTORY-STRICT-01/evidence.json)。base/main8fc927d4236e588fdb70a7dc40681ab0cff10816，fix/inventory-strict-20261021；初代码5c7c85862b0fefa7228e40f0bfdecbf453b7482d，最终兼容代码adeb83290085468425d974045df30601cec8c53e。root唯一写入/执行，gate_review独立只读，普通模型/Standard。
+正式local_trial前后profile/_tree_fingerprint静默漏项已复现/最小strict scandir修复，metadata/枚举/读错原样传播、reparse下降前拒绝、根首位/后代排序/schema保持；before启动前code5诊断，after先清Jobs再code5/scopedfalse，无假空清单。生产57+/31-/11新case，未改业务/GUI/协议/依赖/构建/门禁/旧断言/skip/ACL/安全设置，不造框架。
+基线21P；首7F3P、首版8F3P/87P保留。首full inventory-full-20261021-202713-32bc343d2c 2968P1F20S/exit1/795.091s；之后新增!.txt真实root-first/fingerprint回归1F10P，仅return一行兼容修正，最终同字节旧生产RED inventory-original-final-red-20261021-204501-efcbfe3aa6 8F3P/最终领域 inventory-domain-final-20261021-204505-af8d4713b2 5文件87P/exit0/26.2s，独立复审0 MUST后才启动新候选final full。
+最终full inventory-final-full-20261021-204930-84e2540b3b 完整212文件2968P1F20原skip/exit1/795.28s；唯一原r70:564再取bob100/alice3中间榜单、期待alice7，24P1F。干净base488DCF原r70一次25P、候选一次25P，未复现；静态跨sender首len2事件竞态只属时序解释，不能称baseline已复现/完整定因。r70/业务/skip未改，第二次失败命中停止条件，不再full或专项追绿，不AI接受/推送/合并/发布。
+489/source e8ecc2df345e7141a491c6a508f764fce11ba509149ff6043cc48146eb15a221 当前/领域/final snapshot逐SHA同版，最终RED仅local_trial差异、test同E150…37327；旧211除r70 counts保持，新11P；212原log/单attempt/真实exit/cleanup/sandbox/artifact及21证据后验核实，无cleanup失败，原20opt-in S不变。正式故障测试seam+4真实Python Jobs，不当EXE/GUI。
+session99983/28195及所有专项结束，无活动测试/EXE/构建。原件O=_tmp_gui/r3-inventory-strict-20261021，保留双full/各版binding/root-first-fix/owned base-r70-comparison；最终失败事实与九路径资料独立终审0 MUST，仅允许本地保存，不是AI接受。下一只完成准确9路径+全部newhistory审计/本地检查点；本地main与只读核实远端main均8fc927d4236e588fdb70a7dc40681ab0cff10816，本批远端分支不存在，无远端写；候选未上传，不宣称CI。审批超时单次本地保存重试成功，现无待批事项，不再尝试相同失败门禁。
+本周有界拟公开仅9路径代码/测试/项目文档/脱敏摘要，无raw/用户名/私密/密钥/profile/EXE；当前质量条件未满足，因此不推合/PR/发布/强推/绕保护/删分支。旧包2e21156未重建/重跑；新工具actual EXE、完整GUI/自然退出/LAN/其它DPI/正常完整demo等未测，R3不升级。
+下一P1 R70-BOARD-WAIT-01 DRAFT：确定性诊断双full同点失败、等待契约/保留全部积分排序快照断言，需父线程另冻结，不能混本批；门禁解决后P2 R3-STRICT-PREFLIGHT-01新正式工具+同hash包真实预检，不重建/重复full/造框架。恢复先本段/Task/Review/Git/双full原summary/progress与实际进程，禁止再追绿。
+
 ## R3-ENTRY-WIRE-01 compiled入口编排（2026-10-21）
 
 **AI_ACCEPTED_ENTRY_WIRE_OWNER_DEATH_ONLY / MERGED / NOT_R3_ACCEPTED**。[Task v1](task-packages/R3-ENTRY-WIRE-01.md) / [Review r1](review-packages/R3-ENTRY-WIRE-01-r1.md) / [脱敏索引](review-assets/R3-ENTRY-WIRE-01/evidence.json)。base/main60569347ed3cf93a787a9e6b54bab226c3f4d77e，feature/r3-entry-wire-20261021；root唯一资料写入/执行，gate_review独立只读，普通模型/Standard。

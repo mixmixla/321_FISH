@@ -559,7 +559,12 @@ def test_fish_board_accumulate_cap_order_and_snapshot(tmp_path):
         assert bc.wait("fish_board", pred=lambda e: e.get("game") == "gomoku") is not None
         assert a.send_fish_score("gomoku", 4)      # 累加 → 7
         assert b.send_fish_score("gomoku", 999)    # 夹取上限 → 100
-        ev = bc.wait("fish_board", pred=lambda e: len(e.get("entries") or []) == 2)
+        # Independent senders may broadcast a valid intermediate two-player board.
+        # Wait for both totals; keep order/field/snapshot assertions below.
+        ev = bc.wait("fish_board", pred=lambda e:
+                     e.get("game") == "gomoku" and len(e.get("entries") or []) == 2
+                     and {row.get("uid"): row.get("score") for row in e["entries"]}
+                     == {a.uid: 7, b.uid: 100})
         assert ev is not None
         assert [(e["nick"], e["score"]) for e in ev["entries"]] == \
             [("bob", 100), ("alice", 7)]

@@ -1,0 +1,329 @@
+{
+  "task": "R3-ENTRY-WIRE-01 v1",
+  "technical_status": "AI_ACCEPTED_ENTRY_WIRE_OWNER_DEATH_ONLY",
+  "delivery": "LOCAL_ACCEPTED_AUDITED_NOT_YET_PUSHED",
+  "base_commit": "60569347ed3cf93a787a9e6b54bab226c3f4d77e",
+  "branch": "feature/r3-entry-wire-20261021",
+  "product_code_tests_dependencies_build_changed": false,
+  "full_or_build_repeated": false,
+  "source_inputs": 488,
+  "source_content_id": "dcf9dfb850acd8530274165b6984655ef457ccc077d438978ffe1cdacbd18757",
+  "reused_full": {
+    "run_id": "wire-full-20261021-185108-b66afa85c5",
+    "files": 211,
+    "totals": {
+      "passed": 2958,
+      "skipped": 20
+    },
+    "exit_code": 0,
+    "seconds": 774.173,
+    "summary_sha256": "4d27c337d5abfda46d37960404cf0232106459f49e2978675fdce8d191864a42",
+    "manifest_sha256": "98c0ca0f76187f9830ff63de92368904d42a677278ece49b31fe5b54cf5d04c2",
+    "source_inputs": 488,
+    "source_content_id": "dcf9dfb850acd8530274165b6984655ef457ccc077d438978ffe1cdacbd18757"
+  },
+  "package_build": {
+    "base": "2e2115647940a4025e99f7fcdd112e1fdc9ae416",
+    "source_inputs": 487,
+    "source_content_id": "0a1d29967852b737d3aafa4ea8800d94da3e0747713bc616939e8ea7076052b7",
+    "subsequent_external_wire_code_in_exes": false
+  },
+  "original_package_relative_path": "_tmp_gui/r3-rebuild-20261021/bundle-main2e21156-pending-gui",
+  "entry_package_relative_path": "_tmp_gui/r3-entry-wire-20261021/入口编排 空格/便携包 321 FISH",
+  "package_immutable_files": [
+    {
+      "path": "LICENSE",
+      "size": 35823,
+      "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+    },
+    {
+      "path": "README.md",
+      "size": 1201,
+      "sha256": "3a6e558edd1c0bac3f0af9b2a65048c341bb3101a18ec6b2d24ea0d9eb07f4d9"
+    },
+    {
+      "path": "SHA256SUMS.txt",
+      "size": 485,
+      "sha256": "136c5e35873a50379ea586e938abcd54f593e639076400db1ff6bf2ad7b4f9df"
+    },
+    {
+      "path": "StartTrial.exe",
+      "size": 9738961,
+      "sha256": "aaa37fe82b003da011046e6402f69a9c91b06c5f6323d156822ec94e0d169bff"
+    },
+    {
+      "path": "VERIFICATION.json",
+      "size": 921,
+      "sha256": "88a6c6dc71277ee73c7a936c85bfde3af4572fba9a7a67d942ca1a1ebedbc6e7"
+    },
+    {
+      "path": "dist/client.exe",
+      "size": 27344653,
+      "sha256": "ee2208a24b9e69deff0307b8fe0c88618ec8b896d1ed6b1ef55a2412a3e9d0ab"
+    },
+    {
+      "path": "dist/server.exe",
+      "size": 26084183,
+      "sha256": "cbd87c141c1dd50f1e8df8ed87856ec743f94f1e69e466751a66a6e4efce1cb4"
+    }
+  ],
+  "actual_entry_arguments": [
+    "--mode",
+    "demo",
+    "--nick",
+    "synthetic alpha nickname"
+  ],
+  "checks": {
+    "actual_compiled_entry_not_dryrun": true,
+    "source488_same_as_accepted_full": true,
+    "original_and_immutable_copy_7_hashes_unchanged": true,
+    "actual_alpha_beta_tcp_logins": true,
+    "ports_from_owned_connections_and_server_listeners": true,
+    "actual_http200": true,
+    "reused_formal_wire7_and_2socketclose": true,
+    "10_retained_owned_members_all_signaled": true,
+    "application_images_in_relocated_package": true,
+    "pre_checkpoint_before_termination_return": true,
+    "actual_worker_and_bootloader_forced_exit125": true,
+    "inner_owner_cleanup_before_outer_stop": true,
+    "pre_outer_checkpoint_observed_zero_no_prior_release": true,
+    "outer_release_started_empty_and_closed": true,
+    "independent_sentinel_survived_then_own_job_cleaned": true,
+    "cwd_empty_and_new_content_only_fresh_trial": true,
+    "no_external_tree_fallback_or_handle_close_failure": true,
+    "natural_gui_lan_full_demo_not_accepted": true,
+    "session_summary_absence_not_mislabeled": true,
+    "driver_loopback_safe_flags": true,
+    "checkpoint_times_monotonic": true,
+    "raw_audit_confirms_actual_clients_and_wire_peers": true,
+    "worker_identity_and_parent_verified_membership_and_alive_rechecked": true
+  },
+  "actual_clients": {
+    "tcp_login_uids": [
+      1,
+      2
+    ],
+    "frozen_client_groups": 2,
+    "protocol_peer_uids": [
+      3,
+      4
+    ]
+  },
+  "http_status": 200,
+  "wire": {
+    "ok": true,
+    "timed_out": false,
+    "stage": "connect4_leave",
+    "steps": [
+      {
+        "name": "welcome",
+        "uids": [
+          3,
+          4
+        ]
+      },
+      {
+        "name": "chat",
+        "sender": "REL_wire_a",
+        "seq": 1
+      },
+      {
+        "name": "chat",
+        "sender": "REL_wire_b",
+        "seq": 2
+      },
+      {
+        "name": "gomoku",
+        "moves": 9,
+        "room_id": "g1",
+        "round": 1,
+        "next_round": 2
+      },
+      {
+        "name": "gomoku_leave",
+        "room_id": "g1"
+      },
+      {
+        "name": "connect4",
+        "moves": 7,
+        "room_id": "g2",
+        "round": 1,
+        "next_round": 2
+      },
+      {
+        "name": "connect4_leave",
+        "room_id": "g2"
+      }
+    ],
+    "cleanup": [
+      {
+        "nick": "REL_wire_a",
+        "ok": true
+      },
+      {
+        "nick": "REL_wire_b",
+        "ok": true
+      }
+    ],
+    "cleanup_ok": true,
+    "gui_accepted": false,
+    "natural_exit_verified": false,
+    "physical_lan_verified": false,
+    "seconds": 6.17
+  },
+  "owned_process_image_counts": {
+    "client.exe": 4,
+    "conhost.exe": 2,
+    "server.exe": 2,
+    "StartTrial.exe": 2
+  },
+  "owner_death": {
+    "target": "retained entry worker handle; exact relocated image, Job membership and parent identity verified",
+    "forced_worker_exit_code": 125,
+    "actual_bootloader_exit_code": 125,
+    "outer_active_before": 10,
+    "outer_active_after_without_external_tree_stop": 0,
+    "all_retained_handles_signaled": true,
+    "sentinel_survived": true,
+    "external_tree_fallback_used": false,
+    "natural_exit": false,
+    "session_summary_present": false,
+    "session_summary_meaning": "Intentionally terminated worker did not run normal finally; absence is expected, not cleanup success evidence. External retained handle/Job observations are the evidence."
+  },
+  "outer_cleanup": {
+    "attempted": true,
+    "ok": true,
+    "close_ok": true,
+    "ownership": "unnamed Job; suspended assignment; kill-on-close",
+    "active_before": 0,
+    "active_after": 0,
+    "state": "exited"
+  },
+  "sentinel_cleanup": {
+    "attempted": true,
+    "ok": true,
+    "close_ok": true,
+    "ownership": "unnamed Job; suspended assignment; kill-on-close",
+    "active_before": 3,
+    "active_after": 0,
+    "state": "exited"
+  },
+  "checkpoint_times": [
+    {
+      "name": "pre-injection.json",
+      "captured_at_utc": "2026-10-21T11:59:50.267397+00:00"
+    },
+    {
+      "name": "injection-return.json",
+      "captured_at_utc": "2026-10-21T11:59:50.268930+00:00"
+    },
+    {
+      "name": "post-owner-observation.json",
+      "captured_at_utc": "2026-10-21T11:59:50.628061+00:00"
+    },
+    {
+      "name": "pre-outer-release.json",
+      "captured_at_utc": "2026-10-21T11:59:50.629560+00:00"
+    }
+  ],
+  "package_inventory_capture": {
+    "entries": 3248,
+    "strict_enumeration": true,
+    "cwd_empty": true,
+    "new_content_only_single_trial_run": true,
+    "meaning": "Point-in-time strict inventory, no continuous immutability or whole-system IO claim"
+  },
+  "raw_evidence_hash_index": [
+    {
+      "name": "baseline.json",
+      "sha256": "b8f9c6478510d27b2f25234a04ab57aa6ee40b713cd84131df9212b835180d5c"
+    },
+    {
+      "name": "execution.json",
+      "sha256": "60e9163210863b2470e54ab88bb2548105bde040435cc1f7ca4d46285d3fbc85"
+    },
+    {
+      "name": "entry.log",
+      "sha256": "a6d5553e73f4d510464441c6edb99b68fe3b1fe4ee48ee3aa28c1bb0f52c9718"
+    },
+    {
+      "name": "sentinel.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "pre-injection.json",
+      "sha256": "c2384b5b431e2c4140df39e7dcbe34e924f41a763bc501b5ededa2cf207076b4"
+    },
+    {
+      "name": "injection-return.json",
+      "sha256": "186a10f5ac558c62c5d460aeb0dc463cd9d09bb235c47844d83c324731459bb8"
+    },
+    {
+      "name": "post-owner-observation.json",
+      "sha256": "8a398094ea2ae020bd8e62652521a2a0bc693dfb0bb04bd642c884aa33f2dfa7"
+    },
+    {
+      "name": "pre-outer-release.json",
+      "sha256": "98d02f9b3db95fbfb8ef96f6e94fed6dbbeea2f93551f8a53088b62adfd18597"
+    },
+    {
+      "name": "controllers/entry_execute.py",
+      "sha256": "5751aa2493f9b62b14b6f86b66eba20dc4828635d7a4f8afc8610f3d38ad9245"
+    }
+  ],
+  "raw_audit_hashes": [
+    {
+      "name": "audit-20261021.jsonl",
+      "sha256": "22d23d953e571612e18f6b2f9e9edaa6a0bf7c36a887ff468eaf225525b6492a"
+    }
+  ],
+  "controller_provenance": "Post-execution local source snapshot, not cryptographic execution attestation",
+  "proposed_public_files": [
+    {
+      "path": "docs/task-packages/R3-ENTRY-WIRE-01.md",
+      "category": "Frozen finite scope and control boundaries"
+    },
+    {
+      "path": "docs/review-packages/R3-ENTRY-WIRE-01-r1.md",
+      "category": "Actual compiled orchestration/owner-death evidence and review"
+    },
+    {
+      "path": "docs/review-assets/R3-ENTRY-WIRE-01/evidence.json",
+      "category": "Sanitized structured outcomes and local raw evidence hash index"
+    },
+    {
+      "path": "docs/AI_COMMAND_CENTER.md",
+      "category": "Authoritative status and recovery/next priority"
+    },
+    {
+      "path": "docs/任务清单.md",
+      "category": "Generated roadmap projection"
+    }
+  ],
+  "proposed_public_file_count": 5,
+  "not_tested": [
+    "Complete native GUI interaction",
+    "Natural client/red-button/open-server exit",
+    "Normal complete compiled demo/finally/session-summary",
+    "Physical LAN/multiple machines",
+    "Other real DPI/Windows",
+    "Hardware/STT",
+    "Non-development machine without original build/project",
+    "Whole-system IO or continuous profile immutability"
+  ],
+  "next_candidate": {
+    "id": "R3-INVENTORY-STRICT-01",
+    "status": "DRAFT_NOT_IMPLEMENTED",
+    "priority": "P1",
+    "scope": "Make existing local_trial inventory fail closed on inaccessible directory enumeration; retain current reparse/content constraints and add focused error-propagation regression. No new framework/product feature.",
+    "evidence": "Previous PACKAGE visibility comparison showed Path.rglob silently returning partial 5/4/4 while strict enumeration reported WinError5 and full context saw1020. This batch uses a private strict observer; production helper is unchanged.",
+    "dependencies": "Separately frozen Task; reproduce/red before minimal helper change, affected regression/independent review and appropriate gate."
+  },
+  "public_boundary": "Only these five documents/sanitized results/hash index. Raw logs/full inventories/controller/usernames/private data/keys/profiles/EXEs remain local; audit all new history; no release.",
+  "independent_review": {
+    "reviewer": "gate_review",
+    "pre_execution": "0 MUST after three fixes",
+    "final_raw_evidence_and_5docs": "0 MUST",
+    "acceptance_scope": "Actual compiled entry orchestration, existing wire probe, and child Job cleanup after intentional owner worker termination only. Not natural exit, normal finally, complete GUI, LAN or complete compiled demo."
+  }
+}

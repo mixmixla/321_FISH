@@ -228,7 +228,7 @@ def _allowed_relative(path: Path) -> bool:
     top = lowered[0] if lowered else ""
     if top == "tests":
         return path.suffix.lower() in {".py", ".cjs"}
-    if top in {"games_pkg", "widgets", "assets"}:
+    if top in {"games_pkg", "widgets", "boardgames", "assets"}:
         return True
     if len(lowered) != 1:
         return False
@@ -280,16 +280,20 @@ def _source_files(root: Path) -> list[Path]:
         mandatory.extend(tests_dir.glob("test_*.py"))
         # Embedded Web UI probes are test inputs too, including before commit.
         mandatory.extend(tests_dir.glob("*.cjs"))
-    # Include newly added, not-yet-tracked Python modules in the two project
-    # packages used by the application.  Their bytes belong in the candidate
-    # fingerprint just like tracked files.
-    for package in ("games_pkg", "widgets"):
+    # Include newly added, not-yet-tracked Python modules in application
+    # packages. Their bytes belong in the candidate fingerprint just like
+    # tracked files, including lazily imported presentation packages.
+    for package in ("games_pkg", "widgets", "boardgames"):
         package_dir = root / package
         if package_dir.is_dir():
             mandatory.extend(package_dir.rglob("*.py"))
-    assets = root / "assets"
-    if assets.is_dir():
-        mandatory.extend(p for p in assets.rglob("*") if p.is_file())
+    asset_dirs = [root / "assets"]
+    boardgames = root / "boardgames"
+    if boardgames.is_dir():
+        asset_dirs.extend(p for p in boardgames.rglob("assets") if p.is_dir())
+    for assets in asset_dirs:
+        if assets.is_dir():
+            mandatory.extend(p for p in assets.rglob("*") if p.is_file())
     # A non-Git synthetic source used by runner tests still needs its .py
     # modules and static assets; do not recursively copy ignored runtime data.
     if not found:

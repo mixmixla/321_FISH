@@ -118,3 +118,8 @@ ExcelSheet/ExcelChrome 通常自动收集，仍需实际打包验证后才能声
 optional.find_model_dir/transcribe_wav` 是识别链；voice_api 是采集/播放，不能混同。
 `test_r71.py` 覆盖模型路径，`test_r38.py` 覆盖软依赖降级；源码单元测试不能
 证明成品可转写。目前没有成品 EXE 的正向 STT 验收测试，应单独完成并报告。
+
+GameWindow.close只取消自己拥有的poll/延迟列表请求，不清空解释器after队列；hide继续轮询。
+销毁类问题先在同一存活root核真实after脚本与bgerror，区分Tcl命令已删除与Python_closed guard；
+检查新增闭包回收时另核root-owned bind_all引用，不把既有全局绑定保留误算本修复泄漏。
+ChatWindow.quit_app已有全局取消，组件销毁诊断不能直接推导正式自然退出失败或通过。

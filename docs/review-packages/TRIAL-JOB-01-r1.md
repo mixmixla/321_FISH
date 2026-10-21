@@ -61,3 +61,7 @@ gate_review独立预审/最终测试绑定/领域/正式EXE及完整207原件/�
 补充对最终42个Git blob逐项审计：549处绝对路径全部在用户已授权D:/project/321_FISH内，无越界/遍历、个人Users路径/姓名/私钥/token或二进制/实际runtime文件；标准预检只公开新合成profile根和数量，不含prefs/audit正文。
 据新证据仅重试同一普通push一次，自动审批再次拒绝，并明确即使无秘密/个人路径/二进制，仍要求对这42个源码/测试/治理证据与日志的具体外部披露明确授权。停止该动作，不换工具或PR/API绕过；尚未push/设置upstream/合并。
 拒绝后ls-remote确认main仍ade446e639713297774fea3e7898f8dbb523a4ac，目标分支不存在；本地源/测试/门禁/独立接受不受影响。需要用户明确同意把此42文件（含合成测试日志和项目绝对路径元数据）公开推送至https://github.com/mixmixla/321_FISH.git，然后再依既有质量条件集成。最终阻碍记录leaf见本地Git。
+
+## 后续集成回执（2026-10-21）
+
+用户随后具体批准该42文件公开推送和合并。此前被拒动作确认未执行，据新授权仅重试同一普通push一次并成功；未扩大8f1595d提交树。fetch核main未变、无保护/required checks/rulesets后正常FF集成，ls-remote核main与fix/trial-owned-job-20261021均为8f1595d77da3b2bfd531a1c535930de7b6bbf39f。GitHub后续读取亦确认main同SHA，statuses/check-runs空，不称CI PASS。上节PUSH_APPROVAL_BLOCKED为当时历史，现已解除；未强推/删分支/发布。后续Tk任务在新分支单独进行，不混入原42文件许可。

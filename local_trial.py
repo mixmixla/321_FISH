@@ -132,7 +132,7 @@ def _owned_inventory(root: Path) -> list[dict]:
                                     "sha256": _sha256(path)})
                 else:
                     raise ValueError(f"owned inventory contains unsupported entry: {path}")
-    return sorted(entries, key=lambda entry: entry["path"])
+    return [entries[0], *sorted(entries[1:], key=lambda entry: entry["path"])]
 
 
 def _inventory_error(exc: Exception, phase: str) -> dict:

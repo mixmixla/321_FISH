@@ -61,14 +61,14 @@ def test_normal_unicode_spaces_empty_directories_and_global_order_are_compatible
     root = tmp_path/'中文 空格'
     (root/'a'/'empty').mkdir(parents=True)
     (root/'空 目录').mkdir()
-    payloads = {'a/z.txt': b'owned', 'a.txt': b'flat', '中文.bin': b'\x00\xff'}
+    payloads = {'!.txt': b'root-first', 'a/z.txt': b'owned', 'a.txt': b'flat', '中文.bin': b'\x00\xff'}
     for name, data in payloads.items():
         (root/name).write_bytes(data)
     expected = [{'path': p, 'type': 'dir', 'size': 0, 'sha256': None}
                 for p in ['.', 'a', 'a/empty', '空 目录']]
     expected += [{'path': p, 'type': 'file', 'size': len(data),
                   'sha256': hashlib.sha256(data).hexdigest()} for p, data in payloads.items()]
-    expected.sort(key=lambda row: row['path'])
+    expected = [expected[0], *sorted(expected[1:], key=lambda row: row['path'])]
     assert local_trial._owned_inventory(root) == expected
     encoded = json.dumps(expected, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()
     assert local_trial._tree_fingerprint(root) == (hashlib.sha256(encoded).hexdigest(), len(expected))

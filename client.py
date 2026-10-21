@@ -12142,10 +12142,11 @@ class _RoomCard(_CardBase):
         self.row1 = tk.Frame(self, bg=self._pal["bg"])
         self.row1.pack(fill="x", padx=4, pady=(3, 0))
         mark = "★ " if owner == me else ""
+        # Tk labels retain only the Tcl name; keep the image with this card.
+        self._room_icon_image = game_icon_image(
+            self.row1, room["game"], self._pal["fg"], 15)
         self._room_icon = tk.Label(
-            self.row1, image=game_icon_image(self.row1, room["game"],
-                                             self._pal["fg"], 15),
-            bg=self._pal["bg"])
+            self.row1, image=self._room_icon_image, bg=self._pal["bg"])
         self._room_icon.pack(side="left", padx=(0, 3))
         l1 = tk.Label(self.row1, text=f"{mark}{label} {room['room_id']}",
                       bg=self._pal["bg"], fg=self._pal["fg"],

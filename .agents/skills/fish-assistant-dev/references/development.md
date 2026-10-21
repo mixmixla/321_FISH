@@ -96,7 +96,7 @@ ExcelSheet/ExcelChrome 通常自动收集，仍需实际打包验证后才能声
 正式清理记录Job前后数量与close_ok，任一查询/终止/关闭失败均返回非成功。持有Job而非旧PID决定清理所有权；
 根进程自然退出与Job计数归零分别取证，强制Job清理不能算GUI或服务自然退出。
 
-当前本地候选未验收/未合并，状态以指挥中心为准。正式profile清单使用严格scandir/不跟随stat，枚举或分类失败不能当空目录或文件删除；rglob和os.walk都可能压掉部分错误。启动前失败不launch，运行后先清自有Job，均非0并保存本地错误阶段/errno/filename；原诊断/profile清单不得公开，只公开脱敏摘要。根项固定首位，其余正常结果按相对路径全局排序/hash，时点清单不等于持续磁盘快照。
+正式profile清单使用严格scandir/不跟随stat，枚举或分类失败不能当空目录或文件删除；rglob和os.walk都可能压掉部分错误。启动前失败不launch，运行后先清自有Job，均非0并保存本地错误阶段/errno/filename；原诊断/profile清单不得公开，只公开脱敏摘要。根项固定首位，其余正常结果按相对路径全局排序/hash，时点清单不等于持续磁盘快照。
 
 ## 少量朋友便携入口
 
@@ -132,3 +132,5 @@ MiniBar owner Destroy回归应同时覆盖父root销毁和tooltip子Destroy：�
 Boss定时销毁验证必须跨真实1500ms置顶解除及3000ms更新，root heartbeat/截止哨兵证明观察有效，close在同一mainloop内执行；核窗口、Tcl command与pending脚本三者。跟踪ID应在执行前释放，owner Destroy取消自身，皮肤子Destroy不取消，真实tick重入close不得重新排死widget。
 
 正式local_trial.run默认含有限真实wire门禁：先核actual EXE startup，再同server上双加密loopback peer聊天/两棋生命周期；分块recv/send必须共用绝对总/阶段截止，socket先登记且逐项finally清理。用真实Hub/故障peer验证超时/EOF/帧队列边界，正式run seam测试明确与actual EXE证据分层；实际EXE负路径须证明startup成功且故障确实注入，任意exit1不足。复用已绑定且业务源码未变的EXE无需无关重建；协议/Job强停不证明GUI、自然退出或LAN。
+
+多sender的真实集成等待必须匹配目标game/UID累计值，不能仅靠人数或发送返回判断完成；排序/字段/快照仍单独断言。可控夹具使用原加密连接/原消息、锁外门控和共享截止，不靠加sleep追绿；后台观察异常要记录，原断言优先重抛，逐项收尾自有资源。

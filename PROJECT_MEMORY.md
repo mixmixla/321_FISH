@@ -244,4 +244,6 @@ BossWindow原owner销毁会删除Tcl command但不会自动移除解释器after�
 
 local_trial.run的默认有限wire预检在实际EXE startup成功后，用两个合成加密loopback peer覆盖双向聊天与两旗舰终局/复位/重开/离房；同步无reader线程，总/阶段绝对截止和帧/队列上限必须保留。raw socket先持有、finally逐peer关闭，wire/关闭失败使正式run非0，既有owned Job finally保持。协议及强制清理不等于client GUI交互、自然应用退出或物理LAN。
 
-- 本地候选未验收/未合并，当前状态以指挥中心为准：`local_trial._owned_inventory`使用严格scandir上下文和不跟随stat分类，拒reparse后才安排子目录，根项固定首位，其余结果按相对路径全局排序；枚举/分类/读取失败传播原异常，不用rglob或os.walk的部分视图充完整证据。正式run启动前错误不launch并写非0摘要，运行后先清owned Jobs再写非0及本地阶段/errno/filename诊断；访问不可见不等于文件删除，清单仍是时点记录，非持续快照。
+- `local_trial._owned_inventory`使用严格scandir上下文和不跟随stat分类，拒reparse后才安排子目录，根项固定首位，其余结果按相对路径全局排序；枚举/分类/读取失败传播原异常，不用rglob或os.walk的部分视图充完整证据。正式run启动前错误不launch并写非0摘要，运行后先清owned Jobs再写非0及本地阶段/errno/filename诊断；访问不可见不等于文件删除，清单仍是时点记录，非持续快照。
+
+- 多sender真实加密集成中，send成功不代表服务端已处理；等人数满足会提前接受合法中间榜单。应按game/实际UID目标累计值同步，再保留独立排序/字段/状态/快照断言。可控调度置于业务锁外，只延迟原帧而不改载荷；诊断异常需保留原断言且逐项收自有资源。

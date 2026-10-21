@@ -2692,5 +2692,20 @@
     "remote_feature_exists": false,
     "lookup": "git ls-remote exact main/feature refs; no remote write",
     "candidate_ci": "LOCAL_UNPUSHED; no remote candidate verification claimed"
+  },
+  "record_kind": "HISTORICAL_BLOCKED_INVENTORY_CHECKPOINT",
+  "current_resolution": {
+    "task": "R70-BOARD-WAIT-01",
+    "review": "docs/review-packages/R70-BOARD-WAIT-01-r1.md",
+    "status": "AI_ACCEPTED_COMBINED_CANDIDATE_MERGE_PENDING",
+    "code_commit": "9d6d1de92998e85d73923ff91acb45a46ee0320f",
+    "combined_full": "r70-wait-full-20261021-214111-6d59409cd3",
+    "combined_totals": {
+      "passed": 2971,
+      "skipped": 20
+    },
+    "original_inventory_branch_sha": "79bf27b1a7dd8e7ced907a31d4f6cdde760195ec",
+    "original_failed_records_preserved": true,
+    "scope": "Current combined acceptance; original independent candidate failure/blocked fields above are historical and remain unchanged."
   }
 }

@@ -5,7 +5,18 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## R70-BOARD-WAIT-01 榜单等待时序（2026-10-21）
+
+**READY / DOMAIN_PASSED / CODE_REVIEW_0_MUST / COMBINED_FULL_PASSED / AI_ACCEPTED_INVENTORY_AND_BOARD_WAIT_ONLY / MERGE_PENDING / NOT_R3_ACCEPTED**。[Task v1](task-packages/R70-BOARD-WAIT-01.md) / [Review r1](review-packages/R70-BOARD-WAIT-01-r1.md)。base/main8fc927d4236e588fdb70a7dc40681ab0cff10816；依赖inventory原分支79bf27b1a7dd8e7ced907a31d4f6cdde760195ec及双failed full原件保持，不合并未通过候选。当前fix/r70-board-wait-20261021，独立R70代码9d6d1de92998e85d73923ff91acb45a46ee0320f（父79bf）；root唯一写入/执行，gate_review独立只读，普通模型/Standard。
+真实加密ClientCore/Hub/原Collector/原target可控RED r70-wait-red-20261021-213542-dd85da673d 1F1P：Bob中间100/3实收18→Alice最终100/7实收19→server返回最终观察21→原wait选旧帧25，准确原564失败。实际final/snapshot/restore均7/100、fixture_errors空且owned清理成功；反序原target通过。证实合法交错造成提前接受，不还原历史full未记录精确时序。仅原wait增game+两UID预期积分/len2，全部原排序/字段/非法值/状态/快照断言和3s保留，无sleep/skip/业务改动。
+最终同字节RED/GREEN仅原tests/test_r70.py不同；领域r70-wait-domain-20261021-213719-efd3b4512d 7文件114P/exit0/37.642s，新两组无fixture错误且实际state/restore/owned收尾通过。预审异常保留/逐项清理MUST已修，独立代码/RED/领域0 MUST。初领域误名由runner执行前拒绝，按旧领域manifest纠正后一次有效领域，无概率追绿。
+唯一组合full **r70-wait-full-20261021-214111-6d59409cd3** 已完整结束，213文件2971P0F20原opt-in跳过/actual exit0/793.493s；490输入source81851f98a10c994a180dbf5613d22a711b65dfd59f62333182e82094f7b83993当前/领域/snapshot逐hash同一，全部213单attempt/logSHA/原sandbox/真实exit/cleanup/artifact核过，原211未受影响计数保持，仅原r70恢复25P及新2P。16后验全通过；两个受控组原target/state/restore/fixture错误空/owned清理通过。session64769结束，无活动测试/EXE/构建，不重复full。脱敏索引[证据](review-assets/R70-BOARD-WAIT-01/evidence.json)，原件_tmp_gui/r70-board-wait-20261021/final-validation.json和原test-gate run。
+最终独立原件/资料终审0 MUST，主控仅AI接受inventory严格清单+R70等待契约组合。下一审所有main后history与准确14公开路径，fresh远端/保护/required checks核实后正常安全推合；尚未远端写入。原inventoryref79bf和双failed原件不改。源码9d6d1de已提交，资料dirty属root；恢复先本段/Task/Review/Git/原summary，不重启任何测试。
+本周有界公开只代码/测试/项目文档/脱敏摘要，禁止raw/用户名/私密/密钥/profile/EXE；不强推/绕保护/删分支/发布，无可见CI不当PASS。完整GUI/自然应用退出/LAN/其它DPI/新EXE等未测保持。本批终点为两项组合验收，不扩产品功能；下一有价值候选是用严格清单驱动对现有同hash包执行正式真实EXE预检，确认正常路径，避免代码未变的无关重建，另批冻结。
+
 ## R3-INVENTORY-STRICT-01 正式清单失败可见（2026-10-21）
+
+> 以下为历史单项阻塞检查点，全部原失败事实保留；当前已由上方R70组合全量/独立终审有限AI接受，集成状态以最新R70段为准。原inventoryref79bf保持。
 
 **FULL_FAILED_GATE_BLOCKED / NOT_AI_ACCEPTED / NOT_MERGE_READY / NOT_R3_ACCEPTED**。[Task v1.2](task-packages/R3-INVENTORY-STRICT-01.md) / [Review r1](review-packages/R3-INVENTORY-STRICT-01-r1.md) / [脱敏索引](review-assets/R3-INVENTORY-STRICT-01/evidence.json)。base/main8fc927d4236e588fdb70a7dc40681ab0cff10816，fix/inventory-strict-20261021；初代码5c7c85862b0fefa7228e40f0bfdecbf453b7482d，最终兼容代码adeb83290085468425d974045df30601cec8c53e。root唯一写入/执行，gate_review独立只读，普通模型/Standard。
 正式local_trial前后profile/_tree_fingerprint静默漏项已复现/最小strict scandir修复，metadata/枚举/读错原样传播、reparse下降前拒绝、根首位/后代排序/schema保持；before启动前code5诊断，after先清Jobs再code5/scopedfalse，无假空清单。生产57+/31-/11新case，未改业务/GUI/协议/依赖/构建/门禁/旧断言/skip/ACL/安全设置，不造框架。

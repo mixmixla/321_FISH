@@ -1,6 +1,6 @@
 # TK-BOSS-AFTER-01 r1 — Boss 自有定时任务销毁
 
-2026-10-21：**AI_ACCEPTED_BOSS_TIMERS_ONLY / FULL_PASSED / READY_FOR_INTEGRATION / R3_GUI_NOT_RUN**。
+2026-10-21：**AI_ACCEPTED_BOSS_TIMERS_ONLY / FULL_PASSED / MERGED / R3_GUI_NOT_RUN**。
 [Task v1.1](../task-packages/TK-BOSS-AFTER-01.md) / [脱敏结构化结果及原件hash索引](../review-assets/TK-BOSS-AFTER-01/evidence.json)。root唯一实现；gate_review独立只读；普通模型/Standard。仅本批一个真实组件缺陷，沿用用户本周有界公开/合并授权，不发布。
 
 ## 真实复现与最小修复
@@ -46,4 +46,10 @@ boss.py仅31+/4-：初始化自有ID集合；_build/_tick/show沿用原排程，
 
 ## 最终独立接受与公开审计
 
-gate_review从原件核唯一full210文件/单attempt/rawSHA/退出/cleanup/原skip、当前/领域/snapshot487绑定、RED仅boss差异、原209counts不变及资料边界，独立终审0 MUST。公开审计逐新增文件、每个新提交路径与添加行、新文件blob；准确9路径只代码/测试/项目文档/脱敏结构化结果，投影/链接/diffcheck通过，未增raw/完整summary/profile/EXE/机器用户名/私密或密钥。通过后正常提交、fresh fetch核保护/checks和他人变更，再按本周授权push/安全集成；尚未合并或发布。纯资料改动不重跑同源full。
+gate_review从原件核唯一full210文件/单attempt/rawSHA/退出/cleanup/原skip、当前/领域/snapshot487绑定、RED仅boss差异、原209counts不变及资料边界，独立终审0 MUST。公开审计逐新增文件、每个新提交路径与添加行、新文件blob；准确9路径只代码/测试/项目文档/脱敏结构化结果，投影/链接/diffcheck通过，未增raw/完整summary/profile/EXE/机器用户名/私密或密钥。通过后正常提交、fresh fetch核保护/checks和他人变更，再按本周授权push/安全集成；初接受检查点尚未合并；随后已集成、未发布。纯资料改动不重跑同源full。
+
+## 正常集成回执
+
+全部新提交/准确9路径公开边界审计通过后，按本周有界授权普通push同名分支并设置upstream；fresh fetch核main仍7ff2257，无保护/required checks/rulesets后正常FF，ls-remote核main与fix/boss-timer-lifetime-20261021均4ce2cfe20dada7c3ed63078e10ddccd166a235b9，本地main同步、工作区clean。候选check-runs/statuses/Actions均0，不称CI通过。未强推/绕保护/提PR/删分支/发布。之后只在同9路径中更新四份纯文档回执，487源不变、无需重跑full；本段记已核候选，最终回执leaf完整SHA由Gitrefs及本地delivery-receipt记录。原始诊断/RED/领域/唯一full保留，完整GUI/新EXE/自然退出/LAN/其它DPI/硬件仍未测。
+
+合并checkout后第一次raw源码后验失败：仅boss.py从已验收CRLF变为LF。核checkout字节、full快照按CRLF→LF归一化均精确等当前Git blob，才从已验收快照恢复原raw字节；无代码逻辑变化、无重跑full。恢复后487逐hash与原full一致、Git clean。原/恢复SHA与差异保留本地eol-checkpoint，公开仅脱敏结构化元数据，不覆盖原测试证据。

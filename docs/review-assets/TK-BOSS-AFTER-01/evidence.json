@@ -1,7 +1,7 @@
 {
   "task": "TK-BOSS-AFTER-01 v1.1",
   "technical_status": "AI_ACCEPTED_BOSS_TIMERS_ONLY_FULL_PASSED",
-  "delivery": "READY_FOR_NORMAL_PUSH_AND_SAFE_INTEGRATION",
+  "delivery": "MERGED_UNDER_BOUNDED_WEEKLY_PUBLIC_SCOPE",
   "base_commit": "7ff225763caa2360f571b6de3beec654f32fa77d",
   "code_commit": "46e25087b588cbc10e38b6550ce7e468e178d347",
   "branch": "fix/boss-timer-lifetime-20261021",
@@ -2288,5 +2288,37 @@
     "final_full_evidence_must": 0,
     "implementation_writer": "root",
     "scope": "Boss owned timer lifecycle only; R3 not accepted"
+  },
+  "integration_receipt": {
+    "verified_candidate": "4ce2cfe20dada7c3ed63078e10ddccd166a235b9",
+    "verified_main": "4ce2cfe20dada7c3ed63078e10ddccd166a235b9",
+    "verified_branch": "4ce2cfe20dada7c3ed63078e10ddccd166a235b9",
+    "normal_push": true,
+    "normal_fast_forward": true,
+    "public_file_count": 9,
+    "protection": false,
+    "required_checks": [],
+    "rulesets": [],
+    "visible_ci": {
+      "check_runs": 0,
+      "statuses": 0,
+      "workflow_runs": 0,
+      "claimed_ci_pass": false
+    },
+    "force_push_or_release": false,
+    "new_raw_profiles_exe_or_machine_usernames": false,
+    "receipt_note": "Subsequent four-document receipt remains in same nine paths; source unchanged. Latest receipt leaf and final remote SHA are available from Git refs."
+  },
+  "post_integration_eol_recovery": {
+    "source_content_id": "0a1d29967852b737d3aafa4ea8800d94da3e0747713bc616939e8ea7076052b7",
+    "restored_files": [
+      {
+        "path": "boss.py",
+        "checkout_sha256": "ef81354c0796d01a225fcc74e83d4fa06cf2523deac1e0d5288e45b8bff823c6",
+        "verified_raw_sha256": "34ef7c6f0b45af67406a3c7197452566d3e71e781ee7b2b853753ccff1c4bc4d",
+        "difference": "CRLF versus LF only; both normalize exactly to committed Git blob"
+      }
+    ],
+    "all487_raw_bytes_match": true
   }
 }

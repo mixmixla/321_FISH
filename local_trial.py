@@ -3,8 +3,9 @@
 
 The harness creates a clean source copy for PyInstaller and runs the two
 resulting executables with synthetic profiles on a private Windows desktop.
-It deliberately imports only ``launch_process`` from ``test_sandbox``; no
-pytest runtime guard or monkeypatch environment is injected into an EXE.
+Processes are created suspended, assigned to a private owned Job, then
+resumed via ``friend_trial_process``; no pytest runtime guard or monkeypatch
+environment is injected into an EXE.
 
 Examples (PowerShell 7):
 
@@ -33,8 +34,8 @@ import time
 import urllib.request
 import uuid
 
+from friend_trial_process import launch_owned as launch_process
 from test_sandbox import (
-    launch_process,
     private_desktop_probe,
     process_image_path,
     process_state,
@@ -364,6 +365,35 @@ def _process_record(proc, *, desktop: str, command: list[str],
     }
 
 
+def _cleanup_trial_process(proc) -> dict:
+    """Release only the retained Job; cleanup failure must remain visible.
+
+    A completed initializer can have an empty Job already. Never infer process
+    ownership from its old numeric PID, and always close the Job even if a
+    query or termination fails. The state field is informational only.
+    """
+    result = {"attempted": True, "ok": False, "close_ok": False,
+              "ownership": "unnamed Job; suspended assignment; kill-on-close"}
+    try:
+        result["active_before"] = proc.active_count()
+        terminated = bool(proc.terminate_tree())
+        result["active_after"] = proc.active_count()
+        result["ok"] = terminated and result["active_after"] == 0
+        result["state"] = process_state(proc.pid)
+    except Exception as exc:
+        result["error_type"] = type(exc).__name__
+        result["ok"] = False
+    finally:
+        try:
+            proc.close()
+        except Exception as exc:
+            result["close_error_type"] = type(exc).__name__
+            result["ok"] = False
+        else:
+            result["close_ok"] = True
+    return result
+
+
 def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
                   client_exe: Path | None = None) -> tuple[int, dict]:
     run_dir = _new_run_dir(run_root, "run")
@@ -511,19 +541,7 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
             if proc is None:
                 cleanup[role] = {"attempted": False, "ok": True}
                 continue
-            try:
-                ok = bool(proc.terminate_tree())
-            except Exception as exc:
-                ok = False
-                cleanup[role] = {"attempted": True, "ok": False,
-                                 "error_type": type(exc).__name__}
-            else:
-                cleanup[role] = {"attempted": True, "ok": ok,
-                                 "state": process_state(proc.pid)}
-            try:
-                proc.close()
-            except Exception:
-                pass
+            cleanup[role] = _cleanup_trial_process(proc)
         result["cleanup"] = cleanup
         result["cleanup_ok"] = all(item.get("ok") for item in cleanup.values())
         try:

@@ -277,6 +277,36 @@ class XiangQiGame(BaseGame):
         self.turn = saved
         return True
 
+    def _safe_after(self, fx, fy, tx, ty, cell):
+        """单步模拟走子后己方是否不被将军（不改变回合），结束后完整还原。"""
+        saved = self.board[ty][tx]
+        self.board[ty][tx] = cell
+        self.board[fy][fx] = 0
+        try:
+            bad = self._in_check_self()
+        finally:
+            self.board[fy][fx] = cell
+            self.board[ty][tx] = saved
+        return not bad
+
+    def legal_moves(self, uid):
+        """uid 当前的全部合法着法（复用 _move_gen + 送将校验，与 act 一致）。"""
+        if self.winner:
+            return []
+        if uid != self.players[self.turn]:
+            return []
+        pl = self.turn
+        out = []
+        for y in range(ROWS):
+            for x in range(COLS):
+                c = self.board[y][x]
+                if not c or _p(c) != pl:
+                    continue
+                for (tx, ty) in self._move_gen(x, y, c):
+                    if self._safe_after(x, y, tx, ty, c):
+                        out.append({"from": [x, y], "to": [tx, ty]})
+        return out
+
     def snapshot(self):
         state = {
             "game": self.name, "status": "playing",

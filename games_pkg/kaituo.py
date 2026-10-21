@@ -85,7 +85,7 @@ class KaituoGame(BaseGame):
 
     # ---------- 动作 ----------
     def act(self, uid, action):
-        if self.winner is not None:
+        if self.winner is not None or not self.players:
             raise GameRuleError("本局已结束")
         if uid != self.players[self.turn]:
             raise GameRuleError("还没轮到你")
@@ -292,7 +292,8 @@ class KaituoGame(BaseGame):
                       for a, b in [e]},
             "res": {str(u): v for u, v in self.res.items()},
             "score": {str(u): self._score(u) for u in self.players},
-            "turn_uid": None if self.winner else self.players[self.turn],
+            "turn_uid": (None if (self.winner is not None or not self.players)
+                         else self.players[self.turn]),
             "last_roll": self.last_roll,
             "players": list(self.players), "winner_uid": self.winner,
         }
@@ -301,10 +302,39 @@ class KaituoGame(BaseGame):
         if self.winner is not None:
             return {"winner_uid": self.winner,
                     "detail": f"{self._nick(self.winner)} 率先达成 {WIN_PTS} 分"}
+        if not self.players:
+            return {"winner_uid": None, "detail": "所有玩家已离开，对局平局"}
         return None
 
     def player_left(self, uid):
-        return []
+        if uid not in self.players:
+            return []
+        msgs = [f"💨 {self._nick(uid)} 离开了对局"]
+        idx = self.players.index(uid)
+        current = self.players[self.turn]
+        self.players.remove(uid)
+        self.res.pop(uid, None)
+        for v in [v for v, x in self.board.items() if x["owner"] == uid]:
+            del self.board[v]
+        for e in [e for e, o in self.roads.items() if o == uid]:
+            del self.roads[e]
+        if not self.players:
+            self.turn = 0
+            self.winner = None
+            return msgs
+        if current == uid:
+            self.turn = idx % len(self.players)
+        else:
+            self.turn = self.players.index(current)
+        if self.phase == "setup":
+            # 布置轮按原人数轮转，人数变化后无法续接：直接进入主局
+            self.phase = "play"
+            self.setup_count = 2 * len(self.players)
+            self.turn = 0
+        if self.winner is None and len(self.players) == 1:
+            self.winner = self.players[0]
+            msgs.append(f"🏆 {self._nick(self.winner)} 成为唯一留下的玩家，获胜")
+        return msgs
 
     def _nick(self, uid):
         return f"玩家{uid}"

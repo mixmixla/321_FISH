@@ -60,10 +60,10 @@ class WerewolfGame(BaseGame):
 
     # ---- 快照与私密 ----
     def snapshot(self):
+        # 夜间行动者 (need/acted) 会暴露预言家/狼人/女巫身份，只走私密投递
         return {
             "game": self.name, "phase": self.phase, "night": self.night,
             "players": list(self.players), "alive": sorted(self.alive),
-            "acted": list(self.acted), "need": list(self.need),
             "voted": [u for u in self.players if u in self.votes],
             "lynched": self.lynched, "winner": self.winner,
             "done": self.winner is not None,
@@ -72,7 +72,9 @@ class WerewolfGame(BaseGame):
     def private(self, uid):
         if uid not in self.role:
             return None
-        info = {"role": self.role[uid], "name": NAME[self.role[uid]]}
+        info = {"role": self.role[uid], "name": NAME[self.role[uid]],
+                "can_act": uid in self.need and uid not in self.acted,
+                "acted": uid in self.acted}
         if self.role[uid] == WEREWOLF:
             info["teammates"] = [u for u in self.players
                                  if self.role[u] == WEREWOLF and u != uid]

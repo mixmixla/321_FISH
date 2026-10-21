@@ -1995,6 +1995,60 @@ def _g_hint_marks(cv, marks, cell):
                        tags="_g_hint")
 
 
+def _legal_marks(ui, priv, game, ox, oy, cell, st=None):
+    """服务端合法落点 → 候选格像素中心列表（纯函数，不绘制）。
+    分支：走子 {"from":[fx,fy],"to":[tx,ty]} 仅在选中同源格时生效；
+    落子 {"x","y"} 全量；连四 {"col":c} 自底向上找首个空格行；
+    将棋打入 {"drop":t,"x","y"} 仅在已选同型持子时生效。去重保序。"""
+    legal = (priv or {}).get("legal") or []
+    st = st or {}
+    sel = ui.get("sel") or {}
+    same_sel = sel.get("game") == game
+    drop_sel = sel.get("drop") if same_sel else None
+    board = st.get("board") or []
+    out, seen = [], set()
+    for mv in legal:
+        if not isinstance(mv, dict):
+            continue
+        px = py = None
+        if "drop" in mv:
+            if drop_sel is None or drop_sel != mv.get("drop"):
+                continue
+            tx, ty = mv.get("x"), mv.get("y")
+            if isinstance(tx, int) and isinstance(ty, int):
+                px, py = ox + tx * cell + cell / 2, oy + ty * cell + cell / 2
+        elif "from" in mv:
+            src = list(mv.get("from") or [])
+            if not (same_sel and "fx" in sel
+                    and src == [sel.get("fx"), sel.get("fy")]):
+                continue
+            to = list(mv.get("to") or [])
+            if len(to) == 2:
+                px, py = ox + to[0] * cell + cell / 2, oy + to[1] * cell + cell / 2
+        elif "col" in mv:
+            c = mv.get("col")
+            if not isinstance(c, int) or c < 0:
+                continue
+            rows = len(board)
+            if rows:
+                for y in range(rows - 1, -1, -1):
+                    if c < len(board[y]) and not board[y][c]:
+                        px, py = (ox + c * cell + cell / 2,
+                                  oy + y * cell + cell / 2)
+                        break
+            else:
+                px, py = ox + c * cell + cell / 2, oy + cell / 2
+        elif "x" in mv and "y" in mv:
+            tx, ty = mv.get("x"), mv.get("y")
+            if isinstance(tx, int) and isinstance(ty, int):
+                px, py = ox + tx * cell + cell / 2, oy + ty * cell + cell / 2
+        if px is None or (px, py) in seen:
+            continue
+        seen.add((px, py))
+        out.append((px, py))
+    return out
+
+
 _G_EV_STYLE = {                 # 结果反馈徽标：事件 kind → (配色, 字形)
     "check":      ("#ff5a5a", "将"),   # 将军
     "eat":        ("#ff8a3d", "×"),    # 吃掉对方
@@ -2412,6 +2466,7 @@ def _p_connect4(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 _stone(cv, cxc, cyc, rr, "#f2c844", "#b08a14",
                        glow=False, gint=breathing)
     _flagship_feedback(cv, ui, st, 4, now, lastpx)
+    _g_hint_marks(cv, _legal_marks(ui, priv, "connect4", ox, oy, cell, st), cell)
 
 
 @_register("othello")
@@ -2523,6 +2578,7 @@ def _p_tictactoe(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     _g_draw_last(cv, ui, now, lastpx, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
+    _g_hint_marks(cv, _legal_marks(ui, priv, "tictactoe", ox, oy, cell, st), cell)
     _anim_need(ui, repaint, gap=0.04, cap=180)
 
 
@@ -2770,6 +2826,7 @@ def _xiangqi_chess(cv, st, me, nick, submit, repaint, ui, priv, w, h, kind="xian
     _g_draw_event(cv, ui, now, evpx, evkind, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
+    _g_hint_marks(cv, _legal_marks(ui, priv, kind, ox, oy, cell, st), cell)
     _anim_need(ui, repaint, gap=0.04, cap=180)
 
 
@@ -3142,7 +3199,7 @@ def _p_werewolf(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         _role_chip(cv, w, 92, "werewolf", priv, f"你的身份：{priv['name']}", "#333")
     alive = st.get("alive") or []
     players = st.get("players") or []
-    need = set(st.get("need") or [])
+    my_act = bool(priv and priv.get("can_act"))
     cw, ch = 118, 66
     gap = 14
     per = max(1, int((w - 40) / (cw + gap)))
@@ -3154,7 +3211,7 @@ def _p_werewolf(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         cx = base + col * (cw + gap)
         cy = y0 + row * (ch + gap)
         alive_now = u in alive
-        acting = u in need
+        acting = my_act and u == me
         fill = "#5e1f2e" if alive_now else "#3a3a3a"
         if acting:
             fill = _shade("#c0392b", 0.3)
@@ -3168,10 +3225,9 @@ def _p_werewolf(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         if acting:
             _text(cv, cx + cw - 10, cy + 10, "行动", "#ffd75e", (_FONT_F[0], 9),
                   anchor="ne")
-    # 当前需要行动者提示
-    if need:
-        _text(cv, w / 2, h - 24, "需行动：" + "　".join(nick(int(u)) for u in need),
-              _MUTED, _FONT_F)
+    # 只提示自己是否该行动，不公开本阶段的具体行动者
+    if my_act:
+        _text(cv, w / 2, h - 24, "轮到你行动", "#ffd75e", _FONT_B)
 
 
 @_register("avalon")
@@ -3463,6 +3519,7 @@ def _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
                                 ox + (sx + 1) * cell - 2,
                                 oy + (sy + 1) * cell - 2,
                                 outline=_SEL, width=3)
+    _g_hint_marks(cv, _legal_marks(ui, priv, game, ox, oy, cell, st), cell)
 
 
 @_register("junqi")
@@ -3665,6 +3722,7 @@ def _p_shogi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     _g_draw_last(cv, ui, now, lastpx, cell)
     _g_draw_win(cv, ui, now, w, anchors, breathing,
                 st.get("winner_uid") is not None)
+    _g_hint_marks(cv, _legal_marks(ui, priv, "shogi", ox, oy, cell, st), cell)
     _anim_need(ui, repaint, gap=0.04, cap=180)
 
 
@@ -4048,6 +4106,27 @@ def _p_rummikub(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     else:
         _text(cv, w / 2, ty, "（桌面为空，请出牌）", _MUTED, _FONT_F)
         ty += 30
+    # 首任暂存（仅本人可见）：回合结束仍不足 30 点会全部收回
+    staged = (priv or {}).get("staged") or []
+    if staged:
+        spts = int((priv or {}).get("staged_pts") or 0)
+        sy = h - 214
+        _text(cv, w / 2, sy - 10,
+              f"首任暂存 {spts}/30（回合结束不足将收回）", _MUTED, _FONT_F)
+        scw, sch, sgap = 34, 48, 6
+        flat = [t for g in staged for t in g]
+        per = max(1, (w - 24) // (scw + sgap))
+        start = (w - (min(len(flat), per) * (scw + sgap) - sgap)) / 2
+        for i, t in enumerate(flat[:per]):
+            col = _RMK_COL.get(t.get("c", ""), "#888")
+            x0 = start + i * (scw + sgap)
+            _card_face(cv, x0, sy, x0 + scw, sy + sch, face=col,
+                       edge=_shade(col, -0.3), r=_UXR_CTRL)
+            _text(cv, x0 + scw / 2, sy + sch / 2, str(t.get("n", "?")),
+                  "#fff" if _luma(col) < 150 else "#222", _FONT_F)
+        if len(flat) > per:
+            _text(cv, w - 12, sy + sch / 2, f"+{len(flat) - per}", _MUTED,
+                  _FONT_F, anchor="e")
     # 我的手牌（底部，点击高亮）
     hand = []
     hand_ids = []
@@ -4615,8 +4694,8 @@ def _p_onewolf(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         _role_chip(cv, w, st.get("phase") == "result" and 104 or 78,
                    "onewolf", priv, f"你的身份：{v}{extra}", "#333", _FONT_F)
     players = st.get("players") or []
-    need = st.get("need_act") or []
-    acted = st.get("acted") or []
+    my_act = bool(priv and priv.get("can_act"))
+    my_acted = bool(priv and priv.get("acted"))
     voted = st.get("voted") or []
     dead = st.get("dead") or []
     reveal = st.get("reveal") or {}
@@ -4630,7 +4709,7 @@ def _p_onewolf(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         base = (w - (len(cards_row) * (cw + gap) - gap)) / 2
         cx = base + col * (cw + gap)
         cy = y0 + row * (ch + gap)
-        acting = u in need and u not in acted
+        acting = my_act and u == me
         voted_ok = u in voted
         dead_ok = u in dead
         fill = "#3a3a3a" if dead_ok else _shade("#32264d", 0.5)
@@ -4643,8 +4722,16 @@ def _p_onewolf(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         role_txt = reveal.get(str(u), "")
         _text(cv, cx + cw / 2, cy + 24, nick(u) + ("（我）" if u == me else ""),
               "#fff", _FONT_B)
-        sub = "被处决" if dead_ok else \
-            ("待行动" if acting else ("已行动" if voted_ok else ("已投票" if voted_ok else "")))
+        if dead_ok:
+            sub = "被处决"
+        elif acting:
+            sub = "待行动"
+        elif voted_ok:
+            sub = "已投票"
+        elif my_acted and u == me:
+            sub = "已行动"
+        else:
+            sub = ""
         if st.get("phase") == "result" and role_txt:
             sub = role_txt
         _text(cv, cx + cw / 2, cy + 48, sub,
@@ -5349,6 +5436,25 @@ def _p_siji(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     else:
         _text(cv, w / 2, yy, f"💎施法 {cry_v}   💰金币 {gd_v}   👑胜利 {vp_v}",
               "#eff2e6", _FONT_B)
+    # 我的手牌（私密）：显示序号/名称/费用/产出，便于对应输入
+    my_hand = (priv or {}).get("hand") or []
+    hy = h - 160
+    _text(cv, w / 2, hy - 10, f"我的手牌（{len(my_hand)}）", "#eff2e6", _FONT_F)
+    if my_hand:
+        hcw, hch, hgap = 96, 46, 6
+        per = max(1, (w - 24) // (hcw + hgap))
+        row_cards = my_hand[:per]
+        start = (w - (len(row_cards) * (hcw + hgap) - hgap)) / 2
+        for i, c in enumerate(row_cards):
+            x = start + i * (hcw + hgap)
+            _rrect(cv, x, hy, x + hcw, hy + hch, 7, "#f2ead8", "#8a7a5a")
+            _text(cv, x + 6, hy + 14, f"[{i}] {c.get('name', '?')}", "#333",
+                  (_FONT_F[0], 9), anchor="w")
+            _text(cv, x + 6, hy + 32, f"需{c.get('cost', 0)} 产{c.get('out', 0)}",
+                  "#666", (_FONT_F[0], 9), anchor="w")
+        if len(my_hand) > per:
+            _text(cv, w - 12, hy + hch / 2, f"+{len(my_hand) - per}",
+                  _MUTED, _FONT_F, anchor="e")
     # 玩家矩阵
     n = len(players)
     gap = 8

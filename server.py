@@ -10162,7 +10162,13 @@ class Hub:
                 payload["state"] = room.gs.snapshot()
                 if room.status == RoomStatus.PLAYING:
                     for u in room.members:
-                        priv = room.gs.private(u)
+                        priv = room.gs.private(u) or {}
+                        try:
+                            legal = room.gs.legal_moves(u)
+                        except Exception:
+                            legal = []
+                        if legal:
+                            priv["legal"] = legal
                         if priv:
                             priv_map[u] = priv
             targets = list(room.members)

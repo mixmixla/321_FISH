@@ -138,6 +138,19 @@ class CheckersGame(BaseGame):
             msgs.append(f"🏆 {self._nick(uid)} 对方无路可走获胜！")
         return msgs
 
+    def legal_moves(self, uid):
+        """当前行动者的单步合法走/吃（连跳由 act 分步执行，此处只给下一步）。"""
+        if self.winner or uid != self.players[self.turn]:
+            return []
+        out = []
+        for y in range(N):
+            for x in range(N):
+                if not self._me(self.board[y][x]):
+                    continue
+                for tx, ty in self._targets(x, y):
+                    out.append({"from": [x, y], "to": [tx, ty]})
+        return out
+
     def _has_move(self):
         """当前玩家是否还有合法走/吃（含吃子；漏掉吃子会误判无路可走）。"""
         for y in range(N):

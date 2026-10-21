@@ -101,6 +101,35 @@ class DouGame(BaseGame):
         return [f"🐾 {self._nick(uid)} {CN[a]} ({fx},{fy})→({tx},{ty})" +
                 (f"，吃掉 {CN[target[1]]}" if target else "")]
 
+    def legal_moves(self, uid):
+        """己方动物的全部可接受走法：入水/跳河/吃子规则与 act 保持一致。"""
+        if self.winner or uid != self.players[self.turn]:
+            return []
+        pl = self.turn
+        out = []
+        for (fx, fy), (owner, a) in sorted(self.board.items()):
+            if owner != pl:
+                continue
+            for tx in range(COLS):
+                for ty in range(ROWS):
+                    if (tx, ty) == (fx, fy):
+                        continue
+                    if not self._can_move(a, fx, fy, tx, ty):
+                        continue
+                    target = self.board.get((tx, ty))
+                    # 进敌营即胜，act 在吃子判定前直接结算
+                    if target and (tx, ty) != DENS[1 - pl]:
+                        if target[0] == pl:
+                            continue
+                        oa = target[1]
+                        if self._in_water(fx, fy) != self._in_water(tx, ty):
+                            continue
+                        if a < oa and not (a == MOUSE and oa == ELEPHANT
+                                           and not self._in_water(fx, fy)):
+                            continue
+                    out.append({"from": [fx, fy], "to": [tx, ty]})
+        return out
+
     def _in_water(self, x, y):
         return (x, y) in WATER
 

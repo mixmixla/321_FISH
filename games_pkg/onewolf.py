@@ -50,11 +50,10 @@ class OneNightWolfGame(BaseGame):
         self._rob_seen = {}                        # uid -> stolen_role
 
     def snapshot(self):
+        # 夜晚行动者 (need_act/acted) 会暴露预言家/强盗身份，只走私密投递
         return {
             "game": self.name, "phase": self.phase,
             "players": list(self.players),
-            "acted": [u for u in self.players if u in self.acted],
-            "need_act": [u for u in self.players if u in self.need_act],
             "voted": [u for u in self.players if u in self.votes],
             "dead": list(self.dead),
             "winner": self.winner,
@@ -64,11 +63,17 @@ class OneNightWolfGame(BaseGame):
         }
 
     def private(self, uid):
-        """私密信息：身份 + 夜间结果"""
+        """私密信息：身份 + 夜间结果 + 本人是否可行动"""
         if uid not in self.role:
             return None
         role = self.role[uid]
-        info = {"role": role, "name": NAME[role], "origin": NAME[self.original[uid]]}
+        info = {"role": role, "name": NAME[role], "origin": NAME[self.original[uid]],
+                "acted": uid in self.acted}
+        pending_seer = any(u not in self.acted for u in self.players
+                           if self.original.get(u) == SEER)
+        info["can_act"] = (self.phase == "night" and uid in self.need_act
+                           and uid not in self.acted
+                           and not (self.original.get(uid) == ROBBER and pending_seer))
         if self.original[uid] == WEREWOLF:
             info["teammates"] = [u for u in self.players if self.original[u] == WEREWOLF and u != uid]
         # 预言家已看的人的信息

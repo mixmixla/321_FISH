@@ -12,6 +12,7 @@ class BaseGame:
     - players: 座位顺序的 uid 列表（加入顺序）
     - snapshot(): 公开状态 -> dict（广播给房间成员与观战者）
     - private(uid): 私密投递 -> dict 或 None（谁是卧底词面 / UNO 手牌）
+    - legal_moves(uid): 当前可行动者的合法着法（仅本人可见，供 UI 高亮）
     - act(uid, action): 处理玩家动作，返回系统消息行列表；非法抛 GameRuleError
     - tick(now): 服务器定时推进（超时/自动下一轮），返回消息行
     - ended(): 非 None 表示对局结束 -> {"winner_uid": int|None, "detail": str}
@@ -30,6 +31,15 @@ class BaseGame:
 
     def private(self, uid: int):
         return None
+
+    def legal_moves(self, uid: int) -> list:
+        """返回 uid 当前合法着法（仅本人可见）。
+
+        约定：走子类用 {"from": [x, y], "to": [x, y]}，
+        落子类用 {"x": x, "y": y}（列落子用 {"col": c}）。
+        默认空列表 = 不提供高亮。
+        """
+        return []
 
     def act(self, uid: int, action: dict) -> list:
         raise GameRuleError("该游戏暂不可操作")

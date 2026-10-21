@@ -55,6 +55,15 @@ class TicTacToeGame(BaseGame):
         self.turn = 1 - self.turn
         return [f"✅ {self._nick(uid)} 落子（{x},{y}）"]
 
+    def legal_moves(self, uid):
+        if self.winner_uid is not None or self.draw:
+            return []
+        if uid != self.players[self.turn]:
+            return []
+        return [{"x": x, "y": y}
+                for y in range(SIZE) for x in range(SIZE)
+                if self.board[y][x] == 0]
+
     def _check_win(self, x, y, stone):
         for dx, dy in DIRS:
             cnt = 1

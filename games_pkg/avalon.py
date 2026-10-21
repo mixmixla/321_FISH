@@ -41,6 +41,7 @@ class AvalonGame(BaseGame):
         # 状态
         self.quest = 0                 # 0..4
         self.attempt = 0               # 第几次组队
+        self.rejections = 0            # 连续被否决的组队次数（通过即清零，满 5 次坏人胜）
         self.leader_idx = 0
         self.phase = "nominate"        # nominate → teamvote → quest → (最终指认 final / 下一任务)
         self.team = []                 # 领袖提名的团队
@@ -74,6 +75,7 @@ class AvalonGame(BaseGame):
             "voted": [u for u in self.players if u in self.votes],
             "quest_done": [u for u in self.team if u in self.quest_votes],
             "results": list(self.results),
+            "rejections": self.rejections,
             "winner": self.winner, "done": self.winner is not None,
         }
 
@@ -132,6 +134,8 @@ class AvalonGame(BaseGame):
             return [f"🗳️ {nk(uid)} {'赞成' if ok else '反对'}这个团队"]
         if self.phase == "quest":
             good = bool(action.get("success"))
+            if not good and uid not in self.evil_uids:
+                raise GameRuleError("忠臣不能投失败票")
             self.quest_votes[uid] = good
             return [f"🃏 {nk(uid)} 任务结果：{'成功' if good else '失败'}"]
         if self.phase == "final":
@@ -157,6 +161,7 @@ class AvalonGame(BaseGame):
         if self.phase == "teamvote":
             yays = sum(1 for v in self.votes.values() if v)
             if yays > len(self.players) / 2:
+                self.rejections = 0
                 self.phase = "quest"
                 self.quest_votes = {}
                 self.need = list(self.team)
@@ -164,6 +169,13 @@ class AvalonGame(BaseGame):
                 msgs.append(f"✅ 团队通过（{yays} 赞成），成员进入任务")
             else:
                 self.attempt += 1
+                self.rejections += 1
+                if self.rejections >= 5:
+                    self.winner = False
+                    self.detail = "连续 5 次组队被否决，邪恶方获胜"
+                    self.phase = "done"
+                    msgs.append(f"💀 {self.detail}")
+                    return msgs
                 self.leader_idx = (self.leader_idx + 1) % len(self.players)
                 self._need_leader()
                 msgs.append(f"❌ 团队被否决，换 {self._nick(self._leader_uid())} 重新组队")

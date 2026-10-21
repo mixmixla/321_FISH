@@ -59,6 +59,13 @@ class Connect4Game(BaseGame):
         self.turn = 1 - self.turn
         return []
 
+    def legal_moves(self, uid: int) -> list:
+        if self.winner_uid is not None or self.draw:
+            return []
+        if uid != self.players[self.turn]:
+            return []
+        return [{"col": c} for c in range(COLS) if self._drop_row(c) is not None]
+
     def _drop_row(self, col: int) -> int | None:
         """重力下落：返回该列最底部空位的行号"""
         for row in range(ROWS - 1, -1, -1):

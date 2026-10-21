@@ -71,12 +71,34 @@ class MatchPairsGame(BaseGame):
     def act(self, uid: int, action: dict) -> list:
         if self.loser_uid is not None:
             raise GameRuleError("本局已结束，请开新局")
+        if not isinstance(action, dict):
+            raise GameRuleError("动作数据无效")
+        op = action.get("op")
+        if op is None:
+            if action.get("draw") is not True:
+                raise GameRuleError("缺少摸牌参数")
+        elif op == "draw":
+            if "draw" in action and action.get("draw") is not True:
+                raise GameRuleError("缺少摸牌参数")
+        else:
+            raise GameRuleError(f"未知动作: {op}")
+        self._skip_empty_turn()
         if uid != self._current():
             raise GameRuleError("还没轮到你")
         target = self._next_with_cards()
         if target is None:
             self._finish(uid)
             return ["仅剩你可配对，其余玩家皆已安全"]
+        wanted = action.get("target", action.get("from"))
+        if wanted is not None:
+            try:
+                wanted = int(wanted)
+            except (TypeError, ValueError):
+                raise GameRuleError("目标不在对局")
+            if wanted not in self.players or wanted == uid:
+                raise GameRuleError("目标不在对局")
+            if wanted != target:
+                raise GameRuleError("只能摸下一家的牌")
         card = self.rng.choice(self.hands[target])
         self.hands[target].remove(card)
         if not self.hands[target]:
@@ -111,7 +133,16 @@ class MatchPairsGame(BaseGame):
             if self.hands[self.players[self.turn]]:
                 return
 
+    def _skip_empty_turn(self) -> None:
+        """当前座位已空手（安全）时向前跳过，避免空手玩家发动作或卡住轮次。"""
+        n = len(self.players)
+        for _ in range(n):
+            if self.hands[self.players[self.turn]]:
+                return
+            self.turn = (self.turn + 1) % n
+
     def _current(self) -> int:
+        self._skip_empty_turn()
         return self.players[self.turn]
 
     def _next_with_cards(self) -> int | None:

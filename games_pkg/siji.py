@@ -145,7 +145,8 @@ class SijiGame(BaseGame):
             "game": self.name, "status": "playing",
             "season": self.season, "seasons": SEASONS,
             "turns_left": self.turns_left,
-            "hand": {str(u): v for u, v in self.hand.items()},
+            # 手牌是私密信息：公开快照只给数量，具体牌面走 private()
+            "hand_count": {str(u): len(v) for u, v in self.hand.items()},
             "engine": {str(u): v for u, v in self.engine.items()},
             "crystal": {str(u): v for u, v in self.crystal.items()},
             "gold": {str(u): v for u, v in self.gold.items()},
@@ -153,6 +154,11 @@ class SijiGame(BaseGame):
             "turn_uid": None if self.winner else self.players[self.turn],
             "players": list(self.players), "winner_uid": self.winner,
         }
+
+    def private(self, uid):
+        if uid not in self.hand:
+            return None
+        return {"hand": [dict(c) for c in self.hand[uid]]}
 
     def ended(self):
         if self.winner:

@@ -18,6 +18,7 @@ ROUTES = [
 ]
 TICKETS = [(0, 7, 3), (1, 6, 2), (2, 7, 2), (0, 4, 2), (1, 5, 2),
            (3, 6, 2), (0, 2, 2), (4, 7, 3), (2, 4, 2), (5, 7, 2)]
+TICKET_PER_COLOR = 12    # 每种颜色车票卡张数（官方比例）
 END_TARGET = 10          # 单人有此分即触发终局
 
 
@@ -40,6 +41,11 @@ class TieluGame(BaseGame):
         for u in players:
             for t in self.rng.sample(TICKETS, 2):  # 起手两张不能重复
                 self.tickets[u].append(list(t))
+        # 有限车票牌库：每种颜色固定张数，起手手牌也从牌库扣除
+        used = {c: sum(self.hand[u][c] for u in players) for c in COLORS}
+        self.ticket_deck = [c for c in COLORS
+                            for _ in range(max(0, TICKET_PER_COLOR - used[c]))]
+        self.rng.shuffle(self.ticket_deck)
         self.routes_total = len(self.route_deck)
         self.turn = 0
         self.winner = None
@@ -69,13 +75,13 @@ class TieluGame(BaseGame):
     def _act_draw(self, uid):
         if not self.route_deck:
             raise GameRuleError("线路牌已空")
-        got = []
-        for _ in range(2):
-            c = self.rng.choice(COLORS)
+        if len(self.ticket_deck) < 2:
+            raise GameRuleError("车票卡已抽空")
+        got = [self.ticket_deck.pop(), self.ticket_deck.pop()]
+        for c in got:
             self.hand[uid][c] += 1
-            got.append(COLOR_CN[c])
         self._advance()
-        return [f"🎫 {self._nick(uid)} 摸车票卡：{'、'.join(got)}"]
+        return [f"🎫 {self._nick(uid)} 摸车票卡：{'、'.join(COLOR_CN[c] for c in got)}"]
 
     def _act_claim(self, uid, action):
         try:
@@ -184,6 +190,7 @@ class TieluGame(BaseGame):
             "game": self.name, "status": "playing",
             "cities": CITY_CN, "colors": COLOR_CN,
             "route_left": len(self.route_deck), "routes": routes,
+            "ticket_left": len(self.ticket_deck),
             "hand_count": {str(u): sum(self.hand[u].values()) for u in self.players},
             "score": {str(u): self._score(u) for u in self.players},
             "turn_uid": (None if (self.winner is not None or not self.route_deck)
@@ -192,7 +199,48 @@ class TieluGame(BaseGame):
         }
 
     def player_left(self, uid):
-        return []
+        """掉线善后：移除座位、手牌与未结算票证，修正回合和终局补回合。"""
+        if uid not in self.players:
+            return []
+        msgs = [f"👋 {self._nick(uid)} 离开了对局"]
+        idx = self.players.index(uid)
+        was_turn = (self.winner is None and idx == self.turn)
+        cur_uid = self.players[self.turn]
+        self.players.remove(uid)
+        self.hand.pop(uid, None)
+        self.mine.pop(uid, None)
+        self.tickets.pop(uid, None)
+        n = len(self.players)
+        if n == 0:
+            return msgs
+        if n == 1:
+            if self.winner is None:
+                self.winner = self.players[0]
+                self.turn = 0
+                self.extra = []
+                msgs.append(f"🏆 仅剩 {self._nick(self.winner)}，直接获胜")
+            return msgs
+        if self.winner is not None:
+            self.turn %= n
+            return msgs
+        if self.trigger_uid is not None:
+            # 终局补回合：保留尚未补过回合的玩家（当前行动者 + extra），每人一次
+            pending = ([cur_uid] if cur_uid != uid else []) + \
+                      [u for u in self.extra if u != uid]
+            if not pending:
+                self.extra = []
+                self.turn = 0
+                self._finalize()
+                return msgs
+            self.extra = pending[1:]
+            self.turn = self.players.index(pending[0])
+            return msgs
+        if was_turn or cur_uid == uid:
+            self.turn = idx % n
+        elif idx < self.turn:
+            self.turn -= 1
+        self.turn %= n
+        return msgs
 
     def _nick(self, uid):
         return f"玩家{uid}"

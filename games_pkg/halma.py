@@ -79,7 +79,12 @@ class HalmaGame(BaseGame):
                 self.board[(x, y)] = (p, seats[i])
         self.turn = 0
         self.winner = None
+        self.draw = False
+        self._end_detail = None
         self.last_move = None
+
+    def _over(self):
+        return self.winner is not None or self.draw
 
     # ---- 营区辅助 ----
     def _goal_arm(self, arm):
@@ -97,7 +102,7 @@ class HalmaGame(BaseGame):
 
     # ---- 动作 ----
     def act(self, uid, action):
-        if self.winner:
+        if self._over():
             raise GameRuleError("本局已结束")
         if uid != self.players[self.turn]:
             raise GameRuleError("还没轮到你")
@@ -137,7 +142,67 @@ class HalmaGame(BaseGame):
             msgs.append(f"🏆 {self._nick(uid)} 全部抵达对岸，获胜！")
             return msgs
         self.turn = (self.turn + 1) % self.n
+        msgs.extend(self._skip_to_movable())
         return msgs
+
+    def legal_moves(self, uid):
+        """当前行动者的单步直移/跳子（连跳由 act 分步执行，此处只给下一步）。"""
+        if self._over() or uid != self.players[self.turn]:
+            return []
+        out = []
+        for (x, y), (p, _) in self.board.items():
+            if p != uid:
+                continue
+            for tx, ty in self._targets(x, y):
+                out.append({"from": [x, y], "to": [tx, ty]})
+        return out
+
+    # ---- 回合推进 / 无步跳过 ----
+    def _has_move(self, uid):
+        for (x, y), (p, _) in self.board.items():
+            if p == uid and self._targets(x, y):
+                return True
+        return False
+
+    def _progress(self, uid):
+        """(已入对角营的棋子数, -剩余距离)：元组越大越领先，规则确定可复现"""
+        arm = self.arm_of.get(uid)
+        if arm is None:
+            return (0, 0)
+        goal = self._goal_arm(arm)
+        cells = [pos for pos, (p, _) in self.board.items() if p == uid]
+        in_goal = sum(1 for pos in cells if pos in goal)
+        remain = sum(min(max(abs(x - gx), abs(y - gy)) for (gx, gy) in goal)
+                     for (x, y) in cells)
+        return (in_goal, -remain)
+
+    def _skip_to_movable(self):
+        """从当前座位起跳过无子可动的玩家；全员无步时立即终局，避免死循环"""
+        msgs = []
+        n = len(self.players)
+        for _ in range(n):
+            uid = self.players[self.turn]
+            if self._has_move(uid):
+                return msgs
+            msgs.append(f"⏭ {self._nick(uid)} 无子可动，跳过")
+            self.turn = (self.turn + 1) % n
+        msgs.extend(self._finish_stuck())
+        return msgs
+
+    def _finish_stuck(self):
+        """全员无子可动：按入营子数、剩余距离依次比较，仍相同则平局"""
+        scores = {u: self._progress(u) for u in self.players}
+        best = max(scores.values())
+        leaders = [u for u, s in scores.items() if s == best]
+        if len(leaders) == 1:
+            self.winner = leaders[0]
+            self._end_detail = (f"全员无子可动，{self._nick(self.winner)} 以 "
+                                f"{best[0]} 子入营、剩余距离 {-best[1]} 领先")
+            return [f"🏁 全员无子可动，按进度判定 {self._nick(self.winner)} 获胜"]
+        self.draw = True
+        self._end_detail = (f"全员无子可动，各 {best[0]} 子入营、"
+                            f"剩余距离 {-best[1]}，平局")
+        return ["🏁 全员无子可动，进度相同，平局"]
 
     # ---- 提示辅助 ----
     def _targets(self, x, y):
@@ -162,11 +227,11 @@ class HalmaGame(BaseGame):
             "valid": [[1 if (x, y) in VALID else 0 for x in range(N)] for y in range(N)],
             "arms": [[[1 if (x, y) in ARM_CELLS[a] else 0 for x in range(N)] for y in range(N)]
                      for a in range(ARMS)],
-            "turn_uid": None if self.winner else self.players[self.turn],
+            "turn_uid": None if self._over() else self.players[self.turn],
             "players": list(self.players), "winner_uid": self.winner,
             "owners": {str(p): self.arm_of[p] for p in self.players},
         }
-        if not self.winner:
+        if not self._over():
             me = self.players[self.turn]
             hints = {}
             for (x, y), (p, arm) in self.board.items():
@@ -178,9 +243,16 @@ class HalmaGame(BaseGame):
         return state
 
     def ended(self):
-        if self.winner:
+        # 兜底：若盘面已无任何人可走（如掉线后），查询终局时直接结算
+        if not self._over() and self.players and not any(
+                self._has_move(u) for u in self.players):
+            self._finish_stuck()
+        if self.winner is not None:
             return {"winner_uid": self.winner,
-                    "detail": f"{self._nick(self.winner)} 率先全部抵达对岸"}
+                    "detail": self._end_detail
+                    or f"{self._nick(self.winner)} 率先全部抵达对岸"}
+        if self.draw:
+            return {"winner_uid": None, "detail": self._end_detail or "平局"}
         return None
 
     def player_left(self, uid):
@@ -197,10 +269,15 @@ class HalmaGame(BaseGame):
         if self.turn > idx:
             self.turn -= 1
         self.turn %= self.n
-        if self.n < self.min_players and self.winner is None:
+        if self.n < self.min_players and not self._over():
             self.winner = self.players[self.turn]
+            self._end_detail = (f"{self._nick(uid)} 离开，仅剩 "
+                                f"{self._nick(self.winner)}，判其获胜")
             return [f"💨 {self._nick(uid)} 离开，{self._nick(self.winner)} 获胜"]
-        return [f"💨 {self._nick(uid)} 离开了对局"]
+        msgs = [f"💨 {self._nick(uid)} 离开了对局"]
+        if not self._over():
+            msgs.extend(self._skip_to_movable())
+        return msgs
 
     def _nick(self, uid):
         return f"玩家{uid}"

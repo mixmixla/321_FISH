@@ -172,14 +172,11 @@ class CocGame(BaseGame):
             raise GameRuleError("你还没有调查员卡")
         card = self.assigned[uid]
         skill = action.get("skill")
-        base = action.get("base")
+        # 技能值只认角色卡：已列出的用卡面值，未列出的统一 50，客户端 base 一律忽略
         if isinstance(skill, str):
-            val = card["sig"].get(skill)
-            if val is None:
-                # 允许检定任意已知技能；未列出的按 base 或 50
-                val = int(base) if base is not None and str(base).lstrip("-").isdigit() else 50
+            val = card["sig"].get(skill, 50)
         else:
-            val = int(base) if base is not None and str(base).lstrip("-").isdigit() else 50
+            val = 50
         roll, level = resolve_check(val, self.rng)
         skill_label = skill if isinstance(skill, str) else f"技能{val}"
         line = f"🎲 {self._nick(uid)} 对「{skill_label}」检定 → {level}"

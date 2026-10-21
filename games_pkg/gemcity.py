@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """璀璨宝石（致敬 Splendor）：宝石金库分 5 色+万能金，市场摆 3 级发展卡。
-回合＝取3颗异色/取2颗同色/保留卡(得金)/购买发展卡(扣款得永久折扣+分)。
+回合＝取 1~3 颗异色（超出 10 颗自动退回）/取2颗同色/保留卡(得金)/购买发展卡(扣款得永久折扣+分)。
 手牌达贵宾需求即邀贵宾加分。先到 15 分(且当轮结束)者胜。"""
 from games_pkg.base import BaseGame, GameRuleError
 
@@ -8,6 +8,7 @@ COLORS = ["o", "d", "r", "e", "s"]
 COLOR_CN = {"o": "黑玛瑙", "d": "钻石", "r": "红宝石", "e": "祖母绿", "s": "蓝宝石"}
 CN_TOK = {"o": "⬛", "d": "⬜", "r": "🔴", "e": "🟢", "s": "🔵", "g": "🟡"}
 WIN_PTS = 15
+MAX_GEMS = 10            # 持有宝石上限（金币不计入）
 NOBLES = [  # {cost: {color: n}, pts: 3}
     {"o": 4, "d": 4},
     {"r": 4, "e": 4},
@@ -82,18 +83,26 @@ class GemCityGame(BaseGame):
 
     def _act_take(self, uid, action):
         cs = action.get("colors")
-        if not isinstance(cs, list) or len(set(cs)) != 3 or len(cs) != 3:
-            raise GameRuleError("请选择 3 颗不同颜色的宝石")
+        if not isinstance(cs, list) or not (1 <= len(cs) <= 3):
+            raise GameRuleError("请选择 1~3 颗不同颜色的宝石")
+        cs = [str(c) for c in cs]
+        if len(set(cs)) != len(cs):
+            raise GameRuleError("颜色不能重复")
         for c in cs:
             if c not in COLORS:
                 raise GameRuleError("宝石颜色无效")
+        for c in cs:
             if self.bank[c] < 1:
                 raise GameRuleError(f"{COLOR_CN[c]} 不足")
         for c in cs:
             self.bank[c] -= 1
             self.tokens[uid][c] += 1
+        returned = self._trim_gems(uid, cs)
         self._advance()
-        return [f"💎 {self._nick(uid)} 取 {'、'.join(COLOR_CN[c] for c in cs)}"]
+        msg = f"💎 {self._nick(uid)} 取 {'、'.join(COLOR_CN[c] for c in cs)}"
+        if returned:
+            msg += f"（超过 {MAX_GEMS} 枚，退回 {'、'.join(COLOR_CN[c] for c in returned)}）"
+        return [msg]
 
     def _act_take2(self, uid, action):
         c = action.get("color")
@@ -103,8 +112,27 @@ class GemCityGame(BaseGame):
             raise GameRuleError(f"{COLOR_CN[c]} 不足 4 颗")
         self.bank[c] -= 2
         self.tokens[uid][c] += 2
+        returned = self._trim_gems(uid, [c])
         self._advance()
-        return [f"💎 {self._nick(uid)} 取 2 颗{COLOR_CN[c]}"]
+        msg = f"💎 {self._nick(uid)} 取 2 颗{COLOR_CN[c]}"
+        if returned:
+            msg += f"（超过 {MAX_GEMS} 枚，退回 {'、'.join(COLOR_CN[c] for c in returned)}）"
+        return [msg]
+
+    def _trim_gems(self, uid, preferred):
+        """宝石超过上限时按确定顺序退回金库（优先退回刚取的颜色）。"""
+        returned = []
+        order = list(reversed(preferred)) + [c for c in COLORS if c not in preferred]
+        while self._gem_total(uid) > MAX_GEMS:
+            for c in order:
+                if self.tokens[uid][c] > 0:
+                    self.tokens[uid][c] -= 1
+                    self.bank[c] += 1
+                    returned.append(c)
+                    break
+            else:                       # 理论上不可达：没有任何宝石可退
+                break
+        return returned
 
     def _act_reserve(self, uid, action):
         try:
@@ -206,7 +234,38 @@ class GemCityGame(BaseGame):
     def _finish(self):
         hi = max(self.score.values())
         leaders = [u for u in self.players if self.score[u] == hi]
-        self.winner = leaders[0]
+        # 官方平分规则：同分时发展卡更少者胜；仍相同按座次先后
+        self.winner = min(leaders, key=lambda u: (len(self.cards[u]),
+                                                  self.players.index(u)))
+
+    # ---------- 死锁兜底 ----------
+    def _affordable(self, uid, card):
+        """判断当前资产能否买下该卡（与 _buy_card 同一套抵扣规则）。"""
+        need = {c: max(0, card["cost"][c] - self.discount[uid][c]) for c in COLORS}
+        gold = sum(need[c] - min(need[c], self.tokens[uid][c]) for c in COLORS)
+        return gold <= self.tokens[uid]["g"]
+
+    def _can_act(self, uid):
+        if any(self.bank[c] > 0 for c in COLORS):
+            return True             # 至少可取 1 颗（超出上限会自动退回）
+        if len(self.reserved[uid]) < 3 and any(self.market[t] for t in self.market):
+            return True             # 保留卡不受宝石上限限制
+        for t in self.market:
+            for card in self.market[t]:
+                if self._affordable(uid, card):
+                    return True
+        return any(self._affordable(uid, card) for card in self.reserved[uid])
+
+    def tick(self, now):
+        """当前玩家确实无任何合法动作时自动跳过，避免对局永久卡死。"""
+        if self.winner is not None or not self.players:
+            return []
+        uid = self.players[self.turn]
+        if self._can_act(uid):
+            return []
+        msg = f"⏭ {self._nick(uid)} 已无合法行动，自动跳过"
+        self._advance()
+        return [msg]
 
     # ---------- 快照 ----------
     def snapshot(self):
@@ -235,7 +294,56 @@ class GemCityGame(BaseGame):
         return None
 
     def player_left(self, uid):
-        return []
+        """掉线善后：按座次清理离场者的宝石/折扣/卡与贵宾，并修正回合。
+
+        宝石退回金库以保持供应守恒；终局补回合列表同步剔除离场者。
+        """
+        if uid not in self.players:
+            return []
+        msgs = [f"👋 {self._nick(uid)} 离开了对局"]
+        idx = self.players.index(uid)
+        was_turn = (self.winner is None and idx == self.turn)
+        cur_uid = self.players[self.turn]
+        for c in COLORS + ["g"]:
+            self.bank[c] += self.tokens[uid][c]
+        for book in (self.tokens, self.discount, self.cards,
+                     self.reserved, self.score, self.nobles_cards):
+            book.pop(uid, None)
+        self.players.remove(uid)
+        n = len(self.players)
+        if n == 0:
+            return msgs
+        if n == 1:
+            if self.winner is None:
+                self.winner = self.players[0]
+                self.turn = 0
+                self.extra = []
+                msgs.append(f"🏆 仅剩 {self._nick(self.winner)}，直接获胜")
+            return msgs
+        if self.winner is not None:
+            self.turn %= n
+            return msgs
+        if self.trigger_uid is not None:
+            # 终局补回合：保留尚未补过回合的玩家（当前行动者 + extra），每人一次
+            pending = ([cur_uid] if cur_uid != uid else []) + \
+                      [u for u in self.extra if u != uid]
+            if not pending:
+                self.extra = []
+                self.turn = 0
+                self._finish()
+                return msgs
+            self.extra = pending[1:]
+            self.turn = self.players.index(pending[0])
+            return msgs
+        if was_turn or cur_uid == uid:
+            self.turn = idx % n
+        elif idx < self.turn:
+            self.turn -= 1
+        self.turn %= n
+        return msgs
+
+    def _gem_total(self, uid):
+        return sum(self.tokens[uid][c] for c in COLORS)
 
     def _nick(self, uid):
         return f"玩家{uid}"

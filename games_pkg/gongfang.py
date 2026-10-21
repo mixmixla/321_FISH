@@ -39,7 +39,7 @@ class GongfangGame(BaseGame):
         self.current = None
 
     def act(self, uid, action):
-        if self.winner:
+        if self.winner or not self.players:
             raise GameRuleError("本局已结束")
         if uid != self.players[self.turn]:
             raise GameRuleError("还没轮到你")
@@ -114,7 +114,8 @@ class GongfangGame(BaseGame):
             "placed": {str(u): v for u, v in self.placed.items()},
             "done": list(self.done),
             "score": {str(u): v for u, v in self.score.items()},
-            "turn_uid": None if self.winner else self.players[self.turn],
+            "turn_uid": (None if (self.winner or not self.players)
+                         else self.players[self.turn]),
             "players": list(self.players), "winner_uid": self.winner,
             "workers": WORKERS,
         }
@@ -123,10 +124,50 @@ class GongfangGame(BaseGame):
         if self.winner:
             return {"winner_uid": self.winner,
                     "detail": f"{self._nick(self.winner)} 3轮工分最高"}
+        if not self.players:
+            return {"winner_uid": None, "detail": "所有玩家已离开，对局平局"}
         return None
 
     def player_left(self, uid):
-        return []
+        if uid not in self.players:
+            return []
+        msgs = [f"💨 {self._nick(uid)} 离开了对局"]
+        idx = self.players.index(uid)
+        current = self.players[self.turn]
+        self.players.remove(uid)
+        self.placed.pop(uid, None)
+        self.score.pop(uid, None)
+        self.done.discard(uid)
+        # 收回离场者的工人，工位重新可用
+        for s in self.spots:
+            if s["owner"] == uid:
+                s["owner"] = None
+        if not self.players:
+            self.turn = 0
+            self.winner = None
+            return msgs
+        if current == uid:
+            self.turn = idx % len(self.players)
+        else:
+            self.turn = self.players.index(current)
+        if self.winner is None and len(self.players) == 1:
+            self.winner = self.players[0]
+            msgs.append(f"🏆 {self._nick(self.winner)} 成为唯一留下的玩家，获胜")
+            return msgs
+        if self.winner:
+            return msgs
+        # 若当前座位已结束本轮回合则顺延；剩余玩家都结束则直接收轮
+        n = len(self.players)
+        if self.players[self.turn] in self.done:
+            for step in range(1, n + 1):
+                nxt = (self.turn + step) % n
+                if self.players[nxt] not in self.done:
+                    self.turn = nxt
+                    break
+            else:
+                msgs.append(f"＝ 第 {self.round_no} 轮结束")
+                self._end_round()
+        return msgs
 
     def _nick(self, uid):
         return f"玩家{uid}"

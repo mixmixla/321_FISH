@@ -75,11 +75,15 @@ def test_rummikub_classify():
 def test_rummikub_initial_meld_needs_30():
     g = RummikubGame([1, 2], seed=5)
     u = 1
-    # 小连号 <30 应被拒
+    # 小连号 <30 只进暂存，不能上桌；回合结束回滚
     small = _red_run_ids([3, 4, 5])
     g.rack[u] = list(small)
-    with pytest.raises(GameRuleError):
-        g.act(u, {"op": "meld", "tiles": small})
+    g.act(u, {"op": "meld", "tiles": small})
+    assert not g.initial_ok[u] and g.table == []
+    drawn = g.bag[-1]
+    g.act(u, {"op": "done"})
+    assert sorted(g.rack[u]) == sorted(small + [drawn])   # 回滚 + 未出牌摸一张
+    g.turn = 0
     # 大连号 ≥30 应成功
     big = _red_run_ids([9, 10, 11, 12])      # 42 点
     g.rack[u] = list(big)

@@ -150,6 +150,61 @@ class ShogiGame(BaseGame):
                 out.append((xx, yy))
         return out
 
+    def legal_moves(self, uid):
+        """uid 当前的全部合法着法：普通走子 + 持子打入（与 act 的接受条件一致）。"""
+        if self.winner:
+            return []
+        if uid != self.players[self.turn]:
+            return []
+        pl = self.turn
+        out = []
+        for y in range(N):
+            for x in range(N):
+                c = self.board[y][x]
+                if not c or _p(c) != pl:
+                    continue
+                for (tx, ty) in self._move_gen(x, y, pl):
+                    if self._safe_move(x, y, tx, ty, pl):
+                        out.append({"from": [x, y], "to": [tx, ty]})
+        for t in sorted(set(self.hand[pl])):
+            for (x, y) in self._drop_gen(pl, t):
+                out.append({"drop": t, "x": x, "y": y})
+        return out
+
+    # ---------- 自将判定 ----------
+    def _king_pos(self, pl):
+        k = _code(pl, K)
+        for y in range(N):
+            for x in range(N):
+                if self.board[y][x] == k:
+                    return (x, y)
+        return None
+
+    def _attacked(self, pl):
+        """pl 的王当前是否被对方棋子攻击（按当前 board 局面）。"""
+        kp = self._king_pos(pl)
+        if kp is None:
+            return False
+        opp = 1 - pl
+        for y in range(N):
+            for x in range(N):
+                c = self.board[y][x]
+                if c and _p(c) == opp and kp in self._move_gen(x, y, opp):
+                    return True
+        return False
+
+    def _safe_move(self, fx, fy, tx, ty, pl):
+        """单步试走：走后己方王不被攻击则合法；无论结果都完整还原棋盘。"""
+        moved = self.board[fy][fx]
+        target = self.board[ty][tx]
+        self.board[ty][tx] = moved
+        self.board[fy][fx] = 0
+        try:
+            return not self._attacked(pl)
+        finally:
+            self.board[fy][fx] = moved
+            self.board[ty][tx] = target
+
     def act(self, uid, action):
         if self.winner:
             raise GameRuleError("本局已结束")
@@ -186,6 +241,8 @@ class ShogiGame(BaseGame):
             raise GameRuleError("只能移动己方棋子")
         if (tx, ty) not in self._move_gen(fx, fy, pl):
             raise GameRuleError("该棋子不能这样走")
+        if not self._safe_move(fx, fy, tx, ty, pl):
+            raise GameRuleError("不能走成被将军")
         taken = self.board[ty][tx]
         self.board[ty][tx] = c
         self.board[fy][fx] = 0

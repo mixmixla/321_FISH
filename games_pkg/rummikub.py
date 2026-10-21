@@ -34,6 +34,7 @@ class RummikubGame(BaseGame):
             self.rack[u] = [self.bag.pop() for _ in range(self.rack_need)]
         self.table = []                 # list of rows; row = [tile_id,...]
         self.initial_ok = {u: False for u in players}
+        self.staged = {u: [] for u in players}   # 首任未达成时本回合暂存的牌组
         self.turn = 0
         self.placed_turn = 0
         self.drawn_turn = False
@@ -87,32 +88,68 @@ class RummikubGame(BaseGame):
         if op == "extend":
             return self._extend(uid, action)
         if op == "done":
-            self._next()
-            return [f"✅ {self._nick(uid)} 结束回合"]
+            # 本回合没有任何牌真正上桌（未出牌 / 首任不足被回滚）时，按规则摸一张再结束
+            had_play = self.initial_ok[uid] and self.placed_turn > 0
+            tail = self._next()
+            drawn = []
+            if not had_play and self.bag:
+                self.rack[uid].append(self.bag.pop())
+                drawn = [f"🂠 {self._nick(uid)} 未出牌，摸一张后结束回合"]
+            return [f"✅ {self._nick(uid)} 结束回合"] + drawn + tail
         if op == "draw":
-            if self.placed_turn > 0:
+            staged = bool(self.staged.get(uid))
+            if self.placed_turn > 0 and not staged:
                 raise GameRuleError("本回合已出牌，不能摸牌")
+            # 首任未达成：摸牌结束回合前先把整回合暂存牌收回
+            extra = self._rollback_staged(uid)
             if self.bag:
                 self.rack[uid].append(self.bag.pop())
             self.drawn_turn = True
-            self._next()
-            return [f"🂠 {self._nick(uid)} 摸牌后结束回合"]
+            tail = self._next()
+            return [f"🂠 {self._nick(uid)} 摸牌后结束回合"] + extra + tail
         raise GameRuleError("未知动作")
 
     def _meld(self, uid, action):
         ids = self._parse_ids(action)
         if RummikubGame.classify(ids) is None:
             raise GameRuleError("不构成群或顺")
-        if not self.initial_ok[uid] and self._pts(ids) < INIT_SUM:
-            raise GameRuleError(f"首任需一次性 ≥{INIT_SUM} 点")
+        # 先完整校验手牌再落子：校验失败时暂存/桌面/手牌都不变
         self._apply_rack(uid, ids)
-        self.table.append(ids)
-        self.initial_ok[uid] = True
         self.placed_turn += 1
         self.drawn_turn = False
-        if not self.rack[uid]:
+        if self.initial_ok[uid]:
+            self.table.append(ids)
+            msg = f"{self._tile_str(ids)} 🎴 {self._nick(uid)} 组了一组牌"
+        else:
+            self.staged[uid].append(ids)
+            pts = self._staged_pts(uid)
+            if pts < INIT_SUM:
+                msg = (f"{self._tile_str(ids)} 📥 {self._nick(uid)} 出牌暂存"
+                       f"（首任累计 {pts}/{INIT_SUM}）")
+            else:
+                groups = self.staged[uid]
+                self.staged[uid] = []
+                self.table.extend(groups)
+                self.initial_ok[uid] = True
+                msg = (f"{self._tile_str(ids)} 🎴 {self._nick(uid)} 首任累计 {pts} 点达成，"
+                       f"{len(groups)} 组牌一并上桌")
+        # 只有首任已达成（牌真正上桌）时清空手牌才算胜利
+        if self.initial_ok[uid] and not self.rack[uid]:
             self.winner = uid
-        return [f"{self._tile_str(ids)} 🎴 {self._nick(uid)} 组了一组牌"]
+        return [msg]
+
+    def _staged_pts(self, uid):
+        return sum(self._pts(g) for g in self.staged.get(uid, []))
+
+    def _rollback_staged(self, uid):
+        """回合结束时首任仍不足 30 点：把暂存的牌全部收回手牌"""
+        groups = self.staged.get(uid) or []
+        if not groups:
+            return []
+        for g in groups:
+            self.rack[uid].extend(g)
+        self.staged[uid] = []
+        return [f"↩️ {self._nick(uid)} 首任累计不足 {INIT_SUM} 点，本回合出的牌已全部收回"]
 
     def _extend(self, uid, action):
         ids = self._parse_ids(action)
@@ -153,12 +190,12 @@ class RummikubGame(BaseGame):
         return "".join(COLOR_CN[COLORS[color_of[i]]][0] + str(num_of[i]) for i in ids)
 
     def _next(self):
+        # 回合结束：首任未达成的暂存牌组整回合回滚
+        extra = self._rollback_staged(self._cur())
         self.turn = (self.turn + 1) % len(self.players)
         self.placed_turn = 0
         self.drawn_turn = False
-        if self.winner is None and all(not self.rack[u] for u in self.players):
-            # 极端没人能继续，取手牌最少者为胜（不应发生：赢家已最先清空）
-            pass
+        return extra
 
     def snapshot(self):
         return {
@@ -176,7 +213,11 @@ class RummikubGame(BaseGame):
         if uid not in self.rack:
             return None
         return {"hand": [{"id": i, "c": COLOR_CN[COLORS[color_of[i]]],
-                          "n": num_of[i]} for i in self.rack[uid]]}
+                          "n": num_of[i]} for i in self.rack[uid]],
+                "staged": [[{"id": i, "c": COLOR_CN[COLORS[color_of[i]]],
+                            "n": num_of[i]} for i in group]
+                           for group in self.staged.get(uid, [])],
+                "staged_pts": self._staged_pts(uid)}
 
     def ended(self):
         if self.winner:
@@ -188,8 +229,10 @@ class RummikubGame(BaseGame):
         if uid not in self.players:
             return []
         idx = self.players.index(uid)
-        # 手牌退回牌袋，避免留下无人可打却仍占座位的玩家
+        # 手牌与暂存牌一起退回牌袋，避免留下无人可打却仍占座位的玩家
         self.bag.extend(self.rack.pop(uid, []))
+        for g in self.staged.pop(uid, []):
+            self.bag.extend(g)
         self.initial_ok.pop(uid, None)
         self.players.remove(uid)
         self.placed_turn = 0

@@ -71,6 +71,7 @@ class BetrayalGame(BaseGame):
         self.omens = 0
         self.haunt = None                   # {"traitor": uid, "exit": (x,y), "scenario": str}
         self._result = None                 # ("survivors"|"traitor", 原因)
+        self._solo_winner = None            # 探索阶段仅剩 1 名存活者时的胜者（只结算一次）
         self.turn_idx = 0
         self.steps_left = self.stats[players[0]]["speed"]
         self.attack_used = False
@@ -340,10 +341,28 @@ class BetrayalGame(BaseGame):
             return []
         if any(v <= 0 for v in self.stats[uid].values()):
             self.dead.add(uid)
-            return [f"☠️ {self._nick(uid)} 倒在了山屋的黑暗中……"]
+            msgs = [f"☠️ {self._nick(uid)} 倒在了山屋的黑暗中……"]
+            solo = self._settle_solo()
+            if solo is not None:
+                msgs.append(f"🏃 仅 {self._nick(solo)} 存活，独自逃出山屋")
+            return msgs
         return []
 
+    def _settle_solo(self):
+        """探索阶段只剩 1 名存活者：立即结算该玩家胜，且只结算一次。"""
+        if self._solo_winner is not None or self.phase != "explore":
+            return None
+        alive = [u for u in self.players if u not in self.dead]
+        if len(alive) == 1:
+            self._solo_winner = alive[0]
+            return alive[0]
+        return None
+
     def ended(self):
+        self._settle_solo()
+        if self._solo_winner is not None:
+            return {"winner_uid": self._solo_winner,
+                    "detail": f"🏃 仅 {self._nick(self._solo_winner)} 存活，独自逃出山屋"}
         if self._result:
             side, why = self._result
             if side == "survivors":
@@ -362,9 +381,6 @@ class BetrayalGame(BaseGame):
         else:
             if not alive:
                 return {"winner_uid": None, "detail": "🏚️ 山屋吞噬了所有闯入者"}
-            if len(alive) == 1:
-                return {"winner_uid": alive[0],
-                        "detail": f"🏃 仅 {self._nick(alive[0])} 存活，独自逃出山屋"}
         return None
 
     def player_left(self, uid: int) -> list:
@@ -382,7 +398,10 @@ class BetrayalGame(BaseGame):
             self.turn_idx = 0
         elif idx < self.turn_idx:
             self.turn_idx -= 1
-        if was_current and not self._result and self.players:
+        solo = self._settle_solo()
+        if solo is not None:
+            msgs.append(f"🏃 仅 {self._nick(solo)} 存活，独自逃出山屋")
+        if was_current and not self._result and self.players and self._solo_winner is None:
             n = len(self.players)
             for _ in range(n):                     # 跳过阵亡的继任者
                 if self.players[self.turn_idx] not in self.dead:

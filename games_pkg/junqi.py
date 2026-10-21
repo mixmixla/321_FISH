@@ -94,6 +94,25 @@ class JunqiGame(BaseGame):
             raise GameRuleError("不能移动到己方棋子")
         return self._resolve(fx, fy, tx, ty, code, rank, target)
 
+    def legal_moves(self, uid):
+        """己方非地雷/军旗棋子的相邻一步（空位或敌方子，含可撞的雷/旗）。"""
+        if self.winner or uid != self.players[self.turn]:
+            return []
+        out = []
+        for y in range(ROWS):
+            for x in range(COLS):
+                code = self.board[y][x]
+                if code == EMPTY or self._side_mask(code) != self.turn:
+                    continue
+                if _rank(code) in (FLAG, MINE):
+                    continue
+                for tx, ty in self._adj(x, y):
+                    target = self.board[ty][tx]
+                    if target and _side(target) == self.turn:
+                        continue
+                    out.append({"from": [x, y], "to": [tx, ty]})
+        return out
+
     def _side_mask(self, code):
         return 0 if code == EMPTY else _side(code)
 

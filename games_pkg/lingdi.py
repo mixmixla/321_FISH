@@ -69,7 +69,7 @@ class LingdiGame(BaseGame):
 
     # ---------- 动作 ----------
     def act(self, uid, action):
-        if self.winner is not None:
+        if self.winner is not None or not self.players:
             raise GameRuleError("本局已结束")
         if self.current is None:
             raise GameRuleError("牌堆已尽，对局结束")
@@ -213,7 +213,8 @@ class LingdiGame(BaseGame):
             "current": self.current, "deck_left": len(self.deck),
             "meeples": {str(u): v for u, v in self.meeples.items()},
             "score": {str(u): v for u, v in self.score.items()},
-            "turn_uid": None if self.winner else self.players[self.turn],
+            "turn_uid": (None if (self.winner is not None or not self.players)
+                         else self.players[self.turn]),
             "players": list(self.players), "winner_uid": self.winner,
             "size": SIZE,
         }
@@ -222,11 +223,35 @@ class LingdiGame(BaseGame):
         if self.winner is not None:
             return {"winner_uid": self.winner,
                     "detail": f"{self._nick(self.winner)} 领地得分最高胜出"}
+        if not self.players:
+            return {"winner_uid": None, "detail": "所有玩家已离开，对局平局"}
         return None
 
     def player_left(self, uid):
-        self.turn = self.turn % len(self.players)
-        return []
+        if uid not in self.players:
+            return []
+        msgs = [f"💨 {self._nick(uid)} 离开了对局"]
+        idx = self.players.index(uid)
+        current = self.players[self.turn]
+        self.players.remove(uid)
+        self.meeples.pop(uid, None)
+        self.score.pop(uid, None)
+        # 离场者的米宝直接移出，不结算给任何其他玩家
+        for cell in self.board.values():
+            if cell["owner"] == uid:
+                cell["owner"] = None
+        if not self.players:
+            self.turn = 0
+            self.winner = None
+            return msgs
+        if current == uid:
+            self.turn = idx % len(self.players)
+        else:
+            self.turn = self.players.index(current)
+        if self.winner is None and len(self.players) == 1:
+            self.winner = self.players[0]
+            msgs.append(f"🏆 {self._nick(self.winner)} 成为唯一留下的玩家，获胜")
+        return msgs
 
     def _nick(self, uid):
         return f"玩家{uid}"

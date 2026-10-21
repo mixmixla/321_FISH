@@ -215,6 +215,59 @@ class ChessGame(BaseGame):
                             return False
         return True
 
+    def _safe_after(self, fx, fy, tx, ty, pl):
+        """单步模拟（含易位车、吃过路兵），返回走后己方王是否安全；结束后完整还原棋盘与王位。"""
+        piece = self.board[fy][fx]
+        cap = self.board[ty][tx]
+        cap_ep = 0
+        castle = _t(piece) == K and abs(tx - fx) == 2
+        rook_from = rook_to = None
+        rook = 0
+        if _t(piece) == P and self.ep == (tx, ty):
+            cap_ep = self.board[fy][tx]
+            self.board[fy][tx] = 0
+        self.board[ty][tx] = piece
+        self.board[fy][fx] = 0
+        oldk = self.kpos[pl]
+        if _t(piece) == K:
+            self.kpos[pl] = (tx, ty)
+        if castle:
+            rook_from = 7 if tx > fx else 0
+            rook_to = 5 if tx > fx else 3
+            rook = self.board[ty][rook_from]
+            self.board[ty][rook_to] = rook
+            self.board[ty][rook_from] = 0
+        try:
+            ok = not self._in_check(pl)
+        finally:
+            if castle:
+                self.board[ty][rook_from] = rook
+                self.board[ty][rook_to] = 0
+            self.board[fy][fx] = piece
+            self.board[ty][tx] = cap
+            if cap_ep:
+                self.board[fy][tx] = cap_ep
+            self.kpos[pl] = oldk
+        return ok
+
+    def legal_moves(self, uid):
+        """uid 当前的全部合法着法（与 act 的接受条件一致，含王车易位）。"""
+        if self.winner or self.result == "draw":
+            return []
+        if uid != self.players[self.turn]:
+            return []
+        pl = self.turn
+        out = []
+        for y in range(N):
+            for x in range(N):
+                c = self.board[y][x]
+                if not c or _p(c) != pl:
+                    continue
+                for (tx, ty) in self._move_gen(x, y, pl):
+                    if self._safe_after(x, y, tx, ty, pl):
+                        out.append({"from": [x, y], "to": [tx, ty]})
+        return out
+
     def act(self, uid, action):
         if self.winner or self.result == "draw":
             raise GameRuleError("本局已结束")

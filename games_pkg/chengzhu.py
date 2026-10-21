@@ -165,12 +165,39 @@ class ChengZhuGame(BaseGame):
         if self.winner is not None:
             return {"winner_uid": self.winner,
                     "detail": f"{self._nick(self.winner)} 领地得分最高"}
+        if not self.players:
+            return {"winner_uid": None, "detail": "所有玩家已离开，对局平局"}
         return None
 
     def player_left(self, uid):
-        # 移出挑选顺序并重排（简化：保留原玩家仓位，跳过该 uid）
+        if uid not in self.players:
+            return []
+        msgs = [f"💨 {self._nick(uid)} 离开了对局"]
+        pos = (self.pick_order.index(uid)
+               if uid in self.pick_order else None)
+        # 尚未挑选（含当前正在挑选）的离场者，其待选板块一并移出市场
+        if pos is not None and pos >= self.pick_idx and self.market:
+            self.market.pop()
+        self.players.remove(uid)
+        self.grid.pop(uid, None)
+        self.placed.pop(uid, None)
+        self.score.pop(uid, None)
         self.pick_order = [p for p in self.pick_order if p != uid]
-        return []
+        # 已挑过的离场者会让挑选游标左移一格，保证下一位立即接手
+        if pos is not None and pos < self.pick_idx and self.pick_idx > 0:
+            self.pick_idx -= 1
+        if not self.players:
+            self.pick_idx = 0
+            self.winner = None
+            return msgs
+        if self.winner is None and len(self.players) == 1:
+            self.winner = self.players[0]
+            self.score[self.winner] = self._regions_score(self.winner)
+            msgs.append(f"🏆 {self._nick(self.winner)} 成为唯一留下的玩家，获胜")
+            return msgs
+        if self.winner is None:
+            self._round_check()
+        return msgs
 
     def _nick(self, uid):
         return f"玩家{uid}"

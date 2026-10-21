@@ -4259,6 +4259,20 @@ function renderGamePanel(){
       bits.push("技能："+Object.keys(sg).map(k=>k+sg[k]).join(" "));}
     if(bits.length){priv.innerHTML=bits.join("<br>");priv.style.display=""}}
 }
+// ---- 合法落点（state.gpriv.legal 由服务器按玩家下发）----
+const LEGAL_HINT="inset 0 0 0 3px rgba(46,139,87,.85)";
+function gLegal(){
+  const pv=state.gpriv;
+  return (pv&&Array.isArray(pv.legal))?pv.legal:[];
+}
+function gLegalTos(fx,fy){
+  const out=[];
+  for(const m of gLegal()){
+    if(m&&Array.isArray(m.from)&&Array.isArray(m.to)
+      &&m.from[0]===fx&&m.from[1]===fy)out.push(m.to);
+  }
+  return out;
+}
 // ---- 各游戏渲染器（s = game_state.state）----
 const GRENDER={
   guess_number(box,s){
@@ -4333,12 +4347,16 @@ const GRENDER={
     box.appendChild(info);
     const grid=document.createElement("div");
     grid.style.cssText="display:grid;grid-template-columns:repeat("+cols+",1fr);gap:4px;max-width:420px;margin:0 auto";
+    const legalCols=(s.turn_uid===state.uid)?new Set(gLegal().filter(m=>m&&m.col!=null).map(m=>m.col)):new Set();
+    const landRow={};
+    legalCols.forEach(x=>{for(let y=rows-1;y>=0;y--){if(!s.board[y][x]){landRow[x]=y;break;}}});
     for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
       const c=document.createElement("div");c.className="gcell";
       c.style.borderRadius="50%";c.style.justifyContent="center";
       const v=s.board[y][x];
       c.style.background=v===1?"#e05555":(v===2?"#4a7de0":"");
       if(!v)c.textContent="·";
+      if(!v&&landRow[x]===y)c.style.boxShadow=LEGAL_HINT;
       c.onclick=()=>{if(s.winner_uid!=null||s.draw)return;
         gameAPI("action",{room_id:state.groom,action:{col:x}})};
       grid.appendChild(c);}
@@ -4354,9 +4372,11 @@ const GRENDER={
     box.appendChild(info);
     const grid=document.createElement("div");
     grid.style.cssText="display:grid;grid-template-columns:repeat("+n+",36px);gap:2px;max-width:340px;margin:0 auto";
+    const legalPts=(s.turn_uid===state.uid)?new Set(gLegal().filter(m=>m&&m.x!=null&&m.y!=null).map(m=>m.x+","+m.y)):new Set();
     for(let y=0;y<n;y++)for(let x=0;x<n;x++){
       const c=document.createElement("div");c.className="gcell";c.style.borderRadius="4px";
       const v=s.board[y][x];c.textContent=v===1?"⚫":(v===2?"⚪":"·");
+      if(!v&&legalPts.has(x+","+y))c.style.boxShadow=LEGAL_HINT;
       if(s.winner_uid==null)
         c.onclick=()=>gameAPI("action",{room_id:state.groom,action:{x:x,y:y}});
       grid.appendChild(c);}
@@ -4429,10 +4449,9 @@ const GRENDER={
       if(pv.robbed_role)bits.push("🗡️ 换牌后你的身份："+pv.robbed_role);
     }
     d.innerHTML="<div class='gsec'>阶段："+ph+" · "+s.players.length+" 人</div>"
-      +(bits.length?"<div style='margin:6px 0'>"+bits.join("<br>")+"</div>":"")
-      +(s.acted&&s.acted.length?"<div style='color:var(--dim);font-size:11px'>已行动："+s.acted.map(gnick).join("、")+"</div>":"");
+      +(bits.length?"<div style='margin:6px 0'>"+bits.join("<br>")+"</div>":"");
     box.appendChild(d);
-    const acting=()=>pv&&!s.acted.includes(me);
+    const acting=()=>pv&&!!pv.can_act;
     if(s.phase==="night"&&acting()&&pv.role===2){          // 预言家
       const w=document.createElement("div");w.className="gsec";w.textContent="🔮 预言家：偷看一人或中心两张";box.appendChild(w);
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0";
@@ -4488,7 +4507,7 @@ const GRENDER={
     d.innerHTML="<div class='gsec'>第 "+s.night+" 夜 · "+ph+" · 存活 "+alive.length+" 人</div>"
       +(bits.length?"<div style='margin:6px 0'>"+bits.join("<br>")+"</div>":"");
     box.appendChild(d);
-    const actneed=()=>pv&&(s.need||[]).includes(me)&&!(s.acted||[]).includes(me);
+    const actneed=()=>pv&&!!pv.can_act;
     const av=alive.filter(u=>u!==me);
     if(actneed()&&s.phase==="night_seer"){            // 预言家
       const w=document.createElement("div");w.className="gsec";w.textContent="🔮 查验一位玩家";box.appendChild(w);
@@ -5059,7 +5078,7 @@ const GRENDER={
     d.innerHTML+=mkt;box.appendChild(d);
     if(s.turn_uid===state.uid){
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-      bar.appendChild(document.createTextNode("取3异色(空格分隔)"));
+      bar.appendChild(document.createTextNode("取 1~3 异色(空格分隔)"));
       const I=Object.assign(document.createElement("input"),{placeholder:"o d r",style:"width:80px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"});
       const b=document.createElement("button");b.className="gbtn go";b.textContent="💎 取";
       b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"take",colors:(I.value.trim().split(/\s+/))}});
@@ -5104,7 +5123,8 @@ const GRENDER={
     // E3：四季物语 资源图标描边色（深浅主题通用；水晶取蓝色，金币/胜利点取金色）。
     const SJ_IC={crystal:"#4a9fc4",apple:"#c9962a",vt:"#c9962a"};
     const sjI=(k,sz)=>SJ_IC[k]?"<span style='color:"+SJ_IC[k]+"'>"+resIcon(k,sz||13)+"</span>":"";
-    const hand=(s.hand[state.uid]||[]).map((c,i)=>"["+i+"] "+c.name+"(需"+c.cost+sjI("crystal",12)+"产"+c.out+")").join("　")||"（空）";
+    const myHand=(state.gpriv&&state.gpriv.hand)||[];
+    const hand=myHand.map((c,i)=>"["+i+"] "+c.name+"(需"+c.cost+sjI("crystal",12)+"产"+c.out+")").join("　")||"（空）";
     const eng=(s.engine[state.uid]||[]).map((c,i)=>"["+i+"] "+c.name+(c.played?"(已激活)":"")).join("　")||"（空）";
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>第 "+s.season+"/"+s.seasons+" 季 · 剩"+s.turns_left+" 动 · 回合 → "
       +esc(gnick(s.turn_uid))+"　"+scoreHTML(s.vp)+"</div>"
@@ -5178,6 +5198,11 @@ const GRENDER={
           +esc(hot)+"'>"+row.map(tile).join(" ")+"</span></div>";}).join("")||"<span style='color:var(--dim)'>（空）</span>");
     box.appendChild(d);
     const p=state.gpriv;
+    if(p&&(p.staged||[]).length){
+      const sd=document.createElement("div");sd.style.cssText="margin-top:4px;font-size:12px";
+      sd.innerHTML="<div class='gsec'>首任暂存 "+(p.staged_pts||0)+"/30（回合结束不足将收回）</div>"
+        +p.staged.map(g=>g.map(tile).join(" ")).join("　|　");
+      box.appendChild(sd);}
     if(p&&p.hand){
       const w=document.createElement("div");w.style.cssText="margin-top:4px;font-size:12px";
       w.innerHTML="<div class='gsec'>我的手牌</div>"+p.hand.map(tile).join("　")
@@ -5401,11 +5426,13 @@ const GRENDER={
     box.appendChild(info);
     const grid=document.createElement("div");
     grid.style.cssText="display:grid;grid-template-columns:repeat("+n+",30px);gap:3px;justify-content:center;margin:0 auto";
+    const legalPts=(s.turn_uid===state.uid)?new Set(gLegal().filter(m=>m&&m.x!=null&&m.y!=null).map(m=>m.x+","+m.y)):new Set();
     for(let y=0;y<n;y++)for(let x=0;x<n;x++){
       const c=document.createElement("div");c.className="gcell";c.style.cssText="font-weight:800";
       const v=s.board[y][x];
       c.textContent=v===1?"✕":(v===2?"○":"·");
       c.style.color=v===1?"#2955b8":(v===2?"#c2362c":"var(--dim)");
+      if(!v&&legalPts.has(x+","+y))c.style.boxShadow=LEGAL_HINT;
       if(s.winner_uid==null&&!s.draw&&v===0)
         c.onclick=()=>gameAPI("action",{room_id:state.groom,action:{x:x,y:y}});
       grid.appendChild(c);}
@@ -5418,6 +5445,7 @@ const GRENDER={
     info.innerHTML=(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 获胜":"轮到 "+esc(gnick(s.turn_uid)));
     box.appendChild(info);
     const sel=(state.halmaSel&&state.halmaSel.room===state.groom)?state.halmaSel.sel:null;
+    const legalTos=sel?new Set(gLegalTos(sel[0],sel[1]).map(t=>t[0]+","+t[1])):null;
     const grid=document.createElement("div");
     grid.style.cssText="display:grid;grid-template-columns:repeat("+n+",22px);gap:2px;justify-content:center;margin:0 auto";
     for(let y=0;y<n;y++)for(let x=0;x<n;x++){
@@ -5430,6 +5458,7 @@ const GRENDER={
           if(+v===state.uid)state.halmaSel={room:state.groom,sel:[x,y]};};
       }else if(valid){
         c.style.background=sel?"rgba(255,255,255,.5)":"rgba(0,0,0,.12)";
+        if(sel&&legalTos&&legalTos.has(x+","+y))c.style.boxShadow=LEGAL_HINT;
         if(sel&&s.winner_uid==null){c.style.cursor="pointer";
           c.onclick=()=>{gameAPI("action",{room_id:state.groom,action:{fx:sel[0],fy:sel[1],tx:x,ty:y}});state.halmaSel=null;};}
       }else{c.style.background="transparent";}
@@ -5442,6 +5471,7 @@ const GRENDER={
     info.innerHTML=(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 获胜":"轮到 "+esc(gnick(s.turn_uid)));
     box.appendChild(info);
     const sel=(state.chkSel&&state.chkSel.room===state.groom)?state.chkSel.sel:null;
+    const legalTos=sel?new Set(gLegalTos(sel[0],sel[1]).map(t=>t[0]+","+t[1])):null;
     const grid=document.createElement("div");
     grid.style.cssText="display:grid;grid-template-columns:repeat("+n+",26px);gap:1px;justify-content:center;margin:0 auto";
     for(let y=0;y<n;y++)for(let x=0;x<n;x++){
@@ -5458,6 +5488,7 @@ const GRENDER={
           if(me&&state.uid===s.players[0])state.chkSel={room:state.groom,sel:[x,y]};
           else if(!me&&state.uid===s.players[1])state.chkSel={room:state.groom,sel:[x,y]};};
       }else if(sel&&s.winner_uid==null){
+        if(legalTos&&legalTos.has(x+","+y))c.style.boxShadow=LEGAL_HINT;
         c.style.cursor="pointer";
         c.onclick=()=>{gameAPI("action",{room_id:state.groom,action:{fx:sel[0],fy:sel[1],tx:x,ty:y}});state.chkSel=null;};
       }
@@ -5577,6 +5608,9 @@ const GRENDER={
     const grid=document.createElement("div");
     grid.style.cssText="display:grid;grid-template-columns:repeat("+cols+",34px);gap:1px;justify-content:center;margin:0 auto";
     const sel=state.gsel;
+    const tos=sel?new Set(gLegalTos(sel[0],sel[1]).map(t=>t[0]+","+t[1])):null;
+    const drop=state.gdrop;
+    const drops=drop!=null?new Set(gLegal().filter(m=>m&&m.drop===drop).map(m=>m.x+","+m.y)):null;
     for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
       const code=s.board[y][x];
       const c=document.createElement("div");c.className="gcell";
@@ -5585,6 +5619,7 @@ const GRENDER={
       c.innerHTML=(code!==null&&code!==0&&getText)?getText(code,y,x):"";
       c.style.fontSize="19px";
       if(sel&&sel[0]===x&&sel[1]===y)c.style.outline="2px solid #e33";
+      else if((tos&&tos.has(x+","+y))||(drops&&drops.has(x+","+y)))c.style.boxShadow=LEGAL_HINT;
       const clickable=(s.winner_uid==null&&s.turn_uid===state.uid);
       c.onclick=()=>{if(!clickable){showStatus("还没轮到你");return;} onMove(x,y,code);};
       grid.appendChild(c);

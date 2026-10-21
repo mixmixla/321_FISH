@@ -58,6 +58,13 @@ class OthelloGame(BaseGame):
         self._place(x, y)
         return self._advance()
 
+    def legal_moves(self, uid: int) -> list:
+        if self.winner_uid is not None or self.scores is not None:
+            return []
+        if uid != self.players[self.turn]:
+            return []
+        return [{"x": x, "y": y} for x, y in self._legal_cells(self.turn)]
+
     def _advance(self) -> list:
         """落子后切换对手；对手无处可下则让过；双方皆无则结算"""
         nxt = 1 - self.turn

@@ -11618,7 +11618,7 @@ _GAME_ACTIONS = {
         ("⏭ 跳过", {"fixed": {"op": "pass"}}, "跳过本回合并转为下一位挑选"),
     ],
     "gemcity": [
-        ("💎 取3异色", {"op": "take", "key": "colors", "kind": "colors"}, "输入三种不同颜色（o/d/r/e/s）"),
+        ("💎 取1~3异色", {"op": "take", "key": "colors", "kind": "colors"}, "输入 1~3 种不同颜色（o/d/r/e/s，空格分隔）"),
         ("➡ 取2同色", {"op": "take2", "key": "color", "kind": "text"}, "输入颜色 o/d/r/e/s（该色需 ≥4）"),
         ("📥 保留", {"op": "reserve", "key": None, "kind": "tieridx"}, "输入 层 序号（层1~3）"),
         ("🛒 购买", {"op": "buy", "key": None, "kind": "tieridx"}, "输入 层 序号（层1~3）"),
@@ -11681,6 +11681,20 @@ for _cg in ("gomoku", "connect4", "othello", "tictactoe", "chess", "xiangqi",
             "shogi", "junqi", "dou", "go", "checkers", "halma", "ludo"):
     _GAME_ACTIONS[_cg] = list(_GAME_ACTIONS.get(_cg, [])) + list(_COMMON_ACTION_BTNS)
 
+def _actions_for(game: str, priv: dict | None) -> list:
+    """按角色过滤动作按钮：阿瓦隆忠臣不显示「任务失败」，非刺客不显示「指认梅林」。"""
+    out = []
+    for label, spec, hint in _GAME_ACTIONS.get(game, []):
+        if game == "avalon":
+            info = priv or {}
+            if label.startswith("💥") and info.get("role") not in (2, 3):
+                continue
+            if label.startswith("🎯") and not info.get("guess_required"):
+                continue
+        out.append((label, spec, hint))
+    return out
+
+
 # 棋盘直操类游戏的首屏引导（无按钮可指时告诉玩家怎么操作）
 _GAME_HINTS = {
     "azul": "拖动：从工厂盘 / 中央池抓起花砖，拖到自己的花纹行或地板线松手",
@@ -11711,7 +11725,7 @@ def _KIND_INPUTS():
         "ninjaattack": lambda w, t, h: _one(w, t, h, "目标 uid"),
         # ---- CC-03 桌面补齐新增输入类（花砖物语已改棋盘拖拽，无输入类）----
         "dxyrot": lambda w, t, h: _one(w, t, h, "板号 x y [方向]"),
-        "colors": lambda w, t, h: _one(w, t, h, "三种颜色"),
+        "colors": lambda w, t, h: _one(w, t, h, "一~三种颜色"),
         "tieridx": lambda w, t, h: _one(w, t, h, "层 序号"),
         "setup2": lambda w, t, h: _one(w, t, h, "顶点i 顶点j 路端b_i 路端b_j"),
         "buildspec": lambda w, t, h: _one(w, t, h, "类型 i j [b_i b_j]"),
@@ -13087,10 +13101,11 @@ class GameWindow:
             ph = {"night": "🌙 夜晚行动", "vote": "🗳️ 投票处决", "result": "🏁 揭晓"}.get(
                 st.get("phase"), st.get("phase"))
             lines.append(f"阶段：{ph} · {len(st.get('players') or [])} 人")
-            if st.get("need_act"):
-                lines.append("待行动：" + "、".join(self._nick(u) for u in st["need_act"]))
-            if st.get("acted"):
-                lines.append("已行动：" + "、".join(self._nick(u) for u in st["acted"]))
+            _ow_priv = self.core.game_private or {}
+            if _ow_priv.get("can_act"):
+                lines.append("👉 轮到你夜间行动")
+            elif _ow_priv.get("acted") and st.get("phase") == "night":
+                lines.append("✅ 你已完成夜间行动")
             if st.get("dead"):
                 lines.append("⚖️ 被处决：" + "、".join(self._nick(u) for u in st["dead"]))
             if st.get("phase") == "result":
@@ -13332,6 +13347,8 @@ class GameWindow:
         p = self.core.game_private
         if not p:
             return
+        if set(p.keys()) <= {"legal"}:
+            return          # 仅合法着法高亮数据，不占私密信息区
         self._append_state("—— 你的私密信息 ——", "priv")
         if "hp" in p and set(p.keys()) == {"hp"}:    # 忍者之夜
             self._append_state(f"你的生命：{p['hp']}/3", "priv")
@@ -13339,6 +13356,11 @@ class GameWindow:
             self._append_state(f"你的密信牌：{p['hand']}", "priv")
         elif isinstance(p.get("hand"), list) and p["hand"] and isinstance(p["hand"][0], int):  # 骗子酒馆
             self._append_state("你的手牌：" + "、".join(str(v) for v in p["hand"]), "priv")
+        elif isinstance(p.get("hand"), list) and p["hand"] and \
+                isinstance(p["hand"][0], dict):      # 四季/拉密：牌面是字典
+            names = [str(c.get("name") or f"{c.get('c', '')}{c.get('n', '')}")
+                     for c in p["hand"]]
+            self._append_state("手牌：" + " ".join(names), "priv")
         elif "hand" in p:            # UNO
             self._append_state("手牌：" + " ".join(p["hand"]), "priv")
         elif "origin" in p:          # 一夜狼人
@@ -13453,7 +13475,7 @@ class GameWindow:
         acc_fg = self._pal.get("accent_fg", "#ffffff")
         soft = self._pal.get("soft_bg", "#eef0f5")
         street = self._pal["fg"]
-        for label, spec, hint in _GAME_ACTIONS.get(game, []):
+        for label, spec, hint in _actions_for(game, self.core.game_private):
             primary = "fixed" in spec          # 可直接执行的按钮用强调主色
             b = tk.Button(self.act_btns, text=label, font=self._f, relief="flat",
                           padx=3, cursor="hand2",

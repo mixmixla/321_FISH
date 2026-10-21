@@ -1,0 +1,626 @@
+[
+  {
+    "label": "initial",
+    "ms": 0.01,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 0,
+    "heights": [],
+    "wrap": 0,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 0.0,
+    "yview": [
+      0.0,
+      1.0
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "loaded",
+    "ms": 132.79,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "original_loop_0",
+    "ms": 134.46,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "original_loop_1",
+    "ms": 154.9,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "original_loop_2",
+    "ms": 175.92,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "original_loop_3",
+    "ms": 196.24,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "original_loop_4",
+    "ms": 217.15,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "original_assertion_time",
+    "ms": 238.18,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "before_flush",
+    "ms": 238.69,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "after_flush",
+    "ms": 246.34,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 165.0,
+    "yview": [
+      0.336734693877551,
+      1.0
+    ],
+    "at_bottom": true,
+    "resize_pending": false,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "before_flush",
+    "ms": 404.86,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "after_flush",
+    "ms": 411.99,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 165.0,
+    "yview": [
+      0.336734693877551,
+      1.0
+    ],
+    "at_bottom": true,
+    "resize_pending": false,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "before_flush",
+    "ms": 570.35,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "after_flush",
+    "ms": 584.87,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 165.0,
+    "yview": [
+      0.336734693877551,
+      1.0
+    ],
+    "at_bottom": true,
+    "resize_pending": false,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "before_flush",
+    "ms": 743.29,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "after_flush",
+    "ms": 749.04,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 165.0,
+    "yview": [
+      0.336734693877551,
+      1.0
+    ],
+    "at_bottom": true,
+    "resize_pending": false,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  },
+  {
+    "label": "settled_600ms",
+    "ms": 843.03,
+    "geometry": "1020x720+0+0",
+    "root": [
+      1020,
+      720
+    ],
+    "list": [
+      524,
+      325
+    ],
+    "total": 490,
+    "heights": [
+      142,
+      116,
+      86,
+      146
+    ],
+    "wrap": 490,
+    "expected_wrap": 490,
+    "first": 0,
+    "top": 93.0,
+    "yview": [
+      0.18979591836734694,
+      0.8530612244897959
+    ],
+    "at_bottom": true,
+    "resize_pending": true,
+    "scaling": 2.000984736582964,
+    "system_dpi": 144,
+    "app_scale": 1.5,
+    "screen": [
+      3840,
+      2160
+    ]
+  }
+]

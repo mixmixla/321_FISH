@@ -5,6 +5,30 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## CHAT-RESIZE-01 本机聊天布局测试基线收口（2026-10-21）
+
+**AI_ACCEPTED_TEST_BASELINE_ONLY / FULL_PASSED / LOCAL_ONLY / STOP_AFTER_DELIVERY**。[Task v1](task-packages/CHAT-RESIZE-01.md) / [Review r1](review-packages/CHAT-RESIZE-01-r1.md)。
+用户授权的同环境诊断/明确小缺陷窄修已完成；入场25998f5/clean，保留门禁10caf9f，
+分支`fix/chat-resize-20261021`，测试独立提交`ee487cb`，仅该测试文件24+/4-，产品/依赖不改。
+本聊天唯一实现/治理，gate_review独立只读审查代码/领域/full/资料0 MUST；本地资料leaf见Git。
+
+原84444b5与当前25998f5相同runner/3.14.5/.venv/私桌面合成profile，两侧原13项均12P1F、490<325。
+实际系统DPI144/appscale1.5，minimum1020x720；旧1000x700小于minimum，未发生放大，600ms等待不变。
+同逻辑geometry换算为1500x1050后，消息区1004x655，真实resize防抖回调后wrap490→970/total310/top0/first0。
+仅修fixture/目标DPI尺寸、实际增长断言和2秒上限真实事件完成条件；原三行为断言逐字保持，无flush/滚动强制校正。
+修正base13P0F0S/exit0；当前领域7文件68P0F0S/exit0。全部原FAIL/诊断/修绿原证据随Review保存。
+
+唯一新full：205文件2905P/0F/20原opt-in S，exit0，737.026秒，source `d9b482adbc3b24cb54a5e2784d89cb0d421265c127b1eec9f38adfc668560d1c` / 482输入，
+与领域/当前/snapshot一致；205条raw SHA/单attempt/cleanup独立核验，无unexpected skip/重试/旧FAIL覆盖。
+run `_tmp_gui/test-gate/chat-resize-full-20261021-110511-e3c3b76ae4`。前轮2904P1F及旧Review维持历史失败，
+新结论仅此测试修正与当前组合源码基线，不是完整产品/用户/Pro/R1/发布接受。
+实际144DPI本机Tk验证；其它DPI/跨屏、EXE/物理LAN/完整GUI自然退出仍未验。系统设置与真实资料未改。
+
+当前所有本批应用/测试/构建均结束，资料最终检查/本地提交后停止；不push/PR/merge/发布，不启动旧Goal/heartbeat。
+下一最高优先级小候选：UI-ROOM-ICON-01（已静态确认房间卡片缺PhotoImage强引用）；
+仍为DRAFT，下一批先真实Tk复现/冻结，再最小修复。本轮到此停止，不自动扩展。
+恢复：本节→Task/Review→Git status/log与实际进程，不重复启动已结束全量。
+
 ## GATE-BOARDGAMES-01 新机基线与当前有限任务（2026-10-21）
 
 **IMPLEMENTED / CODE_DOMAIN_REVIEWED / FULL_FAILED / NOT_AI_ACCEPTED / NOT_MERGE_READY / STOP_AFTER_DELIVERY**。[Task v1](task-packages/GATE-BOARDGAMES-01.md) / [Review r1](review-packages/GATE-BOARDGAMES-01-r1.md)。

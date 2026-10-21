@@ -9,3 +9,4 @@ docs/review-assets/EXE-LOCAL-01/logs/*.txt -text -whitespace
 docs/review-assets/EXE-EXIT-01/logs/*.txt -text -whitespace
 docs/review-assets/KALAH-TERMINAL-01/**/*.log.txt -text -whitespace
 docs/review-assets/GATE-BOARDGAMES-01/* -text -whitespace
+docs/review-assets/CHAT-RESIZE-01/* -text -whitespace

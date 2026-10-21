@@ -1,0 +1,763 @@
+{
+  "schema_version": "VB-01.v1",
+  "run_id": "chat-resize-domain-20261021-110305-23131deb95",
+  "run_dir": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\chat-resize-domain-20261021-110305-23131deb95",
+  "source_origin": "D:\\project\\321_FISH",
+  "source_snapshot": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\chat-resize-domain-20261021-110305-23131deb95\\source",
+  "source_content_id": "d9b482adbc3b24cb54a5e2784d89cb0d421265c127b1eec9f38adfc668560d1c",
+  "tests_content_id": "09a44d72ccc87b76ed058fef8abc74a1ff7868fda91263ea80cc91f5d4843b65",
+  "dependency_content_id": "e5a759a0dfe3f9753a3d8fba0abec730982c2a460890dd35a0e8514400dd3741",
+  "content_fingerprint": "4123ea13e76d45cc8316e1d99ea7dc5d5773accf4afc0ad9054410d3f9830fec",
+  "interpreter": {
+    "path": "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+    "implementation": "cpython",
+    "version": "3.14.5",
+    "cache_tag": "cpython-314",
+    "size": 255200,
+    "sha256": "896ccf899b9d45c1c119ba35d6cce6e16cc10dd6a7f502f88fb50429a6e5cf4c"
+  },
+  "runner_tool_sha256": "aec66d5de16f1c26d723dcadba39ef337cbd75eb73f3565fc3ff19a3843e3c43",
+  "sandbox_tool_sha256": "be55bc624290253c937ee68baac68081eb02978e5a672dd2f1acaf5a383c6cfa",
+  "desktop": {
+    "available": true,
+    "required": true,
+    "session_id": 1
+  },
+  "command_template": [
+    "{interpreter}",
+    "-m",
+    "pytest",
+    "-q",
+    "-rs",
+    "-p",
+    "test_sandbox",
+    "{test_file}",
+    "--basetemp",
+    "{basetemp}",
+    "-o",
+    "faulthandler_timeout=60",
+    "{capture_mode}"
+  ],
+  "environment": {
+    "allowed_inherited_keys": [
+      "ALLUSERSPROFILE",
+      "APPDATA",
+      "COMMONPROGRAMFILES",
+      "COMMONPROGRAMFILES(X86)",
+      "COMMONPROGRAMW6432",
+      "COMSPEC",
+      "HOMEDRIVE",
+      "HOMEPATH",
+      "LANG",
+      "LC_ALL",
+      "LC_CTYPE",
+      "LOCALAPPDATA",
+      "NUMBER_OF_PROCESSORS",
+      "OS",
+      "PATH",
+      "PATHEXT",
+      "PROCESSOR_ARCHITECTURE",
+      "PROCESSOR_IDENTIFIER",
+      "PROCESSOR_LEVEL",
+      "PROCESSOR_REVISION",
+      "PROGRAMDATA",
+      "PROGRAMFILES",
+      "PROGRAMFILES(X86)",
+      "PROGRAMW6432",
+      "PSMODULEPATH",
+      "PUBLIC",
+      "SYSTEMDRIVE",
+      "SYSTEMROOT",
+      "TEMP",
+      "TMP",
+      "USERDOMAIN",
+      "USERNAME",
+      "USERPROFILE",
+      "WINDIR"
+    ],
+    "cleared_inherited_keys": [
+      "ASL.LOG",
+      "BROWSER_USE_ACCESS_EXECUTOR_ID",
+      "BROWSER_USE_ACCESS_PIPE_PATH",
+      "BROWSER_USE_ACCESS_VERIFYING_IDENTITY",
+      "BROWSER_USE_AVAILABLE_BACKENDS",
+      "BROWSER_USE_TINYSKY_ENABLED",
+      "CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS",
+      "CODEX_APP_TOOLS_PIPE_PATH",
+      "CODEX_CI",
+      "CODEX_ELECTRON_RESOURCES_PATH",
+      "CODEX_INTERNAL_ORIGINATOR_OVERRIDE",
+      "CODEX_PERMISSION_PROFILE",
+      "CODEX_SAGE_BACKFILL_TRACKER_TAB_REUSE",
+      "CODEX_SANDBOX_NETWORK_DISABLED",
+      "CODEX_SESSION_ID",
+      "CODEX_SHELL",
+      "CODEX_TASK_WORKSPACE_NODE",
+      "CODEX_TASK_WORKSPACE_VERIFYING_IDENTITY",
+      "CODEX_TECTONIC_PATH",
+      "CODEX_THREAD_ID",
+      "CODEX_TOOL_CALL_ID",
+      "CODEX_VERSION",
+      "CODEX_WINDOWS_SANDBOX_PACKAGE_FAMILY",
+      "COLORTERM",
+      "COMPUTERNAME",
+      "DISABLE_AUTO_UPDATE",
+      "DRIVERDATA",
+      "GH_PAGER",
+      "GIT_PAGER",
+      "LOGONSERVER",
+      "LOG_FORMAT",
+      "NODE_REPL_NODE_MODULE_DIRS",
+      "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S",
+      "NODE_REPL_TRUSTED_CODE_PATHS",
+      "NODE_REPL_TRUSTED_SERVICES",
+      "NO_COLOR",
+      "ONEDRIVE",
+      "PAGER",
+      "POWERSHELL_DISTRIBUTION_CHANNEL",
+      "RUST_LOG",
+      "SHELL",
+      "TERM",
+      "USERDOMAIN_ROAMINGPROFILE",
+      "ZSH_TMUX_AUTOSTART",
+      "ZSH_TMUX_AUTOSTARTED"
+    ],
+    "identity_fingerprint": "caf4d6482edf5f5103e5b958196b3622e7101dfae32ff3290c4177783661c958",
+    "profile_root": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\chat-resize-domain-20261021-110305-23131deb95\\profile",
+    "cwd_root": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\chat-resize-domain-20261021-110305-23131deb95\\source",
+    "network": "loopback_only",
+    "agent": "blocked",
+    "hardware": "blocked",
+    "desktop": null
+  },
+  "sandbox_policy": {
+    "source_copy": "git_tracked_plus_current_tests",
+    "runtime_data_excluded": [
+      ".git",
+      ".pytest_cache",
+      ".venv",
+      "__pycache__",
+      "_tmp_gui",
+      "audit",
+      "crash.log",
+      "crash.log.1",
+      "downloads",
+      "history",
+      "models",
+      "prefs.json",
+      "server_state",
+      "web_files",
+      "web_tls"
+    ],
+    "network": "loopback_only",
+    "agent": "blocked",
+    "hardware": "blocked",
+    "gui": "private_Windows_desktop_when_available"
+  },
+  "files": 7,
+  "failures": [],
+  "cleanup_failures": [],
+  "totals": {
+    "passed": 68
+  },
+  "seconds": 39.078,
+  "exit_code": 0,
+  "started_at": "2026-10-21T03:03:07.260+00:00",
+  "ended_at": "2026-10-21T03:03:46.341+00:00",
+  "results": [
+    {
+      "file": "tests/test_msg_list.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T03:03:07.495+00:00",
+          "pid": 34872,
+          "session_id": 1,
+          "log": "logs/test_msg_list.attempt1.log",
+          "sandbox_report": "sandbox/test_msg_list.attempt1.json",
+          "basetemp": "basetemp/test_msg_list-1-7d4f3a17",
+          "source_cwd": "cases/test_msg_list-1-0b5e6374",
+          "profile": "profiles/test_msg_list-1-31dc41df",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_msg_list.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\chat-resize-domain-20261021-110305-23131deb95\\basetemp\\test_msg_list-1-7d4f3a17",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=sys"
+          ],
+          "gui": true,
+          "desktop": "MoyuGate-21308-a00b1b91e2",
+          "ended_at": "2026-10-21T03:03:16.832+00:00",
+          "exit_code": 0,
+          "seconds": 9.337,
+          "summary": "25 passed in 8.66s",
+          "counts": {
+            "passed": 25
+          },
+          "log_sha256": "7f0b6ce1e1262232bd78c07b2ff321b4476683b91ad2f3023ce6412aea993df6",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": "MoyuGate-21308-a00b1b91e2",
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792551788.038824,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "25 passed in 8.66s",
+      "counts": {
+        "passed": 25
+      },
+      "ended_at": "2026-10-21T03:03:16.832+00:00",
+      "seconds": 9.337,
+      "log": "logs/test_msg_list.attempt1.log",
+      "log_sha256": "7f0b6ce1e1262232bd78c07b2ff321b4476683b91ad2f3023ce6412aea993df6",
+      "sandbox_report": "sandbox/test_msg_list.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_msglist_group.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T03:03:17.086+00:00",
+          "pid": 30620,
+          "session_id": 1,
+          "log": "logs/test_msglist_group.attempt1.log",
+          "sandbox_report": "sandbox/test_msglist_group.attempt1.json",
+          "basetemp": "basetemp/test_msglist_group-1-6ce15721",
+          "source_cwd": "cases/test_msglist_group-1-e359db6b",
+          "profile": "profiles/test_msglist_group-1-7e67f8d2",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_msglist_group.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\chat-resize-domain-20261021-110305-23131deb95\\basetemp\\test_msglist_group-1-6ce15721",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ],
+          "gui": false,
+          "desktop": null,
+          "ended_at": "2026-10-21T03:03:17.993+00:00",
+          "exit_code": 0,
+          "seconds": 0.907,
+          "summary": "9 passed in 0.34s",
+          "counts": {
+            "passed": 9
+          },
+          "log_sha256": "e99cb1c9d419cb290dd4f3d2285a6e22eaaf2ce496df004cc512280dfdf23812",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": null,
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792551797.5165389,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "9 passed in 0.34s",
+      "counts": {
+        "passed": 9
+      },
+      "ended_at": "2026-10-21T03:03:17.993+00:00",
+      "seconds": 0.907,
+      "log": "logs/test_msglist_group.attempt1.log",
+      "log_sha256": "e99cb1c9d419cb290dd4f3d2285a6e22eaaf2ce496df004cc512280dfdf23812",
+      "sandbox_report": "sandbox/test_msglist_group.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_settings_nav.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T03:03:18.218+00:00",
+          "pid": 37408,
+          "session_id": 1,
+          "log": "logs/test_settings_nav.attempt1.log",
+          "sandbox_report": "sandbox/test_settings_nav.attempt1.json",
+          "basetemp": "basetemp/test_settings_nav-1-307c3660",
+          "source_cwd": "cases/test_settings_nav-1-7bf755da",
+          "profile": "profiles/test_settings_nav-1-31fb4613",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_settings_nav.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\chat-resize-domain-20261021-110305-23131deb95\\basetemp\\test_settings_nav-1-307c3660",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=sys"
+          ],
+          "gui": true,
+          "desktop": "MoyuGate-21308-766bb5acd8",
+          "ended_at": "2026-10-21T03:03:24.553+00:00",
+          "exit_code": 0,
+          "seconds": 6.335,
+          "summary": "1 passed in 5.77s",
+          "counts": {
+            "passed": 1
+          },
+          "log_sha256": "1594ecd01255c760f5c986ed802473895acf0aa3c316514ff26269b2e173a7c2",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": "MoyuGate-21308-766bb5acd8",
+            "blocked_events": 1,
+            "remapped_events": 3,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792551798.6226726,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              },
+              {
+                "action": "network_bind_remapped",
+                "at": 1792551801.2098794,
+                "requested_host": "0.0.0.0",
+                "effective_host": "127.0.0.1",
+                "operation": "bind"
+              },
+              {
+                "action": "network_blocked",
+                "at": 1792551801.2107947,
+                "requested_host": "8.8.8.8",
+                "operation": "connect"
+              },
+              {
+                "action": "network_bind_remapped",
+                "at": 1792551802.6987338,
+                "requested_host": "0.0.0.0",
+                "effective_host": "127.0.0.1",
+                "operation": "bind"
+              },
+              {
+                "action": "network_broadcast_remapped",
+                "at": 1792551804.2149966,
+                "requested_host": "255.255.255.255",
+                "effective_host": "127.0.0.1",
+                "operation": "sendto"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "1 passed in 5.77s",
+      "counts": {
+        "passed": 1
+      },
+      "ended_at": "2026-10-21T03:03:24.553+00:00",
+      "seconds": 6.335,
+      "log": "logs/test_settings_nav.attempt1.log",
+      "log_sha256": "1594ecd01255c760f5c986ed802473895acf0aa3c316514ff26269b2e173a7c2",
+      "sandbox_report": "sandbox/test_settings_nav.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_ux_repair.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T03:03:24.911+00:00",
+          "pid": 41896,
+          "session_id": 1,
+          "log": "logs/test_ux_repair.attempt1.log",
+          "sandbox_report": "sandbox/test_ux_repair.attempt1.json",
+          "basetemp": "basetemp/test_ux_repair-1-aa2acfc1",
+          "source_cwd": "cases/test_ux_repair-1-e7d7dc25",
+          "profile": "profiles/test_ux_repair-1-a8ab9ad2",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_ux_repair.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\chat-resize-domain-20261021-110305-23131deb95\\basetemp\\test_ux_repair-1-aa2acfc1",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=sys"
+          ],
+          "gui": true,
+          "desktop": "MoyuGate-21308-4a17869ad3",
+          "ended_at": "2026-10-21T03:03:30.550+00:00",
+          "exit_code": 0,
+          "seconds": 5.639,
+          "summary": "7 passed in 4.98s",
+          "counts": {
+            "passed": 7
+          },
+          "log_sha256": "c7b07549d6b1e8e43543800e93f987c66b59a17d77548d535e3bd6e35ed9f763",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": "MoyuGate-21308-4a17869ad3",
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792551805.4077458,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "7 passed in 4.98s",
+      "counts": {
+        "passed": 7
+      },
+      "ended_at": "2026-10-21T03:03:30.550+00:00",
+      "seconds": 5.639,
+      "log": "logs/test_ux_repair.attempt1.log",
+      "log_sha256": "c7b07549d6b1e8e43543800e93f987c66b59a17d77548d535e3bd6e35ed9f763",
+      "sandbox_report": "sandbox/test_ux_repair.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_ux_visual_chat_design.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T03:03:30.780+00:00",
+          "pid": 32128,
+          "session_id": 1,
+          "log": "logs/test_ux_visual_chat_design.attempt1.log",
+          "sandbox_report": "sandbox/test_ux_visual_chat_design.attempt1.json",
+          "basetemp": "basetemp/test_ux_visual_chat_design-1-8ddf9095",
+          "source_cwd": "cases/test_ux_visual_chat_design-1-d69f240d",
+          "profile": "profiles/test_ux_visual_chat_design-1-9a9acf0b",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_ux_visual_chat_design.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\chat-resize-domain-20261021-110305-23131deb95\\basetemp\\test_ux_visual_chat_design-1-8ddf9095",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=sys"
+          ],
+          "gui": true,
+          "desktop": "MoyuGate-21308-dc73238fb6",
+          "ended_at": "2026-10-21T03:03:31.686+00:00",
+          "exit_code": 0,
+          "seconds": 0.905,
+          "summary": "6 passed in 0.35s",
+          "counts": {
+            "passed": 6
+          },
+          "log_sha256": "eca7e3a6bc1d3b6f623fa007ed08e6df1f37574cdde3bc30f2d8277a7cc92830",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": "MoyuGate-21308-dc73238fb6",
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792551811.202548,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "6 passed in 0.35s",
+      "counts": {
+        "passed": 6
+      },
+      "ended_at": "2026-10-21T03:03:31.686+00:00",
+      "seconds": 0.905,
+      "log": "logs/test_ux_visual_chat_design.attempt1.log",
+      "log_sha256": "eca7e3a6bc1d3b6f623fa007ed08e6df1f37574cdde3bc30f2d8277a7cc92830",
+      "sandbox_report": "sandbox/test_ux_visual_chat_design.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_ux_visual_chat_dpi.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T03:03:31.921+00:00",
+          "pid": 26504,
+          "session_id": 1,
+          "log": "logs/test_ux_visual_chat_dpi.attempt1.log",
+          "sandbox_report": "sandbox/test_ux_visual_chat_dpi.attempt1.json",
+          "basetemp": "basetemp/test_ux_visual_chat_dpi-1-d2253710",
+          "source_cwd": "cases/test_ux_visual_chat_dpi-1-66996cad",
+          "profile": "profiles/test_ux_visual_chat_dpi-1-969beadc",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_ux_visual_chat_dpi.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\chat-resize-domain-20261021-110305-23131deb95\\basetemp\\test_ux_visual_chat_dpi-1-d2253710",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ],
+          "gui": false,
+          "desktop": null,
+          "ended_at": "2026-10-21T03:03:34.072+00:00",
+          "exit_code": 0,
+          "seconds": 2.151,
+          "summary": "7 passed in 1.60s",
+          "counts": {
+            "passed": 7
+          },
+          "log_sha256": "423d713320860dee7983a95517d52f2c163be62cccea4375794931f4876bc875",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": null,
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792551812.3446724,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "7 passed in 1.60s",
+      "counts": {
+        "passed": 7
+      },
+      "ended_at": "2026-10-21T03:03:34.072+00:00",
+      "seconds": 2.151,
+      "log": "logs/test_ux_visual_chat_dpi.attempt1.log",
+      "log_sha256": "423d713320860dee7983a95517d52f2c163be62cccea4375794931f4876bc875",
+      "sandbox_report": "sandbox/test_ux_visual_chat_dpi.attempt1.json",
+      "unexpected_skips": []
+    },
+    {
+      "file": "tests/test_ux_visual_chat_regressions.py",
+      "status": "passed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "passed",
+          "started_at": "2026-10-21T03:03:34.304+00:00",
+          "pid": 41748,
+          "session_id": 1,
+          "log": "logs/test_ux_visual_chat_regressions.attempt1.log",
+          "sandbox_report": "sandbox/test_ux_visual_chat_regressions.attempt1.json",
+          "basetemp": "basetemp/test_ux_visual_chat_regressions-1-e64e8d7f",
+          "source_cwd": "cases/test_ux_visual_chat_regressions-1-87111c3d",
+          "profile": "profiles/test_ux_visual_chat_regressions-1-b2fe0446",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_ux_visual_chat_regressions.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\chat-resize-domain-20261021-110305-23131deb95\\basetemp\\test_ux_visual_chat_regressions-1-e64e8d7f",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=sys"
+          ],
+          "gui": true,
+          "desktop": "MoyuGate-21308-8e8912763d",
+          "ended_at": "2026-10-21T03:03:46.338+00:00",
+          "exit_code": 0,
+          "seconds": 12.034,
+          "summary": "13 passed in 11.48s",
+          "counts": {
+            "passed": 13
+          },
+          "log_sha256": "98c3b0a45af0c328fee02727be5890e92cc52fb21cf48f2869823cb05895d4c2",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": "MoyuGate-21308-8e8912763d",
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792551814.7189498,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 0,
+      "summary": "13 passed in 11.48s",
+      "counts": {
+        "passed": 13
+      },
+      "ended_at": "2026-10-21T03:03:46.338+00:00",
+      "seconds": 12.034,
+      "log": "logs/test_ux_visual_chat_regressions.attempt1.log",
+      "log_sha256": "98c3b0a45af0c328fee02727be5890e92cc52fb21cf48f2869823cb05895d4c2",
+      "sandbox_report": "sandbox/test_ux_visual_chat_regressions.attempt1.json",
+      "unexpected_skips": []
+    }
+  ]
+}

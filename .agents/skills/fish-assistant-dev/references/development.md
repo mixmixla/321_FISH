@@ -128,3 +128,5 @@ MiniBar owner Destroy回归应同时覆盖父root销毁和tooltip子Destroy：�
 验证销毁期间重入时，真实tick更新后还须复查销毁标记，避免向仍活解释器重新排已死widget回调。
 
 Boss定时销毁验证必须跨真实1500ms置顶解除及3000ms更新，root heartbeat/截止哨兵证明观察有效，close在同一mainloop内执行；核窗口、Tcl command与pending脚本三者。跟踪ID应在执行前释放，owner Destroy取消自身，皮肤子Destroy不取消，真实tick重入close不得重新排死widget。
+
+正式local_trial.run默认含有限真实wire门禁：先核actual EXE startup，再同server上双加密loopback peer聊天/两棋生命周期；分块recv/send必须共用绝对总/阶段截止，socket先登记且逐项finally清理。用真实Hub/故障peer验证超时/EOF/帧队列边界，正式run seam测试明确与actual EXE证据分层；实际EXE负路径须证明startup成功且故障确实注入，任意exit1不足。复用已绑定且业务源码未变的EXE无需无关重建；协议/Job强停不证明GUI、自然退出或LAN。

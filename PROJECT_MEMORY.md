@@ -241,3 +241,5 @@
 - MiniBar自己的1000ms更新ID在owner真实Destroy时取消；子tooltip Destroy不取消owner更新，hide/show保留单循环，tick前后销毁标记防重入重排。组件清理合同不等于完整应用自然退出或Boss回调已验证。
 
 BossWindow原owner销毁会删除Tcl command但不会自动移除解释器after脚本；应跟踪本类任务ID，执行前移除，close/owner Destroy只取消自有任务，忽略皮肤子Destroy。必须用单root/mainloop跨真实1500/3000ms核自然bgerror和命令归属；组件缺陷不推导正式quit失败，活体多tick/show策略另属范围。
+
+local_trial.run的默认有限wire预检在实际EXE startup成功后，用两个合成加密loopback peer覆盖双向聊天与两旗舰终局/复位/重开/离房；同步无reader线程，总/阶段绝对截止和帧/队列上限必须保留。raw socket先持有、finally逐peer关闭，wire/关闭失败使正式run非0，既有owned Job finally保持。协议及强制清理不等于client GUI交互、自然应用退出或物理LAN。

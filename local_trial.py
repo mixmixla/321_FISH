@@ -29,6 +29,7 @@ import os
 from pathlib import Path
 import shutil
 import socket
+import stat
 import subprocess
 import sys
 import time
@@ -89,19 +90,12 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _is_reparse(path: Path) -> bool:
-    """Reject symlink/junction entries in owned evidence trees."""
-    try:
-        if path.is_symlink():
-            return True
-        is_junction = getattr(path, "is_junction", None)
-        if is_junction is not None and is_junction():
-            return True
-        if os.name == "nt":
-            return bool(path.stat().st_file_attributes & 0x400)
-    except OSError:
-        return True
-    return False
+def _is_reparse(path: Path, *, info=None) -> bool:
+    """Reject reparse entries without suppressing metadata access errors."""
+    if info is None:
+        info = path.lstat()
+    return (stat.S_ISLNK(info.st_mode)
+            or bool(getattr(info, "st_file_attributes", 0) & 0x400))
 
 
 def _assert_relative_path(value: str) -> None:
@@ -111,24 +105,42 @@ def _assert_relative_path(value: str) -> None:
 
 
 def _owned_inventory(root: Path) -> list[dict]:
-    """Inventory only an owned root using relative paths and content hashes."""
+    """Return a complete owned inventory or propagate the original IO error."""
     root = root.resolve()
-    if not root.is_dir() or _is_reparse(root):
+    info = root.lstat()
+    if not stat.S_ISDIR(info.st_mode) or _is_reparse(root, info=info):
         raise ValueError(f"owned inventory root is unsafe: {root}")
     entries = [{"path": ".", "type": "dir", "size": 0, "sha256": None}]
-    for path in sorted(root.rglob("*"), key=lambda p: p.relative_to(root).as_posix()):
-        if _is_reparse(path):
-            raise ValueError(f"owned inventory contains symlink/junction: {path}")
-        rel = path.relative_to(root).as_posix()
-        _assert_relative_path(rel)
-        if path.is_dir():
-            entries.append({"path": rel, "type": "dir", "size": 0, "sha256": None})
-        elif path.is_file():
-            entries.append({"path": rel, "type": "file", "size": path.stat().st_size,
-                            "sha256": _sha256(path)})
-        else:
-            raise ValueError(f"owned inventory contains unsupported entry: {path}")
-    return entries
+    pending = [root]
+    while pending:
+        directory = pending.pop()
+        # rglob and os.walk can suppress enumeration/classification OSErrors.
+        # Read and classify each entry strictly, before scheduling any descent.
+        with os.scandir(directory) as children:
+            for child in children:
+                path = Path(child.path)
+                info = child.stat(follow_symlinks=False)
+                if _is_reparse(path, info=info):
+                    raise ValueError(f"owned inventory contains symlink/junction: {path}")
+                rel = path.relative_to(root).as_posix()
+                _assert_relative_path(rel)
+                if stat.S_ISDIR(info.st_mode):
+                    entries.append({"path": rel, "type": "dir", "size": 0, "sha256": None})
+                    pending.append(path)
+                elif stat.S_ISREG(info.st_mode):
+                    entries.append({"path": rel, "type": "file", "size": info.st_size,
+                                    "sha256": _sha256(path)})
+                else:
+                    raise ValueError(f"owned inventory contains unsupported entry: {path}")
+    return sorted(entries, key=lambda entry: entry["path"])
+
+
+def _inventory_error(exc: Exception, phase: str) -> dict:
+    """Local-only diagnostic; never turn failed enumeration into an empty list."""
+    return {"type": type(exc).__name__, "phase": phase,
+            "errno": getattr(exc, "errno", None),
+            "winerror": getattr(exc, "winerror", None),
+            "filename": getattr(exc, "filename", None), "message": str(exc)}
 
 
 def _tree_fingerprint(root: Path) -> tuple[str, int]:
@@ -684,8 +696,22 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
     client_envs = {role: _clean_env(profile=profiles[role], flags=TRIAL_FLAGS,
                                   ports=(tcp_port, web_port))
                    for role in client_nicks}
-    profile_before = {role: _owned_inventory(path)
-                      for role, path in profiles.items()}
+    profile_before = {}
+    try:
+        for role, path in profiles.items():
+            profile_before[role] = _owned_inventory(path)
+    except Exception as exc:
+        summary = {"schema_version": "REL-01.v1.run", "run_id": run_dir.name,
+                   "source": str(source), "exit_code": 5,
+                   "profiles": {role: {"root": str(path)} for role, path in profiles.items()},
+                   "profile_inventory_error": _inventory_error(exc, "before"),
+                   "profile_paths_scoped": False, "processes": {},
+                   "cleanup": {}, "cleanup_ok": True,
+                   "source_fingerprint_before": source_fingerprint_before,
+                   "source_entry_count": source_entry_count}
+        (run_dir / "summary.json").write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+        return 5, summary
     store_root = profiles['server'] / 'store'
     initialize_cmd = [str(server_exe), 'initialize-new', '--store-dir', str(store_root)]
     server_cmd = [str(server_exe), 'open', '--store-dir', str(store_root)]
@@ -800,7 +826,7 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
                 and source_after_count == source_entry_count)
             result["profile_paths_scoped"] = True
         except Exception as exc:
-            result["profile_inventory_error"] = {"type": type(exc).__name__}
+            result["profile_inventory_error"] = _inventory_error(exc, "after")
             result["profile_paths_scoped"] = False
             result["source_unchanged"] = False
         if not result["cleanup_ok"]:

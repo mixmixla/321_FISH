@@ -11,3 +11,8 @@ docs/review-assets/KALAH-TERMINAL-01/**/*.log.txt -text -whitespace
 docs/review-assets/GATE-BOARDGAMES-01/* -text -whitespace
 docs/review-assets/CHAT-RESIZE-01/* -text -whitespace
 docs/review-assets/UI-ROOM-ICON-01/* -text -whitespace
+
+# Preserve original R3 build/CLI evidence bytes; Python/docs retain normal attributes.
+docs/review-assets/R3-LOCAL-01/*.log -text -whitespace
+docs/review-assets/R3-LOCAL-01/*.json -text -whitespace
+docs/review-assets/R3-LOCAL-01/*.txt -text -whitespace

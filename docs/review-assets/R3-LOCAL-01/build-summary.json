@@ -1,0 +1,28 @@
+{
+  "schema_version": "REL-01.v1.build",
+  "run_id": "build-20261021-053415-73699e80d8",
+  "source": "D:\\project\\321_FISH",
+  "source_copy": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source",
+  "command": [
+    "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+    "build.py"
+  ],
+  "python": "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+  "exit_code": 0,
+  "build_ok": true,
+  "missing_executables": [],
+  "duration_seconds": 48.837,
+  "log": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\build.log",
+  "executables": {
+    "server.exe": {
+      "path": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\server.exe",
+      "size": 26083980,
+      "sha256": "f47f843a0975e10816d228442d9ae2ac864f880b03b0c5b5158f18fbae591335"
+    },
+    "client.exe": {
+      "path": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+      "size": 27342294,
+      "sha256": "c65c4a776015bffcdd804849773c57a0dcbfcfca0a8709cc3b79d08f309808ab"
+    }
+  }
+}

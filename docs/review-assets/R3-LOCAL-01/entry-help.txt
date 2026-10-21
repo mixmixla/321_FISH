@@ -1,0 +1,15 @@
+usage: StartTrial.exe [-h] [--mode {demo,host,join}] [--host HOST]
+                      [--port PORT] [--web-port WEB_PORT] [--nick NICK]
+                      [--bundle-dir BUNDLE_DIR] [--dry-run]
+
+少量朋友受控试用入口；不修改防火墙或导入旧资料。
+
+options:
+  -h, --help            show this help message and exit
+  --mode {demo,host,join}
+  --host HOST
+  --port PORT
+  --web-port WEB_PORT
+  --nick NICK
+  --bundle-dir BUNDLE_DIR
+  --dry-run

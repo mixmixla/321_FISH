@@ -1,0 +1,37 @@
+{
+  "source_content_id": "2dc0c20008aa8288b8746eb2f65a497fe1ee1910da022ab02a16a67dc039e588",
+  "preflight_exit": 0,
+  "entry_cli_exit": 0,
+  "jobs_zero_and_closed": 6,
+  "runtime_input_count": 479,
+  "runtime_before_after": "9d8d9625ad67db943be4a54659fad8ec24b4fc969e426d4c42ba771b50c52c00",
+  "runtime_subset_scope": "479 discovered source entries; original build binding is separate 483-input mapping plus two generated spec changes",
+  "boot_logs": [
+    {
+      "path": "profile-client/moeyu_helper/crash.log",
+      "size": 125,
+      "sha256": "39f7c8fd6d75b60c9d27a4b8b28cb4520d99f397da8ad4a95047c934ecc51119",
+      "boot_lines_only": true
+    },
+    {
+      "path": "profile-client-beta/moeyu_helper/crash.log",
+      "size": 122,
+      "sha256": "f9320f0cfe18bdbbb8de34f95abb07cbd8e008169b7b046e158a4795bf640978",
+      "boot_lines_only": true
+    },
+    {
+      "path": "profile-server/moeyu_helper/crash.log",
+      "size": 34,
+      "sha256": "e118582d7207bb8a62ab274afd68d804e2625dc876010b1127f37e746f4be199",
+      "boot_lines_only": true
+    }
+  ],
+  "gui_flows": "BLOCKED_NO_NATIVE_TOOL",
+  "r3_accepted": false,
+  "controller": {
+    "path": "docs/review-assets/R3-LOCAL-01/reproduce.py",
+    "sha256": "2d931158a991e21d0fe87681e82bc9020929ca74e5e3e1da07e94f9be5fc6138",
+    "scope": "task-local adapter, excluded from 483 application inputs; unchanged since pre-execution independent review and actual preflight/entry-cli execution",
+    "hash_recorded": "post-run archival"
+  }
+}

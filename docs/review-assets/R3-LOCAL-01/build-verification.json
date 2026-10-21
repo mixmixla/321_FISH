@@ -1,0 +1,85 @@
+{
+  "source_content_id": "2dc0c20008aa8288b8746eb2f65a497fe1ee1910da022ab02a16a67dc039e588",
+  "input_count": 483,
+  "source_copy": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source",
+  "allowed_generated_changes": [
+    {
+      "path": "client.spec",
+      "original_sha256": "2d814b6bbe67c8b6508f10a688c6d948d15c8ab4c815e5963316e37a46b6e347",
+      "generated_sha256": "f060c9a6a0c939d3aa4039f3f0a9387ad209a2006d8350d149d517ad7ff3f9bf"
+    },
+    {
+      "path": "server.spec",
+      "original_sha256": "e925b66ba6066d181e89b24a647d2295226104a5ddbe80ff7191e3ba337641f5",
+      "generated_sha256": "8c5196020b2b36f2bd36adaf43892d072230495f623af72277843f8a8d02dc9d"
+    }
+  ],
+  "unchanged_inputs": 481,
+  "app_ico_unchanged": true,
+  "boardgames_input_count": 32,
+  "pyz_modules": {
+    "client": [
+      "boardgames",
+      "boardgames.azul",
+      "boardgames.azul._art",
+      "boardgames.azul.desktop",
+      "boardgames.azul.web",
+      "boardgames.geom",
+      "boardgames.registry",
+      "boardgames.shell"
+    ],
+    "server": [
+      "boardgames",
+      "boardgames.azul",
+      "boardgames.azul._art",
+      "boardgames.azul.desktop",
+      "boardgames.azul.web",
+      "boardgames.geom",
+      "boardgames.registry",
+      "boardgames.shell"
+    ]
+  },
+  "artifacts": {
+    "server.exe": {
+      "path": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\server.exe",
+      "size": 26083980,
+      "sha256": "f47f843a0975e10816d228442d9ae2ac864f880b03b0c5b5158f18fbae591335"
+    },
+    "client.exe": {
+      "path": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+      "size": 27342294,
+      "sha256": "c65c4a776015bffcdd804849773c57a0dcbfcfca0a8709cc3b79d08f309808ab"
+    },
+    "StartTrial.exe": {
+      "path": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\StartTrial.exe",
+      "size": 9739166,
+      "sha256": "0953a1323ba42c4cc31d83a367ec3116654661d0f32ade35510be52adbcbdc18"
+    }
+  },
+  "public_original_evidence": [
+    {
+      "path": "build-summary.json",
+      "sha256": "2cca54006d35dd208ec9dd1227664dd0b95bd3f58b598211a3bff9560435218f"
+    },
+    {
+      "path": "build.log",
+      "sha256": "418587e26e37f79c955fc2d39957e38f8119d81bf9c87761d76a7099dad3128f"
+    },
+    {
+      "path": "entry-build-summary.json",
+      "sha256": "8cf2038542438e109d7b73b72522fe013e1814e23051661b0fd0a8e5f663650a"
+    },
+    {
+      "path": "entry-build.log",
+      "sha256": "d6e0214de03171f913b04a46b89179f86ebea25ad39a0b5b5594b83059b057fb"
+    }
+  ],
+  "optional_capabilities": {
+    "vosk_installed": false,
+    "embedded_vosk_model": false,
+    "speech_transcription_verified": false,
+    "hardware_verified": false
+  },
+  "gui_acceptance": false,
+  "r3_acceptance": false
+}

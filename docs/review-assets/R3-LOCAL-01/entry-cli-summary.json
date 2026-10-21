@@ -1,0 +1,70 @@
+{
+  "exit_code": 0,
+  "results": [
+    {
+      "probe": "help",
+      "exit_code": 0,
+      "log": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\entry-cli-20261021-053840-512e60a61a\\help.txt"
+    },
+    {
+      "probe": "demo-dry-run",
+      "exit_code": 0,
+      "log": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\entry-cli-20261021-053840-512e60a61a\\demo-dry-run.txt"
+    }
+  ],
+  "jobs": [
+    {
+      "role": "help",
+      "pid": 39804,
+      "ownership": "suspended -> unnamed Job -> resume; kill-on-close",
+      "close_ok": true,
+      "active_after_launch": 1,
+      "active_before_cleanup": 1,
+      "active_after_cleanup": 0,
+      "cleanup_ok": true
+    },
+    {
+      "role": "demo-dry-run",
+      "pid": 28496,
+      "ownership": "suspended -> unnamed Job -> resume; kill-on-close",
+      "close_ok": true,
+      "active_after_launch": 1,
+      "active_before_cleanup": 1,
+      "active_after_cleanup": 0,
+      "cleanup_ok": true
+    }
+  ],
+  "actual_demo_run": false,
+  "native_gui_acceptance": false,
+  "natural_exit_verified": false,
+  "plan": {
+    "address": "127.0.0.1",
+    "automatic_demo_ports": true,
+    "bundle": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source",
+    "client_exe": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+    "external_windows_and_real_lan_verified": false,
+    "features": [
+      "chat",
+      "gomoku",
+      "connect4"
+    ],
+    "firewall_changes": false,
+    "fresh_only": true,
+    "mode": "demo",
+    "network_settings_changed": false,
+    "nicks": {
+      "alpha": "trial_friend_3a50e6",
+      "beta": "trial_beta_3a50e6"
+    },
+    "profiles": {
+      "alpha": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\trial_runs\\trial-e4ebbddc2a3843168f0faa33ba3a50e6\\alpha",
+      "beta": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\trial_runs\\trial-e4ebbddc2a3843168f0faa33ba3a50e6\\beta",
+      "server": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\trial_runs\\trial-e4ebbddc2a3843168f0faa33ba3a50e6\\server"
+    },
+    "real_data_import": false,
+    "run_dir": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\trial_runs\\trial-e4ebbddc2a3843168f0faa33ba3a50e6",
+    "server_exe": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\server.exe",
+    "tcp_port": 9527,
+    "web_port": 9529
+  }
+}

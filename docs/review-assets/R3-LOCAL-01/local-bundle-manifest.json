@@ -1,0 +1,46 @@
+{
+  "path": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\bundle-ab6cb77-pending-gui",
+  "files": [
+    {
+      "path": "StartTrial.exe",
+      "size": 9739166,
+      "sha256": "0953a1323ba42c4cc31d83a367ec3116654661d0f32ade35510be52adbcbdc18"
+    },
+    {
+      "path": "dist/server.exe",
+      "size": 26083980,
+      "sha256": "f47f843a0975e10816d228442d9ae2ac864f880b03b0c5b5158f18fbae591335"
+    },
+    {
+      "path": "dist/client.exe",
+      "size": 27342294,
+      "sha256": "c65c4a776015bffcdd804849773c57a0dcbfcfca0a8709cc3b79d08f309808ab"
+    },
+    {
+      "path": "LICENSE",
+      "size": 35823,
+      "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+    },
+    {
+      "path": "README.md",
+      "size": 1680,
+      "sha256": "3969450c52bcb26a494d57befb59d6d97d837b9de4b39e8d68881044691a3376"
+    },
+    {
+      "path": "VERIFICATION.json",
+      "size": 1076,
+      "sha256": "c60ec368b6784dbe9f8035399bd4d4231e832164bca59e7d2bf7fb26851b37cb"
+    },
+    {
+      "path": "SHA256SUMS.txt",
+      "size": 485,
+      "sha256": "28bde1a4e99b0df6bdf9e7305bbd7ddc786fedb9ad715737bc93ab1575a74d21"
+    }
+  ],
+  "allowed_files_only": true,
+  "binary_uploaded": false,
+  "relocated_bundle_full_run_verified": false,
+  "no_runtime_profile_included": true,
+  "server_natural_exit_verified": false,
+  "client_natural_exit_verified": false
+}

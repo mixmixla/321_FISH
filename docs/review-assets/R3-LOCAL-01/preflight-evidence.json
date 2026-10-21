@@ -1,0 +1,243 @@
+{
+  "schema_version": "REL-01.v1.run",
+  "run_id": "run-20261021-053743-a3a19424c2",
+  "source": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source",
+  "desktop": "MoyuTrial-28284-dde8977ef7",
+  "session_id": 1,
+  "ports": {
+    "tcp": 6753,
+    "web": 6754
+  },
+  "flags": {
+    "MOYU_BIND_HOST": "127.0.0.1",
+    "MOYU_DISCOVERY": "0",
+    "MOYU_TRAY": "0",
+    "MOYU_GLOBAL_HOTKEYS": "0",
+    "MOYU_HARDWARE": "0",
+    "MOYU_WEB_HTTPS": "0"
+  },
+  "private_desktop_probe": {
+    "available": true,
+    "name": "MoyuGate-28284-d3a8383b8b"
+  },
+  "processes": {
+    "initialize": {
+      "pid": 40892,
+      "session_id": 1,
+      "desktop": "MoyuTrial-28284-dde8977ef7",
+      "image": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\server.exe",
+      "image_matches_expected": true,
+      "state": "running",
+      "command": [
+        "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\server.exe",
+        "initialize-new",
+        "--store-dir",
+        "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\profile-server\\store"
+      ]
+    },
+    "server": {
+      "pid": 26156,
+      "session_id": 1,
+      "desktop": "MoyuTrial-28284-dde8977ef7",
+      "image": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\server.exe",
+      "image_matches_expected": true,
+      "state": "running",
+      "command": [
+        "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\server.exe",
+        "open",
+        "--store-dir",
+        "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\profile-server\\store"
+      ]
+    },
+    "client": {
+      "pid": 33944,
+      "session_id": 1,
+      "desktop": "MoyuTrial-28284-dde8977ef7",
+      "image": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+      "image_matches_expected": true,
+      "state": "running",
+      "command": [
+        "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "6753",
+        "--nick",
+        "REL_trial_client"
+      ]
+    },
+    "client_beta": {
+      "pid": 24032,
+      "session_id": 1,
+      "desktop": "MoyuTrial-28284-dde8977ef7",
+      "image": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+      "image_matches_expected": true,
+      "state": "running",
+      "command": [
+        "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "6753",
+        "--nick",
+        "REL_trial_beta"
+      ]
+    }
+  },
+  "probes": {
+    "initialize": {
+      "ok": true,
+      "exit_code": 0,
+      "store": "profile-server/store"
+    },
+    "tcp_listen": {
+      "ok": true
+    },
+    "web": {
+      "ok": true,
+      "status": 200,
+      "bytes_read": 256,
+      "url": "http://127.0.0.1:6754/"
+    },
+    "login": {
+      "ok": true,
+      "source": "client.exe",
+      "audit_dir": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\profile-server\\moeyu_helper\\audit",
+      "event": {
+        "type": "login",
+        "uid": 1,
+        "nick": "REL_trial_client",
+        "peer": "127.0.0.1",
+        "via": "tcp",
+        "ts": 1792561072.281,
+        "time": "2026-10-21 13:37:52"
+      }
+    },
+    "login_beta": {
+      "ok": true,
+      "source": "client.exe",
+      "audit_dir": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\profile-server\\moeyu_helper\\audit",
+      "event": {
+        "type": "login",
+        "uid": 2,
+        "nick": "REL_trial_beta",
+        "peer": "127.0.0.1",
+        "via": "tcp",
+        "ts": 1792561075.199,
+        "time": "2026-10-21 13:37:55"
+      }
+    }
+  },
+  "cleanup_ok": true,
+  "logs": {
+    "server": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\server.log",
+    "client": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\client.log",
+    "client_beta": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\client_beta.log",
+    "initialize": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\initialize.log"
+  },
+  "source_fingerprint_before": "9d8d9625ad67db943be4a54659fad8ec24b4fc969e426d4c42ba771b50c52c00",
+  "source_fingerprint_scope": "approved source manifest; not a whole-system IO trace",
+  "source_entry_count": 479,
+  "client_started": true,
+  "client_after_wait": {
+    "pid": 33944,
+    "session_id": 1,
+    "desktop": "MoyuTrial-28284-dde8977ef7",
+    "image": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+    "image_matches_expected": true,
+    "state": "running",
+    "command": [
+      "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "6753",
+      "--nick",
+      "REL_trial_client"
+    ]
+  },
+  "client_beta_after_wait": {
+    "pid": 24032,
+    "session_id": 1,
+    "desktop": "MoyuTrial-28284-dde8977ef7",
+    "image": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+    "image_matches_expected": true,
+    "state": "running",
+    "command": [
+      "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "6753",
+      "--nick",
+      "REL_trial_beta"
+    ]
+  },
+  "server_after_wait": {
+    "pid": 26156,
+    "session_id": 1,
+    "desktop": "MoyuTrial-28284-dde8977ef7",
+    "image": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\server.exe",
+    "image_matches_expected": true,
+    "state": "running",
+    "command": [
+      "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\server.exe",
+      "open",
+      "--store-dir",
+      "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\profile-server\\store"
+    ]
+  },
+  "cleanup": {
+    "client": {
+      "attempted": true,
+      "ok": true,
+      "state": "exited"
+    },
+    "client_beta": {
+      "attempted": true,
+      "ok": true,
+      "state": "exited"
+    },
+    "server": {
+      "attempted": true,
+      "ok": true,
+      "state": "exited"
+    },
+    "initialize": {
+      "attempted": true,
+      "ok": true,
+      "state": "exited"
+    }
+  },
+  "source_fingerprint_after": "9d8d9625ad67db943be4a54659fad8ec24b4fc969e426d4c42ba771b50c52c00",
+  "source_entry_count_after": 479,
+  "source_unchanged": true,
+  "profile_paths_scoped": true,
+  "exit_code": 0,
+  "profiles": {
+    "server": {
+      "root": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\profile-server",
+      "before_entries": 5,
+      "after_entries": 1081
+    },
+    "client": {
+      "root": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\profile-client",
+      "before_entries": 5,
+      "after_entries": 1075
+    },
+    "client_beta": {
+      "root": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\profile-client-beta",
+      "before_entries": 5,
+      "after_entries": 1075
+    }
+  },
+  "original_summary": {
+    "path": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\preflight\\run-20261021-053743-a3a19424c2\\summary.json",
+    "sha256": "8711894672704ddf85bbf8d95653adaec99779147158386206ed6a52f110acd2",
+    "size": 750993,
+    "omitted": "per-file generated profile inventories; counts retained"
+  },
+  "job_evidence": "job-ownership.json",
+  "native_gui_acceptance": false,
+  "natural_exit_verified": false
+}

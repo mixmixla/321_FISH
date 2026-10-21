@@ -1,0 +1,192 @@
+>> D:\project\321_FISH\.venv\Scripts\python.exe -m PyInstaller --onefile --console --hidden-import=web --hidden-import=tls_cert --hidden-import=discovery --hidden-import=audit --hidden-import=stickers --hidden-import=bots --hidden-import=widgets.thread_window --hidden-import=widgets.sticker_shop --hidden-import=widgets.fingerprint --hidden-import=widgets.server_tray --hidden-import=pystray --hidden-import=PIL.Image --hidden-import=PIL.ImageDraw --hidden-import=voice_api --hidden-import=video_api --hidden-import=cryptography.hazmat.primitives.asymmetric.x25519 --hidden-import=cryptography.hazmat.primitives.kdf.hkdf --hidden-import=cryptography.hazmat.primitives.ciphers.aead --hidden-import=boardgames --hidden-import=boardgames.registry --hidden-import=boardgames.shell --hidden-import=boardgames.azul --hidden-import=boardgames.azul.desktop --hidden-import=boardgames.azul.web --hidden-import=boardgames.azul._art --icon=D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\app.ico --noconfirm --clean --name=server server.py
+226 INFO: PyInstaller: 6.22.3, contrib hooks: 2026.9
+227 INFO: Python: 3.14.5
+262 INFO: Platform: Windows-10-10.0.19045-SP0
+262 INFO: Python environment: D:\project\321_FISH\.venv
+262 INFO: wrote D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\server.spec
+265 INFO: Removing temporary files and cleaning cache in D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\build-profile\AppData\Local\pyinstaller
+273 INFO: Module search paths (PYTHONPATH):
+['D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python\\python314.zip',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python\\DLLs',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python\\Lib',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python',
+ 'D:\\project\\321_FISH\\.venv',
+ 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages',
+ 'D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source']
+647 INFO: checking Analysis
+647 INFO: Building Analysis because Analysis-00.toc is non existent
+647 INFO: Looking for Python shared library...
+647 INFO: Using Python shared library: D:\project\321_FISH\_tmp_gui\bootstrap-20261021\python\python314.dll
+647 INFO: Running Analysis Analysis-00.toc
+647 INFO: Target bytecode optimization level: 0
+647 INFO: Initializing module dependency graph...
+648 INFO: Initializing module graph hook caches...
+678 INFO: Analyzing modules for base_library.zip ...
+2116 INFO: Processing standard module hook 'hook-math.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+3098 INFO: Processing standard module hook 'hook-encodings.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+3686 INFO: Processing standard module hook 'hook-pickle.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+6517 INFO: Processing standard module hook 'hook-difflib.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+6532 INFO: Processing standard module hook 'hook-heapq.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+7130 INFO: Caching module dependency graph...
+7163 INFO: Analyzing D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\server.py
+8243 INFO: Processing standard module hook 'hook-platform.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+8359 INFO: Processing standard module hook 'hook-sysconfig.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+8368 INFO: Processing standard module hook 'hook-_ctypes.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+8534 INFO: Processing pre-find-module-path hook 'hook-tkinter.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+8536 INFO: TclTkInfo: initializing cached Tcl/Tk info...
+9367 INFO: Processing standard module hook 'hook-_tkinter.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+9391 INFO: Processing standard module hook 'hook-cryptography.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+11621 INFO: hook-cryptography: cryptography does not seem to be using dynamically linked OpenSSL.
+13627 INFO: Processing standard module hook 'hook-PIL.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+13798 INFO: Processing standard module hook 'hook-PIL.Image.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+14283 INFO: Processing standard module hook 'hook-xml.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+14310 INFO: Processing standard module hook 'hook-xml.etree.cElementTree.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+14575 INFO: Processing standard module hook 'hook-PIL.ImageFilter.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+15084 INFO: Processing standard module hook 'hook-webbrowser.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+15088 INFO: Processing standard module hook 'hook-pystray.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+15519 INFO: Processing pre-safe-import-module hook 'hook-six.moves.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+15629 INFO: Processing pre-safe-import-module hook 'hook-gi.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+D:\project\321_FISH\.venv\Lib\site-packages\pystray\_util\gtk.py:53: SyntaxWarning: 'return' in a 'finally' block
+  return False
+15817 INFO: Analyzing hidden import 'widgets.thread_window'
+15826 INFO: Analyzing hidden import 'widgets.sticker_shop'
+15833 INFO: Analyzing hidden import 'widgets.fingerprint'
+15837 INFO: Analyzing hidden import 'boardgames.shell'
+16465 INFO: Analyzing hidden import 'boardgames.azul'
+16467 INFO: Analyzing hidden import 'boardgames.azul.desktop'
+16492 INFO: Analyzing hidden import 'boardgames.azul.web'
+16500 INFO: Analyzing hidden import 'boardgames.azul._art'
+16595 INFO: Processing module hooks (post-graph stage)...
+17030 INFO: Processing standard module hook 'hook-PIL.SpiderImagePlugin.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+17158 INFO: Processing standard module hook 'hook-_tkinter.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+17169 INFO: Performing binary vs. data reclassification (937 entries)
+17328 INFO: Looking for ctypes DLLs
+17396 INFO: Analyzing run-time hooks ...
+17398 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+17401 INFO: Including run-time hook 'pyi_rth__tkinter.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+17402 INFO: Including run-time hook 'pyi_rth_cryptography_openssl.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks'
+17427 INFO: Creating base_library.zip...
+17453 INFO: Looking for dynamic libraries
+17942 INFO: Extra DLL search directories (AddDllDirectory): []
+17942 INFO: Extra DLL search directories (PATH): []
+18634 INFO: Warnings written to D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\build\server\warn-server.txt
+18665 INFO: Graph cross-reference written to D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\build\server\xref-server.html
+18715 INFO: checking PYZ
+18715 INFO: Building PYZ because PYZ-00.toc is non existent
+18715 INFO: Building PYZ (ZlibArchive) D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\build\server\PYZ-00.pyz
+18972 INFO: Building PYZ (ZlibArchive) D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\build\server\PYZ-00.pyz completed successfully.
+19002 INFO: checking PKG
+19002 INFO: Building PKG because PKG-00.toc is non existent
+19002 INFO: Building PKG (CArchive) server.pkg
+21667 INFO: Building PKG (CArchive) server.pkg completed successfully.
+21689 INFO: Bootloader D:\project\321_FISH\.venv\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\run.exe
+21689 INFO: checking EXE
+21689 INFO: Building EXE because EXE-00.toc is non existent
+21689 INFO: Building EXE from EXE-00.toc
+21690 INFO: Copying bootloader EXE to D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\dist\server.exe
+21796 INFO: Copying icon to EXE
+21837 INFO: Copying 0 resources to EXE
+21837 INFO: Embedding manifest in EXE
+21879 INFO: Appending PKG archive to EXE
+21955 INFO: Fixing EXE headers
+22312 INFO: Building EXE from EXE-00.toc completed successfully.
+22333 INFO: Build complete! The results are available in: D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\dist
+[build] ⚠ 打包机未安装 vosk —— 语音转写依赖不会打进 client.exe！
+        请先 pip install vosk 再打包。
+[build] ⚠ models/vosk/ 不存在或未放模型（缺 am/final.mdl） —— 语音转写内置模型不会随包发布！
+        请下载 vosk-model-small-cn-0.22 解压到 models/vosk/，并确认打包机已 pip install vosk。
+>> D:\project\321_FISH\.venv\Scripts\python.exe -m PyInstaller --onefile --windowed --hidden-import=web --hidden-import=tls_cert --hidden-import=discovery --hidden-import=audit --hidden-import=stickers --hidden-import=bots --hidden-import=widgets.thread_window --hidden-import=widgets.sticker_shop --hidden-import=widgets.fingerprint --hidden-import=widgets.server_tray --hidden-import=pystray --hidden-import=PIL.Image --hidden-import=PIL.ImageDraw --hidden-import=voice_api --hidden-import=video_api --hidden-import=cryptography.hazmat.primitives.asymmetric.x25519 --hidden-import=cryptography.hazmat.primitives.kdf.hkdf --hidden-import=cryptography.hazmat.primitives.ciphers.aead --hidden-import=boardgames --hidden-import=boardgames.registry --hidden-import=boardgames.shell --hidden-import=boardgames.azul --hidden-import=boardgames.azul.desktop --hidden-import=boardgames.azul.web --hidden-import=boardgames.azul._art --icon=D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\app.ico --noconfirm --clean --name=client client.py
+195 INFO: PyInstaller: 6.22.3, contrib hooks: 2026.9
+195 INFO: Python: 3.14.5
+229 INFO: Platform: Windows-10-10.0.19045-SP0
+229 INFO: Python environment: D:\project\321_FISH\.venv
+230 INFO: wrote D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\client.spec
+233 INFO: Removing temporary files and cleaning cache in D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\build-profile\AppData\Local\pyinstaller
+241 INFO: Module search paths (PYTHONPATH):
+['D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python\\python314.zip',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python\\DLLs',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python\\Lib',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python',
+ 'D:\\project\\321_FISH\\.venv',
+ 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages',
+ 'D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source']
+614 INFO: checking Analysis
+614 INFO: Building Analysis because Analysis-00.toc is non existent
+614 INFO: Looking for Python shared library...
+614 INFO: Using Python shared library: D:\project\321_FISH\_tmp_gui\bootstrap-20261021\python\python314.dll
+614 INFO: Running Analysis Analysis-00.toc
+614 INFO: Target bytecode optimization level: 0
+614 INFO: Initializing module dependency graph...
+615 INFO: Initializing module graph hook caches...
+629 INFO: Analyzing modules for base_library.zip ...
+2600 INFO: Processing standard module hook 'hook-encodings.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+3214 INFO: Processing standard module hook 'hook-pickle.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+3509 INFO: Processing standard module hook 'hook-math.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+3665 INFO: Processing standard module hook 'hook-difflib.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+3684 INFO: Processing standard module hook 'hook-heapq.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+6730 INFO: Caching module dependency graph...
+6764 INFO: Analyzing D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\client.py
+8069 INFO: Processing pre-find-module-path hook 'hook-tkinter.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_find_module_path'
+8072 INFO: TclTkInfo: initializing cached Tcl/Tk info...
+8949 INFO: Processing standard module hook 'hook-_tkinter.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+9273 INFO: Processing standard module hook 'hook-cryptography.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+11952 INFO: hook-cryptography: cryptography does not seem to be using dynamically linked OpenSSL.
+12233 INFO: Processing standard module hook 'hook-platform.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+12285 INFO: Processing standard module hook 'hook-sysconfig.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+12291 INFO: Processing standard module hook 'hook-_ctypes.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+12495 INFO: Processing standard module hook 'hook-PIL.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+12665 INFO: Processing standard module hook 'hook-PIL.Image.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+13159 INFO: Processing standard module hook 'hook-xml.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+13186 INFO: Processing standard module hook 'hook-xml.etree.cElementTree.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+13443 INFO: Processing standard module hook 'hook-PIL.ImageFilter.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+14739 INFO: Processing standard module hook 'hook-webbrowser.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+16552 INFO: Processing standard module hook 'hook-pystray.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\stdhooks'
+16992 INFO: Processing pre-safe-import-module hook 'hook-six.moves.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+17104 INFO: Processing pre-safe-import-module hook 'hook-gi.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\pre_safe_import_module'
+D:\project\321_FISH\.venv\Lib\site-packages\pystray\_util\gtk.py:53: SyntaxWarning: 'return' in a 'finally' block
+  return False
+18745 INFO: Analyzing hidden import 'web'
+19238 INFO: Analyzing hidden import 'audit'
+19246 INFO: Analyzing hidden import 'widgets.server_tray'
+19253 INFO: Analyzing hidden import 'boardgames.shell'
+19280 INFO: Analyzing hidden import 'boardgames.azul'
+19281 INFO: Analyzing hidden import 'boardgames.azul.desktop'
+19299 INFO: Analyzing hidden import 'boardgames.azul.web'
+19300 INFO: Analyzing hidden import 'boardgames.azul._art'
+19306 INFO: Processing module hooks (post-graph stage)...
+19714 INFO: Processing standard module hook 'hook-PIL.SpiderImagePlugin.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+19831 INFO: Processing standard module hook 'hook-_tkinter.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+19842 INFO: Performing binary vs. data reclassification (937 entries)
+19927 INFO: Looking for ctypes DLLs
+20457 INFO: Analyzing run-time hooks ...
+20459 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+20462 INFO: Including run-time hook 'pyi_rth_cryptography_openssl.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\_pyinstaller_hooks_contrib\\rthooks'
+20463 INFO: Including run-time hook 'pyi_rth__tkinter.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+20488 INFO: Creating base_library.zip...
+20510 INFO: Looking for dynamic libraries
+20807 INFO: Extra DLL search directories (AddDllDirectory): []
+20807 INFO: Extra DLL search directories (PATH): []
+21365 INFO: Warnings written to D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\build\client\warn-client.txt
+21400 INFO: Graph cross-reference written to D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\build\client\xref-client.html
+21455 INFO: checking PYZ
+21455 INFO: Building PYZ because PYZ-00.toc is non existent
+21455 INFO: Building PYZ (ZlibArchive) D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\build\client\PYZ-00.pyz
+21795 INFO: Building PYZ (ZlibArchive) D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\build\client\PYZ-00.pyz completed successfully.
+21826 INFO: checking PKG
+21826 INFO: Building PKG because PKG-00.toc is non existent
+21826 INFO: Building PKG (CArchive) client.pkg
+24777 INFO: Building PKG (CArchive) client.pkg completed successfully.
+24805 INFO: Bootloader D:\project\321_FISH\.venv\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\runw.exe
+24805 INFO: checking EXE
+24806 INFO: Building EXE because EXE-00.toc is non existent
+24806 INFO: Building EXE from EXE-00.toc
+24806 INFO: Copying bootloader EXE to D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\dist\client.exe
+24886 INFO: Copying icon to EXE
+24927 INFO: Copying 0 resources to EXE
+24927 INFO: Embedding manifest in EXE
+24966 INFO: Appending PKG archive to EXE
+25044 INFO: Fixing EXE headers
+25397 INFO: Building EXE from EXE-00.toc completed successfully.
+25420 INFO: Build complete! The results are available in: D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\dist

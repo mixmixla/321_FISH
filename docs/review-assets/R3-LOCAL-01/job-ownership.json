@@ -1,0 +1,42 @@
+[
+  {
+    "role": "initialize",
+    "pid": 40892,
+    "ownership": "suspended -> unnamed Job -> resume; kill-on-close",
+    "close_ok": true,
+    "active_after_launch": 1,
+    "active_before_cleanup": 0,
+    "active_after_cleanup": 0,
+    "cleanup_ok": true
+  },
+  {
+    "role": "server",
+    "pid": 26156,
+    "ownership": "suspended -> unnamed Job -> resume; kill-on-close",
+    "close_ok": true,
+    "active_after_launch": 1,
+    "active_before_cleanup": 3,
+    "active_after_cleanup": 0,
+    "cleanup_ok": true
+  },
+  {
+    "role": "client",
+    "pid": 33944,
+    "ownership": "suspended -> unnamed Job -> resume; kill-on-close",
+    "close_ok": true,
+    "active_after_launch": 1,
+    "active_before_cleanup": 2,
+    "active_after_cleanup": 0,
+    "cleanup_ok": true
+  },
+  {
+    "role": "client_beta",
+    "pid": 24032,
+    "ownership": "suspended -> unnamed Job -> resume; kill-on-close",
+    "close_ok": true,
+    "active_after_launch": 1,
+    "active_before_cleanup": 2,
+    "active_after_cleanup": 0,
+    "cleanup_ok": true
+  }
+]

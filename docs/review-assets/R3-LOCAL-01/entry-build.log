@@ -1,0 +1,65 @@
+192 INFO: PyInstaller: 6.22.3, contrib hooks: 2026.9
+192 INFO: Python: 3.14.5
+225 INFO: Platform: Windows-10-10.0.19045-SP0
+225 INFO: Python environment: D:\project\321_FISH\.venv
+234 INFO: wrote D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\_tmp_gui\entry-spec\StartTrial.spec
+237 INFO: Removing temporary files and cleaning cache in D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\_tmp_gui\entry-build-profile\AppData\Local\pyinstaller
+244 INFO: Module search paths (PYTHONPATH):
+['D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python\\python314.zip',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python\\DLLs',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python\\Lib',
+ 'D:\\project\\321_FISH\\_tmp_gui\\bootstrap-20261021\\python',
+ 'D:\\project\\321_FISH\\.venv',
+ 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages',
+ 'D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source']
+621 INFO: checking Analysis
+621 INFO: Building Analysis because Analysis-00.toc is non existent
+621 INFO: Looking for Python shared library...
+621 INFO: Using Python shared library: D:\project\321_FISH\_tmp_gui\bootstrap-20261021\python\python314.dll
+621 INFO: Running Analysis Analysis-00.toc
+621 INFO: Target bytecode optimization level: 0
+621 INFO: Initializing module dependency graph...
+623 INFO: Initializing module graph hook caches...
+635 INFO: Analyzing modules for base_library.zip ...
+2629 INFO: Processing standard module hook 'hook-encodings.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+3248 INFO: Processing standard module hook 'hook-pickle.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+3547 INFO: Processing standard module hook 'hook-math.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+3718 INFO: Processing standard module hook 'hook-difflib.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+3741 INFO: Processing standard module hook 'hook-heapq.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+6943 INFO: Caching module dependency graph...
+6978 INFO: Analyzing D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\friend_trial_start.py
+7077 INFO: Processing standard module hook 'hook-platform.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+7129 INFO: Processing standard module hook 'hook-sysconfig.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+7135 INFO: Processing standard module hook 'hook-_ctypes.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks'
+7207 INFO: Processing module hooks (post-graph stage)...
+7222 INFO: Performing binary vs. data reclassification (1 entries)
+7224 INFO: Looking for ctypes DLLs
+7251 INFO: Analyzing run-time hooks ...
+7252 INFO: Including run-time hook 'pyi_rth_inspect.py' from 'D:\\project\\321_FISH\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks'
+7258 INFO: Creating base_library.zip...
+7284 INFO: Looking for dynamic libraries
+7453 INFO: Extra DLL search directories (AddDllDirectory): []
+7453 INFO: Extra DLL search directories (PATH): []
+7789 INFO: Warnings written to D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\_tmp_gui\entry-work\StartTrial\warn-StartTrial.txt
+7806 INFO: Graph cross-reference written to D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\_tmp_gui\entry-work\StartTrial\xref-StartTrial.html
+7829 INFO: checking PYZ
+7829 INFO: Building PYZ because PYZ-00.toc is non existent
+7829 INFO: Building PYZ (ZlibArchive) D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\_tmp_gui\entry-work\StartTrial\PYZ-00.pyz
+7939 INFO: Building PYZ (ZlibArchive) D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\_tmp_gui\entry-work\StartTrial\PYZ-00.pyz completed successfully.
+7946 INFO: checking PKG
+7946 INFO: Building PKG because PKG-00.toc is non existent
+7946 INFO: Building PKG (CArchive) StartTrial.pkg
+8816 INFO: Building PKG (CArchive) StartTrial.pkg completed successfully.
+8819 INFO: Bootloader D:\project\321_FISH\.venv\Lib\site-packages\PyInstaller\bootloader\Windows-64bit-intel\run.exe
+8819 INFO: checking EXE
+8819 INFO: Building EXE because EXE-00.toc is non existent
+8819 INFO: Building EXE from EXE-00.toc
+8819 INFO: Copying bootloader EXE to D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\dist\StartTrial.exe
+8869 INFO: Copying icon to EXE
+8917 INFO: Copying 0 resources to EXE
+8917 INFO: Embedding manifest in EXE
+8959 INFO: Appending PKG archive to EXE
+9006 INFO: Fixing EXE headers
+9236 INFO: Building EXE from EXE-00.toc completed successfully.
+9239 INFO: Build complete! The results are available in: D:\project\321_FISH\_tmp_gui\r3-local-20261021\build-20261021-053415-73699e80d8\source\dist

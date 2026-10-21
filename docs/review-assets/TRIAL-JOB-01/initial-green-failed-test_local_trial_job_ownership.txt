@@ -1,0 +1,39 @@
+FF....                                                                   [100%]
+================================== FAILURES ===================================
+_____ test_standard_initializer_job_can_be_cleaned_after_natural_exit[0] ______
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/test-gate/trial-job-green-20261021-142246-c623dcca3f/basetemp/test_local_trial_job_ownership-1-59d0953b/test_standard_initializer_job_0')
+exit_code = 0
+
+    @pytest.mark.parametrize('exit_code', [0, 7])
+    def test_standard_initializer_job_can_be_cleaned_after_natural_exit(tmp_path, exit_code):
+        sentinel = _start(tmp_path, 'sentinel', 'import time; time.sleep(60)')
+        proc = None
+        try:
+            proc = _start(tmp_path, 'initializer', f'raise SystemExit({exit_code})', standard=True)
+            assert proc.wait(timeout=10) == exit_code
+            assert isinstance(proc, OwnedJobProcess), 'standard trial launcher lacks owned Job'
+            result = local_trial._cleanup_trial_process(proc)
+>           assert result['active_before'] == result['active_after'] == 0
+E           assert 1 == 0
+
+tests\test_local_trial_job_ownership.py:66: AssertionError
+_____ test_standard_initializer_job_can_be_cleaned_after_natural_exit[7] ______
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/test-gate/trial-job-green-20261021-142246-c623dcca3f/basetemp/test_local_trial_job_ownership-1-59d0953b/test_standard_initializer_job_1')
+exit_code = 7
+
+    @pytest.mark.parametrize('exit_code', [0, 7])
+    def test_standard_initializer_job_can_be_cleaned_after_natural_exit(tmp_path, exit_code):
+        sentinel = _start(tmp_path, 'sentinel', 'import time; time.sleep(60)')
+        proc = None
+        try:
+            proc = _start(tmp_path, 'initializer', f'raise SystemExit({exit_code})', standard=True)
+            assert proc.wait(timeout=10) == exit_code
+            assert isinstance(proc, OwnedJobProcess), 'standard trial launcher lacks owned Job'
+            result = local_trial._cleanup_trial_process(proc)
+>           assert result['active_before'] == result['active_after'] == 0
+E           assert 1 == 0
+
+tests\test_local_trial_job_ownership.py:66: AssertionError
+2 failed, 4 passed in 0.54s

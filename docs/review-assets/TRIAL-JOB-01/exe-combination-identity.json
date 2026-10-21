@@ -1,0 +1,33 @@
+{
+  "product_build_base": "ab6cb77f3b806ad16f717e08d4bdda6b9a5c625e",
+  "product_build_original_inputs": 483,
+  "new_external_harness_commit": "975c09b7903b7c80b908b41b746a52cb3b38ae18",
+  "harness_inputs": 484,
+  "harness_source_content_id": "0fb990f761b1230c3bfa1c1b859a7f0b893409affd9a3e94ad86cb673e8645e5",
+  "artifacts": {
+    "server.exe": {
+      "path": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\server.exe",
+      "sha256": "f47f843a0975e10816d228442d9ae2ac864f880b03b0c5b5158f18fbae591335",
+      "size": 26083980,
+      "local_trial_in_PYZ": false,
+      "local_trial_in_CArchive": false
+    },
+    "client.exe": {
+      "path": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\client.exe",
+      "sha256": "c65c4a776015bffcdd804849773c57a0dcbfcfca0a8709cc3b79d08f309808ab",
+      "size": 27342294,
+      "local_trial_in_PYZ": false,
+      "local_trial_in_CArchive": false
+    },
+    "StartTrial.exe": {
+      "path": "D:\\project\\321_FISH\\_tmp_gui\\r3-local-20261021\\build-20261021-053415-73699e80d8\\source\\dist\\StartTrial.exe",
+      "sha256": "0953a1323ba42c4cc31d83a367ec3116654661d0f32ade35510be52adbcbdc18",
+      "size": 9739166,
+      "local_trial_in_PYZ": false,
+      "local_trial_in_CArchive": false
+    }
+  },
+  "rebuild_required": false,
+  "scope": "new external harness + unchanged product EXEs; no claim that existing EXEs contain new harness code",
+  "native_gui_verified": false
+}

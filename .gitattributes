@@ -16,3 +16,7 @@ docs/review-assets/UI-ROOM-ICON-01/* -text -whitespace
 docs/review-assets/R3-LOCAL-01/*.log -text -whitespace
 docs/review-assets/R3-LOCAL-01/*.json -text -whitespace
 docs/review-assets/R3-LOCAL-01/*.txt -text -whitespace
+
+# Exact original TRIAL-JOB-01 test/evidence bytes.
+docs/review-assets/TRIAL-JOB-01/*.json -text -whitespace
+docs/review-assets/TRIAL-JOB-01/*.txt -text -whitespace

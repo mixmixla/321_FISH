@@ -92,6 +92,9 @@ ExcelSheet/ExcelChrome 通常自动收集，仍需实际打包验证后才能声
 可能存在不同资源清单，按实际执行入口核查。REL-01已有实际双EXE构建、private desktop双客户端
 合成登录/存活/owned进程树清理证据；精确候选及当前验收见docs/review-packages/REL-01-r1.md。
 不据此推导EXE界面完整对局、非开发机器、全部可选扩展或真实设备长期通话通过。
+标准 `local_trial.py run` 现在直接使用既有 suspended-owned Job 启动器，无需任务局部adapter；
+正式清理记录Job前后数量与close_ok，任一查询/终止/关闭失败均返回非成功。持有Job而非旧PID决定清理所有权；
+根进程自然退出与Job计数归零分别取证，强制Job清理不能算GUI或服务自然退出。
 
 ## 少量朋友便携入口
 

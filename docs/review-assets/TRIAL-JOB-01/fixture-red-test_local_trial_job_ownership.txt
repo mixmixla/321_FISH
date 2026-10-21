@@ -1,0 +1,106 @@
+FFFFFF                                                                   [100%]
+================================== FAILURES ===================================
+_____ test_standard_initializer_job_can_be_cleaned_after_natural_exit[0] ______
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/trial-job-20261021/final-red-source/_tmp_gui/test-gate/trial-job-final-red-20261021-142457-6ceb19330d/basetemp/test_local_trial_job_ownership-1-ee6e0fb8/test_standard_initializer_job_0')
+exit_code = 0
+
+    @pytest.mark.parametrize('exit_code', [0, 7])
+    def test_standard_initializer_job_can_be_cleaned_after_natural_exit(tmp_path, exit_code):
+        sentinel = _start(tmp_path, 'sentinel', 'import time; time.sleep(60)')
+        proc = None
+        try:
+            proc = _start(tmp_path, 'initializer', f'raise SystemExit({exit_code})', standard=True)
+            assert proc.wait(timeout=10) == exit_code
+>           assert isinstance(proc, OwnedJobProcess), 'standard trial launcher lacks owned Job'
+E           AssertionError: standard trial launcher lacks owned Job
+E           assert False
+E            +  where False = isinstance(<test_sandbox.DesktopProcess object at 0x000002CFDF327770>, OwnedJobProcess)
+
+tests\test_local_trial_job_ownership.py:64: AssertionError
+_____ test_standard_initializer_job_can_be_cleaned_after_natural_exit[7] ______
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/trial-job-20261021/final-red-source/_tmp_gui/test-gate/trial-job-final-red-20261021-142457-6ceb19330d/basetemp/test_local_trial_job_ownership-1-ee6e0fb8/test_standard_initializer_job_1')
+exit_code = 7
+
+    @pytest.mark.parametrize('exit_code', [0, 7])
+    def test_standard_initializer_job_can_be_cleaned_after_natural_exit(tmp_path, exit_code):
+        sentinel = _start(tmp_path, 'sentinel', 'import time; time.sleep(60)')
+        proc = None
+        try:
+            proc = _start(tmp_path, 'initializer', f'raise SystemExit({exit_code})', standard=True)
+            assert proc.wait(timeout=10) == exit_code
+>           assert isinstance(proc, OwnedJobProcess), 'standard trial launcher lacks owned Job'
+E           AssertionError: standard trial launcher lacks owned Job
+E           assert False
+E            +  where False = isinstance(<test_sandbox.DesktopProcess object at 0x000002CFDF3B1F90>, OwnedJobProcess)
+
+tests\test_local_trial_job_ownership.py:64: AssertionError
+______ test_standard_job_removes_its_descendants_and_preserves_other_job ______
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/trial-job-20261021/final-red-source/_tmp_gui/test-gate/trial-job-final-red-20261021-142457-6ceb19330d/basetemp/test_local_trial_job_ownership-1-ee6e0fb8/test_standard_job_removes_its_0')
+
+    def test_standard_job_removes_its_descendants_and_preserves_other_job(tmp_path):
+        # The old launcher must fail the ownership assertion before it can spawn
+        # descendants, so baseline RED cleanup never needs a numeric PID tree kill.
+        go, ready = tmp_path/'go', tmp_path/'descendant-ready'
+        child = "import time; time.sleep(60)"
+        code = (
+            "import subprocess,sys,time; from pathlib import Path; "
+            f"go=Path({str(go)!r}); deadline=time.monotonic()+15; "
+            "\nwhile not go.exists() and time.monotonic()<deadline: time.sleep(.02)"
+            "\nif not go.exists(): raise SystemExit(9)"
+            f"\np=subprocess.Popen([sys.executable,'-B','-c',{child!r}]); "
+            f"Path({str(ready)!r}).write_text(str(p.pid)); time.sleep(60)"
+        )
+        sentinel = _start(tmp_path, 'sentinel', 'import time; time.sleep(60)')
+        proc = None
+        retained = None
+        try:
+            proc = _start(tmp_path, 'tree', code, standard=True)
+>           assert isinstance(proc, OwnedJobProcess), 'standard trial launcher lacks owned Job'
+E           AssertionError: standard trial launcher lacks owned Job
+E           assert False
+E            +  where False = isinstance(<test_sandbox.DesktopProcess object at 0x000002CFDF3B2AD0>, OwnedJobProcess)
+
+tests\test_local_trial_job_ownership.py:98: AssertionError
+__________ test_cleanup_errors_are_reported_and_job_is_closed[query] __________
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/trial-job-20261021/final-red-source/_tmp_gui/test-gate/trial-job-final-red-20261021-142457-6ceb19330d/basetemp/test_local_trial_job_ownership-1-ee6e0fb8/test_cleanup_errors_are_report0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002CFDF679480>
+fault = 'query'
+
+    @pytest.mark.parametrize('fault', ['query', 'terminate', 'close'])
+    def test_cleanup_errors_are_reported_and_job_is_closed(tmp_path, monkeypatch, fault):
+>       cleanup = local_trial._cleanup_trial_process
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'local_trial' has no attribute '_cleanup_trial_process'
+
+tests\test_local_trial_job_ownership.py:120: AttributeError
+________ test_cleanup_errors_are_reported_and_job_is_closed[terminate] ________
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/trial-job-20261021/final-red-source/_tmp_gui/test-gate/trial-job-final-red-20261021-142457-6ceb19330d/basetemp/test_local_trial_job_ownership-1-ee6e0fb8/test_cleanup_errors_are_report1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002CFDF67A520>
+fault = 'terminate'
+
+    @pytest.mark.parametrize('fault', ['query', 'terminate', 'close'])
+    def test_cleanup_errors_are_reported_and_job_is_closed(tmp_path, monkeypatch, fault):
+>       cleanup = local_trial._cleanup_trial_process
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'local_trial' has no attribute '_cleanup_trial_process'
+
+tests\test_local_trial_job_ownership.py:120: AttributeError
+__________ test_cleanup_errors_are_reported_and_job_is_closed[close] __________
+
+tmp_path = WindowsPath('D:/project/321_FISH/_tmp_gui/trial-job-20261021/final-red-source/_tmp_gui/test-gate/trial-job-final-red-20261021-142457-6ceb19330d/basetemp/test_local_trial_job_ownership-1-ee6e0fb8/test_cleanup_errors_are_report2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002CFDF47CA70>
+fault = 'close'
+
+    @pytest.mark.parametrize('fault', ['query', 'terminate', 'close'])
+    def test_cleanup_errors_are_reported_and_job_is_closed(tmp_path, monkeypatch, fault):
+>       cleanup = local_trial._cleanup_trial_process
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'local_trial' has no attribute '_cleanup_trial_process'
+
+tests\test_local_trial_job_ownership.py:120: AttributeError
+6 failed in 0.44s

@@ -1,0 +1,89 @@
+{
+  "source_content_id": "0fb990f761b1230c3bfa1c1b859a7f0b893409affd9a3e94ad86cb673e8645e5",
+  "test_sha256": "f10d0fbd9cde35f1c0dbd9cd452946150d608dfeabbfce653a3f511dfc636d09",
+  "runs": [
+    {
+      "label": "initial-red",
+      "run": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\trial-job-red-20261021-142047-32f11f7dee",
+      "exit_code": 1,
+      "totals": {
+        "failed": 6
+      },
+      "summary_sha256": "279d9a24b8d21bd7680fb17eb9f2597c87d4d6d82610c5cc16a2a0f8c52edd44"
+    },
+    {
+      "label": "safe-red",
+      "run": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\trial-job-safe-red-20261021-142207-5911904623",
+      "exit_code": 1,
+      "totals": {
+        "failed": 6
+      },
+      "summary_sha256": "6144d3acf60bfa688985d61ea64fb2dc76c8ce3a64940dfeb190d8ddd3f19369"
+    },
+    {
+      "label": "initial-green-failed",
+      "run": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\trial-job-green-20261021-142246-c623dcca3f",
+      "exit_code": 1,
+      "totals": {
+        "failed": 2,
+        "passed": 4
+      },
+      "summary_sha256": "f4e3bd5fbce820bdb09752ac95ff76432190cb2422a442230f3149f9baa90186"
+    },
+    {
+      "label": "fixture-red",
+      "run": "D:\\project\\321_FISH\\_tmp_gui\\trial-job-20261021\\final-red-source\\_tmp_gui\\test-gate\\trial-job-final-red-20261021-142457-6ceb19330d",
+      "exit_code": 1,
+      "totals": {
+        "failed": 6
+      },
+      "summary_sha256": "02d6a6531fc2fff882a19250b57f5917c117e51d1d7e2d8c2d37590ab8ff0d8a"
+    },
+    {
+      "label": "frozen-red",
+      "run": "D:\\project\\321_FISH\\_tmp_gui\\trial-job-20261021\\final-red-source\\_tmp_gui\\test-gate\\trial-job-frozen-red-20261021-142537-e37300e7c6",
+      "exit_code": 1,
+      "totals": {
+        "failed": 6
+      },
+      "summary_sha256": "21f86291056971fa3e145427347d6cbf58b4e68872203078c77893f66904f39b"
+    },
+    {
+      "label": "domain",
+      "run": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\trial-job-domain-20261021-142606-8f174eea89",
+      "exit_code": 0,
+      "totals": {
+        "passed": 57
+      },
+      "summary_sha256": "fd3f10fa50ba30b632dc074f938a0e0e6d09e1f57472d4ece3fdba5b1ec6236b"
+    }
+  ],
+  "exe_boot_logs": [
+    {
+      "path": "profile-client/moeyu_helper/crash.log",
+      "size": 128,
+      "sha256": "2af94eb819a182689588c66d71780dd8452029f543beb348413eb4833a3d584f",
+      "boot_only": true
+    },
+    {
+      "path": "profile-client-beta/moeyu_helper/crash.log",
+      "size": 128,
+      "sha256": "4b05ce5e81cfd9faa4718b02f37ff1272ba92f3d29d76d4a6ffdc156eab67e16",
+      "boot_only": true
+    },
+    {
+      "path": "profile-server/moeyu_helper/crash.log",
+      "size": 34,
+      "sha256": "8a86debe5a22a1b374adbcf9a38b9165c8fc8d6700f8e836d9c04da1eacdec3f",
+      "boot_only": true
+    }
+  ],
+  "all_pre_full_original_log_hashes_valid": true,
+  "all_pre_full_runs_single_attempt": true,
+  "all_pre_full_gate_cleanup_ok": true,
+  "standard_exe_exit_code": 0,
+  "jobs_zero_and_closed": 4,
+  "gui_tools_available": false,
+  "computer_use_old_skill_path_present": false,
+  "r3_acceptance": false
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "expected_exit": 0,
+    "natural_root_exit": 0,
+    "samples": [
+      {
+        "seconds": 0.0001,
+        "active": 1
+      },
+      {
+        "seconds": 0.0108,
+        "active": 0
+      }
+    ],
+    "natural_job_zero": true,
+    "cleanup_ok": true,
+    "after_cleanup": 0,
+    "close_ok": true
+  },
+  {
+    "expected_exit": 7,
+    "natural_root_exit": 7,
+    "samples": [
+      {
+        "seconds": 0.0002,
+        "active": 1
+      },
+      {
+        "seconds": 0.0108,
+        "active": 0
+      }
+    ],
+    "natural_job_zero": true,
+    "cleanup_ok": true,
+    "after_cleanup": 0,
+    "close_ok": true
+  }
+]

@@ -233,3 +233,5 @@
 - `widgets/excel_chrome.py`, `widgets/excel_sheet.py` — 可编辑工作簿与发送接入。
 - `build.py`, `client.spec`, `server.spec`, `optional.py` — 打包入口和能力降级。
 - `docs/项目审核_2026-09-30.md`, `tests/test_audit_*.py`, `tests/test_excel*` — 审核/工作表证据。
+
+- `local_trial.py run` 的标准启动器复用 `friend_trial_process.launch_owned`：子进程先 suspended、归入私有 unnamed Job 后 resume。清理以持有 Job 为所有权依据，记录 active_before/active_after/close_ok；查询、终止或关闭失败不得报成功。Job 强停只证明清理，不证明客户端或服务器自然退出。

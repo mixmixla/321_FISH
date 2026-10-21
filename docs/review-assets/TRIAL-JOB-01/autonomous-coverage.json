@@ -1,0 +1,52 @@
+{
+  "current_source_content_id": "0fb990f761b1230c3bfa1c1b859a7f0b893409affd9a3e94ad86cb673e8645e5",
+  "scope": "source protocol/real components and actual unchanged EXE startup are separate evidence layers",
+  "coverage": [
+    {
+      "layer": "real OS process/Job integration",
+      "files": [
+        "tests/test_local_trial_job_ownership.py"
+      ],
+      "result": "6 PASS; actual short/descendant processes, independent sentinel, injected cleanup faults",
+      "gui": false
+    },
+    {
+      "layer": "real encrypted loopback TCP against source Hub",
+      "files": [
+        "tests/test_flagship_game_wire.py",
+        "tests/test_server_games.py",
+        "tests/test_server.py"
+      ],
+      "result": "full exit0: gomoku/connect4 finish/reset/restart, game list/create/join/start/illegal/spectator/leave, public/private chat; no desktop input",
+      "compiled_client_game_flow": false
+    },
+    {
+      "layer": "real Tk component regression",
+      "files": [
+        "tests/test_room_icon_lifecycle.py",
+        "tests/test_ux_visual_chat_regressions.py"
+      ],
+      "result": "full exit0; card/image GC/refresh and DPI-aware layout, no native OS mouse/keyboard flow"
+    },
+    {
+      "layer": "actual compiled product startup",
+      "evidence": "standard-exe-preflight.json",
+      "result": "standard CLI without adapter; explicit server init/open, HTTP200, actual client.exe double TCP login, image/liveness, 4Job0/close",
+      "teardown": "forced owned Job cleanup; not natural GUI/server exit"
+    }
+  ],
+  "not_run": [
+    "full native GUI lobby/invite/accept/game/return-to-chat/red-button exit",
+    "client/server natural exit",
+    "physical LAN/multi-machine/other Windows/other actual DPI",
+    "hardware and full STT model capability"
+  ],
+  "gui_tools_available": false,
+  "old_computer_use_skill_path_present": false,
+  "remaining_tk_diagnostics": {
+    "current_tcl_after_diagnostics": 11,
+    "previous_raw_also_has_diagnostics": true,
+    "interpretation": "pytest PASS is not clean GUI teardown/natural-exit acceptance; not fixed in Job-only task"
+  },
+  "r3_accepted": false
+}

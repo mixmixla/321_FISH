@@ -1,0 +1,7 @@
+{
+  "base": "ade446e639713297774fea3e7898f8dbb523a4ac",
+  "old_local_trial_sha256": "8f6a8e34d74e112bbf3adf134fe8e533bddb281133d4a34b70f0748038357783",
+  "final_test_sha256": "f10d0fbd9cde35f1c0dbd9cd452946150d608dfeabbfce653a3f511dfc636d09",
+  "scope": "white-list copy; only local_trial.py restored from accepted base for final-byte RED",
+  "setup_cleanup": "sentinel/target/duplicate registered inside finally guard"
+}

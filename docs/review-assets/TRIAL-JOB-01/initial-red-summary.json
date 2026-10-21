@@ -1,0 +1,333 @@
+{
+  "schema_version": "VB-01.v1",
+  "run_id": "trial-job-red-20261021-142047-32f11f7dee",
+  "run_dir": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\trial-job-red-20261021-142047-32f11f7dee",
+  "source_origin": "D:\\project\\321_FISH",
+  "source_snapshot": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\trial-job-red-20261021-142047-32f11f7dee\\source",
+  "source_content_id": "637d60c31dbde6230df700bee7e0149c008accb376252483738875ce48691925",
+  "tests_content_id": "320db4875d817d42e30922df38a12d680c59520a575d31bc399a707e1c0df83e",
+  "dependency_content_id": "e5a759a0dfe3f9753a3d8fba0abec730982c2a460890dd35a0e8514400dd3741",
+  "content_fingerprint": "43c62b84f3bbf9a8fc9d44ec49ffa9221c58999620ab3976596d897ab7e0669e",
+  "interpreter": {
+    "path": "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+    "implementation": "cpython",
+    "version": "3.14.5",
+    "cache_tag": "cpython-314",
+    "size": 255200,
+    "sha256": "896ccf899b9d45c1c119ba35d6cce6e16cc10dd6a7f502f88fb50429a6e5cf4c"
+  },
+  "runner_tool_sha256": "aec66d5de16f1c26d723dcadba39ef337cbd75eb73f3565fc3ff19a3843e3c43",
+  "sandbox_tool_sha256": "be55bc624290253c937ee68baac68081eb02978e5a672dd2f1acaf5a383c6cfa",
+  "desktop": {
+    "available": true,
+    "required": false,
+    "session_id": 1
+  },
+  "command_template": [
+    "{interpreter}",
+    "-m",
+    "pytest",
+    "-q",
+    "-rs",
+    "-p",
+    "test_sandbox",
+    "{test_file}",
+    "--basetemp",
+    "{basetemp}",
+    "-o",
+    "faulthandler_timeout=60",
+    "{capture_mode}"
+  ],
+  "environment": {
+    "allowed_inherited_keys": [
+      "ALLUSERSPROFILE",
+      "APPDATA",
+      "COMMONPROGRAMFILES",
+      "COMMONPROGRAMFILES(X86)",
+      "COMMONPROGRAMW6432",
+      "COMSPEC",
+      "HOMEDRIVE",
+      "HOMEPATH",
+      "LANG",
+      "LC_ALL",
+      "LC_CTYPE",
+      "LOCALAPPDATA",
+      "NUMBER_OF_PROCESSORS",
+      "OS",
+      "PATH",
+      "PATHEXT",
+      "PROCESSOR_ARCHITECTURE",
+      "PROCESSOR_IDENTIFIER",
+      "PROCESSOR_LEVEL",
+      "PROCESSOR_REVISION",
+      "PROGRAMDATA",
+      "PROGRAMFILES",
+      "PROGRAMFILES(X86)",
+      "PROGRAMW6432",
+      "PSMODULEPATH",
+      "PUBLIC",
+      "SYSTEMDRIVE",
+      "SYSTEMROOT",
+      "TEMP",
+      "TMP",
+      "USERDOMAIN",
+      "USERNAME",
+      "USERPROFILE",
+      "WINDIR"
+    ],
+    "cleared_inherited_keys": [
+      "ASL.LOG",
+      "BROWSER_USE_ACCESS_EXECUTOR_ID",
+      "BROWSER_USE_ACCESS_PIPE_PATH",
+      "BROWSER_USE_ACCESS_VERIFYING_IDENTITY",
+      "BROWSER_USE_AVAILABLE_BACKENDS",
+      "BROWSER_USE_TINYSKY_ENABLED",
+      "CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS",
+      "CODEX_APP_TOOLS_PIPE_PATH",
+      "CODEX_CI",
+      "CODEX_ELECTRON_RESOURCES_PATH",
+      "CODEX_INTERNAL_ORIGINATOR_OVERRIDE",
+      "CODEX_PERMISSION_PROFILE",
+      "CODEX_SAGE_BACKFILL_TRACKER_TAB_REUSE",
+      "CODEX_SANDBOX_NETWORK_DISABLED",
+      "CODEX_SESSION_ID",
+      "CODEX_SHELL",
+      "CODEX_TASK_WORKSPACE_NODE",
+      "CODEX_TASK_WORKSPACE_VERIFYING_IDENTITY",
+      "CODEX_TECTONIC_PATH",
+      "CODEX_THREAD_ID",
+      "CODEX_TOOL_CALL_ID",
+      "CODEX_VERSION",
+      "CODEX_WINDOWS_SANDBOX_PACKAGE_FAMILY",
+      "COLORTERM",
+      "COMPUTERNAME",
+      "DISABLE_AUTO_UPDATE",
+      "DRIVERDATA",
+      "GH_PAGER",
+      "GIT_PAGER",
+      "LOGONSERVER",
+      "LOG_FORMAT",
+      "NODE_REPL_NODE_MODULE_DIRS",
+      "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S",
+      "NODE_REPL_TRUSTED_CODE_PATHS",
+      "NODE_REPL_TRUSTED_SERVICES",
+      "NO_COLOR",
+      "ONEDRIVE",
+      "PAGER",
+      "POWERSHELL_DISTRIBUTION_CHANNEL",
+      "RUST_LOG",
+      "SHELL",
+      "TERM",
+      "USERDOMAIN_ROAMINGPROFILE",
+      "ZSH_TMUX_AUTOSTART",
+      "ZSH_TMUX_AUTOSTARTED",
+      "__COMPAT_LAYER"
+    ],
+    "identity_fingerprint": "66fa7bbdd0c71b137794e264df1ed8ca7a1c1e55f4226008aad4b0a7972555be",
+    "profile_root": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\trial-job-red-20261021-142047-32f11f7dee\\profile",
+    "cwd_root": "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\trial-job-red-20261021-142047-32f11f7dee\\source",
+    "network": "loopback_only",
+    "agent": "blocked",
+    "hardware": "blocked",
+    "desktop": null
+  },
+  "sandbox_policy": {
+    "source_copy": "git_tracked_plus_current_tests",
+    "runtime_data_excluded": [
+      ".git",
+      ".pytest_cache",
+      ".venv",
+      "__pycache__",
+      "_tmp_gui",
+      "audit",
+      "crash.log",
+      "crash.log.1",
+      "downloads",
+      "history",
+      "models",
+      "prefs.json",
+      "server_state",
+      "web_files",
+      "web_tls"
+    ],
+    "network": "loopback_only",
+    "agent": "blocked",
+    "hardware": "blocked",
+    "gui": "private_Windows_desktop_when_available"
+  },
+  "files": 1,
+  "failures": [
+    {
+      "file": "tests/test_local_trial_job_ownership.py",
+      "status": "failed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "failed",
+          "started_at": "2026-10-21T06:20:49.108+00:00",
+          "pid": 41860,
+          "session_id": 1,
+          "log": "logs/test_local_trial_job_ownership.attempt1.log",
+          "sandbox_report": "sandbox/test_local_trial_job_ownership.attempt1.json",
+          "basetemp": "basetemp/test_local_trial_job_ownership-1-84e539d2",
+          "source_cwd": "cases/test_local_trial_job_ownership-1-760fdddb",
+          "profile": "profiles/test_local_trial_job_ownership-1-3db94ce2",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_local_trial_job_ownership.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\trial-job-red-20261021-142047-32f11f7dee\\basetemp\\test_local_trial_job_ownership-1-84e539d2",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ],
+          "gui": false,
+          "desktop": null,
+          "ended_at": "2026-10-21T06:20:50.086+00:00",
+          "exit_code": 1,
+          "seconds": 0.978,
+          "summary": "6 failed in 0.45s",
+          "counts": {
+            "failed": 6
+          },
+          "log_sha256": "14092dc734ac4ef63801eb24ea454201d906d084c1dfd22bf01baaba7eb26fcc",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": null,
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792563649.4994435,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 1,
+      "summary": "6 failed in 0.45s",
+      "counts": {
+        "failed": 6
+      },
+      "ended_at": "2026-10-21T06:20:50.086+00:00",
+      "seconds": 0.978,
+      "log": "logs/test_local_trial_job_ownership.attempt1.log",
+      "log_sha256": "14092dc734ac4ef63801eb24ea454201d906d084c1dfd22bf01baaba7eb26fcc",
+      "sandbox_report": "sandbox/test_local_trial_job_ownership.attempt1.json",
+      "unexpected_skips": []
+    }
+  ],
+  "cleanup_failures": [],
+  "totals": {
+    "failed": 6
+  },
+  "seconds": 1.206,
+  "exit_code": 1,
+  "started_at": "2026-10-21T06:20:48.879+00:00",
+  "ended_at": "2026-10-21T06:20:50.087+00:00",
+  "results": [
+    {
+      "file": "tests/test_local_trial_job_ownership.py",
+      "status": "failed",
+      "attempts": [
+        {
+          "attempt": 1,
+          "status": "failed",
+          "started_at": "2026-10-21T06:20:49.108+00:00",
+          "pid": 41860,
+          "session_id": 1,
+          "log": "logs/test_local_trial_job_ownership.attempt1.log",
+          "sandbox_report": "sandbox/test_local_trial_job_ownership.attempt1.json",
+          "basetemp": "basetemp/test_local_trial_job_ownership-1-84e539d2",
+          "source_cwd": "cases/test_local_trial_job_ownership-1-760fdddb",
+          "profile": "profiles/test_local_trial_job_ownership-1-3db94ce2",
+          "command": [
+            "D:\\project\\321_FISH\\.venv\\Scripts\\python.exe",
+            "-m",
+            "pytest",
+            "-q",
+            "-rs",
+            "-p",
+            "test_sandbox",
+            "tests/test_local_trial_job_ownership.py",
+            "--basetemp",
+            "D:\\project\\321_FISH\\_tmp_gui\\test-gate\\trial-job-red-20261021-142047-32f11f7dee\\basetemp\\test_local_trial_job_ownership-1-84e539d2",
+            "-o",
+            "faulthandler_timeout=60",
+            "--capture=fd"
+          ],
+          "gui": false,
+          "desktop": null,
+          "ended_at": "2026-10-21T06:20:50.086+00:00",
+          "exit_code": 1,
+          "seconds": 0.978,
+          "summary": "6 failed in 0.45s",
+          "counts": {
+            "failed": 6
+          },
+          "log_sha256": "14092dc734ac4ef63801eb24ea454201d906d084c1dfd22bf01baaba7eb26fcc",
+          "sandbox_report_present": true,
+          "sandbox": {
+            "schema_version": "VB-01.v1",
+            "installed": true,
+            "policy": {
+              "network": "loopback_only",
+              "wildcard_bind": "remap_to_loopback",
+              "broadcast_sendto": "remap_to_loopback_and_record",
+              "agent": "blocked",
+              "hardware": "blocked"
+            },
+            "desktop": null,
+            "blocked_events": 0,
+            "remapped_events": 0,
+            "events": [
+              {
+                "action": "sandbox_installed",
+                "at": 1792563649.4994435,
+                "network": "loopback_only",
+                "agent": "blocked",
+                "devices": "blocked"
+              }
+            ]
+          },
+          "artifact_error": false,
+          "cleanup_ok": true,
+          "unexpected_skips": []
+        }
+      ],
+      "exit_code": 1,
+      "summary": "6 failed in 0.45s",
+      "counts": {
+        "failed": 6
+      },
+      "ended_at": "2026-10-21T06:20:50.086+00:00",
+      "seconds": 0.978,
+      "log": "logs/test_local_trial_job_ownership.attempt1.log",
+      "log_sha256": "14092dc734ac4ef63801eb24ea454201d906d084c1dfd22bf01baaba7eb26fcc",
+      "sandbox_report": "sandbox/test_local_trial_job_ownership.attempt1.json",
+      "unexpected_skips": []
+    }
+  ]
+}

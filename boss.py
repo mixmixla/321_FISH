@@ -72,6 +72,8 @@ class BossWindow:
         self.win = tk.Toplevel(root)
         self.win.geometry("960x600")
         self._alive = True
+        self._after_jobs: set[str] = set()
+        self.win.bind("<Destroy>", self._on_destroy, add="+")
         self._skin = skin if skin in BOSS_SKINS else BOSS_SKINS[0]
         self._on_cycle = on_cycle          # 轮换回调（client 持久化所选皮肤）
         self._tick_fn = None
@@ -132,7 +134,32 @@ class BossWindow:
         self._tick_fn = builder(self._body)
         self.win.bind("<F2>", lambda e: self.cycle())
         self.win.bind("<Button-3>", self._skin_menu)
-        self.win.after(int(BOSS_ALIVE_INTERVAL * 1000), self._tick)
+        self._schedule_after(int(BOSS_ALIVE_INTERVAL * 1000), self._tick)
+
+    def _schedule_after(self, delay: int, callback) -> None:
+        if not self._alive:
+            return
+
+        def run():
+            self._after_jobs.discard(job)
+            if self._alive:
+                callback()
+
+        job = self.win.after(delay, run)
+        self._after_jobs.add(job)
+
+    def _cancel_jobs(self) -> None:
+        self._alive = False
+        for job in tuple(self._after_jobs):
+            try:
+                self.win.after_cancel(job)
+            except tk.TclError:
+                pass
+        self._after_jobs.clear()
+
+    def _on_destroy(self, event) -> None:
+        if event.widget is self.win:
+            self._cancel_jobs()
 
     def _tick(self) -> None:
         if not self._alive:
@@ -142,7 +169,7 @@ class BossWindow:
                 self._tick_fn()
         except Exception:
             pass
-        self.win.after(int(BOSS_ALIVE_INTERVAL * 1000), self._tick)
+        self._schedule_after(int(BOSS_ALIVE_INTERVAL * 1000), self._tick)
 
     # ---------- 皮肤①：Excel ----------
     def _build_excel(self, body: tk.Frame):
@@ -438,7 +465,7 @@ class BossWindow:
         self.win.focus_force()
         self.win.attributes("-topmost", True)
         # 1.5s 后取消置顶，避免长期抢占前台惹注意
-        self.win.after(1500, lambda: self.win.attributes("-topmost", False))
+        self._schedule_after(1500, lambda: self.win.attributes("-topmost", False))
 
     def hide(self) -> None:
         self.win.withdraw()
@@ -450,7 +477,7 @@ class BossWindow:
             return False
 
     def close(self) -> None:
-        self._alive = False
+        self._cancel_jobs()
         try:
             self.win.destroy()
         except Exception:

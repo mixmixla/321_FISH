@@ -14173,6 +14173,9 @@ class MiniBar:
             w.bind("<Leave>", self._tip_leave)
         self._drag_x = self._drag_y = 0
         self._tip = None
+        self._update_job = None
+        self._destroyed = False
+        self.win.bind("<Destroy>", self._on_destroy, add="+")
         self._update()
 
     def show(self) -> None:
@@ -14182,15 +14185,28 @@ class MiniBar:
     def hide(self) -> None:
         self.win.withdraw()
 
+    def _on_destroy(self, event) -> None:
+        if event.widget is not self.win:
+            return
+        self._destroyed = True
+        job, self._update_job = self._update_job, None
+        if job is not None:
+            try:
+                self.win.after_cancel(job)
+            except tk.TclError:
+                pass
+
     def _update(self) -> None:
-        if self.win.winfo_exists():
+        self._update_job = None
+        if not self._destroyed and self.win.winfo_exists():
             dot = "●" if self.app.core.connected else "○"
             with self.app.core.files._lock:
                 inbox = sum(1 for x in self.app.core.files.xfers.values()
                             if x.role == "receive" and x.status == "offering")
             txt = f"{dot} {_now_str()}" + (" 📥" if inbox else "")
             self.label.config(text=txt)
-            self.win.after(1000, self._update)
+            if not self._destroyed:
+                self._update_job = self.win.after(1000, self._update)
 
     def _press(self, ev) -> None:
         self._drag_x, self._drag_y = ev.x_root, ev.y_root

@@ -24,6 +24,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -394,6 +395,236 @@ def _cleanup_trial_process(proc) -> dict:
     return result
 
 
+class _WireSocket:
+    """Use one absolute deadline across every chunk of a crypto operation."""
+
+    def __init__(self, sock: socket.socket, deadline: float):
+        self.sock, self.deadline = sock, deadline
+
+    def arm(self) -> None:
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("wire deadline expired")
+        self.sock.settimeout(remaining)
+
+    def recv(self, size: int) -> bytes:
+        self.arm()
+        return self.sock.recv(size)
+
+    def sendall(self, data: bytes) -> None:
+        self.arm()
+        self.sock.sendall(data)
+
+
+class _WirePeer:
+    """A synchronous, locally owned encrypted peer; no reader thread."""
+
+    def __init__(self, nick: str, deadline: float):
+        self.nick, self.deadline = nick, deadline
+        self.uid = None
+        self.sock = None
+        self.io = None
+        self.channel = None
+        self.pending = []
+
+    def set_deadline(self, deadline: float) -> None:
+        self.deadline = deadline
+        if self.io is not None:
+            self.io.deadline = deadline
+
+    def connect(self, port: int) -> None:
+        from crypto import client_handshake
+        # Store ownership before connect/handshake can fail.
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.io = _WireSocket(self.sock, self.deadline)
+        self.io.arm()
+        self.sock.connect(("127.0.0.1", port))
+        self.channel = client_handshake(self.io)
+        self.send({"t": "hello", "nick": self.nick})
+        self.uid = self.wait("welcome")["uid"]
+        if not isinstance(self.uid, int) or isinstance(self.uid, bool) or self.uid <= 0:
+            raise ValueError("wire welcome lacks a positive uid")
+
+    def send(self, header: dict) -> None:
+        self.channel.send_frame(header)
+
+    def wait(self, kind: str, predicate=lambda _event: True) -> dict:
+        def check_deadline():
+            if time.monotonic() >= self.deadline:
+                raise TimeoutError("wire deadline expired")
+
+        check_deadline()
+        for index, event in enumerate(self.pending):
+            if event.get("t") == kind and predicate(event):
+                return self.pending.pop(index)
+        while True:
+            # This probe only exchanges small JSON state, never attachments.
+            event, body = self.channel.recv_frame(max_len=128 * 1024)
+            check_deadline()
+            if body:
+                raise ValueError("wire probe received an unexpected body")
+            if event.get("t") == kind and predicate(event):
+                return event
+            if len(self.pending) >= 128:
+                raise RuntimeError("wire pending frame limit exceeded")
+            self.pending.append(event)
+
+    def discard(self, kind: str) -> None:
+        self.pending[:] = [event for event in self.pending if event.get("t") != kind]
+
+    def close(self) -> None:
+        if self.sock is None:
+            return
+        try:
+            self.sock.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        try:
+            self.sock.close()
+            self.sock = None
+        finally:
+            self.channel = self.io = None
+
+
+def _wire_state(peer: _WirePeer, rid: str, status: str, *,
+                round_no: int | None = None, stones: int | None = None) -> dict:
+    def matches(event):
+        room = event.get("room") or {}
+        if event.get("room_id") != rid or room.get("status") != status:
+            return False
+        if round_no is not None and room.get("round") != round_no:
+            return False
+        if stones is not None:
+            board = (event.get("state") or {}).get("board", [])
+            if not board or sum(bool(cell) for row in board for cell in row) != stones:
+                return False
+        return True
+    return peer.wait("game_state", matches)
+
+
+def _wire_probe(port: int, *, timeout: float = 45.0) -> dict:
+    """Bounded chat/two-game smoke against the existing loopback server.
+
+    A protocol result never accepts GUI interaction, natural application exit
+    or physical LAN. The caller remains responsible for its existing Jobs.
+    """
+    if isinstance(timeout, bool) or not math.isfinite(timeout) or timeout <= 0:
+        raise ValueError("wire timeout must be positive and finite")
+    if not isinstance(port, int) or isinstance(port, bool) or not 0 < port < 65536:
+        raise ValueError("wire port must be a valid loopback TCP port")
+    started = time.monotonic()
+    total_deadline = started + timeout
+    peers = [_WirePeer(nick, total_deadline) for nick in ("REL_wire_a", "REL_wire_b")]
+    result = {"ok": False, "timed_out": False, "stage": "welcome", "steps": [],
+              "cleanup": [], "cleanup_ok": False, "gui_accepted": False,
+              "natural_exit_verified": False, "physical_lan_verified": False}
+
+    def stage(name):
+        result["stage"] = name
+        deadline = min(total_deadline, time.monotonic() + 5.0)
+        for peer in peers:
+            peer.set_deadline(deadline)
+
+    try:
+        stage("welcome")
+        a, b = peers
+        for peer in peers:
+            peer.connect(port)
+        if not (a.uid != b.uid):
+            raise ValueError("wire peers received duplicate uids")
+        result["steps"].append({"name": "welcome", "uids": [a.uid, b.uid]})
+        last_seq = -1
+        for label, sender in (("chat_a", a), ("chat_b", b)):
+            stage(label)
+            text = "REL-wire-" + uuid.uuid4().hex
+            sender.send({"t": "chat", "text": text})
+            messages = [peer.wait("chat", lambda event: event.get("text") == text
+                                 and event.get("nick") == sender.nick
+                                 and event.get("channel") == "public") for peer in peers]
+            seq = messages[0]["seq"]
+            if not (isinstance(seq, int) and not isinstance(seq, bool)):
+                raise ValueError("wire invariant failed")
+            if not (seq == messages[1]["seq"] and seq > last_seq):
+                raise ValueError("wire invariant failed")
+            last_seq = seq
+            result["steps"].append({"name": "chat", "sender": sender.nick, "seq": seq})
+        games = [
+            ("gomoku", [{"x": x, "y": y} for x, y in (
+                (0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1),
+                (3, 0), (3, 1), (4, 0))]),
+            ("connect4", [{"col": col} for col in (0, 0, 1, 1, 2, 2, 3)]),
+        ]
+        for game, moves in games:
+            stage(game)
+            a.send({"t": "game_create", "game": game})
+            created = a.wait("game_state", lambda event:
+                             (event.get("room") or {}).get("game") == game
+                             and event.get("state") is None)
+            rid = created["room_id"]
+            b.send({"t": "game_join", "room_id": rid})
+            joined = _wire_state(b, rid, "created")
+            if not (set(joined["room"]["players"]) == {a.uid, b.uid}):
+                raise ValueError("wire invariant failed")
+            a.send({"t": "game_start", "room_id": rid})
+            initial = _wire_state(a, rid, "playing", stones=0)
+            round_no = initial["room"]["round"]
+            _wire_state(b, rid, "playing", round_no=round_no, stones=0)
+            for index, action in enumerate(moves):
+                actor = a if index % 2 == 0 else b
+                actor.send({"t": "game_action", "room_id": rid, "action": action})
+                final = index == len(moves) - 1
+                for peer in peers:
+                    event = _wire_state(peer, rid, "ended" if final else "playing",
+                                        round_no=round_no, stones=index + 1)
+                    state = event["state"]
+                    if not (state["winner_uid"] == (a.uid if final else None)):
+                        raise ValueError("wire invariant failed")
+                    if not final:
+                        if not (state["turn_uid"] == (b.uid if actor is a else a.uid)):
+                            raise ValueError("wire invariant failed")
+            for peer in peers:
+                if not (_wire_state(peer, rid, "created", round_no=round_no)["state"] is None):
+                    raise ValueError("wire invariant failed")
+            a.send({"t": "game_start", "room_id": rid})
+            for peer in peers:
+                restarted = _wire_state(peer, rid, "playing", round_no=round_no+1, stones=0)
+                if not (restarted["state"]["winner_uid"] is None):
+                    raise ValueError("wire invariant failed")
+            result["steps"].append({"name": game, "moves": len(moves), "room_id": rid,
+                                    "round": round_no, "next_round": round_no+1})
+            stage(game + "_leave")
+            for peer in peers:
+                peer.send({"t": "game_leave", "room_id": rid})
+                ack = peer.wait("game_state", lambda event: event.get("room_id") == rid
+                                and (event.get("room") is None or peer.uid not in event["room"]["players"]))
+            if not (ack["room"] is None):
+                raise ValueError("wire invariant failed")
+            b.discard("game_list")
+            b.send({"t": "game_list"})
+            b.wait("game_list", lambda event: all(room["room_id"] != rid for room in event["rooms"]))
+            result["steps"].append({"name": game + "_leave", "room_id": rid})
+        result["ok"] = True
+    except Exception as exc:
+        result["error_type"] = type(exc).__name__
+        result["timed_out"] = isinstance(exc, TimeoutError)
+    finally:
+        for peer in peers:
+            row = {"nick": peer.nick, "ok": False}
+            try:
+                peer.close()
+                row["ok"] = True
+            except BaseException as exc:
+                row["error_type"] = type(exc).__name__
+            result["cleanup"].append(row)
+        result["cleanup_ok"] = all(row["ok"] for row in result["cleanup"])
+        if not result["cleanup_ok"]:
+            if result["ok"]:
+                result["stage"] = "cleanup"
+            result["ok"] = False
+        result["seconds"] = round(time.monotonic() - started, 3)
+    return result
+
+
 def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
                   client_exe: Path | None = None) -> tuple[int, dict]:
     run_dir = _new_run_dir(run_root, "run")
@@ -510,6 +741,19 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
             result["probes"]["login" if role == "client" else "login_beta"] = (
                 _wait_login_audit(profiles["server"], nick) if ready else {
                     "ok": False, "source": "client.exe", "error_type": "server_not_ready"})
+        startup_ok = (ready and result["probes"].get("web", {}).get("ok")
+                      and all(result["probes"].get(key, {}).get("ok")
+                              for key in ("login", "login_beta")))
+        if startup_ok:
+            result["probes"]["wire"] = {"ok": False, "stage": "exception"}
+            try:
+                result["probes"]["wire"] = _wire_probe(tcp_port)
+            except Exception as exc:
+                result["probes"]["wire"].update({"error_type": type(exc).__name__,
+                                                "timed_out": isinstance(exc, TimeoutError)})
+                raise
+        else:
+            result["probes"]["wire"] = {"ok": False, "not_run_reason": "startup_failed"}
         result["client_started"] = all(proc.poll() is None for proc in client_procs.values())
         # Allow client boot/login to write its crash log without interacting
         # with the private desktop.  A live process is the expected result.
@@ -530,6 +774,7 @@ def run_candidate(source: Path, run_root: Path, server_exe: Path | None = None,
                      and result["probes"].get("login", {}).get("ok")
                      and result["probes"].get("login_beta", {}).get("ok")
                      and result["probes"].get("web", {}).get("ok")
+                     and result["probes"].get("wire", {}).get("ok")
                      and result.get("client_started")
                      and client_alive and server_alive and image_ok) else 1
     except Exception as exc:

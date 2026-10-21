@@ -25,7 +25,8 @@ def app(tmp_path):
     assert not CFG.hardware_enabled and not CFG.discovery_enabled
     core=ClientCore(nick='视觉合成',history_dir=str(tmp_path/'history'))
     window=ChatWindow(core,prefs_path=str(tmp_path/'prefs.json'))
-    window.root.geometry('680x480')
+    scale=window._dpi_scale
+    window.root.geometry(f'{int(680*scale)}x{int(480*scale)}')
     window.show_main()
     deadline=time.monotonic()+2
     while time.monotonic()<deadline:
@@ -119,10 +120,29 @@ def test_short_history_is_not_clipped_after_window_grows(app):
     rows=[{'seq':i,'uid':uid,'nick':nick,'channel':'public','text':text,'ts':1791518400+i*60} for i,(uid,nick,text) in enumerate(samples,1)]
     app.msg_list.load(rows,me_uid=1)
     app.root.update()
-    app.root.geometry('1000x700')
-    for _ in range(5):
+    before_root=(app.root.winfo_width(),app.root.winfo_height())
+    before_list=(app.msg_list.winfo_width(),app.msg_list.winfo_height())
+    # Application minimum sizes and fonts use logical pixels scaled by DPI.
+    # At 150%, an unscaled 1000x700 request is below the 1020x720 minimum.
+    scale=app._dpi_scale
+    target=(int(1000*scale),int(700*scale))
+    app.root.geometry(f'{target[0]}x{target[1]}')
+    deadline=time.monotonic()+2
+    while time.monotonic()<deadline:
         app.root.update()
-        time.sleep(.02)
+        if ((app.root.winfo_width(),app.root.winfo_height())==target
+                and app.msg_list._resize_job is None
+                and app.msg_list._wrap_w==app.msg_list._wrap_width(app.msg_list.winfo_width())
+                and not app.msg_list._cum_dirty):
+            break
+        time.sleep(.005)
+    assert (app.root.winfo_width(),app.root.winfo_height())==target
+    assert all(after>before for after,before in zip(target,before_root))
+    assert app.msg_list.winfo_width()>before_list[0]
+    assert app.msg_list.winfo_height()>before_list[1]
+    assert app.msg_list._resize_job is None
+    assert app.msg_list._wrap_w==app.msg_list._wrap_width(app.msg_list.winfo_width())
+    assert not app.msg_list._cum_dirty
     assert app.msg_list._cum[-1]<app.msg_list.winfo_height()
     assert app.msg_list._first_visible==0
     assert app.msg_list.canvasy(0)<=1

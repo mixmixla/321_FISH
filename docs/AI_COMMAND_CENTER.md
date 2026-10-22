@@ -1,9 +1,33 @@
 # 321_FISH AI 指挥中心
 
 本文件是当前执行状态与下一任务的唯一权威。需求见 task-packages，证据和审查结论见
-review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-21（UTC；以下旧记录保留原时区）。
+review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-22（UTC；以下旧记录保留原时区）。
+
+## 2026-10-22 恢复前历史检查点（当前状态见路线区首项）
+
+用户已明确恢复本机开发并要求 Astra + FAST；旧任务已停，本任务 root 接管唯一写入/执行，r1_review 独立只读审查，不恢复旧 heartbeat。分支 feature/r1-restart-reconnect-20261021、base/HEAD ddf1c79b0143890a4c98941b6b5b500b6909e761；dirty 为本指挥中心、tests/test_client_core.py、Task v1，未覆盖原改动，尚未提交。本机执行连接首次无响应，后续有界只读检查已恢复；pwsh 7.6.7，无 Python/pytest 活动进程；应用终端未附加不等于权限拒绝。
+
+原全量 run 的490输入/current/snapshot逐SHA一致，source_content_id=7150130067587f8a6dc6b34584390e889bc1acc5c3a40afb8f9d7514fb231abf；不可变身份、依赖/解释器/命令/环境指纹均匹配，189个terminal记录及原日志完整，progress指纹一致。唯一running文件tests/test_server.py所录进程已确认为exited，无summary。决定保留恢复前manifest/progress及日志哈希，使用原生 `.venv/Scripts/python.exe run.py test-all --resume _tmp_gui/test-gate/r1-restart-reconnect-full-20261021-20261021-224241-6202d94027` 仅补剩余24文件，保留原人工中止attempt；不是重跑失败项或retry-to-green。开始/结束原件放 `_tmp_gui/r1-restart-reconnect-20261021/recovery-20261022/`；下一动作：续跑、独立终审、脱敏历史审计及经授权集成。当前仍未AI_ACCEPTED，不代表GUI/自然退出/LAN/新EXE已验证。
+
+## 2026-10-21 休眠前中断检查点（R1-RESTART-RECONNECT-01）
+
+用户要求今日停止；分支 feature/r1-restart-reconnect-20261021、HEAD ddf1c79b0143890a4c98941b6b5b500b6909e761。未提交：tests/test_client_core.py（真实持久 Hub 重开后原 ClientCore 续连回归）及 docs/task-packages/R1-RESTART-RECONNECT-01.md。既有对照 2P，最终目标用例 1P，领域 75P；独立代码复审 0 MUST。唯一实际全量 run r1-restart-reconnect-full-20261021-20261021-224241-6202d94027 于用户停工时中断：最后原进度 189/213 文件 passed，tests/test_server.py 标 running，无 summary，exit1 是人工中止，绝不判作全量通过或产品失败。原件留本地 _tmp_gui/test-gate/ 对应 run 与 _tmp_gui/r1-restart-reconnect-20261021/final-gate-output.txt。已确认无本轮 test_gate/pytest/Python 自有进程；未 commit/push/merge。明日先核 git status、进程、原进度/日志，再决定重新完成唯一有效全量门禁；之后独立终审、脱敏记录和经授权的正常集成。本检查点不代表 R1/M1/GUI/EXE/LAN 验收。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+
+## GATE-CLEANUP-WAIT-01 v1（2026-10-22）
+
+**AI_ACCEPTED_RECONNECT_AND_OWNED_EXIT_ONLY / FINAL_REVIEW_0_MUST / FULL_PASSED / INTEGRATION_PENDING**。[Task v1](task-packages/GATE-CLEANUP-WAIT-01.md)。root唯一写test_sandbox.py和tests/test_test_gate_safety.py；r1_review独立只读，base ddf1c79，交付HEAD以Git refs为准，feature/r1-restart-reconnect-20261021包含原R1测试与失败交接。原R1完整2971P1F20S/exit1保持，不重新resume失败项。先确定性证明终止后立即poll窗口，再最小有界wait，保留unknown/timeout/descendant失败语义，领域/独立复核后新组合full。旧实现同字节新回归cleanup-wait-red-20261022-20261022-115644-c8fb9b86a8为11F9P；仅修复持有进程终止后的wait(10)，异常/unknown/descendant失败仍false。六文件领域cleanup-wait-domain-20261022-20261022-115709-e290982259为78P/exit0/41.338s，source5da85d93290d1d794f83fb3415777b306aae14bf563d10ade49e699197db972f；r1_review代码/RED复审0 MUST。RED11F中两项exited与真实Popen为目标返回失败，其余8项负路径因未执行bounded wait断言失败，真实native旧实现本次通过；不声称原历史分支被精确复现。冻结490输入后完成唯一新组合全量cleanup-wait-full-20261022-20261022-115804-1d35944577（session55738），原R1失败及旧RED保留。新组合full已完整213文件2984P0F20原skip/actual exit0/799.928s，summary SHA050127fa0bc0e93d4680786fef4b0423c53d9b33cb246c14e8eff92824b7622b；490当前/领域/snapshot同字节，15项后验全true，原R1 failed/189原记录/日志全部保留。session55738结束，无活动测试，r1_review独立原件/拟公开资料终审0 MUST，主控有限AI接受正常续连与自有测试进程退出确认；下一全部新增对象/提交元数据审计及正常PR集成，不重复full。原件_tmp_gui/gate-cleanup-wait-20261022。未提交/推合，未升级R1/M1/GUI/EXE验收。历史审计具体发现仅本地报告；最新边界澄清允许无敏感内容的全部新增对象/提交经完整审计后按原授权集成。不得重传敏感内容、改共享历史或轮换部署凭据；尚未集成；本周授权内经PR合并，不直接push main，不发布。
+
+
+
+## R1-RESTART-RECONNECT-01 原续跑失败检查点（历史，后续组合验收见上项）
+
+**FULL_FAILED / NOT_AI_ACCEPTED / NOT_MERGE_READY**。[Task v1](task-packages/R1-RESTART-RECONNECT-01.md) / [Review r1](review-packages/R1-RESTART-RECONNECT-01-r1.md)。base/HEAD ddf1c79b0143890a4c98941b6b5b500b6909e761；feature/r1-restart-reconnect-20261021，root唯一写入/执行，r1_review独立只读代码0 MUST。前次不确定的检查点写入已确认落盘，recovery目录当时不存在且无Python进程；本次先保留原manifest/progress/log hashes再原生resume，session35124已结束。
+490原输入/current/snapshot逐hash一致，不可变identity/environment均匹配；原189完整终态保留，仅执行剩余24文件，test_server原attempt1保留interrupted、attempt2为61P。完整213文件2971P1F20原skip/exit1，107.921s仅恢复阶段。唯一失败tests/test_test_gate.py的timeout cleanup契约：内层cleanup_ok=false、退出2而非1，原完整失败证据不改。最终test_client_core34P有原full字节绑定；历史75P先于最后收尾修订，不宣称最终版本绑定。无活动测试，未commit/push/merge。
+下一动作：独立诊断门禁有界清理；拟GATE-CLEANUP-WAIT-01先设计审查/冻结，再受控证明终止后异步退出窗口，仅必要最小修复/红绿/领域/新组合full，禁止retry-to-green或把本失败升级为通过。公开仅脱敏摘要；GUI/自然退出/LAN/新EXE未测，不代表R1/M1通过。
+
+
 
 ## R3-STRICT-PREFLIGHT-01 现行严格清单真实 EXE 预检（2026-10-21）
 

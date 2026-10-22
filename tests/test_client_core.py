@@ -7,6 +7,7 @@
 """
 import os
 import socket
+import sys
 import threading
 import time
 from dataclasses import replace
@@ -15,6 +16,7 @@ import pytest
 
 from config import CFG
 from server import Hub, serve as serve_tcp
+from server_recovery import StoreCoordinator
 from client_core import ClientCore, LocalHistory
 
 
@@ -348,6 +350,112 @@ def test_reconnect_and_rejoin_group(hub, tmp_path):
             assert g and any(u == a.uid for u in g["members"])
     finally:
         a.stop(); b.stop()
+
+
+def test_running_clients_reconnect_to_reopened_persistent_hub(tmp_path):
+    """A persistent Hub restart preserves live clients' identities and messaging."""
+    store = tmp_path / "store"
+    StoreCoordinator.initialize_new(store)
+    cfg = replace(CFG, audit_dir=str(tmp_path / "audit"),
+                  web_files_dir=str(tmp_path / "web"),
+                  bind_host="127.0.0.1", discovery_enabled=False,
+                  tray_enabled=False, persist_interval=3600.0)
+    port = _free_port()
+    services = []
+    clients = []
+
+    def launch():
+        hub = Hub(cfg=cfg, store_dir=str(store))
+        stop = threading.Event()
+        errors = []
+
+        def run():
+            try:
+                serve_tcp(hub, port, stop, False)
+            except BaseException as exc:
+                errors.append(exc)
+
+        thread = threading.Thread(target=run, name="persisted-hub")
+        services.append((stop, thread, errors))
+        thread.start()
+        deadline = time.monotonic() + 5
+        while not hub._service_started and not errors:
+            assert time.monotonic() < deadline, "real Hub listener did not start"
+            time.sleep(0.01)
+        assert not errors
+        return hub, stop, thread, errors
+
+    try:
+        first, first_stop, first_thread, first_errors = launch()
+        alice, ac = _spawn(port, "alice", tmp_path)
+        clients.append(alice)
+        bob, bc = _spawn(port, "bob", tmp_path)
+        clients.append(bob)
+        assert _online(ac) and _online(bc)
+        alice_uid, bob_uid = alice.uid, bob.uid
+        assert alice_uid != bob_uid and alice_uid > 0 and bob_uid > 0
+        assert ac.wait("welcome", pred=lambda e: e.get("uid") == alice_uid)
+        assert bc.wait("welcome", pred=lambda e: e.get("uid") == bob_uid)
+        old_alice_epoch, old_bob_epoch = alice.connection_epoch, bob.connection_epoch
+        uid_floor = first._uid_seq
+        assert first.nick_to_uid["alice"] == alice_uid
+        assert first.nick_to_uid["bob"] == bob_uid
+        assert alice.send_chat("before persisted restart")
+        assert bc.wait("chat", pred=lambda e: e.get("text") == "before persisted restart")
+
+        first_stop.set()
+        first_thread.join(12)
+        assert not first_thread.is_alive() and not first_errors
+        assert ac.wait("state", timeout=5,
+                       pred=lambda e: e.get("state") == "offline"
+                       and e.get("_connection_epoch", 0) >= old_alice_epoch)
+        assert bc.wait("state", timeout=5,
+                       pred=lambda e: e.get("state") == "offline"
+                       and e.get("_connection_epoch", 0) >= old_bob_epoch)
+
+        reopened, _, _, second_errors = launch()
+        assert reopened.nick_to_uid["alice"] == alice_uid
+        assert reopened.nick_to_uid["bob"] == bob_uid
+        assert reopened._uid_seq == uid_floor
+        assert ac.wait("welcome", timeout=6,
+                       pred=lambda e: e.get("uid") == alice_uid
+                       and e.get("_connection_epoch", 0) > old_alice_epoch)
+        assert bc.wait("welcome", timeout=6,
+                       pred=lambda e: e.get("uid") == bob_uid
+                       and e.get("_connection_epoch", 0) > old_bob_epoch)
+        assert alice.connected and bob.connected
+        assert reopened._uid_seq == uid_floor
+        assert alice.send_chat("after persisted restart")
+        delivered = bc.wait("chat", pred=lambda e: e.get("text") == "after persisted restart")
+        assert delivered and delivered["uid"] == alice_uid
+        assert not second_errors
+    finally:
+        original_failure = sys.exception()
+        cleanup_errors = []
+        for core in clients:
+            try:
+                core.stop()
+            except BaseException as exc:
+                cleanup_errors.append(("client", exc))
+            for worker in (core._reader, core._heartbeat, core._reconnector):
+                if worker is not None and worker.is_alive():
+                    cleanup_errors.append(("client_thread_alive", RuntimeError(worker.name)))
+        for stop, _, _ in services:
+            stop.set()
+        for _, thread, errors in services:
+            try:
+                thread.join(12)
+                if thread.is_alive():
+                    cleanup_errors.append(("server_thread_alive", RuntimeError(thread.name)))
+            except BaseException as exc:
+                cleanup_errors.append(("server_join", exc))
+            cleanup_errors.extend(("server_error", exc) for exc in errors)
+        if cleanup_errors:
+            details = ", ".join(f"{role}:{type(exc).__name__}" for role, exc in cleanup_errors)
+            if original_failure is not None:
+                original_failure.add_note("cleanup failed: " + details)
+            else:
+                raise AssertionError("cleanup failed: " + details) from cleanup_errors[0][1]
 
 
 # ---------- 离线发送报错 ----------

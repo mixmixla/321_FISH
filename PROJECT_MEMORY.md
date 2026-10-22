@@ -116,6 +116,8 @@
 - `test_gate.py/test_sandbox.py`将源码快照、每文件副本/profile/日志/真实exit、候选fingerprint、
   private desktop和loopback映射证据绑定；同候选resume保留失败，进程退出不确定/路径reparse拒绝，
   清理失败停止后续文件。它是受控测试防护，不是对恶意代码的OS安全沙箱，不能证明产品默认绑定loopback。
+- 自有测试进程的Popen.kill/TerminateProcess返回不等于实际退出；DesktopProcess先对持有对象/句柄有界wait，
+  再核根退出状态与原observed descendants。等待超时/异常、退出未知或子进程未确认退出仍失败；不扩大kill范围。
 - 门禁拒绝非原visual/hardware opt-in的意外skip；GUI文件使用sys捕获，parent仍保存原生stdout/stderr，
   非GUI保留fd捕获。source manifest包括未提交Python输入、排除docs/runtime，driver另有独立hash。
 - `local_trial.py`复用批准source manifest构建独立副本并核对双EXE，使用新profile/private desktop验证

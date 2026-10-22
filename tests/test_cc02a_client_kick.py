@@ -120,6 +120,15 @@ def test_kicked_uses_existing_manual_login_exit():
     assert calls == ["switch"]
 
 
+def test_group_removed_only_displays_notification_without_switching_account():
+    calls = []
+    app = SimpleNamespace(_closed=False, request_switch_account=lambda: calls.append("switch"),
+                          _append_sys=lambda text: calls.append(text))
+    ChatWindow._on_error(app, {"t": "error", "code": "group_removed", "gid": 7,
+                              "text": "synthetic group removal"})
+    assert calls == ["⚠ synthetic group removal"]
+
+
 def test_poll_returns_immediately_when_kick_closes_window():
     events = queue.Queue()
     events.put({"t": "error", "code": "kicked"})

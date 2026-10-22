@@ -591,6 +591,7 @@ class Hub:
         self._offline_notice_records: dict = {}  # uid -> {text,state=pending|cancelled}
         self.web_tokens = {}        # token -> 已认证的 Web Session（不能借同 uid 的其它端续权）
         self.groups = {}            # gid -> {gid,name,owner,members:{uid:nick}}
+        self._group_state_revision = 0  # Runtime ordering of group snapshots/removals.
         # R55-7 群邀请码防爆破：ip -> [失败时间戳...]（滑动窗口限速）
         self._invite_fails: dict = {}
         self._uid_seq = 1
@@ -9277,17 +9278,20 @@ class Hub:
             g["admins"].discard(target)
             g["mutes"].pop(target, None)
             dissolved = not g["members"]
+            self._group_state_revision += 1
+            removal = {"t": "error", "code": "group_removed", "gid": gid,
+                       "group_revision": self._group_state_revision,
+                       "text": f"你已被移出群「{g['name']}」"}
+            removed_sessions = list(self._uid_clients.get(target, ()))
         self._broadcast_group_list()
         if dissolved:
             self._broadcast_system(f"群「{g['name']}」已解散")
         else:
             self._send_group_state(gid, text=f"{sess.nick} 将 {nick} 移出群聊")
         self._room_drop(f"group:{gid}", target)              # R72：踢人连同移出该群语音房
-        st = self.sessions.get(target)
-        if st:
+        for st in removed_sessions:
             try:
-                st.send({"t": "error", "code": "kicked",
-                         "text": f"你已被移出群「{g['name']}」"})
+                st.send(removal)
             except Exception:
                 pass
         self.audit.log(type="group_kick", uid=sess.uid, gid=gid,
@@ -9962,7 +9966,9 @@ class Hub:
             g = self.groups.get(gid)
             if not g:
                 return
+            self._group_state_revision += 1
             payload = {"t": "group_state", "gid": gid, "name": g["name"],
+                       "group_revision": self._group_state_revision,
                        "owner": g["owner"], "admins": sorted(g["admins"]),
                        "kind": g.get("kind", ""),       # R72："" 普通群 / "channel" 频道 / "forum" 论坛
                        "mutes": dict(g["mutes"]),

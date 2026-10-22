@@ -104,3 +104,5 @@ Excel 接线：`client.py` → `widgets.excel_chrome.ExcelChrome` →
   与迁移时验证这两类路径的行为，不擅自迁移/合并现有用户目录。
 - 现有 `.spec` 的图标含旧机器绝对路径，且没有当前 build.py 的 Vosk collect/data
   逻辑；直接调用 spec 打包前要核对，不把两个入口视为等价。
+
+群成员移除不是账号撤销：`group_removed/gid` 只清对应群状态，所有现有同 UID Session 都应收到，账号 kicked/deleted/retired 终止语义保持。旧快照/重复通知按 Hub 运行态 revision 过滤；密钥 worker 用本地 generation 跨 WELCOME 作废，握手等待不得持发送锁。迟到密钥不能复活已移除群，显式重新加入仍按原权限。

@@ -83,6 +83,10 @@ function setup(){
 }
 async function flush(){await new Promise(resolve=>setImmediate(resolve))}
 async function main(){
+  let group=setup();group.context.openStream();const groupStream=group.state.es;
+  groupStream.onmessage({data:JSON.stringify({t:'error',code:'group_removed',gid:7,text:'group removal'})});
+  checks.group_removal_preserves_account=group.state.token==='old'&&group.state.uid===1
+    &&group.state.es===groupStream&&!groupStream.closed&&group.statuses.includes('group removal');
   let e=setup();e.context.openStream();let old=e.state.es;
   old.onmessage({data:JSON.stringify({t:'error',code:'kicked',text:'synthetic kick'})});
   assert.deepEqual(e.navButtons.map(button=>({key:button.dataset.uxNav,
@@ -151,4 +155,4 @@ def test_production_web_kick_and_auth_failure_callbacks(tmp_path):
     assert result.returncode == 0, result.stdout + result.stderr
     report = json.loads(result.stdout)
     assert report["failures"] == []
-    assert len(report["checks"]) == 13
+    assert len(report["checks"]) == 14

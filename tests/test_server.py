@@ -329,8 +329,8 @@ def test_group_manage_permissions(hub):
     b.send({"t": "group_kick", "gid": gid, "target": c.uid})
     b.wait("group_state", pred=lambda e: e.get("gid") == gid
            and "移出" in (e.get("text") or ""))
-    kicked = c.wait("error", pred=lambda e: e["code"] == "kicked")
-    assert kicked is not None
+    kicked = c.wait("error", pred=lambda e: e["code"] == "group_removed")
+    assert kicked is not None and kicked["gid"] == gid
     # 管理员不能踢群主
     b.send({"t": "group_kick", "gid": gid, "target": a.uid})
     assert b.wait("error", pred=lambda e: e["code"] == "perm")
@@ -373,7 +373,8 @@ def test_group_owner_transfer_and_cleanup(hub):
     assert gs is not None
     # 新群主 bob 踢 charlie
     b.send({"t": "group_kick", "gid": gid, "target": c.uid})
-    assert c.wait("error", pred=lambda e: e["code"] == "kicked")
+    removed = c.wait("error", pred=lambda e: e["code"] == "group_removed")
+    assert removed and removed["gid"] == gid
     a.close(); b.close(); c.close()
 
 

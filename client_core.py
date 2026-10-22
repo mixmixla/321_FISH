@@ -702,6 +702,9 @@ class ClientCore:
         self.voice_room = VoiceRoom(self)    # R72 多人语音房（mesh 音频，与 calls 互斥）
 
         self._joined_groups: set = set()    # 断线重连后自动重入
+        self._group_revisions: dict = {}    # Current server connection's ordered group frames.
+        self._group_generations: dict = {}  # Local worker fences; never reset on reconnect.
+        self._removed_groups: set = set()
         self._seen_seqs: set = set()        # 服务器全局 seq 去重
         self._send_lock = threading.RLock()  # RLock：群 re-key「切链+分发」同锁原子（R44）
         self._lock = threading.RLock()
@@ -984,6 +987,22 @@ class ClientCore:
         if getattr(self, "_manual_login_required", False):
             return  # late frames cannot revive the revoked authentication
         t = h.get("t")
+        if t == "error" and h.get("code") == "group_removed":
+            gid = h.get("gid")
+            if type(gid) is int and gid > 0:
+                if not self._accept_group_revision(h):
+                    return
+                with self._send_lock:
+                    self._group_generations[gid] = self._group_generations.get(gid, 0) + 1
+                    self._removed_groups.add(gid)
+                    self._joined_groups.discard(gid)
+                    self.group_members.pop(gid, None)
+                    self.group_invites.pop(gid, None)
+                    self._e2ee_groups.discard(gid)
+                    self._e2ee_group_members.pop(gid, None)
+                    self.e2ee.drop_group(gid)
+            self._push(h)
+            return
         auth_refused = (h.get("code") == "retired" and connection is not None
                         and connection.authenticating)
         if t == "error" and (h.get("code") in ("kicked", "deleted") or auth_refused):
@@ -1237,6 +1256,7 @@ class ClientCore:
             self._push(h)                   # error / 未知/未来类型原样透传
 
     def _on_welcome(self, h: dict) -> None:
+        self._group_revisions.clear()
         self.uid = h["uid"]
         self._ever_online = True
         # R52：我自己的资料（sign/avatar 随 welcome 带回）
@@ -1517,7 +1537,19 @@ class ClientCore:
         return self._send_frame({"t": MsgType.STICKER_REORDER.value,
                                  "code": (code or "").strip(), "dir": d})
 
+    def _accept_group_revision(self, h: dict) -> bool:
+        revision = h.get("group_revision")
+        if type(revision) is not int or revision <= 0:
+            return True  # Compatibility with older servers without ordering metadata.
+        gid = h.get("gid")
+        if revision <= self._group_revisions.get(gid, 0):
+            return False
+        self._group_revisions[gid] = revision
+        return True
+
     def _on_group_state(self, h: dict) -> None:
+        if not self._accept_group_revision(h):
+            return
         gid = h.get("gid")
         members = h.get("members", [])
         self.group_members[gid] = members
@@ -1541,7 +1573,9 @@ class ClientCore:
             g["kind"] = h.get("kind", g.get("kind", ""))    # R72："" / "channel" / "forum"
         mine = self.uid in (m.get("uid") for m in members) if self.uid is not None else False
         if mine:
-            self._joined_groups.add(gid)
+            with self._send_lock:
+                self._removed_groups.discard(gid)
+                self._joined_groups.add(gid)
         else:
             self._joined_groups.discard(gid)   # 被踢/退群/解散后不再自动重入
         # R36 群密聊：成员变动 → 后台自动 re-key；退群/被踢 → 销毁密钥材料
@@ -2345,8 +2379,12 @@ class ClientCore:
     def open_group_e2ee(self, gid: int, timeout: float = 8.0) -> tuple:
         """开启/轮换群密聊：与无会话成员先补 1v1 握手，全部就绪后
         生成新 epoch 的 sender_key 并经信封分发。返回 (ok, err)。"""
-        members = [int(m["uid"]) for m in (self.group_members.get(gid) or [])
-                   if m.get("uid") != self.uid]
+        with self._send_lock:
+            generation = self._group_generations.get(gid, 0)
+            if gid in self._removed_groups:
+                return False, "已离开该群"
+            members = [int(m["uid"]) for m in (self.group_members.get(gid) or [])
+                       if m.get("uid") != self.uid]
         if not members:
             return False, "群内没有其他成员"
         pending = []
@@ -2370,6 +2408,9 @@ class ClientCore:
         # R44 DFSS：切链 + SK_DIST 写 socket 与消息发送同锁——保证接收端
         # 先收新纪元信封、再收该纪元消息（帧序一致，杜绝竞态丢消息）
         with self._send_lock:
+            if (gid in self._removed_groups
+                    or generation != self._group_generations.get(gid, 0)):
+                return False, "群成员状态已改变，请重新开启密聊"
             epoch, sk = self.e2ee.new_group_epoch(
                 gid, retain_seed=any(m != self.uid and self.e2ee.is_legacy_peer(m)
                                      for m in members))
@@ -2384,8 +2425,8 @@ class ClientCore:
             if not self._send_frame({"t": MsgType.E2EE_SK_DIST.value, "gid": gid,
                                      "epoch": epoch, "envelopes": envelopes}):
                 return False, "密钥分发失败"
-        self._e2ee_groups.add(int(gid))
-        self._e2ee_group_members[int(gid)] = frozenset(members + [self.uid])
+            self._e2ee_groups.add(int(gid))
+            self._e2ee_group_members[int(gid)] = frozenset(members + [self.uid])
         return True, ""
 
     def group_e2ee_on(self, gid: int) -> bool:
@@ -2400,6 +2441,8 @@ class ClientCore:
             src = int(h["from"])
             ct = bytes.fromhex(str(h.get("ct") or ""))
         except (KeyError, TypeError, ValueError):
+            return
+        if gid in self._removed_groups:
             return
         key = self.e2ee.session_key(src)
         if key is None:

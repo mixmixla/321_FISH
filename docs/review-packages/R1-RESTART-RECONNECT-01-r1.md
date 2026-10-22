@@ -1,6 +1,6 @@
 # R1-RESTART-RECONNECT-01 r1
 
-2026-10-22 当前组合 **AI_ACCEPTED_NORMAL_RESTART_RECONNECT_ONLY / FINAL_REVIEW_0_MUST / INTEGRATION_PENDING**；原运行仍为 **FULL_FAILED**，以下保留原失败检查点。
+2026-10-22 当前组合 **AI_ACCEPTED_NORMAL_RESTART_RECONNECT_ONLY / FINAL_REVIEW_0_MUST / BRANCH_PUSHED / PR_CREATE_BLOCKED_403**；原运行仍为 **FULL_FAILED**，以下保留原失败检查点。
 
 Task v1；base/HEAD `ddf1c79b0143890a4c98941b6b5b500b6909e761`，分支 `feature/r1-restart-reconnect-20261021`。仅 `tests/test_client_core.py` 增加真实持久 Hub 正常重开、原 ClientCore 自动续连、UID/epoch/双端消息及自有线程清理回归，业务源码未改。root 唯一写入/执行，r1_review 独立只读代码审查 0 MUST。
 
@@ -14,3 +14,7 @@ Task v1；base/HEAD `ddf1c79b0143890a4c98941b6b5b500b6909e761`，分支 `feature
 ## 后续组合有限验收（2026-10-22）
 
 独立GATE-CLEANUP-WAIT-01修复终止后有界等待，保留上述failed记录。新组合full为213文件2984P0F20既有skip/exit0；最终test_client_core仍34P，源码与原R1候选仅门禁修复及其回归不同。原R1正常续连覆盖与新门禁候选的独立终审/有限验收见[GATE Review](GATE-CLEANUP-WAIT-01-r1.md)，独立原件/拟公开资料终审0 MUST后，主控有限AI接受正常重启续连回归；不能将原失败run改为通过，也不升级整体里程碑。
+
+## 交付检查点（2026-10-22）
+
+交付候选24c65c26b7d8284a595729f292ba97fbf5104b06已普通push到feature/r1-restart-reconnect-20261021，ls-remote核一致；main仍ddf1c79b0143890a4c98941b6b5b500b6909e761。全部26新增对象（1commit/12tree/13blob）和元数据独立审计0 MUST，490输入保持已验字节。创建PR的GitHub连接器返回403 Resource not accessible by integration；只读查询同head的open PR为空，未创建PR/未合并，未重试或直接push main。候选check-runs/status contexts/Actions均0，aggregate pending/total0，不称CI通过。下一需恢复具有PR写权限的受支持连接，再核分支/保护/未重复PR后正常创建与合并；无需重跑测试或重建。仅本次脱敏交付回执继续提交到同分支，最终leaf以Git refs为准；没有活动测试。

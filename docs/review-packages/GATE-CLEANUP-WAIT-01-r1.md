@@ -1,6 +1,6 @@
 # GATE-CLEANUP-WAIT-01 r1 — 等待自有进程实际退出
 
-2026-10-22 **AI_ACCEPTED_RECONNECT_AND_OWNED_EXIT_ONLY / FULL_PASSED / FINAL_REVIEW_0_MUST / INTEGRATION_PENDING**。
+2026-10-22 **AI_ACCEPTED_RECONNECT_AND_OWNED_EXIT_ONLY / FULL_PASSED / FINAL_REVIEW_0_MUST / BRANCH_PUSHED / PR_CREATE_BLOCKED_403**。
 [Task v1](../task-packages/GATE-CLEANUP-WAIT-01.md)。base ddf1c79b0143890a4c98941b6b5b500b6909e761；交付HEAD以Git refs为准，feature/r1-restart-reconnect-20261021。root唯一实现/执行，r1_review独立设计与代码审查。
 
 ## 问题与变更
@@ -31,3 +31,7 @@ R1正常重启续连回归的原完整全量2971P1F20S/exit1，唯一失败是�
 唯一新full `cleanup-wait-full-20261022-20261022-115804-1d35944577`：213文件 **2984P/0F/20既有skip，actual exit0，799.928s**。当前/领域/快照490输入逐SHA相同，source 5da85d93290d1d794f83fb3415777b306aae14bf563d10ade49e699197db972f；全部213单attempt、logSHA、sandbox、cleanup、artifact及15项后验均通过。未受影响文件counts和全部既有skip保持；新增12个清理case，原门禁自测恢复通过。原R1 failed summary SHA仍e8ff6d805cdb7b3897979bc2408a5e03300e60c39237b2b1bd6b2a0475e23e69，189原通过记录及所有恢复前日志未改。
 
 完整summary SHA `050127fa0bc0e93d4680786fef4b0423c53d9b33cb246c14e8eff92824b7622b`；[脱敏结果/逐文件哈希](../review-assets/GATE-CLEANUP-WAIT-01/evidence.json)，原完整summary及final-validation仅本地。session55738已结束，无活动测试；r1_review独立重算上述原件、490输入、213公开投影、原失败保留和文档边界，终审0 MUST；主控记录AI_ACCEPTED_RECONNECT_AND_OWNED_EXIT_ONLY，不代表用户/Pro或R1/M1/R3整体验收。下一核全部新增对象、提交元数据和远端策略，再正常PR集成；不重复全量。
+
+## 交付检查点（2026-10-22）
+
+交付候选24c65c26b7d8284a595729f292ba97fbf5104b06已普通push到feature/r1-restart-reconnect-20261021，ls-remote核一致；main仍ddf1c79b0143890a4c98941b6b5b500b6909e761。全部26新增对象（1commit/12tree/13blob）和元数据独立审计0 MUST，490输入保持已验字节。创建PR的GitHub连接器返回403 Resource not accessible by integration；只读查询同head的open PR为空，未创建PR/未合并，未重试或直接push main。候选check-runs/status contexts/Actions均0，aggregate pending/total0，不称CI通过。下一需恢复具有PR写权限的受支持连接，再核分支/保护/未重复PR后正常创建与合并；无需重跑测试或重建。仅本次脱敏交付回执继续提交到同分支，最终leaf以Git refs为准；没有活动测试。

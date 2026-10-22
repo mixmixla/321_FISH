@@ -1992,5 +1992,23 @@
     "reviewer": "r1_review",
     "must": 0,
     "scope": "Original evidence, candidate files, source binding, failure preservation; new Git objects require pre-push audit."
+  },
+  "delivery": {
+    "candidate_commit": "24c65c26b7d8284a595729f292ba97fbf5104b06",
+    "branch": "feature/r1-restart-reconnect-20261021",
+    "remote_branch_verified": true,
+    "remote_main": "ddf1c79b0143890a4c98941b6b5b500b6909e761",
+    "status": "BRANCH_PUSHED_PR_CREATE_BLOCKED_403",
+    "pr_created": false,
+    "merged": false,
+    "new_objects_reviewed": 26,
+    "independent_must": 0,
+    "ci": {
+      "check_runs": 0,
+      "status_contexts": 0,
+      "actions_runs": 0,
+      "claim": "NOT_PROVIDED_NOT_PASSED"
+    },
+    "receipt_leaf": "See Git refs; documentation-only receipt."
   }
 }

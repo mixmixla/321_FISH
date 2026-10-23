@@ -111,4 +111,7 @@ UID级主动退群须通知该UID全部已有Session并清对应群重入/密钥
 
 系统管理员remove同样须权威重核同一群/目标成员、只移除一次，向全部目标Session发送带gid/revision的group_removed并清该群语音名册，其他群/账号/token不变；成功外部IO在锁外。管理员remove先_known_names读锁，确定性并发门应放在随后remove写锁acquire前，不能误挂首次读锁。显式dissolve在_known_names之前，锁内原成员全部已有Session/revision、删群及该gid语音名册，锁外逐目标容错通知；其确定性竞态门为首次Hub锁。普通owner无显式dissolve入口，最后成员leave解散是不同路径。
 
+群语音join的锁外预查后仍须在名册写锁内重核当前群/成员；撤销先完成时不得迟到复活名册/孤儿房。
+拒绝不发送成功peers/audit，权限拒绝与容量错误回调IO在锁外；确定性测试门放预查后的首次实际写锁前。
+
 公开入群/系统管理员加人的成员资格、容量和写入必须同一Hub锁内决定，拒绝回执/持久化/广播/审计锁外。确定性竞争门要区分管理员_known_names的前置读锁与实际写入锁，不能只同时起跑；同UID重复加入优先报告已有成员，不重复成功副作用。

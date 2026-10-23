@@ -73,6 +73,8 @@
   复位保留房间成员供房主再开。人数不足且无native结果时公共层中止，不新增winner/奖励。
 - 游戏状态与匹配离房ACK按UID发给全部存活端；客户端清离房room/public/private/events并忽略迟到帧，
   显式join/spectate发请求前解除旧房间fence，失败恢复。桌面/Web终局保留公开棋盘并阻止继续动作。
+- 群语音room_join在Hub写锁内重核当前群存在及成员资格，再更新名册；锁外预查不能替代写入时授权。
+  拒绝不预建房或发送成功peers/audit；新增权限拒绝与容量错误IO在锁外，public/合法同UID重入保持。
 - `FileManager` 管 P2P 优先与服务器回退，`filexfer` 是分块/PartFile 数据层；
   群文件库另走 Hub 权限路径。通话/语音房使用加密 UDP；位置、VMA1、WAV
   有各自 TTL/缓存与 UI 流程。

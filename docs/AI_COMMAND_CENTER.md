@@ -17,12 +17,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 独立R1续批 · GROUP-VOICE-MEMBERSHIP-01 v1（2026-10-23）
 
-**IMPLEMENTED / DOMAIN_PASSED / INDEPENDENT_CODE_REVIEW_0_MUST / NOT_AI_ACCEPTED**。[Task](task-packages/GROUP-VOICE-MEMBERSHIP-01.md) / [Review](review-packages/GROUP-VOICE-MEMBERSHIP-01-r1.md)。上批退群管理员资格已最终交付main ed287336d689360aec7090bfd4cc75c1c8099da7并Git/API双核，220文件3017P0F20既有skip/exit0、50新对象独立0 MUST，clean/无活动测试。沿用户持续Sol+FAST与正常main集成授权，实际服务回执不可见不冒称核实。
+**IMPLEMENTED / DOMAIN_PASSED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / AI_ACCEPTED_GROUP_VOICE_MEMBERSHIP_ONLY / PUBLIC_REVIEW_0_MUST**。[Task](task-packages/GROUP-VOICE-MEMBERSHIP-01.md) / [Review](review-packages/GROUP-VOICE-MEMBERSHIP-01-r1.md) / [脱敏证据](review-assets/GROUP-VOICE-MEMBERSHIP-20261023/evidence.json)。沿用户持续Sol+FAST与普通main集成授权，实际模型/服务回执未暴露，不冒称已核。root唯一集成/资料/组合验证，A隔离server/newtest实现，B独立只读审查，最多3活动者。
 
-下一真实缺陷只读确认：room_join锁外检查群成员后，到锁内写voice_rooms前发生leave/kick/admin remove/dissolve，迟到请求可复活名册甚至为删群创建孤儿房。只冻结join handler当前群/成员权威重核与名册写入同锁、拒绝IO锁外+newtest；不改public/容量/Web只读/已有协议或其他handler，不开音频UDP/硬件。root唯一集成/文档/最终验证，independent-r1工作树已切fix/group-voice-membership-integration-20261023；A独立group-voice-membership-20261023/同名功能分支同base clean只写server/newtest，B独立只读审查，最多3活动者。
+base已双核main ed287336d689360aec7090bfd4cc75c1c8099da7；worker94685dbd9d03130159279b833ac2a2e0bedaaf48无冲突集成ceae77c497e08742db1fa0acc1a72e757d12905d，两blob相同。当前independent-r1工作树/fix/group-voice-membership-integration-20261023；写锁内重核当前群/成员再写语音名册，新增拒绝及既有room_full错误IO锁外，保持public/合法重入/容量/Web/其他群与账号。不改客户端/其他handler/协议，不开音频UDP或硬件。
 
-原产品RED group-voice-race-red-20261023-20261023-192148-7c4b02b2e9为5F/exit1/2.65s，直接观察四撤销后缺room拒绝与room_full锁内回调；名册复活由受控撤销顺序+无异常返回+旧唯一路径确定推导，未冒称RED后续名册断言执行。首GREEN group-voice-race-green-20261023-20261023-192228-11dac1c8d4为5P/exit0/2.017s，旧域group-voice-race-domain-20261023-20261023-192243-a552b14153为5文件66P/exit0/22.232s，同GREEN source75e7d3c61546b61114b877da4317f945b8b41fb665ddad063f35fb24eba1d296，domain summary SHAec63b0fce7f3fcbf6d6bf03cef7f02d6767f884cd674a31322d88843d6bb6ee2。test三阶段同字节，RED→GREEN只server变，root原log/快照/sandbox/cleanup等后验通过；exec12263/51231/14562已结束，无活动测试。B正式代码/三run原件独立0 MUST；下一worker两文件提交→root等blob冻结/唯一短run-dir full，未AI接受/推送。原件将留本工作树_tmp_gui/group-voice-membership-20261023，正式计划原工程_tmp_gui/gvm23-final-01。视频原工程4759仍暂停非祖先，不继承/诊断/合并/开设备，历史失败保持；禁止强推/保护凭据权限更改/发布/原日志私密入库，不称CI/GUI/自然退出/LAN/EXE/完整R1通过。
+原RED5F/exit1/2.65s直接观察四撤销后缺room拒绝和room_full锁内回调；名册复活由受控撤销顺序+无异常返回+旧唯一路径确定推导，后续RED名册断言未执行。首GREEN5P/exit0/2.017s执行完整名册/peers/audit断言及动态锁探针，旧域5文件66P/exit0/22.232s；test三阶段同字节，RED→GREEN仅server变，代码/三run原件独立0 MUST，详见Review。
 
+冻结498输入/source f3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae；唯一full gvm23-final-01已自然完成221文件3022P/0F/20既有skip/actual exit0/862.58s，summary SHA de53fa5bd1c8f69c1d657a6d62b2e2562188fd56eff8b70c69831cc4c4ee0986。root首次28后验全true：冻结/当前/快照、完整集合/全原log/sandbox/单attempt/cleanup、旧220计数与skip、解释器依赖、阶段及旧失败均保持。exec96207已结束，无活动Python测试。原件本工作树_tmp_gui/group-voice-membership-20261023（frozen-source/worker-validation/full-output/full-exit/final-validation），正式run原工程_tmp_gui/gvm23-final-01。B已独立复算全部221原件、498源与身份/旧计数及失败保留，最终技术0 MUST；root据此有限AI_ACCEPTED本Task，公开七资料独立0 MUST（已纠正领域与组合源ID措辞），全新增对象待提交后独立审计，尚未main集成/推送。
+
+视频原工程4759仍暂停非祖先，不继承/诊断/合并/开设备，client/client_core/vmemo_api等base，旧失败原位保留。后继只读邀请码与语音地址边界未确认值得冻结的新缺陷，不造任务或叠加功能；无第二测试。禁止强推/保护凭据权限更改/历史重写/发布/原日志私密入库，不称CI/GUI/自然退出/物理LAN/新EXE/完整R1通过。
 
 ## 独立R1续批 · GROUP-LEAVE-ADMIN-ROLE-01 v1（2026-10-23）
 

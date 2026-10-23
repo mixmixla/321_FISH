@@ -23,3 +23,7 @@
 ## 文件与恢复边界
 
 root唯一资料/指挥中心/任务投影/必要稳定记忆、组合验证与集成，主控independent-r1工作树/分支fix/group-voice-membership-integration-20261023。session_scout独立group-voice-membership-20261023工作树/分支fix/group-voice-membership-20261023，仅server.py/newtest写入；flagship_scout只读独立设计/代码/原件/资料/对象审查，总活动最多3含root。冻结时同base clean，无在途调用/活动测试；长测试/变更/交接及时记指挥中心。原件本工作树_tmp_gui/group-voice-membership-20261023及正式短run目录；原工程视频4759保持不动。
+
+## 本批实施结论
+
+2026-10-23有限AI_ACCEPTED_GROUP_VOICE_MEMBERSHIP_ONLY；需求v1范围不变。worker94685dbd9d03130159279b833ac2a2e0bedaaf48、组合ceae77c497e08742db1fa0acc1a72e757d12905d，唯一full221文件3022P0F20既有skip/exit0，独立最终技术0 MUST。公开资料独立0 MUST；普通main集成仍待，版本/原件/后验见Review；不等用户/Pro或完整R1验收。

@@ -1,7 +1,7 @@
 {
   "task": "GROUP-VOICE-MEMBERSHIP-01 v1",
   "base": "ed287336d689360aec7090bfd4cc75c1c8099da7",
-  "status": "IMPLEMENTED_DOMAIN_PASSED_INDEPENDENT_CODE_REVIEW_0_MUST_PENDING_FULL",
+  "status": "AI_ACCEPTED_GROUP_VOICE_MEMBERSHIP_ONLY_PUBLIC_REVIEW_0_MUST_PENDING_INTEGRATION",
   "worker": {
     "base": "ed287336d689360aec7090bfd4cc75c1c8099da7",
     "runs": {
@@ -95,6 +95,59 @@
   "independent_worker_review": {
     "reviewer": "flagship_scout",
     "scope": "Task v1, actual diff/tests and all three original runs with observed/inferred distinction",
+    "must": 0
+  },
+  "full": {
+    "run_id": "gvm23-final-01",
+    "files": 221,
+    "totals": {
+      "passed": 3022,
+      "skipped": 20
+    },
+    "exit_code": 0,
+    "seconds": 862.58,
+    "source_content_id": "f3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae",
+    "summary_sha256": "de53fa5bd1c8f69c1d657a6d62b2e2562188fd56eff8b70c69831cc4c4ee0986",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true,
+      "actual_shell_exit_zero": true,
+      "current_frozen_full_source_exact": true,
+      "source_498_inputs": true,
+      "full_complete_file_set": true,
+      "full_pass_counts_expected": true,
+      "old_file_counts_unchanged": true,
+      "existing_skips_unchanged": true,
+      "interpreter_identity_exact": true,
+      "dependency_identity_exact": true,
+      "gate_tools_unchanged": true,
+      "test_manifest_current_exact": true,
+      "worker_current_integrated_canonical_equal": true,
+      "no_video_ancestry": true,
+      "no_video_client_changes": true,
+      "prior_full_preserved": true,
+      "paused_video_failure_preserved": true,
+      "prior_path_failure_preserved": true,
+      "all_worker_checks_true": true,
+      "all_worker_summaries_preserved": true,
+      "red_to_green_only_server": true
+    },
+    "source_inputs": 498
+  },
+  "independent_final_technical_review": {
+    "reviewer": "flagship_scout",
+    "scope": "All 221 raw records, 498 source inputs and identity, prior per-file counts/skips and original failure preservation",
+    "must": 0
+  },
+  "independent_public_review": {
+    "reviewer": "flagship_scout",
+    "scope": "Seven final documents, projection/links, source identity wording and stable invariants",
     "must": 0
   }
 }

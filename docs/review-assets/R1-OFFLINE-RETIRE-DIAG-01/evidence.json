@@ -1,0 +1,54 @@
+{
+  "task": "R1-OFFLINE-RETIRE-DIAG-01 v1.1",
+  "status": "AI_ACCEPTED_OFFLINE_RETIRE_DIAGNOSTIC_ONLY",
+  "base": "4a94762d767a1f25e5886d20fc36731d09c04e7d",
+  "baseline_source_content_id": "5da85d93290d1d794f83fb3415777b306aae14bf563d10ade49e699197db972f",
+  "baseline_inputs_unchanged": 490,
+  "prepared_inputs": 491,
+  "diagnostic_inputs": 487,
+  "non_git_snapshot_omissions": [
+    ".python-version",
+    "app.ico",
+    "tests/_run_all.py",
+    "tests/_smoke_excel_skin.py"
+  ],
+  "baseline_inputs_executed_unchanged": 486,
+  "interpreter_and_dependencies_match_baseline": true,
+  "probe_sha256": "603c214beed89e9f98778103a60bed7383745462a21381a334f85e7a813f16d3",
+  "run_id": "offline-retire-diag-20261022-20261022-122310-34311ba5f9",
+  "source_content_id": "df8a313bf41c04b952e1821f16e70f1377d1d0b3020618e90159ffa3b11da733",
+  "summary_sha256": "6f86b60584bcf046aab368fa26b6f60280c1ee55be9b90dda5eb1b135eb8e8fd",
+  "log_sha256": "944177498489df6d9cca8cd20db771bd909d07570106e1d3f655e9d8ada1f201",
+  "sandbox_sha256": "f94ab05fdfb72e0a1f3a6d756fc823eec16b2cdd25cf36e2bd2e7294f4b72251",
+  "counts": {
+    "passed": 1
+  },
+  "exit_code": 0,
+  "actual_shell_exit": 0,
+  "seconds": 3.042,
+  "attempts": 1,
+  "observations": {
+    "owned_cleanup_confirmed": true,
+    "persisted_operation_preserved": true,
+    "retired_while_original_client_offline_without_notification": true,
+    "survivor_same_uid_new_epoch_chat": true,
+    "target_new_epoch_terminal_refusal": true,
+    "target_no_revival": true
+  },
+  "execution_snapshots_verified": 2,
+  "prepared_baseline_verified": true,
+  "root_source_unchanged": true,
+  "cleanup_ok": true,
+  "scope": "Real client encrypted loopback; offline admin authenticated control-interface calls; synthetic data only. No GUI, LAN, EXE or whole R1 acceptance.",
+  "independent_final_review": {
+    "reviewer": "r1_review",
+    "must": 0,
+    "scope": "Original evidence, actual input binding, five sanitized documentation files"
+  },
+  "delivery": {
+    "branch": "feature/r1-offline-retire-diagnostic-20261022",
+    "merge_status": "NOT_MERGED",
+    "pr_creation": "BLOCKED_403_NOT_RETRIED",
+    "head": "See Git refs after ordinary branch push"
+  }
+}

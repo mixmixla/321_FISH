@@ -14,6 +14,9 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 用户要求今日停止；分支 feature/r1-restart-reconnect-20261021、HEAD ddf1c79b0143890a4c98941b6b5b500b6909e761。未提交：tests/test_client_core.py（真实持久 Hub 重开后原 ClientCore 续连回归）及 docs/task-packages/R1-RESTART-RECONNECT-01.md。既有对照 2P，最终目标用例 1P，领域 75P；独立代码复审 0 MUST。唯一实际全量 run r1-restart-reconnect-full-20261021-20261021-224241-6202d94027 于用户停工时中断：最后原进度 189/213 文件 passed，tests/test_server.py 标 running，无 summary，exit1 是人工中止，绝不判作全量通过或产品失败。原件留本地 _tmp_gui/test-gate/ 对应 run 与 _tmp_gui/r1-restart-reconnect-20261021/final-gate-output.txt。已确认无本轮 test_gate/pytest/Python 自有进程；未 commit/push/merge。明日先核 git status、进程、原进度/日志，再决定重新完成唯一有效全量门禁；之后独立终审、脱敏记录和经授权的正常集成。本检查点不代表 R1/M1/GUI/EXE/LAN 验收。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+## R1-OFFLINE-RETIRE-DIAG-01 v1.1（2026-10-22）
+
+**AI_ACCEPTED_OFFLINE_RETIRE_DIAGNOSTIC_ONLY / FINAL_REVIEW_0_MUST / NOT_MERGED**。[Task v1.1](task-packages/R1-OFFLINE-RETIRE-DIAG-01.md) / [Review](review-packages/R1-OFFLINE-RETIRE-DIAG-01-r1.md)。base4a94762，feature/r1-offline-retire-diagnostic-20261022；root唯一执行/资料写入，r1_review设计/探针预审0 MUST。前批feature/r1-restart-reconnect-20261021保持4a94762待合并、main仍ddf，PR403不重试。不改产品/正式tests，已验490输入保持，仅隔离副本加一个本地探针。唯一offline-retire-diag-20261022-20261022-122310-34311ba5f9为1P/exit0/3.042s，原目标core离线退役后新epoch拒绝并终止重连，旁观原core同UID恢复聊天；六观察true，自有资源清理通过。准备491/实际nonGit快照487明确区分（排除版本声明、图标和两辅助脚本），首次后验491断言失败保留，按实际manifest核全部486原输入/探针/解释器/依赖后通过，不重跑。session36244已结束，无活动测试；原件_tmp_gui/r1-offline-retire-diag-20261022及对应run，独立原件/最终五份资料终审0 MUST，主控有限AI接受该诊断；下一新增对象审计后仅正常推送独立资料分支，实际交付HEAD见Git refs，前批PR仍受阻。不是GUI/LAN/EXE/完整R1验收，不重复full或绕PR权限。
 
 ## GATE-CLEANUP-WAIT-01 v1（2026-10-22）
 

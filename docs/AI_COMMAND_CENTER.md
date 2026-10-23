@@ -15,6 +15,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 独立R1续批 · ADMIN-GROUP-DISSOLVE-SCOPE-01 v1（2026-10-23）
+
+**READY / DESIGN_REVIEW_0_MUST / NOT_IMPLEMENTED**。[Task](task-packages/ADMIN-GROUP-DISSOLVE-SCOPE-01.md) / [Review](review-packages/ADMIN-GROUP-DISSOLVE-SCOPE-01-r1.md)。用户明确继续已只读确认的管理员显式解散通知/语音缺口，沿Sol+FAST与正常main授权，实际服务回执不可见不冒称已核。fresh API/fetch main7dbbd28cd9b608657c04e6444a75230cd6bdcd0a，原工作树clean无Python测试；root主控independent-r1工作树已切fix/admin-group-dissolve-integration-20261023，独立worker admin-group-dissolve-20261023/分支fix/admin-group-dissolve-scope-20261023同base clean。
+
+只修server.py显式dissolve分支+newtest：锁内原群成员全部已有Session/revision、删群及该gid语音名册，锁外逐会话通知与原持久/广播/审计，其他群密钥/账号/资源保持。项目没有普通群主显式解散命令，普通群主leave有余人转让、最后成员leave解散为对照，不添加入口或改权限。session_scout唯一写server/newtest，flagship_scout独立只读审查，root唯一文档/组合门禁/集成，最多3活动者；B独立设计审查0 MUST，A确认无在途调用/修改/测试，等待主控冻结提交后的实施GO。无活动测试/未完成写入；下一冻结提交→A确定RED/最小修复/GREEN/必要域→B审查→root冻结/唯一短run-dir full。
+
+基线agr23-final-01为218文件3009P0F20既有skip/exit0、495输入/sourcefe6c061356dbd80855e0856d43b5c2e9e1da52c8d93ccbe82d8123f73796cb4a；新计数不得预写。当前原件将留本工作树_tmp_gui/admin-group-dissolve-20261023，计划正式短run原工程_tmp_gui/agd23-final-01。视频原工程4759继续暂停，不继承、不诊断/合并/启真实设备；历史失败保持。禁止强推/保护凭据权限更改/发布/原日志私密入库；不声称CI/GUI/自然退出/LAN/EXE/整个R1通过。
+
+
 ## 独立R1续批 · ADMIN-GROUP-REMOVE-SCOPE-01 v1.1（2026-10-23）
 
 **IMPLEMENTED / DOMAINS_PASSED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / AI_ACCEPTED_ADMIN_GROUP_REMOVE_ONLY / PUBLIC_REVIEW_0_MUST / MERGED_MAIN / REMOTE_VERIFIED**。[Task](task-packages/ADMIN-GROUP-REMOVE-SCOPE-01.md) / [Review](review-packages/ADMIN-GROUP-REMOVE-SCOPE-01-r1.md) / [脱敏证据](review-assets/ADMIN-GROUP-REMOVE-20261023/evidence.json)。沿用户持续Sol+FAST与普通main集成授权；实际模型/服务回执未暴露，不虚称已独立核实。root唯一集成/资料/最终验证，session_scout隔离实现server.py与新tests/test_admin_group_remove_scope.py，flagship_scout独立设计/代码/原件审查，最多3活动者。

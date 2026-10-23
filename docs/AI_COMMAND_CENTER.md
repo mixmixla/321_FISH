@@ -15,21 +15,21 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
-## 当前账号历史批 · HISTORY-UID-ISOLATION-01 v1（2026-10-23）
+## 当前账号历史批 · HISTORY-UID-ISOLATION-01 v2.1（2026-10-23）
 
-**IMPLEMENTED / INDEPENDENT_CODE_AND_SELECTED_EVIDENCE_REVIEW_0_MUST / FINAL_FULL_PENDING / NOT_AI_ACCEPTED**。[Task](task-packages/HISTORY-UID-ISOLATION-01.md) / [Review](review-packages/HISTORY-UID-ISOLATION-01-r1.md) / [脱敏证据](review-assets/HISTORY-UID-ISOLATION-20261023/evidence.json)。用户已批准按稳定UID隔离、更名连续、旧昵称原件保留且不自动认领。Sol+FAST沿用，实际运行配置回执不可见。main Git/API base293cc526ea2c49a4c5ca4520a09ca73aa5733a01；API再次只读确认未变、protected=false/可见rulesets为空，最终集成前还须fresh核查。
+**IMPLEMENTED / V1_CODE_REVIEW_0_MUST / FIRST_FULL_FAILED_RETAINED / CONTRACT_TESTS_107P_REVIEW_0_MUST / NOT_AI_ACCEPTED**。[Task](task-packages/HISTORY-UID-ISOLATION-01.md) / [Review](review-packages/HISTORY-UID-ISOLATION-01-r1.md) / [脱敏证据](review-assets/HISTORY-UID-ISOLATION-20261023/evidence.json)。用户批准稳定UID隔离/更名连续/旧昵称原件保留不认领，Sol+FAST沿用（实际运行配置回执不可见）；普通main集成授权、不PR/force/改保护凭据/发布。开工main Git/API基线293cc526ea2c49a4c5ca4520a09ca73aa5733a01，集成前须fresh再核。
 
-root唯一集成/资料/最终全量，工作树history-uid-integration-20261023 / feature/history-uid-integration-20261023，HEAD本地检查点ff3bbef（文档dirty，产品尚未提交）。A session_scout独立history-uid-20261023树唯一产品/测试写入；B flagship_scout只读独立审查。原工程视频4759候选clean/暂停/不继承/不诊断，旧integration已同HEAD切checkpoint/r3-delivered-20261023释放main，无文件变化。
+root唯一集成/资料/最终全量，工作树history-uid-integration-20261023 / feature/history-uid-integration-20261023，HEAD ae63aeea5de5131f6c4f828aabd42b304774c849（资料dirty；产品12路径来自A c3280ec999871b9d5977a1eaf6c8edc00b23e20b，无冲突）；原工程视频4759 clean/暂停，不继承/诊断。A session_scout独立history-uid-20261023唯一产品/测试写入，B flagship_scout只读独立设计/代码/原件审，最多3活动者。
 
-冻结语义：accepted WELCOME中durable store_scope_id+正整数UID为持久隔离键；预认证/volatile/缺有效服务scope使用独占fresh临时bundle，不按昵称读取旧数据。显式history_dir是ROOT。旧昵称/顶层历史与prefs正文不自动迁移；新六字段UID视图及UI/worker代次门，strict key/路径失败拒绝并保旧字节。复制整个Store复制scope，现协议不区分克隆。详情以Task v1为准。
+已实现accepted WELCOME durable store_scope_id+正整数UID持久ROOT/v2分层；预认证/volatile fresh独占临时bundle，旧昵称/顶层历史和prefs正文不自动认领。六字段UID视图/严格key与路径/完整WELCOME和捕获旧帧提交/worker发送与cloud/Tk origin/有界主线程退休快照合并已独立代码0 MUST；生产源未再修改。新两文件37+11合成回归已在首full实际通过，不冒称可视GUI/自然退出/LAN/新EXE。
 
-阶段原件均已root核snapshot/progress/testset/log SHA计数/sandbox/单attempt清理/指纹八项一致。原产品RED3F已保留；domain01真实volatile重入回归48P1F已修（runtime epoch+UID+原目标仅保重入意图，不持久化历史/keys）；domain02/exec45050首次168P3F保留，独立确认r37捕获stop前UID、r36单例真实durable fixture保原断言。green03首次44P1F为新口令拒绝用例错误等待flag，green06/exec16977首次74P1F为新Tk用例错用rows属性，原件保留。不同阶段源/测试字节分别绑定，不以部分绿抹失败。
+原产品RED3F、domain01真实重入退化48P1F、domain02旧合同168P3F、green03/06及affected新fixture首失败均保留，不retry-to-green。详见Review/evidence逐版本。A最终501/source4ed7d41…与root首组合501/source72f401b340bc20da32d4d16d9c13e3ba783eee6516db3feabd8d6fbec4abb8a9规范化逐字节相同，仅四文件Git换行不同。
 
-green04实际42P/exit0、green05实际18P/exit0含真实Hub/Store关闭重开及local-only marker、旧cloud/E2EE/media、reparse/准备失败、prefs/Tk；green07/exec10441仅修正Tk断言单文件9P/exit0，非最终候选接受。B报队列代次/WELCOME捕获连接与完整副作用/贴纸与封面/坏UID prefs/temp失败撤销/旧worker发送TOCTOU等MUST，A整改后补完整identity transition互斥及草稿时间戳清空、坏prefs旧保存守卫。501输入候选曾冻结source9da06397520d40a52940b066d21841b9735b964a2b2ba0578d3a1dee846d8855供审；B继续确认非WELCOME旧POLL/pwd及目标未drop间隙、cloud状态调用前代次缝尚须修。当前A仅整改，不运行新选测：完整dispatch提交门需避免队列/网络背压下阻塞UI切目标，旧worker origin须贯穿hook/Tk；不添加新sender/无关队列体系。旧并发测试门也须适配真实串行化，不自锁。尚无代码0 MUST/新affected/full。
+hui23-final-01/exec76517已自然actual exit1，223文件3048P22F20既有skip/841.176s，summary SHA6de2fab0a29bc4020512ac428d21de4e4a1aad1d33054efce3236b2e01dfc10c。root13原件/快照/冻结/当前字节后验全true；失败恰七旧文件。五文件为Core欢迎wrapper关键字、__new__前置及send mock契约失配；另wire一例set_host清旧名册、Stars三launcher例metadata-only不认领与旧期待冲突，B独立分类，不能把全部称夹具。原full永久FAILED，不改终态/续跑旧指纹。
 
-最新：唯一affected hui23-affected-final-01/exec41868自然exit1，6文件103P1F，sole新UI mock过宽拦正常STICKER_SHOP，原件保留。仅修新test按CLOUD_GET处理，501其他500输入逐SHA不变；hui23-ui-fixture-final-01/exec7132自然exit0/11P。root八项后验与B最终代码/选测原件独立0 MUST，绑定501/source4ed7d41cd0f86dd367f021d0192e3df45bd66fed6c3a545cca1e03415f84ab7e；未称首affected全绿或最终接受。A获仅12代码/测试路径本地提交授权，无活动测试，root准备接入/冻结。
+Task v2.1仅准七旧test最小契约修订，产品不动；原断言/屏障或对应新批准语义的数据保护强化，34其余Stars保护不动。A候选501/source9388d7f96ab69a83f3ef46960430ff3b3bc4728cfb90f6df7bf6fe10c0164c66已B差异0 MUST；唯一hui23-contracts-final-01/exec25125自然actual exit0/107P/25.841s，summary8b53cf6eeed5d878fc6f4ccba04581bd80add6eb603021327ff48baa1a5c7d4e。root九项后验、B七原log/501字节独立0 MUST，A获仅七test本地提交授权；无活动测试。下一动作接入/冻结新501，必要新版本完整hui23-final-02。只因已定位测试输入变更需要新候选，不盲重；若出现其他问题先诊断。
 
-下一动作：A交干净代码提交；root接入并逐字节冻结，唯一组合full原工程_tmp_gui/hui23-final-01，之后独立原件终审、敏感全新增对象审计、普通非强制main集成与Git/API核实。原件在本树_tmp_gui/history-uid-isolation-20261023及原工程_tmp_gui/hui23-*；禁止重放仍活动命令、盲重全量或retry-to-green。尚未全量/AI_ACCEPTED/合并，不称CI/可视GUI/自然退出/物理LAN/新EXE或完整里程碑通过。
+后续独立最终原件审、AI接受、全部新增可达对象/metadata敏感审计、普通main合并推送及Git/API/真实CI核实尚未完成。原件本树_tmp_gui/history-uid-isolation-20261023及原工程_tmp_gui/hui23-*，不上传原日志/私人数据/二进制，不声称CI或完整里程碑通过。
 
 ## 当前本地试用批 · R3-CURRENT-BUILD-01 v1（2026-10-23）
 

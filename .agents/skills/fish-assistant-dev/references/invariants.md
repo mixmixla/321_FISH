@@ -100,8 +100,10 @@ Excel 接线：`client.py` → `widgets.excel_chrome.ExcelChrome` →
   目前直接触发 Tk 预览/Toast；涉及视频留言时核对主线程移交，当前未做真机复现。
 - 游戏 painter、`_CLICKS` 和 `_GAME_ACTIONS` 对部分 key 的路由覆盖不一致；
   修改/启用这些游戏先验证具体动作能从客户端到达 Hub，不能只跑规则测试。
-- 昵称安全目录会替换字符并截断，可能碰撞；下载目录不按昵称隔离。涉及账号
-  与迁移时验证这两类路径的行为，不擅自迁移/合并现有用户目录。
+- 新持久历史以已接受WELCOME的durable Store scope+UID隔离；昵称/端点/运行态epoch不是持久键。
+  预认证/volatile fresh临时bundle，旧昵称/顶层历史不自动认领或迁移。旧昵称目录可能碰撞，下载仍设备全局。
+  验证切账号时旧帧/worker/排队UI不能用新代次提交；WELCOME全过程与目标切换串行；阻塞events投递及_on_event回调出迁移锁，目标切换先关捕获旧socket以解除同步发送。
+  durable路径/媒体leaf拒绝既存reparse，坏密钥/prefs保原件；UID六字段偏好不读legacy正文，失败写不覆盖原值。
 - 现有 `.spec` 的图标含旧机器绝对路径，且没有当前 build.py 的 Vosk collect/data
   逻辑；直接调用 spec 打包前要核对，不把两个入口视为等价。
 

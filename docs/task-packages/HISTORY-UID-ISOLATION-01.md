@@ -1,4 +1,4 @@
-# HISTORY-UID-ISOLATION-01 v1 — 已确认账号的本地聊天隔离
+# HISTORY-UID-ISOLATION-01 v2.1 — 已确认账号的本地聊天隔离
 
 2026-10-23 READY / INDEPENDENT_DESIGN_REVIEW_0_MUST。用户已批准：聊天历史按账号UID隔离，改昵称记录连续，旧昵称历史保留、不自动归给新账号。沿用Sol+FAST与普通main集成授权，实际服务回执不可见不冒称核实。base已Git/API双核main `293cc526ea2c49a4c5ca4520a09ca73aa5733a01`；独立集成工作树history-uid-integration-20261023/feature/history-uid-integration-20261023，旧试用树checkpoint/r3-delivered-20261023同base无文件改变。原工程视频4759保持clean/暂停/非祖先，不继承、诊断或合并。
 
@@ -28,11 +28,29 @@ B flagship_scout独立只读设计、代码、原始证据、资料与新增对�
 1. 先用合成旧昵称/顶层jsonl、媒体/身份和prefs标记保存全清单/hash；原产品执行确定性RED，须触达真实旧读取/认领/跨账号问题，不能把新helper不存在或fixture前置错冒充产品失败；首次失败/退出码/测试字节均保留。
 2. GREEN覆盖认证前不读取旧目录/不迁移、登录失败/拒绝、登录登出切号、同昵称不同UID、同UID显示名变更、两个durable服务同UID、新Store、同Store真实重启、端点别名同Store、missing/volatile/非法scope/UID、显式ROOT、绑定失败后恢复、路径逃逸/重解析拒绝与旧字节不变。历史唯一标记使用私聊/本地合成内容，不能把服务端合法公共历史共享误判为泄露。
 3. 必须有旧worker受控门：启动于身份A，切B或失败后再放行，确认不写/合并B、不恢复A UI；不靠sleep概率或无界压力。六字段UID视图重载/切换、legacy opaque-stars保持、失败写入无旧内容覆盖、实际launcher接线与必要真实Tk组件路径回归；不把组件/协议算可视GUI或自然退出。
-4. 按实际影响做一次必要历史/Core/E2EE/prefs/launcher/云/界面组件领域验证，代码/原件独立0 MUST后冻结组合输入，唯一最终按文件隔离full；用短原工程_tmp_gui/hui23-final-01，source-dir是当前Git集成树。A选测也用唯一短run-dir，不重复仍活进程；未改字节不盲目重跑，不retry-to-green，保留旧skip/历史失败。
+4. 代码/原件独立0 MUST后冻结组合输入并按文件隔离full。首组合hui23-final-01已自然失败，完整原件永久保留；七个已定位旧测试文件按下列v2/v2.1契约修订，先单次七文件选测/独立原件复核。测试输入变化不得resume旧指纹或改终态失败，新冻结501组合候选用短原工程_tmp_gui/hui23-final-02完成必要最终full。任一时刻仅一全量/选测；若出现不同问题先分类，不盲重全量或retry-to-green。source-dir是当前Git集成树，保留旧skip/历史失败。
 5. root绑定当前/冻结/快照/解释器依赖/原log/sandbox/完整集合/单attempt清理与实际shell exit，B从原件独立终审后才有限AI_ACCEPTED本Task。新增全部中间提交/可达对象及metadata脱敏审计；原日志/私聊/用户名/密钥/prefs/历史/二进制只本地，不上传。普通非强制main集成与推送后Git/API核完整SHA，CI无记录不称通过；不PR/发布/强推/绕保护或改权限凭据。
 
-原件主控本树_tmp_gui/history-uid-isolation-20261023；worker与正式门禁各独立ignored目录，长动作开始/结束更新中心与实际exec。基线498输入/raw source f3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae，与既有221文件3022P0F20skip/exit0完整门禁逐字节一致。此次尚未编码或运行测试，不沿用旧门禁作为新实现验收。真实GUI/自然退出/LAN/异机/新EXE与视频仍未验。
+原件主控本树_tmp_gui/history-uid-isolation-20261023；worker与正式门禁各独立ignored目录，长动作开始/结束更新中心与实际exec。基线498输入/raw source f3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae，与既有221文件3022P0F20skip/exit0完整门禁逐字节一致。原v1冻结时尚未编码或运行测试，不沿用旧门禁作为新实现验收。真实GUI/自然退出/LAN/异机/新EXE与视频仍未验。
 
 ## 设计审查结论
 
 flagship_scout从冻结v1独立审查0 MUST；窄strict身份存储、legacy保护和原子WELCOME/异步代次为必验项，root据此将本Task置READY。尚未实施或测试，不等验收。
+
+## v2 有限验证修订（产品范围不变）
+
+决定来源：root依现有本地自治/用户UID隔离授权，B独立原日志和差异审查0 MUST；不增加产品功能，不改变真实数据边界。v1首组合full01已实见夹具失配，不能以专项或原run续跑改称全量通过。v1设计/首RED/首次领域及选测失败仍逐版本保留。
+
+A仅增加五个既有测试文件所有权：tests/test_admin_group_dissolve_scope.py、tests/test_admin_group_remove_scope.py、tests/test_group_kick_scope.py、tests/test_group_leave_scope.py的Core私有WELCOME wrapper每处仅接收并透传captured connection关键字；tests/test_game_client_lifecycle.py的唯一__new__合成factory仅补threading导入及transition RLock/threadlocal/local generation三前置。真实Core、所有用例/行为断言/屏障和生产代码不变；不为裸__new__在产品添加fallback，不删/skip/弱化测试。
+
+同一kick文件的旧send mock另仅显式接收expected_local_generation可选关键字，函数体/门/断言不变；原日志两参数例直接显示门超时和cleanup AssertionError，关键字绑定拒绝为确定性源码推导，不冒称原日志直接打印TypeError。
+
+v2冻结时五文件差异已B独立静态0 MUST，worker501/source06652735e0d86ad1c3e31e932110ced5e12b91c33f4b5f097420cf2e0ce4fef6；未执行选测/提交。等待full01完整终态，若其他失败须另审具体原因，不能批量把未知问题列为夹具。02仅因已定位测试输入修正而必要，不承诺通过。
+
+## v2.1 已批准产品合同的旧断言更新
+
+full01完整失败恰七文件；前五项为上述夹具/前置兼容，另外两项由B独立原件及Task v1确认是旧断言与已批准UID隔离合同冲突，不能统称夹具或改产品迎合旧期待。
+
+A另仅获tests/test_retirement_status_wire.py及tests/test_stars_preserve.py所有权：前者保留失败发送不pop旧成员、恰两GET且零DEL/ever_del断言；显式set_host后改断旧uid/known/roster已撤销，迟到回执仍不能复活。后者仅三个launcher参数例按metadata-only登录选择更新期望，旧top stars/profiles/active_profile逐值保留，不迁移/认领，不创建uid_profiles；验证新UID视图为空。其余34个Stars保护用例及直接旧API保护不变。
+
+决定来源仍为用户已批准稳定UID隔离及launcher不认领legacy正文的既定产品合同；root授权技术验收修订，B独立判合同及差异。生产文件零改动，所有失败原件保留。七文件最终候选501/source9388d7f96ab69a83f3ef46960430ff3b3bc4728cfb90f6df7bf6fe10c0164c66，先独立审查后唯一hui23-contracts-final-01七文件选测，再按新指纹最终full02；不将full01改称通过。

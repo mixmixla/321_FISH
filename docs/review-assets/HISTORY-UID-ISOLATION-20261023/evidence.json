@@ -1,7 +1,7 @@
 {
-  "task": "HISTORY-UID-ISOLATION-01 v1",
+  "task": "HISTORY-UID-ISOLATION-01 v2.1",
   "base": "293cc526ea2c49a4c5ca4520a09ca73aa5733a01",
-  "status": "IMPLEMENTED_INDEPENDENT_CODE_AND_SELECTED_EVIDENCE_REVIEW_0_MUST_PENDING_FINAL_FULL",
+  "status": "VERSIONED_CONTRACT_TESTS_107P_REVIEW_0_MUST_PENDING_NEW_FINAL_FULL",
   "requested_service": "Sol + FAST; runtime receipt not exposed",
   "namespace": "validated durable store_scope_id plus confirmed positive UID",
   "old_data_policy": "Preserve original nickname/top-level history and legacy chat prefs; no automatic ownership or migration.",
@@ -341,5 +341,115 @@
     "must": 0,
     "source_content_id": "4ed7d41cd0f86dd367f021d0192e3df45bd66fed6c3a545cca1e03415f84ab7e",
     "scope": "Affected first failure retained and classified independently; five unchanged passing files and corrected UI 11P bound by exact 501-input comparison. No final-full acceptance."
+  },
+  "v2_revision": {
+    "product_scope_unchanged": true,
+    "reason": "First full observed legacy Core welcome wrapper keyword incompatibility and synthetic __new__ dispatch fields missing; preserve all first failures. Only five minimal fixtures adapted, original assertions intact. Changed test fingerprint requires new full02 after full01 naturally completes and all failures classified.",
+    "independent_design_and_five_fixture_diff_review": {
+      "reviewer": "flagship_scout",
+      "must": 0
+    },
+    "candidate_source_content_id": "06652735e0d86ad1c3e31e932110ced5e12b91c33f4b5f097420cf2e0ce4fef6",
+    "files": [
+      "tests/test_admin_group_dissolve_scope.py",
+      "tests/test_admin_group_remove_scope.py",
+      "tests/test_group_kick_scope.py",
+      "tests/test_group_leave_scope.py",
+      "tests/test_game_client_lifecycle.py"
+    ],
+    "selected_run_started": false,
+    "new_full_started": false,
+    "kick_send_mock_note": "Two parameter cases directly log entered timeout and cleanup assertion; source deterministically calls send with a new keyword rejected before mock body. Actual raw does not print captured TypeError. Mock only accepts optional expected_local_generation; assertions unchanged."
+  },
+  "first_combined_full_failure": {
+    "run_id": "hui23-final-01",
+    "files": 223,
+    "totals": {
+      "passed": 3048,
+      "failed": 22,
+      "skipped": 20
+    },
+    "exit_code": 1,
+    "seconds": 841.176,
+    "source_content_id": "72f401b340bc20da32d4d16d9c13e3ba783eee6516db3feabd8d6fbec4abb8a9",
+    "summary_sha256": "6de2fab0a29bc4020512ac428d21de4e4a1aad1d33054efce3236b2e01dfc10c",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true,
+      "actual_shell_exit_one": true,
+      "current_frozen_full_source_exact": true,
+      "all223_completed": true,
+      "only_seven_classified_failures": true,
+      "totals_observed": true
+    },
+    "actual_exec_session": 76517,
+    "actual_shell_exit": 1,
+    "scope": "First combined full FAILED; 7 files/22 failures preserved. Five fixture/prerequisite compatibility files plus two explicit approved semantics changes, independently classified. No product changed to hide these failures. Changed tests require new candidate fingerprint, not resume/relabel.",
+    "independent_review": {
+      "reviewer": "flagship_scout",
+      "must": 0,
+      "scope": "All223 original logs/manifest/progress/cleanup verified. Failure remains FAILED; seven classified files/22 failures, no full acceptance."
+    }
+  },
+  "v2_1_revision": {
+    "product_scope_unchanged": true,
+    "production_files_unchanged": true,
+    "reason": "Two old expectations conflict with explicitly approved target revocation and metadata-only launcher semantics. Preserve preflight no-DEL and all unrelated 34 Stars protections; strengthen legacy no-claim and empty UID view assertions. Distinct from five pure fixture compatibility files.",
+    "additional_paths": [
+      "tests/test_retirement_status_wire.py",
+      "tests/test_stars_preserve.py"
+    ],
+    "candidate_source_content_id": "9388d7f96ab69a83f3ef46960430ff3b3bc4728cfb90f6df7bf6fe10c0164c66",
+    "selected_run_started": true,
+    "new_full_started": false,
+    "independent_diff_review": {
+      "reviewer": "flagship_scout",
+      "must": 0
+    },
+    "actual_exec_session": 25125
+  },
+  "contract_verification": {
+    "run_id": "hui23-contracts-final-01",
+    "files": 7,
+    "totals": {
+      "passed": 107
+    },
+    "exit_code": 0,
+    "seconds": 25.841,
+    "source_content_id": "9388d7f96ab69a83f3ef46960430ff3b3bc4728cfb90f6df7bf6fe10c0164c66",
+    "summary_sha256": "8b53cf6eeed5d878fc6f4ccba04581bd80add6eb603021327ff48baa1a5c7d4e",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true,
+      "only_seven_test_contract_changes": true
+    },
+    "canonical_changed_inputs": [
+      "tests/test_admin_group_dissolve_scope.py",
+      "tests/test_admin_group_remove_scope.py",
+      "tests/test_game_client_lifecycle.py",
+      "tests/test_group_kick_scope.py",
+      "tests/test_group_leave_scope.py",
+      "tests/test_retirement_status_wire.py",
+      "tests/test_stars_preserve.py"
+    ],
+    "actual_exec_session": 25125,
+    "actual_shell_exit": 0,
+    "independent_review": {
+      "reviewer": "flagship_scout",
+      "must": 0,
+      "scope": "Seven original logs/counts/fingerprints/cleanup, all501 current snapshot and only seven contract revisions; original full01 remains failure."
+    }
   }
 }

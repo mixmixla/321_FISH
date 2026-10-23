@@ -80,12 +80,16 @@
   有各自 TTL/缓存与 UI 流程。
 - `theme/ExcelChrome/ExcelSheet` 是桌面可编辑工作表；`_sync_excel_layout` 复用旧
   聊天控件，`_send_excel_text` 仍进入统一聊天发送，工作表值在 `Prefs.excel_cells`。
-- 本地历史/媒体/身份按 `_nick_history_dir` 隔离，首个新账号可能认领旧顶层资源；
-  显式 history_dir 需调用者隔离。下载目录仍为全局 `_log_dir()/downloads`。
-- 当前本地历史键只含安全昵称，不含服务器/UID/身份代际；首次旧资源迁移仅覆盖顶层JSONL、voice和stickers_custom，
-  不含vmemo或旧E2EE身份。Prefs账号档案只切换pinned/muted/archived/drafts/stars/unread_marks六项；excel_cells仍设备共享。
-- 云历史是独立`cloud/{uid}.bin`，不在state.json；客户端解密restore直接merge，当前不校验包内UID/昵称/服务器/身份代际。
-  服务器快照包含group_files/moments等部分索引，独立媒体本体与Web fid元数据不等于快照事务。
+- 新本地历史/voice/vmemo/贴纸缓存/E2EE身份在当前连接WELCOME被接受后，按durable Store的store_scope_id与正整数UID绑定；
+  默认及显式history_dir都是ROOT，落在 `v2/<scope>/uid-<uid>`。昵称/端点别名不作持久键；复制整个Store会复制scope，现协议不区分克隆。
+- 预认证、volatile或缺有效durable scope使用独占fresh临时bundle，不按昵称读取或认领旧顶层资源；旧原件保留、不自动迁移。
+  同目标普通断线保留已确认离线历史，显式stop/切目标/认证拒绝撤销旧身份；新WELCOME、旧帧/worker/UI队列以本地代次隔离。
+  持久目录/历史/密钥及媒体写目标拒绝既存reparse别名，坏key不自动覆盖。下载目录仍为全局_log_dir()/downloads。
+- ChatWindow的pinned/muted/archived/drafts/stars/unread_marks六字段在身份确认前为空，确认durable身份后读写uid_profiles；
+  launcher只记登录昵称、不调用旧昵称档案认领。legacy顶层/profiles/opaque stars保原值，UID写与登录选择原子替换；坏prefs拒绝覆盖。
+  excel_cells及quick/reminders等仍按原设备语义，不属于该六字段隔离范围；星标类型冲突明确拒绝，不覆盖消息收藏正文。
+- 云历史是独立cloud/{uid}.bin，不在state.json；restore合并及UI回调核本地身份代次，旧worker发送也核捕获代次。
+  备份包自身仍不新增UID/服务归属签名。服务器快照包含group_files/moments等部分索引，独立媒体本体与Web fid元数据不等于快照事务。
 - `_attach/unregister`按字段存在性保留known的pwd/sign/avatar/invisible/status/remarks，空值/False同样保留；
   正常最后端更新last_online，在线与否仍取存活会话，退群/转群主等既有语义不变。
 - JSON恢复仅对冻结的groups身份结构、reads内部UID键做严格规范化；非法或冲突组拒该组，reads拒该会话映射，
@@ -215,7 +219,7 @@
   开发需主线程移交，尚未真机复现，本次技能整理不修改业务代码。
 - 部分游戏 painter 与 _CLICKS/_GAME_ACTIONS 路由未齐；新增/启用时验证动作可达，
   不把纯规则测试等同完整玩法交付。
-- 昵称安全目录替换/截断可能碰撞，下载目录全局；迁移/多账号任务需针对验证。
+- 旧昵称目录替换/截断可能碰撞，仅作为未自动归属的legacy保留；新持久历史用Store scope+UID，下载目录仍全局，不擅自迁移真实数据。
 - `.spec` 含旧机器绝对 icon 路径且缺 build.py 的 Vosk 模型逻辑；打包入口不等价。
 - docs/优化清单.md 属于另一个 Ollama IDE 项目；旧 UI 文档可能只记录早期状态。
 - 链接预览目前拒绝 3xx，部分跳转网页没有卡片；正文与链接正常可用。

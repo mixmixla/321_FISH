@@ -125,10 +125,13 @@ Hub 的游戏 handler 与 tick 推进状态、按玩家分发私有内容。桌�
 `ClientCore._dispatch/_push` 更新状态并向 events 队列投递，`ChatWindow._poll`
 每约 120ms 在主线程处理；注入的 `on_event` 回调自身仍可在后台线程执行。
 
-`_nick_history_dir` 将历史、voice/vmemo、贴纸缓存、E2EE 身份按安全昵称目录隔离；
-首次账号目录可迁移旧顶层历史资源。注入显式 history_dir 时需自己做隔离，
-不要让 smoke 或测试认领真实账号旧数据。下载目录仍是全局 `_log_dir()/downloads`。
-`config._log_dir` 在源码模式用项目目录，EXE 用用户可写目录。
+ClientCore构造只创建独占临时bundle；当前连接WELCOME接受后，durable Store的严格store_scope_id+正整数UID
+决定 `ROOT/v2/<scope>/uid-<uid>`，历史、voice/vmemo、贴纸和E2EE身份一起绑定。显式history_dir同样是ROOT。
+昵称、端点别名和运行态server_epoch不作持久键；volatile/缺有效scope每次认证fresh临时bundle，不认领旧昵称/顶层资源。
+旧原件保留，不让smoke或测试读真实历史。ChatWindow六字段UID偏好存uid_profiles，legacy profiles不自动迁移，
+launcher仅记登录选择。显式切目标/stop/认证拒绝撤销身份，旧帧/worker/排队UI以origin generation隔离；
+完整WELCOME与目标切换串行，阻塞事件投递在迁移锁外，关键chat保留背压。
+下载目录仍是全局_log_dir()/downloads；config._log_dir源码模式用项目目录，EXE用用户可写目录。
 
 `vmemo_api.VmemoRecorder` 的 on_done/on_error 在后台回调；当前 GUI 预览入口
 存在直接触 Tk 的接线，需要相关任务核查并移交主线程，见不变量的待验证项。

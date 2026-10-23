@@ -17,15 +17,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 独立R1续批 · GROUP-LEAVE-ADMIN-ROLE-01 v1（2026-10-23）
 
-**IMPLEMENTED / DOMAIN_PASSED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / AI_ACCEPTED_GROUP_LEAVE_ADMIN_ROLE_ONLY / PUBLIC_REVIEW_0_MUST / NOT_INTEGRATED**。[Task](task-packages/GROUP-LEAVE-ADMIN-ROLE-01.md) / [Review](review-packages/GROUP-LEAVE-ADMIN-ROLE-01-r1.md) / [脱敏证据](review-assets/GROUP-LEAVE-ADMIN-ROLE-20261023/evidence.json)。沿用户持续Sol+FAST与正常main授权，实际服务回执不可见不冒称已核。root唯一资料/验证/集成，A隔离实现server/newtest、B独立审查，最多3活动者。
+**IMPLEMENTED / DOMAIN_PASSED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / AI_ACCEPTED_GROUP_LEAVE_ADMIN_ROLE_ONLY / PUBLIC_REVIEW_0_MUST / MERGED_MAIN / REMOTE_VERIFIED**。[Task](task-packages/GROUP-LEAVE-ADMIN-ROLE-01.md) / [Review](review-packages/GROUP-LEAVE-ADMIN-ROLE-01-r1.md) / [脱敏证据](review-assets/GROUP-LEAVE-ADMIN-ROLE-20261023/evidence.json)。沿用户持续Sol+FAST与正常main授权，实际服务回执不可见不冒称已核。root唯一资料/验证/集成，A隔离实现server/newtest、B独立审查，最多3活动者。
 
-base已核main004d2bd545d31e7a2e2686a92b62c4c42e91c181，主控independent-r1工作树/fix/group-leave-admin-role-integration-20261023；worker group-leave-admin-role-20261023提交82945b761fb0f5d4ccdda5e08324d0b3348d176f无冲突集成c6a0106f3e162b442550696258aa6eb9b15550c4，两blob等worker。产品仅普通leave删除成员后同锁admins.discard一行，避免合法重入恢复旧管理能力；加入许可/mutes现状、其他群/账号/token和其他handler/Core/视频不动。
+base已核main004d2bd545d31e7a2e2686a92b62c4c42e91c181，主控independent-r1工作树（当前main，保留fix/group-leave-admin-role-integration-20261023）；worker group-leave-admin-role-20261023提交82945b761fb0f5d4ccdda5e08324d0b3348d176f无冲突集成c6a0106f3e162b442550696258aa6eb9b15550c4，两blob等worker。产品仅普通leave删除成员后同锁admins.discard一行，避免合法重入恢复旧管理能力；加入许可/mutes现状、其他群/账号/token和其他handler/Core/视频不动。
 
 原RED leave-admin-role-red-20261023-20261023-185517-86e3c428b2为2F1P/exit1/5.437s，合成实际invite handler与真实Core均走到旧权限复活、无fixture错；首GREEN leave-admin-role-green-20261023-20261023-185547-4bdb514e72为3P/exit0/2.279s，旧域leave-admin-role-domain-20261023-20261023-185603-4b1665275b为6文件94P/exit0/44.496s，同GREEN source8d187230e68527b3ad8e21108dd8951e4993c8f16f9ece58ce565dff6dff69d7，domain summary SHAd7b17c8c4cbf85a3952d333289fad41dbbe630481a6589750e5e3306ce8650bf。test三阶段同字节，仅server一行变，B设计/代码/3run原件0 MUST；mutes只验证原值保持，不声称有效禁言政策。
 
 冻结497输入/source3f89ac55c725b553a7c954ca92b67c68cadff066aa781a22c8335109233586bc；唯一full gla23-final-01已自然完成220文件3017P0F20既有skip/actual exit0/795.364s，summary SHA310f18fd50a6651aad3499b3d92027925b4e1b38e5a7c5d25fd68b439c3ca65c。root首次28后验全true：当前/冻结/快照、完整220集合、全原log/sandbox/cleanup/单attempt、旧219计数/skip、解释器依赖/历史失败均保持。exec3711已结束，无活动测试；原件本工作树_tmp_gui/group-leave-admin-role-20261023（frozen-source/worker-validation/full-output/full-exit/final-validation），正式run原工程_tmp_gui/gla23-final-01。
 
-B最终独立220原件/497源/身份与旧计数跳过复核0 MUST；root据此有限AI接受，公开资料独立终审0 MUST，未合并/推送。下一全部新对象metadata脱敏→fresh远端/可见规则→普通main集成核SHA，不重跑同版测试。后继群语音room_join锁外权限预查后迟到写入名册竞态只读确认，未冻结/实施；不在本批叠加。视频4759仍暂停非祖先、不继承/诊断/合并或开设备，旧失败保留。禁止强推/改保护凭据权限/发布/原日志私密入库，不称CI/GUI/自然退出/LAN/EXE/完整R1通过。
+B最终独立220原件/497源/身份与旧计数跳过复核0 MUST；root据此有限AI接受，公开资料及全部40新增可达对象（4commit/20tree/16blob）与metadata独立审计0 MUST。fresh fetch/API main仍004d、protected=false/可见rulesets为空，已正常快进main并非强制push；Git ls-remote/API双核完整SHA05927fd5b9fd98a22402b5b9cbf032ddb84cd51b，497源逐字节等full/工作区clean。该提交check-runs/status contexts/Actions均0（aggregate pending/total0），不称CI通过。本段为纯资料回执，最终leaf以Git refs为准，回执对象另审；无源码变化不重测/发布。后继群语音room_join锁外权限预查后迟到写入名册竞态只读确认，未冻结/实施；不在本批叠加。视频4759仍暂停非祖先、不继承/诊断/合并或开设备，旧失败保留。禁止强推/改保护凭据权限/发布/原日志私密入库，不称CI/GUI/自然退出/LAN/EXE/完整R1通过。
 
 
 ## 独立R1续批 · ADMIN-GROUP-DISSOLVE-SCOPE-01 v1（2026-10-23）

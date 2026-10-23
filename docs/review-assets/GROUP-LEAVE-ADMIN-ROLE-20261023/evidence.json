@@ -1,7 +1,7 @@
 {
   "task": "GROUP-LEAVE-ADMIN-ROLE-01 v1",
   "base": "004d2bd545d31e7a2e2686a92b62c4c42e91c181",
-  "status": "AI_ACCEPTED_GROUP_LEAVE_ADMIN_ROLE_ONLY_FINAL_PUBLIC_REVIEW_0_MUST_NOT_INTEGRATED",
+  "status": "AI_ACCEPTED_GROUP_LEAVE_ADMIN_ROLE_ONLY_MERGED_MAIN_REMOTE_VERIFIED",
   "worker": {
     "base": "004d2bd545d31e7a2e2686a92b62c4c42e91c181",
     "runs": {
@@ -149,5 +149,25 @@
     "reviewer": "flagship_scout",
     "scope": "Final Task/Review/evidence/checkpoint/projection and stable documentation",
     "must": 0
+  },
+  "delivery": {
+    "delivery_commit": "05927fd5b9fd98a22402b5b9cbf032ddb84cd51b",
+    "remote_verified_by": [
+      "Git ls-remote",
+      "GitHub branch API"
+    ],
+    "source_exact_final_full": true,
+    "source_inputs": 497,
+    "source_content_id": "3f89ac55c725b553a7c954ca92b67c68cadff066aa781a22c8335109233586bc",
+    "new_objects_at_delivery": 40,
+    "new_commits": 4,
+    "new_blobs": 16,
+    "independent_audit_must": 0,
+    "check_runs": 0,
+    "status_contexts": 0,
+    "actions_runs": 0,
+    "aggregate_status": "pending",
+    "status_total": 0,
+    "receipt_leaf_note": "This documentation receipt binds the verified delivery commit; final leaf is read from Git refs."
   }
 }

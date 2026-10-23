@@ -1,6 +1,6 @@
 # GROUP-LEAVE-ADMIN-ROLE-01 r1
 
-2026-10-23 AI_ACCEPTED_GROUP_LEAVE_ADMIN_ROLE_ONLY / FINAL_FULL_PASSED / INDEPENDENT_FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / NOT_INTEGRATED。
+2026-10-23 AI_ACCEPTED_GROUP_LEAVE_ADMIN_ROLE_ONLY / FINAL_FULL_PASSED / INDEPENDENT_FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / MERGED_MAIN / REMOTE_VERIFIED。
 [Task v1](../task-packages/GROUP-LEAVE-ADMIN-ROLE-01.md)，base004d2bd545d31e7a2e2686a92b62c4c42e91c181。session_scout隔离实现，flagship_scout独立设计/代码/三run及full原件0 MUST，root唯一资料/组合验证和有限AI技术验收，实现者不自验。
 
 旧普通leave只删members，原群管理员在离群期间确无权限，但合法公共重入后旧admins资格恢复。产品只在leave成功分支成员删除后同Hub锁加一行admins.discard；其他群管理员、加入许可、owner转让、revision/通知/语音、账号/token与其他handler/Core不变。mutes保留现状，不定义反逃避政策或扩大有效禁言验收。
@@ -21,6 +21,10 @@ worker82945b761fb0f5d4ccdda5e08324d0b3348d176f无冲突集成为c6a0106f3e162b44
 
 唯一full `gla23-final-01`：220文件3017P/0F/20既有skip，actual exit0，795.364s，summary SHA `310f18fd50a6651aad3499b3d92027925b4e1b38e5a7c5d25fd68b439c3ca65c`。现有短--run-dir入口，未改系统/Git/依赖/安全设置，exec3711已结束，无活动测试。root首次28后验全true，含当前/冻结/快照、完整220集合、全原log/sandbox/cleanup/单attempt、解释器依赖、旧219计数和20skip不变、阶段及旧失败保持。
 
-flagship_scout独立复算全220原件/497源和身份/旧计数跳过，最终技术0 MUST；root据此有限AI_ACCEPTED本Task。公开资料独立终审0 MUST；全部新增可达Git对象/metadata脱敏与普通main集成核远端仍待。[脱敏证据](../review-assets/GROUP-LEAVE-ADMIN-ROLE-20261023/evidence.json)。原日志/用户身份/二进制只本地ignored，不上传。
+flagship_scout独立复算全220原件/497源和身份/旧计数跳过，最终技术0 MUST；root据此有限AI_ACCEPTED本Task。公开资料及全部40新增可达Git对象/metadata独立审计0 MUST，普通main集成/远端双核已完成，见交付回执。[脱敏证据](../review-assets/GROUP-LEAVE-ADMIN-ROLE-20261023/evidence.json)。原日志/用户身份/二进制只本地ignored，不上传。
 
 视频及旧群容量首次长路径失败均exit1原位保留，视频继续暂停不诊断/合并/开硬件。后继群语音迟到join权限竞态只读候选未冻结，不叠加本批。未验收CI、可视GUI、自然退出、物理LAN、新EXE、完整R1或发布。
+
+## 远端交付回执
+
+全部40新对象/metadata独立审计0 MUST后，正常快进main并非强制push；Git ls-remote与GitHub API双核完整SHA `05927fd5b9fd98a22402b5b9cbf032ddb84cd51b`，497源逐字节等最终full，无活动测试。该提交check-runs/status contexts/Actions均0（aggregate pending/total0），不称CI通过。本回执只四份资料，最终leaf以Git refs为准，无源变化/重测/发布；视频继续暂停。

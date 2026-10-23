@@ -15,6 +15,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 独立R1续批 · ADMIN-GROUP-REMOVE-SCOPE-01 v1.1（2026-10-23）
+
+**READY / DESIGN_REVIEW_CORRECTION_RECHECK / NOT_IMPLEMENTED**。[Task](task-packages/ADMIN-GROUP-REMOVE-SCOPE-01.md)。base为main087b6e92857093d69728c25f4aa1b97bff7d62bf；root唯一集成主控，当前integration工作树已切fix/admin-group-remove-integration-20261023、clean HEAD087b；独立worker admin-group-remove-20261023/分支fix/admin-group-remove-scope-20261023同base。session_scout只写server.py管理员remove与新test，flagship_scout独立只读审查，root独占文档/组合验证，最多3活动者。Sol+FAST沿原要求，实际服务回执未暴露，不声称已核服务。
+
+只读已确认同UID管理员并发remove存在锁外成员预查+锁内pop的KeyError缺口，且缺少目标全部会话group_removed，核心缓存可能在重连重入。Task冻结按gid移除/群语音清理，不改账号连接、其他资源、显式dissolve或视频。当前无活动测试/实现/不确定调用；尚未产品验收。独立设计1项MUST（竞态门必须挂_known_names后的第二次写锁获取）已纳入Task v1.1；下一动作：B复核澄清→A同版确定RED/有限修复/必要领域→B审查→root冻结组合与唯一短run-dir full；不提前计数或复跑上一批。原件将留本工作树_tmp_gui/admin-group-remove-20261023，公开仅脱敏摘要。
+
+上一批已交付main087b，217文件3003P/0F/20既有skip/exit0（gcf23-final-01），53新增对象审计0 MUST、工作区clean、CI三类0。视频原工作树仍4759a01e暂停，不继承未验收代码、不再诊断、不合并；旧视频原生失败与群容量首次长路径失败原件保持。用户持续普通main集成授权有效，禁止强推/保护或凭据变更/发布/原日志私密入库；不声称GUI/自然退出/LAN/EXE或整个R1已验收。
+
+
 ## 独立R1续批 · GROUP-CAPACITY-01 v1.1（2026-10-23）
 
 **IMPLEMENTED / DOMAIN_PASSED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_REVIEW_0_MUST / AI_ACCEPTED_GROUP_CAPACITY_ONLY / MERGED_MAIN / REMOTE_VERIFIED**。[Task](task-packages/GROUP-CAPACITY-01.md) / [Review](review-packages/GROUP-CAPACITY-01-r1.md) / [脱敏证据](review-assets/GROUP-CAPACITY-20261023/evidence.json)。沿用户持续Sol+FAST与普通main集成授权（工具未暴露实际模型/服务回执，不虚称已独立核实）；root唯一主控/文档/最终验证，session_scout独立group-capacity工作树实现server.py两入口+新测试，flagship_scout独立设计/代码/原件审查，总活动worker最多3含root。

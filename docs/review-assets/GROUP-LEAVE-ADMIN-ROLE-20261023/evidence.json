@@ -1,0 +1,100 @@
+{
+  "task": "GROUP-LEAVE-ADMIN-ROLE-01 v1",
+  "base": "004d2bd545d31e7a2e2686a92b62c4c42e91c181",
+  "status": "IMPLEMENTED_DOMAIN_PASSED_INDEPENDENT_CODE_REVIEW_0_MUST_PENDING_FULL",
+  "worker": {
+    "base": "004d2bd545d31e7a2e2686a92b62c4c42e91c181",
+    "runs": {
+      "red": {
+        "run_id": "leave-admin-role-red-20261023-20261023-185517-86e3c428b2",
+        "files": 1,
+        "totals": {
+          "failed": 2,
+          "passed": 1
+        },
+        "exit_code": 1,
+        "seconds": 5.437,
+        "source_content_id": "4514a04ed7f54993faaf619e726e4ab308a9d24a19eeb5501658b64d0325d7d0",
+        "summary_sha256": "8d9c3a7041b198ae4796ea8ab7da234199bfd82d6328bde0b350f27d032faeca",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      },
+      "green": {
+        "run_id": "leave-admin-role-green-20261023-20261023-185547-4bdb514e72",
+        "files": 1,
+        "totals": {
+          "passed": 3
+        },
+        "exit_code": 0,
+        "seconds": 2.279,
+        "source_content_id": "8d187230e68527b3ad8e21108dd8951e4993c8f16f9ece58ce565dff6dff69d7",
+        "summary_sha256": "aa9aec58c4cd8079de30811964257a259d3437162bff17ee095c130d4f42ba07",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      },
+      "domain": {
+        "run_id": "leave-admin-role-domain-20261023-20261023-185603-4b1665275b",
+        "files": 6,
+        "totals": {
+          "passed": 94
+        },
+        "exit_code": 0,
+        "seconds": 44.496,
+        "source_content_id": "8d187230e68527b3ad8e21108dd8951e4993c8f16f9ece58ce565dff6dff69d7",
+        "summary_sha256": "d7b17c8c4cbf85a3952d333289fad41dbbe630481a6589750e5e3306ce8650bf",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      }
+    },
+    "red_to_green_only_server": true,
+    "test_sha_by_phase": {
+      "red": "cf0c771ae8cbaecac7937e1f81eb65391842de08e687e8caf2f5b7d9cce21b50",
+      "green": "cf0c771ae8cbaecac7937e1f81eb65391842de08e687e8caf2f5b7d9cce21b50"
+    },
+    "checks": {
+      "current_equals_domain": true,
+      "green_domain_same_source": true,
+      "red_to_green_only_server": true,
+      "actual_execution_receipts_preserved": true
+    }
+  },
+  "independent_worker_review": {
+    "reviewer": "flagship_scout",
+    "scope": "Task v1, actual diff/tests and all three original runs",
+    "must": 0
+  },
+  "version_notes": [
+    "RED/GREEN/domain test bytes are identical; only server.py differs between RED and GREEN.",
+    "Actual protected invite handling verifies role revocation after ordinary leave and legitimate public rejoin, with owner regrant restoring access.",
+    "Mute control checks only the existing synthetic value remains unchanged; no active-mute or anti-evasion policy is claimed."
+  ],
+  "limits": [
+    "No join permission, other handler/client/protocol changes or mute policy redesign.",
+    "Paused video and original failure remain unmerged and unaccepted.",
+    "No visible GUI, natural app exit, physical LAN, new EXE, whole R1 or release validation."
+  ]
+}

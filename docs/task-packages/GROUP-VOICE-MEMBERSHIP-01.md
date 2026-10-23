@@ -26,4 +26,4 @@ root唯一资料/指挥中心/任务投影/必要稳定记忆、组合验证与�
 
 ## 本批实施结论
 
-2026-10-23有限AI_ACCEPTED_GROUP_VOICE_MEMBERSHIP_ONLY；需求v1范围不变。worker94685dbd9d03130159279b833ac2a2e0bedaaf48、组合ceae77c497e08742db1fa0acc1a72e757d12905d，唯一full221文件3022P0F20既有skip/exit0，独立最终技术0 MUST。公开资料独立0 MUST；普通main集成仍待，版本/原件/后验见Review；不等用户/Pro或完整R1验收。
+2026-10-23有限AI_ACCEPTED_GROUP_VOICE_MEMBERSHIP_ONLY；需求v1范围不变。worker94685dbd9d03130159279b833ac2a2e0bedaaf48、组合ceae77c497e08742db1fa0acc1a72e757d12905d，唯一full221文件3022P0F20既有skip/exit0，独立最终技术0 MUST。公开资料独立0 MUST；普通main集成与Git/API远端双核已完成，交付SHA `fc7c2092f001fdacc47277784369badba9609f54`，回执leaf以Git refs为准；版本/原件/后验见Review；不等用户/Pro或完整R1验收。

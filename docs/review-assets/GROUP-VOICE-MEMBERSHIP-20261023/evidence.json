@@ -1,7 +1,7 @@
 {
   "task": "GROUP-VOICE-MEMBERSHIP-01 v1",
   "base": "ed287336d689360aec7090bfd4cc75c1c8099da7",
-  "status": "AI_ACCEPTED_GROUP_VOICE_MEMBERSHIP_ONLY_PUBLIC_REVIEW_0_MUST_PENDING_INTEGRATION",
+  "status": "AI_ACCEPTED_GROUP_VOICE_MEMBERSHIP_ONLY_MERGED_MAIN_REMOTE_VERIFIED",
   "worker": {
     "base": "ed287336d689360aec7090bfd4cc75c1c8099da7",
     "runs": {
@@ -149,5 +149,25 @@
     "reviewer": "flagship_scout",
     "scope": "Seven final documents, projection/links, source identity wording and stable invariants",
     "must": 0
+  },
+  "delivery": {
+    "delivery_commit": "fc7c2092f001fdacc47277784369badba9609f54",
+    "remote_verified_by": [
+      "Git ls-remote",
+      "GitHub branch API"
+    ],
+    "source_exact_final_full": true,
+    "source_inputs": 498,
+    "source_content_id": "f3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae",
+    "new_objects_at_delivery": 42,
+    "new_commits": 4,
+    "new_blobs": 17,
+    "independent_audit_must": 0,
+    "check_runs": 0,
+    "status_contexts": 0,
+    "actions_runs": 0,
+    "aggregate_status": "pending",
+    "status_total": 0,
+    "receipt_leaf_note": "This documentation receipt binds the verified delivery commit; final leaf is read from Git refs."
   }
 }

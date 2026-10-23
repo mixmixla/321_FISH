@@ -1,0 +1,145 @@
+{
+  "task": "ADMIN-GROUP-REMOVE-SCOPE-01 v1.1",
+  "base": "087b6e92857093d69728c25f4aa1b97bff7d62bf",
+  "status": "IMPLEMENTED_DOMAINS_PASSED_INDEPENDENT_CODE_REVIEW_0_MUST_PENDING_FULL",
+  "worker": {
+    "base": "087b6e92857093d69728c25f4aa1b97bff7d62bf",
+    "runs": {
+      "initial_red": {
+        "run_id": "admin-remove-red-20261023-20261023-175545-e99bb40403",
+        "files": 1,
+        "totals": {
+          "failed": 4
+        },
+        "exit_code": 1,
+        "seconds": 5.242,
+        "source_content_id": "4dc0f77e49b964a85787c5f21252e283ff604e4fc579c3358fbbcf34584c92ac",
+        "summary_sha256": "d504bee723cc1178511960342ff6d33c5b80bf39c0e7ae666a64c89e26f471c6",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      },
+      "core_red": {
+        "run_id": "admin-remove-core-red-20261023-20261023-175621-7223591d39",
+        "files": 1,
+        "totals": {
+          "failed": 1
+        },
+        "exit_code": 1,
+        "seconds": 5.331,
+        "source_content_id": "b5e133452b3cf965ba5341dbe86bf5c8fd890d71841a8108a32b6c8a6fe331fc",
+        "summary_sha256": "05c96009fb301223802ca5ac238cb45fcd58ba7f25e2eb7191a5025cc75df004",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      },
+      "controls_red": {
+        "run_id": "admin-remove-controls-red-20261023-20261023-175705-2ca72fdf9b",
+        "files": 1,
+        "totals": {
+          "failed": 1,
+          "passed": 1
+        },
+        "exit_code": 1,
+        "seconds": 2.133,
+        "source_content_id": "5a869cdfb8e0e8fbd04eef28fbb4a602aac3c5f3939a11c52f068e70e41a7724",
+        "summary_sha256": "51882c4f9f565086714caaf4e69609a9979cad35a2d7e61f076cfd41dfcefccb",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      },
+      "green": {
+        "run_id": "admin-remove-green-20261023-20261023-175755-d65be05231",
+        "files": 1,
+        "totals": {
+          "passed": 6
+        },
+        "exit_code": 0,
+        "seconds": 2.454,
+        "source_content_id": "5c9f37e256a77323bfe8c0d8f5c256ca3a3141d4df5a02782210533d198169bc",
+        "summary_sha256": "c5da887b6366eb0bcca075deecb99fdf41092c4a6a30894c7f6b10099dace19d",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      },
+      "domain": {
+        "run_id": "admin-remove-domain-20261023-20261023-175814-2c9463fd12",
+        "files": 6,
+        "totals": {
+          "passed": 82
+        },
+        "exit_code": 0,
+        "seconds": 33.685,
+        "source_content_id": "5c9f37e256a77323bfe8c0d8f5c256ca3a3141d4df5a02782210533d198169bc",
+        "summary_sha256": "2fa548dfd60274b396961b7657feb861e980a095a9c2359207cf712fa2bef7de",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      }
+    },
+    "controls_red_to_green_only_product_server": true,
+    "test_sha_by_phase": {
+      "initial_red": "5637eb240f0c9afe0b76a3e63269b65420f01ded654f7ca370c26123ac132ca4",
+      "core_red": "aa013f6879d6bc1fc49ee222c750a076af477304ff6077f34c646e50ee2e872f",
+      "controls_red": "87cd253ba7c93fcf72568a48513ebc6669ecaf89a7dfc05fedad47e5a3d8bfa9",
+      "green": "87cd253ba7c93fcf72568a48513ebc6669ecaf89a7dfc05fedad47e5a3d8bfa9"
+    },
+    "version_note": "Initial RED includes one fixture precondition failure; corrected Core-only RED and final-test controls-only RED remain distinct versions. Success IO lock placement is independently inspected; dynamic lock probe covers rejection only.",
+    "checks": {
+      "final_current_matches_domain": true,
+      "green_domain_same_source": true,
+      "controls_red_to_green_only_server": true
+    }
+  },
+  "version_notes": [
+    "Initial four-failure RED includes one test precondition error caused by an overlong synthetic group name; it is not counted as a product failure.",
+    "A corrected Core-only RED reached the missing group_removed behavior; new controls were separately selected once against the original product.",
+    "The final controls-RED and GREEN test bytes are equal and only server.py differs; the earlier RED tests remain separately identified.",
+    "Dynamic cross-thread lock probes cover rejection only; success-path IO lock placement is independently inspected in code."
+  ],
+  "limits": [
+    "Explicit admin dissolve remains outside this task.",
+    "Paused video changes and original failure remain unmerged and unaccepted.",
+    "No visible GUI, natural app exit, physical LAN or new EXE validation; no complete R1 milestone or release acceptance."
+  ],
+  "independent_worker_review": {
+    "reviewer": "flagship_scout",
+    "scope": "Task v1.1, actual diff, tests and all five original runs",
+    "must": 0
+  }
+}

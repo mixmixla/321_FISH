@@ -493,10 +493,11 @@ def test_core_preflight_send_failure_and_desired_host_change_never_pop_or_send_d
         assert core.send_admin_user_del(7)
         request = frames[-1]
         core.set_host('127.0.0.2')
+        assert core.uid is None and core.known == {} and core.roster == {}
         core._dispatch({'t': 'admin_user_info', 'uid': 7, 'nick': 'target',
                         'request_id': request['request_id']}, connection=connection)
         assert [frame['t'] for frame in frames] == ['admin_user_get', 'admin_user_get']
-        assert 7 in core.known and 7 in core.roster
+        assert core.uid is None and core.known == {} and core.roster == {}
         assert not core.retirement_snapshot()[0].ever_del
     finally:
         core.stop()

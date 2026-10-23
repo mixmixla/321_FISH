@@ -118,8 +118,8 @@ def test_group_removal_keeps_both_real_clients_online_and_does_not_rejoin(runnin
     # frames have been processed; an arbitrary sleep cannot prove no rejoin.
     welcome_done = threading.Event()
     original_welcome = first._on_welcome
-    def on_welcome(frame):
-        original_welcome(frame)
+    def on_welcome(frame, *, connection=None):
+        original_welcome(frame, connection=connection)
         welcome_done.set()
     monkeypatch.setattr(first, '_on_welcome', on_welcome)
     first.drop()
@@ -201,7 +201,7 @@ def test_group_key_worker_cannot_publish_after_removal(core,monkeypatch,reconnec
     def key(_peer):
         calls[0]+=1
         return None if calls[0]==1 else b'x'*32
-    def send(frame,body=b''):
+    def send(frame,body=b'', *, expected_local_generation=None):
         if frame['t']=='e2ee_pub':
             pending.append(core._e2ee_pending[frame['nonce']]['ev'])
             entered.set()

@@ -302,8 +302,8 @@ def test_admin_remove_clears_two_real_cores_without_rejoining(running, monkeypat
     welcome_done = threading.Event()
     original_welcome = second._on_welcome
 
-    def on_welcome(frame):
-        original_welcome(frame)
+    def on_welcome(frame, *, connection=None):
+        original_welcome(frame, connection=connection)
         welcome_done.set()
 
     monkeypatch.setattr(second, '_on_welcome', on_welcome)

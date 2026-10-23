@@ -1,5 +1,6 @@
 """客户端只接受本端房间的离开确认，不能保留或复活旧私密状态。"""
 import copy
+import threading
 from collections import deque
 
 import pytest
@@ -9,6 +10,9 @@ from client_core import ClientCore
 
 def _core():
     core = ClientCore.__new__(ClientCore)
+    core._identity_transition_lock = threading.RLock()
+    core._transition_events = threading.local()
+    core._local_generation = 0
     core.uid = 1
     core.game_room = {"room_id": "g1", "game": "tictactoe", "status": "playing",
                       "players": [1, 2], "spectators": [], "round": 1}

@@ -247,8 +247,8 @@ def test_real_cores_retire_dissolved_group_and_do_not_attempt_rejoin(running, mo
     welcome_done = threading.Event()
     original_welcome = second._on_welcome
 
-    def on_welcome(frame):
-        original_welcome(frame)
+    def on_welcome(frame, *, connection=None):
+        original_welcome(frame, connection=connection)
         welcome_done.set()
 
     monkeypatch.setattr(second, '_on_welcome', on_welcome)

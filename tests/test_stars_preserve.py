@@ -245,13 +245,13 @@ def test_actual_message_handler_does_not_publish_local_mutation_after_late_refus
 
 
 @pytest.mark.parametrize('trusted', [False, True])
-def test_actual_launcher_refuses_ambiguous_profile_before_opening_chat(tmp_path, trusted):
+def test_actual_launcher_only_remembers_login_metadata_with_opaque_legacy_stars(tmp_path, trusted):
     prefs, path = seed(tmp_path, {'stars': FAVORITES, 'default_account': 'alpha',
                                 'trusted_nicks': ['alpha'] if trusted else []})
     calls, errors, choices = [], [], []
     form = {'nick':'alpha', 'host':'127.0.0.1', 'port':9527,
             'name':'synthetic', 'remember':False, 'pwd':''}
-    forms = iter([None] if trusted else [form, None])
+    forms = iter([] if trusted else [form])
     def choose(**kwargs):
         choices.append(kwargs)
         return next(forms)
@@ -261,27 +261,25 @@ def test_actual_launcher_refuses_ambiguous_profile_before_opening_chat(tmp_path,
                 'run_chat': lambda *args: calls.append(args) or 'quit',
                 'show_login': choose}
     function_from_source('launcher.py', '_last_server', globals_)
-    try:
-        function_from_source('launcher.py', '_prepare_profile', globals_)
-    except StopIteration:
-        pass  # the old launcher did not have a protected profile preparation path
+    function_from_source('launcher.py', '_prepare_profile', globals_)
     launch = function_from_source('launcher.py', 'launch', globals_)
-    assert launch('127.0.0.1', 9527, prefs) == 0  # explicit user cancellation
-    assert len(choices) == (1 if trusted else 2)
-    assert calls == [] and len(errors) == 1
-    assert saved(path)['stars'] == FAVORITES
-    assert not saved(path).get('profiles')  # no owner assignment from the ambiguous value
+    assert launch('127.0.0.1', 9527, prefs) == 0
+    assert len(choices) == (0 if trusted else 1)
+    assert len(calls) == 1 and calls[0][3] == 'alpha' and errors == []
+    data = saved(path)
+    assert data['stars'] == FAVORITES
+    assert not data.get('profiles') and not data.get('uid_profiles')
+    assert data['login_nicks'] == ['alpha'] and data['default_account'] == 'alpha'
 
 
-def test_actual_launcher_refusal_returns_to_choose_a_safe_profile(tmp_path):
+def test_actual_launcher_does_not_claim_legacy_profiles_when_alpha_logs_in(tmp_path):
     prefs, path = seed(tmp_path, {'active_profile': 'beta', 'stars': ['group:beta'],
                                 'profiles': {'alpha': {'stars': FAVORITES},
                                              'beta': {'stars': ['group:beta']},
                                              'gamma': {'stars': ['public']}}})
     calls, errors, choices = [], [], []
-    forms = iter([{'nick':nick, 'host':'127.0.0.1', 'port':9527,
-                   'name':'synthetic', 'remember':False, 'pwd':''}
-                  for nick in ['alpha', 'gamma']])
+    forms = iter([{'nick':'alpha', 'host':'127.0.0.1', 'port':9527,
+                   'name':'synthetic', 'remember':False, 'pwd':''}])
     def choose(**kwargs):
         choices.append(kwargs)
         return next(forms)
@@ -293,10 +291,17 @@ def test_actual_launcher_refusal_returns_to_choose_a_safe_profile(tmp_path):
     function_from_source('launcher.py', '_prepare_profile', globals_)
     launch = function_from_source('launcher.py', 'launch', globals_)
     assert launch('127.0.0.1', 9527, prefs) == 0
-    assert len(choices) == 2 and len(errors) == 1
-    assert len(calls) == 1 and calls[0][3] == 'gamma'
+    assert len(choices) == 1 and errors == []
+    assert len(calls) == 1 and calls[0][3] == 'alpha'
     selected = calls[0][2]  # launcher intentionally reopens Prefs on each loop
-    assert selected.active_account() == 'gamma' and selected.starred() == ['public']
-    assert saved(path)['active_profile'] == 'gamma' and saved(path)['stars'] == ['public']
-    assert saved(path)['profiles']['alpha']['stars'] == FAVORITES
-    assert saved(path)['profiles']['beta']['stars'] == ['group:beta']
+    assert selected.active_account() == 'beta'
+    selected.enable_uid_chat_view()  # same opt-in as ChatWindow initialization
+    selected.bind_uid_chat_view(('a' * 32, 1))
+    assert selected.starred() == []  # confirmed UID starts empty; alpha's old stars stay opaque
+    data = saved(path)
+    assert data['active_profile'] == 'beta' and data['stars'] == ['group:beta']
+    assert data['profiles'] == {'alpha': {'stars': FAVORITES},
+                                'beta': {'stars': ['group:beta']},
+                                'gamma': {'stars': ['public']}}
+    assert not data.get('uid_profiles')
+    assert data['login_nicks'] == ['alpha'] and data['default_account'] == 'alpha'

@@ -1,7 +1,7 @@
 # 321_FISH AI 指挥中心
 
 本文件是当前执行状态与下一任务的唯一权威。需求见 task-packages，证据和审查结论见
-review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-22（UTC；以下旧记录保留原时区）。
+review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-23（UTC；以下旧记录保留原时区）。
 
 ## 2026-10-22 恢复前历史检查点（当前状态见路线区首项）
 
@@ -14,6 +14,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 用户要求今日停止；分支 feature/r1-restart-reconnect-20261021、HEAD ddf1c79b0143890a4c98941b6b5b500b6909e761。未提交：tests/test_client_core.py（真实持久 Hub 重开后原 ClientCore 续连回归）及 docs/task-packages/R1-RESTART-RECONNECT-01.md。既有对照 2P，最终目标用例 1P，领域 75P；独立代码复审 0 MUST。唯一实际全量 run r1-restart-reconnect-full-20261021-20261021-224241-6202d94027 于用户停工时中断：最后原进度 189/213 文件 passed，tests/test_server.py 标 running，无 summary，exit1 是人工中止，绝不判作全量通过或产品失败。原件留本地 _tmp_gui/test-gate/ 对应 run 与 _tmp_gui/r1-restart-reconnect-20261021/final-gate-output.txt。已确认无本轮 test_gate/pytest/Python 自有进程；未 commit/push/merge。明日先核 git status、进程、原进度/日志，再决定重新完成唯一有效全量门禁；之后独立终审、脱敏记录和经授权的正常集成。本检查点不代表 R1/M1/GUI/EXE/LAN 验收。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+
+## 2026-10-23 下午并行批次 v1
+
+**RESUMED / TWO_READY_TASKS / DESIGN_REVIEW_0_MUST / IMPLEMENTATION_STARTING**。用户重新授权继续既定项目，Sol + FAST、多工作者；本次调度模型回执未暴露，不能独立核实实际模型/FAST服务等级，两个新代理显式指定gpt-6-sol，不自行降级或声称知道额度/重置。上午STOPPED是旧批历史。本次本周干净代码/测试/文档/脱敏摘要普通直接集成main授权保持，不发布、强推或修改保护/凭据/历史。
+
+base/main8cd76a3ae52c946206805194ef4b0b053fa6e9e9；现场clean、无活动Python/测试，API及freshfetch远端一致。root为唯一主控/文档写入/最终门禁与集成，主工作分支fix/parallel-session-batch-20261023。活动worker总数3含root：session_scout在独立worktree/分支实现[GROUP-LEAVE-SCOPE-01](task-packages/GROUP-LEAVE-SCOPE-01.md)，只写server与新回归；flagship_scout在另一worktree/分支实现[FLAGSHIP-DRAW-STATE-01](task-packages/FLAGSHIP-DRAW-STATE-01.md)，只写双棋规则/client摘要与对应回归。彼此交叉独立审查，禁止同文件并发写入、禁止worker全量。
+
+两项均有只读具体缺陷证据，尚未运行复现：显式退群未通知同UID其他端，可被续连自动加入；双棋平局快照/桌面摘要仍带轮到提示。交叉设计指出退群成员判断锁外的重复删除竞态，GROUP v1.1增加锁内权威重核及确定性双会话并发回归；FLAGSHIP v1设计0 MUST。整改纳入后两设计0 MUST。下一各线唯一原实现RED→最小实现/领域→交叉代码原证据审查→root组合并冻结一次最终全量→终审/全新对象审计→普通main集成。当前未AI_ACCEPTED/未集成新批；无活动测试。原始证据仅本地，各worker回报run/source/退出与清理，不复制日志/私人数据到公开资料。
+
 
 ## 2026-10-23 最终收尾完成
 

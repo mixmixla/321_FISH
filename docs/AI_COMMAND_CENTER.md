@@ -15,6 +15,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 独立R1续批 · GROUP-LEAVE-ADMIN-ROLE-01 v1（2026-10-23）
+
+**READY / DESIGN_REVIEW_0_MUST / NOT_IMPLEMENTED**。[Task](task-packages/GROUP-LEAVE-ADMIN-ROLE-01.md) / [Review](review-packages/GROUP-LEAVE-ADMIN-ROLE-01-r1.md)。显式dissolve已最终交付main004d2bd545d31e7a2e2686a92b62c4c42e91c181并Git/API双核；219文件3014P0F20既有skip/exit0，50新对象独立审计0 MUST、工作区clean/无活动测试。沿用户持续Sol+FAST与正常main授权，实际服务回执不可见不虚称核实。
+
+下一只读确认：普通leave未清admins，原管理员不在群时没有权限，但合法公开重入后旧资格会复活。只冻结leave锁内清对应admins+newtest，以真实权限handler/loopback Core证明重入后普通成员拒绝、现任群主重授予才恢复；加入权限/其他群角色/账号/token保持。mutes策略不确定、保留现状，本批不清禁言/改其他路径。
+
+root唯一集成/文档/最终验证，independent-r1工作树已切fix/group-leave-admin-role-integration-20261023；A独立group-leave-admin-role-20261023/分支fix/group-leave-admin-role-20261023同base clean，仅server.py/newtest写入，B独立只读审查，最多3活动者。当前无活动测试/在途写入，B独立设计0 MUST，A确认无在途/修改/测试且只读方案可行，冻结提交后GO。下一原版确定RED/小修/GREEN/必要域→B审查→root等blob冻结/唯一短run-dir full；未实施/AI接受/推送。原件将留本工作树_tmp_gui/group-leave-admin-role-20261023，正式计划原工程_tmp_gui/gla23-final-01。视频4759仍暂停不继承/诊断/合并/开设备，历史失败保持；不强推/改保护凭据权限/发布/原日志私密入库，不称CI/GUI/自然退出/LAN/EXE/整个R1通过。
+
+
 ## 独立R1续批 · ADMIN-GROUP-DISSOLVE-SCOPE-01 v1（2026-10-23）
 
 **IMPLEMENTED / DOMAIN_PASSED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / AI_ACCEPTED_ADMIN_GROUP_DISSOLVE_ONLY / PUBLIC_REVIEW_0_MUST / MERGED_MAIN / REMOTE_VERIFIED**。[Task](task-packages/ADMIN-GROUP-DISSOLVE-SCOPE-01.md) / [Review](review-packages/ADMIN-GROUP-DISSOLVE-SCOPE-01-r1.md) / [脱敏证据](review-assets/ADMIN-GROUP-DISSOLVE-20261023/evidence.json)。用户明确继续管理员显式解散缺口，Sol+FAST/正常main授权保持，服务实际回执不可见不冒称核实。root唯一资料/验证/集成，session_scout隔离实现server/newtest，flagship_scout独立审查，最多3活动者。

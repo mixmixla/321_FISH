@@ -6956,18 +6956,21 @@ class Hub:
             return
         cur = g.get("members", {}).get(uid)
         if op == "add":
-            if cur is not None:
-                self._error(sess, "member", "该用户已在群中")
-                return
-            if len(g["members"]) >= self.cfg.group_max_members:
-                self._error(sess, "full", f"群已满（{len(g['members'])}/{self.cfg.group_max_members}）")
-                return
             nick = self._append_nick_for_uid(uid, header.get("nick"))
             with self.lock:
                 if self.groups.get(gid) is not g:
-                    return
-                g["members"][uid] = nick
-                g["mutes"].pop(uid, None)          # 重入群：清残留禁言
+                    rejection = ("group", "群不存在")
+                elif uid in g["members"]:
+                    rejection = ("member", "该用户已在群中")
+                elif len(g["members"]) >= self.cfg.group_max_members:
+                    rejection = ("full", f"群已满（{len(g['members'])}/{self.cfg.group_max_members}）")
+                else:
+                    g["members"][uid] = nick
+                    g["mutes"].pop(uid, None)      # 重入群：清残留禁言
+                    rejection = None
+            if rejection:
+                self._error(sess, *rejection)
+                return
             self._persist()                        # 锁外持久化：避免锁序自锁风险
             self._send_group_state(gid, text=f"系统管理员将 {nick} 加入群聊")
             self._broadcast_group_list()
@@ -9194,23 +9197,22 @@ class Hub:
 
     def _on_group_join(self, sess: Session, header: dict) -> None:
         gid = header.get("gid")
-        g = self.groups.get(gid)
-        if not g:
-            self._error(sess, "group", "群不存在")
-            return
-        if sess.uid in g["members"]:
-            self._error(sess, "group", "已在群中")
-            return
-        if not g.get("public") and not sess.is_admin:
-            self._error(sess, "private", "该群为私有群，需凭邀请码加入")
-            return
-        if len(g["members"]) >= self.cfg.group_max_members:
-            self._error(sess, "full", f"群已满（{len(g['members'])}/{self.cfg.group_max_members}）")
-            return
         with self.lock:
-            if self.groups.get(gid) is not g or sess.uid in g["members"]:
-                return
-            g["members"][sess.uid] = sess.nick
+            g = self.groups.get(gid)
+            if not g:
+                rejection = ("group", "群不存在")
+            elif sess.uid in g["members"]:
+                rejection = ("group", "已在群中")
+            elif not g.get("public") and not sess.is_admin:
+                rejection = ("private", "该群为私有群，需凭邀请码加入")
+            elif len(g["members"]) >= self.cfg.group_max_members:
+                rejection = ("full", f"群已满（{len(g['members'])}/{self.cfg.group_max_members}）")
+            else:
+                g["members"][sess.uid] = sess.nick
+                rejection = None
+        if rejection:
+            self._error(sess, *rejection)
+            return
         self._send_group_state(gid, text=f"{sess.nick} 加入群聊")
         self._broadcast_group_list()
         self.audit.log(type="group_join", uid=sess.uid, nick=sess.nick, gid=gid)

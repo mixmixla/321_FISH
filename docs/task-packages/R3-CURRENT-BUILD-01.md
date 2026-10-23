@@ -19,4 +19,4 @@
 
 ## 本批实施结论
 
-2026-10-23三EXE构建、精确七文件包、入口help/demo dry-run与新包唯一正式strict预检均actual exit0；root19后验全true，独立完整原件终审0 MUST。root仅AI_ACCEPTED_CURRENT_BUILD_PACKAGE_PREFLIGHT_ONLY；五资料独立0 MUST，全部新对象审查和普通main集成仍待。实际版本/哈希与未验边界见Review，不关闭完整R1/R3或发布。
+2026-10-23三EXE构建、精确七文件包、入口help/demo dry-run与新包唯一正式strict预检均actual exit0；root19后验全true，独立完整原件终审0 MUST。root仅AI_ACCEPTED_CURRENT_BUILD_PACKAGE_PREFLIGHT_ONLY；五资料独立0 MUST，全部24新对象/metadata独立0 MUST，普通main集成及Git/API核实已完成，交付SHA `4d169563d58028bffd38ebdd9d3bbd7c058c4f55`，回执leaf以Git refs为准。实际版本/哈希与未验边界见Review，不关闭完整R1/R3或发布。

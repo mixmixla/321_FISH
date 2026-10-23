@@ -1,7 +1,7 @@
 {
   "task": "R3-CURRENT-BUILD-01 v1",
   "base": "175777d146ffddb845b9864d48b8bc588c6bd449",
-  "status": "AI_ACCEPTED_CURRENT_BUILD_PACKAGE_PREFLIGHT_ONLY_PUBLIC_REVIEW_0_MUST_PENDING_INTEGRATION",
+  "status": "AI_ACCEPTED_CURRENT_BUILD_PACKAGE_PREFLIGHT_ONLY_MERGED_MAIN_REMOTE_VERIFIED",
   "source_binding": {
     "source_inputs": 498,
     "source_content_id": "f3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae",
@@ -303,5 +303,23 @@
     "reviewer": "flagship_scout",
     "must": 0,
     "scope": "Five final public documents, projection/links, hash index, source/package identity and no private/raw content"
+  },
+  "delivery": {
+    "verified_commit": "4d169563d58028bffd38ebdd9d3bbd7c058c4f55",
+    "remote_verified_by": [
+      "Git ls-remote",
+      "GitHub branch API"
+    ],
+    "new_objects": 24,
+    "new_commits": 2,
+    "new_blobs": 10,
+    "independent_object_audit_must": 0,
+    "check_runs": 0,
+    "status_contexts": 0,
+    "actions_runs": 0,
+    "aggregate_status": "pending",
+    "status_total_count": 0,
+    "receipt_leaf_note": "This documentation receipt binds the verified delivery commit; final leaf is read from Git refs.",
+    "binary_uploaded": false
   }
 }

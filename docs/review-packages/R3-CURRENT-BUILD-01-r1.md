@@ -1,6 +1,6 @@
 # R3-CURRENT-BUILD-01 r1
 
-2026-10-23 BUILD_PACKAGE_CLI_PREFLIGHT_PASSED / FINAL_TECH_REVIEW_0_MUST / AI_ACCEPTED_CURRENT_BUILD_PACKAGE_PREFLIGHT_ONLY / PUBLIC_REVIEW_0_MUST。[Task v1](../task-packages/R3-CURRENT-BUILD-01.md) / [脱敏证据](../review-assets/R3-CURRENT-BUILD-20261023/evidence.json)。base main175777d146ffddb845b9864d48b8bc588c6bd449；root唯一执行/资料/集成，flagship_scout独立设计及原件审查，Sol+FAST沿用户选择、实际服务回执不可见。
+2026-10-23 BUILD_PACKAGE_CLI_PREFLIGHT_PASSED / FINAL_TECH_REVIEW_0_MUST / AI_ACCEPTED_CURRENT_BUILD_PACKAGE_PREFLIGHT_ONLY / PUBLIC_REVIEW_0_MUST / MERGED_MAIN / REMOTE_VERIFIED。[Task v1](../task-packages/R3-CURRENT-BUILD-01.md) / [脱敏证据](../review-assets/R3-CURRENT-BUILD-20261023/evidence.json)。base main175777d146ffddb845b9864d48b8bc588c6bd449；root唯一执行/资料/集成，flagship_scout独立设计及原件审查，Sol+FAST沿用户选择、实际服务回执不可见。
 
 ## 范围与版本绑定
 
@@ -16,6 +16,10 @@
 
 入口CLI exec58144实际exit0，help与demo dry-run各根exit0、2个owned Job active_after0/close成功；不是完整compiled demo。正式现有local_trial.py run只一次，--source-dir明确为新七文件包，无server/client EXE override；run-20261023-115532-178c91d76a / exec98019实际exit0，summary SHA dedb2c2c16b58995cc74b5ba5946c4a43de6d8905029f8f4ef1bfe371ca64c8e。initialize自然root0、TCP/HTTP200、双真实client.exe登录、映像指包内EXE且短时存活；默认wire两peer双聊、gomoku9步/connect4七步终局→新轮→离房及双socket清理成功。四owned Job cleanup active_after0/close成功；client/open server为强停，不是自然退出。
 
-strict三profile before各5/after1081,1076,1076，无inventory错误且重新只读严格清单与原件一致。无源码包指纹只覆盖校验单1输入，不能替代独立整包7文件SHA或build/source498输入绑定。root首次19后验全部true，实际构建/CLI/正式run均已结束、无活动Python；B已独立复算完整构建/三EXE/包/CLI及正式原件、源身份/清单/Job边界，最终技术0 MUST；root据此有限AI_ACCEPTED_CURRENT_BUILD_PACKAGE_PREFLIGHT_ONLY，五公开资料独立审查0 MUST，全部新增对象审计/集成仍待。
+strict三profile before各5/after1081,1076,1076，无inventory错误且重新只读严格清单与原件一致。无源码包指纹只覆盖校验单1输入，不能替代独立整包7文件SHA或build/source498输入绑定。root首次19后验全部true，实际构建/CLI/正式run均已结束、无活动Python；B已独立复算完整构建/三EXE/包/CLI及正式原件、源身份/清单/Job边界，最终技术0 MUST；root据此有限AI_ACCEPTED_CURRENT_BUILD_PACKAGE_PREFLIGHT_ONLY，五公开资料独立审查0 MUST，全部24新增对象/metadata独立0 MUST，普通main集成/远端核实见回执。
 
-可选Vosk包/模型缺失，未验证STT。完整可视GUI/自然应用退出/物理LAN/异机/DPI/真实硬件/完整R1或R3/发布均未验。视频4759仍暂停非祖先，不继承/诊断/合并；旧失败原件保留。公开仅五资料和脱敏hash摘要，原始日志/profile/包/二进制只ignored本地，不上传/压缩/发布；最终独立审查/全部新对象审计后才普通main集成，CI无记录不称通过。
+可选Vosk包/模型缺失，未验证STT。完整可视GUI/自然应用退出/物理LAN/异机/DPI/真实硬件/完整R1或R3/发布均未验。视频4759仍暂停非祖先，不继承/诊断/合并；旧失败原件保留。公开仅五资料和脱敏hash摘要，原始日志/profile/包/二进制只ignored本地，不上传/压缩/发布；最终独立审查和全部24新对象审计0 MUST后已普通main集成，CI无记录不称通过。
+
+## 远端交付回执
+
+全部24新对象（2commit/12tree/10blob）与metadata独立0 MUST后，正常快进main并非强制push；Git ls-remote/API双核完整SHA `4d169563d58028bffd38ebdd9d3bbd7c058c4f55`，498源仍等full/构建，clean/无活动测试。该提交check-runs/status contexts/Actions均0（aggregate pending/total0），不称CI通过。此五资料回执最终leaf以Git refs为准，回执对象另审；无产品变化不重复源码full或构建/运行，包/原日志仍仅本地，未发布。

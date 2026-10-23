@@ -33,3 +33,7 @@ PR 创建先前由 `github_create_pull_request` 返回 403 `Resource not accessi
 用户再次限定只收尾 main，沿用22日直接正常合并授权。产品候选 `d494d91e23d098578186f2606947c6c4b325e9e4` 已提交；491源与原全量一致，全部75新增对象及metadata独立审计0 MUST。远端最新 main `8237997629aa7912508fa2b8d74144d660463d21` 已含前两批，另有 `88a0d9e` 的 client_gameui.py 光晕参数调整；protected=false、可见rulesets为空。本次保留远端改动，正常合入群移除修复并执行必要最小组合选测，不冒称最终组合与原全量全部同字节、不重跑全量。最终集成结果见指挥中心和Git refs；拒绝即停，不强推或改变保护，完成后立即停工。
 
 正常合并 `c3cd815f51755a58ee8990b0214224b947b7194f` 无冲突；最终491源仅远端client_gameui.py不同于原全量，其余490保持。必要4文件组合门禁 `group-main-integration-20261023-20261023-103944-2de5ef243f` 为 **76P / 0F / exit0，22.5秒**，source `2feeef75c2ed758734057c092f18dcd71b507e5425b339fe0fc0a81f8824929c`，summary SHA `1083dd395eec23414fd42b8abf9f3fdff7f7b073a18713d4f4576b2dbb1cdd4a`；逐原日志/计数/sandbox/快照/单attempt/清理核验通过，脱敏结果已并入原evidence.json。相对远端8237997的35新增对象/17blob/3commit独立审计0 MUST，r1_review组合原件与公开投影终审0 MUST，主控有限AI接受该集成组合；下一收尾文档对象审计及正常推送。原2991P全量属于合并前候选，不能称最终组合新跑全量或视觉已验。
+
+## main 交付回执（2026-10-23）
+
+**MERGED_MAIN / REMOTE_VERIFIED / STOPPED**。已正常快进本地main并非强制推送，远端API核完整main提交 `48b632fa3c992cefe69a27056520a9fd80205159`；全部45待推新对象独立审计0 MUST。该提交check-runs/status contexts/Actions均0，无CI通过记录。本回执为纯文档收口，最终leaf以Git refs为准。原候选全量2991P/0F/20既有skip与保留远端UI后的组合76P分别绑定版本；不是新组合全量、可视GUI、自然退出、LAN或新EXE验收。按用户要求结束工作，不启动下一任务。

@@ -1,7 +1,7 @@
 {
   "task": "ADMIN-GROUP-REMOVE-SCOPE-01 v1.1",
   "base": "087b6e92857093d69728c25f4aa1b97bff7d62bf",
-  "status": "IMPLEMENTED_DOMAINS_PASSED_INDEPENDENT_CODE_REVIEW_0_MUST_PENDING_FULL",
+  "status": "AI_ACCEPTED_ADMIN_GROUP_REMOVE_ONLY_FINAL_PUBLIC_REVIEW_0_MUST_NOT_INTEGRATED",
   "worker": {
     "base": "087b6e92857093d69728c25f4aa1b97bff7d62bf",
     "runs": {
@@ -140,6 +140,59 @@
   "independent_worker_review": {
     "reviewer": "flagship_scout",
     "scope": "Task v1.1, actual diff, tests and all five original runs",
+    "must": 0
+  },
+  "full": {
+    "run_id": "agr23-final-01",
+    "files": 218,
+    "totals": {
+      "passed": 3009,
+      "skipped": 20
+    },
+    "exit_code": 0,
+    "seconds": 793.168,
+    "source_content_id": "fe6c061356dbd80855e0856d43b5c2e9e1da52c8d93ccbe82d8123f73796cb4a",
+    "summary_sha256": "409a289575413d535a3bb5d0c49368952f5228c6957646e9313c394b49904fa7",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true,
+      "actual_shell_exit_zero": true,
+      "current_frozen_full_source_exact": true,
+      "source_495_inputs": true,
+      "full_complete_file_set": true,
+      "full_pass_counts_expected": true,
+      "old_file_counts_unchanged": true,
+      "existing_skips_unchanged": true,
+      "interpreter_identity_exact": true,
+      "dependency_identity_exact": true,
+      "gate_tools_unchanged": true,
+      "test_manifest_current_exact": true,
+      "worker_current_integrated_canonical_equal": true,
+      "no_video_ancestry": true,
+      "no_video_client_changes": true,
+      "prior_full_preserved": true,
+      "paused_video_failure_preserved": true,
+      "prior_path_failure_preserved": true,
+      "all_worker_checks_true": true,
+      "all_worker_summaries_preserved": true,
+      "controls_red_to_green_only_server": true
+    },
+    "source_inputs": 495
+  },
+  "independent_final_technical_review": {
+    "reviewer": "flagship_scout",
+    "scope": "Frozen 495 inputs, complete 218 raw records and prior baseline/failure preservation",
+    "must": 0
+  },
+  "independent_public_review": {
+    "reviewer": "flagship_scout",
+    "scope": "Final Task/Review/evidence/checkpoint/projection and stable documentation",
     "must": 0
   }
 }

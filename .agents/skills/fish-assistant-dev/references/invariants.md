@@ -109,4 +109,6 @@ Excel 接线：`client.py` → `widgets.excel_chrome.ExcelChrome` →
 
 UID级主动退群须通知该UID全部已有Session并清对应群重入/密钥；锁内重核群与成员、只删一次并取得revision，拒绝和通知IO锁外。最后成员解散同样通知，其他群/认证/token保持。确定性并发回归在目标线程首次Hub锁acquire前设门，不能只用同时启动Barrier。
 
+系统管理员remove同样须权威重核同一群/目标成员、只移除一次，向全部目标Session发送带gid/revision的group_removed并清该群语音名册，其他群/账号/token不变；成功外部IO在锁外。管理员handler先_known_names读锁，确定性并发门应放在随后remove写锁acquire前，不能误挂首次读锁；显式dissolve是不同入口，需单独核查。
+
 公开入群/系统管理员加人的成员资格、容量和写入必须同一Hub锁内决定，拒绝回执/持久化/广播/审计锁外。确定性竞争门要区分管理员_known_names的前置读锁与实际写入锁，不能只同时起跑；同UID重复加入优先报告已有成员，不重复成功副作用。

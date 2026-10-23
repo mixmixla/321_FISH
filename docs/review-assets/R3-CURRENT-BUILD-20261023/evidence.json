@@ -1,7 +1,7 @@
 {
   "task": "R3-CURRENT-BUILD-01 v1",
   "base": "175777d146ffddb845b9864d48b8bc588c6bd449",
-  "status": "READY_BUILD_DESIGN_REVIEW_0_MUST",
+  "status": "AI_ACCEPTED_CURRENT_BUILD_PACKAGE_PREFLIGHT_ONLY_PUBLIC_REVIEW_0_MUST_PENDING_INTEGRATION",
   "source_binding": {
     "source_inputs": 498,
     "source_content_id": "f3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae",
@@ -23,5 +23,285 @@
     "reviewer": "flagship_scout",
     "must": 0,
     "resolved": "Run the actual seven-file package, with independent whole-package hashes and separate full source binding."
+  },
+  "build": {
+    "run_id": "build-20261023-115050-e2f6d9f726",
+    "actual_shell_exit": 0,
+    "seconds": 61.234,
+    "summary_sha256": "a784a4d83b2738dff7ce0f1ed20e66cc21dc4e3a75f6fdff5bb31db7f525f8d4",
+    "source_inputs": 498,
+    "unchanged_inputs": 496,
+    "normal_generated_specs": [
+      {
+        "path": "client.spec",
+        "frozen_sha256": "2d814b6bbe67c8b6508f10a688c6d948d15c8ab4c815e5963316e37a46b6e347",
+        "generated_sha256": "173ac46bae830c2d47c23284e91b5ce49bd283f2ff5e7c7f0cedbef5cf16641c"
+      },
+      {
+        "path": "server.spec",
+        "frozen_sha256": "e925b66ba6066d181e89b24a647d2295226104a5ddbe80ff7191e3ba337641f5",
+        "generated_sha256": "c486199fc588977220a28318f96f93a00d8b167ff0f83e46082669b07f4e838f"
+      }
+    ],
+    "entry_actual_shell_exit": 0,
+    "entry_builder_exit": 0,
+    "entry_seconds": 9.561,
+    "entry_summary_sha256": "19eb3dbda0a869f5aea68b5e22a473fdaf5a2489dc7be6f770f43cb049131051",
+    "artifacts": [
+      {
+        "path": "dist/client.exe",
+        "size": 27346063,
+        "sha256": "9337281e54d504cec987f1f55fbf55b3560f0c1a404f42216f33069a185f25c0"
+      },
+      {
+        "path": "dist/server.exe",
+        "size": 26084380,
+        "sha256": "79a1061c769c0b6e19e14457647d5144e07eb7d3b778a54e09accf28e2afe2ee"
+      },
+      {
+        "path": "StartTrial.exe",
+        "size": 9739504,
+        "sha256": "b07c4064a1f13f1b27e1a2d1d64db67773357f435580ca7e477ad9640dd8bd40"
+      }
+    ],
+    "archive_validation": {
+      "server": {
+        "entry_code_matches_current_source_except_filename": true,
+        "required_pyz_modules": [
+          "protocol",
+          "server_recovery",
+          "server_store",
+          "boardgames.registry"
+        ]
+      },
+      "client": {
+        "entry_code_matches_current_source_except_filename": true,
+        "required_pyz_modules": [
+          "protocol",
+          "server_recovery",
+          "server_store",
+          "boardgames.registry",
+          "client_core"
+        ]
+      }
+    },
+    "entry_code_matches_source": true,
+    "optional": {
+      "vosk_package_found": false,
+      "model_in_copy": false,
+      "speech_transcription_verified": false
+    }
+  },
+  "package": {
+    "relative_path": "_tmp_gui/r3m23/bundle-main175777d-pending-gui",
+    "files": [
+      {
+        "path": "dist/client.exe",
+        "size": 27346063,
+        "sha256": "9337281e54d504cec987f1f55fbf55b3560f0c1a404f42216f33069a185f25c0"
+      },
+      {
+        "path": "dist/server.exe",
+        "size": 26084380,
+        "sha256": "79a1061c769c0b6e19e14457647d5144e07eb7d3b778a54e09accf28e2afe2ee"
+      },
+      {
+        "path": "LICENSE",
+        "size": 35823,
+        "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+      },
+      {
+        "path": "README.md",
+        "size": 531,
+        "sha256": "79ea071e4ad520bbb28c5a14945dbbf9593c268709892b7a79d7251c138d30de"
+      },
+      {
+        "path": "SHA256SUMS.txt",
+        "size": 485,
+        "sha256": "36ff5bc990a010b41a3ea0ab8f5ae75e9d2120d202760b0ef97f51e42272ba39"
+      },
+      {
+        "path": "StartTrial.exe",
+        "size": 9739504,
+        "sha256": "b07c4064a1f13f1b27e1a2d1d64db67773357f435580ca7e477ad9640dd8bd40"
+      },
+      {
+        "path": "VERIFICATION.json",
+        "size": 663,
+        "sha256": "4213fd7fb9d0a9cb1e70a8f25b57bce0a272b3f8f5c03f4572b5346709bc7b20"
+      }
+    ],
+    "exact_seven": true,
+    "six_checksums_exact": true,
+    "after_cli_and_runtime_exact": true,
+    "embedded_runtime_note": "Package metadata was frozen before execution; final runtime evidence is external and binds these unchanged hashes.",
+    "binaries_uploaded": false
+  },
+  "formal_preflight": {
+    "run_id": "run-20261023-115532-178c91d76a",
+    "actual_shell_exit": 0,
+    "summary_sha256": "dedb2c2c16b58995cc74b5ba5946c4a43de6d8905029f8f4ef1bfe371ca64c8e",
+    "executed_package_without_override": true,
+    "probes": {
+      "initialize_root_exit": 0,
+      "tcp": true,
+      "http_status": 200,
+      "two_actual_client_logins": true,
+      "wire": true
+    },
+    "wire_steps": [
+      {
+        "name": "welcome"
+      },
+      {
+        "name": "chat"
+      },
+      {
+        "name": "chat"
+      },
+      {
+        "name": "gomoku",
+        "moves": 9,
+        "round": 1,
+        "next_round": 2
+      },
+      {
+        "name": "gomoku_leave"
+      },
+      {
+        "name": "connect4",
+        "moves": 7,
+        "round": 1,
+        "next_round": 2
+      },
+      {
+        "name": "connect4_leave"
+      }
+    ],
+    "wire_socket_cleanup": true,
+    "all_four_owned_jobs": {
+      "client": {
+        "attempted": true,
+        "ok": true,
+        "close_ok": true,
+        "ownership": "unnamed Job; suspended assignment; kill-on-close",
+        "active_before": 2,
+        "active_after": 0,
+        "state": "exited"
+      },
+      "client_beta": {
+        "attempted": true,
+        "ok": true,
+        "close_ok": true,
+        "ownership": "unnamed Job; suspended assignment; kill-on-close",
+        "active_before": 2,
+        "active_after": 0,
+        "state": "exited"
+      },
+      "server": {
+        "attempted": true,
+        "ok": true,
+        "close_ok": true,
+        "ownership": "unnamed Job; suspended assignment; kill-on-close",
+        "active_before": 3,
+        "active_after": 0,
+        "state": "exited"
+      },
+      "initialize": {
+        "attempted": true,
+        "ok": true,
+        "close_ok": true,
+        "ownership": "unnamed Job; suspended assignment; kill-on-close",
+        "active_before": 0,
+        "active_after": 0,
+        "state": "exited"
+      }
+    },
+    "strict_profile_counts": {
+      "server": {
+        "before": 5,
+        "after": 1081
+      },
+      "client": {
+        "before": 5,
+        "after": 1076
+      },
+      "client_beta": {
+        "before": 5,
+        "after": 1076
+      }
+    },
+    "profile_inventory_error": null,
+    "package_fingerprint_entry_count": 1
+  },
+  "entry_cli": {
+    "actual_shell_exit": 0,
+    "summary_sha256": "5687972d89a7427a8cc3a1242eaf0727d615565bc041b503dc47f3c6d11a8b77",
+    "help_root_exit": 0,
+    "demo_dry_run_root_exit": 0,
+    "all_two_owned_jobs": [
+      {
+        "attempted": true,
+        "ok": true,
+        "close_ok": true,
+        "ownership": "unnamed Job; suspended assignment; kill-on-close",
+        "active_before": 1,
+        "active_after": 0,
+        "state": "exited"
+      },
+      {
+        "attempted": true,
+        "ok": true,
+        "close_ok": true,
+        "ownership": "unnamed Job; suspended assignment; kill-on-close",
+        "active_before": 1,
+        "active_after": 0,
+        "state": "exited"
+      }
+    ],
+    "full_compiled_demo": false
+  },
+  "postchecks": {
+    "actual_build_entry_cli_runtime_exits_zero": true,
+    "current_source_equals_frozen_full": true,
+    "build_copy_498_inputs_only_recorded_specs_generated": true,
+    "package_seven_unchanged": true,
+    "checksum_six_exact": true,
+    "package_three_exes_equal_build": true,
+    "formal_source_dir_is_new_bundle": true,
+    "no_exe_override_and_images_exact": true,
+    "actual_six_runtime_probes_ok": true,
+    "wire_steps_complete": true,
+    "four_runtime_jobs_closed_zero": true,
+    "cli_two_jobs_closed_zero": true,
+    "private_desktop_available": true,
+    "profiles_strict_and_still_exact": true,
+    "package_fingerprint_one_input_only_preserved": true,
+    "device_network_flags_unchanged": true,
+    "no_product_test_tool_changes": true,
+    "prior_full_summary_preserved": true,
+    "video_unmerged": true
+  },
+  "local_evidence_hash_index": {
+    "build_summary": "a784a4d83b2738dff7ce0f1ed20e66cc21dc4e3a75f6fdff5bb31db7f525f8d4",
+    "build_log": "e3eac1f3a3cd205ea2f29e2bf752ff4f25194e329b687638783ffffc70546002",
+    "entry_build_summary": "19eb3dbda0a869f5aea68b5e22a473fdaf5a2489dc7be6f770f43cb049131051",
+    "entry_build_log": "1032f809558b207c8f5b6853994a6efd4bb47668a6875284e05cd660ce8068a2",
+    "entry_controller": "216174cec78b53f0e1b0dcc021795b3f6ff49f829fca95d0671c6d3ebd50e5a8",
+    "entry_cli_summary": "5687972d89a7427a8cc3a1242eaf0727d615565bc041b503dc47f3c6d11a8b77",
+    "formal_summary": "dedb2c2c16b58995cc74b5ba5946c4a43de6d8905029f8f4ef1bfe371ca64c8e",
+    "initial_archive_validator": "b83c223fd4857c1834db877382991a5c0c785cf1a24ffdaa66346ea7667575b6",
+    "final_postvalidation": "9efc212d7b0683172893b7840152bbc1d631f938d6289f20e3f0b47e26df9794"
+  },
+  "initial_validator_note": "Initial read-only archive validator incorrectly required client_core in server PYZ. Original report retained; old accepted server also lacks this client-only module. Role-correct recalculation passed without rebuilding or rerunning the application.",
+  "independent_final_technical_review": {
+    "reviewer": "flagship_scout",
+    "must": 0,
+    "scope": "All build/package/CLI/formal raw evidence, current source identity and strict inventories/owned Job cleanup"
+  },
+  "independent_public_review": {
+    "reviewer": "flagship_scout",
+    "must": 0,
+    "scope": "Five final public documents, projection/links, hash index, source/package identity and no private/raw content"
   }
 }

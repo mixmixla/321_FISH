@@ -17,11 +17,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 当前本地试用批 · R3-CURRENT-BUILD-01 v1（2026-10-23）
 
-**READY_BUILD / DESIGN_REVIEW_0_MUST / NOT_AI_ACCEPTED**。[Task](task-packages/R3-CURRENT-BUILD-01.md) / [Review](review-packages/R3-CURRENT-BUILD-01-r1.md) / [脱敏证据](review-assets/R3-CURRENT-BUILD-20261023/evidence.json)。base已验收main175777d146ffddb845b9864d48b8bc588c6bd449/clean，当前feature/r3-current-build-20261023，root唯一构建/执行/资料/集成，B独立只读审查；沿用户Sol+FAST持续授权，实际服务回执不可见。
+**BUILD_PACKAGE_CLI_PREFLIGHT_PASSED / DESIGN_REVIEW_0_MUST / FINAL_TECH_REVIEW_0_MUST / AI_ACCEPTED_CURRENT_BUILD_PACKAGE_PREFLIGHT_ONLY / PUBLIC_REVIEW_0_MUST**。[Task](task-packages/R3-CURRENT-BUILD-01.md) / [Review](review-packages/R3-CURRENT-BUILD-01-r1.md) / [脱敏证据](review-assets/R3-CURRENT-BUILD-20261023/evidence.json)。base已验收main175777d146ffddb845b9864d48b8bc588c6bd449/clean，当前feature/r3-current-build-20261023，root唯一构建/执行/资料/集成，B独立只读审查；沿用户Sol+FAST持续授权，实际服务回执不可见。
 
 有界双线优先级检查：R1旧重连/严格恢复缺口已修；本地历史昵称隔离需另定UID/迁移语义不能热修。R2/3最高价值可执行缺口是10月21日2e211564旧EXE尚未包含现main修复。冻结现498输入/sourcef3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae，复用唯一full gvm23-final-01/3022P0F20skip/exit0，不改源码或重测full。仅新本地三EXE/精确七文件包、一次现行strict正式run在包目录实启双client/HTTP/默认wire/owned Job关闭、必要入口CLI；独立7文件SHA补无源码包单项指纹，源/spec另绑定。
 
-原工程_tmp_gui/r3m23启动前未存在、现有PyInstaller可用，当前/冻结498逐字节一致，无构建/运行实际启动；B已独立冻结设计审查0 MUST，已明确正式run在新七文件包目录且无override、7文件SHA与498源绑定分开；下一执行现有build。原件本工作树_tmp_gui/r3-current-build-20261023及上述新目录，禁止公开原日志/profile/二进制/私密值；视频4759仍暂停未继承，不诊断/开硬件/装工具/改系统，不称GUI/自然退出/LAN/异机/STT/完整R1或R3通过。正常main集成沿原授权，不强推/保护变更或发布。
+三EXE构建已自然完成：双EXE exec38808/exit0/build-20261023-115050-e2f6d9f726，入口exec7031/exit0；副本498输入齐全，496逐SHA不变，两spec正常生成分列；入口编译code与当前源码一致。controller SHA216174cec78b53f0e1b0dcc021795b3f6ff49f829fca95d0671c6d3ebd50e5a8经B独立0 MUST。初归档validator误将client_core列server必需模块，初报告保留；旧验收server亦不含该客户端模块，按角色重核通过，不是构建/运行失败，无重构建。
+
+新包原工程_tmp_gui/r3m23/bundle-main175777d-pending-gui精确七文件，三EXE/许可证复制前后SHA相同，六校验记录已核；入口CLI exec58144已自然结束actual exit0，help/demo dry-run两根exit0且2Job cleanup/close成功，七文件SHA保持；不是完整demo/GUI。唯一正式local_trial.py run exec98019已自然结束actual exit0，run-20261023-115532-178c91d76a，summary SHAdedb2c2c16b58995cc74b5ba5946c4a43de6d8905029f8f4ef1bfe371ca64c8e；source-dir就是新七文件包、无override，initialize0/HTTP200/双client登录/默认wire两棋终局重开离房和双peer cleanup均通过。4Job after0/close成功，strict profiles before各5/after1081,1076,1076无错误，现盘清单一致；七文件SHA保持。root首次19后验全true，无活动Python；B已独立复算所有构建/包/CLI/正式运行原件0 MUST，root据此有限AI_ACCEPTED本Task；五资料独立终审0 MUST，当前dirty仅五资料，下一提交后全部新增Git对象审计/正常集成，尚未推送；不重复构建/运行。原件本工作树_tmp_gui/r3-current-build-20261023（frozen/build/archive/package-before/entry-controller与各stdout/exit），以及原工程_tmp_gui/r3m23；不得重复已启动操作。
+
+禁止公开原日志/profile/二进制/私密值；视频4759仍暂停未继承，不诊断/开硬件/装工具/改系统，不称GUI/自然退出/LAN/异机/STT/完整R1或R3通过。正常main集成沿原授权，不强推/保护变更或发布。
 
 ## 独立R1续批 · GROUP-VOICE-MEMBERSHIP-01 v1（2026-10-23）
 

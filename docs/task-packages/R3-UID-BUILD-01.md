@@ -17,3 +17,7 @@
 ## 恢复
 
 原件本工作树_tmp_gui/r3-uid-build-20261023，构建/包/正式运行原工程_tmp_gui/uib23。当前冻结前无活动Python，旧包保留，源码501精确等full。先独立设计/控制器预审，再构建；不并发运行或重建已成功操作。完成后报告真实依赖，不扩下一任务。
+
+## 实施与有限技术验收
+
+本次三EXE、精确七文件包、入口CLI及唯一正式strict包预检均actual exit0。双client UID目录与本次合成Store/audit正确落位，root25后验全true，B独立完整原件终审0 MUST。root仅AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY，五公开资料独立终审0 MUST；新增Git对象审计与经授权集成待完成；完整GUI/自然退出/LAN/其他未验边界不变。初只读validator字段假设错误原件保留，非EXE失败、无重建重跑。版本/哈希/原件位置及真实依赖见Review与脱敏证据。

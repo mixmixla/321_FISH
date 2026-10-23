@@ -1,0 +1,281 @@
+{
+  "schema": "R3-UID-BUILD-01.v1.sanitized",
+  "status": "AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY",
+  "base_commit": "1e3c96af48552feeddba38b7071a31670c6f388a",
+  "source_inputs": 501,
+  "source_content_id": "81c36be82a54f5663f0ea2b473884a6499040741c171a4c0115500539aa965e5",
+  "source_full": {
+    "run_id": "hui23-final-02",
+    "files": 223,
+    "passed": 3070,
+    "failed": 0,
+    "existing_skips": 20,
+    "actual_exit": 0,
+    "summary_sha256": "2cea79203a4a284cc90db0e3435bd243dd161adb0a43bc0e81f20f303a3b0dc1",
+    "rerun": false
+  },
+  "product_test_tool_dependency_changes": false,
+  "old_package_preserved": true,
+  "build": {
+    "run_id": "build-20261023-143501-35c3e71835",
+    "actual_exec_session": 29681,
+    "actual_exit": 0,
+    "summary_sha256": "1a704435ed90cab2f6192316232a78b45a3337e39cd10e1d80c7fad5396f3405",
+    "normal_spec_changes": [
+      {
+        "path": "client.spec",
+        "frozen_sha256": "2d814b6bbe67c8b6508f10a688c6d948d15c8ab4c815e5963316e37a46b6e347",
+        "generated_sha256": "b4077903931be439f45cab44025456ebb2eb2a267ed467dbfd9446c4e6271681"
+      },
+      {
+        "path": "server.spec",
+        "frozen_sha256": "e925b66ba6066d181e89b24a647d2295226104a5ddbe80ff7191e3ba337641f5",
+        "generated_sha256": "93a7be57ad4531dc962c92a766cc979a2fec376da9107462c7d1225ba17a2e17"
+      }
+    ],
+    "unchanged_inputs": 499,
+    "entry_actual_exec_session": 44315,
+    "entry_actual_exit": 0,
+    "controller_raw_sha256": "495d17ad558a0a768cfb146604f29fe116da664eddb6ab38933504e1c9d94ab8",
+    "archives": {
+      "server": {
+        "entry_code_matches_current_except_filename": true,
+        "required_pyz_modules": [
+          "protocol",
+          "server_store",
+          "server_recovery",
+          "boardgames.registry",
+          "games_pkg.gomoku",
+          "games_pkg.connect4"
+        ],
+        "required_module_code_matches_current_except_filename": {
+          "protocol": true,
+          "server_store": true,
+          "server_recovery": true,
+          "boardgames.registry": true,
+          "games_pkg.gomoku": true,
+          "games_pkg.connect4": true
+        },
+        "size": 26084654,
+        "sha256": "b145cd441e89f5723f6887dd31ce06e9ba2e5ce567bbcdfb92ffb2a892287c43"
+      },
+      "client": {
+        "entry_code_matches_current_except_filename": true,
+        "required_pyz_modules": [
+          "protocol",
+          "server_store",
+          "server_recovery",
+          "boardgames.registry",
+          "games_pkg.gomoku",
+          "games_pkg.connect4",
+          "client_core",
+          "local_identity",
+          "prefs",
+          "crypto_e2ee"
+        ],
+        "required_module_code_matches_current_except_filename": {
+          "protocol": true,
+          "server_store": true,
+          "server_recovery": true,
+          "boardgames.registry": true,
+          "games_pkg.gomoku": true,
+          "games_pkg.connect4": true,
+          "client_core": true,
+          "local_identity": true,
+          "prefs": true,
+          "crypto_e2ee": true
+        },
+        "size": 27365799,
+        "sha256": "3dbb77b35ebc2b00cc09652818254c395c0e45bc649a1b6cef14a2672de13db7"
+      },
+      "StartTrial": {
+        "entry_code_matches_current_except_filename": true,
+        "required_pyz_modules": [
+          "friend_trial_process"
+        ],
+        "required_module_code_matches_current_except_filename": {
+          "friend_trial_process": true
+        },
+        "size": 9739724,
+        "sha256": "189dadaf359c7d4efe0ed3ed62d38ac2a7e05ce6082f7b0108061f83de24442f"
+      }
+    },
+    "optional": {
+      "vosk_package_found": false,
+      "model_in_copy": false,
+      "speech_transcription_verified": false
+    }
+  },
+  "package": {
+    "local_relative_path": "_tmp_gui/uib23/bundle-main1e3c96a-pending-gui",
+    "files": [
+      {
+        "path": "dist/client.exe",
+        "size": 27365799,
+        "sha256": "3dbb77b35ebc2b00cc09652818254c395c0e45bc649a1b6cef14a2672de13db7"
+      },
+      {
+        "path": "dist/server.exe",
+        "size": 26084654,
+        "sha256": "b145cd441e89f5723f6887dd31ce06e9ba2e5ce567bbcdfb92ffb2a892287c43"
+      },
+      {
+        "path": "LICENSE",
+        "size": 35823,
+        "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+      },
+      {
+        "path": "README.md",
+        "size": 595,
+        "sha256": "81ab48c58e286625f7f8c394eed238407445fd78df991f1ec7440f22911bc643"
+      },
+      {
+        "path": "SHA256SUMS.txt",
+        "size": 485,
+        "sha256": "6071fe08b11c3d7249418596a5ffd54de60d5f3460af424a5e4c2a9c7a71210e"
+      },
+      {
+        "path": "StartTrial.exe",
+        "size": 9739724,
+        "sha256": "189dadaf359c7d4efe0ed3ed62d38ac2a7e05ce6082f7b0108061f83de24442f"
+      },
+      {
+        "path": "VERIFICATION.json",
+        "size": 691,
+        "sha256": "a003aa4c80501757a684c554b65c8ecff3a00c02bd01190608de5a68ac5f2159"
+      }
+    ],
+    "checksum_records": 6,
+    "before_after_exact": true,
+    "binaries_uploaded": false,
+    "published": false
+  },
+  "entry_cli": {
+    "run_id": "cli-20261023-143734-7af1b5a76a",
+    "actual_exec_session": 96864,
+    "actual_exit": 0,
+    "root_exits": [
+      0,
+      0
+    ],
+    "jobs_after_zero_and_closed": true,
+    "full_compiled_demo": false
+  },
+  "formal_preflight": {
+    "run_id": "run-20261023-143757-6173c902ae",
+    "summary_sha256": "40b899311e748cd901bcb58e36cb2c565374a84611e0cb6cce7b8db6fe3487af",
+    "actual_exec_session": 54718,
+    "actual_exit": 0,
+    "source_is_exact_new_bundle": true,
+    "exe_overrides": false,
+    "initialize_natural_root_exit": 0,
+    "http_status": 200,
+    "two_actual_client_logins": true,
+    "expected_images_and_alive": true,
+    "wire_chat_both_directions": true,
+    "games": {
+      "gomoku": {
+        "moves": 9,
+        "terminal_then_next_round": true,
+        "left": true
+      },
+      "connect4": {
+        "moves": 7,
+        "terminal_then_next_round": true,
+        "left": true
+      }
+    },
+    "runtime_job_count": 4,
+    "runtime_jobs_after_zero_and_closed": true,
+    "wire_peers_closed": true,
+    "profile_counts": {
+      "server": {
+        "before": 5,
+        "after": 1081
+      },
+      "client": {
+        "before": 5,
+        "after": 1078
+      },
+      "client_beta": {
+        "before": 5,
+        "after": 1078
+      }
+    },
+    "strict_inventories_same_as_disk": true,
+    "package_fingerprint_inputs": 1,
+    "fingerprint_note": "No-source package fingerprint only covers checksum input; independent seven-file hashes plus separate 501 source/build binding cover this candidate.",
+    "uid_observation": [
+      {
+        "uid_directory_matches_accepted_store_and_audit": true,
+        "own_e2ee_identity_leaf_exists_without_reading": true,
+        "no_new_nickname_directory": true,
+        "optional_uid_profiles_current_only": true,
+        "uid_profile_present": false
+      },
+      {
+        "uid_directory_matches_accepted_store_and_audit": true,
+        "own_e2ee_identity_leaf_exists_without_reading": true,
+        "no_new_nickname_directory": true,
+        "optional_uid_profiles_current_only": true,
+        "uid_profile_present": false
+      }
+    ],
+    "uid_scope_value_or_full_inventory_public": false,
+    "uid_observation_scope": "Fresh durable EXE login directory placement only; no content or key reads, no cross-Store/rename/switch/restart/legacy-content/old-worker lifecycle EXE claim."
+  },
+  "root_postchecks": {
+    "actual_build_entry_cli_runtime_exits_zero": true,
+    "current_source_equals_frozen_full": true,
+    "build_copy_501_only_two_specs_generated": true,
+    "package_seven_unchanged": true,
+    "checksum_six_exact": true,
+    "package_three_exes_equal_build": true,
+    "formal_source_dir_is_new_bundle": true,
+    "no_exe_override_and_images_exact": true,
+    "actual_six_runtime_probes_ok": true,
+    "wire_steps_complete": true,
+    "four_runtime_jobs_closed_zero": true,
+    "cli_two_jobs_closed_zero": true,
+    "private_desktop_available": true,
+    "profiles_strict_and_still_exact": true,
+    "package_fingerprint_one_input_preserved": true,
+    "device_network_flags_exact": true,
+    "source_full_summary_preserved": true,
+    "first_failed_full_preserved": true,
+    "video_unmerged": true,
+    "old_package_seven_unchanged": true,
+    "two_audit_uids_distinct": true,
+    "uid_directories_match_store_and_audit": true,
+    "uid_identity_leaves_present_without_reading": true,
+    "no_new_nickname_directory": true,
+    "optional_uid_profiles_current_only": true
+  },
+  "initial_validator_error": {
+    "stage": "Read-only root post-validation",
+    "exception": "KeyError",
+    "incorrect_assumption": "wire.games field; actual schema uses steps",
+    "original_retained": true,
+    "actual_formal_runtime_exit": 0,
+    "runtime_rerun": false,
+    "build_rerun": false
+  },
+  "independent_design_must": 0,
+  "independent_final_must": 0,
+  "technical_acceptance": "AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY",
+  "not_verified": [
+    "Visual GUI complete interaction",
+    "Natural whole-application exit",
+    "Physical cross-machine LAN",
+    "Other Windows/DPI",
+    "Real hardware",
+    "Speech transcription",
+    "Complete EXE UID lifecycle",
+    "Whole R1/R3 milestones",
+    "Release"
+  ],
+  "paused_video_merged": false,
+  "raw_evidence_and_binaries_local_only": true,
+  "independent_public_review_must": 0,
+  "new_object_audit": "PENDING"
+}

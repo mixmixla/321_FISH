@@ -1,6 +1,6 @@
 {
   "schema": "R3-UID-BUILD-01.v1.sanitized",
-  "status": "AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY",
+  "status": "AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY_MERGED_MAIN_REMOTE_VERIFIED",
   "base_commit": "1e3c96af48552feeddba38b7071a31670c6f388a",
   "source_inputs": 501,
   "source_content_id": "81c36be82a54f5663f0ea2b473884a6499040741c171a4c0115500539aa965e5",
@@ -277,5 +277,30 @@
   "paused_video_merged": false,
   "raw_evidence_and_binaries_local_only": true,
   "independent_public_review_must": 0,
-  "new_object_audit": "PENDING"
+  "new_object_audit": {
+    "head": "8dee02f303d69c7497d690375bc0003ca2a58b8b",
+    "commits": 2,
+    "trees": 9,
+    "blobs": 8,
+    "objects": 19,
+    "root_findings": 0,
+    "independent_must": 0
+  },
+  "delivery": {
+    "reviewed_delivery_commit": "8dee02f303d69c7497d690375bc0003ca2a58b8b",
+    "git_ls_remote_verified": true,
+    "github_branch_api_verified": true,
+    "ordinary_ff_and_nonforce_push": true,
+    "source_and_package_bytes_unchanged": true,
+    "ci": {
+      "sha": "8dee02f303d69c7497d690375bc0003ca2a58b8b",
+      "check_runs": 0,
+      "status_total": 0,
+      "status_contexts": 0,
+      "actions": 0,
+      "aggregate_state": "pending",
+      "passed_claimed": false
+    },
+    "receipt_leaf": "Final docs-only receipt resolved from Git refs; independently audited before normal push. No recursive receipt update."
+  }
 }

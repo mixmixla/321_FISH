@@ -17,9 +17,9 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 当前本地试用刷新批 · R3-UID-BUILD-01 v1（2026-10-23）
 
-**THREE_EXE_BUILD_PASSED / ENTRY_CLI_PASSED / FORMAL_RUN_PASSED / UID_DIRECTORY_OBSERVED / FINAL_INDEPENDENT_REVIEW_0_MUST / AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY / PUBLIC_REVIEW_0_MUST / NEW_OBJECT_AUDIT_PENDING**。[Task](task-packages/R3-UID-BUILD-01.md) / [Review](review-packages/R3-UID-BUILD-01-r1.md) / [脱敏证据](review-assets/R3-UID-BUILD-20261023/evidence.json)。本次明确授权仅刷新含UID隔离的本地三EXE/七文件包，旧175777d包逐SHA保留；root唯一构建/运行/资料/集成，B flagship_scout只读独立审查，沿Sol+FAST（服务回执不可见）、正常main直接集成，不PR/force/权限保护凭据更改/发布二进制。
+**THREE_EXE_BUILD_PASSED / ENTRY_CLI_PASSED / FORMAL_RUN_PASSED / UID_DIRECTORY_OBSERVED / FINAL_INDEPENDENT_REVIEW_0_MUST / AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY / PUBLIC_REVIEW_0_MUST / NEW_OBJECT_AUDIT_0_MUST / MERGED_MAIN / REMOTE_VERIFIED**。[Task](task-packages/R3-UID-BUILD-01.md) / [Review](review-packages/R3-UID-BUILD-01-r1.md) / [脱敏证据](review-assets/R3-UID-BUILD-20261023/evidence.json)。本次明确授权仅刷新含UID隔离的本地三EXE/七文件包，旧175777d包逐SHA保留；root唯一构建/运行/资料/集成，B flagship_scout只读独立审查，沿Sol+FAST（服务回执不可见）、正常main直接集成，不PR/force/权限保护凭据更改/发布二进制。
 
-基线Git/API main1e3c96af48552feeddba38b7071a31670c6f388a clean；本工作树history-uid-integration-20261023，分支feature/r3-uid-build-20261023，冻结提交026a4d1，五公开资料dirty属root。501输入/source81c36be82a54f5663f0ea2b473884a6499040741c171a4c0115500539aa965e5仍精确等UID最终full；沿用223文件3070P0F20既有skip/exit0，不改源码/测试/工具/依赖、不重复源码full。视频4759仍原工程clean/暂停且非祖先，不继承/诊断。
+基线Git/API main1e3c96af48552feeddba38b7071a31670c6f388a clean；本工作树history-uid-integration-20261023，现main并保留feature/r3-uid-build-20261023，冻结提交026a4d1，文档验收交付8dee02f303d69c7497d690375bc0003ca2a58b8b；本末纯资料回执提交前dirty属root。501输入/source81c36be82a54f5663f0ea2b473884a6499040741c171a4c0115500539aa965e5仍精确等UID最终full；沿用223文件3070P0F20既有skip/exit0，不改源码/测试/工具/依赖、不重复源码full。视频4759仍原工程clean/暂停且非祖先，不继承/诊断。
 
 设计及controller raw SHA495d17ad558a0a768cfb146604f29fe116da664eddb6ab38933504e1c9d94ab8经B预审0 MUST后执行。双EXE exec29681/自然exit0/59.398s、入口exec44315/自然exit0；build-20261023-143501-35c3e71835，副本499逐SHA不变、两spec正常生成分列；三入口/角色必需PYZ代码与当前源一致（client含local_identity）。新包原工程_tmp_gui/uib23/bundle-main1e3c96a-pending-gui精确七文件/六校验，三产物与原件同SHA，前后七文件不变。可选Vosk/模型缺失不称STT通过。
 
@@ -27,7 +27,7 @@ CLI exec96864自然exit0，help/demo dry-run两根exit0、两owned Job after0/cl
 
 两真实client各1 UID目录与本次合成Store合法scope/audit正整数UID匹配、UID不同且不互混，identity叶只核存在不读key/消息；未新建昵称直达目录。两uid_profiles未落盘属非必有，不声称六字段持久化或完整EXE切账号/更名/旧内容不读取合同已验。初只读validator误读wire.games导致KeyError，原脚本/诊断保留；仅改后验schema，不重构建或运行。B完整原件/源/包/UID边界独立技术终审0 MUST，root仅AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY，不是用户/Pro、完整R1/R3或发布。
 
-当前构建/CLI/正式run均结束，无活动Python。原件本树_tmp_gui/r3-uid-build-20261023，包与运行原工程_tmp_gui/uib23；五公开资料独立终审0 MUST；下一步提交五资料、全部新增Git对象脱敏后正常main集成及Git/API核实，CI无记录不称通过。下一步仅审查/集成，不再开发/测试/构建；可视GUI/自然应用退出需受支持原生输入或同机人工操作，物理LAN/异机需第二设备及可信网络；硬件/STT与视频诊断另有真实依赖，未授权设备/工具不擅自启用，不为用量造任务。
+当前构建/CLI/正式run均结束，无活动Python。原件本树_tmp_gui/r3-uid-build-20261023，包与运行原工程_tmp_gui/uib23；五公开资料独立终审0 MUST，全部19新对象（2提交/9树/8文本blob）与metadata独立审计0 MUST。fresh fetch/API核main基线及可见规则后普通FF/非强制push成功，Git/API双核8dee02f303d69c7497d690375bc0003ca2a58b8b；该交付核验时clean、源与包不变。该提交check-runs/status contexts/Actions均0、aggregate pending/total0，不称CI通过。只余本末纯资料回执独立公开/对象审计和正常推送，最终leaf以Git refs为准，不递归回执；完成即停，不再开发/测试/构建；可视GUI/自然应用退出需受支持原生输入或同机人工操作，物理LAN/异机需第二设备及可信网络；硬件/STT与视频诊断另有真实依赖，未授权设备/工具不擅自启用，不为用量造任务。
 
 ## 当前账号历史批 · HISTORY-UID-ISOLATION-01 v2.1（2026-10-23）
 

@@ -1,6 +1,6 @@
 # R3-UID-BUILD-01 r1
 
-2026-10-23 BUILD_CLI_PREFLIGHT_PASSED / UID_DIRECTORY_OBSERVED / FINAL_INDEPENDENT_REVIEW_0_MUST / AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY / PUBLIC_REVIEW_0_MUST。[Task v1](../task-packages/R3-UID-BUILD-01.md) / [脱敏证据](../review-assets/R3-UID-BUILD-20261023/evidence.json)。base main `1e3c96af48552feeddba38b7071a31670c6f388a`；root唯一构建/运行/资料/集成，flagship_scout独立只读审查。沿用户本次刷新包与此前正常main直接集成授权，不PR/强推/改权限凭据保护/发布二进制。Sol+FAST沿用户偏好，实际服务回执不可见。
+2026-10-23 BUILD_CLI_PREFLIGHT_PASSED / UID_DIRECTORY_OBSERVED / FINAL_INDEPENDENT_REVIEW_0_MUST / AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY / PUBLIC_REVIEW_0_MUST / NEW_OBJECT_AUDIT_0_MUST / MERGED_MAIN / REMOTE_VERIFIED。[Task v1](../task-packages/R3-UID-BUILD-01.md) / [脱敏证据](../review-assets/R3-UID-BUILD-20261023/evidence.json)。base main `1e3c96af48552feeddba38b7071a31670c6f388a`；root唯一构建/运行/资料/集成，flagship_scout独立只读审查。沿用户本次刷新包与此前正常main直接集成授权，不PR/强推/改权限凭据保护/发布二进制。Sol+FAST沿用户偏好，实际服务回执不可见。
 
 ## 输入与本地产物
 
@@ -22,8 +22,8 @@ root后验25项全true，初只读validator误读不存在wire.games字段触发
 
 ## 交付边界
 
-仅五资料可公开：本Task、Review、脱敏evidence、中心及其生成任务投影。原件本工作树_tmp_gui/r3-uid-build-20261023、构建/包/正式run原工程_tmp_gui/uib23；不得公开原log/完整profile/audit/本机用户名/私密值/二进制，scope值也不复制进公开摘要。独立原件/公开资料及全部新增Git对象审计通过后再普通main集成，CI无记录不称通过。
+仅五资料可公开：本Task、Review、脱敏evidence、中心及其生成任务投影。原件本工作树_tmp_gui/r3-uid-build-20261023、构建/包/正式run原工程_tmp_gui/uib23；不得公开原log/完整profile/audit/本机用户名/私密值/二进制，scope值也不复制进公开摘要。独立原件/公开资料及全部19新增Git对象审计0 MUST后已普通main集成，CI无记录不称通过。
 
 可视GUI完整邀请/落子/再开、客户端自然退出、物理LAN、异机/DPI、真实硬件、STT及完整R1/R3仍未验；暂停视频4759保留不合并。前两类需要受支持原生桌面输入或同机人工操作，物理LAN/异机需要第二台设备与可信网络；STT需要另获授权准备依赖/模型及成品合成音频验收，视频需新诊断证据。本批完成后不扩新任务。
 
-五公开资料已独立终审0 MUST，待新增Git对象/metadata脱敏审计与普通main集成；此时不称已推送。
+五公开资料独立终审0 MUST，全部19新对象（2 Codex提交/9树/8文本blob，含冻结中间版本）与metadata独立审计0 MUST；fresh fetch/API核main基线、protected=false/可见rulesets空后普通快进并非强制push成功。Git ls-remote/API双核文档验收交付提交 `8dee02f303d69c7497d690375bc0003ca2a58b8b`，工作树在该交付核验时clean、无活动Python，源码/包未变。该提交check-runs/status contexts/Actions均0、aggregate pending/total0，不能称CI通过。本末纯资料回执单独审查/对象审计后正常推送，最终leaf以Git refs为准，不递归写回执；不再构建、预检或源码full。

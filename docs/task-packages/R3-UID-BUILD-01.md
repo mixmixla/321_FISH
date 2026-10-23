@@ -20,4 +20,6 @@
 
 ## 实施与有限技术验收
 
-本次三EXE、精确七文件包、入口CLI及唯一正式strict包预检均actual exit0。双client UID目录与本次合成Store/audit正确落位，root25后验全true，B独立完整原件终审0 MUST。root仅AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY，五公开资料独立终审0 MUST；新增Git对象审计与经授权集成待完成；完整GUI/自然退出/LAN/其他未验边界不变。初只读validator字段假设错误原件保留，非EXE失败、无重建重跑。版本/哈希/原件位置及真实依赖见Review与脱敏证据。
+本次三EXE、精确七文件包、入口CLI及唯一正式strict包预检均actual exit0。双client UID目录与本次合成Store/audit正确落位，root25后验全true，B独立完整原件终审0 MUST。root仅AI_ACCEPTED_UID_BUILD_PREFLIGHT_ONLY，五公开资料独立终审0 MUST；全部19新可达对象/metadata独立审计0 MUST，已普通main集成及Git/API核实；完整GUI/自然退出/LAN/其他未验边界不变。初只读validator字段假设错误原件保留，非EXE失败、无重建重跑。版本/哈希/原件位置及真实依赖见Review与脱敏证据。
+
+文档验收交付提交 `8dee02f303d69c7497d690375bc0003ca2a58b8b` 已远端双核；CI无check-runs/status contexts/Actions记录（aggregate pending/total0），不称通过。末纯资料回执另做独立公开/对象审计后正常推送，最终leaf以Git refs为准；无源码或包字节变化不重复构建/预检/full。

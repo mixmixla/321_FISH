@@ -1,0 +1,100 @@
+{
+  "task": "GROUP-VOICE-MEMBERSHIP-01 v1",
+  "base": "ed287336d689360aec7090bfd4cc75c1c8099da7",
+  "status": "IMPLEMENTED_DOMAIN_PASSED_INDEPENDENT_CODE_REVIEW_0_MUST_PENDING_FULL",
+  "worker": {
+    "base": "ed287336d689360aec7090bfd4cc75c1c8099da7",
+    "runs": {
+      "red": {
+        "run_id": "group-voice-race-red-20261023-20261023-192148-7c4b02b2e9",
+        "files": 1,
+        "totals": {
+          "failed": 5
+        },
+        "exit_code": 1,
+        "seconds": 2.65,
+        "source_content_id": "93978d1c5183b4cfffcb58781713da9ca547c2d728e8d58ed621c930c0f3efab",
+        "summary_sha256": "9b4034aa13bfdbd2d118d0c75d1855b6e5dccc8c0882ea7f09075ea5e4b1c577",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      },
+      "green": {
+        "run_id": "group-voice-race-green-20261023-20261023-192228-11dac1c8d4",
+        "files": 1,
+        "totals": {
+          "passed": 5
+        },
+        "exit_code": 0,
+        "seconds": 2.017,
+        "source_content_id": "75e7d3c61546b61114b877da4317f945b8b41fb665ddad063f35fb24eba1d296",
+        "summary_sha256": "ded90fbb367ddb03d934b81b17e15fc2d45c08a601e24818df76e765cedb96b3",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      },
+      "domain": {
+        "run_id": "group-voice-race-domain-20261023-20261023-192243-a552b14153",
+        "files": 5,
+        "totals": {
+          "passed": 66
+        },
+        "exit_code": 0,
+        "seconds": 22.232,
+        "source_content_id": "75e7d3c61546b61114b877da4317f945b8b41fb665ddad063f35fb24eba1d296",
+        "summary_sha256": "ec63b0fce7f3fcbf6d6bf03cef7f02d6767f884cd674a31322d88843d6bb6ee2",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      }
+    },
+    "red_to_green_only_server": true,
+    "test_sha_by_phase": {
+      "red": "30f4c69ec314ec4e1bda6f9217462580f7181c23499e691c7e7a8dc3b61322be",
+      "green": "30f4c69ec314ec4e1bda6f9217462580f7181c23499e691c7e7a8dc3b61322be"
+    },
+    "red_evidence_note": "RED directly observes missing room rejection and room_full callback under the Hub lock; stale roster insertion is inferred from the controlled revocation ordering, normal worker return and the original sole mutation path. Later roster assertions were not reached in RED.",
+    "checks": {
+      "current_equals_domain": true,
+      "green_domain_same_source": true,
+      "red_to_green_only_server": true,
+      "actual_execution_receipts_preserved": true
+    }
+  },
+  "version_notes": [
+    "RED/GREEN/domain new test bytes are equal; RED to GREEN only server.py differs.",
+    "RED directly observes missing room rejection and room_full callback under the Hub lock; stale roster insertion is inferred from the controlled revocation ordering, normal worker return and the original sole mutation path. Later roster assertions were not reached in RED.",
+    "GREEN reaches all roster/peers/audit assertions and dynamic rejection/room_full lock probes."
+  ],
+  "limits": [
+    "Only server room-join admission and roster consistency; no real audio UDP or device acceptance.",
+    "No other handler/client/protocol/mute policy changes.",
+    "Paused video remains unmerged/unaccepted; no GUI/natural exit/LAN/new EXE/whole R1 or release acceptance."
+  ],
+  "independent_worker_review": {
+    "reviewer": "flagship_scout",
+    "scope": "Task v1, actual diff/tests and all three original runs with observed/inferred distinction",
+    "must": 0
+  }
+}

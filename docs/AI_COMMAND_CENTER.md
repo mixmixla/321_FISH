@@ -15,6 +15,14 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 2026-10-23 最终收尾决定
+
+用户再次限定本次只完成 main 集成，停止其他开发；沿用22日直接正常合并/推送 main 的明确授权，覆盖下方历史批次默认集成限制，仅用于已验收批次，不形成未来默认权限，不发布。任何 main 写入拒绝即停，不改凭据/权限/保护，不强推。
+
+恢复核实本地产品提交 d494d91e23d098578186f2606947c6c4b325e9e4 已存在，未重复提交。491源与原full逐字节一致，214文件2991P/0F/20既有skip、33后验及独立终审保持。ddf..d494全部75对象/37blob/4commit及metadata独立审计0 MUST；当前无活动测试。
+
+fresh fetch与API核远端main为8237997629aa7912508fa2b8d74144d660463d21，protected=false、可见rulesets为空。远端已合入R1续连/清理修复及离线退役诊断，另含88a0d9e的client_gameui.py光晕参数调整。只补合群移除修复，完整保留远端改动；不假称最终组合与原全量全部同字节。下一提交此检查点→正常合入远端→必要最小组合选测（群移除/ClientCore/棋子光晕/游戏组件）→新增对象复核→正常更新main→远端SHA及CI记录核验→立即停工。不扩任务，不重复全量。下面各批历史未合并状态以本段与最终Git refs为准。
+
 ## GROUP-KICK-SCOPE-01 v1.1（2026-10-22）
 
 **AI_ACCEPTED_GROUP_SESSION_SCOPE_ONLY / FULL_PASSED / FINAL_REVIEW_0_MUST / READY_FOR_BRANCH_PUSH / NOT_MERGED**。[Task](task-packages/GROUP-KICK-SCOPE-01.md) / [Review](review-packages/GROUP-KICK-SCOPE-01-r1.md)。base3a995e90996fe8d6bd7bac9248ffcf32a64b8347，fix/group-kick-session-scope-20261022，dirty；root唯一产品/测试/资料写入，r1_review独立只读。既定R1会话一致性缺陷：群移除共用管理员kicked，导致错误退出账号。产品仅server.py/client_core.py：独立group_removed通知全部目标Session、仅清对应群；revision过滤旧快照，本地generation挡跨移除/续连密钥worker。前批两分支保持，PR403不重试，不直接push main，不发布。

@@ -24,6 +24,9 @@
 
 - 群移除与已确认主动退群均使用 `error/group_removed`（含 gid），与管理员全账号 `kicked` 分离；通知该 UID 已有全部 Session，不撤 Web token；退群的群/成员资格重核与删除同在 Hub 锁内，拒绝和通知 IO 在锁外。Hub 锁内运行态 `group_revision` 排序群快照/移除，Core 丢弃旧帧并清该群重入/成员/邀请/密钥；WELCOME 仅清服务端 revision，本地 generation 保留以挡跨续连旧密钥 worker。合法新成员快照允许显式重入；旧服务器的模糊 kicked 不作文字猜测。
 
+- 公开入群及系统管理员加人将群对象、已有成员、人数容量与写入放在同一 Hub 锁内；
+  拒绝回执及成功持久化/广播/审计均在锁外。同UID重复管理员加入只产生一次成功。
+
 - `_RoomCard`按卡片持有自己的`ImageTk.PhotoImage`；Tk Label的image名字不保活Python图片。
   正常销毁并释放卡片后在Tk主线程回收，刷新不可依赖全局图片缓存或共享Tk守卫来延寿。
 

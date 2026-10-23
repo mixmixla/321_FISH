@@ -7,6 +7,7 @@ import uuid
 import pytest
 
 import test_gate
+import test_sandbox
 
 
 @pytest.mark.parametrize("pid", [None, 0, 123456])
@@ -85,3 +86,104 @@ def test_private_child_has_valid_independent_standard_streams(tmp_path, operatio
         process.close()
     expected = "stdin-ok" if operation == "stdin" else "stderr-marker"
     assert expected in log.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("native", [False, True], ids=["popen", "native"])
+@pytest.mark.parametrize("outcome", ["exited", "timeout", "error", "unknown", "descendant_unknown"])
+def test_termination_waits_for_owned_exit_and_keeps_uncertainty(monkeypatch, native, outcome):
+    """Termination can return while the owned process is still unsignaled."""
+    calls = []
+    state = {"code": None}
+    owned = [73101, 73102]
+
+    class FailedTaskkill:
+        def wait(self, timeout):
+            return 1
+
+    def taskkill(command, **kwargs):
+        assert command[0] == "taskkill" and int(command[2]) in owned
+        return FailedTaskkill()
+
+    def waited(timeout):
+        calls.append(("wait", timeout))
+        assert 0 < timeout <= 10
+        if outcome == "timeout":
+            raise TimeoutError("synthetic delayed exit")
+        if outcome == "error":
+            raise OSError("synthetic wait failure")
+        state["code"] = None if outcome == "unknown" else 124
+        return state["code"]
+
+    class Popen:
+        pid = owned[0]
+
+        def poll(self):
+            return state["code"]
+
+        def kill(self):
+            calls.append(("terminate", self.pid))
+
+        wait = staticmethod(waited)
+
+    class Kernel:
+        def TerminateProcess(self, handle, code):
+            assert handle == 917 and code == 124
+            calls.append(("terminate", owned[0]))
+            return True
+
+    def descendants(pids):
+        assert pids == owned
+        calls.append(("descendants", tuple(pids)))
+        return outcome != "descendant_unknown"
+
+    monkeypatch.setattr(test_sandbox, "process_session_id", lambda _pid: 1)
+    monkeypatch.setattr(test_sandbox, "process_tree_pids", lambda _pid: owned)
+    monkeypatch.setattr(test_sandbox, "_ORIGINAL_POPEN", taskkill)
+    monkeypatch.setattr(test_sandbox, "_windows_handles", lambda: (Kernel(), None))
+    monkeypatch.setattr(test_sandbox, "_wait_owned_processes_gone", descendants)
+    process = test_sandbox.DesktopProcess(
+        popen=None if native else Popen(), process_handle=917 if native else None,
+        pid=owned[0],
+    )
+    if native:
+        monkeypatch.setattr(process, "poll", lambda: state["code"])
+        monkeypatch.setattr(process, "wait", waited)
+    result = process.terminate_tree()
+    assert result is (outcome == "exited")
+    assert calls[:2] == [("terminate", owned[0]), ("wait", 10)]
+    assert any(c[0] == "descendants" for c in calls) is (outcome in {"exited", "descendant_unknown"})
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows owned process exit contract")
+@pytest.mark.parametrize("native", [False, True], ids=["popen", "native"])
+def test_owned_real_process_fallback_termination(tmp_path, monkeypatch, native):
+    """Exercise real held process/handle cleanup when taskkill is unavailable."""
+    env = {key: os.environ[key] for key in ("SYSTEMROOT", "WINDIR", "PATH", "TEMP", "TMP")
+           if key in os.environ}
+    process = test_sandbox.launch_process(
+        [sys.executable, "-c", "import time; time.sleep(30)"],
+        cwd=str(tmp_path), env=env, log_path=tmp_path / "owned-exit.log",
+        desktop_name="MoyuExit-" + uuid.uuid4().hex[:10] if native else None,
+    )
+    try:
+        assert process.poll() is None
+        with monkeypatch.context() as patch:
+            def unavailable(command, **kwargs):
+                assert command[0] == "taskkill"
+                raise OSError("synthetic taskkill unavailable")
+            patch.setattr(test_sandbox, "_ORIGINAL_POPEN", unavailable)
+            assert process.terminate_tree()
+        assert process.poll() is not None
+        assert test_sandbox.process_state(process.pid) == "exited"
+    finally:
+        failure = sys.exception()
+        try:
+            if process.poll() is None:
+                assert process.terminate_tree(), "owned child cleanup failed"
+            process.wait(timeout=10)
+        except BaseException as exc:
+            if failure is None:
+                raise
+            failure.add_note("owned child cleanup: " + type(exc).__name__)
+        finally:
+            process.close()

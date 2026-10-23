@@ -485,12 +485,16 @@ class DesktopProcess:
                     terminated = True
                 except Exception:
                     pass
-            if self._popen.poll() is None:
-                return False
-            return _wait_owned_processes_gone(owned_pids)
-        if self.poll() is None:
+        elif self.poll() is None:
             kernel32, _ = _windows_handles()
             terminated = bool(kernel32.TerminateProcess(self._process_handle, 124)) or terminated
+        # TerminateProcess (also used by Popen.kill) is asynchronous. Wait on
+        # the process we still own before checking its exit and descendants;
+        # an immediate poll can report STILL_ACTIVE after a successful kill.
+        try:
+            self.wait(timeout=10)
+        except Exception:
+            return False
         return self.poll() is not None and _wait_owned_processes_gone(owned_pids)
 
     def close(self):

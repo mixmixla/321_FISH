@@ -8919,21 +8919,31 @@ class Hub:
         if room is None:
             self._error(sess, "room", "语音房不存在或无权进入")
             return
+        rejection = None
         with self.lock:
-            members = self.voice_rooms.setdefault(room, {})
-            d = members.get(sess.uid)
-            if d is None:
-                if len(members) >= self.cfg.voice_room_max:
-                    self._error(sess, "room_full",
-                                f"语音房已满（{self.cfg.voice_room_max} 人）")
-                    return
-                d = members[sess.uid] = {"ip": sess.peer_ip, "port": 0}
-            else:
-                d["ip"] = sess.peer_ip
-            peers = [{"uid": u, "ip": m.get("ip") or "", "port": int(m.get("port") or 0)}
-                     for u, m in members.items()
-                     if u != sess.uid and m.get("port")]
-            state = self._room_state_payload(room)
+            if room.startswith("group:"):
+                group = self.groups.get(int(room[6:]))
+                if group is None or sess.uid not in group["members"]:
+                    rejection = ("room", "语音房不存在或无权进入")
+            if rejection is None:
+                members = self.voice_rooms.setdefault(room, {})
+                d = members.get(sess.uid)
+                if d is None and len(members) >= self.cfg.voice_room_max:
+                    rejection = ("room_full",
+                                 f"语音房已满（{self.cfg.voice_room_max} 人）")
+                else:
+                    if d is None:
+                        members[sess.uid] = {"ip": sess.peer_ip, "port": 0}
+                    else:
+                        d["ip"] = sess.peer_ip
+                    peers = [{"uid": u, "ip": m.get("ip") or "",
+                              "port": int(m.get("port") or 0)}
+                             for u, m in members.items()
+                             if u != sess.uid and m.get("port")]
+                    state = self._room_state_payload(room)
+        if rejection:
+            self._error(sess, *rejection)
+            return
         self._room_broadcast(room, state)
         sess.send({"t": MsgType.ROOM_PEERS.value, "room": room, "peers": peers})
         self.audit.log(type="room_join", uid=sess.uid, nick=sess.nick, room=room)

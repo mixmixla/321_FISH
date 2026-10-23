@@ -1,6 +1,6 @@
 # ADMIN-GROUP-DISSOLVE-SCOPE-01 r1
 
-2026-10-23 AI_ACCEPTED_ADMIN_GROUP_DISSOLVE_ONLY / FINAL_FULL_PASSED / INDEPENDENT_FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / NOT_INTEGRATED。
+2026-10-23 AI_ACCEPTED_ADMIN_GROUP_DISSOLVE_ONLY / FINAL_FULL_PASSED / INDEPENDENT_FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / MERGED_MAIN / REMOTE_VERIFIED。
 [Task v1](../task-packages/ADMIN-GROUP-DISSOLVE-SCOPE-01.md)，base7dbbd28cd9b608657c04e6444a75230cd6bdcd0a。session_scout隔离实现，flagship_scout独立设计/代码/专项与最终full原件审查0 MUST，root唯一资料/组合验证与有限AI技术验收；实现者不自验。
 
 管理员显式dissolve原先只删群/发目录，未清群语音或通知原成员Core清加入态/成员/邀请/E2EE材料。仅server.py该分支新增13行与newtest：同Hub锁内快照原成员全部已有Session、取得revision、删群与group:{gid}语音名册，锁外逐目标send容错及原force persist/system/list/audit。账号/token/其他群资源保持，离线成员无Session则无目标可通知；不对离线客户端后续恢复作新承诺。无普通owner显式dissolve协议，owner leave有余人转让、最后成员才解散作为既有对照，不新增入口/变权限、add/remove或客户端/视频。
@@ -21,6 +21,10 @@ worker0413c96faa9a4c87cdd810dc214d57cfc59b13b2无冲突集成为235fd71be1b8676c
 
 唯一full `agd23-final-01`：219文件3014P/0F/20既有skip，actual exit0，789.681s，summary SHA `5b45a74ff4807e83b9bb57464d790ac7bc8442cc3967ffe3c3a94dceabe8b074`。既有短--run-dir入口，未改系统/Git/依赖/安全设置，exec21440已结束，无自有测试活动。最初本地后验复制模板仍预期上一批remove文件名，full_complete_file_set断言失败；原报告与hash保留。独立实核manifest/summary仅新增dissolve test，无旧218文件缺失，纠正两处预期路径后28项全true；只重算只读证据，没有源/测试变化或重跑全量，不能把后验脚本错误写成产品full失败或抹去原错误。
 
-flagship_scout独立复算219原始记录、496当前/冻结/快照、解释器/依赖、runner/sandbox、旧218计数和20skip、上述后验修正，最终技术0 MUST。root据此有限AI_ACCEPTED本Task；公开资料独立终审0 MUST；全部新增可达Git对象/metadata脱敏及普通main集成/核远端仍待。[脱敏证据](../review-assets/ADMIN-GROUP-DISSOLVE-20261023/evidence.json)。原始日志/本机身份/二进制只ignored本地，不公开。
+flagship_scout独立复算219原始记录、496当前/冻结/快照、解释器/依赖、runner/sandbox、旧218计数和20skip、上述后验修正，最终技术0 MUST。root据此有限AI_ACCEPTED本Task；公开资料及全部40新增可达Git对象/metadata独立审计0 MUST，正常main集成/远端双核已完成，见下方交付回执。[脱敏证据](../review-assets/ADMIN-GROUP-DISSOLVE-20261023/evidence.json)。原始日志/本机身份/二进制只ignored本地，不公开。
 
 视频原生失败与旧长路径失败均原位exit1未改判，视频仍暂停不诊断/合并/开真实设备。后继普通leave管理员资格残留仅只读候选，mutes策略不改。无CI、可视GUI、自然应用退出、物理LAN、新EXE、完整R1或发布验收。
+
+## 远端交付回执
+
+全部40新增对象/metadata独立审计0 MUST后，已正常快进main并非强制push；Git ls-remote与GitHub API双核完整SHA `9628eff5b1d4021a6e310facc1835e5a7a0a2509`，496源仍逐字节等最终full，无活动自有测试。该提交check-runs/status contexts/Actions均0（aggregate pending/total0），不称CI通过。本回执只四份公开资料，最终leaf以Git refs为准，不改源码/重测/发布；视频继续暂停。

@@ -1,7 +1,7 @@
 {
   "task": "ADMIN-GROUP-DISSOLVE-SCOPE-01 v1",
   "base": "7dbbd28cd9b608657c04e6444a75230cd6bdcd0a",
-  "status": "AI_ACCEPTED_ADMIN_GROUP_DISSOLVE_ONLY_FINAL_PUBLIC_REVIEW_0_MUST_NOT_INTEGRATED",
+  "status": "AI_ACCEPTED_ADMIN_GROUP_DISSOLVE_ONLY_MERGED_MAIN_REMOTE_VERIFIED",
   "worker": {
     "base": "7dbbd28cd9b608657c04e6444a75230cd6bdcd0a",
     "runs": {
@@ -160,5 +160,25 @@
     "reviewer": "flagship_scout",
     "scope": "Task/Review/evidence/checkpoint/projection and stable documentation",
     "must": 0
+  },
+  "delivery": {
+    "delivery_commit": "9628eff5b1d4021a6e310facc1835e5a7a0a2509",
+    "remote_verified_by": [
+      "Git ls-remote",
+      "GitHub branch API"
+    ],
+    "source_exact_final_full": true,
+    "source_inputs": 496,
+    "source_content_id": "ebbf84676b7ca566123ec9247dc65939a8d14218972cfa4768b76d36024ad91d",
+    "new_objects_at_delivery": 40,
+    "new_commits": 4,
+    "new_blobs": 16,
+    "independent_audit_must": 0,
+    "check_runs": 0,
+    "status_contexts": 0,
+    "actions_runs": 0,
+    "aggregate_status": "pending",
+    "status_total": 0,
+    "receipt_leaf_note": "This documentation receipt binds the verified delivery commit; final leaf is read from Git refs."
   }
 }

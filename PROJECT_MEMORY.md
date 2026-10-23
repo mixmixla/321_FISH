@@ -20,7 +20,9 @@
 
 ## Architecture
 
-- 群移除使用 `error/group_removed`（含 gid），与管理员全账号 `kicked` 分离；通知该 UID 已有全部 Session，不撤 Web token。Hub 锁内运行态 `group_revision` 排序群快照/移除，Core 丢弃旧帧并清该群重入/成员/邀请/密钥；WELCOME 仅清服务端 revision，本地 generation 保留以挡跨续连旧密钥 worker。合法新成员快照允许显式重入；旧服务器的模糊 kicked 不作文字猜测。
+- Gomoku/Connect4 平局与胜局公开快照均无 turn_uid；桌面文字摘要对带旧行动人的 draw 快照也先呈现终局，不再显示轮到提示。
+
+- 群移除与已确认主动退群均使用 `error/group_removed`（含 gid），与管理员全账号 `kicked` 分离；通知该 UID 已有全部 Session，不撤 Web token；退群的群/成员资格重核与删除同在 Hub 锁内，拒绝和通知 IO 在锁外。Hub 锁内运行态 `group_revision` 排序群快照/移除，Core 丢弃旧帧并清该群重入/成员/邀请/密钥；WELCOME 仅清服务端 revision，本地 generation 保留以挡跨续连旧密钥 worker。合法新成员快照允许显式重入；旧服务器的模糊 kicked 不作文字猜测。
 
 - `_RoomCard`按卡片持有自己的`ImageTk.PhotoImage`；Tk Label的image名字不保活Python图片。
   正常销毁并释放卡片后在Tk主线程回收，刷新不可依赖全局图片缓存或共享Tk守卫来延寿。

@@ -106,3 +106,5 @@ Excel 接线：`client.py` → `widgets.excel_chrome.ExcelChrome` →
   逻辑；直接调用 spec 打包前要核对，不把两个入口视为等价。
 
 群成员移除不是账号撤销：`group_removed/gid` 只清对应群状态，所有现有同 UID Session 都应收到，账号 kicked/deleted/retired 终止语义保持。旧快照/重复通知按 Hub 运行态 revision 过滤；密钥 worker 用本地 generation 跨 WELCOME 作废，握手等待不得持发送锁。迟到密钥不能复活已移除群，显式重新加入仍按原权限。
+
+UID级主动退群须通知该UID全部已有Session并清对应群重入/密钥；锁内重核群与成员、只删一次并取得revision，拒绝和通知IO锁外。最后成员解散同样通知，其他群/认证/token保持。确定性并发回归在目标线程首次Hub锁acquire前设门，不能只用同时启动Barrier。

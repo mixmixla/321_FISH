@@ -1,7 +1,7 @@
 {
   "task": "HISTORY-UID-ISOLATION-01 v2.1",
   "base": "293cc526ea2c49a4c5ca4520a09ca73aa5733a01",
-  "status": "VERSIONED_CONTRACT_TESTS_107P_REVIEW_0_MUST_PENDING_NEW_FINAL_FULL",
+  "status": "AI_ACCEPTED_HISTORY_UID_ISOLATION_ONLY_PENDING_PUBLIC_REVIEW_AND_INTEGRATION",
   "requested_service": "Sol + FAST; runtime receipt not exposed",
   "namespace": "validated durable store_scope_id plus confirmed positive UID",
   "old_data_policy": "Preserve original nickname/top-level history and legacy chat prefs; no automatic ownership or migration.",
@@ -359,7 +359,8 @@
     ],
     "selected_run_started": false,
     "new_full_started": false,
-    "kick_send_mock_note": "Two parameter cases directly log entered timeout and cleanup assertion; source deterministically calls send with a new keyword rejected before mock body. Actual raw does not print captured TypeError. Mock only accepts optional expected_local_generation; assertions unchanged."
+    "kick_send_mock_note": "Two parameter cases directly log entered timeout and cleanup assertion; source deterministically calls send with a new keyword rejected before mock body. Actual raw does not print captured TypeError. Mock only accepts optional expected_local_generation; assertions unchanged.",
+    "historical_freeze_note": "Historical v2 planning snapshot before v2.1 contract classification; current execution status is at top level and in command center."
   },
   "first_combined_full_failure": {
     "run_id": "hui23-final-01",
@@ -407,12 +408,13 @@
     ],
     "candidate_source_content_id": "9388d7f96ab69a83f3ef46960430ff3b3bc4728cfb90f6df7bf6fe10c0164c66",
     "selected_run_started": true,
-    "new_full_started": false,
+    "new_full_started": true,
     "independent_diff_review": {
       "reviewer": "flagship_scout",
       "must": 0
     },
-    "actual_exec_session": 25125
+    "actual_exec_session": 25125,
+    "new_full_actual_exec_session": 28091
   },
   "contract_verification": {
     "run_id": "hui23-contracts-final-01",
@@ -451,5 +453,103 @@
       "must": 0,
       "scope": "Seven original logs/counts/fingerprints/cleanup, all501 current snapshot and only seven contract revisions; original full01 remains failure."
     }
+  },
+  "final_candidate": {
+    "integration_commit": "2c58d90ea3798cc01dd7ffc5be0d38766f91443b",
+    "worker_commit": "68d326c2c39727e532a00c47c990cdcb6c389b99",
+    "source_inputs": 501,
+    "source_content_id": "81c36be82a54f5663f0ea2b473884a6499040741c171a4c0115500539aa965e5",
+    "all501_worker_canonical_equal": true,
+    "raw_line_ending_only_changes": [
+      "client_core.py",
+      "local_identity.py",
+      "tests/test_history_uid_isolation.py",
+      "tests/test_uid_chat_profile.py"
+    ],
+    "run_id": "hui23-final-02",
+    "files": 223,
+    "actual_exec_session": 28091,
+    "state": "AI_ACCEPTED",
+    "accepted": true
+  },
+  "full": {
+    "run_id": "hui23-final-02",
+    "files": 223,
+    "totals": {
+      "passed": 3070,
+      "skipped": 20
+    },
+    "exit_code": 0,
+    "seconds": 811.651,
+    "source_content_id": "81c36be82a54f5663f0ea2b473884a6499040741c171a4c0115500539aa965e5",
+    "summary_sha256": "2cea79203a4a284cc90db0e3435bd243dd161adb0a43bc0e81f20f303a3b0dc1",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true,
+      "actual_shell_exit_zero": true,
+      "current_frozen_full_source_exact": true,
+      "source_inputs_expected": true,
+      "full_complete_file_set": true,
+      "old_file_counts_unchanged": true,
+      "existing_skips_unchanged": true,
+      "full_no_failure": true,
+      "new_test_counts_affected_run": true,
+      "interpreter_identity_exact": true,
+      "dependency_identity_exact": true,
+      "gate_tools_unchanged": true,
+      "test_manifest_current_exact": true,
+      "worker_current_integrated_canonical_equal": true,
+      "no_video_ancestry": true,
+      "vmemo_module_unchanged": true,
+      "prior_full_preserved": true,
+      "first_combined_full_failed_preserved": true,
+      "all_stage_summaries_preserved": true,
+      "prior_path_failure_preserved": true,
+      "paused_video_failure_preserved": true
+    },
+    "source_inputs": 501,
+    "actual_exec_session": 28091,
+    "actual_shell_exit": 0
+  },
+  "independent_final_review": {
+    "reviewer": "flagship_scout",
+    "must": 0,
+    "scope": "Frozen Task v2.1/current501 inputs and all223 original log hashes/counts/sandbox/one-attempt cleanup; old221 per-file counts/skips identical, new37+11 only. First failed full01 and all first failures preserved.",
+    "source_content_id": "81c36be82a54f5663f0ea2b473884a6499040741c171a4c0115500539aa965e5",
+    "not_claimed": [
+      "visible GUI",
+      "natural application exit",
+      "physical LAN or hardware",
+      "new EXE",
+      "paused video candidate",
+      "whole R1/R3 milestone"
+    ]
+  },
+  "ai_acceptance": {
+    "by": "root AI technical acceptance",
+    "scope": "HISTORY-UID-ISOLATION-01 v2.1 only",
+    "basis": "28 root postchecks and independent final review 0 MUST",
+    "not_user_or_pro_acceptance": true
+  },
+  "integration_precheck": {
+    "git_fetched_main": "293cc526ea2c49a4c5ca4520a09ca73aa5733a01",
+    "api_main": "293cc526ea2c49a4c5ca4520a09ca73aa5733a01",
+    "protected": false,
+    "visible_rulesets": [],
+    "original_paused_video_worktree_clean": true,
+    "original_paused_video_head": "4759a01e7984f4570bb1c9bc6e2aa4dd8ab7dbb5"
+  },
+  "sensitive_audit_precheck": {
+    "head": "2c58d90ea3798cc01dd7ffc5be0d38766f91443b",
+    "new_reachable_objects": 86,
+    "new_blobs": 44,
+    "findings": 0,
+    "final_delivery_objects_audit_pending": true
   }
 }

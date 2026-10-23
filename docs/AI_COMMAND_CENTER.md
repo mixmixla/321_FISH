@@ -17,9 +17,9 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 当前账号历史批 · HISTORY-UID-ISOLATION-01 v2.1（2026-10-23）
 
-**IMPLEMENTED / V1_CODE_REVIEW_0_MUST / FIRST_FULL_FAILED_RETAINED / CONTRACT_TESTS_107P_REVIEW_0_MUST / NOT_AI_ACCEPTED**。[Task](task-packages/HISTORY-UID-ISOLATION-01.md) / [Review](review-packages/HISTORY-UID-ISOLATION-01-r1.md) / [脱敏证据](review-assets/HISTORY-UID-ISOLATION-20261023/evidence.json)。用户批准稳定UID隔离/更名连续/旧昵称原件保留不认领，Sol+FAST沿用（实际运行配置回执不可见）；普通main集成授权、不PR/force/改保护凭据/发布。开工main Git/API基线293cc526ea2c49a4c5ca4520a09ca73aa5733a01，集成前须fresh再核。
+**IMPLEMENTED / FIRST_FULL_FAILED_RETAINED / CONTRACT_TESTS_107P_REVIEW_0_MUST / FINAL_FULL_02_PASSED / FINAL_INDEPENDENT_REVIEW_0_MUST / AI_ACCEPTED_HISTORY_UID_ISOLATION_ONLY / PUBLIC_REVIEW_AND_INTEGRATION_PENDING**。[Task](task-packages/HISTORY-UID-ISOLATION-01.md) / [Review](review-packages/HISTORY-UID-ISOLATION-01-r1.md) / [脱敏证据](review-assets/HISTORY-UID-ISOLATION-20261023/evidence.json)。用户批准稳定UID隔离/更名连续/旧昵称原件保留不认领，Sol+FAST沿用（实际运行配置回执不可见）；普通main集成授权、不PR/force/改保护凭据/发布。开工main Git/API基线293cc526ea2c49a4c5ca4520a09ca73aa5733a01，集成前须fresh再核。
 
-root唯一集成/资料/最终全量，工作树history-uid-integration-20261023 / feature/history-uid-integration-20261023，HEAD ae63aeea5de5131f6c4f828aabd42b304774c849（资料dirty；产品12路径来自A c3280ec999871b9d5977a1eaf6c8edc00b23e20b，无冲突）；原工程视频4759 clean/暂停，不继承/诊断。A session_scout独立history-uid-20261023唯一产品/测试写入，B flagship_scout只读独立设计/代码/原件审，最多3活动者。
+root唯一集成/资料/最终全量，工作树history-uid-integration-20261023 / feature/history-uid-integration-20261023，HEAD 2c58d90ea3798cc01dd7ffc5be0d38766f91443b（资料dirty；产品12路径来自A c3280ec999871b9d5977a1eaf6c8edc00b23e20b，七test修订68d326c2c39727e532a00c47c990cdcb6c389b99无冲突接入）；原工程视频4759 clean/暂停，不继承/诊断。A session_scout独立history-uid-20261023唯一产品/测试写入，B flagship_scout只读独立设计/代码/原件审，最多3活动者。
 
 已实现accepted WELCOME durable store_scope_id+正整数UID持久ROOT/v2分层；预认证/volatile fresh独占临时bundle，旧昵称/顶层历史和prefs正文不自动认领。六字段UID视图/严格key与路径/完整WELCOME和捕获旧帧提交/worker发送与cloud/Tk origin/有界主线程退休快照合并已独立代码0 MUST；生产源未再修改。新两文件37+11合成回归已在首full实际通过，不冒称可视GUI/自然退出/LAN/新EXE。
 
@@ -27,9 +27,13 @@ root唯一集成/资料/最终全量，工作树history-uid-integration-20261023
 
 hui23-final-01/exec76517已自然actual exit1，223文件3048P22F20既有skip/841.176s，summary SHA6de2fab0a29bc4020512ac428d21de4e4a1aad1d33054efce3236b2e01dfc10c。root13原件/快照/冻结/当前字节后验全true；失败恰七旧文件。五文件为Core欢迎wrapper关键字、__new__前置及send mock契约失配；另wire一例set_host清旧名册、Stars三launcher例metadata-only不认领与旧期待冲突，B独立分类，不能把全部称夹具。原full永久FAILED，不改终态/续跑旧指纹。
 
-Task v2.1仅准七旧test最小契约修订，产品不动；原断言/屏障或对应新批准语义的数据保护强化，34其余Stars保护不动。A候选501/source9388d7f96ab69a83f3ef46960430ff3b3bc4728cfb90f6df7bf6fe10c0164c66已B差异0 MUST；唯一hui23-contracts-final-01/exec25125自然actual exit0/107P/25.841s，summary8b53cf6eeed5d878fc6f4ccba04581bd80add6eb603021327ff48baa1a5c7d4e。root九项后验、B七原log/501字节独立0 MUST，A获仅七test本地提交授权；无活动测试。下一动作接入/冻结新501，必要新版本完整hui23-final-02。只因已定位测试输入变更需要新候选，不盲重；若出现其他问题先诊断。
+Task v2.1七旧test最小契约修订保产品字节不动；唯一hui23-contracts-final-01/exec25125自然actual exit0/107P/25.841s，summary8b53cf6eeed5d878fc6f4ccba04581bd80add6eb603021327ff48baa1a5c7d4e。root九项后验、B七原log/501字节独立0 MUST；A七test提交68d326c2c39727e532a00c47c990cdcb6c389b99已接root2c58d90，无冲突。root全部501与worker末run规范化逐字节相同，仅既知四文件换行不同。新freeze501/source81c36be82a54f5663f0ea2b473884a6499040741c171a4c0115500539aa965e5。
 
-后续独立最终原件审、AI接受、全部新增可达对象/metadata敏感审计、普通main合并推送及Git/API/真实CI核实尚未完成。原件本树_tmp_gui/history-uid-isolation-20261023及原工程_tmp_gui/hui23-*，不上传原日志/私人数据/二进制，不声称CI或完整里程碑通过。
+必要新候选hui23-final-02/exec28091已自然actual exit0，223文件3070P0F20既有skip/811.651s，summary SHA2cea79203a4a284cc90db0e3435bd243dd161adb0a43bc0e81f20f303a3b0dc1。root首次28后验全true：当前/冻结/快照501、完整223集合/全raw SHA计数/sandbox/单attempt cleanup、旧221每文件计数/skip、解释器依赖gate身份、worker19规范化与首次full01/其他阶段/旧视频路径失败原件均保留。未见活动Python；B独立223原log/501当前字节/身份/旧计数与首失败保留终审0 MUST。root据此仅AI_ACCEPTED本Task v2.1，不是用户/Pro验收或完整里程碑；无源码变化不再测试。
+
+第一full冻结清单另存-v1，原full-output/full-exit及原run完整保留；第二stdout/exit用full-02-*，无覆盖。下一动作仅最终四公开资料独立审查、全新增对象/metadata审计、普通main集成与Git/API/真实CI核实。fresh fetch/API已核main仍base、protected=false/可见rulesets为空，原视频工作树仍clean/暂停；不绕保护。
+
+全新增可达对象/metadata敏感审计、公开终稿和普通main合并推送及Git/API/真实CI核实尚未完成。原件本树_tmp_gui/history-uid-isolation-20261023及原工程_tmp_gui/hui23-*，不上传原日志/私人数据/二进制，不声称CI或完整里程碑通过。
 
 ## 当前本地试用批 · R3-CURRENT-BUILD-01 v1（2026-10-23）
 

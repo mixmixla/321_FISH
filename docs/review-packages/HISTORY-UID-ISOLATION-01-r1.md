@@ -1,43 +1,61 @@
-# HISTORY-UID-ISOLATION-01 r1
+# HISTORY-UID-ISOLATION-01 r1 · v2.1
 
-2026-10-23 READY / INDEPENDENT_DESIGN_REVIEW_0_MUST / IMPLEMENTING / NOT_AI_ACCEPTED。[Task v1](../task-packages/HISTORY-UID-ISOLATION-01.md)，base main293cc526ea2c49a4c5ca4520a09ca73aa5733a01。用户已批准UID历史隔离、旧昵称原件保留不自动归属。A/B只读调查确认现构造按nick且自动认领顶层；现有WELCOME durable store_scope_id可与UID组成持久键。主控选择fresh临时bundle保持接口、认证后原子绑定，并纳入防旧草稿/收藏正文暴露的最小六字段UID视图。flagship_scout已独立核冻结Task0 MUST，root置READY；A将独立代码工作树执行，尚未实施/测试或接受。
+**IMPLEMENTED / FINAL_FULL_02_PASSED / FINAL_INDEPENDENT_REVIEW_0_MUST / AI_ACCEPTED_HISTORY_UID_ISOLATION_ONLY / PUBLIC_REVIEW_AND_INTEGRATION_PENDING**。用户已批准稳定UID隔离、更名连续、旧昵称历史保留且不自动归属。[冻结Task](../task-packages/HISTORY-UID-ISOLATION-01.md) / [完整脱敏指纹与阶段后验](../review-assets/HISTORY-UID-ISOLATION-20261023/evidence.json)。基线main293cc526ea2c49a4c5ca4520a09ca73aa5733a01，root唯一集成/组合验证；A独立树实现，B独立只读设计、代码与原件审。实际Sol/FAST运行回执不可见，不冒称已核。
 
-## 首轮原产品RED
+## 结果与边界
 
-唯一hui23-red-01，exec67249自然结束actual exit1，1文件3F/1.779s，source d0557d8c6c563c26883dcccd0094e164b0a8a21ccb6d5e2ac301c5611b41aeec，summary SHA f3998d1bbff6a87ac1b77f0792cbe821250b4ef5964f7cee7a934871fe346ce9。test SHA c957c46fff2c9f53c2f845a3b3b43a9b3fefe8848166a139e193efa64425ff21。原498产品/测试输入逐SHA等base，仅多新test，manifest/snapshot/progress/log SHA计数/sandbox/单attempt清理后验通过。三断言确实触达preauth读取旧昵称、同nick不同UID共用、同UID新显示名目录分裂，没有fixture/import错误；只用合成内容和临时目录。
+新历史/voice/vmemo/贴纸/E2EE身份仅在当前captured connection的WELCOME接受后按durable store_scope_id+正整数UID绑定，默认与显式history_dir都为`ROOT/v2/<scope>/uid-<uid>`。未认证、volatile或缺有效服务scope使用独占fresh临时bundle；旧昵称/顶层原件不读/不认领/不删除。相同Store+UID不因显示名/端点别名分裂，不新增实际改名API；不同Store同UID和同名不同UID隔离。复制整个Store复制scope，现协议不能区分克隆。
 
-B只读确认RED有效，但直接dispatch仅证明旧路径行为，最终GREEN必须补当前accepted loopback WELCOME、拒绝/切目标、存储失败与受控旧worker、UI六字段。后续强化测试按版本另记，不冒称与首RED同字节，不为镜像断言重复旧RED。当前A在隔离树实现，尚无GREEN/域/full或产品接受。
+六字段pinned/muted/archived/drafts/stars/unread_marks使用新UID视图；launcher只记登录元数据，旧top/profiles/opaque stars保值，坏prefs拒写、新UID保存原子替换。Excel/quick/reminders等其他设备偏好及全局下载目录不在本批隔离范围。云恢复仅新增本地代次提交保护，不增加备份包UID/服务签名或同步功能。
 
-## 必要旧域首次失败
+显式stop/切目标/认证拒绝撤旧UID/UI状态；正常同目标断线保留已确认离线历史。完整WELCOME及captured帧提交与身份迁移串行，目标切换先关闭捕获旧socket解除同步发送阻塞；阻塞events投递及_on_event出迁移锁，主线程退休快照最多一个额外合并项，关键chat原背压保留。旧cloud/E2EE/媒体/贴纸/排队事件和Tk回调携origin代次，拒绝写入或发送到新身份。durable路径/已有媒体leaf拒reparse别名，坏key不覆盖。
 
-hui23-domain-01 / exec42156实际exit1，test_r35 15P、test_client_core33P1F，合48P1F，source d099ed485452cf9f74a26083d3faa5078d86d36502f1fa628ac737448ccb8b59。test_reconnect_and_rejoin_group确实暴露本轮volatile换临时bundle丢群重入意图；原summary/log快照与后验保留，非baseline问题，不抹掉失败。修复须保持原断言且仅accepted auth.server_epoch+UID/原目标运行态fence恢复群重入，新Hub/缺epoch/显式切目标/认证拒绝不恢复；不以该运行态键持久化历史或复用旧keys。新选测仍在运行，不预写域/full通过。
+## 阶段证据（首失败全部保留）
 
-## 增强矩阵与修复后的选测（非最终接受）
+每个阶段使用独立短run-dir、单attempt；root逐原件核manifest/source snapshot、progress、测试集合、原log SHA与计数、sandbox、清理及指纹。下表摘要SHA前12位用于阅读，完整SHA/source ID/actual session/exit在脱敏JSON；原日志与合成profile仅本地。
 
-hui23-green-03/exec7275 actual exit1，44P1F；新真实拒绝口令用例错误等待仅其他错误流程设置的manual_login_required，原日志显示等待超时。改为观察实际pwd错误及无本地身份，不改产品以满足错误期待，保留原summary df7a927140426120016e96688f8411b1f020da907fd5e240978aab8d217035b4。
+| Run | 文件 | 结果 | 实际退出 | Summary SHA前12 |
+| --- | ---: | --- | ---: | --- |
+| hui23-red-01 | 1 | 3F | 1 | f3998d1bbff6 |
+| hui23-green-01 | 2 | 8P | 0 | 474583a0d137 |
+| hui23-green-02 | 2 | 9P | 0 | 064382e1e0ec |
+| hui23-domain-01 | 2 | 48P/1F | 1 | 7ea3a1d95ca5 |
+| hui23-green-03 | 3 | 44P/1F | 1 | df7a92714042 |
+| hui23-green-04 | 2 | 42P | 0 | 39ec956935c2 |
+| hui23-green-05 | 2 | 18P | 0 | 241cd646ed4d |
+| hui23-domain-02 | 12 | 168P/3F | 1 | a27839ffb0cd |
+| hui23-green-06 | 5 | 74P/1F | 1 | fba7a0fe5080 |
+| hui23-green-07 | 1 | 9P | 0 | fc3f17b0126b |
+| hui23-affected-final-01 | 6 | 103P/1F | 1 | f08e76077d8e |
+| hui23-ui-fixture-final-01 | 1 | 11P | 0 | c75a8d348d33 |
+| hui23-final-01 | 223 | 3048P/22F/20S | 1 | 6de2fab0a29b |
+| hui23-contracts-final-01 | 7 | 107P | 0 | 8b53cf6eeed5 |
+| hui23-final-02 | 223 | 3070P/20S | 0 | 2cea79203a4a |
 
-hui23-green-04/exec59224 actual exit0，42P，source010d8ce3a683690913286fea65d793bac96d788c2441f260adfe6ee438b5d841；Core旧重入断言及真实durable接受/拒绝通过。hui23-green-05/exec43371 actual exit0，18P，source222de295ae4854477db20a713adb8a9c4dd5645ad4a57c8e1525c4ecbc4ab56a；包括真实Hub/Store关闭重开、仅本地marker恢复且server bus无marker，切目标/stop-start、受控重解析/非文件、旧media/E2EE worker、坏prefs原件和Tk。三个阶段原件八项后验均通过，详细摘要SHA见evidence。不同阶段产品/测试字节不同，不把旧阶段通过冒称最终版本全域通过。
+原RED仅新增测试，旧498输入逐SHA同base，3F确触预认证读legacy/同名跨UID共用/同UID改显示名目录分裂，无fixture/import误差；直接dispatch seam不冒称真实认证。后续真实durable loopback接受/拒绝、服务Store关闭重开local-only marker（服务器bus无marker）、第二端localhost别名、不同Store/volatile、重启/切目标、路径/准备失败、受控旧worker及实际Tk组件已覆盖。
 
-必要旧领域hui23-domain-02/exec45050已实际启动，12文件，候选源冻结。独立代码审查进行中；尚无最终全量、AI_ACCEPTED或集成。
+domain01的1F是真实本批volatile新bundle误清群重入意图，保原断言修为accepted runtime epoch+UID+原目标仅保重入意图，历史/keys仍fresh；不称baseline旧错。domain02三F对应stop后旧UID期待和旧volatile fixture密钥留存，独立确认后捕获stop前UID、单例改真实durable保持原行为断言。green03错误等待仅其他流程设置的manual_login_required，green06误用MsgList.rows，affected-final mock误拦正常STICKER_SHOP，各首原件保留，测试修正分别另记，不混用源版本或称旧失败通过。
 
-## 独立代码审查整改与第二域首次失败
+## 首组合full失败与v2.1修订
 
-B正式审见5 MUST：旧排队正文缺代标记、WELCOME丢捕获连接及提交前复核、贴纸/封面写缺代锁、已有UID偏好坏结构不能空态覆盖、temp准备失败仍需撤销旧UID/正文。已交A修复，未接受。domain02/exec45050实际exit1，12文件168P3F/source同green05；root八项原件后验通过，summary a27839ffb0cdc6f5351183530df8a27bec7f7402e5abf5988b3e0d9cce36bdd4。r37两旧断言读stop后uid(None)，r36旧volatile fixture期待engine留存；拟分别捕获stop前UID、同已确认身份durable fixture保原断言，仍须B独立确认。首次原件不删除或以其余十文件通过取代。修复后仅必要affected选测，最终稳定版本full仍未启动。
+hui23-final-01/exec76517自然actual exit1，223文件3048P22F20既有skip/841.176s，summary6de2fab0a29bc4020512ac428d21de4e4a1aad1d33054efce3236b2e01dfc10c。root13后验全true，B独立223原件一致，原full永久FAILED。
 
-阶段hui23-green-06/exec16977实际exit1，74P1F；唯一新Tk断言误用MsgList.rows（实际_rows），原异常保留；修正测试后hui23-green-07/exec10441单文件9P/exit0。root均核八项原件一致，各摘要见evidence。B复核指出WELCOME锁外后半段仍有目标切换竞态，尚非0 MUST；A先补完整副作用提交门、坏prefs窄保存守卫和定向门，稳定代码由B核后才再次必要affected，不以07单项绿作为接受。
+五个旧测试文件需新增接口前置兼容：四个Core私有WELCOME wrapper透传captured connection；game_client_lifecycle唯一__new__合成factory补RLock/threadlocal/localgen；kick的send mock接expected_local_generation关键字。kick两参数例原日志直接显示entered超时/cleanup assert，关键字拒绝发生于mock体前是确定性源码推导，不冒称日志直接打印TypeError。
 
-## 稳定候选独立代码审查
+另两文件是已批准产品语义更新，不能统称fixture：retirement_wire在set_host后应撤旧UID/名册，保先前失败发送不pop、恰两GET与零DEL/ever_del、迟到回执零复活；Stars三个launcher例改为仅元数据登录，旧top/profiles/active_profile原值保留、不生成UID归属，启用新UID视图为空，其余34 Stars保护例不动。生产源码未因这七文件再变更，全部用例/安全门或对应新批准语义保留，B独立差异0 MUST。
 
-B对501输入/source656bf297d28eb1f9eecd827e7bb96cb771730f1c7a2a741ea80533a3486c24a6正式静态代码及回归设计0 MUST。前报旧帧/完整WELCOME、队列背压及发送阻塞、cloud与旧worker origin、坏prefs及durable媒体leaf保护均有最小修复与确定性门；主线程退休快照满队列合并最多额外1项，关键chat原背压保持。真实Store重启第二Core以localhost连接，首端127.0.0.1；未自动认领旧数据。此仅代码层通过，未跑的新门不能算验收。已授权A一次必要affected（新两文件+Core/r36/r37/r39b），原工程短目录hui23-affected-final-01，当前待实际启动回执；root唯一最终full仍未启动。
+唯一hui23-contracts-final-01/exec25125自然exit0，七文件107P（5+6+12+6+4+37+37）/25.841s，summary8b53cf6eeed5d878fc6f4ccba04581bd80add6eb603021327ff48baa1a5c7d4e；root九后验/B七原件及501源独立0 MUST。测试输入变更不能resume旧指纹或重置终态F，必要新组合full02不属于相同输入盲重。
 
-唯一hui23-affected-final-01/exec41868自然actual exit1，6文件103P1F/41.168s，source同冻结656bf297…；前五Core34P/history37P/r36 8P/r37 7P/r39b 7P，新UID prefs/Tk 10P1F。原栈为云回调fixture把第二WELCOME正常STICKER_SHOP也拦为CLOUD_GET，访问已清get而KeyError，未走目标隔离断言。root八项原件核对、B独立确认；summary f08e76077d8e3048935c51abe105b021d61c98ba2249875bd56fe47aee363722。仅新UI test收窄模拟按CLOUD_GET处理，501输入其他500逐SHA不变，原隔离断言保留。单文件hui23-ui-fixture-final-01/exec7132已实际启动待退出；其余五绿不重放。最终full仍未启动。
+## 版本绑定与当前门禁
 
-单文件hui23-ui-fixture-final-01/exec7132自然actual exit0，11P/4.75s，source501/4ed7d41cd0f86dd367f021d0192e3df45bd66fed6c3a545cca1e03415f84ab7e，summary c75a8d348d338230e2e7481b6a0c7caf74f3f3b61f5efc6dbd4db34043bc9287。root八项后验通过；B逐原件、501输入及唯一新test差异复核0 MUST，并给最终代码/选测技术0 MUST。前五通过文件/全部产品字节未变，不重放；首affected103P1F依旧是失败，不称六文件全绿。A获仅12路径本地提交授权，root接入后新组合字节仍须唯一full和独立最终原件审查。
+A产品c3280ec999871b9d5977a1eaf6c8edc00b23e20b接root ae63aeea5de5131f6c4f828aabd42b304774c849；七test合同68d326c2c39727e532a00c47c990cdcb6c389b99无冲突接root2c58d90ea3798cc01dd7ffc5be0d38766f91443b。A末source501/9388d7f96ab69a83f3ef46960430ff3b3bc4728cfb90f6df7bf6fe10c0164c66，与root501规范化逐字节相同，raw仅Core/local_identity/两新test四文件Git换行差。root新冻结source81c36be82a54f5663f0ea2b473884a6499040741c171a4c0115500539aa965e5，223文件。
 
-## 首组合全量失败与v2.1旧合同修订
+hui23-final-02/exec28091已自然actual exit0，223文件3070P0F20既有skip/811.651s，summary SHA2cea79203a4a284cc90db0e3435bd243dd161adb0a43bc0e81f20f303a3b0dc1。root首次28后验全true：当前/冻结/快照501、223全原log/sandbox/单attempt/清理、旧221逐文件P/S计数和20既有skip不变、解释器/依赖/门禁身份、worker19规范化字节及全部首失败保存。只新增37+11通过，不增skip。
 
-hui23-final-01/exec76517自然actual exit1，223文件3048P22F20既有skip/841.176s，source72f401b340bc20da32d4d16d9c13e3ba783eee6516db3feabd8d6fbec4abb8a9，summary SHA6de2fab0a29bc4020512ac428d21de4e4a1aad1d33054efce3236b2e01dfc10c。root13原件/冻结/当前字节后验全true，B独立复算223原件一致。原full永久FAILED。五文件为4个WELCOME wrapper、__new__构造前置及同kick send mock关键字契约失配；kick两参数例原日志只显门超时/cleanup assert，未知kw拒绝为确定性源码推导，不冒称日志直接打印TypeError。
+B独立复算223原件/501当前源、身份/逐文件计数、原full01/RED/选测失败保留，最终技术0 MUST。root据此仅AI_ACCEPTED本Task v2.1，不等于用户/Pro验收、整里程碑或发布。未见活动Python，无源码/依赖变化不再测试。第一full冻结/stdout/exit与所有原件保留，第二输出单列full-02-*。
 
-另外retirement_wire一例set_host后期待旧名册，Stars三个launcher例期待旧profile破坏性切换的拒绝，均与v1已批准隔离合同冲突；B独立确认后v2.1最小更新期望，保全部失败发送不pop/仅GET不DEL及其余34 Stars保护，强化legacy原值/无UID归属和新UID空视图。不是把全部失败叫夹具，也没有修改产品来迎合测试。七test最终501/source9388d7f96ab69a83f3ef46960430ff3b3bc4728cfb90f6df7bf6fe10c0164c66已B静态0 MUST；唯一hui23-contracts-final-01/exec25125现实际运行，未预写通过。旧full指纹不可resume改终态，后续新候选full02为测试源码变化后的必要完整验证。
+Git fresh fetch/FETCH_HEAD/origin-main与API均确认main仍base293cc526…，protected=false/可见rulesets为空；原工程视频4759工作树clean且保持暂停。当前7个新增可达commit/86对象/44blob敏感预审无发现；公开终稿、最终新对象/metadata审计与普通main合并推送仍待完成，尚无当前远端CI查询结果。
 
-唯一七文件hui23-contracts-final-01/exec25125自然actual exit0，107P/25.841s（5+6+12+6+4+37+37），source501/9388d7f96ab69a83f3ef46960430ff3b3bc4728cfb90f6df7bf6fe10c0164c66，summary8b53cf6eeed5d878fc6f4ccba04581bd80add6eb603021327ff48baa1a5c7d4e。root九项原件/仅七test规范化差异后验通过，B独立7原件/全部501当前字节及合同差异0 MUST。没有生产字节变化；原full01的22F仍是失败。A获仅七旧test本地提交授权，root接入后新501仍须fresh full02，不拿107P替代完整验收。
+当前及先前原件分别本工作树_tmp_gui/history-uid-isolation-20261023、原工程_tmp_gui/hui23-*；只用合成数据与临时目录。旧paused video4759保持非祖先/不继承/不诊断；原视频/路径首次失败原位保留。不上传原日志、私有prefs/聊天/凭据、用户名或二进制，不强推/改保护权限凭据/发布。全部新增可达提交/中间blob/metadata须交付前再审，普通main交付及Git/API/真实CI状态待回执。
+
+本批不证明可视GUI、自然退出、物理跨机器LAN、硬件、新EXE或完整R1/R3；Tk组件/协议与此前旧源码EXE包分别记录，不相互替代。

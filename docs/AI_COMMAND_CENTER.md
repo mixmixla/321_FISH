@@ -15,6 +15,13 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 独立R1续批（2026-10-23）
+
+**GROUP_CAPACITY_READY / DESIGN_REVIEW_PENDING / NO_PRODUCT_CHANGES**。用户持续Sol+FAST开发与普通main集成授权保持（工具未暴露模型/服务实际回执，不虚称独立核实）。root唯一集成主控，两个Sol代理分别只读筛查R1群/会话与既定两旗舰生命周期；总活动worker最多3含root。新隔离工作树independent-r1-20261023、分支fix/independent-r1-integration-20261023，base9d12a5863102ae0e8302f2b7bb1315350a250669；API+fresh fetch核同远端，入场clean，无活动测试，client.py/vmemo_api.py相对base无差异，完全不继承视频修改。
+
+视频候选fix/vmemo-reliability-integration-20261023保留4759a01e7984f4570bb1c9bc6e2aa4dd8ab7dbb5，原工作树不动，暂停等待新原生证据；原full失败不能因不同新批而抹除，不合并、不重复诊断、不装调试器/改系统设置。本批只从已验收main选择真实、可独立确定性验证的小缺陷，不叠加视频或第三游戏/新方向。已选择既有R1缺陷：[GROUP-CAPACITY-01 v1](task-packages/GROUP-CAPACITY-01.md)。公开加入/管理员加人剩1席时可并发越过锁外容量检查，server.py两入口+newtest最小修复，锁内权威检查/写入、拒绝IO锁外。session_scout隔离编码，flagship_scout独立设计/代码/原件审查，root统一一次full。下一设计独立核→确定RED→小修/必要领域→交叉审查→冻结组合/唯一full→独立终审/新对象审计→正常main集成核远端。另一个只读候选同UID多游戏房覆盖客户端唯一game_room需要更广语义，未冻结/实施，不扩本Task。禁止force push、改保护/凭据、发布、上传原日志/真实用户资料/二进制，不声称CI/GUI/自然退出/LAN/新EXE已通过。
+
+
 ## 2026-10-23 下午并行批次 v1
 
 **RESUMED / DOMAINS_PASSED / AI_ACCEPTED_GROUP_LEAVE_AND_FLAGSHIP_DRAW_ONLY / COMBINED_FULL_PASSED / FINAL_REVIEW_0_MUST / MERGED_MAIN / REMOTE_VERIFIED**。用户重新授权继续既定项目与普通main集成，Sol + FAST、可并行；root唯一集成主控，两个新代理显式指定gpt-6-sol，本次模型/FAST服务回执未暴露，不独立声称已核实际服务配置。上午STOPPED为旧批历史；不发布、不强推/改保护/凭据/共享历史，不声称知道额度或重置时间。

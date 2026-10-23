@@ -1,0 +1,188 @@
+{
+  "batch": "PARALLEL-R1-R2-20261023 v1",
+  "tasks": [
+    "GROUP-LEAVE-SCOPE-01 v1.1",
+    "FLAGSHIP-DRAW-STATE-01 v1"
+  ],
+  "status": "AI_ACCEPTED_TASK_SCOPES_ONLY_FINAL_REVIEW_0_MUST",
+  "full": {
+    "base": "8cd76a3ae52c946206805194ef4b0b053fa6e9e9",
+    "run_id": "parallel-r1-r2-full-20261023-20261023-154204-a506b872c4",
+    "source_content_id": "e51c01b234b0d71490b784efb332b21a8074bcccb62101196e0dae0a025e5444",
+    "source_inputs": 493,
+    "files": 216,
+    "totals": {
+      "passed": 2998,
+      "skipped": 20
+    },
+    "exit_code": 0,
+    "seconds": 804.698,
+    "summary_sha256": "c5e84488af4482d6e90acbc57738d112b2bb45d8d5bda41f061f6afa4a1a1e54",
+    "checks": {
+      "full_216_files_2998_passed": true,
+      "actual_shell_exit_zero": true,
+      "source_current_frozen_full_exact": true,
+      "source_493_inputs": true,
+      "full_snapshot_exact": true,
+      "progress_records_exact": true,
+      "full_test_set_exact": true,
+      "full_original_logs_complete": true,
+      "full_original_log_counts_exact": true,
+      "full_original_sandbox_exact": true,
+      "full_single_attempt_cleanup_policy": true,
+      "old_20_skips_unchanged": true,
+      "unaffected_counts_unchanged": true,
+      "prior_2991_full_preserved": true,
+      "original_failed_full_preserved": true,
+      "all_worker_checks_passed": true,
+      "group_integrated_paths_canonical_equal": true,
+      "group_red_summary_preserved": true,
+      "group_green_earlier_test_summary_preserved": true,
+      "group_domain_summary_preserved": true,
+      "group_race_red_final_test_summary_preserved": true,
+      "flagship_integrated_paths_canonical_equal": true,
+      "flagship_red_summary_preserved": true,
+      "flagship_green_before_cleanup_refinement_summary_preserved": true,
+      "flagship_final_tk_summary_preserved": true,
+      "flagship_domain_summary_preserved": true
+    }
+  },
+  "workers": {
+    "group": {
+      "runs": {
+        "red": {
+          "run_id": "group-leave-red-20261023-20261023-153519-b2ef1fbb24",
+          "files": 1,
+          "totals": {
+            "failed": 3
+          },
+          "exit_code": 1,
+          "seconds": 5.586,
+          "source_content_id": "6075ef40e4984256d89a5906c929731011d7f4ea5c6ec7a02eeb139895d9d02b",
+          "summary_sha256": "782fa12352d322d344353a50bfaa25ba8dbf98862e8c7f88efd2facb9e88ea69"
+        },
+        "green_earlier_test": {
+          "run_id": "group-leave-green-20261023-20261023-153627-23eea24cae",
+          "files": 1,
+          "totals": {
+            "passed": 3
+          },
+          "exit_code": 0,
+          "seconds": 2.565,
+          "source_content_id": "f4e3fadf26e03b9b09528135f8e17c7f11953dfb939228be55bf871a048a443d",
+          "summary_sha256": "060862fc046b5b2e5454c51994fffa45436dfc442ba1392a30b72d2074c47337"
+        },
+        "domain": {
+          "run_id": "group-leave-domain-20261023-20261023-153652-bc52e0e33e",
+          "files": 5,
+          "totals": {
+            "passed": 40
+          },
+          "exit_code": 0,
+          "seconds": 26.544,
+          "source_content_id": "2dffdb75933c32cb78be96829aec86ceb4290d6b7290d646bbbcd5fc1126b2a3",
+          "summary_sha256": "8b6db2aea15836881f6886739be9b455f2a1be1249d36991ed2b7af01fec39fd"
+        },
+        "race_red_final_test": {
+          "run_id": "group-leave-race-red-20261023-20261023-153751-74242bc524",
+          "files": 1,
+          "totals": {
+            "failed": 1
+          },
+          "exit_code": 1,
+          "seconds": 2.266,
+          "source_content_id": "7f553e021b8b7f2ce9594935c72b9f7650bac55daccea5406691e84707b29246",
+          "summary_sha256": "1fc207ebb62b599db7dd2024df8979101d197359ca38f3a80cfc2cf42ffa29a7"
+        }
+      },
+      "checks": {
+        "red_exact_records": true,
+        "red_snapshot_exact": true,
+        "red_raw_evidence": true,
+        "green_earlier_test_exact_records": true,
+        "green_earlier_test_snapshot_exact": true,
+        "green_earlier_test_raw_evidence": true,
+        "domain_exact_records": true,
+        "domain_snapshot_exact": true,
+        "domain_raw_evidence": true,
+        "final_current_matches_domain": true,
+        "race_red_final_test_exact_records": true,
+        "race_red_final_test_snapshot_exact": true,
+        "race_red_final_test_raw_evidence": true
+      }
+    },
+    "flagship": {
+      "runs": {
+        "red": {
+          "run_id": "flagship-draw-20261023-red-20261023-153501-51ffb05c6f",
+          "files": 3,
+          "totals": {
+            "failed": 4,
+            "passed": 27
+          },
+          "exit_code": 1,
+          "seconds": 6.96,
+          "source_content_id": "24c0e631d9992b7675223311984d9211f9036dea78a9fe6fd8a8851b49e023d8",
+          "summary_sha256": "877cf64cb7627f4d49b07d9d8877265f4a20f2267b06f64d17923c255c9acdfd"
+        },
+        "green_before_cleanup_refinement": {
+          "run_id": "flagship-draw-20261023-green-20261023-153617-afc50f701a",
+          "files": 3,
+          "totals": {
+            "passed": 31
+          },
+          "exit_code": 0,
+          "seconds": 6.572,
+          "source_content_id": "692990528e615522ae428a7a79a10b1289184860e4c76b820d9a02eb0f2e1b1a",
+          "summary_sha256": "3378685d981fddc73f045ec68742d76876043d65c28e662eff6e866710563817"
+        },
+        "final_tk": {
+          "run_id": "flagship-draw-20261023-tk-cleanup-20261023-153651-03e10f443c",
+          "files": 1,
+          "totals": {
+            "passed": 2
+          },
+          "exit_code": 0,
+          "seconds": 3.709,
+          "source_content_id": "b9e5e414722e2a252bb5325f0e74ddabfe0ba6a2755e15bc572c4feb74caa0cd",
+          "summary_sha256": "c26bde3f998a37afd0687b92804411e6988c426be5aa629d7861f7fc936a0ebc"
+        },
+        "domain": {
+          "run_id": "flagship-draw-20261023-domain-20261023-153716-b6726dbf74",
+          "files": 3,
+          "totals": {
+            "passed": 67
+          },
+          "exit_code": 0,
+          "seconds": 12.321,
+          "source_content_id": "b9e5e414722e2a252bb5325f0e74ddabfe0ba6a2755e15bc572c4feb74caa0cd",
+          "summary_sha256": "e115aa1604a4eab1e8d3bd24e303b3c4376dc821d837d73d1f86e6826d51279d"
+        }
+      },
+      "checks": {
+        "red_exact_records": true,
+        "red_snapshot_exact": true,
+        "red_raw_evidence": true,
+        "green_before_cleanup_refinement_exact_records": true,
+        "green_before_cleanup_refinement_snapshot_exact": true,
+        "green_before_cleanup_refinement_raw_evidence": true,
+        "final_tk_exact_records": true,
+        "final_tk_snapshot_exact": true,
+        "final_tk_raw_evidence": true,
+        "domain_exact_records": true,
+        "domain_snapshot_exact": true,
+        "domain_raw_evidence": true,
+        "final_current_matches_domain": true
+      }
+    }
+  },
+  "version_notes": [
+    "First REDs precede test-strengthening; final tests are not claimed byte-identical to initial REDs.",
+    "Group first RED baseline server differs only in CRLF/LF; refined race RED reproduces the original KeyError.",
+    "Each worker domain precedes the combined candidate; combined source is independently frozen and tested."
+  ],
+  "limits": [
+    "No visible GUI, natural app exit, physical LAN or new EXE acceptance.",
+    "No complete R1/R2 milestone or release acceptance."
+  ]
+}

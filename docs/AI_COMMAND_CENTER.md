@@ -15,6 +15,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 当前本地试用刷新批 · R3-UID-BUILD-01 v1（2026-10-23）
+
+**READY_BUILD / SOURCE_FROZEN / DESIGN_REVIEW_0_MUST / BUILD_LAUNCH_PENDING**。[Task](task-packages/R3-UID-BUILD-01.md)。本次明确授权仅刷新含UID隔离的本地三EXE/七文件包，保留旧175777d包；root唯一构建/运行/资料/集成，flagship_scout只读独立审查，沿Sol+FAST（服务回执不可见），不PR/force/发布二进制。
+
+基线Git/API main1e3c96af48552feeddba38b7071a31670c6f388a clean；本工作树history-uid-integration-20261023新分支feature/r3-uid-build-20261023，资料dirty属root。501输入/source81c36be82a54f5663f0ea2b473884a6499040741c171a4c0115500539aa965e5与UID最终full逐字节一致，沿用223文件3070P0F20既有skip/exit0，不改源码/测试/工具/依赖、不重复full。旧r3m23七文件已冻结SHA保留；原视频4759 clean/暂停，不继承。
+
+B设计与controller原字节SHA495d17ad558a0a768cfb146604f29fe116da664eddb6ab38933504e1c9d94ab8复核0 MUST；下一步现有local_trial build至新短目录_tmp_gui/uib23；精确新七文件包入口CLI及唯一strict正式run验证合成登录/聊天/双棋/owned Job清理，既有合成profile可观察UID目录边界单列。未启动构建/运行，未见活动Python。原件本树_tmp_gui/r3-uid-build-20261023与原工程_tmp_gui/uib23，首次失败保留；不读真实history/prefs、不用硬件/LAN、不称GUI/自然退出/完整里程碑通过。仅五公开资料独立审查、全部新增对象脱敏后正常main集成；完成即报告剩余真实依赖。
+
+
 ## 当前账号历史批 · HISTORY-UID-ISOLATION-01 v2.1（2026-10-23）
 
 **IMPLEMENTED / FIRST_FULL_FAILED_RETAINED / CONTRACT_TESTS_107P_REVIEW_0_MUST / FINAL_FULL_02_PASSED / FINAL_INDEPENDENT_REVIEW_0_MUST / AI_ACCEPTED_HISTORY_UID_ISOLATION_ONLY / PUBLIC_REVIEW_0_MUST / NEW_OBJECT_AUDIT_0_MUST / MERGED_MAIN / REMOTE_VERIFIED**。[Task](task-packages/HISTORY-UID-ISOLATION-01.md) / [Review](review-packages/HISTORY-UID-ISOLATION-01-r1.md) / [脱敏证据](review-assets/HISTORY-UID-ISOLATION-20261023/evidence.json)。用户批准稳定UID隔离/更名连续/旧昵称原件保留不认领，Sol+FAST沿用（实际运行配置回执不可见）；普通main集成授权、不PR/force/改保护凭据/发布。开工main Git/API基线293cc526ea2c49a4c5ca4520a09ca73aa5733a01，集成前须fresh再核。

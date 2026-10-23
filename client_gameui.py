@@ -313,7 +313,8 @@ def _g_breath(now):
 def _g_glow_stipple(k, gint):
     """按辉光层索引 k(0..2) 与呼吸因子 gint 计算外缘光晕的 stipple（点密度）。
     纯函数：仅由参数推导、值恒落在合法 stipple 集内，供 headless 单测窗密封顶。"""
-    a = max(0.05, min(0.32, 0.10 + 0.20 * k * (0.35 + 0.65 * gint)))
+    # 辉光只做极淡的外缘呼吸，避免相邻棋子光晕叠成实心大圆
+    a = max(0.02, min(0.14, 0.03 + 0.04 * k + 0.06 * gint))
     return _g_stipple(a)
 
 
@@ -321,8 +322,8 @@ def _g_piece_glow(cv, cx, cy, r, color, gint):
     """通用棋子辉光：在棋子外缘叠 3 层同色系柔和光晕（stipple 模拟半透明），
     强度随呼吸因子 gint(∈[0,1]) 微变。供 _disc / _stone / 手绘棋子(create_oval
     、字符) 等多类棋子共用，做到"一处辉光逻辑，四处接用"。纯时间推导无副作用。"""
-    for k, mul in enumerate((1.18, 1.36, 1.58)):
-        gg = _shade(color, 0.14 + 0.16 * k)            # 同色系逐层提亮
+    for k, mul in enumerate((1.05, 1.10, 1.15)):
+        gg = _shade(color, 0.18 + 0.10 * k)            # 同色系逐层提亮
         cv.create_oval(cx - r * mul, cy - r * mul, cx + r * mul,
                        cy + r * mul, fill=gg, outline="",
                        stipple=_g_glow_stipple(k, gint), tags="_gpiece_glow")
@@ -2878,7 +2879,7 @@ def _p_go(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 continue
             cx, cy = ox + x * cell, oy + y * cell
             anchors.append((cx, cy))
-            _stone(cv, cx, cy, cell * 0.44,
+            _stone(cv, cx, cy, cell * 0.42,
                    "#111111" if v == 1 else "#ffffff", "#888888",
                    glow=True, gint=breathing)
     # ---- 最近一步金色光晕标记（落子交叉点）----

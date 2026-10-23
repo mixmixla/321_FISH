@@ -2025,5 +2025,55 @@
       "log_sha256": "573c9f8b5d4926d8db3fc78cad3e3870c622263ff3e3a82a95d309fbc22c98ad",
       "cleanup_ok": true
     }
-  ]
+  ],
+  "integration_20261023": {
+    "run_id": "group-main-integration-20261023-20261023-103944-2de5ef243f",
+    "source_content_id": "2feeef75c2ed758734057c092f18dcd71b507e5425b339fe0fc0a81f8824929c",
+    "files": 4,
+    "totals": {
+      "passed": 76
+    },
+    "exit_code": 0,
+    "seconds": 22.5,
+    "summary_sha256": "1083dd395eec23414fd42b8abf9f3fdff7f7b073a18713d4f4576b2dbb1cdd4a",
+    "prior_full_source_delta": [
+      "client_gameui.py"
+    ],
+    "remote_preserved_commit": "88a0d9edc02c11ebc7eefd16655bc41d736fa635",
+    "checks": "manifest, source snapshot, exact test set, original logs/counts, original sandbox, cleanup and single attempts verified",
+    "file_evidence": [
+      {
+        "file": "tests/test_client_core.py",
+        "counts": {
+          "passed": 34
+        },
+        "log_sha256": "29bde58272b31d7f5014a18d0c46978052dc014a0bf5514da0b2a806b3ba452a",
+        "cleanup_ok": true
+      },
+      {
+        "file": "tests/test_gameui_compact_gui.py",
+        "counts": {
+          "passed": 3
+        },
+        "log_sha256": "d5280ac4d9594011fe01f9619468b27d6d4eec725f60fc436332efdd9992a933",
+        "cleanup_ok": true
+      },
+      {
+        "file": "tests/test_gomoku_fx.py",
+        "counts": {
+          "passed": 33
+        },
+        "log_sha256": "a7c441ba9ea5a2417600d069b39e2011aedc211c1d2b4e7e2b54d23d85944c90",
+        "cleanup_ok": true
+      },
+      {
+        "file": "tests/test_group_kick_scope.py",
+        "counts": {
+          "passed": 6
+        },
+        "log_sha256": "f0277168fdc63a47bb486143055d761692242609ef3ead37443bb0a2f1c0f774",
+        "cleanup_ok": true
+      }
+    ]
+  }
 }

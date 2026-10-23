@@ -1,0 +1,101 @@
+{
+  "task": "ADMIN-GROUP-DISSOLVE-SCOPE-01 v1",
+  "base": "7dbbd28cd9b608657c04e6444a75230cd6bdcd0a",
+  "status": "IMPLEMENTED_DOMAIN_PASSED_INDEPENDENT_CODE_REVIEW_0_MUST_PENDING_FULL",
+  "worker": {
+    "base": "7dbbd28cd9b608657c04e6444a75230cd6bdcd0a",
+    "runs": {
+      "red": {
+        "run_id": "admin-dissolve-red-20261023-20261023-182831-eedb131244",
+        "files": 1,
+        "totals": {
+          "failed": 4,
+          "passed": 1
+        },
+        "exit_code": 1,
+        "seconds": 5.548,
+        "source_content_id": "e8b52a4ed6fae928cefc4db00ff623c4963ae181f162ce48f751ac651f02b669",
+        "summary_sha256": "b6adad5a7b3b00730287892a9c609d48bb4a29a63bec4c9c6af92a0d86d7ded8",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      },
+      "green": {
+        "run_id": "admin-dissolve-green-20261023-20261023-182905-0f4a753a9d",
+        "files": 1,
+        "totals": {
+          "passed": 5
+        },
+        "exit_code": 0,
+        "seconds": 2.495,
+        "source_content_id": "ee7ba9c7d71979bf948a7f094351b90d5e80761f95a2f21b37d86457c6274428",
+        "summary_sha256": "7e0906538dce47d83fa284485193b308b0fda3499e30150da5db637050536322",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      },
+      "domain": {
+        "run_id": "admin-dissolve-domain-20261023-20261023-182921-25ff8505b2",
+        "files": 7,
+        "totals": {
+          "passed": 88
+        },
+        "exit_code": 0,
+        "seconds": 35.964,
+        "source_content_id": "ee7ba9c7d71979bf948a7f094351b90d5e80761f95a2f21b37d86457c6274428",
+        "summary_sha256": "1c999d4ea7a1dab8cac20418bb74c01033d493bfa847ac26c6720d95344b376b",
+        "checks": {
+          "source_snapshot_exact": true,
+          "progress_records_exact": true,
+          "test_set_exact": true,
+          "original_logs_complete": true,
+          "original_log_counts_exact": true,
+          "original_sandbox_exact": true,
+          "single_attempt_cleanup_policy": true,
+          "manifest_fingerprint_exact": true
+        }
+      }
+    },
+    "red_to_green_only_server": true,
+    "test_sha_by_phase": {
+      "red": "f656f7291c1e3505237e54073700b76740596b0b84eedf3c6513ebb806a3f574",
+      "green": "f656f7291c1e3505237e54073700b76740596b0b84eedf3c6513ebb806a3f574"
+    },
+    "checks": {
+      "current_equals_domain": true,
+      "green_domain_same_source": true,
+      "red_to_green_only_server": true,
+      "actual_execution_receipts_preserved": true
+    }
+  },
+  "version_notes": [
+    "RED and GREEN have identical new test bytes; only server.py differs.",
+    "No initial fixture precondition error was observed in the four failing RED cases.",
+    "Dissolve gates the first target-thread Hub lock, before known-name lookup; remove uses a different lock position.",
+    "Success IO lock placement is independently inspected, without claiming dynamic lock-probe coverage."
+  ],
+  "limits": [
+    "No new ordinary owner dissolve command or changes to add/remove/leave/kick.",
+    "Paused video changes and original failure remain unmerged and unaccepted.",
+    "No visible GUI, natural app exit, physical LAN or new EXE validation; no complete R1 or release acceptance."
+  ],
+  "independent_worker_review": {
+    "reviewer": "flagship_scout",
+    "scope": "Task v1, actual diff/tests and all three original runs",
+    "must": 0
+  }
+}

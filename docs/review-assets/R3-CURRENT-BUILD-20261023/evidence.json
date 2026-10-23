@@ -1,0 +1,27 @@
+{
+  "task": "R3-CURRENT-BUILD-01 v1",
+  "base": "175777d146ffddb845b9864d48b8bc588c6bd449",
+  "status": "READY_BUILD_DESIGN_REVIEW_0_MUST",
+  "source_binding": {
+    "source_inputs": 498,
+    "source_content_id": "f3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae",
+    "prior_full_run": "gvm23-final-01",
+    "totals": {
+      "passed": 3022,
+      "skipped": 20
+    },
+    "exit_code": 0,
+    "summary_sha256": "de53fa5bd1c8f69c1d657a6d62b2e2562188fd56eff8b70c69831cc4c4ee0986"
+  },
+  "limits": [
+    "No product/test/tool/dependency changes or repeated full",
+    "New bundle source-dir; independent seven-file hashes supplement one-input package fingerprint",
+    "No visible GUI/natural app exit/physical LAN/new machine/hardware/STT/R3/release acceptance",
+    "Paused video remains unmerged; raw evidence and binaries stay local"
+  ],
+  "independent_design_review": {
+    "reviewer": "flagship_scout",
+    "must": 0,
+    "resolved": "Run the actual seven-file package, with independent whole-package hashes and separate full source binding."
+  }
+}

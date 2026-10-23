@@ -15,6 +15,14 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 当前本地试用批 · R3-CURRENT-BUILD-01 v1（2026-10-23）
+
+**READY_BUILD / DESIGN_REVIEW_0_MUST / NOT_AI_ACCEPTED**。[Task](task-packages/R3-CURRENT-BUILD-01.md) / [Review](review-packages/R3-CURRENT-BUILD-01-r1.md) / [脱敏证据](review-assets/R3-CURRENT-BUILD-20261023/evidence.json)。base已验收main175777d146ffddb845b9864d48b8bc588c6bd449/clean，当前feature/r3-current-build-20261023，root唯一构建/执行/资料/集成，B独立只读审查；沿用户Sol+FAST持续授权，实际服务回执不可见。
+
+有界双线优先级检查：R1旧重连/严格恢复缺口已修；本地历史昵称隔离需另定UID/迁移语义不能热修。R2/3最高价值可执行缺口是10月21日2e211564旧EXE尚未包含现main修复。冻结现498输入/sourcef3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae，复用唯一full gvm23-final-01/3022P0F20skip/exit0，不改源码或重测full。仅新本地三EXE/精确七文件包、一次现行strict正式run在包目录实启双client/HTTP/默认wire/owned Job关闭、必要入口CLI；独立7文件SHA补无源码包单项指纹，源/spec另绑定。
+
+原工程_tmp_gui/r3m23启动前未存在、现有PyInstaller可用，当前/冻结498逐字节一致，无构建/运行实际启动；B已独立冻结设计审查0 MUST，已明确正式run在新七文件包目录且无override、7文件SHA与498源绑定分开；下一执行现有build。原件本工作树_tmp_gui/r3-current-build-20261023及上述新目录，禁止公开原日志/profile/二进制/私密值；视频4759仍暂停未继承，不诊断/开硬件/装工具/改系统，不称GUI/自然退出/LAN/异机/STT/完整R1或R3通过。正常main集成沿原授权，不强推/保护变更或发布。
+
 ## 独立R1续批 · GROUP-VOICE-MEMBERSHIP-01 v1（2026-10-23）
 
 **IMPLEMENTED / DOMAIN_PASSED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / AI_ACCEPTED_GROUP_VOICE_MEMBERSHIP_ONLY / PUBLIC_REVIEW_0_MUST / MERGED_MAIN / REMOTE_VERIFIED**。[Task](task-packages/GROUP-VOICE-MEMBERSHIP-01.md) / [Review](review-packages/GROUP-VOICE-MEMBERSHIP-01-r1.md) / [脱敏证据](review-assets/GROUP-VOICE-MEMBERSHIP-20261023/evidence.json)。沿用户持续Sol+FAST与普通main集成授权，实际模型/服务回执未暴露，不冒称已核。root唯一集成/资料/组合验证，A隔离server/newtest实现，B独立只读审查，最多3活动者。

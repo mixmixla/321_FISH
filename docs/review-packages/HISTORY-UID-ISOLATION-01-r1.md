@@ -1,6 +1,6 @@
 # HISTORY-UID-ISOLATION-01 r1 · v2.1
 
-**IMPLEMENTED / FINAL_FULL_02_PASSED / FINAL_INDEPENDENT_REVIEW_0_MUST / AI_ACCEPTED_HISTORY_UID_ISOLATION_ONLY / PUBLIC_REVIEW_AND_INTEGRATION_PENDING**。用户已批准稳定UID隔离、更名连续、旧昵称历史保留且不自动归属。[冻结Task](../task-packages/HISTORY-UID-ISOLATION-01.md) / [完整脱敏指纹与阶段后验](../review-assets/HISTORY-UID-ISOLATION-20261023/evidence.json)。基线main293cc526ea2c49a4c5ca4520a09ca73aa5733a01，root唯一集成/组合验证；A独立树实现，B独立只读设计、代码与原件审。实际Sol/FAST运行回执不可见，不冒称已核。
+**IMPLEMENTED / FINAL_FULL_02_PASSED / FINAL_INDEPENDENT_REVIEW_0_MUST / AI_ACCEPTED_HISTORY_UID_ISOLATION_ONLY / PUBLIC_REVIEW_0_MUST / NEW_OBJECT_AUDIT_0_MUST / MERGED_MAIN / REMOTE_VERIFIED**。用户已批准稳定UID隔离、更名连续、旧昵称历史保留且不自动归属。[冻结Task](../task-packages/HISTORY-UID-ISOLATION-01.md) / [完整脱敏指纹与阶段后验](../review-assets/HISTORY-UID-ISOLATION-20261023/evidence.json)。基线main293cc526ea2c49a4c5ca4520a09ca73aa5733a01，root唯一集成/组合验证；A独立树实现，B独立只读设计、代码与原件审。实际Sol/FAST运行回执不可见，不冒称已核。
 
 ## 结果与边界
 
@@ -54,8 +54,10 @@ hui23-final-02/exec28091已自然actual exit0，223文件3070P0F20既有skip/811
 
 B独立复算223原件/501当前源、身份/逐文件计数、原full01/RED/选测失败保留，最终技术0 MUST。root据此仅AI_ACCEPTED本Task v2.1，不等于用户/Pro验收、整里程碑或发布。未见活动Python，无源码/依赖变化不再测试。第一full冻结/stdout/exit与所有原件保留，第二输出单列full-02-*。
 
-Git fresh fetch/FETCH_HEAD/origin-main与API均确认main仍base293cc526…，protected=false/可见rulesets为空；原工程视频4759工作树clean且保持暂停。当前7个新增可达commit/86对象/44blob敏感预审无发现；公开终稿、最终新对象/metadata审计与普通main合并推送仍待完成，尚无当前远端CI查询结果。
+公开四终稿及Task/稳定事实/技能参考已独立资料0 MUST；全部8个新可达commit/40tree/48blob共96对象及中间版本/metadata已root扫描和B独立敏感审0 MUST。fresh fetch/API确认原main仍base、protected=false/可见rulesets为空后，正常快进合并并非强制push成功。Git ls-remote与API双核main完整提交21e2ef0cf1fb19afca9655e4cb46c0ad60eb1bdb，501输入仍逐字节等full02、代码交付核验时工作树clean，原视频4759仍独立暂停。
 
-当前及先前原件分别本工作树_tmp_gui/history-uid-isolation-20261023、原工程_tmp_gui/hui23-*；只用合成数据与临时目录。旧paused video4759保持非祖先/不继承/不诊断；原视频/路径首次失败原位保留。不上传原日志、私有prefs/聊天/凭据、用户名或二进制，不强推/改保护权限凭据/发布。全部新增可达提交/中间blob/metadata须交付前再审，普通main交付及Git/API/真实CI状态待回执。
+该交付提交的check-runs/status contexts/Actions均0（aggregate pending/total0），不称CI通过。本段为纯资料交付回执，回执新增对象另审后正常推送，最终leaf以Git refs为准；无源码变化不再全量或构建。
+
+当前及先前原件分别本工作树_tmp_gui/history-uid-isolation-20261023、原工程_tmp_gui/hui23-*；只用合成数据与临时目录。旧paused video4759保持非祖先/不继承/不诊断；原视频/路径首次失败原位保留。不上传原日志、私有prefs/聊天/凭据、用户名或二进制，不强推/改保护权限凭据/发布。不公开旧历史敏感细节、不重写共享历史或轮换部署凭据；本纯资料回执新增对象另审，保留可恢复检查点。
 
 本批不证明可视GUI、自然退出、物理跨机器LAN、硬件、新EXE或完整R1/R3；Tk组件/协议与此前旧源码EXE包分别记录，不相互替代。

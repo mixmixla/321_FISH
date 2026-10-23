@@ -1,7 +1,7 @@
 {
   "task": "HISTORY-UID-ISOLATION-01 v2.1",
   "base": "293cc526ea2c49a4c5ca4520a09ca73aa5733a01",
-  "status": "AI_ACCEPTED_HISTORY_UID_ISOLATION_ONLY_PENDING_PUBLIC_REVIEW_AND_INTEGRATION",
+  "status": "MERGED_MAIN_REMOTE_VERIFIED",
   "requested_service": "Sol + FAST; runtime receipt not exposed",
   "namespace": "validated durable store_scope_id plus confirmed positive UID",
   "old_data_policy": "Preserve original nickname/top-level history and legacy chat prefs; no automatic ownership or migration.",
@@ -469,7 +469,7 @@
     "run_id": "hui23-final-02",
     "files": 223,
     "actual_exec_session": 28091,
-    "state": "AI_ACCEPTED",
+    "state": "DELIVERED_MAIN",
     "accepted": true
   },
   "full": {
@@ -550,6 +550,35 @@
     "new_reachable_objects": 86,
     "new_blobs": 44,
     "findings": 0,
-    "final_delivery_objects_audit_pending": true
+    "final_delivery_objects_audit_pending": false
+  },
+  "sensitive_audit": {
+    "base": "293cc526ea2c49a4c5ca4520a09ca73aa5733a01",
+    "candidate_commit": "21e2ef0cf1fb19afca9655e4cb46c0ad60eb1bdb",
+    "new_commits": 8,
+    "new_trees": 40,
+    "new_blobs": 48,
+    "new_reachable_objects": 96,
+    "findings": 0,
+    "independent_reviewer": "flagship_scout",
+    "must": 0,
+    "scope": "All new reachable commits/intermediate objects and metadata before code delivery, not only final tree. Pure receipt objects separately reviewed and audited before delivery."
+  },
+  "delivery": {
+    "method": "normal fast-forward main merge and non-force push",
+    "code_and_review_commit": "21e2ef0cf1fb19afca9655e4cb46c0ad60eb1bdb",
+    "git_verified_main": "21e2ef0cf1fb19afca9655e4cb46c0ad60eb1bdb",
+    "api_verified_main": "21e2ef0cf1fb19afca9655e4cb46c0ad60eb1bdb",
+    "local501_still_full_exact": true,
+    "worktree_clean_at_verification": true,
+    "ci_for_code_commit": {
+      "check_runs": 0,
+      "status_contexts": 0,
+      "status_total": 0,
+      "actions_runs": 0,
+      "aggregate_state": "pending",
+      "ci_pass_claimed": false
+    },
+    "receipt_note": "This documentation-only delivery receipt is reviewed/audited separately; final receipt commit is resolved from Git refs. CI counts above refer to the verified code/review commit, not a claim that CI passed."
   }
 }

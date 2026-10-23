@@ -26,7 +26,7 @@ class Connect4Game(BaseGame):
         return {
             "game": self.name, "status": "playing",
             "board": self.board, "rows": ROWS, "cols": COLS,
-            "turn_uid": None if self.winner_uid else self.players[self.turn],
+            "turn_uid": None if self.winner_uid is not None or self.draw else self.players[self.turn],
             "players": list(self.players),
             "last_move": self.last_move, "winner_uid": self.winner_uid,
             "draw": self.draw,

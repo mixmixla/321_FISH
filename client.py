@@ -13080,7 +13080,7 @@ class GameWindow:
             for y, row in enumerate(board):
                 lines.append(f"{y%10} " + " ".join("●" if c == 1 else
                                                    "○" if c == 2 else "·" for c in row))
-            if st.get("turn_uid"):
+            if not (st.get("winner_uid") is not None or st.get("draw")) and st.get("turn_uid"):
                 lines.append(f"轮到 {self._nick(st['turn_uid'])}")
             if st.get("winner_uid"):
                 lines.append(f"🏆 {self._nick(st['winner_uid'])} 获胜")
@@ -13193,7 +13193,7 @@ class GameWindow:
             for row in board:
                 lines.append("  " + " ".join("🔴" if c == 1 else
                                              "🔵" if c == 2 else "·" for c in row))
-            if st.get("turn_uid"):
+            if not (st.get("winner_uid") is not None or st.get("draw")) and st.get("turn_uid"):
                 lines.append(f"轮到 {self._nick(st['turn_uid'])}")
             if st.get("winner_uid"):
                 lines.append(f"🏆 {self._nick(st['winner_uid'])} 获胜")

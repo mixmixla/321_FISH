@@ -56,6 +56,24 @@ def test_connect4_occupied_column_rejected():
         g.act(1, {"col": 0})             # 0 列已满
 
 
+def test_connect4_last_legal_drop_draw_has_no_turn():
+    g = Connect4Game([1, 2], seed=1)
+    # Two-row colour bands prevent horizontal, vertical and diagonal fours.
+    # The only gap is the top of column 6, so the final drop is legal.
+    row = [1, 1, 2, 2, 1, 1, 2]
+    inverse = [2, 2, 1, 1, 2, 2, 1]
+    g.board = [row[:], inverse[:], row[:], inverse[:], row[:], inverse[:]]
+    g.board[0][6] = 0
+    g.turn = 1
+    assert g.snapshot()["turn_uid"] == 2
+    assert g.legal_moves(2) == [{"col": 6}]
+    g.act(2, {"col": 6})
+    assert g.draw and g.ended()["winner_uid"] is None
+    assert g.snapshot()["turn_uid"] is None
+    with pytest.raises(GameRuleError, match="本局已结束"):
+        g.act(2, {"col": 0})
+
+
 # ---------- 奥赛罗 ----------
 def test_othello_initial_and_flip():
     g = OthelloGame([1, 2], seed=1)

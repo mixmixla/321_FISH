@@ -100,6 +100,9 @@ def test_full_board_without_five_is_a_draw(monkeypatch):
     g.act(1, {"x": SIZE - 1, "y": SIZE - 1})
     assert g.draw is True and g.winner_uid is None
     assert g.ended()["winner_uid"] is None
+    assert g.snapshot()["turn_uid"] is None
+    with pytest.raises(GameRuleError, match="本局已结束"):
+        g.act(1, {"x": 0, "y": 0})
 
 
 # ---------- 快照与随机全流程 ----------

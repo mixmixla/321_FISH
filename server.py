@@ -6954,7 +6954,6 @@ class Hub:
         if uid is None:
             self._error(sess, "uid", "目标 uid/昵称 无效")
             return
-        cur = g.get("members", {}).get(uid)
         if op == "add":
             nick = self._append_nick_for_uid(uid, header.get("nick"))
             with self.lock:
@@ -6978,25 +6977,42 @@ class Hub:
                            target=uid, target_nick=nick, actor=sess.uid)
             return
         if op == "remove":
-            if cur is None:
-                self._error(sess, "member", "该用户不在群中")
-                return
             dissolved = False
             with self.lock:
                 if self.groups.get(gid) is not g:
-                    return
-                nick = g["members"].pop(uid)
-                g["admins"].discard(uid)
-                if not g["members"]:
-                    del self.groups[gid]
-                    dissolved = True
-                elif g["owner"] == uid:
-                    g["owner"] = next(iter(g["members"]))
+                    rejection = ("group", "群不存在")
+                elif uid not in g["members"]:
+                    rejection = ("member", "该用户不在群中")
+                else:
+                    rejection = None
+                    nick = g["members"].pop(uid)
+                    g["admins"].discard(uid)
+                    g["mutes"].pop(uid, None)
+                    if not g["members"]:
+                        del self.groups[gid]
+                        dissolved = True
+                        self.voice_rooms.pop(f"group:{gid}", None)
+                    elif g["owner"] == uid:
+                        g["owner"] = next(iter(g["members"]))
+                    self._group_state_revision += 1
+                    removal = {"t": "error", "code": "group_removed", "gid": gid,
+                               "group_revision": self._group_state_revision,
+                               "text": f"你已被移出群『{gname}』"}
+                    removed_sessions = list(self._uid_clients.get(uid, ()))
+            if rejection:
+                self._error(sess, *rejection)
+                return
             self._persist(force=dissolved)         # 锁外持久化：避免锁序自锁风险
             if dissolved:
                 self._broadcast_system(f"系统管理员已解散群「{gname}」")
             else:
                 self._send_group_state(gid, text=f"系统管理员将 {nick} 移出群聊")
+                self._room_drop(f"group:{gid}", uid)
+            for st in removed_sessions:
+                try:
+                    st.send(removal)
+                except Exception:
+                    pass
             self._broadcast_group_list()
             self.audit.log(type="admin_group_remove", gid=gid, name=gname,
                            target=uid, target_nick=nick, actor=sess.uid)

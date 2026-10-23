@@ -1,6 +1,6 @@
 # GROUP-LEAVE-SCOPE-01 r1
 
-2026-10-23 **AI_ACCEPTED_TASK_SCOPE_ONLY / COMBINED_FULL_PASSED / FINAL_REVIEW_0_MUST / MAIN_INTEGRATION_PENDING**。
+2026-10-23 **AI_ACCEPTED_TASK_SCOPE_ONLY / COMBINED_FULL_PASSED / FINAL_REVIEW_0_MUST / MERGED_MAIN / REMOTE_VERIFIED**。
 [Task v1.1](../task-packages/GROUP-LEAVE-SCOPE-01.md)，base `8cd76a3ae52c946206805194ef4b0b053fa6e9e9`。session_scout 在独立工作树唯一写 server.py 和新回归，flagship_scout 独立设计/代码/原件审查；root 统一集成与验收。
 
 主动退群修改 UID 级成员关系，却没有清另一同 UID 会话的自动重入意图；该会话续连后可重新加入公共群。修复仅在 `_on_group_leave` 的 Hub 锁内重核群/成员、完成一次删除、取得 group_revision 并捕获当时全部目标 Session，锁外发送现有 group_removed/gid。账号与 Web token 保持有效，最后成员离开导致解散也通知。现有 Core 的 revision/generation/密钥清理机制复用，不改认证、持久格式或显式重新加入权限。
@@ -23,3 +23,7 @@
 ## 最终组合门禁
 
 唯一组合全量 `parallel-r1-r2-full-20261023-20261023-154204-a506b872c4`：**216文件，2998P/0F/20既有skip，actual exit0，804.698s**。493输入冻结source `e51c01b234b0d71490b784efb332b21a8074bcccb62101196e0dae0a025e5444`；summary SHA `c5e84488af4482d6e90acbc57738d112b2bb45d8d5bda41f061f6afa4a1a1e54`。26项后验全部通过，216逐原日志/计数/sandbox/单attempt/清理、完整测试集合、源快照与历史证据保持均核验。exec6697结束，无活动测试；session_scout独立重算全部原件/解释器依赖/源身份及公开投影和资料，终审0 MUST；主控据此有限AI接受本Task范围。[脱敏摘要](../review-assets/PARALLEL-R1-R2-20261023/evidence.json)。
+
+## 交付回执
+
+main已正常快进并非强制推送至 `5a2cebb5a152f15fd0e1363baef0ff0edf74065f`，ls-remote/API双核一致。全部49新增对象及metadata独立审计0 MUST，最终493源仍等full，无活动测试。该提交check-runs/status contexts/Actions均0，不称CI通过。本回执纯文档，最终leaf以Git refs为准；没有发布，也未升级完整里程碑或未测GUI/LAN/EXE边界。

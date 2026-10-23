@@ -17,7 +17,7 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 2026-10-23 下午并行批次 v1
 
-**RESUMED / DOMAINS_PASSED / AI_ACCEPTED_GROUP_LEAVE_AND_FLAGSHIP_DRAW_ONLY / COMBINED_FULL_PASSED / FINAL_REVIEW_0_MUST / MAIN_INTEGRATION_PENDING**。用户重新授权继续既定项目与普通main集成，Sol + FAST、可并行；root唯一集成主控，两个新代理显式指定gpt-6-sol，本次模型/FAST服务回执未暴露，不独立声称已核实际服务配置。上午STOPPED为旧批历史；不发布、不强推/改保护/凭据/共享历史，不声称知道额度或重置时间。
+**RESUMED / DOMAINS_PASSED / AI_ACCEPTED_GROUP_LEAVE_AND_FLAGSHIP_DRAW_ONLY / COMBINED_FULL_PASSED / FINAL_REVIEW_0_MUST / MERGED_MAIN / REMOTE_VERIFIED**。用户重新授权继续既定项目与普通main集成，Sol + FAST、可并行；root唯一集成主控，两个新代理显式指定gpt-6-sol，本次模型/FAST服务回执未暴露，不独立声称已核实际服务配置。上午STOPPED为旧批历史；不发布、不强推/改保护/凭据/共享历史，不声称知道额度或重置时间。
 
 base8cd76a3ae52c946206805194ef4b0b053fa6e9e9；主分支fix/parallel-session-batch-20261023。两线在独立worktree编码并交叉独立设计/代码/原件审查0 MUST：[GROUP Task v1.1](task-packages/GROUP-LEAVE-SCOPE-01.md)/[Review](review-packages/GROUP-LEAVE-SCOPE-01-r1.md) 仅server.py与newtest；[FLAGSHIP Task v1](task-packages/FLAGSHIP-DRAW-STATE-01.md)/[Review](review-packages/FLAGSHIP-DRAW-STATE-01-r1.md) 仅双棋snapshot、client摘要与对应回归。root独占文档和最终门禁，两worker目前只读预审，不测试或改源。共3活动工作者，不另开实现主控。
 
@@ -25,7 +25,7 @@ GROUP首RED3F/exit1；强化后原实现单case并发RED确定KeyError(2)，1F�
 
 两worker提交c19defb/80fb977已无冲突cherry-pick为0c44d11/9f640ba；组合HEAD9f640babe8af7e848ae2af5e55b09011bc3d71e2，8个实现/回归blob逐字节等源提交，远端glow保持。当前493输入冻结sourcee51c01b234b0d71490b784efb332b21a8074bcccb62101196e0dae0a025e5444。唯一full `.venv/Scripts/python.exe run.py test-all --label parallel-r1-r2-full-20261023` 已取得exec6697启动回执，实际run parallel-r1-r2-full-20261023-20261023-154204-a506b872c4，216文件已完成2998P/0F/20既有skip，actual exit0/804.698s；exec6697结束，无活动测试。summary SHA c5e84488af4482d6e90acbc57738d112b2bb45d8d5bda41f061f6afa4a1a1e54，主控26后验全true：493当前/冻结/全量源一致、原log计数/SHA、原sandbox、216完整集合/单attempt/清理、既有skip/未影响计数与历史失败保持。[脱敏证据](review-assets/PARALLEL-R1-R2-20261023/evidence.json)。原件_tmp_gui/parallel-session-batch-20261023（frozen-source/worker-validation/full-output/full-exit）及对应test-gate run；不得重复启动测试。base..组合38个新对象（4commit/15tree/19blob）及metadata独立预审0 MUST；尚未覆盖后续dirty文档/最终证据，终稿另审。
 
-session_scout独立复算216原件、493源、解释器/依赖身份、26后验与公开投影及所有资料，终审0 MUST；flagship_scout拟公开dirty资料边界预审0 MUST。主控有限AI接受退群会话与双棋平局范围。下一提交验收资料→全部新增对象审计→普通main集成并核远端。不称可视GUI、自然退出、物理LAN、新EXE或完整R1/R2验收。原日志与二进制仅本地，不复制私人资料到公开文档。
+session_scout独立复算216原件、493源、解释器/依赖身份、26后验与公开投影及所有资料，终审0 MUST；flagship_scout拟公开dirty资料边界预审0 MUST。主控有限AI接受退群会话与双棋平局范围。验收资料提交5a2cebb5a152f15fd0e1363baef0ff0edf74065f；全部49新对象（5commit/24blob）和metadata独立审计0 MUST。已本地正常快进main并非强制push成功，Git ls-remote与API核远端完整SHA一致为5a2cebb5a152f15fd0e1363baef0ff0edf74065f；493源仍与full逐字节相同，无活动测试。该提交check-runs/status contexts/Actions均0（aggregate pending/total0），不称CI通过。本段纯文档交付回执最终leaf以Git refs为准。本批完成，用户持续开发授权仍有效；尚未冻结下一Task，只读候选是已存在的视频留言worker回调直接进入Tk，不提前实施。不称可视GUI、自然退出、物理LAN、新EXE或完整R1/R2验收。原日志与二进制仅本地，不复制私人资料到公开文档。
 
 ## 2026-10-23 最终收尾完成
 

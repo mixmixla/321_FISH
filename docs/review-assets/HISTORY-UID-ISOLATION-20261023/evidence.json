@@ -1,7 +1,7 @@
 {
   "task": "HISTORY-UID-ISOLATION-01 v1",
   "base": "293cc526ea2c49a4c5ca4520a09ca73aa5733a01",
-  "status": "READY_INDEPENDENT_DESIGN_REVIEW_0_MUST_NOT_IMPLEMENTED",
+  "status": "IMPLEMENTING_ORIGINAL_RED_3_FAILED_PRESERVED",
   "requested_service": "Sol + FAST; runtime receipt not exposed",
   "namespace": "validated durable store_scope_id plus confirmed positive UID",
   "old_data_policy": "Preserve original nickname/top-level history and legacy chat prefs; no automatic ownership or migration.",
@@ -18,5 +18,35 @@
     "reviewer": "flagship_scout",
     "must": 0,
     "scope": "Frozen Task v1, durable namespace, accepted-WELCOME ordering, fresh temp/generation fences, legacy/prefs preservation and failure boundaries"
+  },
+  "red": {
+    "run_id": "hui23-red-01",
+    "files": 1,
+    "totals": {
+      "failed": 3
+    },
+    "exit_code": 1,
+    "seconds": 1.779,
+    "source_content_id": "d0557d8c6c563c26883dcccd0094e164b0a8a21ccb6d5e2ac301c5611b41aeec",
+    "summary_sha256": "f3998d1bbff6a87ac1b77f0792cbe821250b4ef5964f7cee7a934871fe346ce9",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "only_new_test_from_base": true,
+    "test_sha256": "c957c46fff2c9f53c2f845a3b3b43a9b3fefe8848166a139e193efa64425ff21",
+    "actual_exec_session": 67249,
+    "actual_shell_exit": 1,
+    "direct_observed": [
+      "Preauthentication reads legacy nickname history",
+      "Different UIDs with the same nickname share local history",
+      "Same UID with a changed display nickname chooses a different directory"
+    ]
   }
 }

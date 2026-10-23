@@ -3,7 +3,7 @@
   "tasks": [
     "GROUP-CAPACITY-01 v1.1"
   ],
-  "status": "AI_ACCEPTED_GROUP_CAPACITY_SCOPE_ONLY_PENDING_INTEGRATION",
+  "status": "AI_ACCEPTED_GROUP_CAPACITY_SCOPE_ONLY_MERGED_MAIN_REMOTE_VERIFIED",
   "full": {
     "base": "9d12a5863102ae0e8302f2b7bb1315350a250669",
     "run_id": "gcf23-final-01",
@@ -190,5 +190,25 @@
     "final_raw_evidence_must": 0,
     "final_public_documents_must": 0,
     "scope": "GROUP-CAPACITY-01 v1.1 only; implementer is not the independent product reviewer."
+  },
+  "delivery": {
+    "verified_code_delivery_commit": "31a7c2c528ac781de1f8daafdd925b4485f7857f",
+    "verification": [
+      "git_ls_remote",
+      "github_branch_api"
+    ],
+    "new_objects_audited": 43,
+    "new_commits_audited": 4,
+    "new_blobs_audited": 17,
+    "independent_must": 0,
+    "source_inputs_exact_to_full": 494,
+    "ci_at_verified_commit": {
+      "check_runs": 0,
+      "status_contexts": 0,
+      "actions": 0,
+      "aggregate_state": "pending",
+      "total_count": 0
+    },
+    "note": "This receipt is a documentation-only increment; final leaf is determined by Git refs. No CI pass is claimed."
   }
 }

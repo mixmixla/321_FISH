@@ -1,7 +1,7 @@
 {
   "task": "HISTORY-UID-ISOLATION-01 v1",
   "base": "293cc526ea2c49a4c5ca4520a09ca73aa5733a01",
-  "status": "INDEPENDENT_REVIEW_MUST_FIXES_NOT_ACCEPTED",
+  "status": "IMPLEMENTED_INDEPENDENT_CODE_AND_SELECTED_EVIDENCE_REVIEW_0_MUST_PENDING_FINAL_FULL",
   "requested_service": "Sol + FAST; runtime receipt not exposed",
   "namespace": "validated durable store_scope_id plus confirmed positive UID",
   "old_data_policy": "Preserve original nickname/top-level history and legacy chat prefs; no automatic ownership or migration.",
@@ -229,12 +229,117 @@
     "failure": "r37 two assertions read UID after explicit stop now revokes identity; r36 old volatile fixture expects retained E2EE engine across new volatile WELCOME. Preserve all failed originals and original behavior assertions using captured UID / real durable same-identity fixture; independent assessment pending.",
     "independent_classification": "flagship_scout agrees captured pre-stop UID and this single durable same-identity fixture preserve original behavior assertions; volatile no-key/new-Hub contrast retained."
   },
-  "independent_code_review_pending_must": [
-    "queued local-content event generation",
-    "captured WELCOME connection recheck at commit",
-    "sticker and cover generation fence",
-    "malformed existing UID prefs fail closed",
-    "failed temporary bundle still revokes old identity",
-    "atomic expected generation check at outbound worker send commit"
-  ]
+  "affected_accessor_first_failure": {
+    "run_id": "hui23-green-06",
+    "files": 5,
+    "totals": {
+      "passed": 74,
+      "failed": 1
+    },
+    "exit_code": 1,
+    "seconds": 30.524,
+    "source_content_id": "90d30396c67f22e11e5887814405e9a545419b8d48877d842160ae2df09415a4",
+    "summary_sha256": "fba7a0fe5080ab08bb7361ee41175ca2918a5fbe291d04c38c8b6336ca81b580",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "actual_exec_session": 16977,
+    "actual_shell_exit": 1,
+    "scope": "74P1F: new Tk test used nonexistent MsgList.rows accessor; Core/history/r36/r37 passed at this stage. Original retained, only test corrected to _rows."
+  },
+  "accessor_fix_ui_stage": {
+    "run_id": "hui23-green-07",
+    "files": 1,
+    "totals": {
+      "passed": 9
+    },
+    "exit_code": 0,
+    "seconds": 3.71,
+    "source_content_id": "fd6e2574168d5ff787285d73c33ed9f920b46639d990cd5b7b8a6ff760aac233",
+    "summary_sha256": "fc3f17b0126b27860d19a92461dab31b0a5f8c5ff521289565fce70cdb96b570",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "actual_exec_session": 10441,
+    "actual_shell_exit": 0,
+    "scope": "9P UI-only correction; not acceptance because independent WELCOME late-side-effect race still pending."
+  },
+  "independent_code_review": {
+    "reviewer": "flagship_scout",
+    "source_inputs": 501,
+    "source_content_id": "656bf297d28eb1f9eecd827e7bb96cb771730f1c7a2a741ea80533a3486c24a6",
+    "must": 0,
+    "scope": "Frozen product diff and deterministic regression design only; actual affected/full and final acceptance pending. Prior MUST findings fixed: captured dispatch/target and whole WELCOME transaction, out-of-lock queue/callback with origin, bounded main-thread retirement status coalescing, old captured socket preclose, explicit cloud/Tk origin and compatible legacy hooks, stale rotation events, fail-closed prefs and cache leaf checks.",
+    "not_runtime_acceptance": true,
+    "final_source_content_id": "4ed7d41cd0f86dd367f021d0192e3df45bd66fed6c3a545cca1e03415f84ab7e"
+  },
+  "affected_first_failure": {
+    "run_id": "hui23-affected-final-01",
+    "files": 6,
+    "totals": {
+      "passed": 103,
+      "failed": 1
+    },
+    "exit_code": 1,
+    "seconds": 41.168,
+    "source_content_id": "656bf297d28eb1f9eecd827e7bb96cb771730f1c7a2a741ea80533a3486c24a6",
+    "summary_sha256": "f08e76077d8e3048935c51abe105b021d61c98ba2249875bd56fe47aee363722",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "actual_exec_session": 41868,
+    "actual_shell_exit": 1,
+    "failure": "New cloud/Tk fixture intercepted unrelated STICKER_SHOP as CLOUD_GET, KeyError before target assertion. Independently verified test-only correction limits mock to CLOUD_GET; all other 500 source inputs unchanged. Original failure retained."
+  },
+  "ui_fixture_final": {
+    "run_id": "hui23-ui-fixture-final-01",
+    "files": 1,
+    "totals": {
+      "passed": 11
+    },
+    "exit_code": 0,
+    "seconds": 4.75,
+    "source_content_id": "4ed7d41cd0f86dd367f021d0192e3df45bd66fed6c3a545cca1e03415f84ab7e",
+    "summary_sha256": "c75a8d348d338230e2e7481b6a0c7caf74f3f3b61f5efc6dbd4db34043bc9287",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "actual_exec_session": 7132,
+    "actual_shell_exit": 0,
+    "scope": "Test-only CLOUD_GET mock correction, original cloud-origin assertion retained. Other 500 inputs equal affected run."
+  },
+  "independent_selected_evidence_review": {
+    "reviewer": "flagship_scout",
+    "must": 0,
+    "source_content_id": "4ed7d41cd0f86dd367f021d0192e3df45bd66fed6c3a545cca1e03415f84ab7e",
+    "scope": "Affected first failure retained and classified independently; five unchanged passing files and corrected UI 11P bound by exact 501-input comparison. No final-full acceptance."
+  }
 }

@@ -23,3 +23,13 @@ hui23-green-04/exec59224 actual exit0，42P，source010d8ce3a683690913286fea65d7
 ## 独立代码审查整改与第二域首次失败
 
 B正式审见5 MUST：旧排队正文缺代标记、WELCOME丢捕获连接及提交前复核、贴纸/封面写缺代锁、已有UID偏好坏结构不能空态覆盖、temp准备失败仍需撤销旧UID/正文。已交A修复，未接受。domain02/exec45050实际exit1，12文件168P3F/source同green05；root八项原件后验通过，summary a27839ffb0cdc6f5351183530df8a27bec7f7402e5abf5988b3e0d9cce36bdd4。r37两旧断言读stop后uid(None)，r36旧volatile fixture期待engine留存；拟分别捕获stop前UID、同已确认身份durable fixture保原断言，仍须B独立确认。首次原件不删除或以其余十文件通过取代。修复后仅必要affected选测，最终稳定版本full仍未启动。
+
+阶段hui23-green-06/exec16977实际exit1，74P1F；唯一新Tk断言误用MsgList.rows（实际_rows），原异常保留；修正测试后hui23-green-07/exec10441单文件9P/exit0。root均核八项原件一致，各摘要见evidence。B复核指出WELCOME锁外后半段仍有目标切换竞态，尚非0 MUST；A先补完整副作用提交门、坏prefs窄保存守卫和定向门，稳定代码由B核后才再次必要affected，不以07单项绿作为接受。
+
+## 稳定候选独立代码审查
+
+B对501输入/source656bf297d28eb1f9eecd827e7bb96cb771730f1c7a2a741ea80533a3486c24a6正式静态代码及回归设计0 MUST。前报旧帧/完整WELCOME、队列背压及发送阻塞、cloud与旧worker origin、坏prefs及durable媒体leaf保护均有最小修复与确定性门；主线程退休快照满队列合并最多额外1项，关键chat原背压保持。真实Store重启第二Core以localhost连接，首端127.0.0.1；未自动认领旧数据。此仅代码层通过，未跑的新门不能算验收。已授权A一次必要affected（新两文件+Core/r36/r37/r39b），原工程短目录hui23-affected-final-01，当前待实际启动回执；root唯一最终full仍未启动。
+
+唯一hui23-affected-final-01/exec41868自然actual exit1，6文件103P1F/41.168s，source同冻结656bf297…；前五Core34P/history37P/r36 8P/r37 7P/r39b 7P，新UID prefs/Tk 10P1F。原栈为云回调fixture把第二WELCOME正常STICKER_SHOP也拦为CLOUD_GET，访问已清get而KeyError，未走目标隔离断言。root八项原件核对、B独立确认；summary f08e76077d8e3048935c51abe105b021d61c98ba2249875bd56fe47aee363722。仅新UI test收窄模拟按CLOUD_GET处理，501输入其他500逐SHA不变，原隔离断言保留。单文件hui23-ui-fixture-final-01/exec7132已实际启动待退出；其余五绿不重放。最终full仍未启动。
+
+单文件hui23-ui-fixture-final-01/exec7132自然actual exit0，11P/4.75s，source501/4ed7d41cd0f86dd367f021d0192e3df45bd66fed6c3a545cca1e03415f84ab7e，summary c75a8d348d338230e2e7481b6a0c7caf74f3f3b61f5efc6dbd4db34043bc9287。root八项后验通过；B逐原件、501输入及唯一新test差异复核0 MUST，并给最终代码/选测技术0 MUST。前五通过文件/全部产品字节未变，不重放；首affected103P1F依旧是失败，不称六文件全绿。A获仅12路径本地提交授权，root接入后新组合字节仍须唯一full和独立最终原件审查。

@@ -9217,20 +9217,32 @@ class Hub:
 
     def _on_group_leave(self, sess: Session, header: dict) -> None:
         gid = header.get("gid")
-        g = self.groups.get(gid)
-        if not g or sess.uid not in g["members"]:
-            self._error(sess, "group", "不在该群")
-            return
         dissolved = False
         with self.lock:
-            if self.groups.get(gid) is not g:
-                return
-            del g["members"][sess.uid]
-            if not g["members"]:
-                del self.groups[gid]
-                dissolved = True
-            elif g["owner"] == sess.uid:
-                g["owner"] = next(iter(g["members"]))
+            g = self.groups.get(gid)
+            if g is None or sess.uid not in g["members"]:
+                rejected = True
+            else:
+                rejected = False
+                del g["members"][sess.uid]
+                if not g["members"]:
+                    del self.groups[gid]
+                    dissolved = True
+                elif g["owner"] == sess.uid:
+                    g["owner"] = next(iter(g["members"]))
+                self._group_state_revision += 1
+                removal = {"t": "error", "code": "group_removed", "gid": gid,
+                           "group_revision": self._group_state_revision,
+                           "text": f"你已退出群「{g['name']}」"}
+                removed_sessions = list(self._uid_clients.get(sess.uid, ()))
+        if rejected:
+            self._error(sess, "group", "不在该群")
+            return
+        for st in removed_sessions:
+            try:
+                st.send(removal)
+            except Exception:
+                pass
         if dissolved:
             self._broadcast_system(f"群「{g['name']}」已解散")
             with self.lock:                                  # R72：群解散连同语音房名册

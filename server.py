@@ -9256,6 +9256,7 @@ class Hub:
             else:
                 rejected = False
                 del g["members"][sess.uid]
+                g["admins"].discard(sess.uid)
                 if not g["members"]:
                     del self.groups[gid]
                     dissolved = True

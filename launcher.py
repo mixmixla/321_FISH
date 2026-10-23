@@ -72,10 +72,8 @@ def _last_server(prefs: Prefs, host: str, port) -> tuple:
 
 def _prepare_profile(prefs: Prefs, nick: str) -> bool:
     try:
-        prefs.check_profile_switch(nick)
-        prefs.remember_account(nick)
-        prefs.switch_profile(nick)
-    except StarsPreservationError as exc:
+        prefs.remember_login_nick(nick)
+    except (StarsPreservationError, OSError, ValueError) as exc:
         messagebox.showerror("本地收藏已保护", str(exc))
         return False
     return True

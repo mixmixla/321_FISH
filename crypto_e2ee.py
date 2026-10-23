@@ -27,6 +27,7 @@
 import hashlib
 import json
 import os
+import stat
 import struct
 import threading
 import time
@@ -130,8 +131,9 @@ class E2EEError(Exception):
 class E2EEEngine:
     """端到端加密引擎：身份密钥对 + 1v1 链式会话 + 群 sender key 链表。"""
 
-    def __init__(self, data_dir: str) -> None:
+    def __init__(self, data_dir: str, *, strict_storage: bool = False) -> None:
         self._dir = data_dir
+        self._strict_storage = strict_storage
         os.makedirs(data_dir, exist_ok=True)
         self._lock = threading.RLock()
         self._identity = self._load_or_create_identity()
@@ -148,6 +150,11 @@ class E2EEEngine:
     # ---------- 身份密钥 ----------
     def _load_or_create_identity(self) -> x25519.X25519PrivateKey:
         path = os.path.join(self._dir, "e2ee_identity.json")
+        if self._strict_storage and os.path.lexists(path):
+            info = os.lstat(path)
+            if (not stat.S_ISREG(info.st_mode)
+                    or getattr(info, "st_file_attributes", 0) & 0x400):
+                raise E2EEError("local identity is not a plain file")
         if os.path.isfile(path):
             try:
                 with open(path, "r", encoding="utf-8") as f:
@@ -156,8 +163,18 @@ class E2EEEngine:
                 if len(raw) == KEY_LEN:
                     return x25519.X25519PrivateKey.from_private_bytes(raw)
             except (OSError, ValueError, TypeError):
-                pass
+                if self._strict_storage:
+                    raise E2EEError("local identity could not be read")
+            if self._strict_storage:
+                raise E2EEError("local identity is invalid")
         priv = x25519.X25519PrivateKey.generate()
+        if self._strict_storage:
+            # Exclusive creation never overwrites an existing account key.
+            with open(path, "x", encoding="utf-8") as f:
+                json.dump({"priv": priv.private_bytes_raw().hex()}, f)
+                f.flush()
+                os.fsync(f.fileno())
+            return priv
         try:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump({"priv": priv.private_bytes_raw().hex()}, f)

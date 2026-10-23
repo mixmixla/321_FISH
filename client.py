@@ -342,6 +342,8 @@ class ChatWindow:
         self._sticker_on = False
         # C5/C6：未读计数 + 本地偏好（置顶）+ 搜索过滤
         self._prefs = Prefs(prefs_path)
+        self._prefs.enable_uid_chat_view()
+        self._seen_local_generation = getattr(core, "_local_generation", 0)
         self._unread: dict = {}            # (ch, to) -> 未读数
         self._preview: dict = {}           # (ch, to) -> (末条摘要, ts)（T4 会话预览）
         self._list_dirty = False           # 名单/群需按未读/置顶重绘
@@ -460,8 +462,7 @@ class ChatWindow:
         self._conv_state_ts: dict = {}     # pin_key -> 最近一次本地状态变更 ts
         self.core.set_conv_state_hooks(
             self._collect_conv_states,
-            lambda states: self.root.after(
-                0, lambda: self._apply_conv_states(states)))
+            self._queue_conv_states, generation_aware=True)
         # C4/C3：待发引用快照 + 待编辑的自家消息 seq
         self._pending_reply = None         # {nick,text,seq}
         self._pending_edit_seq = None      # int|None
@@ -1112,13 +1113,64 @@ class ChatWindow:
         self._rec_ticks = 0
 
     # ---------- 事件轮询（主线程） ----------
+    def _sync_local_identity(self) -> None:
+        generation = getattr(self.core, "_local_generation", None)
+        if generation is None or generation == self._seen_local_generation:
+            return
+        self._seen_local_generation = generation
+        try:
+            self._prefs.bind_uid_chat_view(getattr(self.core, "local_identity", None))
+        except (OSError, ValueError) as exc:
+            self.show_toast(f"本地账户偏好不可用：{type(exc).__name__}", warn=True)
+        self._drafts = dict(self._prefs.get("drafts", {}) or {})
+        self._stars = dict(self._prefs.get("stars", {}) or {})
+        self._draft_ts.clear()
+        self._remote_ts.clear()
+        self._draft_dirty = False
+        self._last_read.clear()
+        self._unread.clear()
+        self._preview.clear()
+        self._send_hist.clear()
+        self._hist_draft.clear()
+        self._hist_pos.clear()
+        self._pending_reply = None
+        self._pending_edit_seq = None
+        self._pending_rows.clear()
+        self._conv_state_ts.clear()
+        self._ghost_cancel_ttl()
+        self._ghost_cancel_fade()
+        self.view = ("public", None)
+        search = getattr(self, "_global_search_box", None)
+        if search is not None:
+            try:
+                search.destroy()
+            except tk.TclError:
+                pass
+            self._global_search_box = None
+        self.msg_list.load([], me_uid=getattr(self.core, "uid", None))
+        self.entry.delete("1.0", "end")
+        self._list_dirty = True
+
+    def _queue_conv_states(self, states: dict, generation=None) -> None:
+        if generation is None:
+            generation = self.core._local_generation
+        if generation != self.core._local_generation or self._closed:
+            return
+        self.root.after(0, lambda: self._apply_conv_states(states)
+                        if generation == self.core._local_generation
+                        and not self._closed else None)
+
     def _poll(self) -> None:
         if self._closed:
             return
         try:
+            if hasattr(self, "_sync_local_identity"):
+                self._sync_local_identity()
             try:
                 while True:
                     ev = self.core.events.get_nowait()
+                    if hasattr(self, "_sync_local_identity"):
+                        self._sync_local_identity()
                     self._handle(ev)
                     if self._closed:
                         return
@@ -1171,6 +1223,10 @@ class ChatWindow:
                 self.root.after(120, self._poll)
 
     def _handle(self, ev: dict) -> None:
+        local_generation = ev.get("_local_generation")
+        if (local_generation is not None
+                and local_generation != getattr(self.core, "_local_generation", local_generation)):
+            return
         epoch = ev.get("_connection_epoch")
         if epoch is not None and epoch != getattr(self.core, "connection_epoch", 0):
             return  # Queued authentication/state replies from an old connection.
@@ -1359,6 +1415,7 @@ class ChatWindow:
                 self._call_win = None
 
     def _on_welcome(self, ev: dict) -> None:
+        self._sync_local_identity()
         self.status_text.config(text=f"已连接 · {self.core.nick}")
         self.msg_list.set_me_uid(self.core.uid)
         self._refresh_roster()
@@ -5135,6 +5192,8 @@ class ChatWindow:
                 gs.entry.selection_range(0, "end")
             except tk.TclError:
                 pass
+            return "break"
+        if not getattr(self.core, "_local_authenticated", False):
             return "break"
         box = GlobalSearchBox(
             self.root, self.core._history._dir if hasattr(self.core, "_history") else "",

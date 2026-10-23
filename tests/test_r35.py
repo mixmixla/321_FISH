@@ -253,18 +253,19 @@ def test_prefs_switch_saves_dirty_state(tmp_path):
 
 # ================= client_core：多档案目录 / 商店帧 =================
 
-def test_nick_history_dir_migration(tmp_path, monkeypatch):
+def test_legacy_nick_history_remains_unclaimed(tmp_path, monkeypatch):
     base = tmp_path / "history"
     base.mkdir()
-    (base / "public.jsonl").write_text('{"seq":1}\n', encoding="utf-8")
-    (base / "voice").mkdir()
+    original = b'{"seq":1,"text":"legacy"}\n'
+    (base / "public.jsonl").write_bytes(original)
     monkeypatch.setattr("client_core._default_history_dir", lambda: str(base))
-    d = _nick_history_dir("小明")
-    assert os.path.basename(d) == _nick_safe("小明")
-    assert (base / _nick_safe("小明") / "public.jsonl").exists()   # 旧文件已迁入
-    assert not (base / "public.jsonl").exists()
-    # 二次调用同账号：目录已存在，不再迁移
-    assert _nick_history_dir("小明") == d
+    core = ClientCore(nick="legacy")
+    try:
+        assert core.history_tail("public") == []
+        assert (base / "public.jsonl").read_bytes() == original
+        assert not (base / "legacy").exists()
+    finally:
+        core.stop()
 
 
 def test_core_sticker_shop_frames(tmp_path):
@@ -305,21 +306,17 @@ def test_core_send_sticker_shop_and_sub(tmp_path):
                          "on": True}
 
 
-def test_core_nick_history_scoping(tmp_path):
-    """显式 history_dir 优先；不指定时按昵称子目录隔离"""
-    import client_core as cc
-    d = tmp_path / "d"
-    core = ClientCore(nick="测试", history_dir=str(d))
-    assert core._history._dir == os.path.abspath(str(d))
-    monkey_base = tmp_path / "base"
-    monkey_base.mkdir()
-    orig = cc._default_history_dir
-    cc._default_history_dir = lambda: str(monkey_base)
+def test_core_history_root_is_bound_only_after_welcome(tmp_path):
+    root = tmp_path / "history"
+    core = ClientCore(nick="same", history_dir=str(root))
     try:
-        core2 = ClientCore(nick="阿明")
-        assert os.path.basename(core2._history._dir) == _nick_safe("阿明")
+        assert not root.exists()
+        assert core.history_tail("public") == []
+        core._dispatch({"t": "welcome", "uid": 7,
+                        "auth": {"store_mode": "durable", "store_scope_id": "a" * 32}})
+        assert core._history._dir == os.path.abspath(str(root / "v2" / ("a" * 32) / "uid-7"))
     finally:
-        cc._default_history_dir = orig
+        core.stop()
 
 
 # ================= UI：商店窗口 =================

@@ -22,6 +22,7 @@ import pytest
 
 from config import CFG
 from server import Hub, serve as serve_tcp
+from server_recovery import StoreCoordinator
 from web import serve as serve_web
 from client_core import ClientCore
 import crypto_e2ee
@@ -50,6 +51,30 @@ def hub(tmp_path):
     yield h, port, wport, stop
     stop.set()
     time.sleep(0.2)
+
+
+@pytest.fixture()
+def durable_hub(tmp_path):
+    """The reconnect-key case requires a verified persistent account bundle."""
+    store = tmp_path / "store"
+    StoreCoordinator.initialize_new(store)
+    cfg = replace(CFG, audit_dir=str(tmp_path / "audit"),
+                  web_files_dir=str(tmp_path / "web"),
+                  bind_host="127.0.0.1", discovery_enabled=False,
+                  tray_enabled=False)
+    h = Hub(cfg=cfg, store_dir=str(store))
+    port = _free_port()
+    stop = threading.Event()
+    thread = threading.Thread(target=serve_tcp, args=(h, port, stop, False), daemon=True)
+    thread.start()
+    deadline = time.monotonic() + 5
+    while not h._service_started:
+        assert time.monotonic() < deadline
+        time.sleep(0.01)
+    yield h, port, 0, stop
+    stop.set()
+    thread.join(10)
+    assert not thread.is_alive()
 
 
 class Collector:
@@ -270,9 +295,9 @@ def test_group_e2ee_open_rekey_and_reconnect(hub, tmp_path):
         c.stop()
 
 
-def test_e2ee_sk_req_after_reconnect(hub, tmp_path):
+def test_e2ee_sk_req_after_reconnect(durable_hub, tmp_path):
     """b 断线重连后（客户端不重启，1v1 会话仍在内存）welcome SK_REQ → a 补发。"""
-    h, port, _wp, _stop = hub
+    h, port, _wp, _stop = durable_hub
     a, ca = _spawn(port, "补发主", tmp_path)
     b, cb = _spawn(port, "补发员", tmp_path)
     assert a.create_group("补发群", public=True)   # R54：公开群才可被直接加入

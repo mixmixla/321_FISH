@@ -8,6 +8,7 @@
 import json
 from copy import deepcopy
 import os
+import tempfile
 import sys
 import threading
 import time
@@ -37,9 +38,97 @@ class Prefs:
         self._path = path or _prefs_path()
         self._lock = threading.Lock()
         self._preserved_stars = {}
+        self._load_error = None
         self._data = {"pinned": [], "muted": [], "archived": [], "dnd": False,
                       "interaction_mode": "tg", "stars": [], "unread_marks": []}
         self._load()
+        self._uid_chat_guard = False
+        self._uid_chat_identity = None
+        self._uid_chat_state = None
+
+    @staticmethod
+    def _empty_uid_chat_state():
+        return {"pinned": [], "muted": [], "archived": [], "drafts": {},
+                "stars": {}, "unread_marks": []}
+
+    def enable_uid_chat_view(self) -> None:
+        """Keep legacy nickname fields opaque until an account is verified."""
+        with self._lock:
+            self._uid_chat_guard = True
+            self._uid_chat_identity = None
+            self._uid_chat_state = self._empty_uid_chat_state()
+
+    def bind_uid_chat_view(self, identity) -> None:
+        """Bind six conversation fields to one durable store/UID or session memory."""
+        with self._lock:
+            self._uid_chat_identity = identity
+            state = self._empty_uid_chat_state()
+            if identity is not None:
+                if self._load_error is not None:
+                    self._uid_chat_identity = None
+                    self._uid_chat_state = state
+                    raise OSError("account preferences unavailable; original file preserved") from self._load_error
+                scope, uid = identity
+                profiles = self._data.get("uid_profiles", {})
+                if not isinstance(profiles, dict):
+                    self._uid_chat_identity = None
+                    self._uid_chat_state = state
+                    raise ValueError("account preferences schema is invalid")
+                stored = profiles.get(f"{scope}:uid-{uid}")
+                if stored is not None and not isinstance(stored, dict):
+                    self._uid_chat_identity = None
+                    self._uid_chat_state = state
+                    raise ValueError("account preferences entry is invalid")
+                if isinstance(stored, dict):
+                    for key in _PROFILE_KEYS:
+                        if key not in stored:
+                            continue
+                        value = stored.get(key)
+                        if key in ("drafts", "stars"):
+                            valid = isinstance(value, dict)
+                        else:
+                            valid = isinstance(value, list)
+                        if not valid:
+                            self._uid_chat_identity = None
+                            self._uid_chat_state = self._empty_uid_chat_state()
+                            raise ValueError(f"account preferences {key} is invalid")
+                        state[key] = deepcopy(value)
+            self._uid_chat_state = state
+
+    def _chat_data(self):
+        return self._uid_chat_state if self._uid_chat_guard else self._data
+
+    def _save_chat(self):
+        if not self._uid_chat_guard:
+            self._save()
+        elif self._uid_chat_identity is not None:
+            if self._load_error is not None:
+                raise OSError("account preferences unavailable; original file preserved") from self._load_error
+            scope, uid = self._uid_chat_identity
+            profiles = self._data.get("uid_profiles", {})
+            if not isinstance(profiles, dict):
+                raise ValueError("account preferences schema is invalid")
+            data = deepcopy(self._data)
+            data.setdefault("uid_profiles", {})[f"{scope}:uid-{uid}"] = deepcopy(self._uid_chat_state)
+            self._check_preserved_profiles(data.get("profiles"))
+            if "top" in self._preserved_stars:
+                data["stars"] = deepcopy(self._preserved_stars["top"])
+            self._write_atomic(data)
+            self._data = data
+
+    def _write_atomic(self, data):
+        """Account-related updates preserve the old prefs file on failure."""
+        temporary = None
+        try:
+            fd, temporary = tempfile.mkstemp(prefix=".prefs-uid-", dir=os.path.dirname(self._path) or ".")
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=1)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temporary, self._path)
+        finally:
+            if temporary is not None and os.path.exists(temporary):
+                os.unlink(temporary)
 
     def _load(self) -> None:
         try:
@@ -67,10 +156,14 @@ class Prefs:
                 for k, v in d.items():
                     if k not in known and k != "dnd":
                         self._data[k] = v
-        except (FileNotFoundError, ValueError, OSError):
+        except FileNotFoundError:
             pass
+        except (ValueError, OSError) as exc:
+            self._load_error = exc
 
     def _save(self) -> None:
+        if self._load_error is not None:
+            raise OSError("preferences unavailable; original file preserved") from self._load_error
         self._check_preserved_profiles(self._data.get("profiles"))
         data = self._data
         if "top" in self._preserved_stars:
@@ -95,6 +188,13 @@ class Prefs:
                 raise StarsPreservationError("本地收藏格式或归属尚未确认，原值已保留；本次操作未保存。")
 
     def _check_stars_write(self, target_type) -> None:
+        if self._uid_chat_guard:
+            current = self._uid_chat_state["stars"]
+            if target_type not in (list, dict) or not isinstance(current, (list, dict)):
+                raise StarsPreservationError("invalid account favorites format")
+            if current and not isinstance(current, target_type):
+                raise StarsPreservationError("account favorites format conflict")
+            return
         if "top" in self._preserved_stars:
             raise StarsPreservationError("本地收藏格式或归属尚未确认，原值已保留；本次操作未保存。")
         current = self._data["stars"]
@@ -107,7 +207,7 @@ class Prefs:
         """Preflight a UI operation without changing either its state or stored data."""
         with self._lock:
             self._check_stars_write(dict if message_favorites else list)
-            if not message_favorites and not isinstance(self._data["stars"], list):
+            if not message_favorites and not isinstance(self._chat_data()["stars"], list):
                 raise StarsPreservationError("会话星标与消息收藏格式冲突，原值已保留；本次操作未保存。")
 
     def _check_profile_switch(self, nick: str) -> None:
@@ -131,43 +231,43 @@ class Prefs:
 
     def is_pinned(self, key: str) -> bool:
         with self._lock:
-            return key in self._data["pinned"]
+            return key in self._chat_data()["pinned"]
 
     def is_muted(self, key: str) -> bool:
         with self._lock:
-            return key in self._data["muted"]
+            return key in self._chat_data()["muted"]
 
     def muted(self) -> list:
         with self._lock:
-            return list(self._data["muted"])
+            return list(self._chat_data()["muted"])
 
     def toggle_pin(self, key: str) -> bool:
         with self._lock:
-            lst = self._data["pinned"]
+            lst = self._chat_data()["pinned"]
             if key in lst:
                 lst.remove(key)
                 val = False
             else:
                 lst.append(key)
                 val = True
-            self._save()
+            self._save_chat()
             return val
 
     def toggle_mute(self, key: str) -> bool:
         with self._lock:
-            lst = self._data["muted"]
+            lst = self._chat_data()["muted"]
             if key in lst:
                 lst.remove(key)
                 val = False
             else:
                 lst.append(key)
                 val = True
-            self._save()
+            self._save_chat()
             return val
 
     def is_archived(self, key: str) -> bool:
         with self._lock:
-            return key in self._data["archived"]
+            return key in self._chat_data()["archived"]
 
     def trusted_nick(self, nick: str) -> bool:
         """该昵称是否已「记住此身份」：登录时跳过身份确认弹窗。"""
@@ -186,83 +286,85 @@ class Prefs:
 
     def toggle_archive(self, key: str) -> bool:
         with self._lock:
-            lst = self._data["archived"]
+            lst = self._chat_data()["archived"]
             if key in lst:
                 lst.remove(key)
                 val = False
             else:
                 lst.append(key)
                 val = True
-            self._save()
+            self._save_chat()
             return val
 
     def archived(self) -> list:
         with self._lock:
-            return list(self._data["archived"])
+            return list(self._chat_data()["archived"])
 
     def pinned(self) -> list:
         with self._lock:
-            return list(self._data["pinned"])
+            return list(self._chat_data()["pinned"])
 
     # ---------- 星标会话（⭐，置顶之上的更强置顶；对标 TG starred） ----------
     def is_starred(self, key: str) -> bool:
         with self._lock:
-            return key in self._data["stars"]
+            return key in self._chat_data()["stars"]
 
     def toggle_star(self, key: str) -> bool:
         with self._lock:
             self._check_stars_write(list)
-            if not isinstance(self._data["stars"], list):
+            if not isinstance(self._chat_data()["stars"], list):
                 raise StarsPreservationError("会话星标与消息收藏格式冲突，原值已保留；本次操作未保存。")
-            lst = self._data["stars"]
+            lst = self._chat_data()["stars"]
             if key in lst:
                 lst.remove(key)
                 val = False
             else:
                 lst.append(key)
                 val = True
-            self._save()
+            self._save_chat()
             return val
 
     def starred(self) -> list:
         with self._lock:
-            return list(self._data["stars"])
+            return list(self._chat_data()["stars"])
 
     # ---------- R69C11 标为未读（本地标记，打开会话即清） ----------
     def is_unread_mark(self, key: str) -> bool:
         with self._lock:
-            return key in self._data["unread_marks"]
+            return key in self._chat_data()["unread_marks"]
 
     def unread_marks(self) -> list:
         with self._lock:
-            return list(self._data["unread_marks"])
+            return list(self._chat_data()["unread_marks"])
 
     def set_unread_mark(self, key: str, on: bool = True) -> bool:
         """设置/清除「标为未读」标记，返回设置后的状态。"""
         with self._lock:
-            lst = self._data["unread_marks"]
+            lst = self._chat_data()["unread_marks"]
             if on and key not in lst:
                 lst.append(key)
             elif not on and key in lst:
                 lst.remove(key)
-            self._save()
+            self._save_chat()
             return key in lst
 
     def toggle_unread_mark(self, key: str) -> bool:
         with self._lock:
-            lst = self._data["unread_marks"]
+            lst = self._chat_data()["unread_marks"]
             if key in lst:
                 lst.remove(key)
                 val = False
             else:
                 lst.append(key)
                 val = True
-            self._save()
+            self._save_chat()
             return val
 
     def get(self, key: str, default=None):
         """通用取值（如 dnd 免打扰开关）。"""
         with self._lock:
+            if self._uid_chat_guard and key in _PROFILE_KEYS:
+                return deepcopy(self._uid_chat_state.get(key, default))
             value = self._data.get(key, default)
             if ((key == "stars" and "top" in self._preserved_stars) or
                     (key == "profiles" and self._preserved_stars.get("profiles"))):
@@ -272,6 +374,14 @@ class Prefs:
     def set(self, key: str, value) -> None:
         """通用键值写入并持久化。"""
         with self._lock:
+            if self._uid_chat_guard and key in _PROFILE_KEYS:
+                if key == "stars":
+                    if not isinstance(value, dict):
+                        raise StarsPreservationError("account message favorites require an object")
+                    self._check_stars_write(dict)
+                self._uid_chat_state[key] = deepcopy(value)
+                self._save_chat()
+                return
             if key == "stars":
                 target_type = list if isinstance(value, list) else dict if isinstance(value, dict) else None
                 self._check_stars_write(target_type)
@@ -373,6 +483,7 @@ class Prefs:
         """已知账号列表（profiles 键 + 默认账号去重，按字母序）。"""
         with self._lock:
             accs = set(self._data.get("profiles") or {})
+            accs.update(self._data.get("login_nicks") or [])
             d = self._data.get("default_account")
             if d:
                 accs.add(str(d))
@@ -380,6 +491,24 @@ class Prefs:
 
     def active_account(self) -> str | None:
         return self.get("active_profile")
+
+    def remember_login_nick(self, nick: str) -> None:
+        """Remember a login choice without claiming legacy nickname chat fields."""
+        with self._lock:
+            if self._load_error is not None:
+                raise OSError("preferences unavailable; original file preserved") from self._load_error
+            data = deepcopy(self._data)
+            choices = data.setdefault("login_nicks", [])
+            if not isinstance(choices, list):
+                raise ValueError("login choices schema is invalid")
+            if nick not in choices:
+                choices.append(nick)
+            data["default_account"] = nick
+            self._check_preserved_profiles(data.get("profiles"))
+            if "top" in self._preserved_stars:
+                data["stars"] = deepcopy(self._preserved_stars["top"])
+            self._write_atomic(data)
+            self._data = data
 
     def remember_account(self, nick: str) -> None:
         """登记账号并设为默认。首个接入档案体系的账号认领现有顶层会话状态

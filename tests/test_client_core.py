@@ -273,27 +273,48 @@ def test_local_history_disk_persist(tmp_path):
     assert [m["text"] for m in lh2.load_disk("group:7")] == ["h3"]
 
 
-def test_client_restart_recovers_history(hub, tmp_path):
-    _, port, _ = hub
-    a, ac = _spawn(port, "alice", tmp_path)
-    a2 = None
+def test_client_restart_recovers_history(tmp_path):
+    """A confirmed durable UID reopens its history from the same root."""
+    store = tmp_path / "store"
+    StoreCoordinator.initialize_new(store)
+    cfg = replace(CFG, audit_dir=str(tmp_path / "audit"),
+                  web_files_dir=str(tmp_path / "web"),
+                  bind_host="127.0.0.1", discovery_enabled=False,
+                  tray_enabled=False)
+    hub = Hub(cfg=cfg, store_dir=str(store))
+    port = _free_port()
+    stop = threading.Event()
+    thread = threading.Thread(target=serve_tcp, args=(hub, port, stop, False), daemon=True)
+    thread.start()
+    deadline = time.monotonic() + 5
+    while not hub._service_started:
+        assert time.monotonic() < deadline, "durable listener did not start"
+        time.sleep(0.01)
+    a = a2 = None
     try:
+        a, ac = _spawn(port, "alice", tmp_path)
         assert _online(ac)
-        assert a.send_chat("持久化一条")
-        assert ac.wait("chat", pred=lambda e: e.get("text") == "持久化一条")
-        hist_dir = a._history._dir
+        assert a.local_identity is not None
+        uid = a.uid
+        bound_dir = a._history._dir
+        assert a.send_chat("durable-local-history")
+        assert ac.wait("chat", pred=lambda e: e.get("text") == "durable-local-history")
         a.stop()
-        # 同目录新实例（模拟重启）→ 磁盘历史恢复
-        a2 = _make_core(port, "alice", tmp_path, history_dir=hist_dir)
+        a2 = _make_core(port, "alice", tmp_path)
         col2 = Collector(a2)
         a2.start()
         assert _online(col2)
-        assert any(e.get("text") == "持久化一条"
-                   for e in a2.history("public"))
+        assert a2.uid == uid and a2._history._dir == bound_dir
+        assert any(e.get("text") == "durable-local-history"
+                   for e in a2.history_tail("public"))
     finally:
-        a.stop()
+        if a is not None:
+            a.stop()
         if a2 is not None:
             a2.stop()
+        stop.set()
+        thread.join(10)
+        assert not thread.is_alive()
 
 
 # ---------- 心跳 ----------

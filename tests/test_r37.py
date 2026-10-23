@@ -176,16 +176,17 @@ def test_cloud_upload_restore_flow(hub, tmp_path):
         assert "云备份暗号XYZ" not in audit_raw
 
         # 同昵称重登（同 uid）+ 全新历史目录 → 拉取解密恢复
+        account_uid = a.uid
         a.stop()
         time.sleep(0.3)
         b, cb = _spawn(port, "甲", tmp_path, sub="_newdev")
-        assert b.uid == a.uid, "同昵称重登应复用 uid"
+        assert b.uid == account_uid, "同昵称重登应复用 uid"
         assert b._history.load_disk("public") == []
         ok2, msg2 = b.cloud_restore("口令abc")
         assert ok2, msg2
         pub = b._history.load_disk("public")
         assert any(m.get("text") == "云备份暗号XYZ" for m in pub)
-        e2 = b._history.load_disk(f"e2ee:{min(a.uid, 2)}:{max(a.uid, 2)}")
+        e2 = b._history.load_disk(f"e2ee:{min(account_uid, 2)}:{max(account_uid, 2)}")
         assert any(m.get("text") == "密聊暗号QWE" for m in e2)
         # 再次恢复不重复（去重）
         ok3, msg3 = b.cloud_restore("口令abc")
@@ -228,6 +229,7 @@ def test_cloud_server_restart_keeps_blob(hub, tmp_path):
         ok, _ = a.cloud_upload("口令xyz")
         assert ok
         assert h.cloud.get(a.uid) is not None
+        account_uid = a.uid
     finally:
         a.stop()
     stop.set()
@@ -237,8 +239,8 @@ def test_cloud_server_restart_keeps_blob(hub, tmp_path):
     wdir = str(tmp_path / "web")
     cfg = replace(CFG, audit_dir=str(tmp_path / "audit"), web_files_dir=wdir)
     h2 = Hub(cfg=cfg, audit_dir=str(tmp_path / "audit"))
-    assert a.uid in h2.cloud, "重启后密文 blob 未从磁盘恢复"
-    blob = h2.cloud[a.uid]["blob"]
+    assert account_uid in h2.cloud, "重启后密文 blob 未从磁盘恢复"
+    blob = h2.cloud[account_uid]["blob"]
     assert "重启暗号".encode() not in blob           # 服务器仍是密文
     data = ch.unpack(blob, "口令xyz")
     assert data["channels"]["public"][0]["text"] == "重启暗号"

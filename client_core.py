@@ -18,10 +18,13 @@ import hashlib
 import os
 import queue
 import re
+import stat
 import socket
 import sys
+import tempfile
 import threading
 import time
+from contextlib import contextmanager
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 
@@ -36,6 +39,7 @@ from voice_call import CallManager        # R38 1v1 语音对讲
 from voice_room import VoiceRoom          # R72 多人语音房
 from protocol import MsgType, ProtocolError
 from retirement_status import RetirementBook, RetirementError, Scope
+from local_identity import durable_identity, scoped_directory, plain_cache_leaf
 
 _CACHE_KEEP_FILES = 300                   # 语音/贴纸磁盘缓存保留文件数上限（低危配额）
 
@@ -109,8 +113,10 @@ def _nick_history_dir(nick: str) -> str:
 class LocalHistory:
     """频道历史：内存环形（新会话）+ JSONL 落盘（重启恢复，本地长期保留）"""
 
-    def __init__(self, base_dir: str, max_in_mem: int = CFG.chat_history_max) -> None:
+    def __init__(self, base_dir: str, max_in_mem: int = CFG.chat_history_max,
+                 *, strict_storage: bool = False) -> None:
         self._dir = os.path.abspath(base_dir)
+        self._strict_storage = strict_storage
         self._max = max_in_mem
         self._lock = threading.RLock()
         self._mem = defaultdict(lambda: deque(maxlen=max_in_mem))
@@ -118,10 +124,28 @@ class LocalHistory:
         self._writes = 0
         self._index: dict = {}            # R39C: key -> [行起始字节偏移,...]（懒加载行号索引）
         os.makedirs(self._dir, exist_ok=True)
+        if strict_storage:
+            # Validate existing account files before accepting WELCOME.
+            with os.scandir(self._dir) as entries:
+                for entry in entries:
+                    if not entry.name.endswith(".jsonl"):
+                        continue
+                    info = os.lstat(entry.path)
+                    if (not stat.S_ISREG(info.st_mode)
+                            or getattr(info, "st_file_attributes", 0) & 0x400):
+                        raise OSError("local history file is not a plain file")
+                    with open(entry.path, "rb") as f:
+                        f.read(1)
 
     def _path(self, key: str) -> str:
         safe = key.replace(":", "_").replace("/", "_").replace("\\", "_")
-        return os.path.join(self._dir, safe + ".jsonl")
+        path = os.path.join(self._dir, safe + ".jsonl")
+        if self._strict_storage and os.path.lexists(path):
+            info = os.lstat(path)
+            if (not stat.S_ISREG(info.st_mode)
+                    or getattr(info, "st_file_attributes", 0) & 0x400):
+                raise OSError("local history file is not a plain file")
+        return path
 
     def add(self, key: str, msg: dict) -> None:
         with self._lock:
@@ -653,39 +677,36 @@ class ClientCore:
         self.fish_board: dict = {}           # R70H game -> [{uid,nick,score}]（排行榜缓存）
 
         self.events: queue.Queue = queue.Queue(maxsize=16384)
+        self._lifecycle_overflow = {}
         self._on_event = on_event
         self._hb_interval = heartbeat_interval if heartbeat_interval is not None else CFG.heartbeat_interval
         self._hb_timeout = heartbeat_timeout if heartbeat_timeout is not None else CFG.heartbeat_timeout
         self._rb_base = reconnect_base if reconnect_base is not None else CFG.reconnect_base
         self._rb_max = reconnect_max if reconnect_max is not None else CFG.reconnect_max
         # R35 多档案：未显式指定目录时按昵称分子目录（历史/语音/贴纸缓存随账号隔离）
-        if history_dir:
-            self._history = LocalHistory(history_dir)
-        else:
-            self._history = LocalHistory(_nick_history_dir(nick) if nick
-                                         else _default_history_dir())
+        self._history_root = history_dir
+        self._local_identity = None
+        self._local_authenticated = False
+        self._local_disabled = False
+        self._local_generation = 0
+        # Serialize an accepted WELCOME's complete account state transition
+        # with target changes and local identity revocation.
+        self._identity_transition_lock = threading.RLock()
+        self._transition_events = threading.local()
+        self._local_lock = threading.RLock()
+        self._send_lock = threading.RLock()
+        self._local_bundle = None
+        self._install_local_bundle(self._make_local_bundle())
         # R19 语音：接收到的 WAV 落到 history 旁 voice/ 子目录，附在事件 voice_path 上
-        self._voice_dir = os.path.join(self._history._dir, "voice")
-        os.makedirs(self._voice_dir, exist_ok=True)
         # R72 视频留言：VMA1 容器落盘缓存（与 voice/ 同款配额淘汰）
-        self._vmemo_dir = os.path.join(self._history._dir, "vmemo")
-        os.makedirs(self._vmemo_dir, exist_ok=True)
         # R30C 自定义贴纸：清单（code -> {code,label,ext}）+ 本地图片缓存 stickers_custom/
         self.custom_stickers: dict = {}
-        self._sticker_dir = os.path.join(self._history._dir, "stickers_custom")
-        os.makedirs(self._sticker_dir, exist_ok=True)
         # R64 贴纸包深化：包封面元数据 pack->{cover:ext} + 封面本地缓存
         self.sticker_pack_meta: dict = {}
-        self._pack_cover_dir = os.path.join(self._sticker_dir, "_covers")
-        try:
-            os.makedirs(self._pack_cover_dir, exist_ok=True)
-        except OSError:
-            pass
         # 低危治理：语音/贴纸磁盘缓存设上限，按 mtime 保留最近一批（防长会话无限占盘）
         self._prune_cache_dir(self._voice_dir, _CACHE_KEEP_FILES)
         self._prune_cache_dir(self._sticker_dir, _CACHE_KEEP_FILES)
         # R36 E2EE：引擎（身份密钥对落 history 旁，随多账号隔离）+ 握手/群密聊状态
-        self.e2ee = E2EEEngine(self._history._dir)
         self._e2ee_pending: dict = {}       # nonce -> {"to": uid, "ev": Event, "rs": str}（发起端等待）
         self._e2ee_rot_wait: dict = {}      # peer_uid -> Event（R42 轮转发起方等 rt2）
         self._e2ee_groups: set = set()      # 已开启群密聊的 gid（客户端会话态）
@@ -702,11 +723,11 @@ class ClientCore:
         self.voice_room = VoiceRoom(self)    # R72 多人语音房（mesh 音频，与 calls 互斥）
 
         self._joined_groups: set = set()    # 断线重连后自动重入
+        self._volatile_rejoin_fence = None
         self._group_revisions: dict = {}    # Current server connection's ordered group frames.
         self._group_generations: dict = {}  # Local worker fences; never reset on reconnect.
         self._removed_groups: set = set()
         self._seen_seqs: set = set()        # 服务器全局 seq 去重
-        self._send_lock = threading.RLock()  # RLock：群 re-key「切链+分发」同锁原子（R44）
         self._lock = threading.RLock()
         self._stop = threading.Event()
         self._conn_alive = threading.Event()
@@ -724,6 +745,132 @@ class ClientCore:
         self.retirement = RetirementBook()
 
     # ---------- 生命周期 ----------
+    def _make_local_bundle(self, path=None, identity=None):
+        owned = tempfile.TemporaryDirectory(prefix="fish-local-") if path is None else None
+        directory = path or owned.name
+        history = None
+        try:
+            history = LocalHistory(directory, strict_storage=identity is not None)
+            voice = os.path.join(directory, "voice")
+            vmemo = os.path.join(directory, "vmemo")
+            sticker = os.path.join(directory, "stickers_custom")
+            cover = os.path.join(sticker, "_covers")
+            for item in (voice, vmemo, sticker, cover):
+                if identity is not None and os.path.lexists(item):
+                    info = os.lstat(item)
+                    if (not stat.S_ISDIR(info.st_mode)
+                            or getattr(info, "st_file_attributes", 0) & 0x400):
+                        raise OSError("local media path is not a plain directory")
+                os.makedirs(item, exist_ok=True)
+            e2ee = E2EEEngine(directory, strict_storage=identity is not None)
+            return {"history": history, "e2ee": e2ee, "voice": voice,
+                    "vmemo": vmemo, "sticker": sticker, "cover": cover,
+                    "owned": owned, "identity": identity}
+        except BaseException:
+            if history is not None:
+                history.close()
+            if owned is not None:
+                owned.cleanup()
+            raise
+
+    def _install_local_bundle(self, bundle):
+        with self._send_lock:
+            with self._local_lock:
+                old = self._local_bundle
+                self._local_bundle = bundle
+                self._local_generation += 1
+                self._local_identity = bundle["identity"]
+                self._local_disabled = False
+                self._history = bundle["history"]
+                self.e2ee = bundle["e2ee"]
+                self._voice_dir = bundle["voice"]
+                self._vmemo_dir = bundle["vmemo"]
+                self._sticker_dir = bundle["sticker"]
+                self._pack_cover_dir = bundle["cover"]
+            if old is not None:
+                old["history"].close()
+                if old["owned"] is not None:
+                    old["owned"].cleanup()
+
+    @property
+    def local_identity(self):
+        return self._local_identity
+
+    @contextmanager
+    def _identity_transition(self):
+        pending = getattr(self._transition_events, "pending", None)
+        outermost = pending is None
+        if outermost:
+            pending = []
+            self._transition_events.pending = pending
+        try:
+            with self._identity_transition_lock:
+                yield
+        finally:
+            if outermost:
+                del self._transition_events.pending
+                # Full event queues retain their existing backpressure, but
+                # cannot block target revocation behind the transition lock.
+                for event in pending:
+                    self._emit_event(event)
+
+    def _reset_local_identity(self):
+        with self._identity_transition():
+            return self._reset_local_identity_locked()
+
+    def _reset_local_identity_locked(self):
+        with self._send_lock:
+            with self._local_lock:
+                old = self._local_bundle
+                self._local_bundle = None
+                self._local_generation += 1
+                self._local_identity = None
+                self._local_disabled = True
+                self._local_authenticated = False
+                self.uid = None
+                self._seen_seqs.clear()
+                self._e2ee_pending.clear()
+                self._e2ee_rot_wait.clear()
+                self._e2ee_groups.clear()
+                self._e2ee_group_members.clear()
+                self._g_rotating.clear()
+                self._g_rot_backoff.clear()
+                self._joined_groups.clear()
+                self._volatile_rejoin_fence = None
+                self._removed_groups.clear()
+                self.group_members.clear()
+                self.groups.clear()
+                self.group_admins.clear()
+                self.group_mutes.clear()
+                self.group_announces.clear()
+                self.group_ann_modes.clear()
+                self.group_slows.clear()
+                self.group_invites.clear()
+                self.roster.clear()
+                self.known.clear()
+                self.blocked.clear()
+                self.me.clear()
+                self.is_admin = False
+                self.pins.clear()
+                self.reads.clear()
+                self.typing.clear()
+                self.avatars.clear()
+                self.group_avatars.clear()
+                self.custom_stickers.clear()
+                self.sticker_pack_meta.clear()
+                self.sticker_subs.clear()
+                self.sticker_shop.clear()
+                self.remote_drafts = {}
+                for entry in self._cloud_wait.values():
+                    entry["err"] = "account changed"
+                    entry["ev"].set()
+                self._cloud_wait.clear()
+            if old is not None:
+                old["history"].close()
+                if old["owned"] is not None:
+                    old["owned"].cleanup()
+            self._install_local_bundle(self._make_local_bundle())
+
     @property
     def connected(self) -> bool:
         return self.state == "online"
@@ -772,6 +919,8 @@ class ClientCore:
                     thread.join(timeout=2)  # No Core/send lock while waiting.
                     if thread.is_alive():
                         raise RuntimeError("previous connection has not stopped")
+            if self._local_disabled:
+                self._install_local_bundle(self._make_local_bundle())
             self._stop.clear()
             self._manual_login_required = False
             self._set_state("connecting")
@@ -820,7 +969,13 @@ class ClientCore:
         for thread in (self._reader, self._heartbeat, self._reconnector):
             if thread is not None and thread is not threading.current_thread():
                 thread.join(timeout=2)
-        self._history.close()
+        if not self._local_disabled:
+            self._reset_local_identity()
+            with self._local_lock:
+                self._history.close()
+                if self._local_bundle["owned"] is not None:
+                    self._local_bundle["owned"].cleanup()
+                self._local_disabled = True
         self._set_state("offline")
 
     def drop(self) -> None:
@@ -839,6 +994,20 @@ class ClientCore:
         即可按新目标重试。
         """
         with self._lock:
+            target = (host.strip() if host and host.strip() else self.host,
+                      port if port else self.port)
+            old_socket = (self._connection.sock if target != (self.host, self.port)
+                          and self._connection is not None else None)
+        # An in-flight dispatch may be blocked in synchronous socket send
+        # while owning the identity transition. Close only its captured old
+        # socket before waiting; the caller's later drop() still owns teardown.
+        if old_socket is not None:
+            self._close_socket(old_socket)
+        with self._identity_transition():
+            self._set_host_locked(host, port)
+
+    def _set_host_locked(self, host, port):
+        with self._lock:
             previous = (self.host, self.port)
             if host and host.strip():
                 self.host = host.strip()
@@ -848,6 +1017,7 @@ class ClientCore:
             if changed:
                 self.retirement.disconnect(self._epoch)
         if changed:
+            self._reset_local_identity()
             self._push_retirement_state()
 
     def set_password(self, pwd: str) -> None:
@@ -905,7 +1075,7 @@ class ClientCore:
             if thread is not None and thread.is_alive():
                 self._stop.set()
                 raise RuntimeError("旧连接线程尚未退出，已停止自动重连")
-        with self._lock:
+        with self._identity_transition(), self._lock:
             self._epoch += 1
             connection = _Connection(self._epoch, self.host, self.port)
             self._connection = connection
@@ -979,11 +1149,20 @@ class ClientCore:
     # ---------- 收帧分发 ----------
 
     def _dispatch(self, h: dict, body: bytes = b"", *, connection=None) -> None:
-        if connection is not None and not self._connection_current(connection):
+        # A frame admitted on connection A must finish (or be rejected) before
+        # a target/account reset can install B's local bundle and UI generation.
+        with self._identity_transition():
+            return self._dispatch_locked(h, body, connection=connection)
+
+    def _dispatch_locked(self, h: dict, body: bytes = b"", *, connection=None) -> None:
+        if connection is not None and (
+                not self._connection_current(connection)
+                or (connection.host, connection.port) != (self.host, self.port)):
             return
+        local_generation = self._local_generation
         # Local provenance is generated here/_push, never trusted from the wire.
         h = {key: value for key, value in h.items()
-             if key not in ("_connection_epoch", "manual_login_required")}
+             if key not in ("_connection_epoch", "_local_generation", "manual_login_required")}
         if getattr(self, "_manual_login_required", False):
             return  # late frames cannot revive the revoked authentication
         t = h.get("t")
@@ -1001,11 +1180,12 @@ class ClientCore:
                     self._e2ee_groups.discard(gid)
                     self._e2ee_group_members.pop(gid, None)
                     self.e2ee.drop_group(gid)
-            self._push(h)
+            self._push({**h, "_local_generation": local_generation})
             return
         auth_refused = (h.get("code") == "retired" and connection is not None
                         and connection.authenticating)
         if t == "error" and (h.get("code") in ("kicked", "deleted") or auth_refused):
+            self._reset_local_identity()
             with self._lock:
                 self._manual_login_required = True
                 self._stop.set()
@@ -1027,13 +1207,15 @@ class ClientCore:
             self._set_state("offline")
             self._push({**h, "manual_login_required": True})
             return
+        if t == "error" and h.get("code") == "pwd":
+            self._reset_local_identity()
         if t == "error" and getattr(self, "retirement", None) is not None:
             outcome = self.retirement.receive(h, self._epoch)
             if outcome.changed:
                 self._push_retirement_state()
                 return
         if t == MsgType.WELCOME.value:
-            self._on_welcome(h)
+            self._on_welcome(h, connection=connection)
         elif t == MsgType.ROSTER.value:
             hidden = self.retirement.confirmed_uids(self._epoch)
             h = {**h, "online": [u for u in h.get("online", []) if u.get("uid") not in hidden],
@@ -1058,11 +1240,15 @@ class ClientCore:
             self._push(h)
         elif t == MsgType.CHAT.value:
             if h.get("voice"):
-                self._attach_voice(h, body)
+                self._attach_voice(h, body, local_generation=local_generation)
             if h.get("vmemo"):
-                self._attach_vmemo(h, body)
-            self._store_chat(h)
-            self._push(h)
+                self._attach_vmemo(h, body, local_generation=local_generation)
+            if local_generation != self._local_generation:
+                return
+            self._store_chat(h, local_generation=local_generation)
+            if local_generation != self._local_generation:
+                return
+            self._push({**h, "_local_generation": local_generation})
         elif t == MsgType.POLL.value:
             self._store_chat(h)                  # R26A：投票消息入历史（含 poll 字段）
             self._push(h)
@@ -1155,15 +1341,17 @@ class ClientCore:
             self._push(h)
         elif t == MsgType.HISTORY.value:
             for m in h.get("msgs", []):
-                self._store_chat(m)
-            self._push(h)
+                self._store_chat(m, local_generation=local_generation)
+            if local_generation != self._local_generation:
+                return
+            self._push({**h, "_local_generation": local_generation})
         elif t == MsgType.STICKER_LIST.value:
             self.stickers = h.get("stickers", []) or []
             self._sync_custom_stickers(h.get("custom_stickers"))     # R64：清单随广播刷新
             self._sync_pack_meta(h.get("sticker_pack_meta"))
             self._push(h)
         elif t == MsgType.STICKER_PACK_COVER_DATA.value:             # R64 包封面回帧
-            self._on_sticker_pack_cover_data(h, body)
+            self._on_sticker_pack_cover_data(h, body, local_generation=local_generation)
         elif t == MsgType.STICKER_SHOP_LIST.value:   # R35 贴纸商店目录
             self.sticker_shop = h.get("packs", []) or []
             self.sticker_subs = [str(x) for x in (h.get("subs") or [])]
@@ -1255,9 +1443,79 @@ class ClientCore:
                 self._on_cloud_error(str(h.get("text") or ""))  # R37 上传/拉取失败
             self._push(h)                   # error / 未知/未来类型原样透传
 
-    def _on_welcome(self, h: dict) -> None:
+    def _on_welcome(self, h: dict, *, connection=None) -> None:
+        with self._identity_transition():
+            return self._on_welcome_locked(h, connection=connection)
+
+    def _on_welcome_locked(self, h: dict, *, connection=None) -> None:
+        replacement = None
+        try:
+            uid = h["uid"]
+            identity = durable_identity(h.get("auth"), uid)
+            auth = h.get("auth") if isinstance(h.get("auth"), dict) else {}
+            epoch = auth.get("server_epoch")
+            volatile_fence = ((epoch, uid, connection.host, connection.port)
+                              if isinstance(epoch, str) and len(epoch) == 32
+                              and connection is not None and identity is None
+                              else None)
+            if connection is not None:
+                if (not self._connection_current(connection)
+                        or (self.host, self.port) != (connection.host, connection.port)):
+                    return
+                scope = Scope(connection.host, connection.port, uid) if h.get("is_admin") else None
+                if not self.retirement.authenticate(scope, connection.epoch):
+                    return
+            if identity is None or identity != self._local_identity:
+                # A volatile server still gives a fresh local bundle on each
+                # WELCOME. A same-UID reconnect may retain its group rejoin
+                # intent, without carrying history or encryption state over.
+                rejoin = (set(self._joined_groups) if volatile_fence is not None
+                          and self._volatile_rejoin_fence == volatile_fence
+                          and self._local_authenticated
+                          else set())
+                if identity is None:
+                    replacement = self._make_local_bundle()
+                else:
+                    root = self._history_root or _default_history_dir()
+                    replacement = self._make_local_bundle(
+                        scoped_directory(root, identity), identity)
+            with self._send_lock, self._lock:
+                if connection is not None and (
+                        not self._connection_current(connection)
+                        or (self.host, self.port) != (connection.host, connection.port)):
+                    return
+                if replacement is not None:
+                    self._reset_local_identity()
+                    self._install_local_bundle(replacement)
+                    replacement = None
+                    self._joined_groups.update(rejoin)
+                self._volatile_rejoin_fence = volatile_fence
+                self._local_authenticated = True
+        except (KeyError, ValueError, OSError, E2EEError) as exc:
+            try:
+                self._reset_local_identity()
+            except OSError:
+                self._local_authenticated = False
+                self._local_identity = None
+                self._local_disabled = True
+                self._local_generation += 1
+                self._history.close()
+            self._manual_login_required = True
+            self._stop.set()
+            if connection is not None:
+                self._end_connection(connection)
+            self._push({"t": "error", "code": "local_storage",
+                        "text": f"local account storage unavailable: {type(exc).__name__}"})
+            self._set_state("offline")
+            return
+        finally:
+            if replacement is not None:
+                replacement["history"].close()
+                if replacement["owned"] is not None:
+                    replacement["owned"].cleanup()
+        accepted_generation = self._local_generation
         self._group_revisions.clear()
-        self.uid = h["uid"]
+        self.uid = uid
         self._ever_online = True
         # R52：我自己的资料（sign/avatar 随 welcome 带回）
         self.me = {"uid": self.uid, "nick": h.get("nick") or self.nick,
@@ -1302,9 +1560,9 @@ class ClientCore:
         # R25A：welcome 清空旧 typing（重连后无人在输入）
         self.typing.clear()
         for m in h.get("history", []):      # 服务器公聊历史并入本地（按 seq 去重）
-            self._store_chat(m)
+            self._store_chat(m, local_generation=accepted_generation)
         for m in h.get("saved", []):        # R25C 收藏夹历史并入本地（private:uid:uid）
-            self._store_chat(m)
+            self._store_chat(m, local_generation=accepted_generation)
         # R29B 草稿同步：服务器带回全部草稿（换端登录恢复输入）
         self.remote_drafts = {}
         for d in (h.get("drafts") or []):
@@ -1312,13 +1570,14 @@ class ClientCore:
             if key:
                 self.remote_drafts[key] = {"text": str(d.get("text") or ""),
                                            "ts": float(d.get("ts") or 0)}
-        connection = self._connection
         if connection is not None:
-            scope = Scope(connection.host, connection.port, self.uid) if self.is_admin else None
-            if not self.retirement.authenticate(scope, connection.epoch):
+            if (not self._connection_current(connection)
+                    or (self.host, self.port) != (connection.host, connection.port)):
                 return
             connection.authenticating = False
             connection.ever_online = True
+        if accepted_generation != self._local_generation:
+            return
         self._set_state("online")
         self._push({"t": "welcome", "uid": self.uid, "nick": self.nick})
         self._push_retirement_state()
@@ -1365,33 +1624,52 @@ class ClientCore:
             if self.pack_cover_path(pack) is None:
                 self.get_sticker_pack_cover(pack)
 
-    def _on_sticker_pack_cover_data(self, h: dict, body: bytes) -> None:
+    def _on_sticker_pack_cover_data(self, h: dict, body: bytes, *, local_generation=None) -> None:
         """STICKER_PACK_COVER_DATA：封面字节落缓存目录，推事件让 GUI 刷新导航条。"""
         pack = str(h.get("pack") or "")
         ext = str(h.get("ext") or "").lower().strip(". ")
         if not pack or not ext or not body:
             return
-        try:
-            with open(os.path.join(self._pack_cover_dir, self._cover_name(pack, ext)),
-                      "wb") as f:
-                f.write(body)
-        except OSError:
-            return
-        self._push({"t": "sticker_pack_cover_data", "pack": pack})
+        with self._local_lock:
+            if self._local_disabled or (local_generation is not None
+                                        and local_generation != self._local_generation):
+                return
+            try:
+                name = self._cover_name(pack, ext)
+                path = (plain_cache_leaf(self._pack_cover_dir, name)
+                        if self._local_identity is not None
+                        else os.path.join(self._pack_cover_dir, name))
+                with open(path, "wb") as f:
+                    f.write(body)
+            except OSError:
+                return
+            event_generation = self._local_generation
+        self._push({"t": "sticker_pack_cover_data", "pack": pack,
+                    "_local_generation": event_generation})
 
-    def _on_sticker_data(self, h: dict, body: bytes) -> None:
+    def _on_sticker_data(self, h: dict, body: bytes, *, local_generation=None) -> None:
         """STICKER_CUSTOM_DATA：图片字节落缓存目录，推事件让 GUI 刷新贴纸面板。"""
         code = str(h.get("code") or "")
         ext = str(h.get("ext") or "png")
         if not code or not body:
             return
-        try:
-            with open(os.path.join(self._sticker_dir, f"{code}.{ext}"), "wb") as f:
-                f.write(body)
-        except OSError:
-            return
-        self._prune_cache_dir(self._sticker_dir, _CACHE_KEEP_FILES)
-        self._push({"t": "sticker_data", "code": code})
+        with self._local_lock:
+            if self._local_disabled or (local_generation is not None
+                                        and local_generation != self._local_generation):
+                return
+            try:
+                name = f"{code}.{ext}"
+                path = (plain_cache_leaf(self._sticker_dir, name)
+                        if self._local_identity is not None
+                        else os.path.join(self._sticker_dir, name))
+                with open(path, "wb") as f:
+                    f.write(body)
+            except OSError:
+                return
+            self._prune_cache_dir(self._sticker_dir, _CACHE_KEEP_FILES)
+            event_generation = self._local_generation
+        self._push({"t": "sticker_data", "code": code,
+                    "_local_generation": event_generation})
 
     def _on_avatar_data(self, h: dict, body: bytes) -> None:
         """AVATAR_DATA：缓存原始字节，推事件让 GUI 注册图片头像并重绘。"""
@@ -1588,6 +1866,7 @@ class ClientCore:
                 cur = frozenset(int(m["uid"]) for m in members)
                 if cur != self._e2ee_group_members.get(gid):
                     threading.Thread(target=self.open_group_e2ee, args=(gid,),
+                                     kwargs={"local_generation": self._local_generation},
                                      daemon=True, name="e2ee-rekey").start()
         self._push(h)
 
@@ -1838,7 +2117,15 @@ class ClientCore:
             except (TypeError, ValueError):
                 pass
 
-    def _store_chat(self, h: dict) -> None:
+    def _store_chat(self, h: dict, *, local_generation=None) -> None:
+        with self._local_lock:
+            if local_generation is not None and local_generation != self._local_generation:
+                return
+            self._store_chat_bound(h)
+
+    def _store_chat_bound(self, h: dict) -> None:
+        if self._local_disabled:
+            return
         seq = h.get("seq")
         if seq is not None:
             if seq in self._seen_seqs:
@@ -1861,7 +2148,7 @@ class ClientCore:
         self._history.add(key, h)
 
     # ---------- 发送 API ----------
-    def _attach_voice(self, h: dict, body: bytes) -> None:
+    def _attach_voice(self, h: dict, body: bytes, *, local_generation=None) -> None:
         """收到语音消息：把 WAV 二进制体落盘到 voice/ 并附 voice_path（供 GUI 播放）。
         无 body（历史重放/服务器 TTL 过期）则视为墓碑，不动 voice_path。"""
         if not body:
@@ -1870,21 +2157,27 @@ class ClientCore:
         # 文件名确定化：优先 seq；无 seq 时用 ts 的标准哈希（进程级 hash() 会漂移，弃用）
         name = f"voice_{seq}.wav" if seq else \
             f"voice_{hashlib.md5(str(h.get('ts', '')).encode()).hexdigest()[:12]}.wav"
-        path = os.path.join(self._voice_dir, name)
-        try:
-            with open(path, "wb") as f:
-                f.write(body)
-            h["voice_path"] = path
-            self._prune_cache_dir(self._voice_dir, _CACHE_KEEP_FILES)
-        except OSError:
-            h["voice_path"] = ""
+        with self._local_lock:
+            if self._local_disabled or (local_generation is not None
+                                        and local_generation != self._local_generation):
+                return
+            path = os.path.join(self._voice_dir, name)
+            try:
+                if self._local_identity is not None:
+                    path = plain_cache_leaf(self._voice_dir, name)
+                with open(path, "wb") as f:
+                    f.write(body)
+                h["voice_path"] = path
+                self._prune_cache_dir(self._voice_dir, _CACHE_KEEP_FILES)
+            except OSError:
+                h["voice_path"] = ""
 
     def send_voice(self, channel: str, to, wav: bytes, duration: float = 0.0) -> bool:
         """发送语音消息：body = WAV 字节；channel ∈ public/private/group，权限服务端校验。"""
         return self._send_frame({"t": MsgType.VOICE.value, "channel": channel,
                                  "to": to, "duration": duration}, bytes(wav))
 
-    def _attach_vmemo(self, h: dict, body: bytes) -> None:
+    def _attach_vmemo(self, h: dict, body: bytes, *, local_generation=None) -> None:
         """收到视频留言：把 VMA1 容器落盘到 vmemo/ 并附 vmemo_path（供 GUI 播放）。
         无 body（历史重放/服务器 TTL 过期）则视为墓碑，不动 vmemo_path。"""
         if not body:
@@ -1892,14 +2185,20 @@ class ClientCore:
         seq = h.get("seq")
         name = f"vmemo_{seq}.vma" if seq else \
             f"vmemo_{hashlib.md5(str(h.get('ts', '')).encode()).hexdigest()[:12]}.vma"
-        path = os.path.join(self._vmemo_dir, name)
-        try:
-            with open(path, "wb") as f:
-                f.write(body)
-            h["vmemo_path"] = path
-            self._prune_cache_dir(self._vmemo_dir, _CACHE_KEEP_FILES)
-        except OSError:
-            h["vmemo_path"] = ""
+        with self._local_lock:
+            if self._local_disabled or (local_generation is not None
+                                        and local_generation != self._local_generation):
+                return
+            path = os.path.join(self._vmemo_dir, name)
+            try:
+                if self._local_identity is not None:
+                    path = plain_cache_leaf(self._vmemo_dir, name)
+                with open(path, "wb") as f:
+                    f.write(body)
+                h["vmemo_path"] = path
+                self._prune_cache_dir(self._vmemo_dir, _CACHE_KEEP_FILES)
+            except OSError:
+                h["vmemo_path"] = ""
 
     def send_vmemo(self, channel: str, to, blob: bytes,
                    duration: float = 0.0) -> bool:
@@ -2336,7 +2635,8 @@ class ClientCore:
         """发送计数到达 ROTATE_EVERY 且无进行中轮转 → 后台线程发起 DH 轮转。"""
         if not self.e2ee.rotate_due(int(peer_uid)):
             return
-        threading.Thread(target=self._rotate_peer, args=(int(peer_uid),),
+        threading.Thread(target=self._rotate_peer,
+                         args=(int(peer_uid), 12.0, self._local_generation),
                          daemon=True, name=f"e2ee-rot-{peer_uid}").start()
 
     def rotate_e2ee_key(self, peer_uid: int) -> bool:
@@ -2349,36 +2649,52 @@ class ClientCore:
             self._push({"t": "error", "code": "e2ee",
                         "text": "对方是旧版客户端，不支持密钥轮转（对方升级后可用）"})
             return False
-        threading.Thread(target=self._rotate_peer, args=(peer,),
+        threading.Thread(target=self._rotate_peer,
+                         args=(peer, 12.0, self._local_generation),
                          daemon=True, name=f"e2ee-rot-{peer}").start()
         return True
 
-    def _rotate_peer(self, peer: int, wait: float = 12.0) -> None:
+    def _rotate_peer(self, peer: int, wait: float = 12.0,
+                     local_generation=None) -> None:
         """轮转执行体：rt1 骑当前发送链发出 → 等 rt2（接收路径回推唤醒）。
         超时放弃（rotate_abort 丢临时私钥）；消息收发不受影响（继续旧链）。"""
-        rt1 = self.e2ee.rotate_begin(self.uid, peer)
+        if local_generation is None:
+            local_generation = self._local_generation
+        if local_generation != self._local_generation:
+            return
+        engine = self.e2ee
+        rt1 = engine.rotate_begin(self.uid, peer)
         if rt1 is None:
             return                        # 已有轮转进行中
         try:
-            blob = self.e2ee.seal_ratchet(peer, rt1)
+            blob = engine.seal_ratchet(peer, rt1)
         except E2EEError:
-            self.e2ee.rotate_abort(peer)
+            engine.rotate_abort(peer)
             return
         ev = threading.Event()
         self._e2ee_rot_wait[peer] = ev
         try:
-            if not self._send_frame({"t": MsgType.E2EE_CHAT.value, "to": peer}, blob):
-                self.e2ee.rotate_abort(peer)
+            if local_generation != self._local_generation or not self._send_frame(
+                    {"t": MsgType.E2EE_CHAT.value, "to": peer}, blob,
+                    expected_local_generation=local_generation):
+                engine.rotate_abort(peer)
                 return
             ev.wait(wait)
         finally:
-            self._e2ee_rot_wait.pop(peer, None)
-        if self.e2ee.rotate_pending(peer):
-            self.e2ee.rotate_abort(peer)  # 对端无响应：超时兜底
+            if self._e2ee_rot_wait.get(peer) is ev:
+                self._e2ee_rot_wait.pop(peer, None)
+        if engine.rotate_pending(peer):
+            engine.rotate_abort(peer)  # 对端无响应：超时兜底
 
-    def open_group_e2ee(self, gid: int, timeout: float = 8.0) -> tuple:
+    def open_group_e2ee(self, gid: int, timeout: float = 8.0,
+                        *, local_generation=None) -> tuple:
         """开启/轮换群密聊：与无会话成员先补 1v1 握手，全部就绪后
         生成新 epoch 的 sender_key 并经信封分发。返回 (ok, err)。"""
+        if local_generation is None:
+            local_generation = self._local_generation
+        if local_generation != self._local_generation:
+            return False, "account changed"
+        engine = self.e2ee
         with self._send_lock:
             generation = self._group_generations.get(gid, 0)
             if gid in self._removed_groups:
@@ -2389,15 +2705,18 @@ class ClientCore:
             return False, "群内没有其他成员"
         pending = []
         for m in members:
-            if self.e2ee.session_key(m) is not None:
+            if local_generation != self._local_generation:
+                return False, "account changed"
+            if engine.session_key(m) is not None:
                 continue
             nonce = os.urandom(8).hex()
             rs = os.urandom(16).hex()
             ev = threading.Event()
             self._e2ee_pending[nonce] = {"to": m, "ev": ev, "rs": rs}
             if not self._send_frame({"t": MsgType.E2EE_PUB.value, "to": m,
-                                     "pub": self.e2ee.identity_pub.hex(),
-                                     "nonce": nonce, "rs": rs}):
+                                     "pub": engine.identity_pub.hex(),
+                                     "nonce": nonce, "rs": rs},
+                                    expected_local_generation=local_generation):
                 self._e2ee_pending.pop(nonce, None)
                 return False, "有成员不在线，无法开启群密聊"
             pending.append((nonce, ev))
@@ -2407,18 +2726,19 @@ class ClientCore:
                 return False, "密聊握手超时"
         # R44 DFSS：切链 + SK_DIST 写 socket 与消息发送同锁——保证接收端
         # 先收新纪元信封、再收该纪元消息（帧序一致，杜绝竞态丢消息）
-        with self._send_lock:
-            if (gid in self._removed_groups
+        with self._send_lock, self._local_lock:
+            if (local_generation != self._local_generation
+                    or gid in self._removed_groups
                     or generation != self._group_generations.get(gid, 0)):
                 return False, "群成员状态已改变，请重新开启密聊"
-            epoch, sk = self.e2ee.new_group_epoch(
-                gid, retain_seed=any(m != self.uid and self.e2ee.is_legacy_peer(m)
+            epoch, sk = engine.new_group_epoch(
+                gid, retain_seed=any(m != self.uid and engine.is_legacy_peer(m)
                                      for m in members))
             envelopes = []
             for m in members:
-                k = self.e2ee.session_key(m)
+                k = engine.session_key(m)
                 try:
-                    blob = self.e2ee.seal(k, {"sk": sk.hex()})
+                    blob = engine.seal(k, {"sk": sk.hex()})
                 except E2EEError as exc:
                     return False, f"密钥封装失败: {exc}"
                 envelopes.append({"to": m, "ct": blob.hex()})
@@ -2482,7 +2802,8 @@ class ClientCore:
         if sk is None:
             if gid not in self._g_rotating:
                 self._g_rotating.add(gid)
-                threading.Thread(target=self._rotate_group, args=(gid,),
+                threading.Thread(target=self._rotate_group,
+                                 args=(gid, self._local_generation),
                                  daemon=True, name=f"e2ee-grot-{gid}").start()
             return
         k = self.e2ee.session_key(src)
@@ -2542,20 +2863,32 @@ class ClientCore:
         if gid in self._g_rotating or time.time() < self._g_rot_backoff.get(int(gid), 0):
             return
         self._g_rotating.add(int(gid))
-        threading.Thread(target=self._rotate_group, args=(int(gid),),
+        threading.Thread(target=self._rotate_group,
+                         args=(int(gid), self._local_generation),
                          daemon=True, name=f"e2ee-grot-{gid}").start()
 
-    def _rotate_group(self, gid: int) -> None:
+    def _rotate_group(self, gid: int, local_generation=None) -> None:
         """群 DFSS 轮转执行体：open_group_e2ee 生成新纪元并重分发；
         失败退避 60s（有成员离线/握手超时），消息收发不受影响（继续旧链）。"""
+        if local_generation is None:
+            local_generation = self._local_generation
+        if local_generation != self._local_generation:
+            return
         try:
-            ok, err = self.open_group_e2ee(gid)
+            ok, err = self.open_group_e2ee(gid, local_generation=local_generation)
             if not ok:
-                self._g_rot_backoff[int(gid)] = time.time() + 60.0
-                self._push({"t": "error", "code": "e2ee",
-                            "text": f"群密钥自动轮转失败: {err}"})
+                with self._local_lock:
+                    current = local_generation == self._local_generation
+                    if current:
+                        self._g_rot_backoff[int(gid)] = time.time() + 60.0
+                if current:
+                    self._push({"t": "error", "code": "e2ee",
+                                "text": f"群密钥自动轮转失败: {err}",
+                                "_local_generation": local_generation})
         finally:
-            self._g_rotating.discard(int(gid))
+            with self._local_lock:
+                if local_generation == self._local_generation:
+                    self._g_rotating.discard(int(gid))
 
     def _on_e2ee_group_msg(self, h: dict, body: bytes) -> None:
         """群密聊接收（R42 链式）：按 (gid, 发送者, epoch) 取链解密；
@@ -2585,17 +2918,20 @@ class ClientCore:
 
     # ---------- R37 加密云历史 ----------
 
-    def set_conv_state_hooks(self, provider, applyer) -> None:
+    def set_conv_state_hooks(self, provider, applyer, *, generation_aware=False) -> None:
         """R39B：注入会话状态采集/应用钩子（云备份打包/恢复时调用）。"""
         self._conv_provider = provider
-        self._conv_applyer = applyer
+        self._conv_applyer = (applyer if generation_aware or applyer is None
+                              else lambda states, _generation: applyer(states))
 
     def cloud_upload(self, password: str) -> tuple[bool, str]:
         """全量本地历史打包加密后上传（服务器只存密文 blob）。阻塞至回执/超时。"""
         if not password:
             return False, "请输入备份口令"
+        local_generation = self._local_generation
+        local_history = self._history
         try:
-            channels = self._history.export_all()
+            channels = local_history.export_all()
             conv = None
             if self._conv_provider is not None:
                 try:
@@ -2608,16 +2944,26 @@ class ClientCore:
             return False, f"打包失败: {exc}"
         if len(blob) > CLOUD_BLOB_MAX:
             return False, f"备份超过云端上限（{len(blob)} 字节）"
+        if local_generation != self._local_generation:
+            return False, "account changed"
         ev = threading.Event()
-        self._cloud_wait["put"] = {"ev": ev, "err": None}
+        request = {"ev": ev, "err": None}
+        self._cloud_wait["put"] = request
         if not self._send_frame({"t": MsgType.CLOUD_PUT.value,
-                                 "size": len(blob), "ts": _now()}, blob):
-            self._cloud_wait.pop("put", None)
+                                 "size": len(blob), "ts": _now()}, blob,
+                                expected_local_generation=local_generation):
+            if self._cloud_wait.get("put") is request:
+                self._cloud_wait.pop("put", None)
             return False, "发送失败（未连接）"
         if not ev.wait(15.0):
-            self._cloud_wait.pop("put", None)
+            if self._cloud_wait.get("put") is request:
+                self._cloud_wait.pop("put", None)
             return False, "上传超时"
-        entry = self._cloud_wait.pop("put", None) or {}
+        if self._cloud_wait.get("put") is request:
+            self._cloud_wait.pop("put", None)
+        entry = request
+        if local_generation != self._local_generation:
+            return False, "account changed"
         err = entry.get("err")
         if err:
             return False, err
@@ -2628,15 +2974,22 @@ class ClientCore:
         """从云端拉回密文 blob → 口令解密 → 与本地历史合并（去重）。阻塞至完成。"""
         if not password:
             return False, "请输入备份口令"
+        local_generation = self._local_generation
         ev = threading.Event()
-        self._cloud_wait["get"] = {"ev": ev, "blob": b"", "err": None}
-        if not self._send_frame({"t": MsgType.CLOUD_GET.value}):
-            self._cloud_wait.pop("get", None)
+        request = {"ev": ev, "blob": b"", "err": None}
+        self._cloud_wait["get"] = request
+        if not self._send_frame({"t": MsgType.CLOUD_GET.value},
+                                expected_local_generation=local_generation):
+            if self._cloud_wait.get("get") is request:
+                self._cloud_wait.pop("get", None)
             return False, "发送失败（未连接）"
         if not ev.wait(15.0):
-            self._cloud_wait.pop("get", None)
+            if self._cloud_wait.get("get") is request:
+                self._cloud_wait.pop("get", None)
             return False, "拉取超时"
-        entry = self._cloud_wait.pop("get", None) or {}
+        if self._cloud_wait.get("get") is request:
+            self._cloud_wait.pop("get", None)
+        entry = request
         if entry.get("err"):
             return False, entry["err"]
         blob = entry.get("blob") or b""
@@ -2646,12 +2999,15 @@ class ClientCore:
             data = _cloud_unpack(blob, password)
         except CloudHistoryError as exc:
             return False, str(exc)
-        added = self._history.merge_in(data.get("channels") or {})
+        with self._local_lock:
+            if local_generation != self._local_generation:
+                return False, "account changed"
+            added = self._history.merge_in(data.get("channels") or {})
         extra = ""
         states = data.get("conv_states") or {}      # R39B：会话状态段（旧 blob 为空）
-        if states and self._conv_applyer is not None:
+        if states and self._conv_applyer is not None and local_generation == self._local_generation:
             try:
-                self._conv_applyer(states)
+                self._conv_applyer(states, local_generation)
                 extra = f" + {len(states)} 个会话状态"
             except Exception:
                 pass                                # 状态应用失败不影响消息恢复
@@ -2945,28 +3301,42 @@ class ClientCore:
 
     def history(self, channel: str = "public", to=None) -> list:
         """本地历史快照（GUI 渲染用）"""
-        key = _channel_key(channel, self.uid or 0, to)
-        return self._history.load(key)
+        with self._local_lock:
+            if self._local_disabled:
+                return []
+            key = _channel_key(channel, self.uid or 0, to)
+            return self._history.load(key)
 
     def history_tail(self, channel: str = "public", to=None, n: int = 100) -> list:
         """R39C 懒加载：会话最新一页（磁盘 JSONL 按行号索引读，升序去重）。"""
-        return self._history.page_tail(_channel_key(channel, self.uid or 0, to), n)
+        with self._local_lock:
+            if self._local_disabled:
+                return []
+            return self._history.page_tail(_channel_key(channel, self.uid or 0, to), n)
 
     def history_page(self, channel: str = "public", to=None,
                      before_seq: int = 0, n: int = 100) -> list:
         """R39C 懒加载：seq<before_seq 的更旧一页（MsgList 滚到顶触发）。"""
-        return self._history.page_before(_channel_key(channel, self.uid or 0, to),
-                                         before_seq, n)
+        with self._local_lock:
+            if self._local_disabled:
+                return []
+            return self._history.page_before(_channel_key(channel, self.uid or 0, to),
+                                             before_seq, n)
 
     def history_after(self, channel: str = "public", to=None,
                       after_seq: int = 0, n: int = 100) -> list:
         """R39C 懒加载：seq>after_seq 的更新一页（正向窗口备用）。"""
-        return self._history.page_after(_channel_key(channel, self.uid or 0, to),
-                                        after_seq, n)
+        with self._local_lock:
+            if self._local_disabled:
+                return []
+            return self._history.page_after(_channel_key(channel, self.uid or 0, to),
+                                            after_seq, n)
 
     def drop_history(self, channel: str = "public", to=None) -> None:
         """删除某会话本地记录（右键菜单「删除会话记录」）"""
-        self._history.drop(_channel_key(channel, self.uid or 0, to))
+        with self._local_lock:
+            if not self._local_disabled:
+                self._history.drop(_channel_key(channel, self.uid or 0, to))
 
     # ---------- R50 屏蔽名单 ----------
     def set_block(self, target: int, on: bool) -> bool:
@@ -2986,11 +3356,14 @@ class ClientCore:
         self._send_frame({"t": MsgType.BLOCK_LIST.value})
 
     # ---------- 内部 ----------
-    def _send_on(self, connection, header: dict, body: bytes = b"", *, expected_scope=None) -> bool:
+    def _send_on(self, connection, header: dict, body: bytes = b"", *,
+                 expected_scope=None, expected_local_generation=None) -> bool:
         try:
             with self._send_lock:
                 with self._lock:
-                    if (not self._connection_current(connection) or self._manual_login_required
+                    if ((expected_local_generation is not None
+                         and expected_local_generation != self._local_generation)
+                            or not self._connection_current(connection) or self._manual_login_required
                             or connection.chan is None):
                         return False
                     if expected_scope is not None and (
@@ -3006,7 +3379,8 @@ class ClientCore:
                 self._push({"t": "error", "code": "send", "text": f"发送失败: {exc}"})
             return False
 
-    def _send_frame(self, header: dict, body: bytes = b"") -> bool:
+    def _send_frame(self, header: dict, body: bytes = b"", *,
+                    expected_local_generation=None) -> bool:
         connection = getattr(self, "_connection", None)
         if connection is not None:
             if self._manual_login_required:
@@ -3014,7 +3388,8 @@ class ClientCore:
             if not self._connection_current(connection) or connection.chan is None or not self._conn_alive.is_set():
                 self._push({"t": "error", "code": "offline", "text": "未连接"})
                 return False
-            return self._send_on(connection, header, body)
+            return self._send_on(connection, header, body,
+                                 expected_local_generation=expected_local_generation)
         if getattr(self, "_manual_login_required", False):
             return False
         chan = self._chan
@@ -3023,7 +3398,9 @@ class ClientCore:
             return False
         try:
             with self._send_lock:
-                if getattr(self, "_manual_login_required", False):
+                if (getattr(self, "_manual_login_required", False)
+                        or (expected_local_generation is not None
+                            and expected_local_generation != self._local_generation)):
                     return False
                 chan.send_frame(header, body)
             return True
@@ -3037,14 +3414,38 @@ class ClientCore:
                             "sticker_pack_cover_data"})
 
     def _push(self, ev: dict) -> None:
+        ev = {**ev, "_local_generation": ev.get("_local_generation", self._local_generation)}
         if ev.get("t") in {"state", "welcome", "error", "retirement_status", "admin_user_info", "roster"}:
             ev = {**ev, "_connection_epoch": getattr(self, "_epoch", 0)}
+        pending = getattr(self._transition_events, "pending", None)
+        if pending is not None:
+            pending.append(ev)
+            return
+        self._emit_event(ev)
+
+    def _emit_event(self, ev: dict) -> None:
         try:
             self.events.put_nowait(ev)
         except queue.Full:
             if ev.get("t") in self._TRANSIENT:
                 return                    # 瞬时事件可丢，消息类绝不丢
-            self.events.put(ev)           # 消息/关键事件：背压等待，绝不丢
+            if (threading.current_thread() is threading.main_thread()
+                    and ev.get("t") == "retirement_status"):
+                # The Tk owner cannot drain a full queue while blocked in
+                # its own lifecycle action. One pending latest snapshot per
+                # type may exceed capacity; chat still backpressures normally.
+                with self.events.not_full:
+                    prior = self._lifecycle_overflow.get(ev["t"])
+                    if prior is not None and any(item is prior for item in self.events.queue):
+                        prior.clear()
+                        prior.update(ev)
+                    else:
+                        self.events._put(ev)
+                        self._lifecycle_overflow[ev["t"]] = ev
+                        self.events.unfinished_tasks += 1
+                        self.events.not_empty.notify()
+            else:
+                self.events.put(ev)
         cb = self._on_event
         if cb is not None:
             try:

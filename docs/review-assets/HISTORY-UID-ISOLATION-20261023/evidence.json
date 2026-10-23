@@ -1,7 +1,7 @@
 {
   "task": "HISTORY-UID-ISOLATION-01 v1",
   "base": "293cc526ea2c49a4c5ca4520a09ca73aa5733a01",
-  "status": "IMPLEMENTING_ORIGINAL_RED_3_FAILED_PRESERVED",
+  "status": "INDEPENDENT_REVIEW_MUST_FIXES_NOT_ACCEPTED",
   "requested_service": "Sol + FAST; runtime receipt not exposed",
   "namespace": "validated durable store_scope_id plus confirmed positive UID",
   "old_data_policy": "Preserve original nickname/top-level history and legacy chat prefs; no automatic ownership or migration.",
@@ -48,5 +48,193 @@
       "Different UIDs with the same nickname share local history",
       "Same UID with a changed display nickname chooses a different directory"
     ]
-  }
+  },
+  "partial_green": {
+    "run_id": "hui23-green-01",
+    "files": 2,
+    "totals": {
+      "passed": 8
+    },
+    "exit_code": 0,
+    "seconds": 2.237,
+    "source_content_id": "65c6aa0d39feb703c61609193859d01607bdf40f17aeb916eafef309fb2c981d",
+    "summary_sha256": "474583a0d137c31f727fc21a4992e91f11eb7b6e97983678030a0551b6c5e4d2",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "actual_exec_session": 10754,
+    "actual_shell_exit": 0,
+    "scope": "First partial candidate only; full loopback/Tk/matrix and domains still pending.",
+    "test_versions": {
+      "tests/test_history_uid_isolation.py": "b8173d09d31e734a1363e3f13756cf1ef16706f9b2d8489a8126968a67d8e6f7",
+      "tests/test_uid_chat_profile.py": "54997b5083cb4c8dac726643c4719d255df95ed48b8389ed589fff13d9b76b3f"
+    }
+  },
+  "partial_green_02": {
+    "run_id": "hui23-green-02",
+    "files": 2,
+    "totals": {
+      "passed": 9
+    },
+    "exit_code": 0,
+    "seconds": 5.417,
+    "source_content_id": "4a8d947da32b3b87d84a61740bb484d6fee3c3b45529ad477a7e874d87c757ea",
+    "summary_sha256": "064382e1e0ecae9c51bbbb13a8a3d7b44a95dd9154cfbf5e84797cf8ef88bde9",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "actual_exec_session": 48835,
+    "actual_shell_exit": 0,
+    "scope": "Enhanced partial candidate; real loopback/full failure matrix/domains not final.",
+    "test_versions": {
+      "tests/test_history_uid_isolation.py": "b8173d09d31e734a1363e3f13756cf1ef16706f9b2d8489a8126968a67d8e6f7",
+      "tests/test_uid_chat_profile.py": "7cdcd0c75c3002b0b90c97f20dea8aa0650b60a4724254fd5774627e984f69b4"
+    }
+  },
+  "first_domain_failure": {
+    "run_id": "hui23-domain-01",
+    "files": 2,
+    "totals": {
+      "failed": 1,
+      "passed": 48
+    },
+    "exit_code": 1,
+    "seconds": 26.432,
+    "source_content_id": "d099ed485452cf9f74a26083d3faa5078d86d36502f1fa628ac737448ccb8b59",
+    "summary_sha256": "7ea3a1d95ca5c01f72507db65b2c955842911dc4b3fcbd706174853ed8574591",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "actual_exec_session": 42156,
+    "actual_shell_exit": 1,
+    "failure": "test_reconnect_and_rejoin_group: volatile reconnect lost existing group rejoin intent when changing fresh local bundle. Original failure retained; fix must use runtime epoch and UID, not persistent-history fallback."
+  },
+  "enhanced_matrix_first_fixture_failure": {
+    "run_id": "hui23-green-03",
+    "files": 3,
+    "totals": {
+      "passed": 44,
+      "failed": 1
+    },
+    "exit_code": 1,
+    "seconds": 25.721,
+    "source_content_id": "a7ed054e7674e0e34d4057134888a9c86f611da8ea47265993c3dda69cf6edc9",
+    "summary_sha256": "df7a927140426120016e96688f8411b1f020da907fd5e240978aab8d217035b4",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "actual_exec_session": 7275,
+    "actual_shell_exit": 1,
+    "scope": "44P1F. New refused-password test incorrectly waited manual_login_required; server pwd rejection resets identity but that flag belongs to different errors. Original failure retained; changed test observes actual pwd error and empty local claim."
+  },
+  "affected_regression_green": {
+    "run_id": "hui23-green-04",
+    "files": 2,
+    "totals": {
+      "passed": 42
+    },
+    "exit_code": 0,
+    "seconds": 17.404,
+    "source_content_id": "010d8ce3a683690913286fea65d793bac96d788c2441f260adfe6ee438b5d841",
+    "summary_sha256": "39ec956935c2b29821923c92160d079f63e19f7d5cbd3d0ac88cd3d08bbef192",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "actual_exec_session": 59224,
+    "actual_shell_exit": 0,
+    "scope": "42P. Core rejoin regression and real accepted/refused durable authentication; stage-specific candidate, not same source as prior passes."
+  },
+  "enhanced_matrix_green": {
+    "run_id": "hui23-green-05",
+    "files": 2,
+    "totals": {
+      "passed": 18
+    },
+    "exit_code": 0,
+    "seconds": 7.293,
+    "source_content_id": "222de295ae4854477db20a713adb8a9c4dd5645ad4a57c8e1525c4ecbc4ab56a",
+    "summary_sha256": "241cd646ed4d3fadcded89d5b2d42e72498f09aa3a7e900d5a3144cf21f72106",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "actual_exec_session": 43371,
+    "actual_shell_exit": 0,
+    "scope": "18P. Real Hub/Store close and reopen with local-only marker, target switch/stop-start, reparse and non-file refusal, stale media/E2EE worker, malformed prefs and Tk. Not full acceptance."
+  },
+  "domain_02_first_failure": {
+    "run_id": "hui23-domain-02",
+    "files": 12,
+    "totals": {
+      "passed": 168,
+      "failed": 3
+    },
+    "exit_code": 1,
+    "seconds": 55.924,
+    "source_content_id": "222de295ae4854477db20a713adb8a9c4dd5645ad4a57c8e1525c4ecbc4ab56a",
+    "summary_sha256": "a27839ffb0cdc6f5351183530df8a27bec7f7402e5abf5988b3e0d9cce36bdd4",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true
+    },
+    "actual_exec_session": 45050,
+    "actual_shell_exit": 1,
+    "failure": "r37 two assertions read UID after explicit stop now revokes identity; r36 old volatile fixture expects retained E2EE engine across new volatile WELCOME. Preserve all failed originals and original behavior assertions using captured UID / real durable same-identity fixture; independent assessment pending.",
+    "independent_classification": "flagship_scout agrees captured pre-stop UID and this single durable same-identity fixture preserve original behavior assertions; volatile no-key/new-Hub contrast retained."
+  },
+  "independent_code_review_pending_must": [
+    "queued local-content event generation",
+    "captured WELCOME connection recheck at commit",
+    "sticker and cover generation fence",
+    "malformed existing UID prefs fail closed",
+    "failed temporary bundle still revokes old identity",
+    "atomic expected generation check at outbound worker send commit"
+  ]
 }

@@ -7,3 +7,19 @@
 唯一hui23-red-01，exec67249自然结束actual exit1，1文件3F/1.779s，source d0557d8c6c563c26883dcccd0094e164b0a8a21ccb6d5e2ac301c5611b41aeec，summary SHA f3998d1bbff6a87ac1b77f0792cbe821250b4ef5964f7cee7a934871fe346ce9。test SHA c957c46fff2c9f53c2f845a3b3b43a9b3fefe8848166a139e193efa64425ff21。原498产品/测试输入逐SHA等base，仅多新test，manifest/snapshot/progress/log SHA计数/sandbox/单attempt清理后验通过。三断言确实触达preauth读取旧昵称、同nick不同UID共用、同UID新显示名目录分裂，没有fixture/import错误；只用合成内容和临时目录。
 
 B只读确认RED有效，但直接dispatch仅证明旧路径行为，最终GREEN必须补当前accepted loopback WELCOME、拒绝/切目标、存储失败与受控旧worker、UI六字段。后续强化测试按版本另记，不冒称与首RED同字节，不为镜像断言重复旧RED。当前A在隔离树实现，尚无GREEN/域/full或产品接受。
+
+## 必要旧域首次失败
+
+hui23-domain-01 / exec42156实际exit1，test_r35 15P、test_client_core33P1F，合48P1F，source d099ed485452cf9f74a26083d3faa5078d86d36502f1fa628ac737448ccb8b59。test_reconnect_and_rejoin_group确实暴露本轮volatile换临时bundle丢群重入意图；原summary/log快照与后验保留，非baseline问题，不抹掉失败。修复须保持原断言且仅accepted auth.server_epoch+UID/原目标运行态fence恢复群重入，新Hub/缺epoch/显式切目标/认证拒绝不恢复；不以该运行态键持久化历史或复用旧keys。新选测仍在运行，不预写域/full通过。
+
+## 增强矩阵与修复后的选测（非最终接受）
+
+hui23-green-03/exec7275 actual exit1，44P1F；新真实拒绝口令用例错误等待仅其他错误流程设置的manual_login_required，原日志显示等待超时。改为观察实际pwd错误及无本地身份，不改产品以满足错误期待，保留原summary df7a927140426120016e96688f8411b1f020da907fd5e240978aab8d217035b4。
+
+hui23-green-04/exec59224 actual exit0，42P，source010d8ce3a683690913286fea65d793bac96d788c2441f260adfe6ee438b5d841；Core旧重入断言及真实durable接受/拒绝通过。hui23-green-05/exec43371 actual exit0，18P，source222de295ae4854477db20a713adb8a9c4dd5645ad4a57c8e1525c4ecbc4ab56a；包括真实Hub/Store关闭重开、仅本地marker恢复且server bus无marker，切目标/stop-start、受控重解析/非文件、旧media/E2EE worker、坏prefs原件和Tk。三个阶段原件八项后验均通过，详细摘要SHA见evidence。不同阶段产品/测试字节不同，不把旧阶段通过冒称最终版本全域通过。
+
+必要旧领域hui23-domain-02/exec45050已实际启动，12文件，候选源冻结。独立代码审查进行中；尚无最终全量、AI_ACCEPTED或集成。
+
+## 独立代码审查整改与第二域首次失败
+
+B正式审见5 MUST：旧排队正文缺代标记、WELCOME丢捕获连接及提交前复核、贴纸/封面写缺代锁、已有UID偏好坏结构不能空态覆盖、temp准备失败仍需撤销旧UID/正文。已交A修复，未接受。domain02/exec45050实际exit1，12文件168P3F/source同green05；root八项原件后验通过，summary a27839ffb0cdc6f5351183530df8a27bec7f7402e5abf5988b3e0d9cce36bdd4。r37两旧断言读stop后uid(None)，r36旧volatile fixture期待engine留存；拟分别捕获stop前UID、同已确认身份durable fixture保原断言，仍须B独立确认。首次原件不删除或以其余十文件通过取代。修复后仅必要affected选测，最终稳定版本full仍未启动。

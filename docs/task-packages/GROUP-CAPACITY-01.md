@@ -1,4 +1,4 @@
-# GROUP-CAPACITY-01 v1
+# GROUP-CAPACITY-01 v1.1
 
 2026-10-23 READY，沿用户持续Sol+FAST、小批次自主开发与普通main集成授权实施；root唯一集成主控。
 源码base `9d12a5863102ae0e8302f2b7bb1315350a250669`。视频批4759a01e保留原分支并暂停，不继承其代码、测试、文档验收结论或诊断修改。
@@ -20,3 +20,9 @@ session_scout在独立group-capacity工作树/分支唯一写server.py与newtest
 fake传输仅承载合成身份和观测，调用真实Hub处理器；必要领域选择现有群管理/会话回归，不能以全部stub替代协议现有保护。worker只跑原RED/必要单文件和领域，不跑full。独立代码/原件审查后，由root冻结组合源码并唯一最终full；必测失败则保存具体失败并停止验收，不能用选测/重试抹掉。原视频full原生崩溃失败完整保留，不因此新批运行而视作修复。
 
 root依证据有限AI接受本Task范围，审计全部新增Git对象和metadata后普通非强制合并推送main，按可见仓库规则执行；不改保护/凭据、不发布，远端SHA实际核实，无CI记录不称通过。原始日志/二进制/用户身份仅本地ignored证据，公开只脱敏摘要。不声称可视GUI、自然退出、物理LAN、新EXE或完整R1里程碑验收。
+
+## v1.1 纠正运行目录长度，产品范围不变
+
+首次组合full在新嵌套worktree的默认run目录运行，test_gate_boardgames.py四用例的合成Git仓库写对象均报Filename too long。独立只读复核确认失败路径275字符，短run目录同后缀约181字符；不是群容量断言。保留该full实际失败，不改全局Git/系统长路径、环境/安全设置，不放宽断言、跳过或超时。
+
+待首次full自然结束，root先核494冻结源码不变，只对该文件使用现有--run-dir选一个全新、非reparse的短ignored路径执行一次对照；source-dir保持同一Git工作树以保留同一source_content_id（不能把非Git快照较少的枚举冒充同集合）。只有实际4P/exit0、同source、原sandbox/清理通过并证实路径缩短，才用另一个全新短run目录对同494候选执行纠正布局后的最终full。若仍失败则停止并收窄，不直接重跑full。不得用单文件通过替代最终全量，也不重新resume/覆盖首次失败；这是有可证伪路径假设的必要环境纠正，不是无差别retry-to-green。flagship_scout独立方案/对照/最终原件复核，root唯一执行，worker不并行测试。

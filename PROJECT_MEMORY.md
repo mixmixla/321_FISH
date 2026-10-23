@@ -125,6 +125,8 @@
   清理失败停止后续文件。它是受控测试防护，不是对恶意代码的OS安全沙箱，不能证明产品默认绑定loopback。
 - 自有测试进程的Popen.kill/TerminateProcess返回不等于实际退出；DesktopProcess先对持有对象/句柄有界wait，
   再核根退出状态与原observed descendants。等待超时/异常、退出未知或子进程未确认退出仍失败；不扩大kill范围。
+- 深层Windows worktree可能使门禁内部合成Git对象路径过长；用现有`--run-dir`选全新短运行目录，
+  保持同一Git源码与冻结清单，先验证路径原因并保留原失败；不修改全局Git或系统设置。
 - 门禁拒绝非原visual/hardware opt-in的意外skip；GUI文件使用sys捕获，parent仍保存原生stdout/stderr，
   非GUI保留fd捕获。source manifest包括未提交Python输入、排除docs/runtime，driver另有独立hash。
 - `local_trial.py`复用批准source manifest构建独立副本并核对双EXE，使用新profile/private desktop验证

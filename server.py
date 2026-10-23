@@ -6942,7 +6942,20 @@ class Hub:
             with self.lock:
                 if self.groups.get(gid) is not g:
                     return
+                member_uids = tuple(g["members"])
                 del self.groups[gid]
+                self.voice_rooms.pop(f"group:{gid}", None)
+                self._group_state_revision += 1
+                removal = {"t": "error", "code": "group_removed", "gid": gid,
+                           "group_revision": self._group_state_revision,
+                           "text": f"群『{gname}』已解散"}
+                removed_sessions = [st for uid in member_uids
+                                    for st in self._uid_clients.get(uid, ())]
+            for st in removed_sessions:
+                try:
+                    st.send(removal)
+                except Exception:
+                    pass
             self._persist(force=True)
             self._broadcast_system(f"系统管理员已解散群「{gname}」")
             self._broadcast_group_list()

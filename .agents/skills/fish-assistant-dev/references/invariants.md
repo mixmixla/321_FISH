@@ -107,7 +107,7 @@ Excel 接线：`client.py` → `widgets.excel_chrome.ExcelChrome` →
 
 群成员移除不是账号撤销：`group_removed/gid` 只清对应群状态，所有现有同 UID Session 都应收到，账号 kicked/deleted/retired 终止语义保持。旧快照/重复通知按 Hub 运行态 revision 过滤；密钥 worker 用本地 generation 跨 WELCOME 作废，握手等待不得持发送锁。迟到密钥不能复活已移除群，显式重新加入仍按原权限。
 
-UID级主动退群须通知该UID全部已有Session并清对应群重入/密钥；锁内重核群与成员、只删一次并取得revision，拒绝和通知IO锁外。最后成员解散同样通知，其他群/认证/token保持。确定性并发回归在目标线程首次Hub锁acquire前设门，不能只用同时启动Barrier。
+UID级主动退群须通知该UID全部已有Session并清对应群重入/密钥；锁内重核群与成员、只删一次并回收该群admins后取得revision，拒绝和通知IO锁外；合法重新加入不恢复旧管理员，需群主重授，mutes保留现状不在该修复中重定义。最后成员解散同样通知，其他群/认证/token保持。确定性并发回归在目标线程首次Hub锁acquire前设门，不能只用同时启动Barrier。
 
 系统管理员remove同样须权威重核同一群/目标成员、只移除一次，向全部目标Session发送带gid/revision的group_removed并清该群语音名册，其他群/账号/token不变；成功外部IO在锁外。管理员remove先_known_names读锁，确定性并发门应放在随后remove写锁acquire前，不能误挂首次读锁。显式dissolve在_known_names之前，锁内原成员全部已有Session/revision、删群及该gid语音名册，锁外逐目标容错通知；其确定性竞态门为首次Hub锁。普通owner无显式dissolve入口，最后成员leave解散是不同路径。
 

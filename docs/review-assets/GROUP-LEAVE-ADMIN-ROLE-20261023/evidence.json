@@ -1,7 +1,7 @@
 {
   "task": "GROUP-LEAVE-ADMIN-ROLE-01 v1",
   "base": "004d2bd545d31e7a2e2686a92b62c4c42e91c181",
-  "status": "IMPLEMENTED_DOMAIN_PASSED_INDEPENDENT_CODE_REVIEW_0_MUST_PENDING_FULL",
+  "status": "AI_ACCEPTED_GROUP_LEAVE_ADMIN_ROLE_ONLY_FINAL_PUBLIC_REVIEW_0_MUST_NOT_INTEGRATED",
   "worker": {
     "base": "004d2bd545d31e7a2e2686a92b62c4c42e91c181",
     "runs": {
@@ -96,5 +96,58 @@
     "No join permission, other handler/client/protocol changes or mute policy redesign.",
     "Paused video and original failure remain unmerged and unaccepted.",
     "No visible GUI, natural app exit, physical LAN, new EXE, whole R1 or release validation."
-  ]
+  ],
+  "full": {
+    "run_id": "gla23-final-01",
+    "files": 220,
+    "totals": {
+      "passed": 3017,
+      "skipped": 20
+    },
+    "exit_code": 0,
+    "seconds": 795.364,
+    "source_content_id": "3f89ac55c725b553a7c954ca92b67c68cadff066aa781a22c8335109233586bc",
+    "summary_sha256": "310f18fd50a6651aad3499b3d92027925b4e1b38e5a7c5d25fd68b439c3ca65c",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true,
+      "actual_shell_exit_zero": true,
+      "current_frozen_full_source_exact": true,
+      "source_497_inputs": true,
+      "full_complete_file_set": true,
+      "full_pass_counts_expected": true,
+      "old_file_counts_unchanged": true,
+      "existing_skips_unchanged": true,
+      "interpreter_identity_exact": true,
+      "dependency_identity_exact": true,
+      "gate_tools_unchanged": true,
+      "test_manifest_current_exact": true,
+      "worker_current_integrated_canonical_equal": true,
+      "no_video_ancestry": true,
+      "no_video_client_changes": true,
+      "prior_full_preserved": true,
+      "paused_video_failure_preserved": true,
+      "prior_path_failure_preserved": true,
+      "all_worker_checks_true": true,
+      "all_worker_summaries_preserved": true,
+      "red_to_green_only_server": true
+    },
+    "source_inputs": 497
+  },
+  "independent_final_technical_review": {
+    "reviewer": "flagship_scout",
+    "scope": "Complete 220 raw records, 497 source inputs and identity, prior baseline and failure preservation",
+    "must": 0
+  },
+  "independent_public_review": {
+    "reviewer": "flagship_scout",
+    "scope": "Final Task/Review/evidence/checkpoint/projection and stable documentation",
+    "must": 0
+  }
 }

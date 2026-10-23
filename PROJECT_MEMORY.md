@@ -22,7 +22,7 @@
 
 - Gomoku/Connect4 平局与胜局公开快照均无 turn_uid；桌面文字摘要对带旧行动人的 draw 快照也先呈现终局，不再显示轮到提示。
 
-- 群移除与已确认主动退群均使用 `error/group_removed`（含 gid），与管理员全账号 `kicked` 分离；通知该 UID 已有全部 Session，不撤 Web token；退群的群/成员资格重核与删除同在 Hub 锁内，拒绝和通知 IO 在锁外。Hub 锁内运行态 `group_revision` 排序群快照/移除，Core 丢弃旧帧并清该群重入/成员/邀请/密钥；WELCOME 仅清服务端 revision，本地 generation 保留以挡跨续连旧密钥 worker。合法新成员快照允许显式重入；旧服务器的模糊 kicked 不作文字猜测。
+- 群移除与已确认主动退群均使用 `error/group_removed`（含 gid），与管理员全账号 `kicked` 分离；通知该 UID 已有全部 Session，不撤 Web token；退群的群/成员资格重核、删除及回收该群管理员资格同在 Hub 锁内，拒绝和通知 IO 在锁外；合法重入后需群主重新授权才恢复管理员，加入许可和禁言现状保持。Hub 锁内运行态 `group_revision` 排序群快照/移除，Core 丢弃旧帧并清该群重入/成员/邀请/密钥；WELCOME 仅清服务端 revision，本地 generation 保留以挡跨续连旧密钥 worker。合法新成员快照允许显式重入；旧服务器的模糊 kicked 不作文字猜测。
 
 - 系统管理员移出群成员同样按gid通知该UID已有全部Session，并只清该群语音名册；锁内权威重核成员、清管理员/禁言、转让群主或解散空群及取得revision，会话账号和其他群资源保持。通知/持久化/广播/审计在锁外。系统管理员显式解散在同锁内快照原成员全部已有Session、分配移除revision、删除群及该gid语音名册，锁外逐目标通知；该独立入口不等于新增普通群主解散命令。
 

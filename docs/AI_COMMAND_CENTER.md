@@ -15,6 +15,14 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 当前账号历史批 · HISTORY-UID-ISOLATION-01 v1（2026-10-23）
+
+**READY / INDEPENDENT_DESIGN_REVIEW_0_MUST / NOT_IMPLEMENTED**。[Task](task-packages/HISTORY-UID-ISOLATION-01.md) / [Review](review-packages/HISTORY-UID-ISOLATION-01-r1.md) / [脱敏证据](review-assets/HISTORY-UID-ISOLATION-20261023/evidence.json)。用户新批准按UID隔离、改显示昵称连续、旧昵称历史保留不自动归属。base main293cc526ea2c49a4c5ca4520a09ca73aa5733a01已fresh fetch/Git/API核实，clean/无活动测试；现独立history-uid-integration-20261023工作树/feature/history-uid-integration-20261023，dirty仅本Task资料，旧试用树checkpoint/r3-delivered同base无文件改变。root唯一集成/资料/最终门禁，A唯一隔离代码写入者，B独立只读设计/终审；保留Sol+FAST，实际服务回执不可见。
+
+已只读确认：Core构造按nick并自动搬移旧顶层，WELCOME后才UID；现协议auth有durable store_scope_id，跨正常重启稳定，epoch不作持久键。冻结最小单批：fresh临时bundle不触旧数据→当前认证WELCOME接受后以合法scope+UID原子绑定v2目录；history_dir也是ROOT，不降级nick/endpoint/裸UID。缺scope/volatile仅会话；旧异步任务捕获身份代次，切号/切服务/拒绝立即隔离旧存储和UI。为免旧正文绕路暴露，六聊天prefs字段新UID视图、launcher不再认领旧nick内容，设备prefs与旧保护保持；不扩同步/服务器/改名功能或数据迁移。
+
+新工作树498输入与已验收raw full f3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae逐字节一致；上一full221文件3022P0F20skip只是基线，不算本次验收。正式Task含身份/失败/路径/受控旧worker/UI六字段与旧原件清单矩阵，B已独立正式Task设计0 MUST，root据此置READY；下一创建A独立history-uid-20261023工作树并交单一代码所有权，先合成RED再实现/独立代码审查。尚无测试/实现进程；原件本树_tmp_gui/history-uid-isolation-20261023，最终计划原工程短_tmp_gui/hui23-final-01。视频原工程4759仍clean/暂停非祖先，不继承/诊断/合并/开硬件；不读真实prefs/history，不改系统/依赖/权限/凭据，不PR/发布/上传原日志私密或二进制。
+
 ## 当前本地试用批 · R3-CURRENT-BUILD-01 v1（2026-10-23）
 
 **BUILD_PACKAGE_CLI_PREFLIGHT_PASSED / DESIGN_REVIEW_0_MUST / FINAL_TECH_REVIEW_0_MUST / AI_ACCEPTED_CURRENT_BUILD_PACKAGE_PREFLIGHT_ONLY / PUBLIC_REVIEW_0_MUST / MERGED_MAIN / REMOTE_VERIFIED**。[Task](task-packages/R3-CURRENT-BUILD-01.md) / [Review](review-packages/R3-CURRENT-BUILD-01-r1.md) / [脱敏证据](review-assets/R3-CURRENT-BUILD-20261023/evidence.json)。base已验收main175777d146ffddb845b9864d48b8bc588c6bd449/clean，主控现main，保留feature/r3-current-build-20261023，root唯一构建/执行/资料/集成，B独立只读审查；沿用户Sol+FAST持续授权，实际服务回执不可见。

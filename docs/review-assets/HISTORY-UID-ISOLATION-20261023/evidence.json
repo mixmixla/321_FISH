@@ -1,0 +1,22 @@
+{
+  "task": "HISTORY-UID-ISOLATION-01 v1",
+  "base": "293cc526ea2c49a4c5ca4520a09ca73aa5733a01",
+  "status": "READY_INDEPENDENT_DESIGN_REVIEW_0_MUST_NOT_IMPLEMENTED",
+  "requested_service": "Sol + FAST; runtime receipt not exposed",
+  "namespace": "validated durable store_scope_id plus confirmed positive UID",
+  "old_data_policy": "Preserve original nickname/top-level history and legacy chat prefs; no automatic ownership or migration.",
+  "prior_full": {
+    "run_id": "gvm23-final-01",
+    "source_inputs": 498,
+    "source_content_id": "f3b5e013dc2008d10b198ccdac9273bd5fbd5c0b144c9b2134b1abbaf7b8eaae",
+    "passed": 3022,
+    "skipped": 20,
+    "exit_code": 0,
+    "not_new_candidate_acceptance": true
+  },
+  "independent_design_review": {
+    "reviewer": "flagship_scout",
+    "must": 0,
+    "scope": "Frozen Task v1, durable namespace, accepted-WELCOME ordering, fresh temp/generation fences, legacy/prefs preservation and failure boundaries"
+  }
+}

@@ -4051,8 +4051,11 @@ class Hub:
             return
         try:
             fire_at = float(header.get("fire_at") or 0)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             self._error(sess, "fire_at", "缺少发送时间")
+            return
+        if not math.isfinite(fire_at):
+            self._error(sess, "fire_at", "发送时间必须是有限数值")
             return
         if fire_at <= _now():
             self._error(sess, "past", "发送时间必须晚于当前")

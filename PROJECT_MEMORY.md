@@ -48,6 +48,7 @@
   没有独立 npm 前端。`discovery` 管 UDP 发现，`tls_cert` 管自签 HTTPS。
 - `ServerStore` 保存启用持久化时的最新全量快照；audit 只记元数据。云历史在
   客户端加密，服务器存不透明 blob；本地 JSONL/prefs 仍含实际用户内容。
+- 定时消息fire_at在Hub入队前拒绝转换溢出和非有限值，避免NaN进入全量快照并触发durable恢复校验失败停服务；有限时间窗口仍沿用past/far语义。
 - `games_pkg` 注册 47 个当前游戏类，`RoomManager` 管房间，`BaseGame` 的
   snapshot/private/act/tick/ended 管公开、私有与规则；桌面 painter/点击/按钮
   分别在 `client_gameui`、`client._GAME_ACTIONS`，注册不等于 UI 完整可玩。
@@ -87,6 +88,7 @@
   持久目录/历史/密钥及媒体写目标拒绝既存reparse别名，坏key不自动覆盖。下载目录仍为全局_log_dir()/downloads。
 - ChatWindow的pinned/muted/archived/drafts/stars/unread_marks六字段在身份确认前为空，确认durable身份后读写uid_profiles；
   launcher只记登录昵称、不调用旧昵称档案认领。legacy顶层/profiles/opaque stars保原值，UID写与登录选择原子替换；坏prefs拒绝覆盖。
+  prefs的合法JSON若根不是object也视为加载错误，拒绝持久UID绑定、登录选择与保存，原文件字节保留；缺文件仍允许新建。
   excel_cells及quick/reminders等仍按原设备语义，不属于该六字段隔离范围；星标类型冲突明确拒绝，不覆盖消息收藏正文。
 - 云历史是独立cloud/{uid}.bin，不在state.json；restore合并及UI回调核本地身份代次，旧worker发送也核捕获代次。
   备份包自身仍不新增UID/服务归属签名。服务器快照包含group_files/moments等部分索引，独立媒体本体与Web fid元数据不等于快照事务。

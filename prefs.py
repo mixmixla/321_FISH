@@ -134,6 +134,8 @@ class Prefs:
         try:
             with open(self._path, "r", encoding="utf-8") as f:
                 d = json.load(f)
+            if not isinstance(d, dict):
+                raise ValueError("preferences root must be an object")
             if isinstance(d, dict):
                 known = ("pinned", "muted", "archived", "stars", "unread_marks")
                 for k in known:

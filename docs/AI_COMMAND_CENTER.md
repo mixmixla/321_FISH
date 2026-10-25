@@ -1,7 +1,7 @@
 # 321_FISH AI 指挥中心
 
 本文件是当前执行状态与下一任务的唯一权威。需求见 task-packages，证据和审查结论见
-review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-23（UTC；以下旧记录保留原时区）。
+review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-25（UTC；以下旧记录保留原时区）。
 
 ## 2026-10-22 恢复前历史检查点（当前状态见路线区首项）
 
@@ -14,6 +14,20 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 用户要求今日停止；分支 feature/r1-restart-reconnect-20261021、HEAD ddf1c79b0143890a4c98941b6b5b500b6909e761。未提交：tests/test_client_core.py（真实持久 Hub 重开后原 ClientCore 续连回归）及 docs/task-packages/R1-RESTART-RECONNECT-01.md。既有对照 2P，最终目标用例 1P，领域 75P；独立代码复审 0 MUST。唯一实际全量 run r1-restart-reconnect-full-20261021-20261021-224241-6202d94027 于用户停工时中断：最后原进度 189/213 文件 passed，tests/test_server.py 标 running，无 summary，exit1 是人工中止，绝不判作全量通过或产品失败。原件留本地 _tmp_gui/test-gate/ 对应 run 与 _tmp_gui/r1-restart-reconnect-20261021/final-gate-output.txt。已确认无本轮 test_gate/pytest/Python 自有进程；未 commit/push/merge。明日先核 git status、进程、原进度/日志，再决定重新完成唯一有效全量门禁；之后独立终审、脱敏记录和经授权的正常集成。本检查点不代表 R1/M1/GUI/EXE/LAN 验收。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+
+## 当前有限可靠性批 · LOCAL-RELIABILITY-20261025 v1（2026-10-25）
+
+**IMPLEMENTED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / AI_ACCEPTED_TWO_FIXES_ONLY**。[Review](review-packages/LOCAL-RELIABILITY-20261025-r1.md)。用户约90分钟本机开发授权，目标06:27 UTC收尾，06:12后不开大任务；Astra代理/FAST偏好已传达，实际服务回执不可见。root唯一prefs/集成/文档/最终全量；server_scout在独立sched-finite-time-20261025树唯一写server.py与新测试；identity_scout独立只读设计/代码/原件审查。没有可用Goal工具，不声称启动Goal或恢复旧heartbeat。
+
+fresh Git/API/fetch核main完整base `41a01148f8d87464270993484c8a78f9fd9c1794`，可见protected=false/required checks off/rulesets空。集成树 `_tmp_gui/worktrees/local-reliability-20261025` / `fix/local-reliability-20261025` HEAD仍base，dirty仅本批明确文件。原main树和视频4759主目录clean保持；没有继承视频代码。
+
+已冻结并完成[PREFS-INVALID-ROOT-01 v1](task-packages/PREFS-INVALID-ROOT-01.md)与[SCHED-FINITE-TIME-01 v1](task-packages/SCHED-FINITE-TIME-01.md)，两正式设计与实际代码/原件独立审查0 MUST。prefs仅+2行：RED24F3P，领域7文件131P/exit0；SCHED仅+4/-1行：RED9F5P（durable确实FAILED），GREEN14P，领域6文件194P/exit0。两个RED保留；Infinity旧版已有past/far拒绝，8个prefs UID RED停在绑定检查，不冒称所有RED都实写覆盖。SCHED shell退出来自实现代理工具回执，独立磁盘审查核summary/progress/child exit，不虚构shell文件。
+
+server两文件逐SHA相同接入root；已冻结503输入/source702ccc0c4147cac8db36830124f75009da1160b58db44b78d3f059b4f72502d5，旧501仅prefs/server变化并新增两测试。唯一最终full命令 `.venv/Scripts/python.exe run.py test-all --run-dir <原工程>/_tmp_gui/lr25-full --label local-reliability-final`，root执行；开始后不修改产品/测试，不另开全量。专项及唯一full exec64067均已自然结束，无活动Python；full stdout/exit保存集成树 `_tmp_gui/local-reliability-20261025/full-*`。最终full225文件3111P0F20既有skip/actual exit0/813.691s，summary SHA1f48d637772b901315cfdfd408d5903056ce4308f399bb4983ec060d9c108ae7；root24后验全true，当前/冻结/快照503相同、旧223计数/skip保持。identity_scout独立225原log/503源/历史保留最终技术0 MUST，server_scout仅公开资料12路径/六摘要/425链接终审0 MUST；root据此仅AI_ACCEPTED两Task，不是用户/Pro或完整里程碑。下一动作：新增对象审计后正常提交快进main并非强制push；不重跑full。
+
+暂停视频4759及0xC0000005原失败、历史UID首full失败保持，不重诊断/重跑抹掉。完整GUI/自然退出/LAN/STT及现有EXE包含本修复未验收。首次创建UID共享父目录竞态仅候选，当前未实施。
+
+沿用户最新授权：只公开已验收代码、测试、项目文档、脱敏摘要，不PR、不强推/绕保护、不发布/上传EXE/raw/真实数据；未验收候选仅本地。06:12后只收尾，06:27前记录实际远端SHA、工作树/进程与下一动作。
 
 ## 当前本地试用刷新批 · R3-UID-BUILD-01 v1（2026-10-23）
 
@@ -623,6 +637,7 @@ retire_core_backend唯一server.py/server_store.py/核心tests；主控只资料
 路线依据：[原Pro路线与任务映射](路线来源与任务映射.md)。R0–R4和CC-01–CC-05为原接管建议，
 具体开工仍按用户批准批次和Pro前置审查；此前“R2棋类＋门禁”组合只是Codex建议，已让位于CC-02审查优先。
 Android、完整云账号、47款全面美术和大规模重写维持Backlog，不给未经验证的日期承诺。
+
 <!-- END_ROADMAP_VIEW -->
 
 ## 批次、角色与权限

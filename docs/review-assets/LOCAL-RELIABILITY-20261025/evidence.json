@@ -1,0 +1,172 @@
+{
+  "schema": "LOCAL-RELIABILITY-20261025.v1",
+  "base": "41a01148f8d87464270993484c8a78f9fd9c1794",
+  "source_inputs": 503,
+  "source_content_id": "702ccc0c4147cac8db36830124f75009da1160b58db44b78d3f059b4f72502d5",
+  "changed_source_inputs": [
+    "prefs.py",
+    "server.py",
+    "tests/test_prefs_invalid_root.py",
+    "tests/test_sched_finite_time.py"
+  ],
+  "stages": [
+    {
+      "run_id": "pir25-red",
+      "files": 1,
+      "totals": {
+        "failed": 24,
+        "passed": 3
+      },
+      "exit_code": 1,
+      "seconds": 1.69,
+      "source_content_id": "556ddc1e22f10c24a0f68be55e7c3910ac955c189110a8a075189fd492474ca7",
+      "summary_sha256": "88c512f5b64475092d2c9d3de3891527c8f51376f05a4f1aaf2522a2bc46eae6",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    },
+    {
+      "run_id": "pir25-green-domain",
+      "files": 7,
+      "totals": {
+        "passed": 131
+      },
+      "exit_code": 0,
+      "seconds": 20.313,
+      "source_content_id": "6be2a2ab620beb8e595f09767a51eeb24d147f2589b4c9d56e9f8fc48c5292ad",
+      "summary_sha256": "cfe65747014be6362cdf187c6b05fbb33aae02780484021b557dadeb0846b57d",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    },
+    {
+      "run_id": "sft25-red",
+      "files": 1,
+      "totals": {
+        "failed": 9,
+        "passed": 5
+      },
+      "exit_code": 1,
+      "seconds": 2.555,
+      "source_content_id": "62f1e55bbe67e6baaea8e311ad35a4a1cbad8fb0e30c0eef689a8ca4b59fb919",
+      "summary_sha256": "e248ea1ca4b78f2db4b1128d8f91f265238c52d84bb9310e331978fe2b90b237",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    },
+    {
+      "run_id": "sft25-green",
+      "files": 1,
+      "totals": {
+        "passed": 14
+      },
+      "exit_code": 0,
+      "seconds": 1.724,
+      "source_content_id": "f8434a887c972512e8ee8623910e81b6e2e401b7357c4c5da8644cd85453f8ee",
+      "summary_sha256": "13e0d1d08e3e623e2446652c6c99d034f7c66c7a0f87efd642bbdab810918304",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    },
+    {
+      "run_id": "sft25-domain",
+      "files": 6,
+      "totals": {
+        "passed": 194
+      },
+      "exit_code": 0,
+      "seconds": 28.222,
+      "source_content_id": "f8434a887c972512e8ee8623910e81b6e2e401b7357c4c5da8644cd85453f8ee",
+      "summary_sha256": "7b207763da12b9ccbd04388274ef7c2dcc229ff8617fb7c1f17d839cf7b770f5",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    }
+  ],
+  "final_full": {
+    "run_id": "lr25-full",
+    "files": 225,
+    "totals": {
+      "passed": 3111,
+      "skipped": 20
+    },
+    "exit_code": 0,
+    "seconds": 813.691,
+    "source_content_id": "702ccc0c4147cac8db36830124f75009da1160b58db44b78d3f059b4f72502d5",
+    "summary_sha256": "1f48d637772b901315cfdfd408d5903056ce4308f399bb4983ec060d9c108ae7",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true,
+      "actual_shell_exit_zero": true,
+      "current_frozen_snapshot_exact": true,
+      "input_count_503": true,
+      "exact_225_test_set": true,
+      "old_counts_and_skips_unchanged": true,
+      "new_tests_match_reviewed_domains": true,
+      "full_passed": true,
+      "interpreter_exact": true,
+      "dependencies_exact": true,
+      "runner_unchanged": true,
+      "sandbox_unchanged": true,
+      "test_manifest_exact": true,
+      "old_success_preserved": true,
+      "uid_first_failure_preserved": true,
+      "video_failure_preserved": true,
+      "reviewed_stage_evidence_preserved": true
+    }
+  },
+  "scope": [
+    "PREFS-INVALID-ROOT-01 v1",
+    "SCHED-FINITE-TIME-01 v1"
+  ],
+  "not_verified": [
+    "complete native GUI",
+    "natural application exit",
+    "physical LAN",
+    "STT",
+    "existing EXE includes these source fixes"
+  ],
+  "historical_failed_runs_preserved": true,
+  "scheduler_shell_exit_source": "implementation tool receipts; independent disk review covers child exit/summary/progress"
+}

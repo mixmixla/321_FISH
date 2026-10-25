@@ -17,6 +17,9 @@
   本地乐观行与回显去重；纯 core.history 会漏掉尚未回显的行。
 - 服务器定时消息 `SCHED_*` 是权威持久化；客户端提醒、本地草稿、bot 内存提醒
   是不同对象，不因名字相似合并生命周期。
+  `fire_at`转换必须拒绝溢出及NaN/Infinity；仅做past/far比较无法拦NaN，durable全量快照验证会因此停服务。
+- prefs加载失败须保留原文件；合法JSON的非object根同样无有效配置schema，不得用默认值覆盖。
+  UID绑定、登录选择与普通保存共用此拒写边界，缺文件和合法object保持可写。
 - CC-02A-RETIRE-CORE以独立retired字段保留UID/昵称占用，核心t0与CHAT/burn/draft/sched/profile最终C在Hub→bus内存锁内排序。
   异步prepare不是提交许可；有效JSON持久确认后才报confirmed，失败阻断不自动回开。首次失败无durable intent不保证重启屏障。
   save显式成功、actual writer fresh capture及运行态请求代次是最小前置；GUI、CLOUD/upload/bot回复/preview资源、整体loader/marker仍延期，

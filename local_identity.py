@@ -27,14 +27,17 @@ def scoped_directory(root, identity):
     base = Path(root).absolute()
     target = base / "v2" / scope / f"uid-{uid}"
     for path in (*reversed(base.parents), base, base / "v2", base / "v2" / scope, target):
-        if path.exists() or path.is_symlink():
-            info = os.lstat(path)
-            if (stat.S_ISLNK(info.st_mode)
-                    or getattr(info, "st_file_attributes", 0) & 0x400
-                    or not stat.S_ISDIR(info.st_mode)):
-                raise OSError("local history path is not a plain directory")
-        else:
-            path.mkdir()
+        if not (path.exists() or path.is_symlink()):
+            try:
+                path.mkdir()
+            except FileExistsError:
+                # Another account may have created this shared parent.
+                pass
+        info = os.lstat(path)
+        if (stat.S_ISLNK(info.st_mode)
+                or getattr(info, "st_file_attributes", 0) & 0x400
+                or not stat.S_ISDIR(info.st_mode)):
+            raise OSError("local history path is not a plain directory")
     return str(target)
 
 

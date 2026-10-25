@@ -20,6 +20,7 @@
   `fire_at`转换必须拒绝溢出及NaN/Infinity；仅做past/far比较无法拦NaN，durable全量快照验证会因此停服务。
 - prefs加载失败须保留原文件；合法JSON的非object根同样无有效配置schema，不得用默认值覆盖。
   UID绑定、登录选择与普通保存共用此拒写边界，缺文件和合法object保持可写。
+- `_san_geo`把live expire转换失败/溢出/非有限值按缺省0送入既有TTL夹取；坐标转换溢出丢弃geo，正文保持。CHAT与GEO_LIVE共用清洗，NaN不得进入durable快照。
 - CC-02A-RETIRE-CORE以独立retired字段保留UID/昵称占用，核心t0与CHAT/burn/draft/sched/profile最终C在Hub→bus内存锁内排序。
   异步prepare不是提交许可；有效JSON持久确认后才报confirmed，失败阻断不自动回开。首次失败无durable intent不保证重启屏障。
   save显式成功、actual writer fresh capture及运行态请求代次是最小前置；GUI、CLOUD/upload/bot回复/preview资源、整体loader/marker仍延期，
@@ -64,6 +65,7 @@ Excel 接线：`client.py` → `widgets.excel_chrome.ExcelChrome` →
 
 ## 权限、路径与预览
 
+- UID目录共享父层的mkdir可遇到合法竞争者；只容忍FileExistsError，并在预存、创建成功、竞争后三路径均lstat拒绝非目录/symlink/reparse。不能用此修复声称同UID首次key竞态或检查后恶意替换已解决。
 - 群文件分块/完成须验证成员、上传者 uid、偏移和实际字节数，并把检查、写入、
   状态推进放入同一序列化边界。fid 可猜测，不能当成授权。
 - 动态图片 HTTP 入口需登录，图片须仍被现存动态引用；删除动态清理安全目录

@@ -5657,7 +5657,7 @@ class Hub:
         try:
             lat = float(raw.get("lat"))
             lon = float(raw.get("lon"))
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             return {}
         if not (abs(lat) <= 90.0 and abs(lon) <= 180.0):
             return {}
@@ -5670,7 +5670,9 @@ class Hub:
             now = _now()
             try:
                 exp = float(raw.get("expire") or 0.0)
-            except (TypeError, ValueError):
+            except (TypeError, ValueError, OverflowError):
+                exp = 0.0
+            if not math.isfinite(exp):
                 exp = 0.0
             geo["expire"] = round(min(max(exp, now + self.cfg.geo_live_ttl), now + 3600.0), 3)
             sid = raw.get("session")

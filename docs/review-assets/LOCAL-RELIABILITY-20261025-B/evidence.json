@@ -1,0 +1,219 @@
+{
+  "schema": "LOCAL-RELIABILITY-20261025-B.v1",
+  "base": "4690d0ca07811429b66a73c67239df643481cf9c",
+  "source_inputs": 505,
+  "source_content_id": "1f5f2de16d3acb5eac082596863cfb193a453f75ad0cffd7c322aac7ae9d4be5",
+  "changed_source_inputs": [
+    "local_identity.py",
+    "server.py",
+    "tests/test_geo_finite_expiry.py",
+    "tests/test_uid_directory_race.py"
+  ],
+  "stages": [
+    {
+      "run_id": "uidr25-red",
+      "files": 1,
+      "totals": {
+        "failed": 6,
+        "passed": 8
+      },
+      "exit_code": 1,
+      "seconds": 1.362,
+      "source_content_id": "1c289db98ed77af8757c1e665896851e85f89baef272b96be11ed07533f54202",
+      "summary_sha256": "be83a477819d8827858e287e96c65d3e028228163ade9dfb4e402b75adb511b6",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    },
+    {
+      "run_id": "uidr25-green",
+      "files": 1,
+      "totals": {
+        "passed": 14
+      },
+      "exit_code": 0,
+      "seconds": 1.256,
+      "source_content_id": "03f6aff0ffa9c37543b559f359f6845a02f83b447236925d6cd307d8bec09a37",
+      "summary_sha256": "4f8c722fa3cd3e31ada1d80ebad001514e5e54b1ce8f4b63a82ff50989b81386",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    },
+    {
+      "run_id": "uidr25-domain",
+      "files": 5,
+      "totals": {
+        "passed": 90
+      },
+      "exit_code": 0,
+      "seconds": 28.522,
+      "source_content_id": "03f6aff0ffa9c37543b559f359f6845a02f83b447236925d6cd307d8bec09a37",
+      "summary_sha256": "a8927d011cfc345ad3cfc77f61320d2615d175ea1af3a4276e95028e68340f7d",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    },
+    {
+      "run_id": "geo25-red",
+      "files": 1,
+      "totals": {
+        "failed": 11,
+        "passed": 17
+      },
+      "exit_code": 1,
+      "seconds": 3.623,
+      "source_content_id": "2f5ac520cf2eed8ab5adddf400fa54b431b8d530e5551d40f3641b9a2dfeb3e1",
+      "summary_sha256": "c459b752cd17a0e72d81a954a0ad28d863106e8e0c426d2be36e8e6a16b0f2c3",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    },
+    {
+      "run_id": "geo25-green-domain-02",
+      "files": 5,
+      "totals": {
+        "passed": 123,
+        "failed": 2
+      },
+      "exit_code": 1,
+      "seconds": 41.795,
+      "source_content_id": "ee83b1012324f19c39e868a7e680677999a2d91038e72af86f42d80e6ae264e6",
+      "summary_sha256": "b30aff094ce7a940078b3acbdd1725ff96a2c05d5d7ebd6f27554ae3e198b40a",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    },
+    {
+      "run_id": "geo25-red-02",
+      "files": 1,
+      "totals": {
+        "failed": 11,
+        "passed": 17
+      },
+      "exit_code": 1,
+      "seconds": 3.668,
+      "source_content_id": "ede97cae72a612ba2fbd2b9a19ca37a6a87db58d9e250cea600013409c03aab5",
+      "summary_sha256": "484c0a815924bf2bfa3620629c3d53b46343fb4a304e87968c20ef2d3625da5b",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    },
+    {
+      "run_id": "geo25-green-03",
+      "files": 1,
+      "totals": {
+        "passed": 28
+      },
+      "exit_code": 0,
+      "seconds": 1.789,
+      "source_content_id": "ab0b407fd09edebb16f17dd9b399f863fa00cf0b5d58300541ac61ab65bf31f4",
+      "summary_sha256": "b70818d1f443ed4120abb215fee7b7c7285c92831589312081f45be85636be72",
+      "checks": {
+        "source_snapshot_exact": true,
+        "progress_records_exact": true,
+        "test_set_exact": true,
+        "original_logs_complete": true,
+        "original_log_counts_exact": true,
+        "original_sandbox_exact": true,
+        "single_attempt_cleanup_policy": true,
+        "manifest_fingerprint_exact": true
+      }
+    }
+  ],
+  "final_full": {
+    "run_id": "lrb25-full",
+    "files": 227,
+    "totals": {
+      "passed": 3153,
+      "skipped": 20
+    },
+    "exit_code": 0,
+    "seconds": 818.796,
+    "source_content_id": "1f5f2de16d3acb5eac082596863cfb193a453f75ad0cffd7c322aac7ae9d4be5",
+    "summary_sha256": "55fd8fe1f9cb306e738a6a459de9244ded38ab5a0121e14abc801d96c4da17ad",
+    "checks": {
+      "source_snapshot_exact": true,
+      "progress_records_exact": true,
+      "test_set_exact": true,
+      "original_logs_complete": true,
+      "original_log_counts_exact": true,
+      "original_sandbox_exact": true,
+      "single_attempt_cleanup_policy": true,
+      "manifest_fingerprint_exact": true,
+      "actual_shell_exit_zero": true,
+      "current_frozen_snapshot_exact": true,
+      "source_inputs_505": true,
+      "complete_227_test_set": true,
+      "old_counts_and_skips_unchanged": true,
+      "new_tests_match_reviewed_counts": true,
+      "full_passed": true,
+      "interpreter_exact": true,
+      "dependencies_exact": true,
+      "runner_unchanged": true,
+      "sandbox_unchanged": true,
+      "test_manifest_exact": true,
+      "first_batch_full_preserved": true,
+      "uid_old_failure_preserved": true,
+      "video_failure_preserved": true,
+      "refused_command_preserved": true,
+      "red2_product_restored": true,
+      "all_original_stage_evidence_preserved": true
+    }
+  },
+  "scopes": [
+    "UID-DIRECTORY-RACE-01 v1.1",
+    "GEO-FINITE-EXPIRY-01 v1"
+  ],
+  "historical_failures_preserved": true,
+  "not_verified": [
+    "same-UID first-key initialization race",
+    "hostile replacement after lstat",
+    "complete native GUI",
+    "natural application exit",
+    "physical LAN",
+    "STT",
+    "existing EXE contains these fixes"
+  ]
+}

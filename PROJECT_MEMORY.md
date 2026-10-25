@@ -49,6 +49,7 @@
 - `ServerStore` 保存启用持久化时的最新全量快照；audit 只记元数据。云历史在
   客户端加密，服务器存不透明 blob；本地 JSONL/prefs 仍含实际用户内容。
 - 定时消息fire_at在Hub入队前拒绝转换溢出和非有限值，避免NaN进入全量快照并触发durable恢复校验失败停服务；有限时间窗口仍沿用past/far语义。
+- 位置清洗拒绝坐标转换溢出；live expire转换失败或非有限值按缺省0再沿既有TTL下限/一小时上限夹取，CHAT与GEO_LIVE共用此门，避免NaN进入持久历史。
 - `games_pkg` 注册 47 个当前游戏类，`RoomManager` 管房间，`BaseGame` 的
   snapshot/private/act/tick/ended 管公开、私有与规则；桌面 painter/点击/按钮
   分别在 `client_gameui`、`client._GAME_ACTIONS`，注册不等于 UI 完整可玩。
@@ -86,6 +87,7 @@
 - 预认证、volatile或缺有效durable scope使用独占fresh临时bundle，不按昵称读取或认领旧顶层资源；旧原件保留、不自动迁移。
   同目标普通断线保留已确认离线历史，显式stop/切目标/认证拒绝撤销旧身份；新WELCOME、旧帧/worker/UI队列以本地代次隔离。
   持久目录/历史/密钥及媒体写目标拒绝既存reparse别名，坏key不自动覆盖。下载目录仍为全局_log_dir()/downloads。
+- scoped_directory容忍共享父目录已由另一UID创建；预存、成功mkdir和FileExistsError后三路径均lstat拒绝非目录/symlink/reparse，其它IO错误保持拒绝。此边界不保证同UID首次key初始化或lstat后的恶意替换安全。
 - ChatWindow的pinned/muted/archived/drafts/stars/unread_marks六字段在身份确认前为空，确认durable身份后读写uid_profiles；
   launcher只记登录昵称、不调用旧昵称档案认领。legacy顶层/profiles/opaque stars保原值，UID写与登录选择原子替换；坏prefs拒绝覆盖。
   prefs的合法JSON若根不是object也视为加载错误，拒绝持久UID绑定、登录选择与保存，原文件字节保留；缺文件仍允许新建。

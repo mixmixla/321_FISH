@@ -1,6 +1,6 @@
 # LOCAL-RELIABILITY-BUILD-01 r1
 
-2026-10-25 THREE_BUILD_CODE_PACKAGE_PASSED / CLI_PREFLIGHT_PASSED / FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / AI_ACCEPTED_BUILD_PREFLIGHT_ONLY / NOT_MERGED。
+2026-10-25 THREE_BUILD_CODE_PACKAGE_PASSED / CLI_PREFLIGHT_PASSED / FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / AI_ACCEPTED_BUILD_PREFLIGHT_ONLY / MERGED_MAIN / REMOTE_VERIFIED。
 [Task v1](../task-packages/LOCAL-RELIABILITY-BUILD-01.md) / [脱敏证据](../review-assets/LOCAL-RELIABILITY-BUILD-20261025/evidence.json)。
 base Git/API核main `f2ea5b5be4410fa8bb0c31f2f1944ecfb95dd927`。root唯一构建/运行/资料，
 server_scout仅准备ignored helper，identity_scout独立设计/实际脚本/前置0 MUST及最终原件审查。
@@ -48,7 +48,12 @@ identity_scout独立重算505/current/full、503副本与两spec、三入口code
 必需PYZ、包/校验单/旧包、四真实退出及六Job清理；独立严格遍历三profile逐size/SHA等原清单，
 核原audit与summary、scope/UID路径且不读key/body，最终技术0 MUST。root据此仅记录
 AI_ACCEPTED_BUILD_PREFLIGHT_ONLY。server_scout另审五公开资料/400链接/白名单摘要映射与隐私，
-0 MUST，非其helper技术自验；提交新增对象另审后正常集成。
+0 MUST，非其helper技术自验。全部12新增对象（1commit/6tree/5文本blob）及metadata由server_scout
+独立逐内容SHA核验0 MUST，父提交及五路径正确后普通main快进/非强制push；Git/API双核交付提交
+`a1bf30350ddf0aabaae9ae974bb0a7362b44c430`。fresh main仍base、protected=false/可见rulesets空，
+check-runs/status contexts/Actions均0，aggregate pending/total0，不称CI通过。
+源码/包无变化，main与集成树在交付核验时clean。末三资料回执另审对象后正常推送，最终leaf以Git refs为准，
+不递归写自身SHA，不重复构建/预检/full。
 
 ## 交付与续接边界
 

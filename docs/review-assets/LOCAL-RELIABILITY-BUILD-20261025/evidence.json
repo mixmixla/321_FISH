@@ -1,0 +1,324 @@
+{
+  "schema": "LOCAL-RELIABILITY-BUILD-20261025.v1",
+  "base": "f2ea5b5be4410fa8bb0c31f2f1944ecfb95dd927",
+  "source_inputs": 505,
+  "source_content_id": "1f5f2de16d3acb5eac082596863cfb193a453f75ad0cffd7c322aac7ae9d4be5",
+  "source_gate": {
+    "run": "lrb25-full",
+    "totals": {
+      "passed": 3153,
+      "skipped": 20
+    },
+    "files": 227,
+    "exit_code": 0
+  },
+  "source_full_summary_sha256": "55fd8fe1f9cb306e738a6a459de9244ded38ab5a0121e14abc801d96c4da17ad",
+  "source_fixes": [
+    "PREFS-INVALID-ROOT-01",
+    "SCHED-FINITE-TIME-01",
+    "UID-DIRECTORY-RACE-01",
+    "GEO-FINITE-EXPIRY-01"
+  ],
+  "controllers": [
+    {
+      "name": "entry_controller.py",
+      "sha256": "90c60b5b470f4d65a087b4a675fdd2851d2d46f9f6a1231c800826c2d2779dcd",
+      "syntax": "parsed"
+    },
+    {
+      "name": "freeze.py",
+      "sha256": "620670a54127f2b9de8b04e25958075613764da64831b91d13d8ac41e264d9c7",
+      "syntax": "parsed"
+    },
+    {
+      "name": "pack.py",
+      "sha256": "c15c5f5d47c8b459f9bcb26ce51104c4d6d146a05d1ee0b3aa02027e1a80600c",
+      "syntax": "parsed"
+    },
+    {
+      "name": "validate_build.py",
+      "sha256": "3bed43d31eb2095152ced356083d60dd2aba0a01cfc9424079cafd34a213830c",
+      "syntax": "parsed"
+    },
+    {
+      "name": "validate_final.py",
+      "sha256": "7603244407f16587f85c49d3da232bbcb8859b400f0f2325c8f8cec0fa8b2360",
+      "syntax": "parsed"
+    }
+  ],
+  "build": {
+    "run_id": "build-20261025-055405-7a1c8d318d",
+    "summary_sha256": "3d43ec61387ebd243ab6533b40d27a5e83e0c99d2b073c07cb7c6b3b36c533db",
+    "unchanged_inputs": 503,
+    "normal_spec_changes": [
+      {
+        "path": "client.spec",
+        "frozen_sha256": "2d814b6bbe67c8b6508f10a688c6d948d15c8ab4c815e5963316e37a46b6e347",
+        "generated_sha256": "189d01670a8880be2a9161870d5d17ca1d70cca0ea729912c7d96a4b9edbf9a4"
+      },
+      {
+        "path": "server.spec",
+        "frozen_sha256": "e925b66ba6066d181e89b24a647d2295226104a5ddbe80ff7191e3ba337641f5",
+        "generated_sha256": "22b8803ef8db325437ab6a6c25a57e73119be6f97b68c55483bb82123202ea4b"
+      }
+    ],
+    "archives": {
+      "server": {
+        "entry_code_matches_current_except_filename": true,
+        "required_pyz_modules": [
+          "protocol",
+          "server_store",
+          "server_recovery",
+          "boardgames.registry",
+          "games_pkg.gomoku",
+          "games_pkg.connect4"
+        ],
+        "required_module_code_matches_current_except_filename": {
+          "protocol": true,
+          "server_store": true,
+          "server_recovery": true,
+          "boardgames.registry": true,
+          "games_pkg.gomoku": true,
+          "games_pkg.connect4": true
+        },
+        "size": 26084622,
+        "sha256": "8e4e666e4e40d559594452a9692aaf97afe2c90cd060cefd45e831a2ed5b882b"
+      },
+      "client": {
+        "entry_code_matches_current_except_filename": true,
+        "required_pyz_modules": [
+          "protocol",
+          "server_store",
+          "server_recovery",
+          "boardgames.registry",
+          "games_pkg.gomoku",
+          "games_pkg.connect4",
+          "client_core",
+          "local_identity",
+          "prefs",
+          "crypto_e2ee"
+        ],
+        "required_module_code_matches_current_except_filename": {
+          "protocol": true,
+          "server_store": true,
+          "server_recovery": true,
+          "boardgames.registry": true,
+          "games_pkg.gomoku": true,
+          "games_pkg.connect4": true,
+          "client_core": true,
+          "local_identity": true,
+          "prefs": true,
+          "crypto_e2ee": true
+        },
+        "size": 27365719,
+        "sha256": "da6b3dc9fd335a8a09e44c05efc074ff599e45325b4090d430419ce51f7fed8c"
+      },
+      "StartTrial": {
+        "entry_code_matches_current_except_filename": true,
+        "required_pyz_modules": [
+          "friend_trial_process"
+        ],
+        "required_module_code_matches_current_except_filename": {
+          "friend_trial_process": true
+        },
+        "size": 9738910,
+        "sha256": "0de86136f94834a18f79e0c762f79d5aa5ad36079afe0adc5cf1e8f5b392913f"
+      }
+    },
+    "optional": {
+      "vosk_package_found": false,
+      "model_in_copy": false,
+      "speech_transcription_verified": false
+    },
+    "duration_seconds": 55.909,
+    "entry_seconds": 8.847,
+    "entry_summary_sha256": "a9abc143fe6279b8918f749772259ad73e9ddd286e6b73b280bb7b6bcdd71550",
+    "actual_exits": {
+      "build-exit.json": 0,
+      "entry-build-exit.json": 0
+    }
+  },
+  "cli": {
+    "run_id": "cli-20261025-055613-e5bffaeca9",
+    "summary_sha256": "4681f215a6b45f2879ee2c01cb75e8150292221d4d9ba3746ec41243fda77431",
+    "actual_exit": 0,
+    "jobs": [
+      {
+        "ok": true,
+        "close_ok": true,
+        "active_after": 0
+      },
+      {
+        "ok": true,
+        "close_ok": true,
+        "active_after": 0
+      }
+    ],
+    "actual_compiled_demo": false
+  },
+  "preflight": {
+    "run_id": "run-20261025-055628-2f54bb1b23",
+    "summary_sha256": "cad7186edf144105f55d940277c2317223d694008decc74515d07d0325d0946b",
+    "exit_code": 0,
+    "checks": {
+      "actual_build_entry_cli_runtime_exits_zero": true,
+      "current_source_equals_frozen_full": true,
+      "build_copy_only_two_specs_generated": true,
+      "package_seven_unchanged": true,
+      "checksum_six_exact": true,
+      "package_three_exes_equal_build": true,
+      "formal_source_dir_is_new_bundle": true,
+      "no_exe_override_and_images_exact": true,
+      "actual_six_runtime_probes_ok": true,
+      "wire_steps_complete": true,
+      "four_runtime_jobs_closed_zero": true,
+      "cli_two_jobs_closed_zero": true,
+      "private_desktop_available": true,
+      "profiles_strict_and_still_exact": true,
+      "only_new_synthetic_profile_paths": true,
+      "package_fingerprint_one_input_preserved": true,
+      "device_network_flags_exact": true,
+      "source_full_summary_preserved": true,
+      "first_failed_full_preserved": true,
+      "video_unmerged": true,
+      "old_package_seven_unchanged": true,
+      "two_audit_uids_distinct": true,
+      "uid_directories_match_store_and_audit": true,
+      "uid_identity_leaves_present_without_reading": true,
+      "no_new_nickname_directory": true,
+      "optional_uid_profiles_current_only": true
+    },
+    "uid_directory_observation": [
+      {
+        "uid_directory_matches_accepted_store_and_audit": true,
+        "own_e2ee_identity_leaf_exists_without_reading": true,
+        "no_new_nickname_directory": true,
+        "optional_uid_profiles_current_only": true,
+        "uid_profile_present": false
+      },
+      {
+        "uid_directory_matches_accepted_store_and_audit": true,
+        "own_e2ee_identity_leaf_exists_without_reading": true,
+        "no_new_nickname_directory": true,
+        "optional_uid_profiles_current_only": true,
+        "uid_profile_present": false
+      }
+    ],
+    "profile_counts": {
+      "server": {
+        "before": 5,
+        "after": 1081
+      },
+      "client": {
+        "before": 5,
+        "after": 1078
+      },
+      "client_beta": {
+        "before": 5,
+        "after": 1078
+      }
+    },
+    "bundle_files": [
+      {
+        "path": "LICENSE",
+        "size": 35823,
+        "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809"
+      },
+      {
+        "path": "README.md",
+        "size": 894,
+        "sha256": "bdfd0343bf09955ff4a6ba515f01589b1c5e6f1cac34617b2e80f0d43a4653f3"
+      },
+      {
+        "path": "SHA256SUMS.txt",
+        "size": 479,
+        "sha256": "f6e212259c7f1032f12758ebbb16b569b5c8a52fc7740793bbac5cf5527a785f"
+      },
+      {
+        "path": "StartTrial.exe",
+        "size": 9738910,
+        "sha256": "0de86136f94834a18f79e0c762f79d5aa5ad36079afe0adc5cf1e8f5b392913f"
+      },
+      {
+        "path": "VERIFICATION.json",
+        "size": 887,
+        "sha256": "56623ffb11bbc87de37b18b2a5e7246d5b1e4b9fca5b7eae86f6877e6ecac8b4"
+      },
+      {
+        "path": "dist/client.exe",
+        "size": 27365719,
+        "sha256": "da6b3dc9fd335a8a09e44c05efc074ff599e45325b4090d430419ce51f7fed8c"
+      },
+      {
+        "path": "dist/server.exe",
+        "size": 26084622,
+        "sha256": "8e4e666e4e40d559594452a9692aaf97afe2c90cd060cefd45e831a2ed5b882b"
+      }
+    ],
+    "package_fingerprint_entry_count": 1,
+    "actual_shell_exit": 0,
+    "jobs": {
+      "client": {
+        "ok": true,
+        "close_ok": true,
+        "active_after": 0
+      },
+      "client_beta": {
+        "ok": true,
+        "close_ok": true,
+        "active_after": 0
+      },
+      "server": {
+        "ok": true,
+        "close_ok": true,
+        "active_after": 0
+      },
+      "initialize": {
+        "ok": true,
+        "close_ok": true,
+        "active_after": 0
+      }
+    },
+    "wire_steps": [
+      {
+        "name": "welcome"
+      },
+      {
+        "name": "chat"
+      },
+      {
+        "name": "chat"
+      },
+      {
+        "name": "gomoku",
+        "moves": 9,
+        "next_round": 2
+      },
+      {
+        "name": "gomoku_leave"
+      },
+      {
+        "name": "connect4",
+        "moves": 7,
+        "next_round": 2
+      },
+      {
+        "name": "connect4_leave"
+      }
+    ]
+  },
+  "not_verified": [
+    "four failure scenarios dynamically exercised in EXE",
+    "complete GUI interaction",
+    "natural application exit",
+    "physical LAN",
+    "other Windows/DPI",
+    "real hardware",
+    "speech transcription",
+    "complete EXE UID lifecycle",
+    "same-UID first-key concurrency"
+  ],
+  "binary_release_or_upload": false,
+  "raw_evidence_public": false,
+  "uid_scope_value_public": false
+}

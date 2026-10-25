@@ -1,0 +1,93 @@
+{
+  "run_id": "kir25-red",
+  "files": 1,
+  "totals": {
+    "failed": 2
+  },
+  "exit_code": 1,
+  "seconds": 1.221,
+  "source_content_id": "15bba77c4b500c5763c9f4ca46128adafb8554a02ddd9dae05497bbcd8485857",
+  "summary_sha256": "8403037942d6d03f41ddd79703ec4a4599aed0a95157e5baea1e5ea138aa61d9",
+  "checks": {
+    "source_snapshot_exact": true,
+    "progress_records_exact": true,
+    "test_set_exact": true,
+    "original_logs_complete": true,
+    "original_log_counts_exact": true,
+    "original_sandbox_exact": true,
+    "single_attempt_cleanup_policy": true,
+    "manifest_fingerprint_exact": true
+  },
+  "base": "18a4a5e4e90bc1669dda142c9f0db02dc14a2a7d",
+  "source_inputs": 506,
+  "candidate_test_sha256": "3467f3035f2796d6e68d59241496b883d2c399c7a19ecf963755ce76064aacc0",
+  "actual_shell_exit": 1,
+  "accepted_main_source_inputs": 505,
+  "accepted_main_source_content_id": "1f5f2de16d3acb5eac082596863cfb193a453f75ad0cffd7c322aac7ae9d4be5",
+  "accepted_main_source_unchanged": true,
+  "worker_snapshot_current_exact": true,
+  "checkout_only_line_ending_differences": [
+    "tests/test_geo_finite_expiry.py",
+    "tests/test_prefs_invalid_root.py",
+    "tests/test_sched_finite_time.py",
+    "tests/test_uid_directory_race.py"
+  ],
+  "synthetic_observations": [
+    {
+      "A": {
+        "authenticated": false,
+        "identity_bound": false,
+        "local_storage_errors": 1,
+        "manual_login_required": true,
+        "stop_set": true
+      },
+      "B": {
+        "authenticated": true,
+        "identity_bound": true,
+        "local_storage_errors": 0,
+        "manual_login_required": false,
+        "stop_set": false
+      },
+      "both_authenticated": false,
+      "cores_stopped": true,
+      "empty_file_observed": [],
+      "fsync_completed": {
+        "A": 0,
+        "B": 1
+      },
+      "gate_hits": 1,
+      "identity_exception_types": {
+        "A": [
+          [
+            "FileExistsError"
+          ]
+        ],
+        "B": []
+      },
+      "key_unchanged_after_stop": true,
+      "opened_key_handles_closed": {
+        "A": true,
+        "B": true
+      },
+      "published_key_preserved": true,
+      "same_public_key": false,
+      "thread_exceptions": [],
+      "threads_stopped": true,
+      "window": "before_exclusive_open"
+    },
+    {
+      "cores_stopped": true,
+      "threads_stopped": true,
+      "window": "before_first_dump"
+    }
+  ],
+  "classification": {
+    "before_exclusive_open": "confirmed real FileExistsError; terminal normal-behavior assertion failed",
+    "before_first_dump": "blocked by exact exception-chain fixture assertion; E2EEError/JSONDecodeError/StopIteration observed, terminal report not reached"
+  },
+  "task_acceptance": "PARTIAL_BLOCKED / NOT_AI_REPRO_CONFIRMED_TASK",
+  "candidate_test_committed": false,
+  "product_changes": false,
+  "retry_performed": false,
+  "cross_process_reproduction_verified": false
+}

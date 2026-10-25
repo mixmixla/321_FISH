@@ -1,6 +1,6 @@
 # KEY-INIT-RACE-REPRO-01 r1
 
-2026-10-25 PARTIAL_BLOCKED / NOT_AI_REPRO_CONFIRMED_TASK / NO_PRODUCT_CHANGE / LOCAL_CANDIDATE_ONLY。
+2026-10-25 PARTIAL_BLOCKED / NOT_AI_REPRO_CONFIRMED_TASK / NO_PRODUCT_CHANGE / LOCAL_CANDIDATE_ONLY / DOCUMENTATION_MERGED_MAIN。
 [Task v1](../task-packages/KEY-INIT-RACE-REPRO-01.md) / [脱敏证据](../review-assets/KEY-INIT-RACE-REPRO-20261025/evidence.json)。
 base为已Git/API核main `18a4a5e4e90bc1669dda142c9f0db02dc14a2a7d`。
 root独立key-init-race-repro-20261025树/diag同名分支；server_scout唯一写本地候选测试/ignored辅助，
@@ -53,6 +53,12 @@ red-output、red-exit、run-index、safe-observations和辅助错误说明；roo
 含已有合法/坏key、reparse、写入失败、超时/关闭与不同UID边界；本批不批准实现。
 
 identity_scout已对最终技术分类/披露独立审0 MUST，server_scout仅审公开准确性/隐私，
-五路径/404相对链接/投影与原件映射0 MUST，非其测试技术自验。新增Git对象另审后仅交付这五资料。
+五路径/404相对链接/投影与原件映射0 MUST，非其测试技术自验。全部12新对象（1commit/6tree/5文本blob）
+及Codex metadata另经server_scout独立逐内容SHA审0 MUST，确认候选test/key SHA/raw未入tree后，
+仅这五资料正常main快进/非强制push；Git/API双核文档交付提交
+`562929028b303c4c1b435f9a29a447ff94343b5c`。fresh main仍base、protected=false/可见rulesets空；
+check-runs/status contexts/Actions均0、aggregate pending/total0，不称CI通过。
+此末三资料回执另审后正常推送，最终leaf以Git refs为准，不递归回写自身SHA。源码/包保持，
+失败候选仍只在诊断树未跟踪，不因文档合并改变诊断未验收结论。
 资料通过不代表诊断Task或产品修复通过；
 仍保留完整GUI、自然退出、LAN、异机/DPI、STT和视频失败边界，不发布二进制或原始资料。

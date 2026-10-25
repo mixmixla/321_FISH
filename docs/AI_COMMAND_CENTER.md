@@ -17,11 +17,11 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 当前有限密钥竞态复现 · KEY-INIT-RACE-REPRO-01 v1（2026-10-25）
 
-**PARTIAL_BLOCKED / NOT_AI_REPRO_CONFIRMED_TASK / LOCAL_CANDIDATE_ONLY**。[Task v1](task-packages/KEY-INIT-RACE-REPRO-01.md)只在剩余时间验证两个同UID首次key窗口，非修复。当前base/HEAD/Git/API main为18a4a5e4e90bc1669dda142c9f0db02dc14a2a7d；root集成树仅本批五资料可公开，原505源码和全部包保持不变。
+**PARTIAL_BLOCKED / NOT_AI_REPRO_CONFIRMED_TASK / LOCAL_CANDIDATE_ONLY / DOCUMENTATION_MERGED_MAIN**。[Task v1](task-packages/KEY-INIT-RACE-REPRO-01.md)只在剩余时间验证两个同UID首次key窗口，非修复。base与诊断worker HEAD为18a4a5e4e90bc1669dda142c9f0db02dc14a2a7d；当前文档交付HEAD/Git/API main为562929028b303c4c1b435f9a29a447ff94343b5c；root集成树本批五资料已交付，末回执仅三资料dirty，原505源码和全部包保持不变。
 
 server_scout现已授权在新key-init-race-repro-20261025树唯一写本地候选两例测试/ignored辅助；identity_scout独立设计/测试/原件审；root唯一公开资料/集成。预建UID目录、真实Core/同UID、Event分别门控open(x)之前与创建空文件后dump之前；只一次两例RED，须证明实际FileExists或JSONDecodeError链而非fixture超时，全部有界清理。
 
-唯一kir25-red于06:08:06启动、06:08:09结束，actual exit1/2F/1.221s；候选SHA3467f3035f2796d6e68d59241496b883d2c399c7a19ecf963755ce76064aacc0，summary8403037942d6d03f41ddd79703ec4a4599aed0a95157e5baea1e5ea138aa61d9。第一例完整FileExists/赢家保持，第二例因实际三段异常链而在精确夹具断言提前失败、缺最终状态；原件已独立确认此分类，未整体验收，未改测试/产品/重跑。当前无活动进程，identity_scout技术分类/披露0 MUST、server_scout公开5路径/404链接/隐私0 MUST（仅资料审，不等诊断Task通过）；下一步仅文档提交/对象审计；06:27收尾。未命中只记录未知，不重跑抹除；无产品修复/full/build。本轮未达到整体AI_REPRO_CONFIRMED_ONLY，失败候选测试不入main，原件只本地，公开仅脱敏五资料。旧视频/历史失败/GUI等未验结论不变。
+唯一kir25-red于06:08:06启动、06:08:09结束，actual exit1/2F/1.221s；候选SHA3467f3035f2796d6e68d59241496b883d2c399c7a19ecf963755ce76064aacc0，summary8403037942d6d03f41ddd79703ec4a4599aed0a95157e5baea1e5ea138aa61d9。第一例完整FileExists/赢家保持，第二例因实际三段异常链而在精确夹具断言提前失败、缺最终状态；原件已独立确认此分类，未整体验收，未改测试/产品/重跑。当前无活动进程，identity_scout技术分类/披露0 MUST、server_scout公开5路径/404链接/隐私0 MUST（仅资料审，不等诊断Task通过）；12新增对象/metadata独立审0 MUST后仅五资料已普通main快进/push，CI三类0记录不称通过；末三资料回执再审对象后收尾，不再开新任务或测试；06:27收尾。未命中只记录未知，不重跑抹除；无产品修复/full/build。本轮未达到整体AI_REPRO_CONFIRMED_ONLY，失败候选测试不入main，原件只本地，公开仅脱敏五资料。旧视频/历史失败/GUI等未验结论不变。
 
 诊断worker506输入/source15bba77c4b500c5763c9f4ca46128adafb8554a02ddd9dae05497bbcd8485857；原main505不变，新checkout四旧test只CRLF规范化差异。失败新test仅worker未跟踪，不推送。证据/续接见[Review](review-packages/KEY-INIT-RACE-REPRO-01-r1.md)。下一轮须修订诊断夹具合同再补第二窗口，跨进程修复另Task；本轮不再开新任务。
 

@@ -1,6 +1,6 @@
 # LOCAL-RELIABILITY-20261025 r1
 
-2026-10-25 IMPLEMENTED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / AI_ACCEPTED_TWO_FIXES_ONLY。范围为
+2026-10-25 IMPLEMENTED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / AI_ACCEPTED_TWO_FIXES_ONLY / MERGED_MAIN / REMOTE_VERIFIED。范围为
 [PREFS-INVALID-ROOT-01 v1](../task-packages/PREFS-INVALID-ROOT-01.md) 与
 [SCHED-FINITE-TIME-01 v1](../task-packages/SCHED-FINITE-TIME-01.md)。
 base已Git/API双核 `41a01148f8d87464270993484c8a78f9fd9c1794`。
@@ -68,7 +68,14 @@ identity_scout已独立重算225原log计数/哈希/退出/清理与503当前/�
 root据此记录有限AI_ACCEPTED，仅本批两个Task，不是用户/Pro验收或完整里程碑通过。
 当前不重复已完成全量。
 原始证据仅ignored本地：集成树 `_tmp_gui/local-reliability-20261025` 与原工程短run目录。
-当前未提交/推送/合并；新增Git对象审计尚待完成。按用户本轮授权正常提交、快进main并非强制push，
+代码和验收资料已提交、快进main并正常非强制push。新增24对象（1commit/11tree/12文本blob）及metadata
+经server_scout独立审查0 MUST，实际12路径无扩大，作者Codex；Git/API双核远端交付提交
+`7247d80e7605724743e7f7512659c8643606a001`。集成前fresh main仍为base，protected=false、required checks off、
+可见rulesets空；该提交check-runs/status contexts/Actions均0（aggregate pending/total0），不称CI通过。
+main快进后仅两新测试LF→CRLF，核规范化内容与Git blob相同后恢复实测原字节并刷新索引，
+main 503输入再次精确等full/source702ccc，工作树clean；没有产品变化或重测。
+本末纯文档回执独立对象审计后另正常推送，最终leaf以Git refs为准，不递归记录自身SHA。
+交付继续限定
 只公开代码、测试、项目文档和脱敏摘要；不PR、绕保护、发布或上传EXE/raw。
 
 暂停视频4759及其0xC0000005失败、历史UID第一full失败永久保持，不被本次通过覆盖。

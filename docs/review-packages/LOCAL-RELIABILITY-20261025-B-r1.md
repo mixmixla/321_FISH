@@ -1,6 +1,6 @@
 # LOCAL-RELIABILITY-20261025-B r1
 
-2026-10-25 IMPLEMENTED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / AI_ACCEPTED_TWO_FIXES_ONLY / NOT_MERGED。
+2026-10-25 IMPLEMENTED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / AI_ACCEPTED_TWO_FIXES_ONLY / MERGED_MAIN / REMOTE_VERIFIED。
 范围仅[UID-DIRECTORY-RACE-01 v1.1](../task-packages/UID-DIRECTORY-RACE-01.md)与
 [GEO-FINITE-EXPIRY-01 v1](../task-packages/GEO-FINITE-EXPIRY-01.md)。base已Git/API核main
 `4690d0ca07811429b66a73c67239df643481cf9c`，承接本轮前两项已合并修复。
@@ -66,7 +66,12 @@ identity_scout独立重算227原log/计数/SHA/退出/单attempt/清理/sandbox/
 size/SHA/冻结/快照、旧225计数及20skip逐原因，七阶段/两个历史失败、依赖/解释器与source边界，
 最终技术0 MUST。root据此有限AI_ACCEPTED仅本批两个Task；没有活动测试，不重复全量。
 server_scout只审公开资料，非其UID代码自验：精确12路径、八个run摘要逐项与原件匹配、431相对链接、
-中心投影/hash与隐私边界均0 MUST。验收状态更新随提交对象另审；新增Git对象审计后正常main集成。
+中心投影/hash与隐私边界均0 MUST。server_scout另直接枚举全部24新增Git对象（1commit/11tree/12文本blob）
+与Codex metadata，核最新有限验收与12路径，0 MUST后正常main快进/非强制push，Git/API双核
+`8a4a27c1433f3b650c28635fb785106802932f7d`。fresh main仍为base，protected=false、可见rulesets空，
+check-runs/status contexts/Actions均0（aggregate pending/total0），不称CI通过。
+main仅两新test检出行尾不同，规范化及Git内容相同后对齐实测字节并刷新相同索引；505再次精确等full，
+main工作树clean，无产品变化或重测。本末纯资料回执另审新增对象后正常推送，最终leaf以Git refs为准。
 原件位于本地ignored的`_tmp_gui/uidr25-*`、`geo25-*`、`lrb25-full`及集成树
 `_tmp_gui/reliability-b-20261025`。[脱敏结构化索引](../review-assets/LOCAL-RELIABILITY-20261025-B/evidence.json)
 绑定七阶段与本次唯一full，不含原日志或用户数据。

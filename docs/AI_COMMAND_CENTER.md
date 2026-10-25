@@ -17,15 +17,15 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 当前目录与位置可靠性批 · LOCAL-RELIABILITY-20261025-B v1（2026-10-25）
 
-**IMPLEMENTED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / AI_ACCEPTED_TWO_FIXES_ONLY / NOT_MERGED**。仅[UID-DIRECTORY-RACE-01 v1.1](task-packages/UID-DIRECTORY-RACE-01.md)与[GEO-FINITE-EXPIRY-01 v1](task-packages/GEO-FINITE-EXPIRY-01.md)。用户本轮约90分钟本地开发授权，06:12 UTC后不开大任务、06:27收尾；Astra代理/FAST偏好，实际服务回执不可见。
+**IMPLEMENTED / INDEPENDENT_CODE_REVIEW_0_MUST / FINAL_FULL_PASSED / FINAL_TECH_REVIEW_0_MUST / PUBLIC_REVIEW_0_MUST / AI_ACCEPTED_TWO_FIXES_ONLY / MERGED_MAIN / REMOTE_VERIFIED**。仅[UID-DIRECTORY-RACE-01 v1.1](task-packages/UID-DIRECTORY-RACE-01.md)与[GEO-FINITE-EXPIRY-01 v1](task-packages/GEO-FINITE-EXPIRY-01.md)。用户本轮约90分钟本地开发授权，06:12 UTC后不开大任务、06:27收尾；Astra代理/FAST偏好，实际服务回执不可见。
 
-base/HEAD为已Git/API核main `4690d0ca07811429b66a73c67239df643481cf9c`；root集成树local-reliability-20261025/同名fix分支，dirty为本批12明确路径，main树clean保留前批503实测字节。root唯一GEO server/newtest、集成资料/最终全量；server_scout独立uid-directory-race树只写local_identity/newtest；identity_scout独立只读设计/代码/原件审，未参与实现。无文件交叉写入。
+base为4690d0ca07811429b66a73c67239df643481cf9c，当前交付HEAD与Git/API核main为 `8a4a27c1433f3b650c28635fb785106802932f7d`；root集成树local-reliability-20261025/同名fix分支，代码交付clean，末回执仅3资料dirty；main树clean且505精确等本次实测字节。root唯一GEO server/newtest、集成资料/最终全量；server_scout独立uid-directory-race树只写local_identity/newtest；identity_scout独立只读设计/代码/原件审，未参与实现。无文件交叉写入。
 
 UID原RED6F8P（三真实Core竞争及三新建后检查），GREEN14P、五域90P/exit0；已审两文件逐SHA接入。GEO初RED11F17P包含实际durable FAILED；错路径领域命令入口exit2无测试，首次实际五域123P2F保留（两新live夹具只有发送者）。补真实接收者后同新test RED-02仍11F17P，NaN live越过收件数量到有限性断言，GREEN-03为28P；四旧域97P同产品保持。原产品对照结束已finally恢复候选SHA，未弱化断言/改旧skip。
 
 两个正式设计、实际代码/全部阶段原件及组合边界独立审0 MUST。已冻结505输入/source1f5f2de16d3acb5eac082596863cfb193a453f75ad0cffd7c322aac7ae9d4be5，相对前批503仅local_identity/server/两新test四项。UID worker与root两旧测试仅CRLF规范化不同，产品/新test准确同SHA，不冒称各阶段raw source相同。
 
-唯一新候选full命令 `.venv/Scripts/python.exe run.py test-all --run-dir <原工程>/_tmp_gui/lrb25-full --label reliability-b-final`，root持有执行；唯一full已自然结束：227文件3153P0F20既有skip/actual exit0/818.796s，summary55fd8fe1f9cb306e738a6a459de9244ded38ab5a0121e14abc801d96c4da17ad；root26后验全true，当前无活动测试。full原stdout/exit保存在集成树_tmp_gui/reliability-b-20261025/full-*，各阶段根_tmp_gui/uidr25-*与geo25-*完整保留。产品/测试仍冻结，identity_scout独立逐227原log/505输入/旧skip原因/全部阶段终审0 MUST，root仅有限源码验收；server_scout公开12路径/431链接/八run摘要终审0 MUST；下一动作提交、对象审查，再按许可普通main集成；证据见[Review](review-packages/LOCAL-RELIABILITY-20261025-B-r1.md)与其结构化索引。
+唯一新候选full命令 `.venv/Scripts/python.exe run.py test-all --run-dir <原工程>/_tmp_gui/lrb25-full --label reliability-b-final`，root持有执行；唯一full已自然结束：227文件3153P0F20既有skip/actual exit0/818.796s，summary55fd8fe1f9cb306e738a6a459de9244ded38ab5a0121e14abc801d96c4da17ad；root26后验全true，当前无活动测试。full原stdout/exit保存在集成树_tmp_gui/reliability-b-20261025/full-*，各阶段根_tmp_gui/uidr25-*与geo25-*完整保留。产品/测试仍冻结，identity_scout独立逐227原log/505输入/旧skip原因/全部阶段终审0 MUST，root仅有限源码验收；server_scout公开12路径/431链接/八run摘要终审0 MUST；24新增对象/metadata独立审0 MUST后已普通main快进/push，CI三类记录均0不称通过；下一动作纯资料回执审计及有限本地包刷新设计（另Task，未构建）；证据见[Review](review-packages/LOCAL-RELIABILITY-20261025-B-r1.md)与其结构化索引。
 
 原视频4759仍clean/暂停，0xC0000005、旧UID/本轮失败保留，不重试抹除。同UID首次key初始化、lstat后恶意替换、完整GUI/自然退出/LAN/STT/现有EXE含本修复未验证。只合成数据；不PR/强推/绕保护/发布/上传EXE/raw，未验收只本地，收尾记录远端完整SHA和续接点。
 

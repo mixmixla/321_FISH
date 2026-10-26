@@ -21,6 +21,7 @@ class GongfangGame(BaseGame):
         self.done = set()        # 本轮回合结束的玩家
         self.score = {u: 0 for u in players}
         self.turn = 0
+        self.start_idx = 0       # 每轮先手座位
         self.winner = None
         self.current = None      # 未用
         self._new_round()
@@ -35,7 +36,7 @@ class GongfangGame(BaseGame):
         self.used = set()
         self.placed = {u: 0 for u in self.players}
         self.done = set()
-        self.turn = 0
+        self.turn = self.start_idx % n
         self.current = None
 
     def act(self, uid, action):
@@ -102,6 +103,7 @@ class GongfangGame(BaseGame):
             leaders = [u for u in self.players if scores[u] == hi]
             self.winner = leaders[0]
             return
+        self.start_idx = (self.start_idx + 1) % len(self.players)
         self.round_no += 1
         self._new_round()
 

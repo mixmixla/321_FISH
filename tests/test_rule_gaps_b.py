@@ -172,15 +172,19 @@ def test_tielu_ticket_deck_is_finite_and_snapshot_reports_remaining():
 
 
 def test_tielu_exhausted_ticket_deck_rejects_draw_atomically():
-    """回归：此前车票卡无限生成，牌库概念不存在，抽空也不会被拒绝。"""
+    """回归：此前车票卡无限生成，牌库概念不存在，抽空也不会被拒绝；
+    牌库只剩 1 张时也应能摸走最后 1 张，只有真正为空才拒绝。"""
     g = TieluGame([1, 2], seed=3)
-    g.ticket_deck = ["red"]                         # 只剩 1 张，凑不够摸 2 张
+    g.ticket_deck = ["red"]
     g.turn = 0
-    before = _state(g)
-    with pytest.raises(GameRuleError, match="车票卡已抽空"):
-        g.act(1, {"op": "draw"})
-    assert _state(g) == before
+    hand_before = dict(g.hand[1])
+    msgs = g.act(1, {"op": "draw"})
+    assert g.ticket_deck == []
+    assert g.hand[1]["red"] == hand_before["red"] + 1
+    assert "摸到 1 张" in msgs[0]
+    assert g.players[g.turn] == 2
 
+    g.turn = 0
     g.ticket_deck = []
     before = _state(g)
     with pytest.raises(GameRuleError, match="车票卡已抽空"):

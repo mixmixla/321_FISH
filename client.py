@@ -11691,6 +11691,7 @@ _GAME_ACTIONS = {
         ("🎲 掷骰", {"fixed": {"op": "roll"}}, "掷 2 骰并结算资源"),
         ("🏠 布置（开局）", {"key": None, "kind": "setup2"}, "开局：输入 顶点i 顶点j 路端b_i 路端b_j"),
         ("⛏ 建造", {"op": "build", "key": None, "kind": "buildspec"}, "输入 类型 i j [b_i b_j]，类型 road/settle/city"),
+        ("🦹 移动盗匪", {"op": "robber", "key": None, "kind": "rc"}, "输入 行 列（0~4）"),
         ("🔄 交换", {"op": "trade", "key": None, "kind": "tradespec"}, "输入 给 得 [数量]，如 wood brick 4"),
         ("⏭ 跳过", {"fixed": {"op": "skip"}}, "结束本回合"),
     ],
@@ -11789,6 +11790,7 @@ def _KIND_INPUTS():
         "setup2": lambda w, t, h: _one(w, t, h, "顶点i 顶点j 路端b_i 路端b_j"),
         "buildspec": lambda w, t, h: _one(w, t, h, "类型 i j [b_i b_j]"),
         "tradespec": lambda w, t, h: _one(w, t, h, "给 得 [数量]"),
+        "rc": lambda w, t, h: _one(w, t, h, "行 列"),
         "rcmeeple": lambda w, t, h: _one(w, t, h, "行 列 [self | 米行,米列]"),
         "twoidx": lambda w, t, h: _one(w, t, h, "两个序号 0~2"),
         "ab": lambda w, t, h: _one(w, t, h, "城市A 城市B"),
@@ -13816,6 +13818,11 @@ class GameWindow:
                 if len(parts) > 2:
                     act["n"] = int(parts[2])
                 return act
+            if kind == "rc":           # 开拓：盗匪 行 列
+                toks = text.replace(",", " ").split()
+                if len(toks) < 2:
+                    return None
+                return {"r": int(toks[0]), "c": int(toks[1])}
             if kind == "rcmeeple":     # 领地：行 列 [self | 米行,米列]
                 toks = text.replace(",", " ").split()
                 if len(toks) < 2:

@@ -11,6 +11,7 @@ RES_COST = {"road": {"wood": 1, "brick": 1},
             "settle": {"wood": 1, "brick": 1, "lamb": 1, "wheat": 1},
             "city": {"wheat": 2, "ore": 3}}
 RES_CN = {"wood": "木头", "brick": "砖", "lamb": "羊", "wheat": "麦", "ore": "矿"}
+RES_ORDER = ("wood", "brick", "lamb", "wheat", "ore")
 ROWS = ["wrblt", "obtwb", "tlrtd", "rwbwo", "bttrw"]
 WIN_PTS = 10
 
@@ -29,6 +30,9 @@ class KaituoGame(BaseGame):
                    "l": "wheat", "t": "ore", "o": "ore", "d": "desert"}[ROWS[r][c]]
                 self.tiles[(r, c)] = {"res": res,
                                       "num": self.rng.choice([x for x in range(2, 13) if x != 7])}
+        self.robber = next((k for k, t in self.tiles.items()
+                            if t["res"] == "desert"), (0, 0))
+        self.robber_pending = False
         self.res = {u: {"wood": 0, "brick": 0, "lamb": 0, "wheat": 0, "ore": 0}
                     for u in players}
         self.board = {}          # vertex -> {"owner","city"}
@@ -37,6 +41,7 @@ class KaituoGame(BaseGame):
         self.phase = "setup"     # setup -> play -> done
         self.setup_count = 0     # 已布置村数
         self.last_roll = None
+        self.rolled = False      # 本回合是否已掷骰
         self.winner = None
         self._ni = SIZE          # 顶点坐标上限 = SIZE
 
@@ -92,8 +97,12 @@ class KaituoGame(BaseGame):
         if self.phase == "setup":
             return self._act_setup(uid, action)
         op = action.get("op")
+        if self.robber_pending and op != "robber":
+            raise GameRuleError("请先移动盗匪")
         if op == "roll":
             return self._act_roll(uid)
+        if op == "robber":
+            return self._act_robber(uid, action)
         if op == "build":
             return self._act_build(uid, action)
         if op == "trade":
@@ -131,15 +140,45 @@ class KaituoGame(BaseGame):
         return [f"🏠 {self._nick(uid)} 布置定居点 ({v[0]},{v[1]})"]
 
     def _act_roll(self, uid):
+        if self.rolled:
+            raise GameRuleError("本回合已掷过骰")
         d1, d2 = self.rng.randint(1, 6), self.rng.randint(1, 6)
-        roll = d1 + d2
+        msgs = self._resolve_roll(uid, d1 + d2)
+        self.rolled = True
+        return msgs
+
+    def _resolve_roll(self, uid, roll):
+        """结算一次掷骰：7 点弃牌并触发盗匪，其余点数产资源（跳过盗匪地块）。"""
         self.last_roll = roll
         msgs = [f"🎲 {self._nick(uid)} 掷出 {roll}"]
         if roll == 7:
-            self._advance(uid)
-            return msgs + ["（7 点：此局不触发盗匪惩罚）"]
+            for u in self.players:
+                res = self.res.get(u) or {}
+                total = sum(res.values())
+                if total <= 7:          # 官方：超过 7 张才弃半
+                    continue
+                need = total // 2
+                order = sorted(RES_ORDER, key=lambda k: (-res.get(k, 0),
+                                                         RES_ORDER.index(k)))
+                taken = []
+                for k in order:
+                    if need <= 0:
+                        break
+                    n = min(need, res.get(k, 0))
+                    if n > 0:
+                        res[k] -= n
+                        need -= n
+                        taken.append(f"{RES_CN[k]}×{n}")
+                if taken:
+                    msgs.append(f"🦹 {self._nick(u)} 弃 {total // 2} 张："
+                                + "、".join(taken))
+            self.robber_pending = True
+            msgs.append("🦹 7 点：请先移动盗匪")
+            return msgs
         for v, x in self.board.items():
             for tr in self._atiles(v):
+                if tr == self.robber:
+                    continue
                 t = self.tiles[tr]
                 if t["num"] == roll and t["res"] != "desert":
                     if t["res"] not in self.res[x["owner"]]:
@@ -147,10 +186,40 @@ class KaituoGame(BaseGame):
                     amt = 2 if x["city"] else 1
                     self.res[x["owner"]][t["res"]] += amt
                     msgs.append(f"⛰ {self._nick(x['owner'])} +{amt}{RES_CN[t['res']]}")
-        self._advance(uid)
+        return msgs
+
+    def _act_robber(self, uid, action):
+        try:
+            r, c = int(action.get("r")), int(action.get("c"))
+        except (TypeError, ValueError):
+            raise GameRuleError("盗匪坐标无效")
+        if (r, c) not in self.tiles:
+            raise GameRuleError("盗匪只能放在资源地内")
+        if (r, c) == self.robber:
+            raise GameRuleError("盗匪不能留在原地")
+        self.robber = (r, c)
+        self.robber_pending = False
+        msgs = [f"🦹 {self._nick(uid)} 将盗匪移到 ({r},{c})"]
+        owners = []
+        for v in ((r, c), (r, c + 1), (r + 1, c), (r + 1, c + 1)):
+            x = self.board.get(v)
+            if (x and x["owner"] != uid and x["owner"] not in owners
+                    and sum((self.res.get(x["owner"]) or {}).values()) > 0):
+                owners.append(x["owner"])
+        if not owners:
+            msgs.append("（此地块周围无人可抢）")
+            return msgs
+        victim = self.rng.choice(sorted(owners))
+        kinds = [k for k in RES_ORDER if self.res[victim].get(k, 0) > 0]
+        got = self.rng.choice(kinds)
+        self.res[victim][got] -= 1
+        self.res[uid][got] += 1
+        msgs.append(f"🦹 从 {self._nick(victim)} 抢到 1{RES_CN[got]}")
         return msgs
 
     def _act_build(self, uid, action):
+        if not self.rolled:
+            raise GameRuleError("请先掷骰")
         kind = action.get("kind")
         cost = RES_COST.get(kind)
         if not cost:
@@ -170,7 +239,6 @@ class KaituoGame(BaseGame):
             if pts >= WIN_PTS:
                 self.winner = uid
                 return [f"🏆 {self._nick(uid)} 建造道路，总分 {pts}，达成 {WIN_PTS} 分获胜！"]
-            self._advance(uid)
             return [f"🛣 {self._nick(uid)} 建造道路"]
         if kind in ("settle", "city"):
             v = self._parse_v(action)
@@ -192,11 +260,12 @@ class KaituoGame(BaseGame):
             if pts >= WIN_PTS:
                 self.winner = uid
                 return [f"🏆 {self._nick(uid)} 建造，总分 {pts}，达成 {WIN_PTS} 分获胜！"]
-            self._advance(uid)
             return [f"{self._nick(uid)} 建造{'城市' if kind=='city' else '定居点'}，总分 {pts}"]
         raise GameRuleError("未知建筑")
 
     def _act_trade(self, uid, action):
+        if not self.rolled:
+            raise GameRuleError("请先掷骰")
         give, want = action.get("give"), action.get("want")
         if give not in self.res[uid] or want not in self.res[uid] or give == want:
             raise GameRuleError("资源类型无效")
@@ -210,13 +279,14 @@ class KaituoGame(BaseGame):
             raise GameRuleError(f"{RES_CN[give]} 不足")
         self.res[uid][give] -= amt
         self.res[uid][want] += 1
-        self._advance(uid)
         return [f"🔄 {self._nick(uid)} {amt}{RES_CN[give]} → 1{RES_CN[want]}"]
 
     def _advance(self, uid):
         if self.winner is not None:
             return
         self.turn = (self.turn + 1) % len(self.players)
+        self.rolled = False
+        self.robber_pending = False
 
     def _pay(self, uid, cost):
         for r, n in cost.items():
@@ -295,6 +365,9 @@ class KaituoGame(BaseGame):
             "turn_uid": (None if (self.winner is not None or not self.players)
                          else self.players[self.turn]),
             "last_roll": self.last_roll,
+            "rolled": self.rolled,
+            "robber": [self.robber[0], self.robber[1]],
+            "robber_pending": bool(self.robber_pending),
             "players": list(self.players), "winner_uid": self.winner,
         }
 
@@ -324,6 +397,8 @@ class KaituoGame(BaseGame):
             return msgs
         if current == uid:
             self.turn = idx % len(self.players)
+            self.rolled = False          # 新接手的玩家需要重新掷骰
+            self.robber_pending = False
         else:
             self.turn = self.players.index(current)
         if self.phase == "setup":
@@ -331,6 +406,8 @@ class KaituoGame(BaseGame):
             self.phase = "play"
             self.setup_count = 2 * len(self.players)
             self.turn = 0
+            self.rolled = False
+            self.robber_pending = False
         if self.winner is None and len(self.players) == 1:
             self.winner = self.players[0]
             msgs.append(f"🏆 {self._nick(self.winner)} 成为唯一留下的玩家，获胜")

@@ -1892,6 +1892,94 @@ def _click_blokus(ui, x, y):
                   "oi": ui.get("blok_oi", 0), "x": c[1], "y": c[0]})
 
 
+def _gc_afford(tokens, discount, card):
+    """璀璨宝石买卡能力（镜像服务端 _buy_card）：need=max(0,cost-discount)，
+    彩色先付、金补各色缺口总和；返回是否买得起。"""
+    tokens = tokens or {}
+    discount = discount or {}
+    cost = (card or {}).get("cost") or {}
+    gold = 0
+    for c, amount in cost.items():
+        need = max(0, int(amount or 0) - int(discount.get(c, 0) or 0))
+        gold += max(0, need - int(tokens.get(c, 0) or 0))
+    return gold <= int(tokens.get("g", 0) or 0)
+
+
+def _gc_pick(sel, color, bank):
+    """筹码点击选择：选满 3 异色→take；单选同色且库≥4→take2；再点已选色取消。"""
+    cur = list(sel or [])
+    bank = bank or {}
+    if color in cur:
+        if len(cur) == 1 and int(bank.get(color, 0) or 0) >= 4:
+            return [], {"op": "take2", "color": color}
+        return [c for c in cur if c != color], None
+    if len(cur) < 3:
+        cur.append(color)
+        if len(cur) == 3:
+            return [], {"op": "take", "colors": cur}
+    return cur, None
+
+
+def _click_gemcity(ui, x, y):
+    """璀璨宝石点击：保留徽标→reserve；市场卡→buy；保留卡→buy_res；宝石池→取筹码。"""
+    st = ui.get("state") or {}
+    me = ui.get("me")
+    room = ui.get("room") or {}
+    if (st.get("status") or room.get("status")) != "playing":
+        return
+    if st.get("winner_uid") is not None:
+        return
+    if me is None or me not in (st.get("players") or []):
+        return
+    if st.get("turn_uid") != me:
+        return
+    submit = ui.get("submit")
+    if submit is None:
+        return
+    repaint = ui.get("repaint") or (lambda: None)
+
+    def _hit(rect):
+        return rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]
+
+    for x0, y0, x1, y1, tier, idx in ui.get("gc_reserve") or ():
+        if _hit((x0, y0, x1, y1)):
+            ui["gc_sel"] = []
+            submit({"op": "reserve", "tier": tier, "idx": idx})
+            repaint()
+            return
+    for x0, y0, x1, y1, tier, idx, ok in ui.get("gc_cards") or ():
+        if ok and _hit((x0, y0, x1, y1)):
+            ui["gc_sel"] = []
+            submit({"op": "buy", "tier": tier, "idx": idx})
+            repaint()
+            return
+    for x0, y0, x1, y1, idx, ok in ui.get("gc_reserved") or ():
+        if ok and _hit((x0, y0, x1, y1)):
+            ui["gc_sel"] = []
+            submit({"op": "buy_res", "idx": idx})
+            repaint()
+            return
+    take_rect = ui.get("gc_take")
+    if take_rect and _hit(take_rect):
+        sel = list(ui.get("gc_sel") or [])
+        if sel:
+            ui["gc_sel"] = []
+            submit({"op": "take", "colors": sel})
+            repaint()
+        return
+    bank = st.get("bank") or {}
+    for x0, y0, x1, y1, color in ui.get("gc_bank") or ():
+        if _hit((x0, y0, x1, y1)):
+            if int(bank.get(color, 0) or 0) < 1:
+                return
+            sel, action = _gc_pick(ui.get("gc_sel") or [], color, bank)
+            ui["gc_sel"] = sel
+            if action:
+                submit(action)
+            repaint()
+            return
+
+
 _CLICKS = {
     "gomoku": _click_xy, "othello": _click_xy, "tictactoe": _click_xy,
     "go": _click_go, "xiangqi": _click_move, "chess": _click_move,
@@ -1904,6 +1992,7 @@ _CLICKS = {
     "balatro_solo": _click_balatro_solo,   # 单人版：商店/消耗品 + select/unselect
     "blokus": _click_blokus,               # 角斗士棋：选拼块/换方向/跳过/点棋盘落子
 }
+_CLICKS["gemcity"] = _click_gemcity        # 璀璨宝石：筹码/市场卡/保留卡点击
 
 
 # ---------------------------------------------------------------------------
@@ -4180,6 +4269,28 @@ def _draw_die(cv, cx, cy, s, val, accent):
     _die_face(cv, cx, cy, s, val, accent)
 
 
+def _yz_can_score(st, cat, uid):
+    """快艇骰子记分门禁：对局中、轮到我、已掷骰、本回合未记分、该分类为空、未终局。"""
+    if not isinstance(st, dict):
+        return False
+    if (st.get("status") or "playing") != "playing":
+        return False
+    if uid is None or uid not in (st.get("players") or []):
+        return False
+    if st.get("winner_uid") is not None:
+        return False
+    if st.get("turn_uid") != uid:
+        return False
+    if not st.get("rolled"):
+        return False
+    if st.get("category"):
+        return False
+    row = (st.get("scores") or {}).get(str(uid)) or {}
+    if cat not in row:
+        return False
+    return row.get(cat) is None
+
+
 @_register("yahtzee")
 def _p_yahtzee(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["yahtzee"][1]
@@ -4191,6 +4302,18 @@ def _p_yahtzee(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     _turn_banner(cv, w, 46, title, accent)
     # 骰面 5 枚（统一矢量骰面 + 掷骰/重掷滚动动画）
     dice = st.get("dice") or [None] * 5
+    # 点击热区每次重绘重建；新一次掷骰/重掷（骰面+剩余次数签名变化）清空保留位
+    ui["yz_dice"] = []
+    ui["yz_cats"] = []
+    ui["yz_reroll"] = None
+    sig = (tuple(dice), st.get("rolls_left"))
+    if ui.get("yz_sig") != sig:
+        ui["yz_keep"] = set()
+        ui["yz_sig"] = sig
+    keep = {i for i in (ui.get("yz_keep") or ()) if 0 <= i < len(dice)}
+    ui["yz_keep"] = keep
+    can_pick = bool(st.get("rolled") and st.get("rolls_left")
+                    and not st.get("category"))
     gap = w * 0.06
     die_s = min(44, int((w - gap * 6) / 5 / 2))
     x0 = (w - (die_s * 2 * 5 + gap * 4)) / 2
@@ -4202,13 +4325,33 @@ def _p_yahtzee(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     for i, d in enumerate(dice):
         cx = x0 + i * (die_s * 2 + gap) + die_s
         jit = -math.sin(rk * math.pi) * die_s * 0.30 if rolling else 0.0
-        cy = y0 + die_s + jit
+        cy = y0 + die_s + jit - (6 if i in keep else 0)
         if d is None:
             _die_face(cv, cx, cy, die_s, None, accent, blank=True)
         elif rolling:
             _die_face(cv, cx, cy, die_s, _die_scramble(now, i, 6), accent)
         else:
             _die_face(cv, cx, cy, die_s, d, accent, fresh=True)
+        if i in keep:
+            cv.create_polygon(_rrect_pts(cx - die_s - 3, cy - die_s - 3,
+                                         cx + die_s + 3, cy + die_s + 3,
+                                         die_s * 0.34),
+                              fill="", outline="#e0a13c", width=2,
+                              smooth=True, splinesteps=24)
+            _text(cv, cx, cy - die_s - 9, "保留", "#b8860b",
+                  (_FONT_F[0], 8))
+        ui["yz_dice"].append((cx - die_s, cy - die_s, cx + die_s,
+                              cy + die_s, i))
+    # 重掷按钮（仅已掷骰且还有次数、本回合未记分时出现）
+    if can_pick:
+        by0 = y0 + die_s * 2 + 2
+        by1 = by0 + 22
+        bw = 150
+        bx0, bx1 = (w - bw) / 2, (w + bw) / 2
+        _rrect(cv, bx0, by0, bx1, by1, 9, "#fff3dc", "#e0a13c", 1)
+        _text(cv, w / 2, (by0 + by1) / 2, "🔁 重掷未保留", "#8a5a12",
+              (_FONT_F[0], 10))
+        ui["yz_reroll"] = (bx0, by0, bx1, by1)
     # 分类得分矩阵
     cats = st.get("cats") or {}
     players = st.get("players") or []
@@ -4235,6 +4378,13 @@ def _p_yahtzee(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         for i, u in enumerate(players):
             v = (scores.get(str(u)) or {}).get(cat)
             hx = 60 + i * col_w + col_w / 2
+            if u == me:
+                cx0 = hx - col_w / 2 + 2
+                cx1 = hx + col_w / 2 - 2
+                if _yz_can_score(st, cat, me):
+                    _rrect(cv, cx0, yy + 1, cx1, yy + col_h - 1, 5,
+                           "#e8f5e9", "#67a86b", 1)
+                ui["yz_cats"].append((cx0, yy + 1, cx1, yy + col_h - 1, cat))
             fg = "#333" if v is not None else _MUTED
             _text(cv, hx, yy + col_h / 2, "-" if v is None else str(v),
                   fg, (_FONT_F[0], 9))
@@ -4246,6 +4396,53 @@ def _p_yahtzee(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         hx = 60 + i * col_w + col_w / 2
         _text(cv, hx, yy + col_h / 2, str(totals.get(str(u), 0)), accent,
               _FONT_B)
+
+
+def _click_yahtzee(ui, x, y):
+    """快艇骰子点击：重掷未保留 / 点骰子切换保留位 / 点我的分类格记分。"""
+    st = ui.get("state") or {}
+    room = ui.get("room") or {}
+    me = ui.get("me")
+    if (st.get("status") or room.get("status")) != "playing":
+        return
+    if me is None or me not in (st.get("players") or []):
+        return
+    if st.get("turn_uid") != me or st.get("winner_uid") is not None:
+        return
+    submit = ui.get("submit")
+    if submit is None:
+        return
+    repaint = ui.get("repaint") or (lambda: None)
+    can_pick = bool(st.get("rolled") and st.get("rolls_left")
+                    and not st.get("category"))
+
+    def _hit(rect):
+        return bool(rect) and rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]
+
+    reroll = ui.get("yz_reroll")
+    if can_pick and _hit(reroll):
+        submit({"op": "reroll", "keep": sorted(ui.get("yz_keep") or ())})
+        repaint()
+        return
+    if can_pick:
+        for (x0, y0, x1, y1, idx) in ui.get("yz_dice") or ():
+            if x0 <= x <= x1 and y0 <= y <= y1:
+                keep = set(ui.get("yz_keep") or ())
+                if idx in keep:
+                    keep.discard(idx)
+                else:
+                    keep.add(idx)
+                ui["yz_keep"] = keep
+                repaint()
+                return
+    for (x0, y0, x1, y1, cat) in ui.get("yz_cats") or ():
+        if x0 <= x <= x1 and y0 <= y <= y1 and _yz_can_score(st, cat, me):
+            submit({"op": "score", "cat": cat})
+            repaint()
+            return
+
+
+_CLICKS["yahtzee"] = _click_yahtzee       # 快艇骰子：重掷/保留/记分点击
 
 
 @_register("nimmt")
@@ -4303,6 +4500,8 @@ def _p_nimmt(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     hand = []
     if priv and isinstance(priv.get("hand"), list):
         hand = priv["hand"]
+    # 点击热区：每次重绘清空重建（画与命中同源）
+    ui["nm_hand"] = []
     if hand:
         hy = ty + maxh * (ch + gap) + 40
         _text(cv, w / 2, hy - 22, "我的手牌（排序，暗选一张）", _MUTED, _FONT_F)
@@ -4317,8 +4516,38 @@ def _p_nimmt(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             _text(cv, cx + cw / 2, hy + 20, str(card), "#333", _FONT_B)
             _text(cv, cx + cw / 2, hy + 40, _bull_str(card), "#c0392b",
                   (_FONT_F[0], 8))
+            ui["nm_hand"].append((cx, hy, cx + cw, hy + 58, card))
     else:
         _text(cv, w / 2, h - 60, "（本局手牌已出完）", _MUTED, _FONT_F)
+
+
+def _click_nimmt(ui, x, y):
+    """牛头王点击：点手牌暗选一张（phase=resolve / 本轮已选时不再提交）。"""
+    st = ui.get("state") or {}
+    room = ui.get("room") or {}
+    me = ui.get("me")
+    if (st.get("status") or room.get("status")) != "playing":
+        return
+    if st.get("winner_uid") is not None:
+        return
+    if me is None or me not in (st.get("players") or []):
+        return
+    if st.get("phase") == "resolve":
+        return
+    if str(me) in (st.get("chosen") or {}):
+        return
+    submit = ui.get("submit")
+    if submit is None:
+        return
+    repaint = ui.get("repaint") or (lambda: None)
+    for x0, y0, x1, y1, card in ui.get("nm_hand") or ():
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            submit({"op": "choose", "card": card})
+            repaint()
+            return
+
+
+_CLICKS["nimmt"] = _click_nimmt     # 牛头王：点手牌暗选
 
 
 @_register("davinci")
@@ -4854,6 +5083,117 @@ def _pscore(st, u):
     return sc.get(str(u), 0)
 
 
+# ---- 开拓（卡坦）点击化：顶点/地块热区 + 两段式选点状态机 ----
+_KT_MODES = (("road", "路"), ("settle", "村"), ("city", "城"))
+
+
+def _kt_adjacent(a, b):
+    """两顶点正交相邻：曼哈顿距离为 1。"""
+    return abs(int(a[0]) - int(b[0])) + abs(int(a[1]) - int(b[1])) == 1
+
+
+def _kt_pick(mode, sel, v, board):
+    """顶点点击状态机：返回 (新选中, 动作 | None)。
+
+    setup/road 为两段式：首次点选起点，再点正交相邻点发动作；点同点取消，
+    不相邻保持原选中。settle/city 单击直接生成对应建造动作。
+    """
+    v = (int(v[0]), int(v[1]))
+    if mode in ("setup", "road"):
+        if sel is None:
+            return v, None
+        sel = (int(sel[0]), int(sel[1]))
+        if v == sel:
+            return None, None
+        if not _kt_adjacent(sel, v):
+            return sel, None
+        if mode == "setup":
+            return None, {"op": "setup", "i": sel[0], "j": sel[1],
+                          "b_i": v[0], "b_j": v[1]}
+        return None, {"op": "build", "kind": "road", "i": sel[0], "j": sel[1],
+                      "b_i": v[0], "b_j": v[1]}
+    return None, {"op": "build", "kind": mode, "i": v[0], "j": v[1]}
+
+
+def _kt_settle_free(board, v):
+    """布置可放判定：顶点为空，且四邻（曼哈顿 1）无建筑。"""
+    i, j = v
+    if f"{i},{j}" in board:
+        return False
+    for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        a, b = i + di, j + dj
+        if 0 <= a <= 5 and 0 <= b <= 5 and f"{a},{b}" in board:
+            return False
+    return True
+
+
+def _kt_vertex_at(ui, x, y):
+    """顶点命中：热区由画师登记且与绘制同源，取半径内最近的一个。"""
+    lim = max(float(ui.get("kt_cell") or 0) * 0.36, 10.0)
+    best = None
+    for (px, py, i, j) in ui.get("kt_vertices") or ():
+        d = (x - px) ** 2 + (y - py) ** 2
+        if d <= lim * lim and (best is None or d < best[0]):
+            best = (d, i, j)
+    return None if best is None else (best[1], best[2])
+
+
+def _click_kaituo(ui, x, y):
+    """开拓点击：模式切换 / 盗匪落点 / 顶点两段式选点（布置·路·村·城）。"""
+    st = ui.get("state") or {}
+    room = ui.get("room") or {}
+    me = ui.get("me")
+    if (st.get("status") or room.get("status")) != "playing":
+        return
+    if st.get("winner_uid") is not None or me is None:
+        return
+    if me not in (st.get("players") or []) or st.get("turn_uid") != me:
+        return
+    submit = ui.get("submit")
+    if submit is None:
+        return
+    repaint = ui.get("repaint") or (lambda: None)
+    board = st.get("board") or {}
+    setup = st.get("phase") == "setup"
+    pending = bool(st.get("robber_pending"))
+    for (x0, y0, x1, y1, mode) in ui.get("kt_modes") or ():
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            if not setup and ui.get("kt_mode") != mode:
+                ui["kt_mode"] = mode
+                ui["kt_sel"] = None
+                repaint()
+            return
+    if pending:
+        # 盗匪待移动：点地块发 robber，此状态下不响应建造点击
+        robber = list(st.get("robber") or [None, None])
+        for (x0, y0, x1, y1, r, c) in ui.get("kt_tiles") or ():
+            if x0 <= x <= x1 and y0 <= y <= y1:
+                if [r, c] == robber:
+                    return
+                submit({"op": "robber", "r": r, "c": c})
+                repaint()
+                return
+        return
+    v = _kt_vertex_at(ui, x, y)
+    if v is None:
+        return
+    mode = "setup" if setup else (ui.get("kt_mode") or "road")
+    sel, action = _kt_pick(mode, ui.get("kt_sel"), v, board)
+    if mode == "setup" and ui.get("kt_sel") is None and not action:
+        if not _kt_settle_free(board, v):        # 只在可放村顶点起手
+            return
+    if mode == "settle" and f"{v[0]},{v[1]}" in board:
+        return
+    if mode == "city":
+        b = board.get(f"{v[0]},{v[1]}")
+        if not b or b.get("owner") != me or b.get("city"):
+            return
+    ui["kt_sel"] = sel
+    if action:
+        submit(action)
+    repaint()
+
+
 # --------------------------------------------------------------------------
 @_register("kaituo")
 def _p_kaituo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
@@ -4868,8 +5208,24 @@ def _p_kaituo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             title += f"（{st['phase']}）"
     if st.get("last_roll"):
         title += f"　🎲上次 {st['last_roll']}"
+    if st.get("robber_pending") and st.get("turn_uid") == me:
+        title += "　🦹 请先移动盗匪"
     _turn_banner(cv, w, 46, title, accent)
     ui.update(game="kaituo")
+    ui["kt_vertices"] = []
+    ui["kt_tiles"] = []
+    ui["kt_modes"] = []
+    mode = ui.get("kt_mode")
+    if mode not in ("road", "settle", "city"):
+        mode = "road"
+    ui["kt_mode"] = mode
+    setup = st.get("phase") == "setup"
+    mine = me is not None and me in players
+    my_turn = bool(mine and st.get("turn_uid") == me
+                   and st.get("winner_uid") is None)
+    if not my_turn:
+        ui["kt_sel"] = None
+    pending = bool(st.get("robber_pending")) and my_turn
     rcol = {"wood": "#6aa84f", "brick": "#c27f5a", "lamb": "#a9cc7e",
             "wheat": "#e4cd6b", "ore": "#9aa0ab", "desert": "#ecd9a0"}
     bw = w - 20
@@ -4877,7 +5233,29 @@ def _p_kaituo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     cell = min(bw / 6, bh / 6)
     ox = (w - cell * 6) / 2
     oy = 58
+    ui["kt_cell"] = cell
+    # 模式切换放在棋盘下方，避免与顶栏标题叠字
+    mbw = min(54.0, max(30.0, (w - 24) / 4.0))
+    my0 = min(oy + cell * 5 + 4, h - 112)
+    my1 = my0 + 16
+    for idx, (mk, lab) in enumerate(_KT_MODES):
+        x1 = w - 8 - (len(_KT_MODES) - 1 - idx) * (mbw + 4)
+        x0 = x1 - mbw
+        on = (not setup) and mode == mk
+        cv.create_rectangle(x0, my0, x1, my1,
+                            fill=accent if on else _shade(accent, 0.72),
+                            outline=accent, width=1)
+        _text(cv, (x0 + x1) / 2, (my0 + my1) / 2, lab,
+              "#fff" if on else _shade(accent, -0.45), (_FONT_F[0], 8))
+        ui["kt_modes"].append((x0, my0, x1, my1, mk))
+    if setup:
+        _text(cv, 8, (my0 + my1) / 2, "布置：先点村，再点相邻顶点修路",
+              "#fff", (_FONT_F[0], 7), anchor="w")
+    for i in range(6):                       # 6x6 顶点热区（与绘制同源）
+        for j in range(6):
+            ui["kt_vertices"].append((ox + j * cell, oy + i * cell, i, j))
     tiles = st.get("tiles") or {}
+    robber = list(st.get("robber") or [None, None])
     for key, t in tiles.items():
         r, c = key.split(",")
         r, c = int(r), int(c)
@@ -4885,6 +5263,10 @@ def _p_kaituo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         col = rcol.get(t.get("res"), "#ddd")
         cv.create_rectangle(x0 + 1, y0 + 1, x0 + cell - 1, y0 + cell - 1,
                             fill=col, outline="#5a4a35", width=1)
+        ui["kt_tiles"].append((x0, y0, x0 + cell, y0 + cell, r, c))
+        if pending and [r, c] != robber:     # 盗匪待移：淡红描边提示可点
+            cv.create_rectangle(x0 + 3, y0 + 3, x0 + cell - 3, y0 + cell - 3,
+                                outline="#e0535a", width=2)
         fs = max(8, int(cell * 0.30))
         if t.get("res") == "desert":
             _text(cv, x0 + cell / 2, y0 + cell / 2, "沙漠", "#a89a7f",
@@ -4893,6 +5275,12 @@ def _p_kaituo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             fg = "#fff" if _luma(col) < 150 else "#222"
             _text(cv, x0 + cell / 2, y0 + cell / 2, str(t["num"]), fg,
                   (_FONT_F[0], fs))
+        if [r, c] == robber:
+            rcx, rcy, rr = x0 + cell * 0.78, y0 + cell * 0.22, cell * 0.20
+            cv.create_oval(rcx - rr, rcy - rr, rcx + rr, rcy + rr,
+                           fill="#2b2b2b", outline="#f0e6d8", width=2)
+            _text(cv, rcx, rcy, "盗", "#ffd75e",
+                  (_FONT_F[0], max(8, int(cell * 0.22))))
     for key, x in (st.get("board") or {}).items():
         i, j = key.split(",")
         i, j = int(i), int(j)
@@ -4911,6 +5299,12 @@ def _p_kaituo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         x1, y1 = ox + int(j1) * cell, oy + int(i1) * cell
         cv.create_line(x0, y0, x1, y1, fill=_pcolor(o, players),
                        width=max(3, int(cell * 0.22)), capstyle="round")
+    sel = ui.get("kt_sel")
+    if sel is not None:
+        sx, sy = ox + sel[1] * cell, oy + sel[0] * cell
+        sr = max(9.0, cell * 0.30)
+        cv.create_oval(sx - sr, sy - sr, sx + sr, sy + sr,
+                       outline="#37a25f", width=3)
     # 玩家资源面板（底部）
     res_order = ["wood", "brick", "lamb", "wheat", "ore"]
     res_color = {"wood": "#6aa84f", "brick": "#c27f5a", "lamb": "#a9cc7e",
@@ -4944,6 +5338,9 @@ def _p_kaituo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             i += 1
         _text(cv, x0 + pw / 2, py0 + 66, "掷骰·建房·贸易 → 按钮区", "#b0a48f",
               (_FONT_F[0], 8))
+
+
+_CLICKS["kaituo"] = _click_kaituo          # 开拓：模式切换/盗匪落点/顶点两段式选点
 
 
 @_register("lingdi")
@@ -5029,6 +5426,17 @@ def _p_lingdi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
               "#ffd75e", _FONT_F)
 
 
+def _tl_seg_dist(px, py, x0, y0, x1, y1):
+    """点到线段最短距离：垂足落段内取投影，否则取近端；零长度线段按点距。"""
+    dx, dy = x1 - x0, y1 - y0
+    d2 = dx * dx + dy * dy
+    if d2 <= 0:
+        return math.hypot(px - x0, py - y0)
+    t = ((px - x0) * dx + (py - y0) * dy) / d2
+    t = max(0.0, min(1.0, t))
+    return math.hypot(px - (x0 + t * dx), py - (y0 + t * dy))
+
+
 @_register("tielu")
 def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["tielu"][1]
@@ -5040,6 +5448,10 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         title += f"　轮到 {nick(st['turn_uid'])} · 线路剩 {st.get('route_left', 0)}"
     _turn_banner(cv, w, 46, title, accent)
     ui.update(game="tielu")
+    ui["tl_routes"] = []          # 未认领线路热区：(x0,y0,x1,y1,a,b,color,length,affordable)
+    hand = (priv or {}).get("hand") if isinstance(priv, dict) else None
+    if not isinstance(hand, dict):
+        hand = {}
     ccmap = {"red": "#d2534f", "yellow": "#e0b33c", "green": "#4a9b5f",
              "blue": "#4a7de0", "purple": "#9a6fd0"}
     cities = st.get("cities") or {}
@@ -5059,12 +5471,23 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         x0, y0 = pos[rt["a"]]
         x1, y1 = pos[rt["b"]]
         claimed = rt.get("claimed")
-        col = ccmap.get(rt.get("color"), "#999") if not claimed else \
-            _pcolor(claimed, players)
-        width = (6 if claimed else 3) if claimed else (3 if rt.get("color") else 2)
+        color = rt.get("color")
+        length = int(rt.get("length") or 0)
+        can_pay = bool(color) and int(hand.get(color, 0)) >= length
         if claimed:
-            width = 6
-        cv.create_line(x0, y0, x1, y1, fill=col, width=width)
+            col = _pcolor(claimed, players)
+            cv.create_line(x0, y0, x1, y1, fill=col, width=6)
+        else:
+            base = ccmap.get(color, "#b9c6d8")
+            # 买得起：亮色且线宽 +1；买不起：降饱和虚线
+            col = _shade(base, 0.2) if can_pay else _shade(base, -0.45)
+            width = 4 if can_pay else 2
+            kw = {"fill": col, "width": width}
+            if not can_pay:
+                kw["dash"] = (4, 4)
+            cv.create_line(x0, y0, x1, y1, **kw)
+            ui["tl_routes"].append((x0, y0, x1, y1, rt.get("a"), rt.get("b"),
+                                    color, length, can_pay))
         mx, my = (x0 + x1) / 2, (y0 + y1) / 2
         _text(cv, mx, my - 8, str(rt.get("length", "")), "#fff",
               (_FONT_F[0], 8))
@@ -5074,6 +5497,9 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         _text(cv, px, py, str(cid), "#fff", (_FONT_F[0], 9))
         _text(cv, px, py + 24, cities.get(str(cid), ""), "#dfe6ef",
               (_FONT_F[0], 9))
+    _text(cv, w / 2, h - 102,
+          "点线路认领（需对应颜色车票卡 N 张，N = 线路长度）", _MUTED,
+          (_FONT_F[0], 8))
     # 玩家手牌/分
     hc = st.get("hand_count") or {}
     n = len(players)
@@ -5095,6 +5521,37 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         _text(cv, w / 2, h - 20, "你的票卡：" + "  ".join(
             f"{c}:{v}" for c, v in sorted(hd.items())), "#dfe6ef",
             (_FONT_F[0], 8))
+
+
+def _click_tielu(ui, x, y):
+    """铁路点击认领：最近且 ≤12px、买得起的未认领线路 → claim。"""
+    st = ui.get("state") or {}
+    me = ui.get("me")
+    if st.get("status") != "playing" or st.get("winner_uid") is not None:
+        return
+    if me is None or me not in (st.get("players") or []):
+        return
+    if st.get("turn_uid") is None or st.get("turn_uid") != me:
+        return
+    submit = ui.get("submit")
+    if submit is None:
+        return
+    best = None
+    for (x0, y0, x1, y1, a, b, _color, _length, affordable) in ui.get("tl_routes") or ():
+        if not affordable:
+            continue
+        d = _tl_seg_dist(x, y, x0, y0, x1, y1)
+        if d <= 12 and (best is None or d < best[0]):
+            best = (d, a, b)
+    if best is None:
+        return
+    submit({"op": "claim", "a": best[1], "b": best[2]})
+    repaint = ui.get("repaint")
+    if repaint:
+        repaint()
+
+
+_CLICKS["tielu"] = _click_tielu      # 铁路：点线路认领（最近命中，买得起才发）
 
 
 @_register("gongfang")
@@ -5261,6 +5718,16 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         title += f"　轮到 {nick(st['turn_uid'])} · 目标 {15} 分"
     _turn_banner(cv, w, 46, title, accent)
     ui.update(game="gemcity")
+    # 点击热区：每次重绘重建（画与命中同源），避免残留旧坐标
+    ui["gc_bank"] = []
+    ui["gc_cards"] = []
+    ui["gc_reserve"] = []
+    ui["gc_take"] = None
+    ui["gc_reserved"] = []
+    if st.get("winner_uid") is not None or st.get("turn_uid") != me:
+        ui["gc_sel"] = []
+    if not isinstance(ui.get("gc_sel"), list):
+        ui["gc_sel"] = []
     # P3：阿兹勒赫花砖壁纸底（原创位图平铺；非真画布/缺素材时保留原底色，零回归）
     _asset_bg(cv, "azulejo", 0, 47, w, h)
     gcol = {"o": "#3a3a3a", "d": "#f0f0f0", "r": "#d2534f",
@@ -5271,8 +5738,14 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     gdisp["o"] = "#a6a6a6"
     colors = ["o", "d", "r", "e", "s"]
     market = st.get("market") or {}
-    # 市场 3 级 × 4
-    chh = min(108, (h - 46 - 120) / 4)
+    tokens_all = st.get("tokens") or {}
+    disc_all = st.get("discount") or {}
+    my_toks = tokens_all.get(str(me)) or {}
+    my_disc = disc_all.get(str(me)) or {}
+    sel = [c for c in (ui.get("gc_sel") or []) if c in colors]
+    reserved = (priv or {}).get("reserved") or []
+    # 市场 3 级 × 4（有保留卡时预留底部一条紧凑卡位）
+    chh = min(108, max(40, (h - 46 - 120 - (36 if reserved else 0)) / 4))
     cw = (w - 40) / 4.5
     y0 = 58
     for tier in ("1", "2", "3"):
@@ -5280,11 +5753,17 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         _text(cv, 18, y0 + 14, f"{tier}级", "#213336", _FONT_B, anchor="w")
         for i, cd in enumerate(cards):
             x0 = 46 + i * (cw + 6)
+            x1, y1 = x0 + cw, y0 + chh
+            ok = _gc_afford(my_toks, my_disc, cd)
             # P3：卡面用九宫格面板位图铺底（圆角描边），不可用时回退既有 _rrect 浅底
             if not _asset_nine_at(cv, "panel", x0, y0, cw, chh, border=14):
-                _rrect(cv, x0, y0, x0 + cw, y0 + chh, 8, "#F4F8FB", "#DCE6E2")
-            _text(cv, x0 + cw - 8, y0 + 14, f"+{cd.get('pts', 0)}", "#16796C",
-                  _FONT_B, anchor="ne")
+                _rrect(cv, x0, y0, x1, y1, 8, "#F4F8FB", "#DCE6E2")
+            # 买得起描绿边；买不起淡描边 + 灰字，降低存在感
+            cv.create_rectangle(x0, y0, x1, y1,
+                                outline="#2E8B57" if ok else "#D6DFDB",
+                                width=2 if ok else 1)
+            _text(cv, x0 + cw - 8, y0 + 14, f"+{cd.get('pts', 0)}",
+                  "#16796C" if ok else "#8FA39C", _FONT_B, anchor="ne")
             dc = gcol.get(cd.get("disc"), "#888")
             dk = cd.get("disc")
             # P3：市场宝石改用原创刻面宝石位图；失败回退 E3 矢量资源图标
@@ -5305,12 +5784,19 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                     if _real_cv(cv):
                         cv.create_image(x0 + 15, yy, anchor="center",
                                         image=_res_img(cv, k, gdisp[k], 12))
-                        _text(cv, x0 + 25, yy, f"×{v}", "#5F706A",
+                        _text(cv, x0 + 25, yy, f"×{v}",
+                              "#5F706A" if ok else "#9DAAA4",
                               (_FONT_F[0], 9), anchor="w")
                     else:
-                        _text(cv, x0 + 12, yy, f"{gtok[k]}×{v}", "#5F706A",
+                        _text(cv, x0 + 12, yy, f"{gtok[k]}×{v}",
+                              "#5F706A" if ok else "#9DAAA4",
                               (_FONT_F[0], 9), anchor="w")
                     yy += 15
+            # 左上角📥保留徽标（点击发 reserve；先于卡面本体命中）
+            _rrect(cv, x0 + 2, y0 + 2, x0 + 18, y0 + 16, 4, "#FFF7E6", "#D9C79A")
+            _text(cv, x0 + 10, y0 + 9, "📥", "#7a5b22", (_FONT_F[0], 9))
+            ui["gc_reserve"].append((x0 + 2, y0 + 2, x0 + 18, y0 + 16, tier, i))
+            ui["gc_cards"].append((x0, y0, x1, y1, tier, i, ok))
         y0 += chh + 14
     # 银行 + 贵宾
     bank = st.get("bank") or {}
@@ -5329,7 +5815,26 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                                fill=gcol.get(k, "#888"), outline="")
         _text(cv, xx + 22, py, str(bank.get(k, 0)), "#5F706A", _FONT_F,
               anchor="w")
+        # 只登记 5 色筹码（金不可取）；已选筹码加高亮圈
+        if k in colors:
+            if k in sel:
+                cv.create_oval(xx - 3, py - 11, xx + 21, py + 11,
+                               outline="#2E8B57", width=2)
+            ui["gc_bank"].append((xx - 5, py - 13, xx + 29, py + 13, k))
         xx += 34
+    if sel:
+        hint = "已选：" + "、".join(sel)
+        if len(sel) == 1 and int(bank.get(sel[0], 0) or 0) >= 4:
+            hint += "（再点同色可取 2）"
+        else:
+            hint += f"（{len(sel)}/3，选满自动取）"
+        _text(cv, w - 14, py + 10, hint, "#16796C", (_FONT_F[0], 9), anchor="e")
+        # 取 1~3 颗的确认按钮（不选满 3 色也能取 1~2 颗）
+        bx0, by0, bx1, by1 = w - 104, py + 18, w - 10, py + 36
+        _rrect(cv, bx0, by0, bx1, by1, 7, "#2E8B57", "#1f6b42")
+        _text(cv, (bx0 + bx1) / 2, (by0 + by1) / 2, f"取 {len(sel)} 颗",
+              "#ffffff", (_FONT_F[0], 9))
+        ui["gc_take"] = (bx0, by0, bx1, by1)
     nobles = st.get("nobles") or []
     if nobles:
         lx = bx + 4
@@ -5345,6 +5850,32 @@ def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     gap = 8
     pw = (w - gap * (n + 1)) / n if n else w
     ply = h - 74
+    # 我的保留卡：玩家面板上方 3 个紧凑卡位（点击购买）
+    if reserved:
+        ry = max(py + 34, ply - 42)
+        if ry - 10 > py + 30:            # 紧凑高度下不挤压贵宾行
+            _text(cv, 18, ry - 8, "保留卡（点卡购买）", "#213336",
+                  (_FONT_F[0], 8), anchor="w")
+        cw2 = min(112, max(60, (w - 24) / 3 - 8))
+        for i, cd in enumerate(reserved[:3]):
+            rx0 = 18 + i * (cw2 + 6)
+            ry1 = ry + 30
+            ok = _gc_afford(my_toks, my_disc, cd)
+            _rrect(cv, rx0, ry, rx0 + cw2, ry1, 7, "#F4F8FB",
+                   "#2E8B57" if ok else "#D6DFDB", width=2 if ok else 1)
+            dk = cd.get("disc")
+            if not _asset_at(cv, f"gem_{dk}", rx0 + 12, ry + 15, 16,
+                             anchor="center"):
+                if _real_cv(cv):
+                    cv.create_image(rx0 + 12, ry + 15, anchor="center",
+                                    image=_res_img(cv, dk,
+                                                   gdisp.get(dk, "#888"), 13))
+                else:
+                    cv.create_oval(rx0 + 6, ry + 9, rx0 + 18, ry + 21,
+                                   fill=gcol.get(dk, "#888"), outline="")
+            _text(cv, rx0 + 24, ry + 15, f"+{cd.get('pts', 0)} 购",
+                  "#16796C" if ok else "#8FA39C", (_FONT_F[0], 9), anchor="w")
+            ui["gc_reserved"].append((rx0, ry, rx0 + cw2, ry1, i, ok))
     tokens = st.get("tokens") or {}
     for idx, u in enumerate(players):
         x0 = gap + idx * (pw + gap)
@@ -5388,6 +5919,11 @@ def _p_siji(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                   f" · 余 {st.get('turns_left', 0)} 行动")
     _turn_banner(cv, w, 46, title, accent)
     ui.update(game="siji")
+    # 点击热区：每次重绘清空重建（画与命中同源）
+    ui["sj_hand"] = []
+    ui["sj_engine"] = []
+    my_turn = (st.get("winner_uid") is None and me is not None
+               and me in players and st.get("turn_uid") == me)
     kind_cn = {"crystal": "水晶", "apple": "金币", "vt": "胜利点"}
     # 我的引擎
     engine = st.get("engine") or {}
@@ -5404,6 +5940,9 @@ def _p_siji(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         filled = c.get("played")
         fill = "#3a4a3a" if not filled else "#1e2f24"
         _rrect(cv, cx, y0 + 24, cx + cw, y0 + 24 + chh, 8, fill, "#5a7a5a")
+        if my_turn and not filled:      # 轮到自己：可激活的引擎卡加绿色描边
+            _rrect(cv, cx, y0 + 24, cx + cw, y0 + 24 + chh, 8, "", "#7fd18a",
+                   width=2)
         _text(cv, cx + cw / 2, y0 + 44, c.get("name", "?"), "#fff", _FONT_B)
         kind = c.get("kind")
         otext = f"{kind_cn.get(kind, '')}+{c.get('out','')}"
@@ -5417,6 +5956,8 @@ def _p_siji(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                   (_FONT_F[0], 9))
         _text(cv, cx + cw / 2, y0 + 82, "已激活" if filled else "待激活",
               "#9fbf9f", (_FONT_F[0], 8))
+        ui["sj_engine"].append((cx, y0 + 24, cx + cw, y0 + 24 + chh, i,
+                                bool(filled)))
     # 我的资源
     yy = y0 + 24 + chh + 26
     cry = st.get("crystal") or {}
@@ -5453,6 +5994,7 @@ def _p_siji(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                   (_FONT_F[0], 9), anchor="w")
             _text(cv, x + 6, hy + 32, f"需{c.get('cost', 0)} 产{c.get('out', 0)}",
                   "#666", (_FONT_F[0], 9), anchor="w")
+            ui["sj_hand"].append((x, hy, x + hcw, hy + hch, i))
         if len(my_hand) > per:
             _text(cv, w - 12, hy + hch / 2, f"+{len(my_hand) - per}",
                   _MUTED, _FONT_F, anchor="e")
@@ -5482,6 +6024,43 @@ def _p_siji(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         else:
             _text(cv, x0 + pw / 2, ply + 34, f"💎{cu} 💰{gu}", "#cfe0d8", _FONT_F)
             _text(cv, x0 + pw / 2, ply + 54, f"👑 {vu}", "#ffd75e", _FONT_B)
+
+
+def _click_siji(ui, x, y):
+    """四季物语点击：先查引擎热区（未激活才可 activate），再查手牌热区（play）。"""
+    st = ui.get("state") or {}
+    room = ui.get("room") or {}
+    me = ui.get("me")
+    if (st.get("status") or room.get("status")) != "playing":
+        return
+    if st.get("winner_uid") is not None:
+        return
+    if me is None or me not in (st.get("players") or []):
+        return
+    if st.get("turn_uid") != me:
+        return
+    submit = ui.get("submit")
+    if submit is None:
+        return
+    repaint = ui.get("repaint") or (lambda: None)
+
+    def _hit(rect):
+        return rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]
+
+    for x0, y0, x1, y1, idx, played in ui.get("sj_engine") or ():
+        if _hit((x0, y0, x1, y1)):
+            if not played:
+                submit({"op": "activate", "idx": idx})
+                repaint()
+            return
+    for x0, y0, x1, y1, idx in ui.get("sj_hand") or ():
+        if _hit((x0, y0, x1, y1)):
+            submit({"op": "play", "idx": idx})
+            repaint()
+            return
+
+
+_CLICKS["siji"] = _click_siji       # 四季物语：点引擎卡激活 / 点手牌打出
 
 
 @_register("bolan")

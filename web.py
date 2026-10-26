@@ -777,7 +777,8 @@ const state={token:null,uid:0,nick:"",stickers:{},cur:{type:"public"},es:null,es
   marks:[],   // R69C11：本地「标为未读」会话键（稍后处理清单）
   memByStatus:true,   // R69C12：群成员面板按在线状态分组（默认开）
   tasks:[],taskGid:null,   // R69B6/B7：群任务清单 / 面板所属群
-  momUnread:0,momSig:{}};   // R65 贴纸包封面元数据/订阅/商店目录/当前包/商店视图/封面缓存戳 // R67 群成员缓存 + @选择器状态 // R68 朋友圈红点 // R69C9 好友备注缓存
+  momUnread:0,momSig:{},   // R65 贴纸包封面元数据/订阅/商店目录/当前包/商店视图/封面缓存戳 // R67 群成员缓存 + @选择器状态 // R68 朋友圈红点 // R69C9 好友备注缓存
+  ktmode:"road",ktsel:null};   // 开拓：建造模式（路/村/城，默认路）+ 已选中顶点
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 // R69C9 好友备注名：本人视角优先（本地缓存 > 名单 remark），无则回退昵称
 function dnid(uid,fb){
@@ -4244,7 +4245,9 @@ function renderGamePanel(){
     note.textContent="🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
   const pv=state.gpriv;if(pv){
     const bits=[];
-    if(pv.hand)bits.push("🂠 你的手牌："+pv.hand.join(" "));
+    if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
+      ?pv.hand.join(" ")
+      :Object.keys(pv.hand).map(k=>k+"×"+pv.hand[k]).join(" ")));
     if(gname==="spy")bits.push(roleIcon("spy",pv)+" 身份："+(pv.role==="spy"?"卧底":"平民")+" · 词："+esc(pv.word));
     if(pv.hint)bits.push(esc(pv.hint));
     if(pv.stats&&gname==="betrayal"){
@@ -4872,32 +4875,113 @@ const GRENDER={
     box.appendChild(gTitle("kaituo","开拓 · 资源建设"));
     const R_CN={wood:"木头",brick:"砖",lamb:"羊",wheat:"麦",ore:"矿"};
     const R_COL={wood:"#8a5b2c",brick:"#c24a33",lamb:"#7fbf4f",wheat:"#e8b93c",ore:"#7a8499",desert:"#e2c9a0"};
+    const PC=["#e0535a","#4a7de0","#37a25f","#e0a13c","#9a6fd0","#26c6b0"];
+    const my=state.uid, players=s.players||[];
+    const myTurn=players.includes(my)&&s.winner_uid==null&&s.turn_uid===my;
+    const setup=s.phase==="setup", pending=!!s.robber_pending;
+    const gact=(a)=>gameAPI("action",{room_id:state.groom,action:a});
+    if(!myTurn)state.ktsel=null;
+    if(!state.ktmode)state.ktmode="road";
     const d=document.createElement("div");
     let html="<div style='font-size:11px;color:var(--dim);margin-bottom:4px'>"
       +"回合 → "+esc(gnick(s.turn_uid))+"　"+scoreHTML(s.score)+"</div>";
-    if(s.phase==="setup")html+="<div class='gsec'>布置阶段：轮流放 1 村 + 1 路（逆向再补）</div>";
+    if(setup)html+="<div class='gsec'>布置阶段：先点村，再点相邻顶点修路</div>";
     else if(s.last_roll!=null)html+="<div>🎲 上次掷骰 "+s.last_roll+"</div>";
-    html+="<div style='display:grid;grid-template-columns:repeat("+s.size+",minmax(30px,1fr));"
-      +"gap:2px;margin:6px 0'>";
-    for(let r=0;r<s.size;r++)for(let c=0;c<s.size;c++){
+    if(pending&&myTurn)html+="<div style='color:#c0392b;font-size:12px'>🦹 请先点地块移动盗匪</div>";
+    d.innerHTML=html;box.appendChild(d);
+    // 模式切换：布置阶段不生效，统一走 setup 手势
+    const mbar=document.createElement("div");
+    mbar.style.cssText="display:flex;gap:4px;justify-content:center;margin:2px 0 4px";
+    [["road","路"],["settle","村"],["city","城"]].forEach(k=>{
+      const on=!setup&&state.ktmode===k[0];
+      const b=document.createElement("button");b.className="gbtn";b.textContent=k[1];
+      b.style.cssText="min-width:40px;padding:2px 8px;font-size:12px;"
+        +(on?"background:#37a25f;color:#fff;border-color:#37a25f":"");
+      b.disabled=!myTurn||setup;
+      if(!b.disabled)b.onclick=()=>{state.ktmode=k[0];state.ktsel=null;renderGamePanel();};
+      mbar.appendChild(b);});
+    box.appendChild(mbar);
+    // 地图：5x5 地块 + 6x6 绝对定位交点按钮（同桌面两段式选点状态机）
+    const N=5, cell=34, board=s.board||{};
+    const wrap=document.createElement("div");
+    wrap.style.cssText="position:relative;width:"+(N*cell)+"px;height:"+(N*cell)+"px;margin:4px auto";
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++){
       const t=s.tiles[r+","+c];if(!t)continue;
-      const col=R_COL[t.res]||"#999";
-      html+="<div style='height:34px;border-radius:4px;background:"+col+";color:#fff;"
-        +"display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700'>"
-        +(t.res==="desert"?"🟤":t.num)+"</div>";}
-    html+="</div>";
-    html+="<div class='gsec'>你的资源（"+esc(gnick(state.uid))+"）</div>";
+      const isRb=s.robber&&s.robber[0]===r&&s.robber[1]===c;
+      const el=document.createElement("div");
+      el.style.cssText="position:absolute;left:"+(c*cell)+"px;top:"+(r*cell)+"px;width:"
+        +cell+"px;height:"+cell+"px;box-sizing:border-box;border:1px solid rgba(0,0,0,.22);border-radius:3px;background:"
+        +(R_COL[t.res]||"#999")+";color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700";
+      el.textContent=isRb?"🦹":(t.res==="desert"?"🟤":(t.num||""));
+      if(pending&&myTurn&&!isRb){
+        el.style.cursor="pointer";el.style.borderColor="#e0535a";
+        el.style.boxShadow="inset 0 0 0 2px rgba(224,83,90,.55)";
+        el.onclick=()=>gact({op:"robber",r:r,c:c});}
+      wrap.appendChild(el);}
+    Object.keys(board).forEach(k=>{
+      const p=k.split(","),i=+p[0],j=+p[1],b=board[k];
+      const col=PC[Math.max(0,players.indexOf(b.owner))%PC.length];
+      const dot=document.createElement("div");
+      dot.style.cssText="position:absolute;left:"+(j*cell-5)+"px;top:"+(i*cell-5)+"px;width:10px;height:10px;border-radius:50%;background:"
+        +col+";border:1px solid #fff;pointer-events:none"+(b.city?";box-shadow:0 0 0 2px "+col:"");
+      wrap.appendChild(dot);});
+    const adj=(a,b)=>Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])===1;
+    const kv=(v)=>v[0]+","+v[1];
+    const pick=(v)=>{
+      if(!myTurn||pending)return;
+      const mode=setup?"setup":(state.ktmode||"road");
+      const sel=state.ktsel;
+      if(mode==="settle"){
+        if(board[kv(v)])return;
+        state.ktsel=null;gact({op:"build",kind:"settle",i:v[0],j:v[1]});return;}
+      if(mode==="city"){
+        const b=board[kv(v)];
+        if(!b||b.owner!==my||b.city)return;
+        state.ktsel=null;gact({op:"build",kind:"city",i:v[0],j:v[1]});return;}
+      if(!sel){
+        if(mode==="setup"){
+          if(board[kv(v)])return;
+          const around=[[v[0]+1,v[1]],[v[0]-1,v[1]],[v[0],v[1]+1],[v[0],v[1]-1]];
+          if(around.some(p=>board[kv(p)]))return;}
+        state.ktsel=v;renderGamePanel();return;}
+      if(sel[0]===v[0]&&sel[1]===v[1]){state.ktsel=null;renderGamePanel();return;}
+      if(!adj(sel,v))return;
+      state.ktsel=null;
+      if(mode==="setup")gact({op:"setup",i:sel[0],j:sel[1],b_i:v[0],b_j:v[1]});
+      else gact({op:"build",kind:"road",i:sel[0],j:sel[1],b_i:v[0],b_j:v[1]});};
+    for(let i=0;i<=N;i++)for(let j=0;j<=N;j++){
+      const on=state.ktsel&&state.ktsel[0]===i&&state.ktsel[1]===j;
+      const vb=document.createElement("button");
+      vb.style.cssText="position:absolute;left:"+(j*cell-9)+"px;top:"+(i*cell-9)+"px;width:18px;height:18px;box-sizing:border-box;padding:0;border-radius:50%;z-index:3;border:1px solid "
+        +(on?"#2E8B57":"rgba(0,0,0,.30)")+";background:"+(on?"#37a25f":"rgba(255,255,255,.35)")
+        +";cursor:"+(myTurn&&!pending?"pointer":"default");
+      vb.title="交点 ("+i+","+j+")";
+      if(myTurn&&!pending)vb.onclick=()=>pick([i,j]);
+      wrap.appendChild(vb);}
+    box.appendChild(wrap);
+    // 资源与建筑统计
+    const info=document.createElement("div");
+    info.innerHTML="<div class='gsec'>你的资源（"+esc(gnick(state.uid))+"）</div>";
     const res=s.res[state.uid]||{};
     for(const k of ["wood","brick","lamb","wheat","ore"])
-      html+="<span style='margin:0 6px'><span style='color:"+(R_COL[k]||"#666")+"'>"
+      info.innerHTML+="<span style='margin:0 6px'><span style='color:"+(R_COL[k]||"#666")+"'>"
         +resIcon(k,14)+"</span>"+R_CN[k]+"×"+(res[k]||0)+"</span>";
-    html+="<div class='gsec'>定居点/城市/道路</div>";
-    html+="<div style='font-size:11px;color:var(--dim)'>村 ×"+(Object.values(s.board).filter(v=>!v.city).length)
-      +"　城 ×"+(Object.values(s.board).filter(v=>v.city).length)
+    info.innerHTML+="<div class='gsec'>定居点/城市/道路</div>"
+      +"<div style='font-size:11px;color:var(--dim)'>村 ×"+(Object.values(board).filter(v=>!v.city).length)
+      +"　城 ×"+(Object.values(board).filter(v=>v.city).length)
       +"　路 ×"+(Object.keys(s.roads||{}).length)+"</div>";
-    d.innerHTML=html;box.appendChild(d);
-    const my=state.uid,myTurn=s.turn_uid===my;
+    box.appendChild(info);
+    // 以下为文本输入兜底（点击区之后）
     if(!myTurn){box.appendChild(gBtn("⏭ 跳过",{op:"skip"},true));return}
+    if(s.robber_pending){
+      const rbar=document.createElement("div");rbar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
+      const I=(ph)=>Object.assign(document.createElement("input"),{type:"number",placeholder:ph,
+        style:"width:52px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"}),
+        rr=I("行"),rc=I("列"),
+        rbtn=document.createElement("button");rbtn.className="gbtn go";rbtn.textContent="🦹 移动";
+      rbtn.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"robber",r:rr.value,c:rc.value}});
+      rbar.append(document.createTextNode("🦹 移动盗匪：行"),rr,document.createTextNode("列"),rc,rbtn);
+      box.appendChild(rbar);return}
     if(s.phase==="setup"){
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px";
       const I=(ph)=>Object.assign(document.createElement("input"),{type:"number",placeholder:ph,
@@ -4969,26 +5053,52 @@ const GRENDER={
   tielu(box,s){
     box.appendChild(gTitle("tielu","铁路 · 连线得分"));
     const P_COL={red:"#e05555",yellow:"#e8b93c",green:"#3ba55d",blue:"#4a7de0",purple:"#9b5fbf"};
-    const routes=(s.routes||[]).map(rt=>{
-      const col=rt.claimed?("#666"):(P_COL[rt.color]||"#999");
-      return "<div style='font-size:11px;padding:2px 0;border-bottom:1px dashed var(--line,#eee)'>"
-        +(rt.claimed?"("+esc(gnick(rt.claimed))+")":"")
-        +esc(s.cities[rt.a])+" ↔ "+esc(s.cities[rt.b])
-        +" <b style='color:"+col+"'>"+({red:"红",yellow:"黄",green:"绿",blue:"蓝",purple:"紫"}[rt.color]||"")+"×"+rt.length+"</b></div>";}).join("");
+    const CN={red:"红",yellow:"黄",green:"绿",blue:"蓝",purple:"紫"};
+    const ids=Object.keys(s.cities||{}).map(Number).sort((a,b)=>a-b);
+    const n=ids.length||1,cx=170,cy=130,Rx=130,Ry=95,pos={};
+    ids.forEach((id,i)=>{const an=i/n*2*Math.PI-Math.PI/2;
+      pos[id]=[cx+Rx*Math.cos(an),cy+Ry*Math.sin(an)];});
+    const pv=(state.gpriv&&state.gpriv.hand)||{};
+    const myTurn=s.turn_uid!=null&&s.turn_uid===state.uid;
+    const P2=(v)=>Math.round(v*10)/10;
+    let svg="<svg viewBox='0 0 340 260' style='width:100%;max-width:460px;display:block;margin:4px auto'>";
+    (s.routes||[]).forEach(rt=>{
+      const A=pos[rt.a],B=pos[rt.b];if(!A||!B)return;
+      const claimed=!!rt.claimed,col=claimed?"#666":(P_COL[rt.color]||"#999");
+      const cnm=CN[rt.color]||"";
+      const canPay=!claimed&&myTurn&&(pv[rt.color]||0)>=rt.length;
+      const ln="x1='"+P2(A[0])+"' y1='"+P2(A[1])+"' x2='"+P2(B[0])+"' y2='"+P2(B[1])+"'";
+      svg+="<line "+ln+" stroke='"+col+"' stroke-width='"+(claimed?6:4)+"' stroke-linecap='round'"
+        +(claimed?"":(canPay?"":" style='opacity:.35'"))+"/>";
+      if(!claimed)svg+="<line "+ln
+        +(canPay?" data-tla='"+rt.a+"' data-tlb='"+rt.b+"' style='cursor:pointer'":"")
+        +" stroke='transparent' stroke-width='16'/>";
+      svg+="<text x='"+P2((A[0]+B[0])/2)+"' y='"+P2((A[1]+B[1])/2-3)
+        +"' fill='#fff' font-size='9' text-anchor='middle'>"+rt.length+" "+cnm+"</text>";
+    });
+    ids.forEach(id=>{const P=pos[id];
+      svg+="<circle cx='"+P2(P[0])+"' cy='"+P2(P[1])+"' r='15' fill='#33415a' stroke='#fff' stroke-width='2'/>"
+        +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+3)+"' fill='#fff' font-size='9' text-anchor='middle'>"+id+"</text>"
+        +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+26)+"' fill='#dfe6ef' font-size='9' text-anchor='middle'>"
+        +esc(s.cities[id]||"")+"</text>";});
+    svg+="</svg>";
     const d=document.createElement("div");
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>回合 → "+esc(gnick(s.turn_uid))
       +"　剩线路 "+s.route_left+"　手牌×"+(s.hand_count[state.uid]||0)+"　"+scoreHTML(s.score)+"</div>"
-      +"<div class='gsec'>线路</div>"+routes;
+      +"<div class='gsec'>线路图（点线路认领：需对应颜色车票卡，长度即张数）</div>"+svg;
+    d.querySelectorAll("line[data-tla]").forEach(el=>{
+      el.onclick=()=>gameAPI("action",{room_id:state.groom,
+        action:{op:"claim",a:+el.getAttribute("data-tla"),b:+el.getAttribute("data-tlb")}});});
     box.appendChild(d);
     if(s.turn_uid===state.uid){
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-      const S=(ph)=>Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
-      const S_a=S("城市A");
-      for(let i=0;i<(s.cities||[]).length;i++){const o=document.createElement("option");o.value=i;
-        o.textContent=(s.cities[i]||("城市"+i));S_a.appendChild(o)}
+      const S=()=>Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
+      const S_a=S();
+      ids.forEach(id=>{const o=document.createElement("option");o.value=id;
+        o.textContent=(s.cities[id]||("城市"+id));S_a.appendChild(o)});
       bar.appendChild(document.createTextNode("认领 "));bar.appendChild(S_a);
       bar.appendChild(document.createTextNode("→"));
-      const S_b=S("城市B");S_b.innerHTML=S_a.innerHTML;
+      const S_b=S();S_b.innerHTML=S_a.innerHTML;
       const bb=document.createElement("button");bb.className="gbtn go";bb.textContent="🚂 认领";
       bb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"claim",a:S_a.value,b:S_b.value}});
       bar.append(S_b,bb);box.appendChild(bar);
@@ -5064,19 +5174,122 @@ const GRENDER={
     const GMCOL={o:"#8a8a8a",d:"#b9c6d4",r:"#d2534f",e:"#3a9b5f",s:"#4a7de0",g:"#c9962a"};
     const gmI=(c,sz)=>{const u=BG["gem_"+c];const n=sz||13;if(u)return "<img src='"+u+"' width='"+n+"' height='"+n+"' style='vertical-align:middle' alt=''>";return GMCOL[c]?"<span style='color:"+GMCOL[c]+"'>"+resIcon(c,n)+"</span>":"";};
     const tok=(t)=>Object.entries(t||{}).map(([c,n])=>gmI(c)+"×"+n).join("　");
+    const my=state.uid;
+    const mine=(s.players||[]).includes(my);
+    const myTurn=mine&&s.winner_uid==null&&s.turn_uid===my;
+    if(!myTurn)state.gcsel=[];                  // 换手/观战后丢弃残留选择
+    const sel=state.gcsel||[];
+    const bank=s.bank||{};
+    const toks=(s.tokens&&s.tokens[my])||{};
+    const disc=(s.discount&&s.discount[my])||{};
+    // 客户端镜像服务端扣款规则：need=max(0,cost-discount)，金补各色缺口总和
+    const afford=(card)=>{const cost=(card&&card.cost)||{};let gold=0;
+      for(const c in cost){const need=Math.max(0,(cost[c]||0)-(disc[c]||0));
+        gold+=Math.max(0,need-(toks[c]||0));}
+      return gold<=(toks.g||0);};
+    const gact=(a)=>gameAPI("action",{room_id:state.groom,action:a});
+    const pickChip=(c)=>{
+      const cur=state.gcsel||[],n=bank[c]||0;
+      if(!myTurn||n<=0)return;
+      if(cur.includes(c)){
+        if(cur.length===1&&n>=4){state.gcsel=[];gact({op:"take2",color:c});return}
+        state.gcsel=cur.filter(k=>k!==c);renderGamePanel();return;}
+      if(cur.length<3){const next=cur.concat([c]);
+        if(next.length===3){state.gcsel=[];gact({op:"take",colors:next});return}
+        state.gcsel=next;renderGamePanel();}
+    };
     const d=document.createElement("div");
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>回合 → "+esc(gnick(s.turn_uid))
-      +"　金库："+Object.entries(s.bank).map(([c,n])=>gmI(c,14)+"×"+n).join(" ")+"　"+scoreHTML(s.score)+"</div>";
-    let mkt="<div class='gsec'>市场</div>";
-    for(let t=1;t<=3;t++){mkt+="<div style='font-size:11px'><b>"+t+"级</b>　"
-      +((s.market[t]||[]).map((c,i)=>{const cost=Object.entries(c.cost).filter(e=>e[1]>0).map(e=>gmI(e[0],12)+"×"+e[1]).join(" ");
-        return "<span style='"+bgImg("panel")+"margin:0 6px;border:1px solid var(--line,#ddd);border-radius:var(--r1);padding:3px 6px;display:inline-block'>["+i+"] "+gmI(c.disc,15)+"+"+c.pts+" "+C_CN[c.disc]+"　需"+cost+"</span>";}).join("")||"（空）")+"</div>";}
-    mkt+="<div class='gsec'>你的宝石</div>"+tok(s.tokens[state.uid])
-      +"<div style='font-size:11px;color:var(--dim)'>永久折扣："+tok(s.discount[state.uid])
+      +"　"+scoreHTML(s.score)+"</div>";
+    box.appendChild(d);
+    // 宝石池：5 色可点击筹码（金不可取，仅展示）
+    const bk=document.createElement("div");
+    bk.style.cssText="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0";
+    const bkl=document.createElement("span");
+    bkl.style.cssText="font-size:11px;color:var(--dim)";bkl.textContent="宝石池：";
+    bk.appendChild(bkl);
+    ["o","d","r","e","s"].forEach(c=>{
+      const n=bank[c]||0,on=sel.includes(c);
+      const el=document.createElement("span");
+      el.style.cssText="display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:var(--r1);font-size:12px;border:1px solid "
+        +(on?"#2E8B57":(n>0?"var(--line,#ddd)":"var(--line,#eee)"))
+        +";background:"+(on?"rgba(46,139,87,.16)":"transparent")
+        +";cursor:"+(myTurn&&n>0?"pointer":"default")+";opacity:"+(n>0?1:0.45);
+      el.innerHTML=gmI(c,15)+"<b>"+n+"</b>";
+      if(myTurn&&n>0)el.onclick=()=>pickChip(c);
+      bk.appendChild(el);});
+    const gold=document.createElement("span");
+    gold.style.cssText="font-size:12px;margin-left:4px";
+    gold.innerHTML=gmI("g",15)+"×"+(bank.g||0);
+    bk.appendChild(gold);
+    box.appendChild(bk);
+    if(sel.length){                             // 已选提示 + 取消选择
+      const line=document.createElement("div");
+      line.style.cssText="display:flex;gap:6px;align-items:center;font-size:11px;margin:2px 0";
+      const tip=document.createElement("span");
+      tip.innerHTML="已选："+sel.map(c=>gmI(c,12)+c).join("、")
+        +(sel.length===1&&(bank[sel[0]]||0)>=4?"（再点同色可取 2）":"（选满 3 色自动取）");
+      const takeBtn=document.createElement("button");takeBtn.className="gbtn go";
+      takeBtn.textContent="💎 取 "+sel.length+" 颗";
+      takeBtn.onclick=()=>{const cur=(state.gcsel||[]).slice();if(!cur.length)return;
+        state.gcsel=[];gact({op:"take",colors:cur});};
+      const cancel=document.createElement("button");cancel.className="gbtn";cancel.textContent="取消选择";
+      cancel.onclick=()=>{state.gcsel=[];renderGamePanel();};
+      line.append(tip,takeBtn,cancel);box.appendChild(line);}
+    // 市场：点卡购买（买不起置灰且不发请求），左上角 📥 保留
+    const mkt=document.createElement("div");
+    const mt=document.createElement("div");mt.className="gsec";mt.textContent="市场（点卡购买 · 📥 保留）";
+    mkt.appendChild(mt);
+    for(let t=1;t<=3;t++){
+      const row=document.createElement("div");
+      row.style.cssText="display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin:3px 0";
+      const lab=document.createElement("span");
+      lab.style.cssText="font-size:11px;font-weight:700;align-self:center";lab.textContent=t+"级";
+      row.appendChild(lab);
+      const cards=s.market[t]||[];
+      if(!cards.length){const e=document.createElement("span");
+        e.style.cssText="font-size:11px;color:var(--dim)";e.textContent="（空）";row.appendChild(e);}
+      cards.forEach((c,i)=>{
+        const ok=afford(c)&&myTurn;
+        const cost=Object.entries(c.cost||{}).filter(e=>e[1]>0).map(e=>gmI(e[0],12)+"×"+e[1]).join(" ");
+        const el=document.createElement("div");
+        el.style.cssText=bgImg("panel")+"position:relative;border:1px solid "+(ok?"#2E8B57":"var(--line,#ddd)")
+          +";border-radius:var(--r1);padding:4px 8px 4px 10px;display:inline-block;font-size:11px;opacity:"
+          +(afford(c)?1:0.55)+";cursor:"+(ok?"pointer":"default");
+        el.innerHTML=gmI(c.disc,15)+"+"+c.pts+" <span style='color:var(--dim)'>"+esc(C_CN[c.disc]||c.disc)+"</span><br>需"+cost;
+        if(ok)el.onclick=()=>gact({op:"buy",tier:t,idx:i});
+        const rv=document.createElement("span");rv.textContent="📥";rv.title="保留";
+        rv.style.cssText="position:absolute;top:0;left:0;font-size:10px;line-height:1;padding:1px 2px;border-radius:6px;background:rgba(255,255,255,.85);cursor:"+(myTurn?"pointer":"default");
+        if(myTurn)rv.onclick=(ev)=>{ev.stopPropagation();gact({op:"reserve",tier:t,idx:i});};
+        el.appendChild(rv);row.appendChild(el);});
+      mkt.appendChild(row);}
+    box.appendChild(mkt);
+    // 我的保留卡：紧凑一行，点卡即买
+    const myRsv=(state.gpriv&&state.gpriv.reserved)||[];
+    if(myRsv.length){
+      const rt=document.createElement("div");rt.className="gsec";rt.textContent="保留卡（点卡购买）";
+      box.appendChild(rt);
+      const r_row=document.createElement("div");
+      r_row.style.cssText="display:flex;flex-wrap:wrap;gap:6px;margin:2px 0";
+      myRsv.forEach((c,i)=>{
+        const ok=afford(c)&&myTurn;
+        const cost=Object.entries(c.cost||{}).filter(e=>e[1]>0).map(e=>gmI(e[0],12)+"×"+e[1]).join(" ");
+        const el=document.createElement("div");
+        el.style.cssText=bgImg("panel")+"border:1px solid "+(ok?"#2E8B57":"var(--line,#ddd)")
+          +";border-radius:var(--r1);padding:4px 8px;font-size:11px;opacity:"+(afford(c)?1:0.5)
+          +";cursor:"+(ok?"pointer":"default");
+        el.innerHTML="🎴+"+c.pts+" "+gmI(c.disc,14)+"<br>需"+cost;
+        if(ok)el.onclick=()=>gact({op:"buy_res",idx:i});
+        r_row.appendChild(el);});
+      box.appendChild(r_row);}
+    const info=document.createElement("div");
+    info.innerHTML="<div class='gsec'>你的宝石</div>"+tok(s.tokens[my])
+      +"<div style='font-size:11px;color:var(--dim)'>永久折扣："+tok(s.discount[my])
       +"　<span style='color:#c9962a'>"+resIcon("crown",12)+"</span>贵宾待邀："+(s.nobles||[]).length
       +"｜你的贵宾×"+(state.gpriv?(state.gpriv.nobles||[]).length:0)+"</div>";
-    d.innerHTML+=mkt;box.appendChild(d);
-    if(s.turn_uid===state.uid){
+    box.appendChild(info);
+    if(myTurn){
+      // 文本输入兜底（默认交互已是点击）
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
       bar.appendChild(document.createTextNode("取 1~3 异色(空格分隔)"));
       const I=Object.assign(document.createElement("input"),{placeholder:"o d r",style:"width:80px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"});
@@ -5124,8 +5337,13 @@ const GRENDER={
     const SJ_IC={crystal:"#4a9fc4",apple:"#c9962a",vt:"#c9962a"};
     const sjI=(k,sz)=>SJ_IC[k]?"<span style='color:"+SJ_IC[k]+"'>"+resIcon(k,sz||13)+"</span>":"";
     const myHand=(state.gpriv&&state.gpriv.hand)||[];
-    const hand=myHand.map((c,i)=>"["+i+"] "+c.name+"(需"+c.cost+sjI("crystal",12)+"产"+c.out+")").join("　")||"（空）";
-    const eng=(s.engine[state.uid]||[]).map((c,i)=>"["+i+"] "+c.name+(c.played?"(已激活)":"")).join("　")||"（空）";
+    const myTurn=s.turn_uid===state.uid&&s.winner_uid==null;
+    const chip="display:inline-block;margin:2px 6px 2px 0;padding:3px 8px;border-radius:8px;background:rgba(127,127,127,.12);border:1px solid var(--line,#cbb)";
+    const hand=myHand.map((c,i)=>"<span data-sjhand='"+i+"' style='"+chip+(myTurn?";cursor:pointer":"")+"'>["+i+"] "+esc(c.name)+"(需"+c.cost+sjI("crystal",12)+"产"+c.out+")</span>").join("")||"（空）";
+    const eng=(s.engine[state.uid]||[]).map((c,i)=>{
+      const on=myTurn&&!c.played;
+      return "<span "+(on?"data-sjeng='"+i+"' ":"")+"style='"+chip+";border-color:"+(on?"#6fbf7f":"var(--line,#888)")+(c.played?";color:var(--dim)":"")+(on?";cursor:pointer":"")+"'>["+i+"] "+esc(c.name)+(c.played?"（已激活）":"")+"</span>";
+    }).join("")||"（空）";
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>第 "+s.season+"/"+s.seasons+" 季 · 剩"+s.turns_left+" 动 · 回合 → "
       +esc(gnick(s.turn_uid))+"　"+scoreHTML(s.vp)+"</div>"
       +"<div style='font-size:12px'>"+sjI("crystal",15)+" 水晶 "+s.crystal[state.uid]+"　"+sjI("apple",15)+" 金币 "+s.gold[state.uid]
@@ -5133,6 +5351,12 @@ const GRENDER={
       +"<div class='gsec'>手牌</div><div style='font-size:12px'>"+hand+"</div>"
       +"<div class='gsec'>我的引擎</div><div style='font-size:12px'>"+eng+"</div>";
     box.appendChild(d);
+    if(myTurn){
+      d.querySelectorAll("[data-sjhand]").forEach(el=>{
+        el.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"play",idx:parseInt(el.getAttribute("data-sjhand"),10)}});});
+      d.querySelectorAll("[data-sjeng]").forEach(el=>{
+        el.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"activate",idx:parseInt(el.getAttribute("data-sjeng"),10)}});});
+    }
     if(s.turn_uid===state.uid){
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
       bar.appendChild(document.createTextNode("出牌 "));
@@ -5220,14 +5444,56 @@ const GRENDER={
   },
   yahtzee(box,s){
     box.appendChild(gTitle("yahtzee","快艇骰子 · 记分"));
+    const me=state.uid,mine=(s.scores||{})[me]||{};
+    const sig=(s.dice||[]).join(",")+"|"+(s.rolls_left||0);
+    if(state.yzsig!==sig){state.yzsig=sig;state.yzkeep=[];}
+    if(!Array.isArray(state.yzkeep))state.yzkeep=[];
+    const myturn=s.turn_uid===me&&s.winner_uid==null;
+    const canPick=!!(myturn&&s.rolled&&s.rolls_left>0&&!s.category);
+    const canScore=!!(myturn&&s.rolled&&!s.category);
     const d=document.createElement("div");
-    d.innerHTML="<div style='font-size:20px;font-weight:700;letter-spacing:4px;margin:6px 0'>"
-      +(s.dice||[]).join("　")+"</div>"
-      +"<div style='font-size:11px;color:var(--dim)'>第 "+s.round+" 动 · 回合 → "+esc(gnick(s.turn_uid))
+    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>第 "+s.round+" 动 · 回合 → "+esc(gnick(s.turn_uid))
       +"（可再重掷 "+s.rolls_left+" 次）　"+Object.entries(s.totals||{}).map(([u,v])=>esc(gnick(+u))+"="+v).join("　")+"</div>";
-    d.innerHTML+="<div class='gsec'>记分表</div><div style='display:grid;grid-template-columns:repeat(auto-fill,96px);gap:2px'>"
-      +Object.entries(s.cats||{}).map(([k,v])=>"<div style='font-size:11px'>"+v+"："+(s.scores[state.uid]?.[k]??"<span style='color:var(--dim)'>-</span>")+"</div>").join("")
-      +"</div>";
+    const row=document.createElement("div");
+    row.style.cssText="display:flex;gap:8px;justify-content:center;align-items:flex-end;margin:10px 0 4px;min-height:58px";
+    (s.dice||[]).forEach((v,i)=>{
+      const kept=state.yzkeep.indexOf(i)>=0;
+      const db=document.createElement("button");
+      db.className="gbtn"+(kept?" go":"");
+      db.textContent=String(v);
+      db.style.cssText="min-width:46px;height:50px;font-size:22px;font-weight:800;border-radius:12px;padding:0 8px;"
+        +(kept?"transform:translateY(-6px);border:2px solid #e0a13c;box-shadow:0 0 0 3px rgba(224,161,60,.22);":"");
+      db.title=kept?"点击取消保留":"点击保留这枚骰子";
+      if(canPick)db.onclick=()=>{
+        const k=state.yzkeep.slice(),p=k.indexOf(i);
+        if(p>=0)k.splice(p,1);else k.push(i);
+        state.yzkeep=k;renderGamePanel();
+      };else db.disabled=true;
+      row.appendChild(db);
+    });
+    d.appendChild(row);
+    if(canPick){
+      const rw=document.createElement("div");rw.style.cssText="display:flex;justify-content:center;margin:2px 0 6px";
+      const rb=document.createElement("button");rb.className="gbtn go";rb.textContent="🔁 重掷未保留";
+      rb.onclick=()=>gameAPI("action",{room_id:state.groom,
+        action:{op:"reroll",keep:state.yzkeep.slice().sort((a,b)=>a-b)}});
+      rw.appendChild(rb);d.appendChild(rw);
+    }
+    const hd=document.createElement("div");hd.className="gsec";hd.textContent="记分表（点我的格子记分）";
+    d.appendChild(hd);
+    const grid=document.createElement("div");
+    grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fill,96px);gap:4px";
+    Object.entries(s.cats||{}).forEach(([k,v])=>{
+      const got=mine[k],ok=canScore&&got==null;
+      const cb=document.createElement("button");cb.className="gbtn";
+      cb.textContent=v+"："+(got==null?"-":got);
+      cb.style.cssText="font-size:11px;padding:5px 4px;"
+        +(ok?"border:1px solid #67a86b;background:rgba(103,168,107,.16);":"");
+      if(ok)cb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"score",cat:k}});
+      else cb.disabled=true;
+      grid.appendChild(cb);
+    });
+    d.appendChild(grid);
     box.appendChild(d);
     if(s.turn_uid!==state.uid)return;
     const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
@@ -5257,12 +5523,13 @@ const GRENDER={
       const w=document.createElement("div");w.style.cssText="margin-top:6px";
       const hd=document.createElement("div");hd.className="gsec";hd.textContent="我的手牌（选一张打出）";
       w.appendChild(hd);
+      const picked=Object.keys(s.chosen||{}).includes(String(state.uid));
       p.hand.forEach(c=>{
-        const el=mkCard({cls:"click",sym:c,cor:c,title:"打出 "+c,
-          click:()=>gameAPI("action",{room_id:state.groom,action:{op:"choose",card:c}})});
-        w.appendChild(el);});
+        const o={cls:picked?"":"click",sym:c,cor:c,title:(picked?"已暗选 ":"打出 ")+c};
+        if(!picked)o.click=()=>gameAPI("action",{room_id:state.groom,action:{op:"choose",card:c}});
+        w.appendChild(mkCard(o));});
       box.appendChild(w);
-      if(Object.keys(s.chosen||{}).includes(String(state.uid)))
+      if(picked)
         box.appendChild(Object.assign(document.createElement("div"),
           {style:"color:var(--dim);font-size:12px;margin-top:4px",textContent:"✅ 本赛季已暗选"}));
     }

@@ -157,6 +157,7 @@ class YahtzeeGame(BaseGame):
             "game": self.name, "status": "playing",
             "turn_uid": self._cur(), "round": self.round,
             "dice": self.dice, "rolls_left": self.rolls_left,
+            "rolled": self.rolled,
             "category": self.category, "cats": CAT_CN,
             "scores": {str(u): {c: v for c, v in row.items()}
                        for u, row in self.scores.items()},

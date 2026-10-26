@@ -30,6 +30,7 @@ class LoveLoveGame(BaseGame):
         self.turn_idx = 0
         self.discard = []
         self.dead = []
+        self.burned = []                             # 开局烧掉的暗牌（不参与对局）
         self.winner = None
         self.game_over = False
         self._deal()
@@ -50,11 +51,12 @@ class LoveLoveGame(BaseGame):
         n = len(self.alive)
         for i, u in enumerate(self.alive):
             self.hand[u] = deck.pop()
-        # 模拟开局弃一张到牌堆底（保证可抽）
+        # 官方开局：先烧掉 1 张暗牌，既不进任何人手牌，也不进入牌堆
+        self.burned = [deck.pop()] if deck else []
         self.deck = deck
-        if not self.deck:
-            self.deck = [x for x in range(1, 9) for _ in VAL_LIMIT[x]]
-            self.rng.shuffle(self.deck)
+        if not self.deck:                     # 极端兜底：牌堆异常为空时重建
+            self.deck = self._build_deck()
+            self.burned = [self.deck.pop()]
 
     @property
     def cur(self):

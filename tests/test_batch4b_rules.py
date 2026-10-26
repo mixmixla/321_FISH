@@ -59,6 +59,7 @@ def test_kaituo_road_build_can_win_with_longest_road_bonus():
         _road(g, 1, (0, c), (0, c + 1))
     g.res[1]["wood"] = 1
     g.res[1]["brick"] = 1
+    g.rolled = True                                # 建造需先掷骰
 
     msgs = g.act(1, {"op": "build", "kind": "road",
                      "i": 0, "j": 4, "b_i": 0, "b_j": 5})
@@ -74,6 +75,7 @@ def test_kaituo_bad_trade_quantity_is_rejected_without_mutation():
     """回归：此前 exchange 的 n 直接 int()，非法输入抛 ValueError 而非 GameRuleError。"""
     g = _kaituo_play()
     g.res[1]["wood"] = 4
+    g.rolled = True
     before = dict(g.res[1])
     with pytest.raises(GameRuleError):
         g.act(1, {"op": "trade", "give": "wood", "want": "brick", "n": "abc"})
@@ -96,6 +98,7 @@ def test_kaituo_setup_round_invariants():
         for u in g.players:
             assert all(v >= 0 for v in g.res[u].values())
             assert g._score(u) >= 0
+        g.act(uid, {"op": "skip"})
 
 
 # ================================================================ 领地

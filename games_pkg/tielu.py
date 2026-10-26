@@ -75,12 +75,15 @@ class TieluGame(BaseGame):
     def _act_draw(self, uid):
         if not self.route_deck:
             raise GameRuleError("线路牌已空")
-        if len(self.ticket_deck) < 2:
+        if not self.ticket_deck:
             raise GameRuleError("车票卡已抽空")
-        got = [self.ticket_deck.pop(), self.ticket_deck.pop()]
+        take = min(2, len(self.ticket_deck))
+        got = [self.ticket_deck.pop() for _ in range(take)]
         for c in got:
             self.hand[uid][c] += 1
         self._advance()
+        if take == 1:
+            return [f"🎫 {self._nick(uid)} 摸到 1 张车票卡：{COLOR_CN[got[0]]}"]
         return [f"🎫 {self._nick(uid)} 摸车票卡：{'、'.join(COLOR_CN[c] for c in got)}"]
 
     def _act_claim(self, uid, action):

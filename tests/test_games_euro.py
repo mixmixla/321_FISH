@@ -52,13 +52,14 @@ def test_kaituo_setup_and_roll():
     g.act(2, {"op": "setup", "i": SIZE, "j": SIZE, "b_i": SIZE - 1, "b_j": SIZE})
     g.act(1, {"op": "setup", "i": 0, "j": SIZE, "b_i": 0, "b_j": SIZE - 1})
     assert g.phase == "play" and g.turn == 0
-    # 掷骰后轮到 2
+    # 掷骰不结束回合，同回合只能掷一次
     msgs = g.act(1, {"op": "roll"})
     assert any("🎲" in m for m in msgs)
-    assert g.players[g.turn] == 2
-    # 非法：重复由 1 行动
+    assert g.players[g.turn] == 1
     with pytest.raises(GameRuleError):
         g.act(1, {"op": "roll"})
+    g.act(1, {"op": "skip"})
+    assert g.players[g.turn] == 2
 
 
 def test_kaituo_build_insufficient():
@@ -67,6 +68,7 @@ def test_kaituo_build_insufficient():
     g.act(2, {"op": "setup", "i": SIZE, "j": 0, "b_i": SIZE, "b_j": 1})
     g.act(2, {"op": "setup", "i": SIZE, "j": SIZE, "b_i": SIZE - 1, "b_j": SIZE})
     g.act(1, {"op": "setup", "i": 0, "j": SIZE, "b_i": 0, "b_j": SIZE - 1})
+    g.rolled = True                                  # 主局建造需先掷骰
     # 无资源造村
     with pytest.raises(GameRuleError):
         g.act(1, {"op": "build", "kind": "settle", "i": 1, "j": 0})

@@ -1400,6 +1400,12 @@ def handle_drag(cv, ui, x, y, phase):
     if game == "azul":
         _azul_drag(cv, ui, x, y, phase)
         return
+    if game == "lingdi":
+        _lingdi_drag(cv, ui, x, y, phase)
+        return
+    if game == "chengzhu":
+        _chengzhu_drag(cv, ui, x, y, phase)
+        return
     if game != "drawguess":
         return
     st = ui.get("state") or {}
@@ -5336,6 +5342,217 @@ def _p_kaituo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 _CLICKS["kaituo"] = _click_kaituo          # 开拓：模式切换/盗匪落点/顶点两段式选点
 
 
+# ---- 领地（卡卡颂）拖拽投放 + 旋转 ----
+_LD_D = ("N", "E", "S", "W")
+_LD_OPP = {"N": "S", "S": "N", "E": "W", "W": "E"}
+_LD_NB = (("N", -1, 0), ("E", 0, 1), ("S", 1, 0), ("W", 0, -1))
+_LD_FEAT_COL = {"c": "#c05550", "r": "#a8a48f", "f": "#7fb069"}
+
+
+def _ld_rot_edges(edges, rot):
+    """与引擎 `_rot_edges` 同规则：顺时针 90°×rot。"""
+    out = {d: (edges or {}).get(d) for d in _LD_D}
+    for _ in range(int(rot or 0) % 4):
+        out = {"N": out["W"], "E": out["N"], "S": out["E"], "W": out["S"]}
+    return out
+
+
+def _ld_legal(st, r, c, rot):
+    """客户端镜像放置规则：范围内、空格；空盘任意；否则至少一邻且共享边相等。"""
+    try:
+        r, c = int(r), int(c)
+    except (TypeError, ValueError):
+        return False
+    size = int(st.get("size") or 9)
+    if not (0 <= r < size and 0 <= c < size):
+        return False
+    board = st.get("board") or {}
+    if f"{r},{c}" in board:
+        return False
+    cur = st.get("current")
+    if not cur:
+        return False
+    if not board:
+        return True
+    edges = _ld_rot_edges(cur.get("edges") or {}, rot)
+    found = False
+    for d, dr, dc in _LD_NB:
+        nb = board.get(f"{r + dr},{c + dc}")
+        if nb is None:
+            continue
+        found = True
+        if (nb.get("edges") or {}).get(_LD_OPP[d]) != edges.get(d):
+            return False
+    return found
+
+
+def _ld_cell_at(ui, x, y):
+    for (x0, y0, x1, y1, r, c) in ui.get("ld_cells") or ():
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            return r, c
+    return None
+
+
+def _ld_cell_rect(ui, r, c):
+    for (x0, y0, x1, y1, rr, cc) in ui.get("ld_cells") or ():
+        if rr == r and cc == c:
+            return x0, y0, x1, y1
+    return None
+
+
+def _ld_can_act(ui):
+    """门禁：进行中、本人在席、轮到自己且未终局。"""
+    st = ui.get("state") or {}
+    room = ui.get("room") or {}
+    me = ui.get("me")
+    if (st.get("status") or room.get("status")) != "playing":
+        return False
+    return bool(me is not None and st.get("winner_uid") is None
+                and st.get("turn_uid") == me
+                and me in (st.get("players") or []))
+
+
+def _ld_action(ui, st, r, c, rot):
+    act = {"op": "place", "r": int(r), "c": int(c), "rot": int(rot)}
+    try:
+        left = int((st.get("meeples") or {}).get(str(ui.get("me")), 0) or 0)
+    except (TypeError, ValueError):
+        left = 0
+    if ui.get("ld_meeple") and left > 0:
+        act["meeple"] = "self"
+    return act
+
+
+def _ld_repaint(ui):
+    fn = ui.get("repaint")
+    if fn is None:
+        return
+    try:
+        fn()
+    except Exception:
+        pass
+
+
+def _ld_edge_bars(cv, x0, y0, cell, edges, tags=None, stipple=None, thick=None):
+    """四边地型色条（画/幽灵共用）。"""
+    e = edges or {}
+    t = thick if thick is not None else max(2.0, cell * 0.16)
+    ins = max(1.0, cell * 0.06)
+    kw = {}
+    if tags:
+        kw["tags"] = tags
+    if stipple:
+        kw["stipple"] = stipple
+    boxes = (
+        ("N", (x0 + ins, y0 + ins, x0 + cell - ins, y0 + ins + t)),
+        ("E", (x0 + cell - ins - t, y0 + ins, x0 + cell - ins, y0 + cell - ins)),
+        ("S", (x0 + ins, y0 + cell - ins - t, x0 + cell - ins, y0 + cell - ins)),
+        ("W", (x0 + ins, y0 + ins, x0 + ins + t, y0 + cell - ins)),
+    )
+    for d, box in boxes:
+        if e.get(d):
+            cv.create_rectangle(*box, fill=_LD_FEAT_COL.get(e[d], "#999"),
+                                outline="", **kw)
+
+
+def _lingdi_drag(cv, ui, x, y, phase):
+    """领地拖拽：从左上预览抓起 → 目标格幽灵 → 合法才 submit(place,rot)。"""
+    if phase == "down":
+        ui.pop("ld_drag", None)
+        ui["ld_ghost_cell"] = None
+        if not _ld_can_act(ui):
+            return
+        box = ui.get("ld_src")
+        if not box or not (box[0] <= x <= box[2] and box[1] <= y <= box[3]):
+            return
+        ui["ld_drag"] = True
+        return
+    if not ui.get("ld_drag"):
+        return
+    st = ui.get("state") or {}
+    rot = int(ui.get("ld_rot", 0) or 0)
+    hit = _ld_cell_at(ui, x, y)
+    if phase == "up":
+        ui["ld_drag"] = False
+        ui["ld_ghost_cell"] = None
+        try:
+            if cv is not None:
+                cv.delete("ld_ghost")
+        except Exception:
+            pass
+        if hit is None or not _ld_can_act(ui) \
+                or not _ld_legal(st, hit[0], hit[1], rot):
+            return
+        submit = ui.get("submit")
+        if submit is None:
+            return
+        submit(_ld_action(ui, st, hit[0], hit[1], rot))
+        ui["ld_rot"] = 0
+        ui["ld_meeple"] = False
+        _ld_repaint(ui)
+        return
+    if cv is None:
+        return
+    try:
+        cv.delete("ld_ghost")
+    except Exception:
+        pass
+    # 所有合法格淡绿提示（tag 统一 ld_ghost，rem 时一并清理）
+    for (x0, y0, x1, y1, r, c) in ui.get("ld_cells") or ():
+        if _ld_legal(st, r, c, rot):
+            cv.create_rectangle(x0 + 2, y0 + 2, x1 - 2, y1 - 2,
+                                fill="#7fd18f", outline="",
+                                stipple="gray25", tags="ld_ghost")
+    ui["ld_ghost_cell"] = None
+    if hit is None:
+        return
+    rect = _ld_cell_rect(ui, hit[0], hit[1])
+    if rect is None:
+        return
+    x0, y0, x1, y1 = rect
+    ok = _ld_legal(st, hit[0], hit[1], rot)
+    cv.create_rectangle(x0 + 2, y0 + 2, x1 - 2, y1 - 2, fill="#efe9dc",
+                        outline="", stipple="gray50", tags="ld_ghost")
+    _ld_edge_bars(cv, x0, y0, x1 - x0,
+                  _ld_rot_edges((st.get("current") or {}).get("edges"), rot),
+                  tags="ld_ghost", stipple="gray50")
+    cv.create_rectangle(x0 + 1, y0 + 1, x1 - 1, y1 - 1, fill="",
+                        outline=("#4ec26f" if ok else "#d9534f"), width=3,
+                        tags="ld_ghost")
+    ui["ld_ghost_cell"] = (hit[0], hit[1])
+
+
+def _click_lingdi(ui, x, y):
+    """领地点击兜底：旋转 / 米宝开关 / 点合法空格按当前旋转放置。"""
+    st = ui.get("state") or {}
+    repaint = ui.get("repaint") or (lambda: None)
+    box = ui.get("ld_rot_btn")
+    if box and box[0] <= x <= box[2] and box[1] <= y <= box[3]:
+        ui["ld_rot"] = (int(ui.get("ld_rot", 0) or 0) + 1) % 4
+        repaint()
+        return
+    box = ui.get("ld_meeple_btn")
+    if box and box[0] <= x <= box[2] and box[1] <= y <= box[3]:
+        ui["ld_meeple"] = not ui.get("ld_meeple")
+        repaint()
+        return
+    hit = _ld_cell_at(ui, x, y)
+    if hit is None or not _ld_can_act(ui):
+        return
+    rot = int(ui.get("ld_rot", 0) or 0)
+    if not _ld_legal(st, hit[0], hit[1], rot):
+        return
+    submit = ui.get("submit")
+    if submit is not None:
+        submit(_ld_action(ui, st, hit[0], hit[1], rot))
+    ui["ld_rot"] = 0
+    ui["ld_meeple"] = False
+    repaint()
+
+
+_CLICKS["lingdi"] = _click_lingdi       # 旋转/米宝开关 + 点格放置
+
+
 @_register("lingdi")
 def _p_lingdi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["lingdi"][1]
@@ -5347,61 +5564,68 @@ def _p_lingdi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         title += f"　轮到 {nick(st['turn_uid'])} · 剩牌 {st.get('deck_left', 0)}"
     _turn_banner(cv, w, 46, title, accent)
     ui.update(game="lingdi")
+    ui["ld_cells"] = []
+    ui["ld_rot_btn"] = None
+    ui["ld_meeple_btn"] = None
+    ui["ld_src"] = None
+    ui["ld_ghost_cell"] = None
+    ui.setdefault("ld_rot", 0)             # 跨重绘保留旋转/米宝开关
+    ui.setdefault("ld_meeple", False)
+    size = int(st.get("size") or 9)
     board = st.get("board") or {}
-    feat_col = {"c": "#c05550", "r": "#a8a48f", "f": "#7fb069"}
-    if board:
-        keys = [k.split(",") for k in board]
-        minr = min(int(k[0]) for k in keys)
-        maxr = max(int(k[0]) for k in keys)
-        minc = min(int(k[1]) for k in keys)
-        maxc = max(int(k[1]) for k in keys)
-    else:
-        minr = minc = 0
-        maxr = maxc = 8
-    nrow, ncol = maxr - minr + 1, maxc - minc + 1
-    bw = w - 24
-    bh = h - 46 - 92 - 24
-    cell = min(bw / ncol, bh / nrow, w / 9)
-    ox = (w - ncol * cell) / 2
+    # 固定 9x9：空位始终可见，便于拖放；坐标与 ld_cells 同源。
+    cell = min((w - 24) / size, (h - 46 - 92 - 24) / size, w / size)
+    ox = (w - size * cell) / 2
     oy = 58
-    t = 3
-    for key, cellx in board.items():
-        r, c = key.split(",")
-        r, c = int(r), int(c)
-        cr, cc = r - minr, c - minc
-        x0, y0 = ox + cc * cell, oy + cr * cell
-        cv.create_rectangle(x0 + 1, y0 + 1, x0 + cell - 1, y0 + cell - 1,
-                            fill="#efe9dc", outline="#b7ad96", width=1)
-        edges = cellx.get("edges") or {}
-        if edges.get("N"):
-            cv.create_rectangle(max(1, int(x0 + 2)), y0, int(x0 + cell - 2),
-                                int(y0 + t), fill=feat_col[edges["N"]], outline="")
-        if edges.get("E"):
-            cv.create_rectangle(int(x1 := x0 + cell - t), y0 + 2, x0 + cell,
-                                int(y0 + cell - 2), fill=feat_col[edges["E"]], outline="")
-        if edges.get("S"):
-            cv.create_rectangle(int(x0 + 2), int(y0 + cell - t),
-                                int(x0 + cell - 2), y0 + cell,
-                                fill=feat_col[edges["S"]], outline="")
-        if edges.get("W"):
-            cv.create_rectangle(x0, y0 + 2, x0 + t, int(y0 + cell - 2),
-                                fill=feat_col[edges["W"]], outline="")
-        owner = cellx.get("owner")
-        if owner is not None:
-            _stone(cv, x0 + cell / 2, y0 + cell / 2, cell * 0.26,
-                   _pcolor(owner, players))
-    # 当前待放板块 + 玩家
+    for r in range(size):
+        for c in range(size):
+            x0, y0 = ox + c * cell, oy + r * cell
+            x1, y1 = x0 + cell, y0 + cell
+            tile = board.get(f"{r},{c}")
+            if tile:
+                cv.create_rectangle(x0 + 1, y0 + 1, x1 - 1, y1 - 1,
+                                    fill="#efe9dc", outline="#b7ad96", width=1)
+                _ld_edge_bars(cv, x0, y0, cell, tile.get("edges") or {})
+                owner = tile.get("owner")
+                if owner is not None:
+                    _stone(cv, x0 + cell / 2, y0 + cell / 2, cell * 0.26,
+                           _pcolor(owner, players))
+            else:
+                cv.create_rectangle(x0 + 1, y0 + 1, x1 - 1, y1 - 1,
+                                    fill="#1d2a20", outline="#37473a", width=1)
+            ui["ld_cells"].append((x0, y0, x1, y1, r, c))
+    # 左上预览 + 旋转/米宝按钮（画与命中同源）
     cur = st.get("current")
-    py0 = h - 92
+    ps, px, py = 44.0, 16.0, 70.0
+    cv.create_rectangle(px, py, px + ps, py + ps, fill="#efe9dc",
+                        outline=_shade(accent, 0.5), width=2)
     if cur and isinstance(cur, dict):
-        ed = cur.get("edges") or {}
-        _text(cv, 16, py0 - 10,
-              "当前板块：" + "→".join(
-                  {"c": "城", "r": "路", "f": "场"}.get(ed[k], k)
-                  for k in ("N", "E", "S", "W") if ed.get(k)),
-              _MUTED, _FONT_F, anchor="w")
-        _text(cv, w / 2, py0 - 10, "放板块·放米宝·过 → 按钮区", _MUTED,
-              _FONT_F, anchor="center")
+        _ld_edge_bars(cv, px, py, ps,
+                      _ld_rot_edges(cur.get("edges") or {},
+                                    ui.get("ld_rot", 0)),
+                      thick=6.0)
+    ui["ld_src"] = (px, py, px + ps, py + ps)
+    bw_btn = min(104.0, max(40.0, w - px * 2))
+    ry0 = py + ps + 8
+    cv.create_rectangle(px, ry0, px + bw_btn, ry0 + 24, fill="#2d3b2e",
+                        outline=_shade(accent, 0.45), width=1)
+    _text(cv, px + bw_btn / 2, ry0 + 12, "⟳ 旋转", "#e8f2e9",
+          (_FONT_F[0], 10))
+    ui["ld_rot_btn"] = (px, ry0, px + bw_btn, ry0 + 24)
+    my0 = ry0 + 30
+    cv.create_rectangle(px, my0, px + bw_btn, my0 + 24,
+                        fill="#2d3b2e" if ui.get("ld_meeple") else "#243125",
+                        outline=_shade(accent, 0.45), width=1)
+    _text(cv, px + bw_btn / 2, my0 + 12,
+          "🧑‍🌾 米宝：" + ("开" if ui.get("ld_meeple") else "关"),
+          "#e8f2e9", (_FONT_F[0], 9))
+    ui["ld_meeple_btn"] = (px, my0, px + bw_btn, my0 + 24)
+    # 玩家资源面板（底部）
+    py0 = h - 92
+    _text(cv, 16, py0 - 10,
+          f"拖预览到棋盘 · 旋转 {int(ui.get('ld_rot', 0) or 0) * 90}°"
+          f" · 米宝{'开' if ui.get('ld_meeple') else '关'}",
+          _MUTED, (_FONT_F[0], 8), anchor="w")
     score = st.get("score") or {}
     meeples = st.get("meeples") or {}
     n = len(players)
@@ -5689,6 +5913,199 @@ def _p_gongfang(cv, st, me, nick, submit, repaint, ui, priv, w, h):
               (_FONT_F[0], 9))
 
 
+# ---- 我是城主（Kingdomino）拖拽投放 + 旋转 ----
+_CZ_TCOL = {"fd": "#a7c97a", "fo": "#4f7a3c", "mo": "#9aa0ab",
+            "wa": "#6aa8e0", "gr": "#c8d48a"}
+
+
+def _cz_can_act(ui) -> bool:
+    """门禁：对局进行中、本人在席、轮到自己挑选且未终局。"""
+    st = ui.get("state") or {}
+    room = ui.get("room") or {}
+    me = ui.get("me")
+    if (st.get("status") or room.get("status")) != "playing":
+        return False
+    return bool(me is not None and st.get("winner_uid") is None
+                and st.get("picker_uid") == me
+                and me in (st.get("players") or []))
+
+
+def _cz_halves(r, c, rot):
+    """与引擎同规则：rot=0 占 (r,c)+(r,c+1)，rot=1 占 (r,c)+(r+1,c)。"""
+    dr, dc = (0, 1) if int(rot) == 0 else (1, 0)
+    return [(r, c), (r + dr, c + dc)]
+
+
+def _cz_legal(st, uid, dom, r, c, rot) -> bool:
+    """客户端镜像引擎放置规则：两半都在界内且未占用；首块任放；
+    否则至少一半与自家同地型相邻。"""
+    try:
+        dom, r, c, rot = int(dom), int(r), int(c), int(rot)
+    except (TypeError, ValueError):
+        return False
+    if rot not in (0, 1):
+        return False
+    size = int(st.get("size") or 5)
+    market = st.get("market") or []
+    if not (0 <= dom < len(market)):
+        return False
+    d = market[dom] or {}
+    halves = _cz_halves(r, c, rot)
+    if any(not (0 <= rr < size and 0 <= cc < size) for rr, cc in halves):
+        return False
+    myg = (st.get("grid") or {}).get(str(uid)) or {}
+    if any(f"{rr},{cc}" in myg for rr, cc in halves):
+        return False
+    if int((st.get("placed") or {}).get(str(uid), 0) or 0) == 0:
+        return True
+    for (rr, cc), half in zip(halves, ("A", "B")):
+        terr = (d.get(half) or {}).get("terr")
+        for nr, nc in ((rr - 1, cc), (rr + 1, cc), (rr, cc - 1), (rr, cc + 1)):
+            cell = myg.get(f"{nr},{nc}")
+            if cell and cell.get("terr") == terr:
+                return True
+    return False
+
+
+def _cz_market_at(ui, x, y):
+    for (x0, y0, x1, y1, i) in ui.get("cz_market") or ():
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            return i
+    return None
+
+
+def _cz_cell_at(ui, x, y):
+    for (x0, y0, x1, y1, r, c) in ui.get("cz_cells") or ():
+        if x0 <= x <= x1 and y0 <= y <= y1:
+            return r, c
+    return None
+
+
+def _cz_cell_rect(ui, r, c):
+    for (x0, y0, x1, y1, rr, cc) in ui.get("cz_cells") or ():
+        if rr == r and cc == c:
+            return x0, y0, x1, y1
+    return None
+
+
+def _cz_repaint(ui) -> None:
+    fn = ui.get("repaint")
+    if fn is None:
+        return
+    try:
+        fn()
+    except Exception:
+        pass
+
+
+def _chengzhu_drag(cv, ui, x, y, phase) -> None:
+    """我是城主拖拽：市场抓板块 → 自家领地幽灵（按 rot 画两半）→ 合法才 submit。"""
+    if phase == "down":
+        ui.pop("cz_drag", None)
+        ui["cz_ghost_cell"] = None
+        if not _cz_can_act(ui):
+            return
+        i = _cz_market_at(ui, x, y)
+        if i is None:
+            return
+        ui["cz_sel"] = i
+        ui["cz_drag"] = i
+        _cz_repaint(ui)
+        return
+    if ui.get("cz_drag") is None:
+        return
+    dom = int(ui.get("cz_drag"))
+    st = ui.get("state") or {}
+    uid = ui.get("me")
+    rot = int(ui.get("cz_rot", 0) or 0)
+    hit = _cz_cell_at(ui, x, y)
+    if phase == "up":
+        ui["cz_drag"] = None
+        ui["cz_ghost_cell"] = None
+        try:
+            if cv is not None:
+                cv.delete("cz_ghost")
+        except Exception:
+            pass
+        ok = (hit is not None and _cz_can_act(ui)
+              and _cz_legal(st, uid, dom, hit[0], hit[1], rot))
+        submit = ui.get("submit")
+        if not ok or submit is None:
+            _cz_repaint(ui)
+            return
+        submit({"dom": dom, "x": int(hit[0]), "y": int(hit[1]),
+                "rot": rot})                       # x=行(r)、y=列(c)
+        ui["cz_sel"] = None
+        ui["cz_rot"] = 0
+        _cz_repaint(ui)
+        return
+    if cv is None:
+        return
+    try:
+        cv.delete("cz_ghost")
+    except Exception:
+        pass
+    # 所有合法格淡绿提示（tag 统一 cz_ghost，重绘/取消时一并清理）
+    for (x0, y0, x1, y1, r, c) in ui.get("cz_cells") or ():
+        if _cz_legal(st, uid, dom, r, c, rot):
+            cv.create_rectangle(x0 + 2, y0 + 2, x1 - 2, y1 - 2,
+                                fill="#7fd18f", outline="",
+                                stipple="gray25", tags="cz_ghost")
+    ui["cz_ghost_cell"] = None
+    if hit is None:
+        return
+    ok = _cz_legal(st, uid, dom, hit[0], hit[1], rot)
+    market = st.get("market") or []
+    d = market[dom] if 0 <= dom < len(market) else {}
+    for idx, (rr, cc) in enumerate(_cz_halves(hit[0], hit[1], rot)):
+        rect = _cz_cell_rect(ui, rr, cc)
+        if rect is None:
+            continue
+        bx0, by0, bx1, by1 = rect
+        terr = ((d.get("A" if idx == 0 else "B") or {}).get("terr"))
+        cv.create_rectangle(bx0 + 2, by0 + 2, bx1 - 2, by1 - 2,
+                            fill=_CZ_TCOL.get(terr, "#efe9dc"), outline="",
+                            stipple="gray50", tags="cz_ghost")
+        cv.create_rectangle(bx0 + 1, by0 + 1, bx1 - 1, by1 - 1, fill="",
+                            outline=("#4ec26f" if ok else "#d9534f"), width=3,
+                            tags="cz_ghost")
+    ui["cz_ghost_cell"] = (hit[0], hit[1])
+
+
+def _click_chengzhu(ui, x, y):
+    """点击兜底：旋转按钮切换横/竖、点市场板块选中、点合法格用当前选择放置。"""
+    st = ui.get("state") or {}
+    repaint = ui.get("repaint") or (lambda: None)
+    box = ui.get("cz_rot_btn")
+    if box and box[0] <= x <= box[2] and box[1] <= y <= box[3]:
+        ui["cz_rot"] = 1 - int(ui.get("cz_rot", 0) or 0)
+        repaint()
+        return
+    i = _cz_market_at(ui, x, y)
+    if i is not None:
+        if _cz_can_act(ui):
+            ui["cz_sel"] = i
+            repaint()
+        return
+    hit = _cz_cell_at(ui, x, y)
+    sel = ui.get("cz_sel")
+    if hit is None or sel is None or not _cz_can_act(ui):
+        return
+    rot = int(ui.get("cz_rot", 0) or 0)
+    if not _cz_legal(st, ui.get("me"), sel, hit[0], hit[1], rot):
+        return
+    submit = ui.get("submit")
+    if submit is not None:
+        submit({"dom": int(sel), "x": int(hit[0]), "y": int(hit[1]),
+                "rot": rot})
+    ui["cz_sel"] = None
+    ui["cz_rot"] = 0
+    repaint()
+
+
+_CLICKS["chengzhu"] = _click_chengzhu     # 旋转/选中板块 + 点格放置
+
+
 @_register("chengzhu")
 def _p_chengzhu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["chengzhu"][1]
@@ -5701,8 +6118,20 @@ def _p_chengzhu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         title += f"　{picker == me and '你' or nick(picker)} 挑选板块"
     _turn_banner(cv, w, 46, title, accent)
     ui.update(game="chengzhu")
-    tcol = {"fd": "#a7c97a", "fo": "#4f7a3c", "mo": "#9aa0ab",
-            "wa": "#6aa8e0", "gr": "#c8d48a"}
+    ui["cz_cells"] = []                   # 我的 5x5 热区：(x0,y0,x1,y1,r,c)
+    ui["cz_market"] = []                  # 市场热区：(x0,y0,x1,y1,i)
+    ui["cz_rot_btn"] = None
+    ui["cz_ghost_cell"] = None
+    ui.setdefault("cz_sel", None)         # 跨重绘保留选择/方向
+    try:
+        rot = 1 if int(ui.get("cz_rot", 0) or 0) else 0
+    except (TypeError, ValueError):
+        rot = 0
+    ui["cz_rot"] = rot
+    if not _cz_can_act(ui):
+        ui["cz_sel"] = None
+        ui["cz_drag"] = None
+    tcol = _CZ_TCOL
     grid = st.get("grid") or {}
     myg = grid.get(str(me), {})
     # 左：我的 5x5 领地
@@ -5721,6 +6150,8 @@ def _p_chengzhu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             col = tcol.get(gx.get("terr"), "#eee") if gx else "#3a2c1e"
             cv.create_rectangle(x0, yy0, x0 + cell - 1, yy0 + cell - 1,
                                 fill=col, outline="#5a4a35", width=1)
+            ui["cz_cells"].append((x0, yy0, x0 + cell - 1, yy0 + cell - 1,
+                                   r, c))
             if gx:
                 crown = gx.get("crown", 0)
                 if crown:
@@ -5734,18 +6165,34 @@ def _p_chengzhu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                               (_FONT_F[0], int(cell * 0.32)))
                     _text(cv, x0 + cell - 4, yy0 + 12, str(crown), "#7c4a1f",
                           (_FONT_F[0], int(cell * 0.22)), anchor="ne")
-    # 右：市场板块（1x2 多米诺）
+    # 右：市场板块（1x2 多米诺，可点选/拖拽）
     market = st.get("market") or []
     mx = w * 0.56
     mw = w - mx - 12
-    cv.create_text((mx + w) / 2, y0 - 8, text="市场板块（点选由按钮）", fill="#efe3d0",
-                   font=_FONT_B, anchor="center")
+    cv.create_text(mx, y0 - 8, text="市场板块", fill="#efe3d0",
+                   font=_FONT_B, anchor="w")
+    rbw = min(92.0, mw)
+    rx0, ry0 = mx + mw - rbw, y0 - 20
+    cv.create_rectangle(rx0, ry0, rx0 + rbw, ry0 + 20, fill="#3a2c1e",
+                        outline=_shade(accent, 0.5), width=1)
+    _text(cv, rx0 + rbw / 2, ry0 + 10,
+          "⟳ 旋转：" + ("横" if rot == 0 else "竖"), "#ffe9b8",
+          (_FONT_F[0], 9))
+    ui["cz_rot_btn"] = (rx0, ry0, rx0 + rbw, ry0 + 20)
+    sel = ui.get("cz_sel")
+    if not isinstance(sel, int) or not (0 <= sel < len(market)):
+        sel = None
+        ui["cz_sel"] = None
     mcell = min(mw / 2 - 6, 40)
     yy = y0
     for i, dom in enumerate(market):
         A, B = dom.get("A") or {}, dom.get("B") or {}
         bx = mx + (mw - mcell * 2 - 6) / 2
         by = yy + i * (mcell + 10)
+        if sel == i:
+            cv.create_rectangle(bx - 3, by - 3, bx + mcell * 2 + 9,
+                                by + mcell + 3, fill="", outline="#e8b93c",
+                                width=3)          # 选中的板块金色描边
         cv.create_rectangle(bx, by, bx + mcell, by + mcell,
                             fill=tcol.get(A.get("terr"), "#eee"),
                             outline="#5a4a35", width=1)
@@ -5770,6 +6217,7 @@ def _p_chengzhu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                   (_FONT_F[0], int(mcell * 0.24)), anchor="nw")
         _text(cv, bx + mcell + 3, by + mcell + 6, f"#{dom.get('id')}",
               "#dfe6ef", (_FONT_F[0], 8))
+        ui["cz_market"].append((bx, by, bx + mcell * 2 + 6, by + mcell, i))
         if i == 4:
             break
     # 底：各玩家已放数

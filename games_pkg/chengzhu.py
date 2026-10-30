@@ -86,6 +86,8 @@ class ChengZhuGame(BaseGame):
         try:
             x, y = int(action["x"]), int(action["y"])
             rot = int(action.get("rot", 0))
+            if rot not in (0, 1):
+                raise GameRuleError("旋转参数无效")
         except (TypeError, ValueError):
             raise GameRuleError("坐标无效")
         dr, dc = (0, 1) if rot == 0 else (1, 0)

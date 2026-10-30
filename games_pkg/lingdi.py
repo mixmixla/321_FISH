@@ -10,6 +10,14 @@ DIRS = ["N", "E", "S", "W"]
 OPP = {"N": "S", "S": "N", "E": "W", "W": "E"}
 
 
+def _rot_edges(edges, rot):
+    """顺时针旋转 90°×rot：N←旧W、E←旧N、S←旧E、W←旧S。"""
+    out = {d: edges.get(d) for d in DIRS}
+    for _ in range(int(rot) % 4):
+        out = {"N": out["W"], "E": out["N"], "S": out["E"], "W": out["S"]}
+    return out
+
+
 class LingdiGame(BaseGame):
     name = "lingdi"
     min_players = 2
@@ -87,23 +95,30 @@ class LingdiGame(BaseGame):
             r, c = int(action["r"]), int(action["c"])
         except (TypeError, ValueError):
             raise GameRuleError("坐标无效")
+        try:
+            rot = int(action.get("rot", 0) or 0)
+        except (TypeError, ValueError):
+            raise GameRuleError("旋转参数无效")
+        if rot not in (0, 1, 2, 3):
+            raise GameRuleError("旋转参数无效")
         if (r, c) in self.board:
             raise GameRuleError("该位置已有板块")
         if not (0 <= r < SIZE and 0 <= c < SIZE):
             raise GameRuleError("越界")
         # 必须与至少一块已放板块相邻，且共享边地型相等：
         # 新板块的 d 边要与邻板块相对边 OPP[d] 相同。
+        edges = _rot_edges(self.current["edges"], rot)
         nbs = self._neighbors(r, c)
         if self.board and not nbs:
             raise GameRuleError("必须与已放板块相邻")
         for d, (br, bc) in nbs.items():
-            if self.board[(br, bc)]["edges"][OPP[d]] != self.current["edges"][d]:
+            if self.board[(br, bc)]["edges"][OPP[d]] != edges[d]:
                 raise GameRuleError("相邻地型不匹配")
         # 放置
-        edges = dict(self.current["edges"])
-        self.board[(r, c)] = {"edges": edges, "owner": None}
+        self.board[(r, c)] = {"edges": dict(edges), "owner": None}
         self.placed += 1
-        msgs = [f"🏗 {self._nick(uid)} 放置板块 ({r},{c}) {self._feat_short(edges)}"]
+        msgs = [f"🏗 {self._nick(uid)} 放置板块 ({r},{c}) {self._feat_short(edges)}"
+                + (f"·旋转{rot * 90}°" if rot else "")]
         # 放米宝：先校验，失败则回滚整块板块，避免白拿板块/半状态
         pos = action.get("meeple")  # "r,c" 或 None
         if pos:

@@ -5058,16 +5058,131 @@ const GRENDER={
   },
   lingdi(box,s){
     box.appendChild(gTitle("lingdi","领地 · 拼贴得分"));
-    const d=document.createElement("div");
-    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>回合 → "+esc(gnick(s.turn_uid))
-      +"　剩余牌 "+s.deck_left+"　"+scoreHTML(s.score)+"</div>"
-      +"<div class='gsec'>你的米宝："+(s.meeples[state.uid]||0)+"</div>";
-    box.appendChild(d);
-    if(s.current){
-      const ed=s.current.edges||{};
-      const edt="<span style='font-size:11px'>本张："+[{k:"N",n:"北"},{k:"E",n:"东"},{k:"S",n:"南"},{k:"W",n:"西"}]
-        .map(x=>x.n+"="+({c:"城",r:"路",f:"场"}[ed[x.k]]||"?")).join("　")+"</span>";
-      box.appendChild(d);d.innerHTML+=edt;}
+    const FCOL={c:"#c05550",r:"#a8a48f",f:"#7fb069"};
+    const FC={c:"城",r:"路",f:"场"};
+    const OPP={N:"S",S:"N",E:"W",W:"E"};
+    const PAL=["#e0535a","#4a7de0","#37a25f","#e0a13c","#9a6fd0","#26c6b0"];
+    const my=state.uid,size=(+s.size)||9,board=s.board||{},players=s.players||[];
+    const pcol=u=>{const i=players.indexOf(u);return PAL[(i<0?u:i)%PAL.length]};
+    if(state.ldrot==null)state.ldrot=0;
+    state.ldrot=((state.ldrot%4)+4)%4;
+    if(state.ldmeeple==null)state.ldmeeple=false;
+    const rot=state.ldrot;
+    const rotE=k=>{let e=Object.assign({},(s.current&&s.current.edges)||{});
+      for(let i=0;i<k;i++)e={N:e.W,E:e.N,S:e.E,W:e.S};return e;};
+    const cur=s.current?rotE(rot):null;
+    const myTurn=s.winner_uid==null&&s.turn_uid===my&&players.includes(my);
+    const ldLegal=(r,c,k)=>{
+      if(!(r>=0&&r<size&&c>=0&&c<size))return false;
+      if(board[r+","+c])return false;
+      if(!s.current)return false;
+      if(!Object.keys(board).length)return true;
+      const e=rotE(k);let near=false;
+      for(const d of ["N","E","S","W"]){
+        const dr=d==="N"?-1:d==="S"?1:0,dc=d==="W"?-1:d==="E"?1:0;
+        const nb=board[(r+dr)+","+(c+dc)];
+        if(!nb)continue;near=true;
+        if(!nb.edges||nb.edges[OPP[d]]!==e[d])return false;}
+      return near;};
+    const addAct=(r,c)=>{
+      const act={op:"place",r:r,c:c,rot:rot};
+      if(state.ldmeeple&&((s.meeples&&s.meeples[my])||0)>0)act.meeple="self";
+      gameAPI("action",{room_id:state.groom,action:act});};
+    const info=document.createElement("div");
+    info.style.cssText="font-size:11px;color:var(--dim);margin-bottom:4px";
+    info.innerHTML="回合 → "+(s.turn_uid==null?"—":esc(gnick(s.turn_uid)))
+      +"　剩余牌 "+s.deck_left+"　"+scoreHTML(s.score)
+      +"<br>你的米宝："+((s.meeples&&s.meeples[my])||0);
+    box.appendChild(info);
+    // 9x9 固定网格：空格可见，已放板块显示四边地条与米宝
+    const CS=34,GAP=2,grid=document.createElement("div");
+    grid.className="ldgrid";
+    grid.style.cssText="display:grid;grid-template-columns:repeat("+size+","+CS+"px);gap:"
+      +GAP+"px;justify-content:center;margin:6px auto";
+    const cells=[];
+    for(let r=0;r<size;r++)for(let c=0;c<size;c++){
+      const t=board[r+","+c],el=document.createElement("div");
+      el.dataset.ldr=r;el.dataset.ldc=c;
+      el.style.cssText="position:relative;width:"+CS+"px;height:"+CS+"px;box-sizing:border-box;border-radius:3px;border:1px solid "
+        +(t?"#b7ad96":"rgba(255,255,255,.10)")+";background:"+(t?"#efe9dc":"#222b22");
+      if(t){
+        const e=t.edges||{};
+        [["N","top:1px;left:9%;width:82%;height:5px"],
+         ["E","top:9%;right:1px;width:5px;height:82%"],
+         ["S","bottom:1px;left:9%;width:82%;height:5px"],
+         ["W","top:9%;left:1px;width:5px;height:82%"]].forEach(pair=>{
+          if(!e[pair[0]])return;
+          const b=document.createElement("div");
+          b.style.cssText="position:absolute;"+pair[1]+";background:"
+            +(FCOL[e[pair[0]]]||"#999")+";border-radius:2px";
+          el.appendChild(b);});
+        if(t.owner!=null){
+          const o=document.createElement("div");
+          o.style.cssText="position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;border:1px solid #fff;background:"
+            +pcol(t.owner);
+          el.appendChild(o);}}
+      if(myTurn&&!t&&ldLegal(r,c,rot))el.style.cursor="pointer";
+      if(myTurn&&!t)el.onclick=()=>{if(ldLegal(r,c,rot))addAct(r,c);};
+      grid.appendChild(el);cells.push(el);}
+    box.appendChild(grid);
+    // 当前板块 3x3 预览 + 旋转/米宝开关 + 拖拽投放
+    const ctl=document.createElement("div");
+    ctl.style.cssText="display:flex;gap:10px;align-items:center;justify-content:center;margin:2px 0 6px;flex-wrap:wrap";
+    const pv=document.createElement("div");
+    pv.style.cssText="display:grid;grid-template-columns:repeat(3,18px);grid-template-rows:repeat(3,18px);gap:1px;background:#20301f;padding:2px;border-radius:6px";
+    const pvEdge=(e)=>{
+      const d=document.createElement("div");
+      d.style.cssText="width:18px;height:18px;border-radius:3px;background:"
+        +(e?(FCOL[e]||"#999"):"#2c3b2c")+";color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center";
+      if(e)d.textContent=FC[e]||"";
+      return d;};
+    const pvMap=cur?{"0,1":cur.N,"1,0":cur.W,"1,2":cur.E,"2,1":cur.S}:{};
+    for(let i=0;i<3;i++)for(let j=0;j<3;j++){
+      if(i===1&&j===1){
+        const d=document.createElement("div");
+        d.style.cssText="width:18px;height:18px;border-radius:3px;background:#efe9dc";
+        pv.appendChild(d);}
+      else pv.appendChild(pvEdge(pvMap[i+","+j]));}
+    const rb=document.createElement("button");rb.className="gbtn";rb.textContent="⟳ 旋转";
+    rb.onclick=()=>{state.ldrot=(rot+1)%4;renderGamePanel();};
+    const mb=document.createElement("button");mb.className="gbtn";
+    mb.textContent="🧑‍🌾 米宝："+(state.ldmeeple?"开":"关");
+    if(state.ldmeeple)mb.style.cssText="background:#37a25f;color:#fff;border-color:#37a25f";
+    mb.onclick=()=>{state.ldmeeple=!state.ldmeeple;renderGamePanel();};
+    ctl.append(pv,rb,mb);box.appendChild(ctl);
+    const clearHint=()=>{cells.forEach(el=>{el.style.boxShadow="";});};
+    const showHint=()=>{cells.forEach(el=>{
+      el.style.boxShadow=ldLegal(+el.dataset.ldr,+el.dataset.ldc,rot)
+        ?"inset 0 0 0 2px rgba(80,200,120,.6)":"";});};
+    const startDrag=ev=>{
+      if(!myTurn||!cur)return;
+      ev.preventDefault();
+      const g=document.createElement("div");
+      g.style.cssText="position:fixed;z-index:9999;pointer-events:none;width:"+CS+"px;height:"+CS+"px;border-radius:3px;border:2px solid rgba(80,200,120,.9);background:rgba(239,233,220,.75)";
+      [["top:0;left:10%;width:80%;height:5px",cur.N],["right:0;top:10%;width:5px;height:80%",cur.E],
+       ["bottom:0;left:10%;width:80%;height:5px",cur.S],["left:0;top:10%;width:5px;height:80%",cur.W]]
+        .forEach(pair=>{if(!pair[1])return;
+          const b=document.createElement("div");
+          b.style.cssText="position:absolute;"+pair[0]+";background:"+(FCOL[pair[1]]||"#999");
+          g.appendChild(b);});
+      document.body.appendChild(g);
+      const mv=e=>{g.style.left=(e.clientX+10)+"px";g.style.top=(e.clientY+10)+"px";};
+      mv(ev);showHint();
+      const up=e=>{
+        document.removeEventListener("pointermove",mv);
+        document.removeEventListener("pointerup",up);
+        if(g.parentNode)g.parentNode.removeChild(g);
+        let hit=null;
+        try{hit=document.elementFromPoint(e.clientX,e.clientY);}catch(_){}
+        const ce=hit&&hit.closest?hit.closest("[data-ldr]"):null;
+        clearHint();
+        if(ce){
+          const r=+ce.dataset.ldr,c=+ce.dataset.ldc;
+          if(ldLegal(r,c,rot)){addAct(r,c);return;}}
+        renderGamePanel();};
+      document.addEventListener("pointermove",mv);
+      document.addEventListener("pointerup",up);};
+    if(myTurn&&cur){pv.style.cursor="grab";pv.addEventListener("pointerdown",startDrag);}
     if(s.turn_uid===state.uid){
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
       const I=(ph)=>Object.assign(document.createElement("input"),{type:"number",placeholder:ph,
@@ -5211,22 +5326,126 @@ const GRENDER={
     const T_IC={fd:"#c9a227",fo:"#2f8a48",mo:"#7a8087",wa:"#3a6fcf",gr:"#5faa3a"};
     const tI=(t)=>T_IC[t]?"<span style='color:"+T_IC[t]+"'>"+resIcon(t,13)+"</span>":"";
     const crI=(n)=>n?"<span style='color:#7c4a1f'>"+resIcon("crown",12)+"</span>"+n:"";
-    const grd=s.grid[state.uid]||{};
-    let grid="<div style='display:grid;grid-template-columns:repeat("+s.size+",minmax(26px,1fr));gap:1px;margin:6px 0'>";
+    const my=state.uid,players=s.players||[],market=s.market||[];
+    const myTurn=s.winner_uid==null&&s.picker_uid===my&&players.includes(my);
+    if(state.czrot==null)state.czrot=0;
+    state.czrot=state.czrot?1:0;
+    if(!myTurn){state.czsel=null;state.czrot=0;}   // 换手/观战后丢弃残留选择
+    if(state.czsel!=null&&(state.czsel<0||state.czsel>=market.length))state.czsel=null;
+    const rot=state.czrot,sel=(state.czsel==null?null:state.czsel);
+    const grd=s.grid[my]||{};
+    // JS 镜像引擎放置规则：两半在界内且未占用；首块任放；否则至少一半同地型相邻。
+    const czLegal=(uid,dom,r,c,k)=>{
+      if(!(dom>=0&&dom<market.length))return false;
+      const dm=market[dom];if(!dm)return false;
+      const g2=s.grid[uid]||{},dr=k===1?1:0,dc=k===1?0:1;
+      const hs=[[r,c],[r+dr,c+dc]];
+      for(const h of hs){
+        if(!(h[0]>=0&&h[0]<s.size&&h[1]>=0&&h[1]<s.size))return false;
+        if(g2[h[0]+","+h[1]])return false;}
+      const placed=(s.placed&&s.placed[uid])||0;
+      if(!placed)return true;
+      const terr=[(dm.A||{}).terr,(dm.B||{}).terr];
+      for(let i=0;i<2;i++){
+        const q=[[hs[i][0]-1,hs[i][1]],[hs[i][0]+1,hs[i][1]],
+                 [hs[i][0],hs[i][1]-1],[hs[i][0],hs[i][1]+1]];
+        for(const nb of q){const cell=g2[nb[0]+","+nb[1]];
+          if(cell&&cell.terr===terr[i])return true;}}
+      return false;};
+    const place=(i,r,c,k)=>gameAPI("action",{room_id:state.groom,
+      action:{op:"place",dom:i,x:r,y:c,rot:k}});   // x=行(r)、y=列(c)
+    const info=document.createElement("div");
+    info.style.cssText="font-size:11px;color:var(--dim)";
+    info.innerHTML="本轮挑选 → "+esc(gnick(s.picker_uid))
+      +"　剩余 "+s.piles+"　"+scoreHTML(s.score);
+    box.appendChild(info);
+    const gsec=document.createElement("div");
+    gsec.className="gsec";gsec.textContent="我的领地（点格或拖入放置）";
+    box.appendChild(gsec);
+    const grid=document.createElement("div");
+    grid.style.cssText="display:grid;grid-template-columns:repeat("+s.size+",minmax(26px,1fr));gap:1px;margin:6px 0";
+    const cells=[];
     for(let r=0;r<s.size;r++)for(let c=0;c<s.size;c++){
-      const cell=grd[r+","+c];
-      grid+="<div style='height:26px;border-radius:2px;background:"+(cell?(T_COL[cell.terr]||"#ccc"):"rgba(0,0,0,.04)")
-        +";color:#333;font-size:10px;display:flex;align-items:center;justify-content:center'>"
-        +(cell?crI(cell.crown):"")+"</div>";}
-    grid+="</div>";
-    const d=document.createElement("div");
-    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>本轮挑选 → "+esc(gnick(s.picker_uid))
-      +"　剩余 "+s.piles+"　"+scoreHTML(s.score)+"</div>"
-      +"<div class='gsec'>我的领地</div>"+grid
-      +"<div class='gsec'>市场</div>"
-      +(s.market||[]).map((m,i)=>{const a=T_CN[m.A.terr],b=T_CN[m.B.terr];
-        return "<span style='margin-right:8px'>["+i+"] "+tI(m.A.terr)+a+crI(m.A.crown)+" + "+tI(m.B.terr)+b+crI(m.B.crown)+"</span>";}).join("");
-    box.appendChild(d);
+      const cell=grd[r+","+c],el=document.createElement("div");
+      el.dataset.czr=r;el.dataset.czc=c;
+      el.style.cssText="height:26px;box-sizing:border-box;border-radius:2px;border:1px solid rgba(0,0,0,.06);background:"
+        +(cell?(T_COL[cell.terr]||"#ccc"):"rgba(0,0,0,.04)")
+        +";color:#333;font-size:10px;display:flex;align-items:center;justify-content:center";
+      if(cell)el.innerHTML=crI(cell.crown);
+      if(myTurn)el.onclick=()=>{if(sel!=null&&czLegal(my,sel,r,c,rot))place(sel,r,c,rot);};
+      grid.appendChild(el);cells.push(el);}
+    box.appendChild(grid);
+    const ctl=document.createElement("div");
+    ctl.style.cssText="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:2px 0 6px";
+    const rb=document.createElement("button");rb.className="gbtn";
+    rb.textContent="⟳ 旋转："+(rot?"竖":"横");
+    if(myTurn)rb.onclick=()=>{state.czrot=rot?0:1;renderGamePanel();};
+    const hint=document.createElement("span");
+    hint.style.cssText="font-size:11px;color:var(--dim)";
+    hint.textContent=sel==null?"先点/拖市场板块"
+      :("已选第 "+sel+" 块（"+(rot?"竖":"横")+"）· 点合法格或拖到领地");
+    ctl.append(rb,hint);box.appendChild(ctl);
+    const clearHint=()=>{cells.forEach(el=>{el.style.boxShadow="";});};
+    const showHint=(i)=>{cells.forEach(el=>{
+      el.style.boxShadow=czLegal(my,i,+el.dataset.czr,+el.dataset.czc,rot)
+        ?"inset 0 0 0 2px rgba(80,200,120,.6)":"";});};
+    const startDrag=(ev,i)=>{
+      if(!myTurn||!market[i])return;
+      ev.preventDefault();
+      state.czsel=i;
+      const A=market[i].A||{},B=market[i].B||{};
+      const g=document.createElement("div");
+      g.style.cssText="position:fixed;z-index:9999;pointer-events:none;display:flex;flex-direction:"
+        +(rot?"column":"row")+";gap:2px;opacity:.85";
+      [A,B].forEach(h=>{
+        const hc=document.createElement("div");
+        hc.style.cssText="width:34px;height:34px;border-radius:3px;border:2px solid rgba(80,200,120,.9);background:"
+          +(T_COL[h.terr]||"#ccc")+";color:#333;font-size:10px;display:flex;align-items:center;justify-content:center";
+        hc.innerHTML=crI(h.crown);g.appendChild(hc);});
+      document.body.appendChild(g);
+      const mv=e=>{g.style.left=(e.clientX+10)+"px";g.style.top=(e.clientY+10)+"px";};
+      mv(ev);showHint(i);
+      const up=e=>{
+        document.removeEventListener("pointermove",mv);
+        document.removeEventListener("pointerup",up);
+        if(g.parentNode)g.parentNode.removeChild(g);
+        clearHint();
+        let hit=null;
+        try{hit=document.elementFromPoint(e.clientX,e.clientY);}catch(_){}
+        const ce=hit&&hit.closest?hit.closest("[data-czr]"):null;
+        if(ce){
+          const r=+ce.dataset.czr,c=+ce.dataset.czc;
+          if(czLegal(my,i,r,c,rot)){place(i,r,c,rot);return;}}
+        renderGamePanel();};
+      document.addEventListener("pointermove",mv);
+      document.addEventListener("pointerup",up);};
+    const mt=document.createElement("div");
+    mt.className="gsec";mt.textContent="市场（点选或拖到领地）";
+    box.appendChild(mt);
+    const mk=document.createElement("div");
+    mk.style.cssText="display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 8px";
+    market.forEach((m,i)=>{
+      const A=m.A||{},B=m.B||{};
+      const el=document.createElement("div");
+      el.dataset.czm=i;
+      el.style.cssText="display:flex;flex-direction:"+(rot?"column":"row")+";gap:2px;padding:3px;border-radius:8px;border:2px solid "
+        +(sel===i?"#e8b93c":"var(--line,#ddd)")+";background:"
+        +(sel===i?"rgba(232,185,60,.18)":"transparent")
+        +";cursor:"+(myTurn?"grab":"default");
+      [A,B].forEach(h=>{
+        const hc=document.createElement("div");
+        hc.style.cssText="width:34px;height:34px;border-radius:3px;background:"
+          +(T_COL[h.terr]||"#ccc")+";color:#333;font-size:10px;display:flex;align-items:center;justify-content:center";
+        hc.innerHTML=crI(h.crown);el.appendChild(hc);});
+      const lb=document.createElement("div");
+      lb.style.cssText="font-size:10px;color:var(--dim);text-align:center";
+      lb.textContent="["+i+"] "+tI(A.terr)+(T_CN[A.terr]||"")+"+"+tI(B.terr)+(T_CN[B.terr]||"");
+      el.appendChild(lb);
+      if(myTurn){
+        el.onclick=()=>{state.czsel=i;renderGamePanel();};
+        el.addEventListener("pointerdown",(ev)=>startDrag(ev,i));}
+      mk.appendChild(el);});
+    box.appendChild(mk);
     if(s.picker_uid===state.uid){
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
       const I=(ph)=>Object.assign(document.createElement("input"),{type:"number",placeholder:ph,

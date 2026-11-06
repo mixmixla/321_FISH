@@ -12069,8 +12069,8 @@ class _GameCard(_CardBase):
     按钮单击也直接创建。渐变取自 _GAME_GRAD，对齐网页端 GART。
     """
 
-    _COVER_H = 64                       # 封面条高度
-    _CARD_H = 156                       # 卡片统一总高（封面64 + 标题 + 副标题2行），同行严格等高
+    _COVER_H = 96                       # 插画与原渐变共用封面区
+    _CARD_H = 188                       # 卡片等高，标题与副标题保留原空间
 
     def __init__(self, parent, name, meta, on_click, on_double,
                  pal: dict | None = None):
@@ -12103,7 +12103,7 @@ class _GameCard(_CardBase):
         self.create_btn.configure(command=lambda: on_double(name))
         if self._desktop_status == "unsupported":
             self.create_btn.configure(state="disabled", disabledforeground="#8b8b8b")
-        self.create_btn.place(relx=0.5, rely=1.0, y=-6, anchor="s")
+        self.create_btn.place(relx=1.0, x=-6, rely=1.0, y=-6, anchor="se")
 
         # 标题 + 副标题（名称 / 人数 · 一句话玩法）
         # 统一卡片总高，副标题文字在固定高度内用 wraplength 最多撑 2 行，
@@ -12154,6 +12154,9 @@ class _GameCard(_CardBase):
         cv.delete("all")
         w, h = cv.winfo_width(), cv.winfo_height()
         if w < 2 or h < 2:
+            return
+        from boardgames.gallery import paint_cover
+        if paint_cover(cv, self.key, w, h):
             return
 
         def _hex(c):
@@ -12516,8 +12519,8 @@ class GameWindow:
         wrap, self.room_inner = self._scroll_area(left)
         wrap.pack(fill="both", expand=True, pady=(0, 2))
 
-    # 桌游区固定可视高度（容纳 2 行等高卡片 = 2×(156+10)）；超出内容自动滚动
-    _game_zone_h = 2 * (156 + 10)
+    # 卡片区有上限，为 860×600 大厅的房间列表保留空间；插画卡的后续行可滚动查看。
+    _game_zone_h = min(2 * (_GameCard._CARD_H + 10), 332)
 
     def _scroll_area(self, parent, height=None):
         """返回 (外层容器, 内部滚动 Frame)：卡片网格/列表放入 inner，支持滚轮滚动。"""
@@ -12716,11 +12719,13 @@ class GameWindow:
         if raw_players and (not raw_players.isdecimal() or int(raw_players) < 1):
             return []
         players = int(raw_players) if raw_players else None
-        return [name for name, meta in sorted(self.core.game_meta.items())
+        from boardgames.gallery import prioritise
+        names = [name for name, meta in sorted(self.core.game_meta.items())
                 if (not query or query in name.casefold() or
                     query in meta.get("label", name).casefold())
                 and (players is None or (meta["min"] <= players and
                      (not meta.get("max") or players <= meta["max"])))]
+        return prioritise(names)
 
     def _change_game_filter(self, *_args) -> None:
         self._refresh_games()

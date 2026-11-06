@@ -113,6 +113,13 @@ def _SERVED_PAGE():
     _resico['__fallback'] = resource_icon_svg('', 18)
     page = page.replace('@@UX_RESOURCE_ICONS@@', _js_json_literal(_resico))
     page = page.replace('@@UX_BG_ASSETS@@', _js_json_literal(_bg_assets_subset()))
+    from boardgames.gallery import COVERS, FEATURED, cover_url
+    page = page.replace('@@UX_GALLERY@@', _js_json_literal({
+        "covers": {name: cover_url(name) for name in COVERS},
+        "featured": FEATURED,
+    }))
+    from boardgames.gomoku_art import WEB_JS as gomoku_art_js
+    page = page.replace('/*@@GOMOKU_ART@@*/', gomoku_art_js)
     try:
         from boardgames.registry import web_parts
         _gjs, _gcss = web_parts()
@@ -575,6 +582,9 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 .gcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
 .gcard b{font-size:var(--body-font,14px)}
 .gcard .go{margin-top:auto}
+.gallery-cover{aspect-ratio:2/1;border-radius:16px 16px 16px 7px;margin:-12px -12px 8px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.gallery-cover img[data-gallery-cover]{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.gallery-cover img[hidden]{display:none}
 .gcell{width:36px;height:36px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;border-radius:var(--r1);background:var(--card);transition:transform .1s,box-shadow .1s}
 .gcell:hover{transform:scale(1.06);box-shadow:var(--shadow-sm)}
 .gmap{display:grid;gap:3px;font-size:10px}
@@ -3926,6 +3936,7 @@ function applyRO(){
 // game_list（房间清单）/ game_state（房间快照+events+nicks）/ game_private（手牌/词面）。
 state.gmeta={};state.grooms=[];state.groom=null;state.gst=null;state.gpriv=null;state.gleft={};
 state.gnicks={};state.glog=[];state.globbyOpen=false;
+const GALLERY=JSON.parse("@@UX_GALLERY@@");
 state.fish={};state.fishOpen=false;state.fishGame="";   // R70H 摸鱼排行榜缓存
 // E1：47 款游戏统一矢量图标（单源 ui_design.GAME_ICONS → SVG），大厅房间行复用。
 // 与 GART（渐变封面美术）正交：GICON 只做单色轮廓小图标，颜色随 currentColor。
@@ -4135,9 +4146,12 @@ function renderLobby(){
   grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px";
   const query=(state.glQuery||"").trim().toLowerCase(),rawPlayers=(state.glPlayers||"").trim();
   const players=rawPlayers?Number(rawPlayers):null;
+  const gallery=typeof GALLERY==="object"?GALLERY:{covers:{},featured:[]};
   const games=Object.entries(state.gmeta).filter(([name,g])=>
     (!query||name.toLowerCase().includes(query)||(g.label||name).toLowerCase().includes(query))&&
     (players===null||(/^\d+$/.test(rawPlayers)&&players>=1&&players>=g.min&&(!g.max||players<=g.max))));
+  const ranks=new Map((gallery.featured||[]).map((name,index)=>[name,index]));
+  games.sort((a,b)=>(ranks.has(a[0])?ranks.get(a[0]):ranks.size)-(ranks.has(b[0])?ranks.get(b[0]):ranks.size));
   $("#glCount").textContent="显示 "+games.length+" / "+Object.keys(state.gmeta).length+" 款 · 人数留空不限";
   if(!games.length){const empty=document.createElement("div");
     empty.textContent=Object.keys(state.gmeta).length?"没有符合条件的桌游，请修改条件或点击「清空筛选」":"正在获取桌游列表…";
@@ -4149,11 +4163,15 @@ function renderLobby(){
     const cover=art.length?art:pastels[pi];
     const grad="linear-gradient(135deg,"+cover[0]+","+cover[1]+")";
     const c=document.createElement("div");c.className="gcard";c.dataset.game=name;
-    c.innerHTML="<div style='height:52px;border-radius:16px 16px 16px 7px;margin:-12px -12px 8px;display:flex;align-items:center;justify-content:center;background:"+grad+"'>"
-      +"<img src='"+gArt(name,30)+"' width='30' height='30' style='border-radius:10px;box-shadow:0 2px 6px rgba(120,80,40,.35);background:#fff' alt=''></div>"
+    const imageURL=(gallery.covers||{})[name]||"";
+    c.innerHTML="<div class='gallery-cover' style='background:"+grad+"'>"
+      +(imageURL?"<img data-gallery-cover src='"+esc(imageURL)+"' loading='lazy' decoding='async' alt=''>":"")
+      +"<img class='gallery-fallback' "+(imageURL?"hidden ":"")+"src='"+gArt(name,30)+"' width='30' height='30' style='border-radius:10px;box-shadow:0 2px 6px rgba(120,80,40,.35);background:#fff' alt=''></div>"
       +"<b style='font-size:14px;color:#3d3a54'>"+esc(g.label||name)+"</b>"
       +"<span style='color:var(--dim);font-size:11px'>"+esc(g.desc||"")+"</span>"
       +"<span style='color:var(--dim);font-size:10px'>👥 "+g.min+"~"+(g.max||"∞")+" 人</span>";
+    if(imageURL){const image=c.querySelector('[data-gallery-cover]');
+      image.onerror=()=>{image.hidden=true;c.querySelector('.gallery-fallback').hidden=false;};}
     let optSel=null;                                  // 围棋等：创建前选棋盘路数
     const sizes=(g.options&&g.options.size)||[];
     if(sizes.length>1){
@@ -4309,6 +4327,7 @@ function gLegalTos(fx,fy){
   return out;
 }
 // ---- 各游戏渲染器（s = game_state.state）----
+/*@@GOMOKU_ART@@*/
 const GRENDER={
   guess_number(box,s){
     const d=document.createElement("div");d.style.cssText="text-align:center;padding:6px";
@@ -4351,6 +4370,11 @@ const GRENDER={
       +(mine?"pointer":"default");
     box.appendChild(cv);
     const ctx=cv.getContext("2d");
+    const art=(s.solo||s.game==="gomoku_solo")&&typeof createGomokuArtPainter==="function"
+      ?createGomokuArtPainter(cv,paint):null;
+    function paint(){
+    ctx.clearRect(0,0,W,W);
+    if(art)art.board(0,0,W,W);
     // 坐标：列 A~O、行 1~15（BGA 默认显示坐标）
     ctx.fillStyle="#5a3d16";ctx.font="11px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
     for(let i=0;i<n;i++){
@@ -4358,18 +4382,22 @@ const GRENDER={
       ctx.fillText(String(i+1),pad-16,pad+i*cell);}
     ctx.strokeStyle="#6b4a1b";
     for(let i=0;i<n;i++){
-      ctx.beginPath();ctx.moveTo(pad+i*cell,pad);ctx.lineTo(pad+i*cell,W-pad);ctx.stroke();
-      ctx.beginPath();ctx.moveTo(pad,pad+i*cell);ctx.lineTo(W-pad,pad+i*cell);ctx.stroke();}
+      ctx.beginPath();ctx.moveTo(pad+i*cell,pad);ctx.lineTo(pad+i*cell,pad+(n-1)*cell);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(pad,pad+i*cell);ctx.lineTo(pad+(n-1)*cell,pad+i*cell);ctx.stroke();}
     // 天元/星位
     ctx.fillStyle="#5a3d16";
     for(const h of [[3,3],[11,3],[3,11],[11,11],[7,7]]){
       if(h[0]<n&&h[1]<n){ctx.beginPath();ctx.arc(pad+h[0]*cell,pad+h[1]*cell,3,0,7);ctx.fill();}}
     for(let y=0;y<n;y++)for(let x=0;x<n;x++){const v=s.board[y][x];if(!v)continue;
+      if(art){art.stone(pad+x*cell,pad+y*cell,cell*0.42,v);continue;}
       ctx.beginPath();ctx.arc(pad+x*cell,pad+y*cell,cell*0.42,0,7);
       ctx.fillStyle=v===1?"#111":"#fff";ctx.fill();ctx.stroke();}
-    if(s.last_move){ctx.beginPath();
+    if(s.last_move&&art)art.last(pad+s.last_move[0]*cell,pad+s.last_move[1]*cell,cell*.42);
+    else if(s.last_move){ctx.beginPath();
       ctx.arc(pad+s.last_move[0]*cell,pad+s.last_move[1]*cell,3,0,7);
       ctx.fillStyle="#e33";ctx.fill();}
+    }
+    paint();
     if(mine)
       cv.onclick=e=>{const r=cv.getBoundingClientRect();
         const x=Math.round(((e.clientX-r.left)*W/r.width-pad)/cell),y=Math.round(((e.clientY-r.top)*W/r.height-pad)/cell);
@@ -6923,6 +6951,19 @@ class _Handler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Cache-Control", "no-cache")   # R41G：页面随服务器更新，禁浏览器陈旧缓存
             self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+        elif path.startswith("/game-art/"):
+            from boardgames.gallery import read_resource
+            try:
+                data, mime = read_resource(path[len("/game-art/"):])
+            except (OSError, ValueError):
+                self._json(404, {"ok": False, "error": "not found"})
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", mime)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "public, max-age=3600")
             self.end_headers()
             self.wfile.write(data)
         elif path == "/api/events":

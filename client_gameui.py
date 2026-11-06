@@ -2486,6 +2486,9 @@ def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["gomoku"][1]
     n = st.get("size") or 15
     game = "gomoku_solo" if st.get("game") == "gomoku_solo" else "gomoku"
+    use_art = game == "gomoku_solo"
+    if use_art:
+        from boardgames import gomoku_art
     title = flagship_status(game, st, me, nick)
     _turn_banner(cv, w, 46, title, accent)
     ox, oy, cell = _fit(n, w, h, header=46)
@@ -2493,15 +2496,17 @@ def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     # 棋盘（纸面木纹底）加柔和投影
     _soft_shadow(cv, ox - 18, oy - 14, ox + n * cell + 14, oy + n * cell + 14,
                  6, 5)
-    _paper_board(cv, ox - 16, oy - 16, ox + n * cell + 16, oy + n * cell + 16,
-                 base="#f6f3e9", edge="#c8c2b0")
+    if not use_art or not gomoku_art.draw_board(
+            cv, ox - 16, oy - 16, ox + n * cell + 16, oy + n * cell + 16):
+        _paper_board(cv, ox - 16, oy - 16, ox + n * cell + 16, oy + n * cell + 16,
+                     base="#f6f3e9", edge="#c8c2b0")
     for i in range(n):
         cv.create_line(ox, oy + i * cell, ox + (n - 1) * cell, oy + i * cell,
                        fill="#8a5a2b")
         cv.create_line(ox + i * cell, oy, ox + i * cell, oy + (n - 1) * cell,
                        fill="#8a5a2b")
     _draw_hoshi(cv, ox, oy, cell, n, ink="#6b4423")
-    _board_coords(cv, ox, oy, cell, n, ink="#a08b6a", mg=9)
+    _board_coords(cv, ox, oy, cell, n, ink="#62482d" if use_art else "#a08b6a", mg=9)
     board = st.get("board") or []
     last = st.get("last_move")
     if isinstance(last, list) and len(last) == 2:
@@ -2520,10 +2525,13 @@ def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 continue
             cx, cy = ox + x * cell, oy + y * cell
             stone_anchors.append((cx, cy))
-            _stone(cv, cx, cy, cell * 0.42,
-                   "#111" if v == 1 else "#fff", "#888",
-                   last == (x, y), glow=False, gint=breathing)
+            if not use_art or not gomoku_art.draw_stone(cv, cx, cy, cell * 0.42, v):
+                _stone(cv, cx, cy, cell * 0.42,
+                       "#111" if v == 1 else "#fff", "#888",
+                       last == (x, y), glow=False, gint=breathing)
     _flagship_feedback(cv, ui, st, 5, now, lastpx)
+    if use_art and lastpx:
+        gomoku_art.draw_last_move(cv, *lastpx, cell * 0.42)
 
 
 @_register("connect4")

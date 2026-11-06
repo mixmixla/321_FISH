@@ -5597,57 +5597,7 @@ const GRENDER={
       grid.appendChild(c);}
     box.appendChild(grid);
   },
-  blokus(box,s){
-    const n=s.size||20;
-    const idxOf={};(s.players||[]).forEach((u,i)=>idxOf[u]=i);
-    const colFor=(u)=>(s.colors&&s.colors[idxOf[u]])||"#888";
-    const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:6px;font-size:13px";
-    info.innerHTML=(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 获胜":"轮到 "+esc(gnick(s.turn_uid)));
-    box.appendChild(info);
-    const grid=document.createElement("div");
-    grid.style.cssText="display:grid;grid-template-columns:repeat(20,15px);gap:1px;justify-content:center;margin:0 auto;max-width:340px";
-    for(let y=0;y<n;y++)for(let x=0;x<n;x++){
-      const c=document.createElement("div");c.className="gcell";c.style.cssText="padding:0;min-height:15px;border-radius:1px;background:"+(s.board[y][x]!=null?colFor(s.board[y][x]):"rgba(0,0,0,.06)");
-      if(s.board[y][x]==null&&state.blockMode&&s.winner_uid==null){
-        c.style.cursor="pointer";c.onclick=()=>{placeBlokus({x:x,y:y});};
-      }
-      grid.appendChild(c);}
-    box.appendChild(grid);
-    if(state.uid==null)return;
-    const meh=s.has_piece?s.has_piece[String(state.uid)]:[];
-    if(s.winner_uid!=null)return;
-    if(s.turn_uid!==state.uid){box.appendChild(document.createElement("div")).textContent="";return;}
-    const zone=document.createElement("div");zone.style.cssText="margin-top:8px";
-    const row=document.createElement("div");row.style.cssText="display:flex;flex-wrap:wrap;gap:4px;align-items:center";
-    const cat=s.pieces||{};
-    const pick=state.blokP||(meh[0]||"");
-    const ots=cat[pick]||[];
-    const oi=state.blokO||0;
-    row.appendChild(Object.assign(document.createElement("span"),{textContent:"拼块:"}));
-    (meh||[]).forEach(pc=>{
-      const b=document.createElement("button");b.className="gbtn"+(pc===pick?" go":"");b.textContent=pc;
-      b.onclick=()=>{state.blokP=pc;state.blokO=0;};row.appendChild(b);});
-    const prev=document.createElement("span");prev.style.cssText="display:inline-block;margin-left:6px";
-    if(ots.length){const oc=ots[oi];let mini="";
-      for(let r=0;r<6;r++){for(let ccol=0;ccol<6;ccol++){mini+=oc.includes(r+","+ccol)?"▣":"·";}mini+="<br>";}
-      prev.innerHTML=mini;
-      row.appendChild(prev);
-    }
-    zone.appendChild(row);
-    const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;margin-top:6px;align-items:center";
-    if(ots.length){
-      const rot=document.createElement("button");rot.className="gbtn";rot.textContent="↻ 方向 "+oi+"/"+ots.length;
-      rot.onclick=()=>{state.blokO=(oi+1)%(ots.length||1);box.innerHTML="";renderGamePanel();};
-      bar.appendChild(rot);
-    }
-    bar.appendChild(gBtn("🙋 跳过回合",{op:"pass"}));
-    const allow=document.createElement("button");allow.className="gbtn go";allow.textContent=state.blockMode?"已完成预览 · 点棋盘落子":"🔍 预览放置位置";
-    allow.onclick=()=>{state.blockMode=!state.blockMode;box.innerHTML="";renderGamePanel();};
-    bar.appendChild(allow);
-    zone.appendChild(bar);
-    box.appendChild(zone);
-    function placeBlokus(corner){gameAPI("action",{room_id:state.groom,action:{op:"place",piece:pick,oi:oi||0,x:corner.y,y:corner.x}});}
-  },
+  blokus(box,s){BoardsBlokus.paint(box,s);},
   ludo(box,s){BoardsLudo.paint(box,s);},
   // ---- W4 重型棋类：通用"选中→目标"落子 ----
   _move_click(box,s,rows,cols,col_bg,getText,onMove){

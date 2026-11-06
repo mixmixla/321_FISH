@@ -11598,10 +11598,7 @@ _GAME_ACTIONS = {
     ],
     "halma": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（直移或隔子直跳）")],
     "checkers": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（斜移/斜跳吃子）")],
-    "blokus": [
-        ("放置", {"key": None, "kind": "blok"}, "输入 拼块名 方向号 x y（也可直接在棋盘上点击落子）"),
-        ("⏭ 跳过", {"fixed": {"op": "pass"}}, "跳过本回合"),
-    ],
+    "blokus": [],  # Select a physical polyomino, then its board location.
     "ludo": [],  # Dice and aircraft are direct canvas controls.
     "onewolf": [
         ("🔮预言看一人", {"op": "peek", "key": "look_one", "kind": "uid"}, "输入目标 uid（预言家）"),
@@ -11750,6 +11747,7 @@ def _actions_for(game: str, priv: dict | None) -> list:
 
 # 棋盘直操类游戏的首屏引导（无按钮可指时告诉玩家怎么操作）
 _GAME_HINTS = {
+    "blokus": "点右侧实际拼块，换向后点棋格放置；金边预览可落，红边表示受阻。",
     "ludo": "点棋盘中央骰子，再点机棚或轨道飞机；R掷骰、1–4选机。",
     "betrayal": "点自己所在房间的方向门移动；发现簿回看揭牌，背包阅读与使用道具。全图只作导航",
     "gemcity": "先选市场牌，再点「买入」或「保留」；在「藏册」点卡可放大赏图",

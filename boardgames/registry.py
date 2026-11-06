@@ -30,6 +30,7 @@ PACKAGE_MODULES: tuple = (
     "boardgames.chess_dou",
     "boardgames.chess_junqi",
     "boardgames.boards_ludo",
+    "boardgames.boards_blokus",
 )
 
 _REGISTRY: dict = {}

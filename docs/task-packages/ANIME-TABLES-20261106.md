@@ -40,3 +40,14 @@
 ## 共享画布提交的检查
 
 独审在斗兽棋、工坊、领地复现同一入口错误：同 UID 换到新房以后，未重绘的旧画布可能向新房提交旧走子/工位。冻结一处桌面共用的发送前画面归属检查，覆盖新实物交互；只允许已验证的花砖取/放连续动作在中间收到服务器更新后衔接。兼顾键盘、双窗口及旧调用的缺省参数；不得据此改动游戏规则或通用网络协议。
+
+## v1.5 · 用户要求收尾后暂停
+
+现在只收尾冻结时已有实质制作、返工、候选或已推的游戏，共29个注册项。用户授权以新会话建立的六条制作队列停止取下一项。清单按游戏 ID 计算：
+
+- 已有窗口与主控：gemcity、lovelove、rps、tielu、azul、betrayal、gomoku、gomoku_solo、balatro。
+- 推理：spy、onewolf、werewolf。纸牌：uno、blackjack、matchpairs。
+- 经营：gongfang、lingdi、chengzhu、kaituo。棋类：dou、junqi。拼板：ludo、blokus。
+- 休闲：halloween、yahtzee、drawguess、calc24、guess_number、tile2048。
+
+其余21种下次再决定，仅预画的候选维持延期。允许的收尾为现有游戏内缺陷修正、实操核验、独审、累计门禁与逐游戏推送。所有窗口和主控完成后停止，Goal 暂停，当前窗口不再选题、发图或开始其他桌游。

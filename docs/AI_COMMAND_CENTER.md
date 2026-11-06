@@ -15,6 +15,11 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 新游戏与铁路美术 · ARCADE-20261106 v1
+
+**READY**。上一批已由 [PR #9](https://github.com/mixmixla/321_FISH/pull/9) 合并，远端 main 基线 162eef9。本批[任务包](task-packages/ARCADE-20261106.md)冻结两款单人玩法、铁路原创地图与提速验证，父聊天负责共享入口协调、独立验收和 PR 合并。功能分支 feature/arcade-20261106。后台隔离运行，禁止接管桌面。
+
+
 ## 桌游试玩 · PLAY-20261106 v1
 
 **AI_ACCEPTED · 全量通过**。三项已完成主控审查。[批次任务](task-packages/PLAY-20261106.md) / [集成评审](review-packages/PLAY-20261106-r1.md)。应用候选 d0f31ba，基线 de4031e，集成分支 feature/boardgame-play-20261106。最终全量 237 文件、3226 通过、0 失败、20 项默认跳过，退出 0。三个实现窗口和后台验证均已结束；下一步按用户授权推送功能分支、通过 PR 合并，结果以远端 Git 为准。

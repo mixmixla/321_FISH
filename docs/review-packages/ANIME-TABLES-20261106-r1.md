@@ -105,3 +105,7 @@ a9067e7。正式交互密封73、猜50后区间51..100，再猜90及73后结算�
 ## UNO · AI_ACCEPTED
 
 ac2cce1→c5de348 的人物重复牌面已按看图反馈重做，108种真实牌值映射已核，全色万能牌和功能牌直接按牌型显示。08275b2、77b5ca9、764f756 对旧房、登录切换和同帧重绘重复摸牌的发现分别修订；按当前房/帧保存待确认状态。桌面和390px网页使用实际牌ID进行选牌、合法摸牌及选色，其他玩家和旁观者不显示私牌。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/uno/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/uno/mobile.webp)。
+
+## 21点 · AI_ACCEPTED
+
+候选a8841f7与后续帧守门77b5ca9/764f756。发牌阶段庄家暗牌从公共快照隐藏，结算后按服务端明牌和实际点数展示。原先“要牌／停牌”文字排改为桌上的牌靴和停牌筹。实操验证庄家暗牌、要牌、停牌、结算；同帧重绘和跨房旧回调不能重复发送。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/blackjack/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/blackjack/mobile.webp)。

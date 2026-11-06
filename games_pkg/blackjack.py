@@ -45,13 +45,17 @@ class BlackjackGame(BaseGame):
         self.gap = 3.0
 
     def snapshot(self) -> dict:
+        hidden = self.phase == "playing" and bool(self.dealer)
         return {
             "game": self.name, "status": self.phase, "round": self.round,
             "players": list(self.players), "scores": dict(self.scores),
             "hands": {str(u): [_card_str(c) for c in h] for u, h in self.hands.items()},
             "hand_values": {str(u): self._hand_value(h) for u, h in self.hands.items()},
-            "dealer": [_card_str(c) for c in self.dealer],
-            "dealer_value": self._hand_value(self.dealer),
+            "dealer": ["背牌" if hidden and i == 0 else _card_str(c)
+                       for i, c in enumerate(self.dealer)],
+            "dealer_value": self._hand_value(self.dealer[1:] if hidden else self.dealer),
+            "dealer_hidden": hidden,
+            "deck_remaining": len(self.deck),
             "current_uid": self.players[self.current_idx] if self.phase == "playing" else None,
             "stand": sorted(self.stand),
             "results": {str(u): r for u, r in self.results.items()},

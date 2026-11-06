@@ -48,6 +48,7 @@ ART_FILES = frozenset(COVERS.values()) | {
     "arcade-numbers.webp",
     "balatro-jokers-core.webp",
     "cards-uno-dealer.webp",
+    "cards-blackjack-dealer.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}

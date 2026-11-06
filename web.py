@@ -161,6 +161,9 @@ def _SERVED_PAGE():
     from boardgames.cards_uno_web import WEB_JS as uno_js, WEB_CSS as uno_css
     page = page.replace('/*@@CARDS_UNO@@*/', uno_js)
     page = page.replace('/*@@CARDS_UNO_CSS@@*/', uno_css)
+    from boardgames.cards_blackjack_web import WEB_JS as blackjack_js, WEB_CSS as blackjack_css
+    page = page.replace('/*@@CARDS_BLACKJACK@@*/', blackjack_js)
+    page = page.replace('/*@@CARDS_BLACKJACK_CSS@@*/', blackjack_css)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -631,6 +634,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 .gmap>div{border:1px solid var(--line);border-radius:var(--r1);padding:2px;min-height:26px;text-align:center;background:var(--card)}
 .glogl{padding:1px 0;border-bottom:1px dashed var(--line)}
 /*@@CARDS_UNO_CSS@@*/
+/*@@CARDS_BLACKJACK_CSS@@*/
 .unocard{display:inline-block;border:1.5px solid var(--line);border-radius:var(--r1);padding:3px 9px;margin:2px;cursor:pointer;background:var(--card);color:var(--txt);font-size:var(--secondary-font,12px);font-weight:600;box-shadow:var(--shadow-sm)}
 .unocard.dis{background:var(--ux-disabled-background,var(--side));color:var(--ux-disabled-text,var(--dim));cursor:default;box-shadow:none;opacity:1}
 .gsec{font-weight:700;margin:8px 0 3px;font-size:var(--secondary-font,12px);color:var(--dim)}
@@ -4812,24 +4816,7 @@ const GRENDER={
       t.textContent="🏆 "+esc(gnick(s.winner))+" 是最后存活的忍者！";box.appendChild(t);}
   },
   uno(box,s){/*@@CARDS_UNO@@*/},
-  blackjack(box,s){
-    const d=document.createElement("div");d.style.cssText="padding:4px";
-    d.innerHTML="<div class='gsec'>庄家："+(s.dealer||[]).map(pokerCard).join("")+"（"+s.dealer_value+"）</div>"
-      +"<div style='font-size:12px'>"+Object.entries(s.hands||{}).map(([u,h])=>{
-        const uid=+u;
-        return "<div class='glogl'>"+(uid===state.uid?"<b>你</b>":esc(gnick(uid)))
-          +"："+h.map(pokerCard).join("")+"（"+(s.hand_values[u]||0)+"）"
-          +(s.current_uid===uid?" ⏳":(s.stand||[]).includes(uid)?" 🛑 已停":"")
-          +(s.results[u]!=null?(" → "+({win:"✅ 胜",draw:"➖ 平",lose:"❌ 负"}[s.results[u]]||s.results[u])):"")+"</div>";}).join("")+"</div>";
-    box.appendChild(d);
-    if(s.status==="playing"&&s.current_uid===state.uid){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:8px;justify-content:center;margin:8px";
-      bar.appendChild(gBtn("🃏 要牌",{action:"hit"}));bar.appendChild(gBtn("🛑 停牌",{action:"stand"}));
-      box.appendChild(bar);}
-    else box.appendChild(Object.assign(document.createElement("div"),
-      {style:"text-align:center;color:var(--dim);font-size:12px",
-       textContent:s.status==="playing"?"等待 "+gnick(s.current_uid)+" 操作…":"本局结束"}));
-  },
+  blackjack(box,s){/*@@CARDS_BLACKJACK@@*/},
   calc24(box,s){MathTable.render(box,s);},
   matchpairs(box,s){
     const d=document.createElement("div");d.style.cssText="padding:4px";

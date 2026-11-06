@@ -45,6 +45,7 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 | 山屋惊魂 | AI_ACCEPTED · 点击当前房间的门探索，物品牌、角色棋子和出口章分别直接使用、攻击、撤离。 |
 | 小丑牌（多人） | AI_ACCEPTED · 以真实扑克手牌、已出牌区、弃牌堆和结算台操作，八种小丑能力有各自的女性角色与标记。 |
 | UNO | AI_ACCEPTED · 四色大点数手牌、独立牌背/弃牌堆与可点选色盘。 |
+| 21点 | AI_ACCEPTED · 牌靴、庄家明暗牌、本人铺牌和停牌筹直接操作。 |
 
 
 

@@ -1733,6 +1733,11 @@ def _click_uno(ui, x, y):
     click(ui, x, y)
 
 
+def _click_blackjack(ui, x, y):
+    from boardgames.cards_blackjack import click
+    click(ui, x, y)
+
+
 def _click_coc_deck(ui, x, y):
     cards = ui.get("cards")
     if not cards:
@@ -1979,7 +1984,7 @@ _CLICKS = {
     "gomoku": _click_xy, "othello": _click_xy, "tictactoe": _click_xy,
     "go": _click_go, "xiangqi": _click_move, "chess": _click_move,
     "connect4": _click_col, "kalah": _click_kalah,
-    "uno": _click_uno, "coc": _click_coc_deck,
+    "uno": _click_uno, "blackjack": _click_blackjack, "coc": _click_coc_deck,
     "halma": _click_move, "checkers": _click_move,
     "junqi": _click_junqi, "dou": _click_dou,
     "shogi": _click_shogi, "ludo": _click_ludo,
@@ -3047,28 +3052,8 @@ def _draw_uno_card(cv, x0, y0, w, h, cstr, ccmap, font, selected=False):
 
 @_register("blackjack")
 def _p_blackjack(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["blackjack"][1]
-    title = "🂠 21点"
-    if st.get("results"):
-        _text(cv, w / 2, 30, "结算：" + "，".join(
-            f"{nick(int(u))} {'胜' if r=='win' else '平' if r=='draw' else '负'}"
-            for u, r in st["results"].items()), _WHITE, _FONT_B)
-    _turn_banner(cv, w, 46, title, accent)
-    hands = st.get("hands") or {}
-    y = 150
-    # 庄家
-    _text(cv, 30, y - 14, "庄家", _MUTED, _FONT_F, anchor="w")
-    deal = st.get("dealer") or []
-    for i, c in enumerate(deal):
-        _draw_poker(cv, 30 + i * 62, y, c, i == 0)
-    y += 92
-    for u, cards in hands.items():
-        who = "我" if int(u) == me else nick(int(u))
-        _text(cv, 30, y - 6, who + f"（{st.get('hand_values', {}).get(u,'')}点）",
-              _MUTED, _FONT_F, anchor="w")
-        for i, c in enumerate(cards):
-            _draw_poker(cv, 30 + i * 58, y, c, False)
-        y += 88
+    from boardgames.cards_blackjack import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 def _draw_poker(cv, x, y, cstr, face_down=False):

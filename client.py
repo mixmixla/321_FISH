@@ -11539,10 +11539,7 @@ _GAME_ACTIONS = {
         ("投票", {"key": "vote", "kind": "uid"}, "输入怀疑对象的 uid"),
     ],
     "uno": [],  # Card objects and widget-local keyboard own the actions.
-    "blackjack": [
-        ("要牌", {"fixed": {"action": "hit"}}, ""),
-        ("停牌", {"fixed": {"action": "stand"}}, ""),
-    ],
+    "blackjack": [],  # 牌靴与停牌标记承担所有常规行动。
     "drawguess": [],  # Canvas strokes, palette, cloth and native guess field.
     "connect4": [("落子", {"key": "col", "kind": "int"}, "输入列号 0~6")],
     "othello": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起）")],
@@ -12956,7 +12953,7 @@ class GameWindow:
         self.state_text.configure(state="disabled")
         room = self.core.game_room
         st = self.core.game_state
-        if (room or {}).get("game") == "uno" and (room or {}).get("status") in ("playing", "ended"):
+        if (room or {}).get("game") in ("uno", "blackjack") and (room or {}).get("status") in ("playing", "ended"):
             self.state_text.pack_forget()
             self._cards_log_scroll.pack_forget()
             self._rebuild_actions("uno")
@@ -13123,6 +13120,8 @@ class GameWindow:
     def _bind_board_keys(self, cv, ui) -> None:
         from boardgames.cards_uno import bind_keys
         bind_keys(cv, ui)
+        from boardgames.cards_blackjack import bind_keys as blackjack_keys
+        blackjack_keys(cv, ui)
         # Widget-local bindings leave chat fields and other windows alone.
         for choice in range(3):
             cv.bind(str(choice+1), lambda evt, c=choice: self._on_rps_key(evt, c, ui))
@@ -13480,7 +13479,7 @@ class GameWindow:
         return " · ".join(bits)
 
     def _render_private(self) -> None:
-        if (self.core.game_room or {}).get("game") in ("drawguess", "balatro", "uno"):
+        if (self.core.game_room or {}).get("game") in ("drawguess", "balatro", "uno", "blackjack"):
             return  # Only the illustrated tabletop shows this private information.
         p = self.core.game_private
         if (self.core.game_room or {}).get("game") == "betrayal":
@@ -13606,7 +13605,7 @@ class GameWindow:
         for w in self.act_btns.winfo_children():
             w.destroy()
         self.act_hint.config(text=_GAME_HINTS.get(game) or "")
-        if game == "uno":
+        if game in ("uno", "blackjack"):
             self.act_hint.config(text="")
             return  # Deck, cards and color picker are the action controls.
         if not game or (self.core.game_room or {}).get("status") != "playing":
@@ -13980,7 +13979,7 @@ class GameWindow:
                         or ("_drawn_private" in source_ui
                             and source_ui["_drawn_private"] is not self.core.game_private)):
                     return
-            if source_game != game and (game == "uno" or source_game == "uno"):
+            if source_game != game and (game in ("uno", "blackjack") or source_game in ("uno", "blackjack")):
                 return
             if source_game != game and (
                     game in ("gemcity", "lovelove", "betrayal", "rps", "tielu")
@@ -14023,6 +14022,19 @@ class GameWindow:
                 if source_ui.get("repaint"):
                     source_ui["repaint"]()
             return
+        if game == "blackjack":
+            if source_ui is not None and (
+                    source_ui.get("game") != game
+                    or source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st
+                    or source_ui.get("me") != self.core.uid):
+                return
+            if (not getattr(self.core, "connected", False)
+                    or self.core.uid not in room.get("players", [])
+                    or self.core.uid in room.get("spectators", [])
+                    or st.get("current_uid") != self.core.uid
+                    or st.get("status") != "playing"):
+                return
         if game == "uno":
             if source_ui is not None and (
                     source_ui.get("_room_context") != (rid, room.get("round"))

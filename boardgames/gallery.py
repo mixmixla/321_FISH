@@ -21,6 +21,8 @@ ART_FILES = frozenset(COVERS.values()) | {
     "tile2048-atlas.webp", "gomoku-board.webp", "gomoku-stones.png",
     "gemcity-tier1.webp", "gemcity-tier2.webp", "gemcity-tier3.webp",
     "gemcity-patrons.webp", "lovelove-court.webp",
+    "betrayal-rooms.webp", "betrayal-items.webp",
+    "betrayal-events.webp", "betrayal-omens.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}

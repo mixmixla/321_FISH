@@ -22,9 +22,17 @@ ROOM_SHORT = {
     "育儿室": "育", "主卧": "卧", "浴室": "浴", "琴房": "琴", "阁楼": "阁",
     "出口之门": "出",
 }
-ROOM_NAMES = [n for n in ROOM_SHORT if n != "出口之门"]     # 19 张房间牌（门厅开局已放）
+ROOM_NAMES = [n for n in ROOM_SHORT if n != "出口之门"]
 
 ITEM_DECK = ["消防斧", "急救包", "镇静剂", "光之水晶", "力量护符", "圣水"]
+ITEM_TEXT = {
+    "消防斧": "携带时攻击掷骰 +1，无需使用。",
+    "急救包": "力量和速度中较低的一项 +2；相同时增加力量。",
+    "镇静剂": "理智和知识中较低的一项 +2；相同时增加理智。",
+    "光之水晶": "使用后速度 +1。",
+    "力量护符": "使用后力量 +1。",
+    "圣水": "饮用后，下一次攻击掷骰 +2。",
+}
 EVENT_DECK = {
     "寒气入骨": ("sanity", -1, "一阵寒气从脚底窜上脊背"),
     "血字浮现": ("knowledge", -1, "墙上渗出暗红血字，看得头晕目眩"),
@@ -57,10 +65,15 @@ class BetrayalGame(BaseGame):
         self.holy = set()                   # 饮下圣水者：下一次攻击 +2
         self.dead = set()
         self.room_map = {(0, 0): "门厅"}     # 已揭示房间
+        self.discoveries = []
         kinds = ["event"] * 8 + ["omen"] * 6 + ["item"] * 5
         self.rng.shuffle(kinds)
         rooms = list(ROOM_NAMES)
         self.rng.shuffle(rooms)
+        # 门厅已经铺好。用原洗牌中多出的一张补它的位置，保留其余牌位和随机序列。
+        spare = rooms.pop()
+        if spare != "门厅":
+            rooms[rooms.index("门厅")] = spare
         self.tiles = list(zip(rooms, kinds))    # 探索时从末尾弹出
         self.item_deck = list(ITEM_DECK)
         self.rng.shuffle(self.item_deck)
@@ -90,6 +103,9 @@ class BetrayalGame(BaseGame):
             "pos": {str(u): f"{x},{y}" for u, (x, y) in self.pos.items()},
             "rooms": {f"{x},{y}": ROOM_SHORT.get(n, n[0])
                       for (x, y), n in self.room_map.items()},
+            "room_names": {f"{x},{y}": name for (x, y), name in self.room_map.items()},
+            "tiles_left": len(self.tiles),
+            "discoveries": list(self.discoveries),
             "stats": {str(u): dict(self.stats[u]) for u in self.players},
             "items": {str(u): list(self.items[u]) for u in self.players},
             "haunt": (None if not self.haunt else {
@@ -147,7 +163,10 @@ class BetrayalGame(BaseGame):
             name, kind = self.tiles.pop()
             self.room_map[t] = name
             msgs.append(f"{self._nick(uid)} 推开{DIR_CN[d]}侧的门，发现【{name}】")
-            msgs += self._draw(uid, kind)
+            lines, cards = self._draw(uid, kind)
+            msgs += lines
+            self.discoveries.append({"pos": f"{t[0]},{t[1]}", "room": name,
+                                     "uid": uid, "cards": cards})
         else:
             msgs.append(f"{self._nick(uid)} 走进【{self.room_map[t]}】")
         self.pos[uid] = t
@@ -159,20 +178,20 @@ class BetrayalGame(BaseGame):
             msgs += self._end_turn([])
         return msgs
 
-    def _draw(self, uid: int, kind: str) -> list:
+    def _draw(self, uid: int, kind: str) -> tuple[list, list]:
         if kind == "item":
             if not self.item_deck:
-                return []
+                return [], []
             it = self.item_deck.pop()
             self.items[uid].append(it)
-            return [f"🎁 拾获道具【{it}】"]
+            return [f"🎁 拾获道具【{it}】"], [{"kind": "item", "name": it, "text": ITEM_TEXT[it]}]
         if kind == "event":
             if not self.event_deck:
-                return []
+                return [], []
             return self._apply_event(uid, self.event_deck.pop())
         if kind == "omen":
             if not self.omen_deck:
-                return []
+                return [], []
             name, stat = self.omen_deck.pop()
             self.stats[uid][stat] += 1
             self.omens += 1
@@ -184,20 +203,21 @@ class BetrayalGame(BaseGame):
                     msgs += self._trigger_haunt()
                 else:
                     msgs.append(f"🎲 惊魂检定掷出 {roll} > {self.omens}，暂时安然无恙")
-            return msgs
-        return []
+            return msgs, [{"kind": "omen", "name": name, "text": "\n".join(msgs)}]
+        return [], []
 
-    def _apply_event(self, uid: int, ev: str) -> list:
+    def _apply_event(self, uid: int, ev: str) -> tuple[list, list]:
         stat, delta, desc = EVENT_DECK[ev]
         msgs = [f"❗事件【{ev}】：{desc}"]
+        gift = None
         if stat:
             self.stats[uid][stat] += delta
             msgs.append(f"　{STAT_CN[stat]} {'+' if delta > 0 else ''}{delta}")
         elif ev == "意外的馈赠":
             if self.item_deck:
-                it = self.item_deck.pop()
-                self.items[uid].append(it)
-                msgs.append(f"　🎁 获得道具【{it}】")
+                gift = self.item_deck.pop()
+                self.items[uid].append(gift)
+                msgs.append(f"　🎁 获得道具【{gift}】")
         elif ev == "暗门":
             x, y = self.pos[uid]
             for dx, dy in self.rng.sample(list(DIRS.values()), 4):
@@ -207,7 +227,10 @@ class BetrayalGame(BaseGame):
                     self.room_map[t] = name
                     msgs.append(f"　暗门通向【{name}】，已在地图上标出")
                     break
-        return msgs
+        cards = [{"kind": "event", "name": ev, "text": "\n".join(msgs)}]
+        if gift:
+            cards.append({"kind": "item", "name": gift, "text": ITEM_TEXT[gift]})
+        return msgs, cards
 
     def _use(self, uid: int, item: str) -> list:
         if item not in self.items[uid]:

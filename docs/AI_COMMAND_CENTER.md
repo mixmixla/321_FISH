@@ -17,7 +17,7 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 宝石牌桌重做 · GEM-TABLE-20261106 v1
 
-**AI_ACCEPTED · 全量通过**。[任务](task-packages/GEM-TABLE-20261106.md) / [最终评审](review-packages/MANOR-GEM-20261106-r1.md)。60 张固定牌、三级竖版市场、筹码/费用/实际折扣以及另七款游戏错配已完成。原暖纸底专测失败保留，修订后完整候选共 3370 通过。本批通过功能分支 PR 合并，最终交付以远端记录为准。
+**AI_ACCEPTED · 全量通过**。[任务](task-packages/GEM-TABLE-20261106.md) / [最终评审](review-packages/MANOR-GEM-20261106-r1.md)。60 张固定牌、三级竖版市场、筹码/费用/实际折扣以及另七款游戏错配已完成。原暖纸底专测失败保留，修订后完整候选共 3370 通过。本批 Git 交付见 [PR #12](https://github.com/mixmixla/321_FISH/pull/12)，合并状态以远端记录为准。
 
 ## 山屋惊魂 · MANOR-20261106 v1
 

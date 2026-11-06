@@ -81,3 +81,7 @@ dc9d0ad/e12532c/1658059 的八个棋种逐格核对，7×9 连续森林上有两
 ## 你画我猜 · AI_ACCEPTED
 
 f0572bc。实际鼠标/触摸使用笔、颜色、清除与画板，猜方只看可见笔画并能输入答案；画手的题目不作为公开文案。真实规则夹具回放双端笔迹，不把演练认作外部局域网联测。 各款Web输入绑定账号及当前房/轮和帧身份。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/drawguess/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/drawguess/mobile.webp)。
+
+## 24点 · AI_ACCEPTED
+
+32be5f6。正式Tk与390px Web在同一数学牌面上选数字、括号、四则运算并提交，保留需要的自然表达式键盘输入；真实规则用原有Fraction解析，末轮正常计分。 各款Web输入绑定账号及当前房/轮和帧身份。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/calc24/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/calc24/mobile.webp)。

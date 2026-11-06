@@ -3162,25 +3162,16 @@ _CLICKS["rps"] = _click_rps
 
 @_register("calc24")
 def _p_calc24(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["calc24"][1]
-    title = "➗ 24点"
-    if st.get("solved_uid") is not None:
-        title = f"🎉 {nick(st['solved_uid'])} 答对！{st.get('win_expr','')}"
-    else:
-        title += f"　第 {st.get('round',1)} 轮"
-    _turn_banner(cv, w, 46, title, accent)
-    _status_hud(cv, w, 68, st, me, nick, accent)      # F6：阶段·轮次 + 计分
-    cards = st.get("cards") or []
-    cw, ch = 86, 120
-    total = len(cards) * (cw + 16) - 16
-    x0 = (w - total) / 2
-    for i, v in enumerate(cards):
-        cx = x0 + i * (cw + 16)
-        _card_face(cv, cx, h / 2 - 60, cx + cw, h / 2 - 60 + ch, face="#ffffff",
-                   edge="#cccccc", r=_UXR_BIG)
-        _text(cv, cx + cw / 2, h / 2 - 60 + ch / 2, str(v), "#333", _FONT_BIG)
-    _text(cv, w / 2, h / 2 - 95, "用 + - × ÷ 凑出 24（答案写进下方输入框）",
-          _MUTED, _FONT_F)
+    from boardgames.arcade_calc24 import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
+
+
+def _click_calc24(ui, x, y):
+    from boardgames.arcade_calc24 import click
+    click(ui, x, y)
+
+
+_CLICKS["calc24"] = _click_calc24
 
 
 @_register("coc")

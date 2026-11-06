@@ -11557,7 +11557,7 @@ _GAME_ACTIONS = {
     "drawguess": [],  # Canvas strokes, palette, cloth and native guess field.
     "connect4": [("落子", {"key": "col", "kind": "int"}, "输入列号 0~6")],
     "othello": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起）")],
-    "calc24": [("作答", {"key": "expr", "kind": "text"}, "输入凑 24 的表达式，如 1+2+3*4")],
+    "calc24": [],  # Four value cards, operator chips and expression seal.
     "matchpairs": [("摸牌", {"fixed": {"draw": True}}, "")],
     "betrayal": [
         ("⬆ 上", {"fixed": {"move": "up"}}, ""),
@@ -11737,6 +11737,7 @@ def _actions_for(game: str, priv: dict | None) -> list:
 _GAME_HINTS = {
     "blokus": "点右侧实际拼块，换向后点棋格放置；金边预览可落，红边表示受阻。",
     "ludo": "点棋盘中央骰子，再点机棚或轨道飞机；R掷骰、1–4选机。",
+    "calc24": "点数字牌与运算筹片组合算式；点24印章或Enter提交，也可直接输入表达式",
     "drawguess": "选画笔颜色与粗细，在画板拖动作画；猜词者在画板下写下答案",
     "yahtzee": "点骰盅掷骰，点骰面保留；点自己的空白记分格写入预览分数",
     "halloween": "点牌堆翻牌，点桌铃收牌，点箭头结束回合；F / B / P 快捷键",
@@ -13216,7 +13217,7 @@ class GameWindow:
     def _fmt_state(self, st: dict) -> str:
         """公开快照 → 可读文本（按游戏定制 + 兜底 key-value）"""
         game = st.get("game", "")
-        if game in ("halloween", "yahtzee", "drawguess"):
+        if game in ("halloween", "yahtzee", "drawguess", "calc24"):
             return ""  # Public fruit cards and score seats are on the table.
         lines = []
         if st.get("status") == "await_secret":

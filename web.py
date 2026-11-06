@@ -152,6 +152,9 @@ def _SERVED_PAGE():
     from boardgames.arcade_drawguess import WEB_JS as atelier_js, WEB_CSS as atelier_css
     page = page.replace('/*@@ARCADE_ATELIER_JS@@*/', atelier_js)
     page = page.replace('@@ARCADE_ATELIER_CSS@@', atelier_css)
+    from boardgames.arcade_calc24 import WEB_JS as math_js, WEB_CSS as math_css
+    page = page.replace('/*@@ARCADE_MATH_JS@@*/', math_js)
+    page = page.replace('@@ARCADE_MATH_CSS@@', math_css)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -714,6 +717,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 @@ARCADE_ORCHARD_CSS@@
 @@ARCADE_YACHT_CSS@@
 @@ARCADE_ATELIER_CSS@@
+@@ARCADE_MATH_CSS@@
 @@MANOR_CSS@@
 </style>
 </head>
@@ -4371,6 +4375,7 @@ function gLegalTos(fx,fy){
 /*@@ARCADE_ORCHARD_JS@@*/
 /*@@ARCADE_YACHT_JS@@*/
 /*@@ARCADE_ATELIER_JS@@*/
+/*@@ARCADE_MATH_JS@@*/
 const MANOR_ATLASES=JSON.parse("@@MANOR_ATLASES@@");
 const RAIL_TICKET_COUNT=@@RAIL_TICKET_COUNT@@;
 /*@@RAIL_JS@@*/
@@ -4889,22 +4894,7 @@ const GRENDER={
       {style:"text-align:center;color:var(--dim);font-size:12px",
        textContent:s.status==="playing"?"等待 "+gnick(s.current_uid)+" 操作…":"本局结束"}));
   },
-  calc24(box,s){
-    const d=document.createElement("div");d.style.cssText="text-align:center;padding:6px";
-    d.innerHTML="<div style='margin:8px'>"+(s.cards||[]).map(c=>vcardHTML({cls:"wide",sym:c})).join("")+"</div>"
-      +(s.status==="answering"?"<div style='color:var(--dim)'>剩余 "+s.wait+"s</div>"
-        :(s.solved_uid?"<div>🎉 "+esc(gnick(s.solved_uid))+" 答对："+esc(s.win_expr||"")+"</div>":"下一轮即将开始…"))
-      +"<div style='margin-top:6px'>"+scoreHTML(s.scores)+"</div>";
-    box.appendChild(d);
-    if(s.status==="answering"&&(s.players||[]).includes(state.uid)&&s.solved_uid==null){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;justify-content:center;margin:8px";
-      const inp=document.createElement("input");inp.placeholder="如 (5-1/5)*5";
-      inp.style.cssText="width:180px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px 8px";
-      const b=document.createElement("button");b.className="gbtn";b.textContent="作答";
-      b.onclick=()=>{const t=inp.value.trim();if(t)gameAPI("action",{room_id:state.groom,action:{expr:t}})};
-      inp.addEventListener("keydown",e=>{if(e.key==="Enter")b.click()});
-      bar.append(inp,b);box.appendChild(bar);}
-  },
+  calc24(box,s){MathTable.render(box,s);},
   matchpairs(box,s){
     const d=document.createElement("div");d.style.cssText="padding:4px";
     d.innerHTML="<div class='gsec'>轮到 "+esc(gnick(s.turn_uid))+"</div>"

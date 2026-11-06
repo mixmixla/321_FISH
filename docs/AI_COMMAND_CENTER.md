@@ -17,8 +17,7 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 桌游试玩 · PLAY-20261106 v1
 
-**READY**。主控评审铁路、桌游大厅筛选和网页花砖点按。范围与分工见[任务包](task-packages/PLAY-20261106.md)。铁路本地验证进行中；大厅与花砖分配到各自的独立工作树。基线 de4031e，集成分支 feature/boardgame-play-20261106；由主控跑一次最终全量并核对远端分支。验证在后台进行。
-
+**AI_ACCEPTED · 全量通过**。三项已完成主控审查。[批次任务](task-packages/PLAY-20261106.md) / [集成评审](review-packages/PLAY-20261106-r1.md)。应用候选 d0f31ba，基线 de4031e，集成分支 feature/boardgame-play-20261106。最终全量 237 文件、3226 通过、0 失败、20 项默认跳过，退出 0。三个实现窗口和后台验证均已结束；下一步按用户授权推送功能分支、通过 PR 合并，结果以远端 Git 为准。
 
 ## 当前有限密钥竞态复现 · KEY-INIT-RACE-REPRO-01 v1（2026-10-25）
 

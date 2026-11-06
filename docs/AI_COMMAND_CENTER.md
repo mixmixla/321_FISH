@@ -15,6 +15,11 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 卡牌插画 · CARDS-STUDIO-20261106 v1
+
+**READY**。承接已合并的 [PR #10](https://github.com/mixmixla/321_FISH/pull/10)，远端 main 基线 36ff593。主控依用户新要求冻结[任务包](task-packages/CARDS-STUDIO-20261106.md)：璀璨宝石整副发展卡和贵宾插画、情书八张人物牌。三个层次的写入分开，桌面和网页各一名入口写入者；原开发目录保留。主控负责视觉复核、最终后台全量及 PR 合并。
+
+
 ## 游戏与美术升级 · ARCADE-20261106 v1.1
 
 **AI_ACCEPTED · 完整候选通过**。铁路/大厅/手机点按已由[PR #9](https://github.com/mixmixla/321_FISH/pull/9)合并。本批见[任务 v1.1](task-packages/ARCADE-20261106.md)及[最终评审](review-packages/ARCADE-20261106-r1.md)。应用候选 b270e8a，从 162eef9 开发，分支 feature/arcade-20261106。全量 243 文件、3274 通过、0 失败、20 默认跳过，用时 29 分 28 秒；所有实现、试玩、测试已结束。本批 Git 交付见 [PR #10](https://github.com/mixmixla/321_FISH/pull/10)，合并状态以远端记录为准。当前范围结束，无下一项 READY。

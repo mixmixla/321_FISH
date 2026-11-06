@@ -38,8 +38,11 @@ def test_panel_css_and_renderers_use_bitmaps():
     assert "function bgImg(" in html
     # Azul 渲染器迁入展示包后改用包内新键（由 web_parts 注入，仍在服务页内）。
     for mark in ('bgImg("azul_wall_bg")', 'bgImg("azul_plate")',
-                 'bgImg("azul_board")', 'bgImg("azul_track_ring")', 'bgImg("panel")'):
+                 'bgImg("azul_board")', 'bgImg("azul_track_ring")'):
         assert mark in html, mark
+    # Gem City now paints the development-card atlas, with values in real text.
+    assert "CardTableWeb.development" in html
+    assert "'gemcity-tier'+tier+'.webp'" in html
     assert 'BG["gem_' in html
     assert 'BG["azul_tile_' in html
     # 动作契约不回归

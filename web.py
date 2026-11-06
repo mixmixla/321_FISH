@@ -127,6 +127,9 @@ def _SERVED_PAGE():
         _gjs, _gcss = "", ""
     page = page.replace('/*@@UX_GAME_RENDERERS@@*/', _gjs)
     page = page.replace('@@UX_GAME_CSS@@', _gcss)
+    from boardgames.card_table_web import WEB_JS as card_js, WEB_CSS as card_css
+    page = page.replace('/*@@CARD_TABLE_JS@@*/', card_js)
+    page = page.replace('@@CARD_TABLE_CSS@@', card_css)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -678,6 +681,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 }
 @@UX_CHAT_CSS@@
 @@UX_GAME_CSS@@
+@@CARD_TABLE_CSS@@
 </style>
 </head>
 <body>
@@ -4293,7 +4297,7 @@ function renderGamePanel(){
     main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
     const note=document.createElement("div");note.className="gsec";
     note.textContent=gname==="tielu"?"🏁 本局结束，保留结算 30 秒后回到房间":"🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
-  const pv=state.gpriv;if(pv){
+  const pv=(gname==="gemcity"||gname==="lovelove")?null:state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
       ?pv.hand.join(" ")
@@ -4328,6 +4332,7 @@ function gLegalTos(fx,fy){
 }
 // ---- 各游戏渲染器（s = game_state.state）----
 /*@@GOMOKU_ART@@*/
+/*@@CARD_TABLE_JS@@*/
 const GRENDER={
   guess_number(box,s){
     const d=document.createElement("div");d.style.cssText="text-align:center;padding:6px";
@@ -5268,14 +5273,17 @@ const GRENDER={
   },
   gemcity(box,s){
     box.appendChild(gTitle("gemcity","璀璨宝石 · 收集换分"));
+    const root=document.createElement("div");root.className="ct-table ct-gemcity";box.appendChild(root);box=root;
     const C_CN=s.colors||{};
     // E3：宝石图标描边色（深浅主题通用；o/d 取中间调，避免纯黑/纯白在某一主题下不可辨）。
     const GMCOL={o:"#8a8a8a",d:"#b9c6d4",r:"#d2534f",e:"#3a9b5f",s:"#4a7de0",g:"#c9962a"};
     const gmI=(c,sz)=>{const u=BG["gem_"+c];const n=sz||13;if(u)return "<img src='"+u+"' width='"+n+"' height='"+n+"' style='vertical-align:middle' alt=''>";return GMCOL[c]?"<span style='color:"+GMCOL[c]+"'>"+resIcon(c,n)+"</span>":"";};
     const tok=(t)=>Object.entries(t||{}).map(([c,n])=>gmI(c)+"×"+n).join("　");
     const my=state.uid;
-    const mine=(s.players||[]).includes(my);
-    const myTurn=mine&&s.winner_uid==null&&s.turn_uid===my;
+    const mine=CardTableWeb.owned("gemcity",s);
+    const myTurn=CardTableWeb.canAct("gemcity",s,s.turn_uid);
+    const context=state.groom+":"+my+":"+((state.gst.room||{}).round||0);
+    if(state.gccontext!==context){state.gcsel=[];state.gccontext=context;}
     if(!myTurn)state.gcsel=[];                  // 换手/观战后丢弃残留选择
     const sel=state.gcsel||[];
     const bank=s.bank||{};
@@ -5286,7 +5294,7 @@ const GRENDER={
       for(const c in cost){const need=Math.max(0,(cost[c]||0)-(disc[c]||0));
         gold+=Math.max(0,need-(toks[c]||0));}
       return gold<=(toks.g||0);};
-    const gact=(a)=>gameAPI("action",{room_id:state.groom,action:a});
+    const gact=(a)=>{if(CardTableWeb.canAct("gemcity",s,s.turn_uid))gameAPI("action",{room_id:state.groom,action:a});};
     const pickChip=(c)=>{
       const cur=state.gcsel||[],n=bank[c]||0;
       if(!myTurn||n<=0)return;
@@ -5297,10 +5305,11 @@ const GRENDER={
         if(next.length===3){state.gcsel=[];gact({op:"take",colors:next});return}
         state.gcsel=next;renderGamePanel();}
     };
+    const tools=document.createElement("div");tools.className="ct-gem-tools";box.appendChild(tools);
     const d=document.createElement("div");
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>回合 → "+esc(gnick(s.turn_uid))
       +"　"+scoreHTML(s.score)+"</div>";
-    box.appendChild(d);
+    tools.appendChild(d);
     // 宝石池：5 色可点击筹码（金不可取，仅展示）
     const bk=document.createElement("div");
     bk.style.cssText="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0";
@@ -5309,7 +5318,8 @@ const GRENDER={
     bk.appendChild(bkl);
     ["o","d","r","e","s"].forEach(c=>{
       const n=bank[c]||0,on=sel.includes(c);
-      const el=document.createElement("span");
+      const el=document.createElement("button");el.type="button";el.className="ct-bank-chip";el.dataset.gem=c;
+      el.disabled=!myTurn||n<=0;el.setAttribute("aria-label","选择 "+(C_CN[c]||c));el.setAttribute("aria-pressed",String(on));
       el.style.cssText="display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:var(--r1);font-size:12px;border:1px solid "
         +(on?"#2E8B57":(n>0?"var(--line,#ddd)":"var(--line,#eee)"))
         +";background:"+(on?"rgba(46,139,87,.16)":"transparent")
@@ -5321,12 +5331,12 @@ const GRENDER={
     gold.style.cssText="font-size:12px;margin-left:4px";
     gold.innerHTML=gmI("g",15)+"×"+(bank.g||0);
     bk.appendChild(gold);
-    box.appendChild(bk);
+    tools.appendChild(bk);
     if(sel.length){                             // 已选提示 + 取消选择
       const line=document.createElement("div");
-      line.style.cssText="display:flex;gap:6px;align-items:center;font-size:11px;margin:2px 0";
+      line.style.cssText="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11px;margin:2px 0";
       const tip=document.createElement("span");
-      tip.innerHTML="已选："+sel.map(c=>gmI(c,12)+c).join("、")
+      tip.innerHTML="已选："+sel.map(c=>gmI(c,12)+esc(C_CN[c]||c)).join("、")
         +(sel.length===1&&(bank[sel[0]]||0)>=4?"（再点同色可取 2）":"（选满 3 色自动取）");
       const takeBtn=document.createElement("button");takeBtn.className="gbtn go";
       takeBtn.textContent="💎 取 "+sel.length+" 颗";
@@ -5334,60 +5344,30 @@ const GRENDER={
         state.gcsel=[];gact({op:"take",colors:cur});};
       const cancel=document.createElement("button");cancel.className="gbtn";cancel.textContent="取消选择";
       cancel.onclick=()=>{state.gcsel=[];renderGamePanel();};
-      line.append(tip,takeBtn,cancel);box.appendChild(line);}
-    // 市场：点卡购买（买不起置灰且不发请求），左上角 📥 保留
-    const mkt=document.createElement("div");
-    const mt=document.createElement("div");mt.className="gsec";mt.textContent="市场（点卡购买 · 📥 保留）";
-    mkt.appendChild(mt);
+      line.append(tip,takeBtn,cancel);tools.appendChild(line);}
+    if(mine){const wallet=document.createElement("div");wallet.className="ct-wallet";
+      wallet.innerHTML="你的筹码："+tok(toks)+"<br>永久折扣："+tok(disc)+" · 贵宾×"+(((state.gpriv||{}).nobles||[]).length);tools.appendChild(wallet);}
+    CardTableWeb.personal(box,s,afford,gact);
+    const mkt=document.createElement("section");
     for(let t=1;t<=3;t++){
-      const row=document.createElement("div");
-      row.style.cssText="display:flex;flex-wrap:wrap;gap:6px;align-items:stretch;margin:3px 0";
-      const lab=document.createElement("span");
-      lab.style.cssText="font-size:11px;font-weight:700;align-self:center";lab.textContent=t+"级";
-      row.appendChild(lab);
-      const cards=s.market[t]||[];
-      if(!cards.length){const e=document.createElement("span");
-        e.style.cssText="font-size:11px;color:var(--dim)";e.textContent="（空）";row.appendChild(e);}
-      cards.forEach((c,i)=>{
-        const ok=afford(c)&&myTurn;
-        const cost=Object.entries(c.cost||{}).filter(e=>e[1]>0).map(e=>gmI(e[0],12)+"×"+e[1]).join(" ");
-        const el=document.createElement("div");
-        el.style.cssText=bgImg("panel")+"position:relative;border:1px solid "+(ok?"#2E8B57":"var(--line,#ddd)")
-          +";border-radius:var(--r1);padding:4px 8px 4px 10px;display:inline-block;font-size:11px;opacity:"
-          +(afford(c)?1:0.55)+";cursor:"+(ok?"pointer":"default");
-        el.innerHTML=gmI(c.disc,15)+"+"+c.pts+" <span style='color:var(--dim)'>"+esc(C_CN[c.disc]||c.disc)+"</span><br>需"+cost;
-        if(ok)el.onclick=()=>gact({op:"buy",tier:t,idx:i});
-        const rv=document.createElement("span");rv.textContent="📥";rv.title="保留";
-        rv.style.cssText="position:absolute;top:0;left:0;font-size:10px;line-height:1;padding:1px 2px;border-radius:6px;background:rgba(255,255,255,.85);cursor:"+(myTurn?"pointer":"default");
-        if(myTurn)rv.onclick=(ev)=>{ev.stopPropagation();gact({op:"reserve",tier:t,idx:i});};
-        el.appendChild(rv);row.appendChild(el);});
-      mkt.appendChild(row);}
+      const title=document.createElement("h3");title.className="ct-section-title";
+      title.textContent=t+"级 · "+(["","矿场","工坊","商贸城市"][t])+" · 点图购买，按钮保留";mkt.appendChild(title);
+      const row=document.createElement("div");row.className="ct-market-row";
+      const cards=(s.market||{})[t]||[];
+      const reserveFull=mine&&((state.gpriv||{}).reserved||[]).length>=3;
+      cards.forEach((card,index)=>row.appendChild(CardTableWeb.development(card,{
+        tier:t,colors:C_CN,myTurn,canBuy:myTurn&&afford(card),
+        onBuy:()=>gact({op:"buy",tier:t,idx:index}),
+        canReserve:myTurn&&!reserveFull,reserveFull,
+        onReserve:()=>gact({op:"reserve",tier:t,idx:index})})));
+      if(!cards.length){const empty=document.createElement("p");empty.textContent="本级已售罄";row.appendChild(empty);}
+      mkt.appendChild(row);
+    }
     box.appendChild(mkt);
-    // 我的保留卡：紧凑一行，点卡即买
-    const myRsv=(state.gpriv&&state.gpriv.reserved)||[];
-    if(myRsv.length){
-      const rt=document.createElement("div");rt.className="gsec";rt.textContent="保留卡（点卡购买）";
-      box.appendChild(rt);
-      const r_row=document.createElement("div");
-      r_row.style.cssText="display:flex;flex-wrap:wrap;gap:6px;margin:2px 0";
-      myRsv.forEach((c,i)=>{
-        const ok=afford(c)&&myTurn;
-        const cost=Object.entries(c.cost||{}).filter(e=>e[1]>0).map(e=>gmI(e[0],12)+"×"+e[1]).join(" ");
-        const el=document.createElement("div");
-        el.style.cssText=bgImg("panel")+"border:1px solid "+(ok?"#2E8B57":"var(--line,#ddd)")
-          +";border-radius:var(--r1);padding:4px 8px;font-size:11px;opacity:"+(afford(c)?1:0.5)
-          +";cursor:"+(ok?"pointer":"default");
-        el.innerHTML="🎴+"+c.pts+" "+gmI(c.disc,14)+"<br>需"+cost;
-        if(ok)el.onclick=()=>gact({op:"buy_res",idx:i});
-        r_row.appendChild(el);});
-      box.appendChild(r_row);}
-    const info=document.createElement("div");
-    info.innerHTML="<div class='gsec'>你的宝石</div>"+tok(s.tokens[my])
-      +"<div style='font-size:11px;color:var(--dim)'>永久折扣："+tok(s.discount[my])
-      +"　<span style='color:#c9962a'>"+resIcon("crown",12)+"</span>贵宾待邀："+(s.nobles||[]).length
-      +"｜你的贵宾×"+(state.gpriv?(state.gpriv.nobles||[]).length:0)+"</div>";
-    box.appendChild(info);
+    CardTableWeb.patrons(box,s,disc);
     if(myTurn){
+      const more=document.createElement("details");more.className="ct-legacy";
+      const summary=document.createElement("summary");summary.textContent="更多输入方式";more.appendChild(summary);box.appendChild(more);box=more;
       // 文本输入兜底（默认交互已是点击）
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
       bar.appendChild(document.createTextNode("取 1~3 异色(空格分隔)"));
@@ -5726,40 +5706,7 @@ const GRENDER={
     w.appendChild(hint);
     box.appendChild(w);
   },
-  lovelove(box,s){
-    box.appendChild(gTitle("lovelove","情书 · 递给心上人"));
-    const LOVE_NAME={1:"护卫",2:"牧师",3:"男爵",4:"侍女",5:"王子",6:"国王",7:"伯爵夫人",8:"公主"};
-    const roleCard=v=>vcardHTML({cls:"role wide",sym:(LOVE_NAME[v]||v),title:"情书 · 数值"+v});
-    const w=document.createElement("div");w.style.cssText="font-size:12px;line-height:20px";
-    const dead=((s.dead||[]).map(u=>esc(gnick(u))).join("、")||"无");
-    w.innerHTML="<div class='gsec'>存活："+(s.alive||[]).map(u=>esc(gnick(u))).join("　")
-      +"</div><div><span style='color:var(--dim)'>出局：</span>"+dead
-      +"　<span style='color:var(--dim)'>废牌：</span>"
-      +((s.discard||[]).map(x=>"<span class='vtile w' title='数值"+x[1]+"'>"+(LOVE_NAME[x[1]]||x[1])+"</span>").join("")||"无")
-      +"　牌堆剩 "+s.deck_left+"</div>";
-    box.appendChild(w);
-    const me=state.uid, mine=state.gpriv?state.gpriv.hand:null;
-    const bar=document.createElement("div");bar.style.cssText="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px";
-    if(s.winner_uid){bar.appendChild(document.createTextNode("🏁 对局结束"));}
-    else if(s.cur!==me){bar.appendChild(document.createTextNode("⏳ 等待 "+esc(gnick(s.cur))));}
-    else if(mine!=null){
-      const hd=document.createElement("span");hd.innerHTML="我的手牌："+roleCard(mine);
-      bar.appendChild(hd);
-      const ts=document.createElement("select");
-      ts.appendChild(Object.assign(document.createElement("option"),{value:"",textContent:"(无需目标)"}));
-      (s.alive||[]).forEach(u=>{if(u!==me)ts.appendChild(Object.assign(document.createElement("option"),{value:u,textContent:gnick(u)}))});
-      const vs=document.createElement("select");
-      vs.appendChild(Object.assign(document.createElement("option"),{value:"",textContent:"(不影响)"}));
-      for(let v=1;v<=8;v++)vs.appendChild(Object.assign(document.createElement("option"),{value:v,textContent:"数值"+v}));
-      const db=document.createElement("button");db.className="gbtn";db.textContent="🂠 弃牌出效果";
-      db.onclick=()=>{const a={op:"discard",play:mine};
-        if(ts.value!=="")a.target=+ts.value;
-        if(vs.value!=="")a.val=+vs.value;
-        gameAPI("action",{room_id:state.groom,action:a})};
-      bar.append(ts,vs,db);
-    }
-    box.appendChild(bar);
-  },
+  lovelove(box,s){ CardTableWeb.lovelove(box,s); },
   halloween(box,s){
     box.appendChild(gTitle("halloween","德国心脏病 · 翻牌抢铃"));
     const w=document.createElement("div");w.style.cssText="font-size:12px;line-height:20px";

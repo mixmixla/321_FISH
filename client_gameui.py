@@ -5437,6 +5437,30 @@ def _tl_seg_dist(px, py, x0, y0, x1, y1):
     return math.hypot(px - (x0 + t * dx), py - (y0 + t * dy))
 
 
+def _tl_map_art(cv, x0, y0, x1, y1):
+    """One source bitmap and one size per canvas; Tk owns its PhotoImage lifetime."""
+    if not _real_cv(cv) or _PILImage is None or _PILImageTk is None:
+        return False
+    try:
+        source = getattr(cv, "_tl_art_source", None)
+        if source is None:
+            from pathlib import Path
+            path = Path(__file__).resolve().parent / "assets/boardgame/tielu_travel.jpg"
+            with _PILImage.open(path) as image:
+                source = image.convert("RGB")
+            cv._tl_art_source = source
+        size = (max(1, round(x1 - x0)), max(1, round(y1 - y0)))
+        cached = getattr(cv, "_tl_art_photo", None)
+        if not cached or cached[0] != size:
+            photo = _PILImageTk.PhotoImage(
+                source.resize(size, _PILImage.Resampling.LANCZOS), master=cv)
+            cv._tl_art_photo = (size, photo)
+        cv.create_image(x0, y0, image=cv._tl_art_photo[1], anchor="nw", tags="_tl_map")
+        return True
+    except (OSError, ValueError, tk.TclError):
+        return False
+
+
 @_register("tielu")
 def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     cv.create_rectangle(0, 0, w, h, fill="#111b2b", outline="")
@@ -5485,6 +5509,9 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                       "#ffd75e" if u == st.get("winner_uid") else "#dfe6ef", _FONT_B)
         return
     order = [int(k) for k in cities] or list(range(st.get("cities_count", 8)))
+    map_box = (12, map_top, w - 12, max(map_top + 50, h - 122))
+    cv.create_rectangle(*map_box, fill="#e6dab9", outline="#aa9168", width=1)
+    _tl_map_art(cv, *map_box)
     cx, cy = w / 2, map_top + (h - 132 - map_top) / 2
     Rx = (w - 40) / 3.2
     Ry = max(30, (h - 172 - map_top) / 2)
@@ -5493,7 +5520,17 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     for i, cid in enumerate(order):
         ang = i / n * 2 * math.pi - math.pi / 2
         pos[cid] = (cx + Rx * math.cos(ang), cy + Ry * math.sin(ang))
+    # Scenic landmarks are illustrative; these real nodes remain authoritative.
+    landmarks = {0: (.16, .23), 1: (.42, .19), 2: (.72, .20), 3: (.88, .43),
+                 4: (.77, .76), 5: (.46, .76), 6: (.18, .75), 7: (.10, .49)}
+    for cid in order:
+        if cid in landmarks:
+            fx, fy = landmarks[cid]
+            pos[cid] = (map_box[0] + fx * (map_box[2] - map_box[0]),
+                        map_box[1] + fy * (map_box[3] - map_box[1]))
     routes = st.get("routes") or []
+    labels = []
+    occupied = [(px - 25, py - 10, px + 25, py + 33) for px, py in pos.values()]
     for rt in routes:
         if (rt.get("a") not in pos) or (rt.get("b") not in pos):
             continue
@@ -5503,28 +5540,48 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         color = rt.get("color")
         length = int(rt.get("length") or 0)
         can_pay = bool(color) and int(hand.get(color, 0)) >= length
+        cv.create_line(x0, y0, x1, y1, fill="#fff4d8", width=9)
         if claimed:
             col = _pcolor(claimed, players)
             cv.create_line(x0, y0, x1, y1, fill=col, width=6)
+            cv.create_line(x0, y0, x1, y1, fill="#fff4d8", width=1, dash=(2, 8))
         else:
             base = ccmap.get(color, "#b9c6d8")
-            # 买得起：亮色且线宽 +1；买不起：降饱和虚线
-            col = _shade(base, 0.2) if can_pay else _shade(base, -0.45)
-            width = 4 if can_pay else 2
+            # Affordable routes are solid; dashed routes still show their card color.
+            col = _shade(base, -0.12)
+            width = 5 if can_pay else 3
             kw = {"fill": col, "width": width}
             if not can_pay:
                 kw["dash"] = (4, 4)
             cv.create_line(x0, y0, x1, y1, **kw)
             ui["tl_routes"].append((x0, y0, x1, y1, rt.get("a"), rt.get("b"),
                                     color, length, can_pay))
-        mx, my = (x0 + x1) / 2, (y0 + y1) / 2
-        _text(cv, mx, my - 8, str(rt.get("length", "")), "#fff",
-              (_FONT_F[0], 8))
+        # Slide cost signs along their own segment to keep small boards readable.
+        choices = []
+        for t in (.38, .62, .5, .26, .74, .18, .82, .44, .56):
+            mx, my = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
+            box = (mx - 15, my - 10, mx + 15, my + 10)
+            overlap = sum(max(0, min(box[2], b[2]) - max(box[0], b[0]))
+                          * max(0, min(box[3], b[3]) - max(box[1], b[1])) for b in occupied)
+            choices.append((overlap, mx, my, box))
+            if overlap == 0:
+                break
+        _, mx, my, box = min(choices, key=lambda item: item[0])
+        occupied.append(box)
+        labels.append((mx, my,
+                       str(length) + (st.get("colors") or {}).get(color, ""),
+                       "#263c40" if claimed else _shade(ccmap.get(color, "#66706b"), -.35)))
+    for mx, my, label, col in labels:
+        cv.create_rectangle(mx - 13, my - 8, mx + 13, my + 8,
+                            fill="#fff5dc", outline=col, width=1)
+        _text(cv, mx, my, label, col, (_FONT_F[0], 8, "bold"))
     for cid, (px, py) in pos.items():
-        cv.create_oval(px - 15, py - 15, px + 15, py + 15,
-                       fill="#33415a", outline="#fff", width=2)
+        cv.create_oval(px - 8, py - 8, px + 8, py + 8,
+                       fill="#263c40", outline="#fff5dc", width=2)
         _text(cv, px, py, str(cid), "#fff", (_FONT_F[0], 9))
-        _text(cv, px, py + 24, city(cid), "#dfe6ef",
+        cv.create_rectangle(px - 24, py + 11, px + 24, py + 31,
+                            fill="#fff5dc", outline="#796746", width=1)
+        _text(cv, px, py + 21, city(cid), "#263c40",
               (_FONT_F[0], 9))
     _text(cv, w / 2, h - 102,
           "点线路认领（需对应颜色车票卡 N 张，N = 线路长度）", _MUTED,

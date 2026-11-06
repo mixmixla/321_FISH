@@ -61,7 +61,7 @@ _BG_ASSET_KEYS = ("azulejo",
                   "azul_wall_bg", "azul_board", "azul_plate_center", "azul_track_ring", "azul_chip",
                   "azul_marker_r", "azul_marker_w", "azul_marker_b", "azul_marker_y", "azul_marker_k",
                   "gem_o", "gem_d", "gem_r", "gem_e", "gem_s", "gem_g",
-                  "card_frame", "panel")
+                  "card_frame", "panel", "tielu_travel")
 
 
 def _bg_assets_all():
@@ -73,6 +73,13 @@ def _bg_assets_all():
         from boardgames.registry import package_assets
         out.update(package_assets() or {})
     except Exception:
+        pass
+    # Railway-specific original art: one compact bitmap shared with Tk.
+    try:
+        from pathlib import Path
+        art = Path(__file__).resolve().parent / "assets/boardgame/tielu_travel.jpg"
+        out["tielu_travel"] = "data:image/jpeg;base64," + base64.b64encode(art.read_bytes()).decode("ascii")
+    except OSError:
         pass
     return out
 
@@ -555,6 +562,8 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
 body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.90),rgba(255,255,255,.90)),var(--azulejo);background-size:auto,256px 256px;background-repeat:no-repeat,repeat;background-position:center,top left}
 #ghead{display:flex;align-items:center;gap:8px;font-weight:700;font-size:var(--body-font,14px);color:var(--txt)}
 #gmain{overflow:auto;max-height:50vh}
+/* Railway map and its controls share the available height, including phones. */
+#gmain:has(.tl-map){max-height:calc(90vh - 180px)}
 #gpriv{background:var(--side);border:1px dashed var(--line);border-radius:var(--r1);padding:8px 12px;font-size:var(--secondary-font,12px);color:var(--txt)}
 #glog{background:var(--side);border:1px solid var(--line);border-radius:var(--r1);padding:7px 12px;font-size:var(--secondary-font,12px);max-height:15vh;overflow:auto;color:var(--dim)}
 .gbtn{cursor:pointer;border:1px solid var(--line);background:var(--side);color:var(--txt);border-radius:var(--r1);padding:5px 14px;font-size:var(--secondary-font,12px);font-weight:600;transition:background .15s,border-color .15s}
@@ -5096,34 +5105,54 @@ const GRENDER={
     const n=ids.length||1,cx=170,cy=130,Rx=130,Ry=95,pos={};
     ids.forEach((id,i)=>{const an=i/n*2*Math.PI-Math.PI/2;
       pos[id]=[cx+Rx*Math.cos(an),cy+Ry*Math.sin(an)];});
+    const landmarks={0:[.16,.23],1:[.42,.19],2:[.72,.20],3:[.88,.43],
+      4:[.77,.76],5:[.46,.76],6:[.18,.75],7:[.10,.49]};
+    ids.forEach(id=>{if(landmarks[id])pos[id]=[340*landmarks[id][0],260*landmarks[id][1]];});
     const pv=(state.gpriv&&state.gpriv.hand)||{};
     const myTurn=s.turn_uid!=null&&s.turn_uid===state.uid;
     const P2=(v)=>Math.round(v*10)/10;
-    let svg="<svg viewBox='0 0 340 260' style='width:100%;max-width:460px;display:block;margin:4px auto;background:#111b2b;border-radius:10px'>";
+    let svg="<svg class='tl-map' role='img' aria-label='铁路旅行地图，点击可支付的线路认领' viewBox='0 0 340 260' style='width:min(100%,max(290px,calc(117.69vh - 562px)));max-width:600px;display:block;margin:4px auto;background:#e6dab9;border-radius:10px;border:1px solid #aa9168'>";
+    if(BG.tielu_travel)svg+="<image href='"+BG.tielu_travel+"' width='340' height='260' preserveAspectRatio='none' pointer-events='none'/>";
+    let routeLabels="",routeHits="";
+    const occupied=ids.map(id=>{const p=pos[id];return [p[0]-23,p[1]-9,p[0]+23,p[1]+30];});
     (s.routes||[]).forEach(rt=>{
       const A=pos[rt.a],B=pos[rt.b];if(!A||!B)return;
-      const claimed=!!rt.claimed,col=claimed?"#666":(P_COL[rt.color]||"#999");
+      const claimed=!!rt.claimed;
+      const ownerColors=["#e0535a","#4a7de0","#37a25f","#e0a13c","#9a6fd0","#26c6b0"];
+      const col=claimed?ownerColors[Math.max(0,(s.players||[]).indexOf(rt.claimed))%ownerColors.length]:(P_COL[rt.color]||"#66706b");
       const cnm=CN[rt.color]||"";
       const canPay=!claimed&&myTurn&&(pv[rt.color]||0)>=rt.length;
       const ln="x1='"+P2(A[0])+"' y1='"+P2(A[1])+"' x2='"+P2(B[0])+"' y2='"+P2(B[1])+"'";
-      svg+="<line "+ln+" stroke='"+col+"' stroke-width='"+(claimed?6:4)+"' stroke-linecap='round'"
-        +(claimed?"":(canPay?"":" style='opacity:.35'"))+"/>";
-      if(!claimed)svg+="<line "+ln
-        +(canPay?" data-tla='"+rt.a+"' data-tlb='"+rt.b+"' style='cursor:pointer'":"")
-        +" stroke='transparent' stroke-width='16'/>";
-      svg+="<text x='"+P2((A[0]+B[0])/2)+"' y='"+P2((A[1]+B[1])/2-3)
-        +"' fill='#fff' font-size='9' text-anchor='middle'>"+rt.length+" "+cnm+"</text>";
+      svg+="<line "+ln+" stroke='#fff4d8' stroke-width='8' stroke-linecap='round'"
+        +(claimed||canPay?"":" style='opacity:.35'")+"/>"
+        +"<line "+ln+" stroke='"+col+"' stroke-width='"+(claimed?5:3.5)+"' stroke-linecap='round'"
+        +(claimed?"":(canPay?"":" stroke-dasharray='4 3'"))+"/>";
+      if(claimed)svg+="<line "+ln+" stroke='#fff4d8' stroke-width='1' stroke-dasharray='2 7'/>";
+      if(canPay)routeHits+="<line "+ln+" data-tla='"+rt.a+"' data-tlb='"+rt.b+"' style='cursor:pointer'"
+        +" stroke='transparent' stroke-width='16'><title>"+esc(s.cities[rt.a])+" → "+esc(s.cities[rt.b])+" · "+cnm+rt.length+"张</title></line>";
+      const choices=[];
+      for(const t of [.38,.62,.5,.26,.74,.18,.82,.44,.56]){
+        const x=A[0]+(B[0]-A[0])*t,y=A[1]+(B[1]-A[1])*t,b=[x-14,y-9,x+14,y+9];
+        const overlap=occupied.reduce((sum,r)=>sum+Math.max(0,Math.min(b[2],r[2])-Math.max(b[0],r[0]))
+          *Math.max(0,Math.min(b[3],r[3])-Math.max(b[1],r[1])),0);
+        choices.push({overlap,x,y,b});if(!overlap)break;
+      }
+      choices.sort((a,b)=>a.overlap-b.overlap);const best=choices[0],mx=best.x,my=best.y;occupied.push(best.b);
+      routeLabels+="<g pointer-events='none'><rect x='"+P2(mx-12)+"' y='"+P2(my-7)+"' width='24' height='14' rx='3' fill='#fff5dc' stroke='"+col+"'/>"
+        +"<text x='"+P2(mx)+"' y='"+P2(my+3.2)+"' fill='#263c40' font-size='9' font-weight='bold' text-anchor='middle'>"+rt.length+" "+cnm+"</text></g>";
     });
+    svg+=routeLabels+routeHits;
     ids.forEach(id=>{const P=pos[id];
-      svg+="<circle cx='"+P2(P[0])+"' cy='"+P2(P[1])+"' r='15' fill='#33415a' stroke='#fff' stroke-width='2'/>"
+      svg+="<g pointer-events='none'><circle cx='"+P2(P[0])+"' cy='"+P2(P[1])+"' r='7' fill='#263c40' stroke='#fff5dc' stroke-width='2'/>"
         +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+3)+"' fill='#fff' font-size='9' text-anchor='middle'>"+id+"</text>"
-        +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+26)+"' fill='#dfe6ef' font-size='9' text-anchor='middle'>"
-        +esc(s.cities[id]||"")+"</text>";});
+        +"<rect x='"+P2(P[0]-21)+"' y='"+P2(P[1]+10)+"' width='42' height='18' rx='3' fill='#fff5dc' stroke='#796746'/>"
+        +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+23)+"' fill='#263c40' font-size='11' font-weight='bold' text-anchor='middle'>"
+        +esc(s.cities[id]||"")+"</text></g>";});
     svg+="</svg>";
     const d=document.createElement("div");
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>"+(s.final_round?"最后一轮 · ":"")+"回合 → "+esc(gnick(s.turn_uid))
       +"　剩线路 "+s.route_left+"　手牌×"+(s.hand_count[state.uid]||0)+"　"+scoreHTML(s.score)+"</div>"
-      +"<div class='gsec'>线路图（点线路认领：需对应颜色车票卡，长度即张数）</div>"+svg;
+      +"<div class='gsec'>旅行线路 · 实线可认领，虚线需补票卡，带白点为已认领</div>"+svg;
     d.querySelectorAll("line[data-tla]").forEach(el=>{
       el.onclick=()=>gameAPI("action",{room_id:state.groom,
         action:{op:"claim",a:+el.getAttribute("data-tla"),b:+el.getAttribute("data-tlb")}});});

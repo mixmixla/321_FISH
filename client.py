@@ -11719,7 +11719,7 @@ _GAME_ACTIONS = {
     "chess": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
     "xiangqi": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
     "junqi": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
-    "dou": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
+    "dou": [],  # 兽娘棋格直接选择和落子；保留通用对局菜单/键盘。
     "shogi": [
         ("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）"),
         ("打入", {"op": "drop", "key": None, "kind": "droptxy"}, "输入 子类型编号 x y"),

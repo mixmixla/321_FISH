@@ -32,6 +32,7 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 | 桌面棋盘提交 | AI_ACCEPTED · 旧画布必须匹配Core当前房间、轮次、UID、公私帧和成员身份；花砖验明的取放连续动作有独立校验。 |
 | 五子棋 | AI_ACCEPTED · 双人木纹棋盘直接点交叉点，黑白棋、末手与五连胜线可辨。 |
 | 五子棋陪练 | AI_ACCEPTED · 陪练直接落黑子、电脑即时应白，封面、棋盘和棋子与真人版共享。 |
+| 斗兽棋 | AI_ACCEPTED · 八种兽娘与真实等级、阵营和可走位置对应，采用用户选定的双河与陷阱规则。 |
 
 
 

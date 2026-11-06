@@ -99,18 +99,18 @@ def test_junqi_needs_adjacent():
 # ================= 斗兽棋 =================
 def test_dou_setup():
     g = _g("dou", [1, 2])
-    assert g.board[(0, 0)] == (1, LION)      # 玩家1 狮
-    assert g.board[(6, 8)] == (0, TIGER)     # 玩家0 虎
+    assert g.board[(0, 0)] == (0, LION)      # 玩家1 狮
+    assert g.board[(6, 8)] == (1, LION)     # 玩家0 虎
 
 
 def test_dou_lion_jump_water():
     g = _g("dou", [1, 2])
     g.board = {}
-    # 河：x=1..5, y=3,4,5；player0 狮 (x3,y2) 竖跳过河吃 player1 狼 (x3,y6)
-    g.board[(3, 2)] = (0, LION)
-    g.board[(3, 6)] = (1, 4)
-    g.act(1, {"fx": 3, "fy": 2, "tx": 3, "ty": 6})
-    assert (3, 6) in g.board and g.board[(3, 6)][0] == 0
+    # 左河 x=1,2；player0 狮从 B3 纵跳至 B7 吃狼
+    g.board[(1, 2)] = (0, LION)
+    g.board[(1, 6)] = (1, 4)
+    g.act(1, {"fx": 1, "fy": 2, "tx": 1, "ty": 6})
+    assert (1, 6) in g.board and g.board[(1, 6)][0] == 0
 
 
 def test_dou_mouse_eats_elephant():

@@ -203,7 +203,7 @@ def test_junqi_terminal_returns_empty():
 def test_dou_initial_moves_are_accepted():
     g = DouGame([1, 2])
     moves = g.legal_moves(1)
-    assert len(moves) == 11
+    assert len(moves) == 24  # 双河与围绕己营的三排标准阵位。
     assert all(g.board[tuple(mv["from"])][0] == 0 for mv in moves)
     assert g.legal_moves(2) == []
     for mv in moves:

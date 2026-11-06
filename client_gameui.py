@@ -1662,6 +1662,11 @@ def _click_move(ui, x, y):
     ui["repaint"]()
 
 
+def _click_dou(ui, x, y):
+    from boardgames.chess_dou.desktop import click
+    click(ui, x, y)
+
+
 def _click_go(ui, x, y):
     """围棋：单击交叉点直接落子（GoGame.act 期望 {"x","y"}，无需两段式选子）。"""
     st = ui.get("state") or {}
@@ -2002,7 +2007,7 @@ _CLICKS = {
     "connect4": _click_col, "kalah": _click_kalah,
     "uno": _click_uno, "coc": _click_coc_deck,
     "halma": _click_move, "checkers": _click_move,
-    "junqi": _click_move, "dou": _click_move,
+    "junqi": _click_move, "dou": _click_dou,
     "shogi": _click_shogi, "ludo": _click_ludo,
     "rummikub": _click_rummikub, "balatro": _click_balatro,
     "balatro_solo": _click_balatro_solo,   # 单人版：商店/消耗品 + select/unselect
@@ -3664,63 +3669,8 @@ def _p_junqi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("dou")
 def _p_dou(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    rows = st.get("rows") or 9
-    cols = st.get("cols") or 7
-    water = st.get("water") or []
-
-    def pt(cv, y, x, code, x0, y0, cell):
-        inw = water and y < len(water) and x < len(water[y]) and water[y][x]
-        if inw:
-            cv.create_rectangle(x0, y0, x0 + cell, y0 + cell,
-                                fill="#3f8fe0", outline="#2f6bc0", width=2)
-        cx, cy = x0 + cell / 2, y0 + cell / 2
-        if not code:
-            return
-        if code >= 10:
-            a, side = code - 10, 1
-        else:
-            a, side = code, 0
-        # 营格标红底
-        camp = (x, y) in ((3, 0), (3, 8))
-        if camp:
-            _disc(cv, cx, cy, cell * 0.44, "#a02f2f", outline="#7a1f1f")
-        else:
-            _disc(cv, cx, cy, cell * 0.42, "#f6f4ee", outline=_PANEL_BD)
-        cn = _DOU_CN.get(a, "")
-        _dou_beast(cv, cx, cy - cell * 0.06, cell, a,
-                   ink="#7a2020" if camp else "#333333")
-        cv.create_text(cx, cy + cell * 0.30, text=cn,
-                       fill="#7a2020" if camp else "#333",
-                       font=(_FONT_F[0], max(8, int(cell * 0.16))),
-                       anchor="center")
-
-    _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
-                "dou", rows, cols, "🐭 斗兽棋", pt)
-    # ---- 最近一步金色光晕标记（服务端 last_move 目标格）----
-    now = time.monotonic()
-    lastpx = None
-    last = st.get("last_move")
-    if last and len(last) == 2 and last[1]:
-        cell = ui.get("cell") or 0
-        try:
-            lx, ly = int(last[1][0]), int(last[1][1])
-        except (TypeError, ValueError, IndexError):
-            lx = ly = -1
-        if 0 <= lx < cols and 0 <= ly < rows and cell:
-            lastpx = (ui["ox"] + lx * cell + cell / 2, ui["oy"] + ly * cell + cell / 2)
-    _g_draw_last(cv, ui, now, lastpx, ui.get("cell") or 0)
-    # ---- 结果反馈：吃子/兑子/获胜徽标（服务端 last_event）----
-    evpx = evkind = None
-    ev = st.get("last_event")
-    cell = ui.get("cell") or 0
-    if ev and cell:
-        ex, ey = int(ev.get("x", -1)), int(ev.get("y", -1))
-        if 0 <= ex < cols and 0 <= ey < rows:
-            evpx = (ui["ox"] + ex * cell + cell / 2,
-                    ui["oy"] + ey * cell + cell / 2)
-            evkind = ev.get("kind")
-    _g_draw_event(cv, ui, now, evpx, evkind, cell)
-    _anim_need(ui, repaint, gap=0.04, cap=180)
+    from boardgames.chess_dou.desktop import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 @_register("shogi")

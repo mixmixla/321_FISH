@@ -11699,11 +11699,7 @@ _GAME_ACTIONS = {
     "tielu": [
         # Railway actions live on the route, physical decks and table controls.
     ],
-    "yahtzee": [
-        ("🎲 掷骰", {"fixed": {"op": "roll"}}, "掷 5 骰（可再重掷 2 次）"),
-        ("🔁 重掷", {"op": "reroll", "key": "keep", "kind": "intlist"}, "输入要保留的骰位 0~4（逗号分隔）"),
-        ("📝 记分", {"op": "score", "key": "cat", "kind": "text"}, "输入分类键，如 1/3/three/house/small/large/yahtzee/chance"),
-    ],
+    "yahtzee": [],  # Dice tray, cup and writable scorebook.
     # ---- CC-03 桌面交互补齐：5 款仅点击棋类补按钮 ----
     "chess": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
     "xiangqi": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
@@ -11745,6 +11741,7 @@ def _actions_for(game: str, priv: dict | None) -> list:
 _GAME_HINTS = {
     "blokus": "点右侧实际拼块，换向后点棋格放置；金边预览可落，红边表示受阻。",
     "ludo": "点棋盘中央骰子，再点机棚或轨道飞机；R掷骰、1–4选机。",
+    "yahtzee": "点骰盅掷骰，点骰面保留；点自己的空白记分格写入预览分数",
     "halloween": "点牌堆翻牌，点桌铃收牌，点箭头结束回合；F / B / P 快捷键",
     "betrayal": "点自己所在房间的方向门移动；发现簿回看揭牌，背包阅读与使用道具。全图只作导航",
     "gemcity": "先选市场牌，再点「买入」或「保留」；在「藏册」点卡可放大赏图",
@@ -13222,7 +13219,7 @@ class GameWindow:
     def _fmt_state(self, st: dict) -> str:
         """公开快照 → 可读文本（按游戏定制 + 兜底 key-value）"""
         game = st.get("game", "")
-        if game == "halloween":
+        if game in ("halloween", "yahtzee"):
             return ""  # Public fruit cards and score seats are on the table.
         lines = []
         if st.get("status") == "await_secret":

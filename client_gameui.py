@@ -3866,156 +3866,16 @@ def _yz_can_score(st, cat, uid):
 
 @_register("yahtzee")
 def _p_yahtzee(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["yahtzee"][1]
-    title = "🎲 快艇骰子"
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 总分最高"
-    elif st.get("turn_uid"):
-        title += f"　轮到 {nick(st['turn_uid'])} · 第 {st.get('round',1)} 轮"
-    _turn_banner(cv, w, 46, title, accent)
-    # 骰面 5 枚（统一矢量骰面 + 掷骰/重掷滚动动画）
-    dice = st.get("dice") or [None] * 5
-    # 点击热区每次重绘重建；新一次掷骰/重掷（骰面+剩余次数签名变化）清空保留位
-    ui["yz_dice"] = []
-    ui["yz_cats"] = []
-    ui["yz_reroll"] = None
-    sig = (tuple(dice), st.get("rolls_left"))
-    if ui.get("yz_sig") != sig:
-        ui["yz_keep"] = set()
-        ui["yz_sig"] = sig
-    keep = {i for i in (ui.get("yz_keep") or ()) if 0 <= i < len(dice)}
-    ui["yz_keep"] = keep
-    can_pick = bool(st.get("rolled") and st.get("rolls_left")
-                    and not st.get("category"))
-    gap = w * 0.06
-    die_s = min(44, int((w - gap * 6) / 5 / 2))
-    x0 = (w - (die_s * 2 * 5 + gap * 4)) / 2
-    y0 = 90
-    now = time.monotonic()
-    rolling, rk = _die_roll_fx(ui, now, tuple(dice), repaint)
-    _text(cv, w / 2, y0 - 30, "本回合骰面" + (f"（还可重掷 {st.get('rolls_left',0)} 次）"
-          if st.get("rolls_left") else ""), _MUTED, _FONT_F)
-    for i, d in enumerate(dice):
-        cx = x0 + i * (die_s * 2 + gap) + die_s
-        jit = -math.sin(rk * math.pi) * die_s * 0.30 if rolling else 0.0
-        cy = y0 + die_s + jit - (6 if i in keep else 0)
-        if d is None:
-            _die_face(cv, cx, cy, die_s, None, accent, blank=True)
-        elif rolling:
-            _die_face(cv, cx, cy, die_s, _die_scramble(now, i, 6), accent)
-        else:
-            _die_face(cv, cx, cy, die_s, d, accent, fresh=True)
-        if i in keep:
-            cv.create_polygon(_rrect_pts(cx - die_s - 3, cy - die_s - 3,
-                                         cx + die_s + 3, cy + die_s + 3,
-                                         die_s * 0.34),
-                              fill="", outline="#e0a13c", width=2,
-                              smooth=True, splinesteps=24)
-            _text(cv, cx, cy - die_s - 9, "保留", "#b8860b",
-                  (_FONT_F[0], 8))
-        ui["yz_dice"].append((cx - die_s, cy - die_s, cx + die_s,
-                              cy + die_s, i))
-    # 重掷按钮（仅已掷骰且还有次数、本回合未记分时出现）
-    if can_pick:
-        by0 = y0 + die_s * 2 + 2
-        by1 = by0 + 22
-        bw = 150
-        bx0, bx1 = (w - bw) / 2, (w + bw) / 2
-        _rrect(cv, bx0, by0, bx1, by1, 9, "#fff3dc", "#e0a13c", 1)
-        _text(cv, w / 2, (by0 + by1) / 2, "🔁 重掷未保留", "#8a5a12",
-              (_FONT_F[0], 10))
-        ui["yz_reroll"] = (bx0, by0, bx1, by1)
-    # 分类得分矩阵
-    cats = st.get("cats") or {}
-    players = st.get("players") or []
-    order = ["1", "2", "3", "4", "5", "6", "three", "four", "house",
-             "small", "large", "yahtzee", "chance"]
-    scores = st.get("scores") or {}
-    totals = st.get("totals") or {}
-    my_row = players.index(me) if me in players else 0
-    col_h = int((h - y0 - die_s * 2 - 70) / (len(order) + 2))
-    col_h = max(15, col_h)
-    tpy = y0 + die_s * 2 + 30
-    col_w = (w - 30) / max(len(players), 1)
-    # 表头
-    _text(cv, 12, tpy + col_h / 2, "分类", _MUTED, (_FONT_F[0], 9), anchor="w")
-    for i, u in enumerate(players):
-        hx = 60 + i * col_w + col_w / 2
-        who = "我" if u == me else nick(u)
-        _text(cv, hx, tpy + col_h / 2, who, "#333", (_FONT_F[0], 9))
-    _text(cv, 12, tpy + col_h / 2, "分类", _MUTED, (_FONT_F[0], 9), anchor="w")
-    for ri, cat in enumerate(order):
-        yy = tpy + (ri + 1) * col_h
-        _text(cv, 14, yy + col_h / 2, cats.get(cat, cat), "#444",
-              (_FONT_F[0], 9), anchor="w")
-        for i, u in enumerate(players):
-            v = (scores.get(str(u)) or {}).get(cat)
-            hx = 60 + i * col_w + col_w / 2
-            if u == me:
-                cx0 = hx - col_w / 2 + 2
-                cx1 = hx + col_w / 2 - 2
-                if _yz_can_score(st, cat, me):
-                    _rrect(cv, cx0, yy + 1, cx1, yy + col_h - 1, 5,
-                           "#e8f5e9", "#67a86b", 1)
-                ui["yz_cats"].append((cx0, yy + 1, cx1, yy + col_h - 1, cat))
-            fg = "#333" if v is not None else _MUTED
-            _text(cv, hx, yy + col_h / 2, "-" if v is None else str(v),
-                  fg, (_FONT_F[0], 9))
-    # 合计行
-    yy = tpy + (len(order) + 1) * col_h
-    cv.create_line(12, yy - 3, w - 12, yy - 3, fill=_PANEL_BD)
-    _text(cv, 14, yy + col_h / 2, "合计", "#333", _FONT_B, anchor="w")
-    for i, u in enumerate(players):
-        hx = 60 + i * col_w + col_w / 2
-        _text(cv, hx, yy + col_h / 2, str(totals.get(str(u), 0)), accent,
-              _FONT_B)
+    from boardgames.arcade_yahtzee import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 def _click_yahtzee(ui, x, y):
-    """快艇骰子点击：重掷未保留 / 点骰子切换保留位 / 点我的分类格记分。"""
-    st = ui.get("state") or {}
-    room = ui.get("room") or {}
-    me = ui.get("me")
-    if (st.get("status") or room.get("status")) != "playing":
-        return
-    if me is None or me not in (st.get("players") or []):
-        return
-    if st.get("turn_uid") != me or st.get("winner_uid") is not None:
-        return
-    submit = ui.get("submit")
-    if submit is None:
-        return
-    repaint = ui.get("repaint") or (lambda: None)
-    can_pick = bool(st.get("rolled") and st.get("rolls_left")
-                    and not st.get("category"))
-
-    def _hit(rect):
-        return bool(rect) and rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]
-
-    reroll = ui.get("yz_reroll")
-    if can_pick and _hit(reroll):
-        submit({"op": "reroll", "keep": sorted(ui.get("yz_keep") or ())})
-        repaint()
-        return
-    if can_pick:
-        for (x0, y0, x1, y1, idx) in ui.get("yz_dice") or ():
-            if x0 <= x <= x1 and y0 <= y <= y1:
-                keep = set(ui.get("yz_keep") or ())
-                if idx in keep:
-                    keep.discard(idx)
-                else:
-                    keep.add(idx)
-                ui["yz_keep"] = keep
-                repaint()
-                return
-    for (x0, y0, x1, y1, cat) in ui.get("yz_cats") or ():
-        if x0 <= x <= x1 and y0 <= y <= y1 and _yz_can_score(st, cat, me):
-            submit({"op": "score", "cat": cat})
-            repaint()
-            return
+    from boardgames.arcade_yahtzee import click
+    click(ui, x, y)
 
 
-_CLICKS["yahtzee"] = _click_yahtzee       # 快艇骰子：重掷/保留/记分点击
+_CLICKS["yahtzee"] = _click_yahtzee
 
 
 @_register("nimmt")

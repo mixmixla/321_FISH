@@ -146,6 +146,9 @@ def _SERVED_PAGE():
     from boardgames.arcade_halloween import WEB_JS as orchard_js, WEB_CSS as orchard_css
     page = page.replace('/*@@ARCADE_ORCHARD_JS@@*/', orchard_js)
     page = page.replace('@@ARCADE_ORCHARD_CSS@@', orchard_css)
+    from boardgames.arcade_yahtzee import WEB_JS as yacht_js, WEB_CSS as yacht_css
+    page = page.replace('/*@@ARCADE_YACHT_JS@@*/', yacht_js)
+    page = page.replace('@@ARCADE_YACHT_CSS@@', yacht_css)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -706,6 +709,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 @@CARD_TABLE_CSS@@
 @@RAIL_CSS@@
 @@ARCADE_ORCHARD_CSS@@
+@@ARCADE_YACHT_CSS@@
 @@MANOR_CSS@@
 </style>
 </head>
@@ -4361,6 +4365,7 @@ function gLegalTos(fx,fy){
 /*@@GOMOKU_ART@@*/
 /*@@CARD_TABLE_JS@@*/
 /*@@ARCADE_ORCHARD_JS@@*/
+/*@@ARCADE_YACHT_JS@@*/
 const MANOR_ATLASES=JSON.parse("@@MANOR_ATLASES@@");
 const RAIL_TICKET_COUNT=@@RAIL_TICKET_COUNT@@;
 /*@@RAIL_JS@@*/
@@ -5315,73 +5320,7 @@ const GRENDER={
     be.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"extend",row:row.value,tiles:ids.value.trim().split(/\\s+/).map(Number)}});
     bar.append(ids,bm,row,be,gBtn("✅ 结束回合",{op:"done"}));box.appendChild(bar);
   },
-  yahtzee(box,s){
-    box.appendChild(gTitle("yahtzee","快艇骰子 · 记分"));
-    const me=state.uid,mine=(s.scores||{})[me]||{};
-    const sig=(s.dice||[]).join(",")+"|"+(s.rolls_left||0);
-    if(state.yzsig!==sig){state.yzsig=sig;state.yzkeep=[];}
-    if(!Array.isArray(state.yzkeep))state.yzkeep=[];
-    const myturn=s.turn_uid===me&&s.winner_uid==null;
-    const canPick=!!(myturn&&s.rolled&&s.rolls_left>0&&!s.category);
-    const canScore=!!(myturn&&s.rolled&&!s.category);
-    const d=document.createElement("div");
-    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>第 "+s.round+" 动 · 回合 → "+esc(gnick(s.turn_uid))
-      +"（可再重掷 "+s.rolls_left+" 次）　"+Object.entries(s.totals||{}).map(([u,v])=>esc(gnick(+u))+"="+v).join("　")+"</div>";
-    const row=document.createElement("div");
-    row.style.cssText="display:flex;gap:8px;justify-content:center;align-items:flex-end;margin:10px 0 4px;min-height:58px";
-    (s.dice||[]).forEach((v,i)=>{
-      const kept=state.yzkeep.indexOf(i)>=0;
-      const db=document.createElement("button");
-      db.className="gbtn"+(kept?" go":"");
-      db.textContent=String(v);
-      db.style.cssText="min-width:46px;height:50px;font-size:22px;font-weight:800;border-radius:12px;padding:0 8px;"
-        +(kept?"transform:translateY(-6px);border:2px solid #e0a13c;box-shadow:0 0 0 3px rgba(224,161,60,.22);":"");
-      db.title=kept?"点击取消保留":"点击保留这枚骰子";
-      if(canPick)db.onclick=()=>{
-        const k=state.yzkeep.slice(),p=k.indexOf(i);
-        if(p>=0)k.splice(p,1);else k.push(i);
-        state.yzkeep=k;renderGamePanel();
-      };else db.disabled=true;
-      row.appendChild(db);
-    });
-    d.appendChild(row);
-    if(canPick){
-      const rw=document.createElement("div");rw.style.cssText="display:flex;justify-content:center;margin:2px 0 6px";
-      const rb=document.createElement("button");rb.className="gbtn go";rb.textContent="🔁 重掷未保留";
-      rb.onclick=()=>gameAPI("action",{room_id:state.groom,
-        action:{op:"reroll",keep:state.yzkeep.slice().sort((a,b)=>a-b)}});
-      rw.appendChild(rb);d.appendChild(rw);
-    }
-    const hd=document.createElement("div");hd.className="gsec";hd.textContent="记分表（点我的格子记分）";
-    d.appendChild(hd);
-    const grid=document.createElement("div");
-    grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fill,96px);gap:4px";
-    Object.entries(s.cats||{}).forEach(([k,v])=>{
-      const got=mine[k],ok=canScore&&got==null;
-      const cb=document.createElement("button");cb.className="gbtn";
-      cb.textContent=v+"："+(got==null?"-":got);
-      cb.style.cssText="font-size:11px;padding:5px 4px;"
-        +(ok?"border:1px solid #67a86b;background:rgba(103,168,107,.16);":"");
-      if(ok)cb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"score",cat:k}});
-      else cb.disabled=true;
-      grid.appendChild(cb);
-    });
-    d.appendChild(grid);
-    box.appendChild(d);
-    if(s.turn_uid!==state.uid)return;
-    const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-    bar.appendChild(gBtn("🎲 掷骰",{op:"roll"}));
-    const I=Object.assign(document.createElement("input"),{placeholder:"保留位如 0 1 2",style:"width:130px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"});
-    const br=document.createElement("button");br.className="gbtn";br.textContent="🔁 重掷其余";
-    br.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"reroll",keep:I.value.trim().split(/\\s+/).map(Number)}});
-    bar.append(I,br);box.appendChild(bar);
-    const bar2=document.createElement("div");bar2.style.cssText="display:flex;gap:6px;margin-top:6px;align-items:center";
-    const S=document.createElement("select");
-    Object.entries(s.cats||{}).forEach(([k,v])=>{const o=document.createElement("option");o.value=k;o.textContent=v;S.appendChild(o)});
-    const bs=document.createElement("button");bs.className="gbtn go";bs.textContent="📝 记分";
-    bs.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"score",cat:S.value}});
-    bar2.append(document.createTextNode("选分类 "),S,bs);box.appendChild(bar2);
-  },
+  yahtzee(box,s){YachtTable.render(box,s);},
   nimmt(box,s){
     box.appendChild(gTitle("nimmt","牛头王 · 避牛头"));
     const d=document.createElement("div");

@@ -18,28 +18,28 @@ NOBLES = [  # {cost: {color: n}, pts: 3}
 ]
 TIERS = 3
 MARKET_PER_TIER = 4
-# Each row follows the position of a painting in that tier's 4 × 5 atlas.
+# Jewel-v2: art 0–19 groups black, white, red, green, blue, four per gem.
 CARD_TITLES = {
     1: (
-        "翡翠矿坑", "红宝井巷", "蓝晶泉谷", "琥珀溪场",
-        "石榴矿灯", "海蓝峭壁", "欧泊晶穴", "黄晶日坡",
-        "紫晶幽窟", "黑曜石场", "珍珠淘湾", "碧玺山脊",
-        "孔雀石林", "黄玉沙井", "尖晶隧道", "月光石窟",
-        "橄榄石台", "珊瑚暗礁", "水晶天峰", "青金驼队",
+        "黑曜矿脉", "玛瑙原石", "黑石采场", "黑曜矿车",
+        "白钻岩隙", "晨光白钻", "溪流筛钻", "白钻吊井",
+        "红宝矿脉", "赤岩采场", "红宝矿车", "燃脉洞窟",
+        "翠玉矿脉", "翠晶采篮", "祖母绿采场", "翠石矿车",
+        "钴蓝矿井", "溪流淘蓝", "蓝岩采场", "蓝晶矿车",
     ),
     2: (
-        "翡翠切坊", "红宝火磨", "蓝晶水轮", "琥珀琢室",
-        "石榴镶工", "海蓝商舟", "欧泊灯坊", "黄晶金匠",
-        "紫晶染坊", "黑曜雕台", "珍珠绣坊", "碧玺玻坊",
-        "孔雀石厅", "黄玉驳船", "尖晶银铺", "月石镜坊",
-        "橄榄珠坊", "珊瑚香市", "水晶刻室", "青金商旅",
+        "黑曜切割台", "玛瑙雕坊", "乌石商匣", "黑晶首饰铺",
+        "白钻工坊", "白钻镶嵌台", "白钻商柜", "白钻首饰铺",
+        "红宝工坊", "红晶切磨", "赤宝商柜", "红玉首饰铺",
+        "翠玉雕刻坊", "祖母绿镶嵌", "绿宝商柜", "翠玉首饰铺",
+        "蓝宝切割坊", "蓝晶雕坊", "蓝宝商柜", "钴蓝首饰铺",
     ),
     3: (
-        "翡翠港厅", "红宝宫门", "蓝晶灯塔", "琥珀商会",
-        "石榴剧院", "海蓝船坞", "欧泊穹顶", "黄晶银行",
-        "紫晶宫苑", "黑曜铸馆", "珍珠海关", "碧玺拱廊",
-        "孔雀石庭", "黄玉香料港", "尖晶钟楼", "月石天文台",
-        "橄榄公馆", "珊瑚集市", "水晶议厅", "青金宫市",
+        "黑曜交易所", "玛瑙商会", "乌晶宫廊", "黑石大厦",
+        "白钻总商行", "晶光银行", "白钻塔楼", "白钻交易宫",
+        "红宝商贸城", "朱红大厦", "赤晶交易厅", "红宝矿业行",
+        "翡翠交易宫", "翠宝商会", "祖母绿穹顶", "绿晶贸易塔",
+        "钴蓝商行", "蓝宝港楼", "深蓝交易宫", "蓝晶商贸塔",
     ),
 }
 NOBLE_TITLES = ("翡翠侯爵", "红宝女侯", "蓝晶航长", "黄玉银行家", "紫晶工匠王")
@@ -77,15 +77,17 @@ class GemCityGame(BaseGame):
         self.winner = None
 
     def _make_card(self, tier, art, title):
-        disc = self.rng.choice(COLORS)
-        cost = {c: 0 for c in COLORS}
+        # Jewel-v2 atlas: four paintings per permanent gem, in COLORS order.
+        # This is the existing 60-card simplified game, not the classic deck.
+        group, variant = divmod(art, 4)
+        disc = COLORS[group]
         budget = tier + 1
-        while budget > 0:
-            c = self.rng.choice([x for x in COLORS if x != disc])
-            if c in cost:
-                cost[c] += 1
-                budget -= 1
-        return {"tier": tier, "art": art, "title": title,
+        patterns = ((budget, 0, 0, 0), (0, budget - 1, 1, 0),
+                    (0, 0, budget - 1, 1), (1, 0, 0, budget - 1))
+        cost = {c: 0 for c in COLORS}
+        for offset, amount in enumerate(patterns[variant], 1):
+            cost[COLORS[(group + offset) % len(COLORS)]] = amount
+        return {"tier": tier, "art": art, "art_set": "jewel-v2", "title": title,
                 "disc": disc, "pts": tier, "cost": cost}
 
     # ---------- 动作 ----------

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Azul 展示包素材生成器（22 键；在共享 artkit + geom 之上程序化原创，无外部素材）。
+"""彩釉工坊素材出包器（22 键；原创 ImageGen atlas + 既有 artkit）。
 
 产物：
   boardgames/azul/assets/*.png   —— 22 个 PNG 源文件（可提交）
@@ -14,27 +14,23 @@ import io
 import math
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageEnhance
 
 from boardgames import artkit as ak
-from boardgames import geom
 
 HERE = Path(__file__).resolve().parent
 ASSETS_DIR = HERE / "assets"
 ART_MODULE = HERE / "_art.py"
+ATLAS = ASSETS_DIR / "source" / "glaze-atlas.png"
+_PANELS = {"b": (0, 0), "r": (1, 0), "y": (2, 0), "w": (0, 1), "k": (1, 1)}
 
-# 调色（程序化原创，仅风格对标；花砖 5 色沿用引擎）
-TILE = {"r": "#D2534F", "w": "#F0F0F0", "b": "#4A7DE0", "y": "#E0B33C",
-        "k": "#3A3A3A"}
+# 五色键沿用规则引擎；辅件与缺图回退匹配生成的釉色。
+TILE = {"r": "#B9361F", "w": "#F7EACB", "b": "#17469A", "y": "#EAB325",
+        "k": "#192231"}
 _ORDER = "rwbyk"                 # 墙色循环顺序（花砖 5 色）
-_WALL_BG = "#F7FAFC"
-_WALL_BLUE = "#4A7DE0"
-_WALL_DEEP = "#2B5E8C"
-_BOARD_BG = "#F6F1E7"
-_BOARD_STRIPE = "#EFE7D6"
-_BOARD_BAND = "#3E7CB1"
-_SLOT_BG = "#E4D9C3"
-_SLOT_BD = "#CDBE9C"
+_WALL_BG = "#17343D"
+_WALL_BLUE = "#21454E"
+_WALL_DEEP = "#1C3E48"
 _PLATE_RIM = "#2E4A63"
 _PLATE_BODY = "#F7FAFC"
 _PLATE_GOLD = "#C9A227"
@@ -42,13 +38,19 @@ _RING_RIM = "#16232E"
 _RING_BODY = "#24405A"
 _RING_TICK = "#BBD3E6"
 _FLOOR_BG = "#F2F6F8"
-_FLOOR_BD = "#8FB6CE"
 _CHIP = "#F3E3B0"
 
 
 def _datauri(img):
     buf = io.BytesIO()
-    img.save(buf, "PNG", optimize=True)
+    # 游戏缩略图与低对比桌垫无需真彩噪点；保留 alpha 的索引 PNG 明显减小内嵌包。
+    if img.size == (384, 288):
+        # 独立选桌垫调色板，避免全图集/八叉树量化将浅釉压成大块色斑。
+        packed = img.convert("RGB").quantize(colors=64).convert("RGBA")
+        packed.putalpha(img.getchannel("A"))
+    else:
+        packed = img.quantize(colors=128, method=Image.Quantize.FASTOCTREE)
+    packed.save(buf, "PNG", optimize=True)
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
@@ -56,9 +58,27 @@ def _blank(w, h):
     return Image.new("RGBA", (w, h), (0, 0, 0, 0))
 
 
+def _panel(col, row):
+    """唯一生成源的六等分面板；不依赖开发机原图或 ImageGen 运行时。"""
+    with Image.open(ATLAS) as atlas:
+        if atlas.size != (384, 256):
+            raise ValueError("glaze-atlas.png must be 384×256 (3×2 panels)")
+        return atlas.crop((col * 128, row * 128, (col + 1) * 128,
+                           (row + 1) * 128)).convert("RGBA")
+
+
+def _rounded(img, radius):
+    mask = Image.new("L", img.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, img.width - 1, img.height - 1),
+                                          radius=radius, fill=255)
+    img.putalpha(mask)
+    return img
+
+
 def make_wall_bg(size=512):
-    """瓷砖墙背景：4×4 大尺度阿兹勒赫，蓝/白两色，周期 128 整除 512 ⇒ 无缝。"""
-    return ak.ornament_tile(size, _WALL_BG, _WALL_BLUE, _WALL_DEEP, cells=4)
+    """低对比深青工坊桌面，周期 128 整除 512，衬托真实彩釉砖。"""
+    pattern = ak.ornament_tile(size, _WALL_BG, _WALL_BLUE, _WALL_DEEP, cells=4)
+    return Image.blend(Image.new("RGBA", (size, size), _WALL_BG), pattern, 0.22)
 
 
 def make_plate(size=160, center=False):
@@ -74,15 +94,14 @@ def make_plate(size=160, center=False):
 
 
 def make_tile(color, size=48):
-    """立体花砖：上亮下暗的竖向渐变 + 斜边内缘。"""
-    return ak.gem(_blank(size, size), (2, 2, size - 2, size - 2), TILE[color],
-                  shape="tile")
+    """真实生成的五种粗轮廓陶瓷印花，48px 源供两端缩到 20/22px。"""
+    face = _panel(*_PANELS[color]).resize((size, size), Image.Resampling.LANCZOS)
+    return _rounded(face, max(2, size // 12))
 
 
 def make_marker(color, size=40):
-    """计分轨玩家棋子（瓷盘外形 + 该色实心）。"""
-    return ak.gem(_blank(size, size), (2, 2, size - 2, size - 2), TILE[color],
-                  shape="marker")
+    """计分棋子沿用同色印花并裁圆，颜色与轮廓双重识别。"""
+    return _rounded(make_tile(color, size), size // 2)
 
 
 def make_chip(size=64):
@@ -93,15 +112,13 @@ def make_chip(size=64):
 
 
 def make_wall_cell(color, size=48):
-    """墙位预印目标色：内凹槽 + 该色淡印八角星（alpha≈70）。"""
-    img = _blank(size, size)
-    box = (2, 2, size - 2, size - 2)
-    img = ak.recess(img, box, size * 0.16, _SLOT_BG, depth=2)
-    dr = ImageDraw.Draw(img)
-    pts = ak._star_pts(size / 2.0, size / 2.0, size * 0.26, size * 0.12, 8)
-    r, g, b, _ = ak.color(TILE[color])
-    dr.polygon(pts, fill=(r, g, b, 70))
-    return img
+    """代码绘制的真实墙格：同花纹低饱和淡印，与已上墙饱和实砖明显分层。"""
+    face = make_tile(color, size)
+    face = ImageEnhance.Color(face).enhance(0.55)
+    cell = Image.blend(Image.new("RGBA", (size, size), "#E4E5D3"), face, 0.24)
+    ImageDraw.Draw(cell).rounded_rectangle((1, 1, size - 2, size - 2),
+                                          radius=size // 12, outline="#9AAFA6", width=1)
+    return _rounded(cell, max(2, size // 12))
 
 
 def make_floor(size=48):
@@ -111,47 +128,10 @@ def make_floor(size=48):
 
 
 def make_board(w=384, h=288):
-    """玩家板：奶油底 + 细斜纹 + 左侧彩布边 + 铭牌照 + 5 条花纹凹槽
-    + 5×5 墙位（预印目标色）+ 底部 7 格地板线；用 geom 保证与落子坐标一致。"""
-    img, _dr, s = ak.canvas(w, h)
-    img = ak.linen(img, (0, 0, w, h), w * 0.05, _BOARD_BG, s=s, amount=5, seed=11)
-    dr = ImageDraw.Draw(img)
-    step = w / 32.0
-    for k in range(-1, 33):
-        dr.line((k * step * s, 0, (k * step + h) * s, h * s),
-                fill=ak.color(_BOARD_STRIPE), width=1)
-    band = w * 0.008
-    for i, c in enumerate(_ORDER):
-        dr.rectangle((i * band * s, 0, (i + 1) * band * s, h * s),
-                     fill=ak.color(TILE[c]))
-    img = ak.rrect_bevel(img, geom.nameplate(w, h), h * 0.035, "#E7DCC4",
-                         s=s, depth=2)
-    for i in range(geom.ROWS_N):
-        for j in range(i + 1):
-            x, y, cs = geom.row_slot(i, j, w, h)
-            img = ak.recess(img, (x, y, x + cs, y + cs), cs * 0.16, _SLOT_BG,
-                            s=s, depth=2)
-    for r in range(geom.WALL_N):
-        for c in range(geom.WALL_N):
-            x, y, cs = geom.wall_slot(r, c, w, h)
-            img = ak.recess(img, (x, y, x + cs, y + cs), cs * 0.16, _SLOT_BG,
-                            s=s, depth=2)
-            rr, gg, bb, _ = ak.color(TILE[_ORDER[(c - r) % 5]])
-            ImageDraw.Draw(img).polygon(
-                ak._star_pts((x + cs / 2.0) * s, (y + cs / 2.0) * s,
-                             cs * 0.26 * s, cs * 0.12 * s, 8), fill=(rr, gg, bb, 46))
-    for i in range(geom.FLOOR_N):
-        x, y, cs = geom.floor_slot(i, w, h)
-        img = ak.recess(img, (x, y, x + cs, y + cs), cs * 0.14, _FLOOR_BG,
-                        s=s, depth=2)
-    wx0, wy0, _wx1, wy1 = geom.wall_band(w, h)
-    ImageDraw.Draw(img).line((wx0 * 0.985 * s, wy0 * s, wx0 * 0.985 * s, wy1 * s),
-                             fill=ak.color(_SLOT_BD), width=max(1, int(1.4 * s)))
-    m = Image.new("L", img.size, 0)
-    ImageDraw.Draw(m).rounded_rectangle((0, 0, img.size[0] - 1, img.size[1] - 1),
-                                        radius=int(round(w * 0.05 * s)), fill=255)
-    img.putalpha(m)                       # 统一裁圆角（内部全部不透明）
-    return ak.finish(img, w, h)
+    """干净浅青釉桌垫；不烧入任何文字、铭牌、行槽、墙格或按钮。"""
+    # 避开生成面板边缘的光泽边线，真实格子/名字/分数由各端实时画出。
+    img = _panel(2, 1).crop((9, 9, 119, 119))
+    return _rounded(img.resize((w, h), Image.Resampling.LANCZOS), int(w * 0.04))
 
 
 def make_track_ring(size=512, steps=30):
@@ -202,14 +182,15 @@ def main():
     imgs = _build_images()
     lines = [
         "# -*- coding: utf-8 -*-",
-        "# Azul 展示包内嵌原创素材（由 boardgames/azul/sprites.py 程序化生成，无外部素材依赖）。",
+        "# 彩釉工坊原创 ImageGen 图集出包；源与提示见 ARTWORK.md。",
         "# 重生成：python -m boardgames.azul.sprites",
         "ASSETS = {",
     ]
     for key in sorted(imgs):
         img = imgs[key]
-        img.save(ASSETS_DIR / f"{key}.png")
-        lines.append(f"    {key!r}: {_datauri(img)!r},")
+        uri = _datauri(img)
+        (ASSETS_DIR / f"{key}.png").write_bytes(base64.b64decode(uri.split(",", 1)[1]))
+        lines.append(f"    {key!r}: {uri!r},")
     lines.append("}")
     lines.append("")
     ART_MODULE.write_text("\n".join(lines), encoding="utf-8")

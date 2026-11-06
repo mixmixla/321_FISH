@@ -92,8 +92,10 @@ azul(box,s){
       for(let c=0;c<5;c++){
         const v=wall[r+","+c];
         wallHtml+=v
-          ?"<div class='azwcell' title='"+CC[v]+"' style='"+bgImg("azul_tile_"+v)+"'></div>"
-          :"<div class='azwcell' style='"+bgImg("azul_wall_cell_"+wallColor(r,c))+"'></div>";
+          ?"<div class='azwcell azfilled' title='"+CC[v]+"' style='"+bgImg("azul_tile_"+v)+"'>"
+            +(BG["azul_tile_"+v]?"":CC[v])+"</div>"
+          :"<div class='azwcell' title='待放"+CC[wallColor(r,c)]+"' style='"+bgImg("azul_wall_cell_"+wallColor(r,c))+"'>"
+            +(BG["azul_wall_cell_"+wallColor(r,c)]?"":CC[wallColor(r,c)])+"</div>";
       }
       wallHtml+="</div>";
     }
@@ -266,7 +268,7 @@ azul(box,s){
     if(z&&(e.key==="Enter"||e.key===" ")){e.preventDefault();submit(+z.dataset.azdrop)}
     if(e.key==="Escape")cancel.click();
   });
-  const colCss={r:"#D2534F",w:"#F0F0F0",b:"#4A7DE0",y:"#E0B33C",k:"#3A3A3A"};
+  const colCss={r:"#B9361F",w:"#F7EACB",b:"#17469A",y:"#EAB325",k:"#192231"};
   const ghost=document.createElement("div");ghost.className="azghost";d.appendChild(ghost);
   let drag=null,suppressClick=false;
   const endDrag=()=>{
@@ -283,7 +285,8 @@ azul(box,s){
     if(!drag.moved&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)<7)return;
     e.preventDefault();drag.moved=true;
     move.pick={src:drag.src,col:drag.col,n:sourceCount(drag.src,drag.col)};refresh();
-    ghost.style.background=colCss[drag.col];ghost.style.display="block";
+    ghost.style.backgroundColor=colCss[drag.col];ghost.style.display="block";
+    ghost.style.backgroundImage=BG["azul_tile_"+drag.col]?"url("+BG["azul_tile_"+drag.col]+")":"";
     ghost.style.left=(e.clientX-13)+"px";ghost.style.top=(e.clientY-13)+"px";
     try{d.setPointerCapture(e.pointerId)}catch(_e){}
     const el=document.elementFromPoint(e.clientX,e.clientY),z=el&&el.closest("[data-azdrop]");
@@ -319,14 +322,14 @@ WEB_CSS = r"""
   flex-wrap:wrap;gap:4px;padding:8px;margin:3px;min-width:36px;min-height:36px;max-width:100%;box-sizing:border-box}
 .azplate-c{display:flex;border-radius:12px}
 .azpick{display:inline-flex;align-items:center;justify-content:center;gap:3px;min-width:56px;min-height:44px;
-  padding:4px;color:#172b3b;background:#edf3f7;border:1px solid #7291aa;border-radius:6px;
+  padding:4px;color:#17343d;background:#f7f0df;border:1px solid #9aafa6;border-radius:6px;
   font-size:12px;cursor:grab;touch-action:manipulation;user-select:none}
 .azpick:disabled{cursor:default;opacity:.6}
 .azpick.azchosen{outline:3px solid #ffd977;background:#fff1ba}
 .azpick img{pointer-events:none;-webkit-user-drag:none}
 .azempty{color:#cfe0ee;font-size:11px}
 .azboard{flex:1 1 250px;max-width:560px;border-radius:var(--r1);padding:6px 8px;
-  min-width:0;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+  min-width:0;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;background-color:#e9e6ce;box-shadow:0 2px 6px rgba(0,0,0,.35)}
 .azboard.me{box-shadow:0 0 0 2px #E0B33C,0 2px 8px rgba(0,0,0,.45)}
 .azbhead{font-size:11px;color:#2b3a46;font-weight:700;display:flex;gap:8px}
 .azbs{color:#8a6d1f}
@@ -340,9 +343,11 @@ WEB_CSS = r"""
 .azrowcap{width:14px;text-align:center;color:#5a6b78;font-size:10px}
 .azrowslots{display:inline-flex;width:110px;justify-content:flex-end}
 .azslot{display:inline-block;width:20px;height:20px;margin:1px;vertical-align:middle}
-.azslot-e{background:rgba(0,0,0,.06);border-radius:3px}
+.azslot-e{background:rgba(66,96,86,.10);border:1px solid #a8b9aa;box-sizing:border-box;border-radius:3px}
 .azwrow{display:flex}
-.azwcell{width:22px;height:22px;margin:1px;border-radius:3px}
+.azwcell{width:22px;height:22px;margin:1px;border-radius:3px;display:flex;align-items:center;justify-content:center;
+  color:#536a61;background-color:#dce0d1;font-size:10px}
+.azwcell.azfilled{color:#17343d;background-color:#b4cbbb;font-weight:700}
 .azringw{position:relative;width:150px;height:150px;margin:2px auto;border-radius:50%}
 .azring{position:absolute;inset:0;width:100%;height:100%}
 .azslist{font-size:11px;color:#e8f0f6;margin-top:4px}
@@ -360,7 +365,7 @@ WEB_CSS = r"""
   min-height:44px;flex-wrap:wrap;box-sizing:border-box;border-radius:4px;background:rgba(0,0,0,.10);font-size:11px;color:#5a6b78}
 .azfloor b{color:#8a6d1f}
 .azfloors{display:inline-flex;align-items:center;gap:1px}
-.azghost{position:fixed;width:26px;height:26px;border-radius:50%;pointer-events:none;
+.azghost{position:fixed;width:26px;height:26px;border-radius:4px;background-size:cover;pointer-events:none;
   border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.45);z-index:99;display:none}
 .aztip{grid-area:tip;font-size:13px;line-height:1.6;color:#f3f7fa;background:#1c3349;
   padding:8px;border-radius:6px;min-height:58px;box-sizing:border-box}

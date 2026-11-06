@@ -223,7 +223,10 @@ class LoveLoveGame(BaseGame):
     def private(self, uid):
         if uid not in self.hand:
             return None
-        return {"hand": self.hand[uid]}
+        cards = {"hand": self.hand[uid]}
+        if self.deck and self.alive and not self.game_over and self.winner is None and uid == self.cur:
+            cards["drawn"] = self.deck[-1]
+        return cards
 
     def ended(self):
         if self.winner:

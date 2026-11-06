@@ -39,8 +39,8 @@ class GemCityGame(BaseGame):
         self.market = {t: [] for t in range(1, TIERS + 1)}
         self.deck = {t: [] for t in range(1, TIERS + 1)}
         for t in range(1, TIERS + 1):
-            for _ in range(20):
-                self.deck[t].append(self._make_card(t))
+            for art in range(20):
+                self.deck[t].append(self._make_card(t, art))
             self.rng.shuffle(self.deck[t])
             for _ in range(MARKET_PER_TIER):
                 self.market[t].append(self.deck[t].pop())
@@ -51,7 +51,7 @@ class GemCityGame(BaseGame):
         self.extra = []          # 触发终局后仍需行动（按回合顺序）的玩家
         self.winner = None
 
-    def _make_card(self, tier):
+    def _make_card(self, tier, art):
         disc = self.rng.choice(COLORS)
         cost = {c: 0 for c in COLORS}
         budget = tier + 1
@@ -60,7 +60,7 @@ class GemCityGame(BaseGame):
             if c in cost:
                 cost[c] += 1
                 budget -= 1
-        return {"tier": tier, "disc": disc, "pts": tier, "cost": cost}
+        return {"tier": tier, "art": art, "disc": disc, "pts": tier, "cost": cost}
 
     # ---------- 动作 ----------
     def act(self, uid, action):
@@ -269,6 +269,9 @@ class GemCityGame(BaseGame):
 
     # ---------- 快照 ----------
     def snapshot(self):
+        # A patron keeps its portrait when another patron leaves the display.
+        noble_art = [NOBLES.index(cost) if cost in NOBLES else None
+                     for cost in self.nobles_left]
         return {
             "game": self.name, "status": "playing",
             "bank": self.bank, "colors": COLOR_CN,
@@ -277,13 +280,15 @@ class GemCityGame(BaseGame):
             "discount": {str(u): v for u, v in self.discount.items()},
             "score": {str(u): v for u, v in self.score.items()},
             "nobles": self.nobles_left,
+            "noble_art": noble_art,
             "turn_uid": None if self.winner else self.players[self.turn],
             "players": list(self.players), "winner_uid": self.winner,
             "trigger_uid": self.trigger_uid,
         }
 
     def private(self, uid):
-        return {"cards": len(self.cards.get(uid, [])),
+        collection = self.cards.get(uid, [])
+        return {"cards": len(collection), "collection": list(collection),
                 "reserved": self.reserved.get(uid, []),
                 "nobles": self.nobles_cards.get(uid, [])}
 

@@ -11533,12 +11533,7 @@ _GAME_ACTIONS = {
     "guess_number": [],  # Number cards and the legal interval board.
     "gomoku": [],  # Placement is directly on the real board intersections.
     "gomoku_solo": [],
-    "tile2048": [
-        ("↑ 上", {"fixed": {"op": "move", "dir": "up"}}, ""),
-        ("↓ 下", {"fixed": {"op": "move", "dir": "down"}}, ""),
-        ("← 左", {"fixed": {"op": "move", "dir": "left"}}, ""),
-        ("→ 右", {"fixed": {"op": "move", "dir": "right"}}, ""),
-    ],
+    "tile2048": [],  # Board swipes, local direction compass and arrow keys.
     "spy": [
         ("描述", {"key": "describe", "kind": "text"}, "输入描述（别说出关键词）"),
         ("投票", {"key": "vote", "kind": "uid"}, "输入怀疑对象的 uid"),
@@ -11742,7 +11737,7 @@ _GAME_HINTS = {
     "betrayal": "点自己所在房间的方向门移动；发现簿回看揭牌，背包阅读与使用道具。全图只作导航",
     "gemcity": "先选市场牌，再点「买入」或「保留」；在「藏册」点卡可放大赏图",
     "lovelove": "先点持牌或新摸牌，再选目标／护卫猜值，最后点「确认出牌」",
-    "tile2048": "用方向按钮滑动；点击棋盘聚焦后可按方向键。相同数字合并，挑战 2048",
+    "tile2048": "拖动棋盘或点方向罗盘滑动；聚焦后可按方向键，真实数字相同才合并",
     "gomoku": "点击棋盘交叉点落子；恰好五连获胜",
     "gomoku_solo": "你执黑，点击交叉点落子；电脑执白自动应手，恰好五连获胜",
     "azul": "点花砖，再点花纹行或地板；也可拖动。键盘：←→选砖，↑↓选落点，Enter落砖，Esc取消",
@@ -13215,7 +13210,7 @@ class GameWindow:
     def _fmt_state(self, st: dict) -> str:
         """公开快照 → 可读文本（按游戏定制 + 兜底 key-value）"""
         game = st.get("game", "")
-        if game in ("halloween", "yahtzee", "drawguess", "calc24", "guess_number"):
+        if game in ("halloween", "yahtzee", "drawguess", "calc24", "guess_number", "tile2048"):
             return ""  # Public fruit cards and score seats are on the table.
         lines = []
         if st.get("status") == "await_secret":

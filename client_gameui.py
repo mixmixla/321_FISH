@@ -1405,6 +1405,10 @@ def handle_drag(cv, ui, x, y, phase):
     本地即时描线（tag=dg_ink）避免等待心跳回包。
     """
     game = ui.get("game")
+    if game == "tile2048":
+        from boardgames.tile2048.desktop import drag
+        drag(cv, ui, x, y, phase)
+        return
     if game == "azul":
         from boardgames.azul.desktop import drag
         drag(cv, ui, x, y, phase)
@@ -4319,6 +4323,14 @@ def _click_guess_number(ui, x, y):
 
 
 _CLICKS["guess_number"] = _click_guess_number
+
+
+def _click_tile2048(ui, x, y):
+    from boardgames.tile2048.desktop import click
+    click(ui, x, y)
+
+
+_CLICKS["tile2048"] = _click_tile2048
 
 
 @_register("drawguess")

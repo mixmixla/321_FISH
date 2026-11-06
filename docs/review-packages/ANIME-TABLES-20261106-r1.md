@@ -89,3 +89,7 @@ f0572bc。实际鼠标/触摸使用笔、颜色、清除与画板，猜方只看
 ## 猜数字 · AI_ACCEPTED
 
 a9067e7。正式交互密封73、猜50后区间51..100，再猜90及73后结算，本人的秘密不在公共面板；网页与Tk均走真实选择/规则状态。 各款Web输入绑定账号及当前房/轮和帧身份。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/guess_number/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/guess_number/mobile.webp)。
+
+## 2048 · AI_ACCEPTED
+
+7fe5a3c。11档星阶卡画按2至2048准确映射，数字为单独图层。验证左移2+2得4分、板上拖动、键盘、手机触摸，末步1024+1024达到2048。原有合并/补砖规则维持。 各款Web输入绑定账号及当前房/轮和帧身份。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/tile2048/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/tile2048/mobile.webp)。

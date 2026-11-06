@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """2048 桌面画师。
 
-画师只负责把公开快照画成清晰的棋盘；方向按钮由宿主 GameWindow 的动作面板
-接入 ``submit({"op": "move", "dir": direction})``，因此这里不重复绑定 Tk 事件。
+画师绘制实际数字层与原创星阶角色；棋盘旁方向罗盘及滑动沿用move/dir动作。
 """
 from __future__ import annotations
 
@@ -87,6 +86,8 @@ def _tile_images(cv, ui, cell):
 def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     """Render the 4×4 board into the existing GameWindow canvas."""
     state = st or {}
+    context=(ui.get('_room_context'),me,id(st))
+    if ui.get('tile2048_render_context')!=context:ui.pop('tile2048_drag',None);ui['tile2048_render_context']=context
     board = state.get("board") or []
     board = [list(row[:4]) + [0] * max(0, 4 - len(row)) for row in board[:4]]
     board += [[0] * 4 for _ in range(4 - len(board))]
@@ -95,7 +96,7 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     # Keep this rectangle generous enough for the dark canvas and readable at the
     # compact GameWindow size; the host already clears the canvas before calling us.
     cv.create_rectangle(0, 0, w, h, fill="#0B1B2A", outline="")
-    cv.create_text(18, 22, text="2048 · 方块合成", anchor="w", fill=_TEXT,
+    cv.create_text(18, 22, text="2048 · 星阶合成", anchor="w", fill=_TEXT,
                    font=("Segoe UI", max(13, min(20, int(w / 26))), "bold"))
     cv.create_text(18, 45, text="单人挑战 · 每次有效滑动生成一块新砖", anchor="w",
                    fill=_MUTED, font=("Segoe UI", max(8, min(10, int(w / 42)))))
@@ -108,7 +109,7 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     cv.create_text(w - 73, 36, text=str(score), fill=_ACCENT,
                    font=("Segoe UI", 13, "bold"))
 
-    side = max(128, min(float(w - 34), float(h - 104)))
+    side = max(128, min(float(w - 94), float(h - 104)))
     x0 = (float(w) - side) / 2.0
     y0 = 61.0 + max(0.0, (float(h) - 104.0 - side) / 2.0)
     ui["tile2048_board"] = (x0, y0, x0 + side, y0 + side)
@@ -131,11 +132,13 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 cv.create_rectangle(left, top, right, bottom,
                                     fill=_tile_color(value), outline="")
             if value:
+                cv.create_rectangle(left, top+cell*.68, right, bottom,
+                                    fill="#122b42", outline="")
                 font = ("Segoe UI", _font_size(value, cell), "bold")
                 cv.create_text((left + right) / 2.0 + 1,
-                               (top + bottom) / 2.0 + 1,
+                               top+cell*.84+1,
                                text=str(value), fill="#061321", font=font)
-                cv.create_text((left + right) / 2.0, (top + bottom) / 2.0,
+                cv.create_text((left + right) / 2.0, top+cell*.84,
                                text=str(value), fill="#FFFFFF", font=font)
 
     status = state.get("status", "playing")
@@ -144,9 +147,46 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     elif status == "lost":
         message, color = "💥 无路可走", "#8B4F52"
     else:
-        message, color = "使用下方方向按钮继续", "#1E3B52"
+        message, color = "拖动棋盘 / 点方向罗盘 / 方向键", "#1E3B52"
     banner_y = y0 + side + 12
     cv.create_rectangle(x0, banner_y, x0 + side, min(h - 5, banner_y + 26),
                         fill=color, outline="")
     cv.create_text(x0 + side / 2.0, banner_y + 13, text=message,
                    fill="#FFFFFF", font=("Segoe UI", 10, "bold"))
+    ui['tile2048_hits']=[]
+    cx,cy=w-40,y0+side/2;radius=min(14,max(10,(w-x0-side)/5))
+    positions=(('up',cx,cy-32,'↑'),('left',cx-25,cy,'←'),('down',cx,cy,'↓'),('right',cx+25,cy,'→'))
+    for direction,px,py,label in positions:
+        rect=(px-radius,py-radius,px+radius,py+radius)
+        cv.create_rectangle(*rect,fill='#2d4b61' if can_move(ui) else '#283a46',outline='#be9e5b',width=1)
+        cv.create_text(px,py,text=label,fill='#f4e6bd',font=('Segoe UI',13,'bold'))
+        if can_move(ui):ui['tile2048_hits'].append((*rect,direction))
+
+
+def can_move(ui):
+    st=ui.get('state') or {};room=ui.get('room') or {};me=ui.get('me')
+    return (ui.get('connected',True) is not False and me is not None and me in st.get('players',[])
+            and me in room.get('players',st.get('players',[])) and me not in room.get('spectators',[])
+            and room.get('status','playing')=='playing' and st.get('status')=='playing'
+            and st.get('winner_uid') is None and st.get('turn_uid') in (None,me))
+
+
+def click(ui,x,y):
+    if not can_move(ui):return
+    for a,b,c,d,direction in ui.get('tile2048_hits',[]):
+        if a<=x<=c and b<=y<=d:ui['submit']({'op':'move','dir':direction});return
+
+
+def drag(cv,ui,x,y,phase):
+    if not can_move(ui):ui.pop('tile2048_drag',None);return
+    rect=ui.get('tile2048_board')
+    if phase=='down':
+        if rect and rect[0]<=x<=rect[2] and rect[1]<=y<=rect[3]:ui['tile2048_drag']=(x,y)
+        return
+    if phase=='up':
+        start=ui.pop('tile2048_drag',None)
+        if start is None:return
+        dx,dy=x-start[0],y-start[1]
+        if max(abs(dx),abs(dy))<20:return
+        direction=('right' if dx>0 else 'left') if abs(dx)>abs(dy) else ('down' if dy>0 else 'up')
+        ui['submit']({'op':'move','dir':direction})

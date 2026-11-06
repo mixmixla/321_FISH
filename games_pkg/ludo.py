@@ -103,6 +103,7 @@ class LudoGame(BaseGame):
         if not (0 <= idx < NS):
             raise GameRuleError("机号超出范围")
         s = self.miles[u][idx]
+        previous = s
         if s == -1:
             if self.dice != 6:
                 raise GameRuleError("需掷 6 才能起飞")
@@ -117,6 +118,8 @@ class LudoGame(BaseGame):
         self.dice_val = s
         self.last_move = {
             "uid": u, "idx": idx, "fin": s >= FIN,
+            "from_stall": None if previous < 0 else (self._start(self.turn) + previous) % TRACK,
+            "steps": 0 if previous < 0 else self.dice, "takeoff": previous < 0,
             "stall": None if s >= FIN else (self._start(self.turn) + s) % TRACK,
         }
         if s < FIN:
@@ -165,6 +168,7 @@ class LudoGame(BaseGame):
             "positions": {str(u): row(u) for u in self.players},
             "starts": {str(self.players[i]): self._start(i) for i in range(len(self.players))},
             "track": TRACK, "dice": self.dice, "winner_uid": self.winner,
+            "need_roll": self.need_roll, "last_roll": self.last_roll,
             "stones": STONE_CN, "players": list(self.players),
             "last_move": self.last_move,
         }

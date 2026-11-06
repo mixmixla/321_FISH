@@ -11602,11 +11602,7 @@ _GAME_ACTIONS = {
         ("放置", {"key": None, "kind": "blok"}, "输入 拼块名 方向号 x y（也可直接在棋盘上点击落子）"),
         ("⏭ 跳过", {"fixed": {"op": "pass"}}, "跳过本回合"),
     ],
-    "ludo": [
-        ("掷骰", {"fixed": {"op": "roll"}}, ""),
-        ("走机", {"key": None, "kind": "ludomove"}, "输入机号 0~3"),
-        ("结束回合", {"fixed": {"op": "skip"}}, ""),
-    ],
+    "ludo": [],  # Dice and aircraft are direct canvas controls.
     "onewolf": [
         ("🔮预言看一人", {"op": "peek", "key": "look_one", "kind": "uid"}, "输入目标 uid（预言家）"),
         ("🔮看中心(自选)", {"op": "peek", "key": "look_center", "kind": "twoidx"}, "预言家选中心两张：两个序号 0~2（空格分隔）"),
@@ -11754,6 +11750,7 @@ def _actions_for(game: str, priv: dict | None) -> list:
 
 # 棋盘直操类游戏的首屏引导（无按钮可指时告诉玩家怎么操作）
 _GAME_HINTS = {
+    "ludo": "点棋盘中央骰子，再点机棚或轨道飞机；R掷骰、1–4选机。",
     "betrayal": "点自己所在房间的方向门移动；发现簿回看揭牌，背包阅读与使用道具。全图只作导航",
     "gemcity": "先选市场牌，再点「买入」或「保留」；在「藏册」点卡可放大赏图",
     "lovelove": "先点持牌或新摸牌，再选目标／护卫猜值，最后点「确认出牌」",
@@ -13043,12 +13040,11 @@ class GameWindow:
 
     def _render_canvas(self, force: bool = False) -> None:
         """桌游对局 Canvas 图形渲染（棋盘/手牌/角色面板）。
-        持独立专注窗时改画到专注窗；否则画到大厅内嵌棋盘。"""
-        if getattr(self, "_board_win", None) and self._board_win.active():
-            self._board_win.redraw(force=force)
-            return
+        大厅和专注窗各按自己的真实 Canvas 尺寸重绘，避免缩窗后残留裁切。"""
         self._cv_ui["_after_owner"] = self.win
         self._render_to(self.game_cv, self._cv_ui)
+        if getattr(self, "_board_win", None) and self._board_win.active():
+            self._board_win.redraw(force=force)
 
     def _cancel_repaint(self, ui) -> None:
         job = ui.pop("_after_id", None)
@@ -13977,6 +13973,10 @@ class GameWindow:
         st = self.core.game_state or {}
         rid = room.get("room_id")
         game = room.get("game")
+        if game == "ludo" or (source_ui is not None and source_ui.get("game") == "ludo"):
+            from boardgames.boards_ludo import submit_allowed
+            if not submit_allowed(self.core, source_ui, action):
+                return
         if source_ui is not None:
             source_game = source_ui.get("game")
             if "_room_context" in source_ui:

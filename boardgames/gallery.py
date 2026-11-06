@@ -35,6 +35,8 @@ ART_FILES = frozenset(COVERS.values()) | {
     "dou-beastgirls.webp",
     "dou-terrain.webp",
     "junqi-officers.webp",
+    "ludo-aviators.webp",
+    "ludo-cloud-airports.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}

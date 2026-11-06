@@ -1787,14 +1787,8 @@ def _click_shogi(ui, x, y):
 
 
 def _click_ludo(ui, x, y):
-    """飞行棋：点自己的一架机（未完成）提交移动。"""
-    tokens = ui.get("tokens") or []     # [(cx,cy,idx,r)]
-    for cx, cy, idx, r in tokens:
-        if cx is None:
-            continue
-        if (x - cx) ** 2 + (y - cy) ** 2 <= r ** 2:
-            ui["submit"]({"op": "move", "idx": idx})
-            return
+    from boardgames.boards_ludo import click
+    click(ui, x, y)
 
 
 def _click_rummikub(ui, x, y):
@@ -3921,141 +3915,8 @@ def _p_blokus(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("ludo")
 def _p_ludo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["ludo"][1]
-    players = st.get("players") or []
-    stt = st.get("starts") or {}            # {uid_str: 起点格号}
-    pos = st.get("positions") or {}
-    dice = st.get("dice")
-    stones = st.get("stones") or ["✈️", "🚢", "🚗", "🚁"]
-    track = st.get("track") or 40
-    title = "🎲 飞行棋"
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 获胜"
-    elif st.get("turn_uid"):
-        title += f"　轮到 {nick(st['turn_uid'])}"
-    _turn_banner(cv, w, 46, title, accent)
-    header, note_h = 46, 30
-    avail = max(60, min(w - 24, h - header - note_h - 24))
-    cx = w / 2
-    cy = header + note_h + (h - header - note_h - 20) / 2
-    R = avail / 2 - 8                      # 环中心线半径
-
-    def ring_pt(i):
-        i = i % track
-        side = i // 10
-        t = (i % 10) / 9.0
-        if side == 0:
-            return (cx - R + t * 2 * R, cy - R)
-        elif side == 1:
-            return (cx + R, cy - R + t * 2 * R)
-        elif side == 2:
-            return (cx + R - t * 2 * R, cy + R)
-        return (cx - R, cy + R - t * 2 * R)
-
-    step = (2 * R) / 9.0
-    csz = step * 0.86
-    corner_dx = [( -1, -1), (1, -1), (1, 1), (-1, 1)]
-    # 各 player 的颜色
-    pcol = ["#e05555", "#3f6fe0", "#3ba55d", "#f2c94c"]
-    # 轨道环底框
-    cv.create_rectangle(cx - R - 4, cy - R - 4, cx + R + 4, cy + R + 4,
-                        fill="#efe6cd", outline="#b9986a", width=2)
-    # 画 40 个轨道格
-    for i in range(track):
-        x0, y0 = ring_pt(i)
-        mine_start = any(str(stt[sk]) == str(i) for sk in stt) if stt else False
-        cv.create_rectangle(x0 - csz / 2, y0 - csz / 2,
-                            x0 + csz / 2, y0 + csz / 2,
-                            fill=_shade("#efe6cd", 0.35 if not mine_start else 0.6),
-                            outline="#c9ad7e")
-    # 画机棚 & 放子
-    tokens = []                            # [(cx,cy,idx,r)] 我的可动机
-    mono_x = {i: 0 for i in range(track)}
-    for pi, u in enumerate(players):
-        ci = pi % 4
-        col = pcol[ci]
-        ddx, ddy = corner_dx[pi % 4]
-        hx = cx + ddx * R * 0.55
-        hy = cy + ddy * R * 0.55
-        # 机棚框
-        cv.create_rectangle(hx - csz - 4, hy - csz - 4,
-                            hx + csz + 4, hy + csz + 4,
-                            fill=_shade(col, 0.5), outline=col, width=2)
-        vals = pos.get(str(u)) or []
-        h_slot = 0
-        for idx, v in enumerate(vals):
-            if v == -1:                      # 机棚
-                sx = hx + (h_slot % 2 - 0.5) * csz
-                sy = hy + (h_slot // 2 - 0.5) * csz
-                h_slot += 1
-                tw = stones[idx] if u == me else "●"
-                cv.create_oval(sx - csz / 2 + 1, sy - csz / 2 + 1,
-                               sx + csz / 2 - 1, sy + csz / 2 - 1,
-                               fill=col, outline=_shade(col, -0.35))
-                _text(cv, sx, sy, tw, "#fff" if u != me else "#fff",
-                      (_FONT_B[0], int(csz * 0.5)))
-                if u == me:
-                    tokens.append((sx, sy, idx, max(14, csz * 0.9)))
-            elif v == "FIN":                 # 完成
-                sx = cx + ddx * R * 0.76
-                sy = cy + ddy * R * 0.76
-                cv.create_text(sx, sy, text="🏁" if u == me else "✓",
-                               fill=col, font=(_FONT_B[0], int(csz * 0.6)))
-            else:                            # 轨道格
-                try:
-                    s = int(v) % track
-                except (TypeError, ValueError):
-                    continue
-                bx0, by0 = ring_pt(s)
-                off = mono_x[s]
-                mono_x[s] += 1
-                sx = bx0 + (off - 0.5) * csz * 0.5
-                sy = by0 + (off - 0.5) * csz * 0.5
-                tw = stones[idx] if u == me else "●"
-                cv.create_oval(sx - csz / 2 + 1, sy - csz / 2 + 1,
-                               sx + csz / 2 - 1, sy + csz / 2 - 1,
-                               fill=col, outline=_shade(col, -0.35))
-                _text(cv, sx, sy, tw, "#fff", (_FONT_B[0], int(csz * 0.5)))
-                if u == me:
-                    tokens.append((sx, sy, idx, max(14, csz * 0.9)))
-    ui.update(game="ludo", tokens=tokens, me=me)
-    # 最近一步动效：金色光晕标记本次被推动的机（到达提示格 stall 或完成 FIN）
-    now = time.monotonic()
-    lm = st.get("last_move")
-    lastpx = None
-    if isinstance(lm, dict):
-        try:
-            pi = players.index(lm.get("uid"))
-        except (ValueError, TypeError):
-            pi = -1
-        if pi >= 0:
-            ddx2, ddy2 = corner_dx[pi % 4]
-            if lm.get("fin"):
-                lastpx = (cx + ddx2 * R * 0.76, cy + ddy2 * R * 0.76)
-            elif isinstance(lm.get("stall"), int):
-                lastpx = ring_pt(lm["stall"])
-    _g_draw_last(cv, ui, now, lastpx, csz)
-    if lastpx is not None:
-        _anim_need(ui, repaint, gap=0.04, cap=180)
-    # 提示 / 骰面：右上角画统一矢量骰 + 掷骰滚动动画（替代纯文字"骰面：N"）
-    dnow = time.monotonic()
-    dkey = None if dice is None else int(dice)
-    rolling, rk = _die_roll_fx(ui, dnow, dkey, repaint)
-    die_cx = w - 34
-    die_cy = header + note_h / 2
-    ds = 15
-    if dkey is None:
-        _die_face(cv, die_cx, die_cy, ds, None, accent, blank=True)
-        note = "尚未掷骰（点下方「掷骰」）"
-    else:
-        jit = -math.sin(rk * math.pi) * 6 if rolling else 0.0
-        show = _die_scramble(dnow, 3, 6) if rolling else dkey
-        _die_face(cv, die_cx, die_cy + jit, ds, show, accent, fresh=not rolling)
-        if st.get("turn_uid") == me:
-            note = "点你一架机前进"
-        else:
-            note = f"等待 {nick(st.get('turn_uid'))}"
-    _text(cv, w / 2, header + note_h / 2, "🎲 " + note, "#333", _FONT_B)
+    from boardgames.boards_ludo import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 # ---------------------------------------------------------------------------

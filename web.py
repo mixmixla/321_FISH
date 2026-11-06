@@ -5648,59 +5648,7 @@ const GRENDER={
     box.appendChild(zone);
     function placeBlokus(corner){gameAPI("action",{room_id:state.groom,action:{op:"place",piece:pick,oi:oi||0,x:corner.y,y:corner.x}});}
   },
-  ludo(box,s){
-    const tr=s.track||40,per=11,ARMCOL=["#e05555","#3f6fe0","#3ba55d","#e8b93c"];
-    const idxOf={};(s.players||[]).forEach((u,i)=>idxOf[u]=i);
-    const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:6px;font-size:13px";
-    info.innerHTML=(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 获胜"
-      :"轮到 "+esc(gnick(s.turn_uid))+" · 🎲 "+((s.dice!=null)?s.dice:"—"));
-    box.appendChild(info);
-    const ring=(t)=>{if(t<per)return [t,0];const t2=t-per;if(t2<per)return [10,1+t2];
-      const t3=t-2*per;if(t3<per)return [10-t3,10];const t4=t-3*per;return [0,10-t4];};
-    const rc={};for(let t=0;t<tr;t++){const p=ring(t);rc[t]=[p[1],p[0]];}
-    // 中心基地的四格也映射到每玩家停机坪显示位
-    const stallPos=[[5,4],[6,5],[5,6],[4,5]];
-    const grid=document.createElement("div");
-    grid.style.cssText="display:grid;grid-template-columns:repeat(11,23px);gap:1px;justify-content:center;margin:0 auto";
-    for(let yy=0;yy<11;yy++)for(let xx=0;xx<11;xx++){
-      const cell=document.createElement("div");
-      cell.style.cssText="min-height:23px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:1px";
-      grid.appendChild(cell);}
-    // 环格
-    for(let t=0;t<tr;t++){const [ry,rx]=rc[t];const cell=grid.children[ry*11+rx];cell.style.background="#efca63";cell.style.border="1px solid #caa832";}
-    // 中心基地底色
-    for(let pl=0;pl<(s.players||[]).length;pl++){const [sy,sx]=stallPos[pl%4];
-      for(let dy=0;dy<2;dy++)for(let dx=0;dx<2;dx++){const g=grid.children[(sy+dy)*11+(sx+dx)];g.style.background=ARMCOL[pl%4];g.style.opacity="0.9";}}
-    // 子
-    for(let pl=0;pl<(s.players||[]).length;pl++){
-      const u=s.players[pl];const col=ARMCOL[pl%4];
-      (s.positions[String(u)]||[]).forEach((t,pdx)=>{
-        const st=document.createElement("div");st.style.cssText="width:16px;height:16px;border-radius:50%;background:"+col+";box-shadow:inset 0 0 0 2px rgba(255,255,255,.4)";
-        st.title="玩家"+u+" 机"+(pdx+1);
-        if(typeof t==="number"){
-          if(t<0){const [sy,sx]=stallPos[pl%4];grid.children[(sy+(pdx>>1))*11+(sx+(pdx%2))].appendChild(st);}
-          else{const [ry,rx]=rc[t];grid.children[ry*11+rx].appendChild(st);}
-        }else{ // FIN 停到基地
-          const [sy,sx]=stallPos[pl%4];grid.children[sy*11+sx].appendChild(st);
-        }});
-    }
-    box.appendChild(grid);
-    const u=state.uid;
-    if(s.turn_uid===u&&s.winner_uid==null){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;justify-content:center;margin-top:8px";
-      if(s.dice==null)bar.appendChild(gBtn("🎲 掷骰",{op:"roll"}));
-      else{
-        const pieceRow=document.createElement("div");pieceRow.style.cssText="margin-top:6px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap";
-        (s.positions[String(u)]||[]).forEach((t,pdx)=>{
-          const b=document.createElement("button");b.className="gbtn";b.textContent="机"+(pdx+1)+((t===-1)?"(起飞)":(t==="FIN"?"(到)":" →"));
-          if(t!=="FIN")b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"move",idx:pdx}});
-          pieceRow.appendChild(b);});
-        box.appendChild(pieceRow);
-        bar.appendChild(gBtn("🙅 结束本回合",{op:"skip"}));
-      }
-      box.appendChild(bar);
-    }
-  },
+  ludo(box,s){BoardsLudo.paint(box,s);},
   // ---- W4 重型棋类：通用"选中→目标"落子 ----
   _move_click(box,s,rows,cols,col_bg,getText,onMove){
     const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:6px;font-size:13px";

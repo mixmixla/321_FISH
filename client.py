@@ -12662,6 +12662,8 @@ class GameWindow:
         if core.game_private != self._last_private:
             self._last_private = core.game_private
             self._render_private()
+            if (core.game_room or {}).get("game") == "tielu":
+                self._render_canvas()  # 私有目标/手牌晚于公共状态到达时也立即更新。
         if len(core.game_events) < self._events_shown:
             self._events_shown = 0
         if len(core.game_events) > self._events_shown:

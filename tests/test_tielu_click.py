@@ -31,11 +31,14 @@ def test_seg_dist_vertical_and_zero_length_segments():
 class Canvas:
     def __init__(self):
         self.lines = []
+        self.text = []
 
     def __getattr__(self, name):
         def record(*args, **kwargs):
             if name == "create_line":
                 self.lines.append(kwargs)
+            if name == "create_text":
+                self.text.append(kwargs.get("text", ""))
         return record
 
 
@@ -105,3 +108,41 @@ def test_web_svg_map_and_claim_wiring():
     assert "opacity:.35" in section
     assert "<svg" in section and "viewBox='0 0 340 260'" in section
     assert "transparent" in section and "data-tla" in section
+
+
+def test_desktop_painter_shows_private_goals_then_final_ticket_totals():
+    g = TieluGame([1, 2], seed=79)
+    cv, ui = Canvas(), {}
+    cu._p_tielu(cv, g.snapshot(), 1, lambda u: f"P{u}", None, None, ui,
+                g.private(1), 480, 366)
+    assert "河城→雾谷 · 2分 · 尚未连通" in cv.text
+    assert "沙堡→金矿 · 3分 · 尚未连通" in cv.text
+    g.hand[1]["blue"] = 3
+    g.act(1, {"op": "claim", "a": 1, "b": 5})
+    cv = Canvas()
+    cu._p_tielu(cv, g.snapshot(), 1, lambda u: f"P{u}", None, None, ui,
+                g.private(1), 480, 366)
+    assert "河城→雾谷 · 2分 · 已连通" in cv.text
+    g.route_deck = []
+    g.ended()
+    cv = Canvas()
+    cu._p_tielu(cv, g.snapshot(), 1, lambda u: f"P{u}", None, None, ui,
+                None, 480, 366)  # 实际结束帧会清空 private。
+    assert all(label in cv.text for label in ["线路分", "票证加分", "票证扣分", "总分", "+2", "−3"])
+    assert ui["tl_routes"] == []
+
+
+def test_late_private_frame_repaints_desktop_without_a_new_public_state():
+    from types import SimpleNamespace
+    from client import GameWindow
+
+    core = SimpleNamespace(game_meta={}, game_rooms=[], game_room={"game": "tielu"},
+                           game_state={}, game_private={"tickets": [{"a": 0, "b": 7, "v": 3}]},
+                           game_events=[])
+    painted = []
+    host = SimpleNamespace(core=core, _last_list=({}, []), _last_room=core.game_room,
+                           _last_state=core.game_state, _last_private=None,
+                           _render_private=lambda: None, _render_canvas=lambda: painted.append(True),
+                           _events_shown=0, _chat_open=False)
+    GameWindow._sync(host)
+    assert painted == [True]

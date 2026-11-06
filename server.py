@@ -10343,7 +10343,8 @@ class Hub:
                                   expected_status=RoomStatus.CREATED)
 
         def delayed_reset():
-            if not self._service_stop.wait(3.0):
+            # 铁路要读逐人票证结算表，留出阅读时间；其它游戏沿用原倒计时。
+            if not self._service_stop.wait(30.0 if room.game_name == "tielu" else 3.0):
                 _reset()
         self._start_worker(delayed_reset, name='game-reset')
         return True

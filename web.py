@@ -4242,7 +4242,7 @@ function renderGamePanel(){
   if(room.status==="ended"){
     main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
     const note=document.createElement("div");note.className="gsec";
-    note.textContent="🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
+    note.textContent=gname==="tielu"?"🏁 本局结束，保留结算 30 秒后回到房间":"🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
   const pv=state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
@@ -5052,6 +5052,23 @@ const GRENDER={
   },
   tielu(box,s){
     box.appendChild(gTitle("tielu","铁路 · 连线得分"));
+    const tickets=(state.gpriv&&state.gpriv.tickets)||[];
+    const goals=document.createElement("div");goals.className="gsec";
+    goals.innerHTML="<b>你的私人目标票</b> · 连通加分，未连通扣分"
+      +tickets.map(t=>"<div>"+esc((s.cities||{})[t.a])+" → "+esc((s.cities||{})[t.b])
+        +" · "+t.v+"分 · "+(t.connected?"✅ 已连通":"○ 尚未连通")+"</div>").join("");
+    if(tickets.length)box.appendChild(goals);
+    const result=s.final_scores||{};
+    if(s.winner_uid!=null){
+      const end=document.createElement("div");
+      end.innerHTML="<div class='gsec'>🏆 "+esc(gnick(s.winner_uid))+" 票证结算后总分最高</div>"
+        +"<table style='width:100%;text-align:center'><thead><tr><th>玩家</th><th>线路分</th><th>票证加分</th><th>票证扣分</th><th>总分</th></tr></thead><tbody>"
+        +(s.players||[]).map(u=>{const r=result[u]||{};
+          return "<tr><td>"+esc(gnick(u))+"</td><td>"+(r.route||0)+"</td><td>+"+(r.ticket_bonus||0)
+            +"</td><td>−"+(r.ticket_penalty||0)+"</td><td><b>"+(r.total||0)+"</b></td></tr>";}).join("")
+        +"</tbody></table>";
+      box.appendChild(end);return;
+    }
     const P_COL={red:"#e05555",yellow:"#e8b93c",green:"#3ba55d",blue:"#4a7de0",purple:"#9b5fbf"};
     const CN={red:"红",yellow:"黄",green:"绿",blue:"蓝",purple:"紫"};
     const ids=Object.keys(s.cities||{}).map(Number).sort((a,b)=>a-b);
@@ -5061,7 +5078,7 @@ const GRENDER={
     const pv=(state.gpriv&&state.gpriv.hand)||{};
     const myTurn=s.turn_uid!=null&&s.turn_uid===state.uid;
     const P2=(v)=>Math.round(v*10)/10;
-    let svg="<svg viewBox='0 0 340 260' style='width:100%;max-width:460px;display:block;margin:4px auto'>";
+    let svg="<svg viewBox='0 0 340 260' style='width:100%;max-width:460px;display:block;margin:4px auto;background:#111b2b;border-radius:10px'>";
     (s.routes||[]).forEach(rt=>{
       const A=pos[rt.a],B=pos[rt.b];if(!A||!B)return;
       const claimed=!!rt.claimed,col=claimed?"#666":(P_COL[rt.color]||"#999");
@@ -5083,7 +5100,7 @@ const GRENDER={
         +esc(s.cities[id]||"")+"</text>";});
     svg+="</svg>";
     const d=document.createElement("div");
-    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>回合 → "+esc(gnick(s.turn_uid))
+    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>"+(s.final_round?"最后一轮 · ":"")+"回合 → "+esc(gnick(s.turn_uid))
       +"　剩线路 "+s.route_left+"　手牌×"+(s.hand_count[state.uid]||0)+"　"+scoreHTML(s.score)+"</div>"
       +"<div class='gsec'>线路图（点线路认领：需对应颜色车票卡，长度即张数）</div>"+svg;
     d.querySelectorAll("line[data-tla]").forEach(el=>{

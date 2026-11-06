@@ -73,8 +73,6 @@ class TieluGame(BaseGame):
         raise GameRuleError("未知动作")
 
     def _act_draw(self, uid):
-        if not self.route_deck:
-            raise GameRuleError("线路牌已空")
         if not self.ticket_deck:
             raise GameRuleError("车票卡已抽空")
         take = min(2, len(self.ticket_deck))
@@ -126,7 +124,7 @@ class TieluGame(BaseGame):
         t = list(self.rng.choice(avail))
         self.tickets[uid].append(t)
         self._advance()
-        return [f"📜 {self._nick(uid)} 抽到票证：{CITY_CN[t[0]]}→{CITY_CN[t[1]]}（+{t[2]}）"]
+        return [f"📜 {self._nick(uid)} 抽到 1 张私人目标票"]
 
     def _advance(self):
         if self.trigger_uid is not None:
@@ -158,10 +156,18 @@ class TieluGame(BaseGame):
         return False
 
     def _total(self, uid):
-        s = self._score(uid)
+        return self._score_breakdown(uid)["total"]
+
+    def _score_breakdown(self, uid):
+        bonus, penalty = 0, 0
         for (a, b, v) in self.tickets[uid]:
-            s += v if self._connected(uid, a, b) else -v
-        return s
+            if self._connected(uid, a, b):
+                bonus += v
+            else:
+                penalty += v
+        route = self._score(uid)
+        return {"route": route, "ticket_bonus": bonus, "ticket_penalty": penalty,
+                "total": route + bonus - penalty}
 
     def _finalize(self):
         self.extra = []
@@ -170,7 +176,8 @@ class TieluGame(BaseGame):
         self.winner = leaders[0]
 
     def ended(self):
-        if self.winner is None and not self.route_deck and not self.extra:
+        # extra 不含当前补回合玩家；最后一人发出回合后只能由 _advance 结算。
+        if self.winner is None and not self.route_deck and self.trigger_uid is None:
             self._finalize()
         if self.winner is not None:
             return {"winner_uid": self.winner,
@@ -178,7 +185,8 @@ class TieluGame(BaseGame):
         return None
 
     def private(self, uid):
-        return {"tickets": [{"a": a, "b": b, "v": v}
+        return {"tickets": [{"a": a, "b": b, "v": v,
+                             "connected": self._connected(uid, a, b)}
                             for (a, b, v) in self.tickets.get(uid, [])],
                 "hand": self.hand.get(uid, {})}
 
@@ -196,8 +204,11 @@ class TieluGame(BaseGame):
             "ticket_left": len(self.ticket_deck),
             "hand_count": {str(u): sum(self.hand[u].values()) for u in self.players},
             "score": {str(u): self._score(u) for u in self.players},
-            "turn_uid": (None if (self.winner is not None or not self.route_deck)
+            "turn_uid": (None if self.winner is not None
                          else self.players[self.turn]),
+            "final_round": self.trigger_uid is not None and self.winner is None,
+            "final_scores": ({str(u): self._score_breakdown(u) for u in self.players}
+                             if self.winner is not None else {}),
             "players": list(self.players), "winner_uid": self.winner,
         }
 

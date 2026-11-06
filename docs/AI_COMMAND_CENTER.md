@@ -15,9 +15,9 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
-## 新游戏与铁路美术 · ARCADE-20261106 v1
+## 游戏与美术升级 · ARCADE-20261106 v1.1
 
-**READY**。上一批已由 [PR #9](https://github.com/mixmixla/321_FISH/pull/9) 合并，远端 main 基线 162eef9。本批[任务包](task-packages/ARCADE-20261106.md)冻结两款单人玩法、铁路原创地图与提速验证，父聊天负责共享入口协调、独立验收和 PR 合并。功能分支 feature/arcade-20261106。后台隔离运行，禁止接管桌面。
+**实现与联调中**。用户追加系列美术升级，范围见[任务 v1.1](task-packages/ARCADE-20261106.md)。两款玩法与铁路原创地图已进入功能分支；两端大厅/开局由集成窗口联调。2048 图鉴、五子棋、花砖彩釉和大厅封面四项 READY，分包开发，公共入口由指定写入者整合。主控负责效果图、交互与最终全量，通过后 PR 合并 main。
 
 
 ## 桌游试玩 · PLAY-20261106 v1

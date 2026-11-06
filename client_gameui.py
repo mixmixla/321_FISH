@@ -1398,7 +1398,8 @@ def handle_drag(cv, ui, x, y, phase):
     """
     game = ui.get("game")
     if game == "azul":
-        _azul_drag(cv, ui, x, y, phase)
+        from boardgames.azul.desktop import drag
+        drag(cv, ui, x, y, phase)
         return
     if game != "drawguess":
         return
@@ -2016,6 +2017,14 @@ def _click_lovelove(ui, x, y):
 
 
 _CLICKS["lovelove"] = _click_lovelove
+
+
+def _click_azul(ui, x, y):
+    from boardgames.azul.desktop import click
+    click(ui, x, y)
+
+
+_CLICKS["azul"] = _click_azul
 
 
 def _click_betrayal(ui, x, y):

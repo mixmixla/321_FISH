@@ -20,6 +20,8 @@ azul(box,s){
   const COLORS=["r","w","b","y","k"];
   const MARKERS="rwbyk";
   const CTS_CLS={r:"r",w:"w",b:"b",y:"y",k:"k"};
+  const MOTIFS={r:"红花",w:"白叶",b:"蓝浪",y:"黄日",k:"黑星"};
+  const firstMarker="<span class='azfirst-marker' role='img' aria-label='首次玩家标记，占地板一格'>1</span>";
   // 墙空格应有色：引擎拉丁方 _wall_col(ci,row)=(ci+row)%5 ⇒ 格 (r,c) 应为 COLORS[(c-r)%5]
   const wallColor=(r,c)=>COLORS[(((c-r)%5)+5)%5];
   // 取砖热区：每片砖带 data-azsrc（工厂碗序号 / center）与 data-azcol（色键）。
@@ -28,7 +30,7 @@ azul(box,s){
     const c=(t&&t.c)?t.c:t;
     const ds=(src==null)?"":" data-azsrc='"+src+"'";
     const u=BG["azul_tile_"+c];
-    if(u)return "<img class='aztile' data-azcol='"+c+"'"+ds+" src='"+u+"' title='"+CC[c]+"' style='width:20px;height:20px;vertical-align:middle;margin:1px' alt=''>";
+    if(u)return "<img class='aztile' data-azcol='"+c+"'"+ds+" src='"+u+"' title='"+MOTIFS[c]+"' style='width:20px;height:20px;vertical-align:middle;margin:1px' alt='"+MOTIFS[c]+"'>";
     return "<span class='vtile aztile "+(CTS_CLS[c]||"w")+"' data-azcol='"+c+"'"+ds+" title='"+CC[c]+"'>"+CC[c]+"</span>";};
   const azSource=(tiles,src)=>COLORS.filter(c=>tiles.some(t=>(t.c||t)===c)).map(c=>{
     const n=tiles.filter(t=>(t.c||t)===c).length;
@@ -55,7 +57,8 @@ azul(box,s){
     +"<span"+(u===me?" class='azme'":"")+">"+esc(nickOf(u))+" "+(score[String(u)]||0)+"</span></span>")).join("");
   d.innerHTML="<div class='azinfo'>第 "+s.round+" 轮 · 回合 → "+esc(nickOf(s.turn_uid))
     +"　🧱 袋剩 "+s.bag
-    +(s.start_uid!=null?"　⭐先手 "+esc(nickOf(s.start_uid)):"")
+    +(s.start_uid!=null?"　本轮先手 "+esc(nickOf(s.start_uid)):"")
+    +(s.marker_uid!=null?"　下轮先手 "+esc(nickOf(s.marker_uid)):"")
     +"　"+chips+"</div>";
 
   // 2) 左列：工厂盘（azul_plate）+ 中央池（azul_plate_center）
@@ -65,7 +68,7 @@ azul(box,s){
   const center=azSource(s.center||[],"center");
   d.innerHTML+="<div class='azleft'><div class='gsec'>工厂盘</div>"+plates
     +"<div class='gsec'>中央池</div><span class='azplate azplate-c' style='"+bgImg("azul_plate_center")+"'>"
-    +(center||"<span class='azempty'>（空）</span>")+"</span></div>";
+    +(s.marker_uid==null?firstMarker:"")+(center||"<span class='azempty'>（空）</span>")+"</span></div>";
 
   // 3) 中部：所有玩家板（自己大板高亮、对手缩略）
   const boards=players.map(u=>{
@@ -99,13 +102,14 @@ azul(box,s){
       }
       wallHtml+="</div>";
     }
-    const floorTiles=(floorTilesAll[String(u)]||[]).map(t=>azTile(t)).join("");
+    const floorValues=floorTilesAll[String(u)]||[],floorTiles=floorValues.map(t=>azTile(t)).join("");
+    const markerInFloor=s.marker_uid===u&&(floorAll[String(u)]||0)>floorValues.length;
     const floorLine=mine
       ?"<div class='azfloor azdrop' data-azdrop='-1'>"
-       +"<span>地板</span><span class='azfloors'>"+floorTiles+"</span><span class='azrowhint'></span>"
+       +"<span>地板</span><span class='azfloors'>"+floorTiles+"</span>"+(markerInFloor?firstMarker+"<small>含先手筹</small>":"")+"<span class='azrowhint'></span>"
        +"<b>"+(floorAll[String(u)]||0)+"</b></div>":"";
     return "<div class='azboard"+(mine?" me":"")+"' style='"+bgImg("azul_board")+"'>"
-      +"<div class='azbhead'>"+esc(nickOf(u))+"<span class='azbs'>"+(score[String(u)]||0)+"</span>"
+      +"<div class='azbhead'>"+esc(nickOf(u))+((!mine||!markerInFloor)&&s.marker_uid===u?firstMarker:"")+"<span class='azbs'>"+(score[String(u)]||0)+"</span>"
       +(mine?"":"<span class='azbf'>地板 "+(floorAll[String(u)]||0)+"</span>")+"</div>"
       +"<div class='azbbody'><div>"+left+"</div><div>"+wallHtml+"</div></div>"+floorLine+"</div>";
   }).join("");
@@ -308,10 +312,13 @@ azul(box,s){
 """
 
 WEB_CSS = r"""
+#gpanel .card:has(.azgrid){width:min(1160px,calc(100vw - 16px));box-sizing:border-box}
+#gmain:has(.azgrid){max-height:calc(92vh - 145px)}
 .azgrid{display:grid;grid-template-columns:minmax(110px,1fr) minmax(0,2.6fr) minmax(140px,1fr);
   grid-template-areas:"info info info" "tip tip tip" "actions actions actions" "left boards right";gap:8px;align-items:start}
 .azinfo{grid-area:info;font-size:11px;color:#e8f0f6;border-radius:var(--r1);padding:4px 8px}
 .azleft{grid-area:left}
+.azgrid .gsec{color:#e8f0f6;font-weight:700}.azplate-c .azempty{color:#45627a}
 .azboards{grid-area:boards;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
 .azright{grid-area:right}
 .azfoot{grid-column:1/-1;font-size:11px;color:#cfe0ee;margin-top:4px}
@@ -327,6 +334,8 @@ WEB_CSS = r"""
 .azpick:disabled{cursor:default;opacity:.6}
 .azpick.azchosen{outline:3px solid #ffd977;background:#fff1ba}
 .azpick img{pointer-events:none;-webkit-user-drag:none}
+.azpick img.aztile{width:28px!important;height:28px!important}
+.azfirst-marker{display:inline-flex;align-items:center;justify-content:center;flex:0 0 23px;width:23px;height:23px;box-sizing:border-box;border:2px solid #c29732;border-radius:50%;background:#fff6d8;color:#6f4b13;font:bold 15px/1 Georgia,serif;box-shadow:0 1px 3px #0003}
 .azempty{color:#cfe0ee;font-size:11px}
 .azboard{flex:1 1 250px;max-width:560px;border-radius:var(--r1);padding:6px 8px;
   min-width:0;box-sizing:border-box;display:flex;flex-direction:column;gap:4px;background-color:#e9e6ce;box-shadow:0 2px 6px rgba(0,0,0,.35)}

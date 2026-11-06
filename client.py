@@ -11666,10 +11666,8 @@ _GAME_ACTIONS = {
         ("▶ 继续", {"fixed": {"op": "next"}}, "商店结束，进下一盲注"),
     ],
     # ---- CC-03 桌面交互补齐：11 款此前被拦截的桌游 ----
-    # azul 取砖/落砖改走棋盘拖拽（client_gameui._azul_drag），不再弹输入窗。
-    "azul": [
-        ("🌀 溢出地板", {"fixed": {"op": "floor"}}, "本回合取的砖全部溢出（地板扣分）"),
-    ],
+    # 花砖直接点/拖实物到花纹行或地板，键盘在同一画布完成。
+    "azul": [],
     "bolan": [
         ("🗳 投放", {"op": "place", "key": "r", "kind": "int"}, "输入选区 0~4"),
         ("🔥 弃2枚翻倍", {"op": "devote", "key": "r", "kind": "int"}, "输入选区 0~4（耗 2 枚影响力）"),
@@ -11764,7 +11762,7 @@ _GAME_HINTS = {
     "lovelove": "先点持牌或新摸牌，再选目标／护卫猜值，最后点「确认出牌」",
     "tile2048": "用方向按钮滑动；点击棋盘聚焦后可按方向键。相同数字合并，挑战 2048",
     "gomoku_solo": "你执黑，点击交叉点落子；电脑执白自动应手，恰好五连获胜",
-    "azul": "拖动：从工厂盘 / 中央池抓起花砖，拖到自己的花纹行或地板线松手",
+    "azul": "点花砖，再点花纹行或地板；也可拖动。键盘：←→选砖，↑↓选落点，Enter落砖，Esc取消",
     "go_solo": "单人练习：点击交叉点落子，电脑会自动应手；连续两次「过一手」终局",
 }
 
@@ -14020,6 +14018,24 @@ class GameWindow:
                     or turn != self.core.uid or st.get("winner_uid") is not None
                     or st.get("status") != "playing"):
                 return
+        if game == "azul" or (source_ui is not None and source_ui.get("game") == "azul"):
+            if (game != "azul" or not getattr(self.core, "connected", False)
+                    or self.core.uid not in room.get("players", [])
+                    or st.get("turn_uid") != self.core.uid or st.get("winner_uid") is not None
+                    or st.get("status") != "playing"):
+                return
+            if source_ui is not None:
+                context = (rid, room.get("round"))
+                pair = source_ui.get("_azul_pair") or {}
+                paired = (pair.get("accepted") and action == pair.get("follow")
+                          and pair.get("snapshot") is source_ui.get("state")
+                          and pair.get("context") == context and pair.get("me") == self.core.uid
+                          and st.get("pending") == pair.get("tiles"))
+                if (source_ui.get("game") != "azul" or source_ui.get("_room_context") != context or source_ui.get("me") != self.core.uid
+                        or (source_ui.get("state") is not st and not paired)):
+                    return
+            if action.get("op") == "take" and st.get("pending"):
+                return
         if game in ("tile2048", "gomoku_solo"):
             if source_ui is not None and (
                     source_ui.get("_room_context") != (rid, room.get("round"))
@@ -14054,7 +14070,14 @@ class GameWindow:
                     getattr(self.core, "connected", False)):
                 return
         if rid and room.get("status") == "playing":
-            self.core.game_action(rid, action)
+            result = self.core.game_action(rid, action)
+            if game == "azul":
+                if source_ui is not None:
+                    pair = source_ui.get("_azul_pair")
+                    if (pair and action == pair.get("take") and pair.get("snapshot") is st
+                            and pair.get("context") == (rid, room.get("round"))):
+                        pair["accepted"] = bool(result)
+                return result
 
     # ---------- 房间操作 ----------
     def _on_create(self) -> None:

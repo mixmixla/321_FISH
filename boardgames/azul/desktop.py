@@ -110,13 +110,21 @@ def _row_ok(rows, wall, r, col):
     return wall.get(f"{r},{(ci + r) % 5}") in (None, "")
 
 
+def _row_fits(rows, wall, r, col):
+    row = rows.get(str(r)) or rows.get(r) or []
+    return len(row) < r+1 and _row_ok(rows, wall, r, col)
+
+
 def _paint_drag(cv, ui, src_hits, dst_hits, rows_st, wall_st, me):
     """拖拽反馈：源砖金框 + 可落行虚线框 + 悬停留点着色 + 随指针的幽灵砖。
 
     `_azul_drag` 由 client_gameui 在按下/移动时维护（本模块只读），gx/gy 回写供
     拖动中 cv.move("azul_ghost", ...) 平移幽灵，避免每次都整屏重绘。
     """
-    d = ui.get("_azul_drag")
+    d = ui.get("_azul_drag") or ui.get("azul_pick")
+    pending = (ui.get("state") or {}).get("pending") or []
+    if not d and pending and _can_input(ui):
+        d = {"col": pending[0], "row": ui.get("azul_key_row")}
     if not d:
         return
     col = d.get("col")
@@ -128,7 +136,7 @@ def _paint_drag(cv, ui, src_hits, dst_hits, rows_st, wall_st, me):
     rows = (rows_st or {}).get(str(me)) or {}
     wall = (wall_st or {}).get(str(me)) or {}
     ok = [row for _x0, _y0, _x1, _y1, row in dst_hits
-          if row < 0 or _row_ok(rows, wall, row, col)]
+          if row < 0 or _row_fits(rows, wall, row, col)]
     ui["azul_ok"] = ok
     sel = d.get("row")
     for (x0, y0, x1, y1, row) in dst_hits:
@@ -150,8 +158,160 @@ def _paint_drag(cv, ui, src_hits, dst_hits, rows_st, wall_st, me):
     d["gx"], d["gy"] = gx, gy
 
 
+def _capture(ui):
+    return ui.get("state"), ui.get("_room_context"), ui.get("me")
+
+
+def _current(ui, capture):
+    now = _capture(ui)
+    return capture is not None and capture[0] is now[0] and capture[1:] == now[1:]
+
+
+def _can_input(ui):
+    from client_gameui import _azul_can_drag
+    return _azul_can_drag(ui) and not _current(ui, ui.get("azul_busy"))
+
+
+def _source_count(st, src, col):
+    offers = st.get("offers") or []
+    if src == "center":
+        tiles = st.get("center") or []
+    else:
+        tiles = offers[src] if isinstance(src, int) and 0 <= src < len(offers) else []
+    return sum(int(t.get("n", 1)) if isinstance(t, dict) else 1 for t in tiles
+               if (t.get("c") if isinstance(t, dict) else t) == col)
+
+
+def _pair(ui, pick, follow):
+    st = ui.get("state") or {}
+    return {"snapshot": st, "context": ui.get("_room_context"), "me": ui.get("me"),
+            "take": {"op": "take", "src": pick["src"], "col": pick["col"]},
+            "follow": follow, "tiles": [pick["col"]]*_source_count(st, pick["src"], pick["col"]),
+            "accepted": False}
+
+
+def click(ui, x, y):
+    """Select a real source without sending; the second click chooses a row/floor."""
+    from client_gameui import _azul_src_at, _azul_dst_at
+    if not _can_input(ui):
+        return
+    st, me = ui.get("state") or {}, ui.get("me")
+    pending = st.get("pending") or []
+    source = _azul_src_at(ui, x, y)
+    if source is not None and not pending:
+        src, col = source
+        if _source_count(st, src, col) <= 0:
+            return
+        ui.pop("azul_key_row", None)
+        ui["azul_pick"] = {"src": src, "col": col, "capture": _capture(ui)}
+        ui.get("repaint", lambda: None)()
+        return
+    row = _azul_dst_at(ui, x, y)
+    pick = ui.get("azul_pick")
+    if row is None or (not pending and (not pick or not _current(ui, pick.get("capture")))):
+        return
+    col = pending[0] if pending else pick["col"]
+    rows = (st.get("rows") or {}).get(str(me)) or {}
+    wall = (st.get("wall") or {}).get(str(me)) or {}
+    if row >= 0 and not _row_fits(rows, wall, row, col):
+        return
+    submit = ui.get("submit")
+    if not submit:
+        return
+    if not pending and _source_count(st, pick["src"], col) <= 0:
+        return
+    ui["azul_busy"] = _capture(ui)
+    ui.pop("azul_pick", None)
+    ui.pop("_azul_drag", None)
+    follow = {"op": "floor"} if row < 0 else {"op": "place", "row": row}
+    if pending:
+        submit(follow)
+    else:
+        pair = ui["_azul_pair"] = _pair(ui, pick, follow)
+        try:
+            submit(pair["take"]);submit(follow)
+        finally:
+            ui.pop("_azul_pair", None)
+    ui.get("repaint", lambda: None)()
+
+
+def drag(cv, ui, x, y, phase):
+    """The real click/down/up sequence shares the selection and submission lock."""
+    from client_gameui import _azul_drag, _azul_dst_at
+    if phase == "down":
+        if not _can_input(ui) or (ui.get("state") or {}).get("pending"):
+            return
+        _azul_drag(cv, ui, x, y, phase)
+        if ui.get("_azul_drag"):
+            ui["_azul_drag"]["capture"] = _capture(ui)
+        return
+    move = ui.get("_azul_drag")
+    if not move:
+        return
+    if not _can_input(ui) or not _current(ui, move.get("capture")):
+        ui.pop("_azul_drag", None);ui.pop("azul_pick", None)
+        ui.get("repaint", lambda: None)()
+        return
+    if phase == "up":
+        row = _azul_dst_at(ui, x, y)
+        if row is not None and (row < 0 or row in (ui.get("azul_ok") or [])):
+            ui["azul_busy"] = _capture(ui)
+            ui.pop("azul_pick", None)
+            follow = {"op": "floor"} if row < 0 else {"op": "place", "row": row}
+            ui["_azul_pair"] = _pair(ui, move, follow)
+    try:
+        _azul_drag(cv, ui, x, y, phase)
+    finally:
+        ui.pop("_azul_pair", None)
+
+
+def _first_token(cv, x, y, size=18):
+    r = size/2
+    cv.create_oval(x-r, y-r, x+r, y+r, fill="#fff6d8", outline="#c29732", width=2, tags="azul-first-marker")
+    _text(cv, x, y, "1", "#6f4b13", (_FONT_F[0], max(7, int(size*.55)), "bold"))
+
+
+def key(ui, name):
+    """Keyboard chooses the same visible objects and uses the same click gate."""
+    if ui.get("game") != "azul" or not _can_input(ui):
+        return None
+    if name == "Escape":
+        ui.pop("azul_pick", None);ui.pop("azul_key_row", None)
+        ui.get("repaint", lambda: None)();return "break"
+    pending = (ui.get("state") or {}).get("pending") or []
+    if name in ("Left", "Right") and not pending:
+        unique = {}
+        for rect in ui.get("azul_src") or []:
+            unique.setdefault(tuple(rect[-2:]), rect)
+        sources = list(unique.values())
+        if sources:
+            index = (ui.get("azul_key_source", -1 if name == "Right" else 0)+(1 if name == "Right" else -1))%len(sources)
+            ui["azul_key_source"] = index;ui.pop("azul_key_row", None)
+            rect = sources[index];click(ui, (rect[0]+rect[2])/2, (rect[1]+rect[3])/2)
+    elif name in ("Up", "Down"):
+        legal = [r for r in ui.get("azul_dst") or [] if r[-1] in (ui.get("azul_ok") or [])]
+        if legal:
+            old = next((i for i, rect in enumerate(legal) if rect[-1] == ui.get("azul_key_row")), -1 if name == "Down" else 0)
+            rect = legal[(old+(1 if name == "Down" else -1))%len(legal)]
+            ui["azul_key_row"] = rect[-1]
+            if ui.get("azul_pick"):ui["azul_pick"]["row"] = rect[-1]
+            ui.get("repaint", lambda: None)()
+    elif name in ("Return", "KP_Enter"):
+        rect = next((r for r in ui.get("azul_dst") or [] if r[-1] == ui.get("azul_key_row")), None)
+        if rect:click(ui, (rect[0]+rect[2])/2, (rect[1]+rect[3])/2)
+    return "break"
+
+
+def _bind_keys(cv, ui):
+    if not isinstance(getattr(cv, "_w", None), str) or getattr(cv, "_azul_keys_bound", False):
+        return
+    cv._azul_keys_bound = True
+    for name in ("Left", "Right", "Up", "Down", "Return", "KP_Enter", "Escape"):
+        cv.bind("<"+name+">", lambda event, value=name: key(ui, value), add="+")
+
+
 def _paint_boards(cv, lay, players, me, rows_st, wall_st, fl_st, fl_tiles_st,
-                  score, nick):
+                  score, nick, marker_uid=None):
     """中部玩家板区：自己一块大板（active + 地板计数）+ 对手缩略小板。
 
     `me` 不在 `players` 里（旁观）时退化为 `layout` 的均匀网格，不做高亮。
@@ -159,41 +319,53 @@ def _paint_boards(cv, lay, players, me, rows_st, wall_st, fl_st, fl_tiles_st,
     """
     cx0, cy0, cx1, cy1 = lay["center"]
     cw_all, ch_all = cx1 - cx0, cy1 - cy0
+    def token(g, uid):
+        if uid == marker_uid:
+            _first_token(cv, g["bx"]+g["bw"]*.58, g["by"]+g["bh"]*.08,
+                         max(10, min(18, g["bw"]*.065)))
     if players and me in players:
-        me_w = min(cw_all * 0.55, ch_all * geom.BOARD_W / float(geom.BOARD_H))
         others = [u for u in players if u != me]
-        o_x0 = cx0 + me_w + 8.0
-        o_w = max(1.0, cx1 - o_x0)
-        ocols = 2 if o_w >= 380.0 else 1
-        orows = max(1, (len(others) + ocols - 1) // ocols)
-        o_cw, o_ch = o_w / ocols, ch_all / orows
+        mine_h = ch_all*.72 if others else ch_all
+        ocols, orows = max(1, len(others)), 1
+        o_cw, o_ch = cw_all/ocols, max(1, ch_all-mine_h-8)
         compact = o_cw < 190.0
-        mine = shell.board_panel(cv, cx0, cy0, me_w, ch_all, nick(me),
+        mine = shell.board_panel(cv, cx0, cy0, cw_all, mine_h, nick(me),
                                  rows_st.get(str(me), {}), wall_st.get(str(me), {}),
                                  fl_tiles_st.get(str(me), []), score.get(str(me), 0),
                                  KEYS, wall_expected=_wall_target, active=True,
-                                 note=f"地板 {int(fl_st.get(str(me), 0))}")
+                                 note=f"地板 {int(fl_st.get(str(me), 0))}"+(
+                                     (" · 含先手筹" if int(fl_st.get(str(me), 0)) > len(fl_tiles_st.get(str(me), [])) else " · 先手筹")
+                                     if marker_uid == me else ""))
+        token(mine, me)
         for i, u in enumerate(others):
             c, r = i % ocols, i // ocols
-            shell.board_panel(cv, o_x0 + c * o_cw, cy0 + r * o_ch, o_cw, o_ch,
+            g = shell.board_panel(cv, cx0 + c*o_cw, cy0+mine_h+8+r*o_ch, o_cw, o_ch,
                               nick(u), rows_st.get(str(u), {}),
                               wall_st.get(str(u), {}), fl_tiles_st.get(str(u), []),
                               score.get(str(u), 0),
                               KEYS, wall_expected=_wall_target, compact=compact)
+            token(g, u)
         return mine
     cols, rows = lay["cols"], lay["rows"]
     cell_w, cell_h = lay["cell"]
     compact = cell_w < 190.0
     for i, u in enumerate(players):
         c, r = i % cols, i // cols
-        shell.board_panel(cv, cx0 + c * cell_w, cy0 + r * cell_h, cell_w, cell_h,
+        g = shell.board_panel(cv, cx0 + c * cell_w, cy0 + r * cell_h, cell_w, cell_h,
                           nick(u), rows_st.get(str(u), {}), wall_st.get(str(u), {}),
                           fl_tiles_st.get(str(u), []), score.get(str(u), 0), KEYS,
                           wall_expected=_wall_target, compact=compact)
+        token(g, u)
     return None
 
 
 def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
+    _bind_keys(cv, ui)
+    pick = ui.get("azul_pick")
+    if pick and not _current(ui, pick.get("capture")):
+        ui.pop("azul_pick", None)
+    if ui.get("azul_busy") and not _current(ui, ui.get("azul_busy")):
+        ui.pop("azul_busy", None)
     accent = THEME["azul"][1]
     title = "🧱 花砖物语·拼花"
     if st.get("winner_uid") is not None:
@@ -253,6 +425,8 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     pile = _pile(center)                      # 按色归堆 → 任意色都可被抓（见 _pile）
     shell.factory_disc(cv, pcx, pcy, pr, pile, plate_key="azul_plate_center",
                        tile_key="azul_tile_{c}", center=True, colors=ACOL)
+    if st.get("marker_uid") is None:
+        _first_token(cv, pcx+pr+9, pcy-pr-7, 16)
     for k, it in enumerate(pile):
         _px, _py, _ts, a = _ring_pos(pcx, pcy, pr, len(pile), k)
         _text(cv, pcx + pr * 0.88 * math.cos(a), pcy + pr * 0.88 * math.sin(a),
@@ -262,7 +436,7 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
     # 4) 中部：所有玩家板（自己大板高亮 + 对手缩略）
     mine = _paint_boards(cv, lay, players, me, rows_st, wall_st, fl_st,
-                         fl_tiles_st, score, nick)
+                         fl_tiles_st, score, nick, st.get("marker_uid"))
     dst_hits = _dst_hits(mine)
     ui["azul_dst"] = dst_hits
     ui.pop("azul_ok", None)

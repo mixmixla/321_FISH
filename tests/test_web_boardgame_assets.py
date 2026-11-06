@@ -40,14 +40,21 @@ def test_panel_css_and_renderers_use_bitmaps():
     for mark in ('bgImg("azul_wall_bg")', 'bgImg("azul_plate")',
                  'bgImg("azul_board")', 'bgImg("azul_track_ring")'):
         assert mark in html, mark
-    # Gem City now paints the development-card atlas, with values in real text.
-    assert "CardTableWeb.development" in html
-    assert "'gemcity-tier'+tier+'.webp'" in html
-    assert 'BG["gem_' in html
+    # The complete Gem City table is mounted in the real page and loads art by URL.
+    assert "gemcity(box,s){CardTableWeb.gemcity(box,s);}" in html
+    for filename in ("gemcity-tier1.webp", "gemcity-tier2.webp", "gemcity-tier3.webp", "gemcity-jewels.webp"):
+        assert filename in html
     assert 'BG["azul_tile_' in html
     # 动作契约不回归
     assert '{op:"take"' in html and '{op:"place"' in html and '{op:"floor"' in html
-    assert 'op:"take2"' in html and 'op:"buy"' in html and 'op:"reserve"' in html
+    from boardgames.card_table_web import WEB_JS
+    assert "op:'take2'" in WEB_JS and "op:'buy'" in WEB_JS and "op:'reserve'" in WEB_JS
+
+
+def test_gemcity_formal_entry_uses_complete_table_without_legacy_selection():
+    start = web.PAGE.index("gemcity(box,s){")
+    section = web.PAGE[start:web.PAGE.index("siji(box,s){", start)]
+    assert section.strip() == "gemcity(box,s){CardTableWeb.gemcity(box,s);},"
 
 def test_bg_img_fragment_survives_single_quoted_style_attribute():
     # bgImg 输出的片段会被拼进单引号包裹的 style 属性（如 style='...+bgImg(...)+...'）。

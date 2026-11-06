@@ -130,6 +130,14 @@ def _SERVED_PAGE():
     from boardgames.card_table_web import WEB_JS as card_js, WEB_CSS as card_css
     page = page.replace('/*@@CARD_TABLE_JS@@*/', card_js)
     page = page.replace('@@CARD_TABLE_CSS@@', card_css)
+    from boardgames.manor_web import WEB_JS as manor_js, WEB_CSS as manor_css
+    try:
+        from boardgames.manor_catalog import ATLASES
+    except ImportError:
+        ATLASES = {}
+    page = page.replace('/*@@MANOR_JS@@*/', manor_js)
+    page = page.replace('@@MANOR_CSS@@', manor_css)
+    page = page.replace('@@MANOR_ATLASES@@', _js_json_literal(ATLASES))
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -682,6 +690,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 @@UX_CHAT_CSS@@
 @@UX_GAME_CSS@@
 @@CARD_TABLE_CSS@@
+@@MANOR_CSS@@
 </style>
 </head>
 <body>
@@ -4297,7 +4306,7 @@ function renderGamePanel(){
     main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
     const note=document.createElement("div");note.className="gsec";
     note.textContent=gname==="tielu"?"🏁 本局结束，保留结算 30 秒后回到房间":"🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
-  const pv=(gname==="gemcity"||gname==="lovelove")?null:state.gpriv;if(pv){
+  const pv=(gname==="gemcity"||gname==="lovelove"||gname==="betrayal")?null:state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
       ?pv.hand.join(" ")
@@ -4333,6 +4342,8 @@ function gLegalTos(fx,fy){
 // ---- 各游戏渲染器（s = game_state.state）----
 /*@@GOMOKU_ART@@*/
 /*@@CARD_TABLE_JS@@*/
+const MANOR_ATLASES=JSON.parse("@@MANOR_ATLASES@@");
+/*@@MANOR_JS@@*/
 const GRENDER={
   guess_number(box,s){
     const d=document.createElement("div");d.style.cssText="text-align:center;padding:6px";
@@ -4613,7 +4624,7 @@ const GRENDER={
       t.textContent=s.winner?"🎉 好人获胜！":"🐺 狼人获胜！";box.appendChild(t);}
   },
   avalon(box,s){
-    const me=state.uid, pv=state.gpriv;
+    const me=state.uid, member=(s.players||[]).includes(me), pv=member?state.gpriv:null;
     const phm={nominate:"👑 领袖组队",teamvote:"🗳️ 团队投票",quest:"🃏 执行任务",final:"🎯 刺客指认",done:"🏁 已结束"};
     const ph=phm[s.phase]||s.phase;
     const d=document.createElement("div");d.style.cssText="padding:4px";
@@ -4621,48 +4632,58 @@ const GRENDER={
     const team=s.team||[], av=(s.players||[]).filter(u=>!team.includes(u));
     const bits=[];
     if(pv&&pv.name){
-      bits.push(roleIcon("avalon",pv)+" 你的身份："+pv.name+(pv.role===1?"（知晓叛军，务必隐藏！）":""));
+      bits.push(roleIcon("avalon",pv)+" 你的身份："+esc(pv.name)+(pv.role===1?"（知晓叛军，务必隐藏！）":""));
+      if(pv.role===1&&Array.isArray(pv.evil))bits.push("⭐ 梅林所见叛军："+pv.evil.map(u=>esc(gnick(u))).join("、"));
       if((pv.role===2||pv.role===3)&&pv.evil)bits.push("🌑 叛军："+pv.evil.map(u=>esc(gnick(u))).join("、"));
-      if(pv.role===3)bits.push("🗡️ 你是刺客：终局指认梅林");
+      if(pv.role===2)bits.push("🗡️ 你是刺客：终局指认梅林");
     }
     d.innerHTML="<div class='gsec'>任务 "+s.quest+"/5 · "+ph+" · 需 "+s.need_size+" 人</div>"
       +"<div>结果："+(results||"—")+"</div>"
       +(bits.length?"<div style='margin:6px 0'>"+bits.join("<br>")+"</div>":"")
       +(team.length?"<div>📋 当前团队："+team.map(gnick).join("、")+"</div>":"");
     box.appendChild(d);
-    const acting=()=>pv&&(s.need||[]).includes(me)&&!(s.acted||[]).includes(me);
+    const acting=()=>member&&pv&&!s.done&&(
+      (s.phase==="nominate"&&s.leader===me)||
+      (s.phase==="teamvote"&&!(s.voted||[]).includes(me))||
+      (s.phase==="quest"&&team.includes(me)&&!(s.quest_done||[]).includes(me))||
+      (s.phase==="final"&&pv.role===2&&pv.guess_required===true));
+    let sent=false;
+    const send=action=>{if(sent||!acting()||state.uid!==me||state.gpriv!==pv||!state.gst||state.gst.state!==s||state.gst.room.game!=="avalon"||state.gst.room.status!=="playing")return;
+      sent=true;const request=gameAPI("action",{room_id:state.groom,action});
+      if(request&&typeof request.then==="function")request.then(result=>{if(result&&result.ok===false)sent=false;},()=>{sent=false;});};
+    const avButton=(text,action)=>{const b=gBtn(text,action);b.onclick=()=>send(action);return b;};
     if(acting()&&s.phase==="nominate"){              // 领袖提团队
       const w=document.createElement("div");w.className="gsec";
       w.textContent="选择 "+s.need_size+" 名成员组成任务团队";box.appendChild(w);
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0";
       (s.players||[]).forEach(u=>{
         const b=gBtn("选 "+gnick(u),{});b.dataset.u=u;
-        b.onclick=()=>{ sel[b.dataset.u]=!sel[b.dataset.u]; b.textContent=(sel[b.dataset.u]?"✅ ":"选 ")+gnick(u); };
+        b.onclick=()=>{if(!acting())return;sel[b.dataset.u]=!sel[b.dataset.u]; b.textContent=(sel[b.dataset.u]?"✅ ":"选 ")+gnick(u); };
         bar.appendChild(b);});
       const sel={};
       const ok=document.createElement("button");ok.className="gbtn";ok.textContent="确定组队";
       ok.style.cssText="margin:4px 6px 0 auto;display:block";
       ok.onclick=()=>{const t=Object.keys(sel).filter(u=>sel[u]).map(Number);
-        if(t.length===s.need_size)gameAPI("action",{room_id:state.groom,action:{team:t}});
+        if(t.length===s.need_size)send({team:t});
         else showStatus("需选 "+s.need_size+" 人");};
       bar.appendChild(ok);box.appendChild(bar);}
     if(acting()&&s.phase==="teamvote"){               // 赞同/反对
       const w=document.createElement("div");w.className="gsec";
       w.textContent="该团队是否通过？（已投 "+(s.voted||[]).length+" 人）";box.appendChild(w);
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;margin:4px 0";
-      bar.appendChild(gBtn("✅ 通过",{approve:true}));
-      bar.appendChild(gBtn("❌ 否决",{approve:false}));
+      bar.appendChild(avButton("✅ 通过",{approve:true}));
+      bar.appendChild(avButton("❌ 否决",{approve:false}));
       box.appendChild(bar);}
     if(acting()&&s.phase==="quest"){                  // 任务成功/失败
       const w=document.createElement("div");w.className="gsec";w.textContent="秘密执行任务（秘密）";box.appendChild(w);
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;margin:4px 0";
-      bar.appendChild(gBtn("✅ 成功",{success:true}));
-      if(pv&&(pv.role===2||pv.role===3))bar.appendChild(gBtn("💥 失败",{success:false}));
+      bar.appendChild(avButton("✅ 成功",{success:true}));
+      if(pv&&(pv.role===2||pv.role===3))bar.appendChild(avButton("💥 失败",{success:false}));
       box.appendChild(bar);}
-    if(acting()&&s.phase==="final"){                  // 刺客指认梅林
+    if(member&&pv&&pv.role===2&&pv.guess_required===true&&s.phase==="final"&&!s.done){
       const w=document.createElement("div");w.className="gsec";w.textContent="🎯 谁是梅林？指认一人";box.appendChild(w);
       const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin:4px 0";
-      (s.players||[]).forEach(u=>{if(u!==me)bar.appendChild(gBtn("指认 "+gnick(u),{op:"guess",target:u},false))});
+      (s.players||[]).forEach(u=>{if(u!==me)bar.appendChild(avButton("指认 "+gnick(u),{op:"guess",target:u}));});
       box.appendChild(bar);}
     if(s.leader&&s.phase!=="final"){const t=document.createElement("div");t.style.cssText="margin-top:6px;color:var(--dim);font-size:12px";
       t.textContent="👑 当前领袖："+gnick(s.leader);box.appendChild(t);}
@@ -4838,60 +4859,7 @@ const GRENDER={
       w.innerHTML="<span style='color:var(--dim);font-size:12px'>你的手牌：</span>"+p.hand.map(pokerCard).join("");
       box.appendChild(w);}
   },
-  betrayal(box,s){
-    const my=state.uid;
-    const d=document.createElement("div");d.style.cssText="padding:2px";
-    d.innerHTML="<div class='gsec'>阶段："+({explore:"探索",haunt:"惊魂"}[s.phase]||s.phase)
-      +" · 🔮 预兆 "+s.omens+" · 轮到 "+esc(gnick(s.turn_uid))+"（剩 "+s.steps_left+" 步）</div>"
-      +"<div style='font-size:11px;color:var(--dim)'>💀 已死："
-      +((s.dead||[]).map(u=>esc(gnick(u))).join("、")||"无")+"</div>";
-    box.appendChild(d);
-    // 地图：把 "x,y" 房间网格化；玩家落位显示座位号
-    const keys=Object.keys(s.rooms||{}).map(k=>k.split(",").map(Number));
-    if(keys.length){
-      const xs=keys.map(k=>k[0]),ys=keys.map(k=>k[1]);
-      const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
-      const at={};Object.entries(s.pos||{}).forEach(([u,p])=>{(at[p]=at[p]||[]).push(+u)});
-      const map=document.createElement("div");map.className="gmap";
-      map.style.gridTemplateColumns="repeat("+(x1-x0+1)+",minmax(52px,1fr))";
-      for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
-        const c=document.createElement("div");
-        const key=x+","+y;
-        c.innerHTML=(s.rooms[key]?esc(s.rooms[key]):"")
-          +((at[key]||[]).map(u=>"<b>"+(s.seats[u]||u)+"</b>").join(""));
-        if((at[key]||[]).includes(my))c.style.outline="2px solid #e33";
-        map.appendChild(c);}
-      box.appendChild(map);}
-    // 属性表
-    const stats=document.createElement("div");stats.style.cssText="font-size:11px;margin-top:6px";
-    stats.innerHTML=Object.entries(s.stats||{}).map(([u,st])=>{
-      const uid=+u;
-      return "<div class='glogl'>"+(uid===my?"<b>你</b>":esc(gnick(uid)))+"：💪"+st.might+" 🏃"+st.speed
-        +" 🧠"+st.sanity+" 📚"+st.knowledge
-        +((s.items[u]||[]).length?"　🎒"+s.items[u].join("、"):"")
-        +((s.dead||[]).includes(uid)?"　💀":"")+"</div>";}).join("");
-    box.appendChild(stats);
-    // 动作
-    if(s.turn_uid===my){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin:8px";
-      [["⬆ 上","up"],["⬇ 下","down"],["⬅ 左","left"],["➡ 右","right"]].forEach(([t,dn])=>
-        bar.appendChild(gBtn(t,{move:dn},s.steps_left<=0)));
-      bar.appendChild(gBtn("结束回合",{end:true}));
-      box.appendChild(bar);
-      const pv=state.gpriv;
-      if(pv&&(pv.items||[]).length){
-        const ub=document.createElement("div");
-        ub.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin:4px";
-        pv.items.forEach(it=>ub.appendChild(gBtn("使用 "+it,{use:it})));
-        box.appendChild(ub);}
-      const here=Object.entries(s.pos||{}).filter(([u,p])=>+u!==my&&p===s.pos[my]).map(([u])=>+u);
-      if(here.length&&s.phase==="haunt"){
-        const ab=document.createElement("div");
-        ab.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin:4px";
-        here.forEach(u=>ab.appendChild(gBtn("⚔ 攻击 "+gnick(u),{attack:u})));
-        box.appendChild(ab);}
-    }
-  },
+  betrayal(box,s){ ManorWeb.paint(box,s); },
   drawguess(box,s){
     const my=state.uid,amDrawer=s.drawer_uid===my;
     const d=document.createElement("div");d.style.cssText="text-align:center;margin-bottom:6px;font-size:13px";
@@ -5219,9 +5187,9 @@ const GRENDER={
       +"<div class='gsec'>你的空闲工人："+(s.workers-(s.placed[state.uid]||0))+"</div>"
       +"<div style='display:grid;grid-template-columns:repeat(4,minmax(60px,1fr));gap:4px'>"
       +(s.spots||[]).map(sp=>{const free=sp.owner==null;
-        return "<div style='border:1px solid "+(sp.exclusive?"#e8b93c":"var(--line,#ddd)")
+        return "<div style='border:1px solid var(--line,#ddd)"
           +(free?"":";background:var(--line,#eee)")+";border-radius:6px;padding:5px;text-align:center'>"
-          +(sp.exclusive?"✨":"")+"工位"+sp.id+"<br><b>"+sp.pts+"</b> 分<br>"
+          +"工位"+sp.id+"<br><b>"+sp.pts+"</b> 分<br>"
           +(free?"<span style='color:var(--dim)'>空闲</span>":esc(gnick(sp.owner)))+"</div>";}).join("")+"</div>";
     box.appendChild(d);
     if(s.turn_uid===state.uid){
@@ -5271,144 +5239,7 @@ const GRENDER={
       bar.append(di,x,y,S,b);box.appendChild(bar);
       box.appendChild(gBtn("⏭ 跳过",{op:"pass"}));}
   },
-  gemcity(box,s){
-    box.appendChild(gTitle("gemcity","璀璨宝石 · 收集换分"));
-    const root=document.createElement("div");root.className="ct-table ct-gemcity";box.appendChild(root);box=root;
-    const C_CN=s.colors||{};
-    // E3：宝石图标描边色（深浅主题通用；o/d 取中间调，避免纯黑/纯白在某一主题下不可辨）。
-    const GMCOL={o:"#8a8a8a",d:"#b9c6d4",r:"#d2534f",e:"#3a9b5f",s:"#4a7de0",g:"#c9962a"};
-    const gmI=(c,sz)=>{const u=BG["gem_"+c];const n=sz||13;if(u)return "<img src='"+u+"' width='"+n+"' height='"+n+"' style='vertical-align:middle' alt=''>";return GMCOL[c]?"<span style='color:"+GMCOL[c]+"'>"+resIcon(c,n)+"</span>":"";};
-    const tok=(t)=>Object.entries(t||{}).map(([c,n])=>gmI(c)+"×"+n).join("　");
-    const my=state.uid;
-    const mine=CardTableWeb.owned("gemcity",s);
-    const myTurn=CardTableWeb.canAct("gemcity",s,s.turn_uid);
-    const context=state.groom+":"+my+":"+((state.gst.room||{}).round||0);
-    if(state.gccontext!==context){state.gcsel=[];state.gccontext=context;}
-    if(!myTurn)state.gcsel=[];                  // 换手/观战后丢弃残留选择
-    const sel=state.gcsel||[];
-    const bank=s.bank||{};
-    const toks=(s.tokens&&s.tokens[my])||{};
-    const disc=(s.discount&&s.discount[my])||{};
-    // 客户端镜像服务端扣款规则：need=max(0,cost-discount)，金补各色缺口总和
-    const afford=(card)=>{const cost=(card&&card.cost)||{};let gold=0;
-      for(const c in cost){const need=Math.max(0,(cost[c]||0)-(disc[c]||0));
-        gold+=Math.max(0,need-(toks[c]||0));}
-      return gold<=(toks.g||0);};
-    const gact=(a)=>{if(CardTableWeb.canAct("gemcity",s,s.turn_uid))gameAPI("action",{room_id:state.groom,action:a});};
-    const pickChip=(c)=>{
-      const cur=state.gcsel||[],n=bank[c]||0;
-      if(!myTurn||n<=0)return;
-      if(cur.includes(c)){
-        if(cur.length===1&&n>=4){state.gcsel=[];gact({op:"take2",color:c});return}
-        state.gcsel=cur.filter(k=>k!==c);renderGamePanel();return;}
-      if(cur.length<3){const next=cur.concat([c]);
-        if(next.length===3){state.gcsel=[];gact({op:"take",colors:next});return}
-        state.gcsel=next;renderGamePanel();}
-    };
-    const tools=document.createElement("div");tools.className="ct-gem-tools";box.appendChild(tools);
-    const d=document.createElement("div");
-    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>回合 → "+esc(gnick(s.turn_uid))
-      +"　"+scoreHTML(s.score)+"</div>";
-    tools.appendChild(d);
-    // 宝石池：5 色可点击筹码（金不可取，仅展示）
-    const bk=document.createElement("div");
-    bk.style.cssText="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0";
-    const bkl=document.createElement("span");
-    bkl.style.cssText="font-size:11px;color:var(--dim)";bkl.textContent="宝石池：";
-    bk.appendChild(bkl);
-    ["o","d","r","e","s"].forEach(c=>{
-      const n=bank[c]||0,on=sel.includes(c);
-      const el=document.createElement("button");el.type="button";el.className="ct-bank-chip";el.dataset.gem=c;
-      el.disabled=!myTurn||n<=0;el.setAttribute("aria-label","选择 "+(C_CN[c]||c));el.setAttribute("aria-pressed",String(on));
-      el.style.cssText="display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:var(--r1);font-size:12px;border:1px solid "
-        +(on?"#2E8B57":(n>0?"var(--line,#ddd)":"var(--line,#eee)"))
-        +";background:"+(on?"rgba(46,139,87,.16)":"transparent")
-        +";cursor:"+(myTurn&&n>0?"pointer":"default")+";opacity:"+(n>0?1:0.45);
-      el.innerHTML=gmI(c,15)+"<b>"+n+"</b>";
-      if(myTurn&&n>0)el.onclick=()=>pickChip(c);
-      bk.appendChild(el);});
-    const gold=document.createElement("span");
-    gold.style.cssText="font-size:12px;margin-left:4px";
-    gold.innerHTML=gmI("g",15)+"×"+(bank.g||0);
-    bk.appendChild(gold);
-    tools.appendChild(bk);
-    if(sel.length){                             // 已选提示 + 取消选择
-      const line=document.createElement("div");
-      line.style.cssText="display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11px;margin:2px 0";
-      const tip=document.createElement("span");
-      tip.innerHTML="已选："+sel.map(c=>gmI(c,12)+esc(C_CN[c]||c)).join("、")
-        +(sel.length===1&&(bank[sel[0]]||0)>=4?"（再点同色可取 2）":"（选满 3 色自动取）");
-      const takeBtn=document.createElement("button");takeBtn.className="gbtn go";
-      takeBtn.textContent="💎 取 "+sel.length+" 颗";
-      takeBtn.onclick=()=>{const cur=(state.gcsel||[]).slice();if(!cur.length)return;
-        state.gcsel=[];gact({op:"take",colors:cur});};
-      const cancel=document.createElement("button");cancel.className="gbtn";cancel.textContent="取消选择";
-      cancel.onclick=()=>{state.gcsel=[];renderGamePanel();};
-      line.append(tip,takeBtn,cancel);tools.appendChild(line);}
-    if(mine){const wallet=document.createElement("div");wallet.className="ct-wallet";
-      wallet.innerHTML="你的筹码："+tok(toks)+"<br>永久折扣："+tok(disc)+" · 贵宾×"+(((state.gpriv||{}).nobles||[]).length);tools.appendChild(wallet);}
-    CardTableWeb.personal(box,s,afford,gact);
-    const mkt=document.createElement("section");
-    for(let t=1;t<=3;t++){
-      const title=document.createElement("h3");title.className="ct-section-title";
-      title.textContent=t+"级 · "+(["","矿场","工坊","商贸城市"][t])+" · 点图购买，按钮保留";mkt.appendChild(title);
-      const row=document.createElement("div");row.className="ct-market-row";
-      const cards=(s.market||{})[t]||[];
-      const reserveFull=mine&&((state.gpriv||{}).reserved||[]).length>=3;
-      cards.forEach((card,index)=>row.appendChild(CardTableWeb.development(card,{
-        tier:t,colors:C_CN,myTurn,canBuy:myTurn&&afford(card),
-        onBuy:()=>gact({op:"buy",tier:t,idx:index}),
-        canReserve:myTurn&&!reserveFull,reserveFull,
-        onReserve:()=>gact({op:"reserve",tier:t,idx:index})})));
-      if(!cards.length){const empty=document.createElement("p");empty.textContent="本级已售罄";row.appendChild(empty);}
-      mkt.appendChild(row);
-    }
-    box.appendChild(mkt);
-    CardTableWeb.patrons(box,s,disc);
-    if(myTurn){
-      const more=document.createElement("details");more.className="ct-legacy";
-      const summary=document.createElement("summary");summary.textContent="更多输入方式";more.appendChild(summary);box.appendChild(more);box=more;
-      // 文本输入兜底（默认交互已是点击）
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-      bar.appendChild(document.createTextNode("取 1~3 异色(空格分隔)"));
-      const I=Object.assign(document.createElement("input"),{placeholder:"o d r",style:"width:80px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"});
-      const b=document.createElement("button");b.className="gbtn go";b.textContent="💎 取";
-      b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"take",colors:(I.value.trim().split(/\s+/))}});
-      bar.append(I,b);box.appendChild(bar);
-      const b2=document.createElement("div");b2.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center";
-      b2.appendChild(document.createTextNode("买卡："));
-      const S1=document.createElement("select"),S2=document.createElement("select");
-      [1,2,3].forEach(t=>{const o=document.createElement("option");o.value=t;o.textContent=t+"级";S1.appendChild(o)});
-      for(let i=0;i<4;i++){const o=document.createElement("option");o.value=i;o.textContent="[卡"+i+"]";S2.appendChild(o)}
-      const bb=document.createElement("button");bb.className="gbtn";bb.textContent="🛒 购买";
-      bb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"buy",tier:S1.value,idx:S2.value}});
-      b2.append(S1,S2,bb);box.appendChild(b2);
-      const s3=document.createElement("div");s3.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center";
-      s3.appendChild(document.createTextNode("取2同色 "));
-      const S3=Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
-      ["o","d","r","e","s"].forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=(C_CN[c]||c);S3.appendChild(o)});
-      const t2b=document.createElement("button");t2b.className="gbtn";t2b.textContent="➡ 取2";
-      t2b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"take2",color:S3.value}});
-      s3.append(S3,t2b);box.appendChild(s3);
-      const resBox=document.createElement("div");resBox.style.cssText="display:flex;gap:6px;margin-top:6px";
-      resBox.appendChild(document.createTextNode("保留："));
-      const st=document.createElement("select");[1,2,3].forEach(t=>{const o=document.createElement("option");o.value=t;o.textContent=t+"级";st.appendChild(o)});
-      const si=document.createElement("select");for(let i=0;i<4;i++){const o=document.createElement("option");o.value=i;o.textContent="[卡"+i+"]";si.appendChild(o)}
-      const rb=document.createElement("button");rb.className="gbtn";rb.textContent="📥 保留";
-      rb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"reserve",tier:parseInt(st.value,10),idx:parseInt(si.value,10)}});
-      resBox.append(st,si,rb);box.appendChild(resBox);
-      const rsv=(state.gpriv&&state.gpriv.reserved)||[];
-      if(rsv.length){
-        const brBox=document.createElement("div");brBox.style.cssText="display:flex;gap:6px;margin-top:6px;align-items:center";
-        brBox.appendChild(document.createTextNode("购保留卡："));
-        const sr=document.createElement("select");sr.style.cssText="border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)";
-        rsv.forEach((c,i)=>{const o=document.createElement("option");o.value=i;
-          o.textContent="["+i+"] 🎴+"+c.pts+" "+ (C_CN&&C_CN[c.disc]?C_CN[c.disc]:c.disc);sr.appendChild(o)});
-        const brb=document.createElement("button");brb.className="gbtn";brb.textContent="♻ 购买";
-        brb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"buy_res",idx:parseInt(sr.value,10)}});
-        brBox.append(sr,brb);box.appendChild(brBox);}
-    }
-  },
+  gemcity(box,s){CardTableWeb.gemcity(box,s);},
   siji(box,s){
     box.appendChild(gTitle("siji","四季物语 · 引擎构筑"));
     const d=document.createElement("div");

@@ -104,199 +104,428 @@ def _cost(cv, rect, cost, size=8):
         _token(cv, rect[0]+8+i*step, rect[1], key, value, size)
 
 
-def _development(cv, card, rect, affordable=False, reserve=False):
-    x0, y0, x1, y1 = rect
-    height = y1-y0
-    box(cv, rect, "#fffdf5", GREEN if affordable else "#a7b9aa", 2 if affordable else 1)
-    image_rect = x0+2, y0+2, x1-2, y1-37
-    tier = card.get("tier", 1)
-    if not art(cv, f"gemcity-tier{tier}.webp", card.get("art"), 4, 5, image_rect):
-        box(cv, image_rect, "#e9e5d6", "#e9e5d6")
-        text(cv, (x0+x1)/2, (y0+y1-37)/2, f"{tier}级发展卡", 10, MUTED, "center")
-    title = card.get("title") or f"{tier}级·{GEMS.get(card.get('disc'), ('宝石',))[0]}发展卡"
-    text(cv, x0+4, y1-29, title, 8 if height < 100 else 10, width=x1-x0-(36 if reserve else 8))
-    _token(cv, x1-13, y0+12, card.get("disc"), "+1", 9)
-    box(cv, (x0+3, y0+3, x0+34, y0+21), "#234b43", "#234b43")
-    text(cv, x0+18, y0+12, f"{card.get('pts', 0)}分", 8, "#fff", "center", True)
-    _cost(cv, (x0+5, y1-10, x1-5, y1), card.get("cost"), 7)
-    if reserve:
-        r = x1-28, y1-40, x1-2, y1-23
-        button(cv, r, "留")
-        return r
+# GemCity owns the functions below; shared helpers and the Love Letter court stay unchanged.
+_GC_NAMES = {'o':'黑玛瑙','d':'白钻石','r':'红宝石','e':'祖母绿','s':'蓝宝石','g':'黄金'}
+_GC_FILL = {'o':'#252a2b','d':'#ecf2f5','r':'#bd3448','e':'#268558','s':'#246eb1','g':'#d7a741'}
+_GC_LIGHT, _GC_DARK, _GC_EDGE = '#f5ead3', '#203833', '#c1a578'
 
 
-def paint_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h, afford):
-    cv.create_rectangle(0, 0, w, h, fill=PAPER, outline=PAPER, tags="card-table-paper")
-    ui["game"] = "gemcity"
-    ui["_card_private"] = priv
-    ui.pop("_hover", None)
-    context = ui.get("_room_context"), me
-    if ui.get("gc_view_context") != context:
-        ui.update(gc_view_context=context, gc_view="market", gc_page=0, gc_detail=None)
-    private = _private(st, ui, me, priv)
-    reserved, collection = private.get("reserved") or [], private.get("collection") or []
-    view = ui.get("gc_view", "market")
-    if not _member(st, ui, me) and view in ("reserved", "collection"):
-        view = ui["gc_view"] = "market"
-        ui["gc_detail"] = None
-    for name in ("gc_bank", "gc_cards", "gc_reserve", "gc_reserved", "gc_navigation"):
-        ui[name] = []
-    ui["gc_take"] = None
-    active = st.get("status") == "playing" and st.get("turn_uid") == me and st.get("winner_uid") is None
-    if not active:
-        ui["gc_sel"] = []
-    sel = ui.setdefault("gc_sel", [])
-    box(cv, (0, 0, w, 34), "#244f46", "#244f46")
-    title = "璀璨宝石 · 发展卡市集"
-    if st.get("winner_uid") is not None:
-        title = f"{nick(st['winner_uid'])} 获胜"
-    text(cv, 12, 16, title, 11, "#fff", bold=True)
-    text(cv, w-10, 16, "轮到你" if active else "等待 " + str(nick(st.get("turn_uid"))), 9, "#e1ead6", "e")
-    tabs = [("market", "三级市集"), ("reserved", f"我的保留 {len(reserved)}"),
-            ("collection", f"我的卡册 {len(collection) or private.get('cards', 0)}"),
-            ("nobles", f"贵宾 {len(st.get('nobles') or [])}")]
-    for i, (key, label) in enumerate(tabs):
-        rect = 7+i*(w-14)/4, 40, 4+(i+1)*(w-14)/4, 65
-        enabled = key not in ("reserved", "collection") or _member(st, ui, me)
-        button(cv, rect, label, view == key, enabled)
-        if enabled:
-            ui["gc_navigation"].append((*rect, key))
-    top, bottom = 72, h-104
-    market = st.get("market") or {}
-    tokens = st.get("tokens") or {}
-    discounts = st.get("discount") or {}
-    mine, discount = tokens.get(str(me), tokens.get(me, {})), discounts.get(str(me), discounts.get(me, {}))
-    detail = ui.get("gc_detail")
-    if view == "collection" and type(detail) is int and 0 <= detail < len(collection):
-        card = collection[detail]
-        tier = card.get("tier", 1)
-        box(cv, (6, 68, w-6, h-5), PAPER, "#c6cfc5")
-        rect = 12, 72, 114, 99
-        button(cv, rect, "返回卡册")
-        ui["gc_navigation"].append((*rect, "album_back"))
-        title = card.get("title") or f"{tier}级发展卡"
-        text(cv, 126, 85, title, 11, GREEN, bold=True, width=w-140)
-        frame = 12, 105, w-12, h-54
-        box(cv, frame, "#eee7d9", "#b9a786")
-        if not art(cv, f"gemcity-tier{tier}.webp", card.get("art"), 4, 5, frame, contain=True):
-            text(cv, w/2, (105+h-54)/2, title, 17, MUTED, "center")
-        color = GEMS.get(card.get("disc"), ("宝石",))[0]
-        text(cv, 14, h-34, f"{tier}级 · {card.get('pts', 0)}分 · {color}折扣 +1", 10, GREEN, bold=True)
-        text(cv, w-180, h-34, "费用", 9, MUTED)
-        _cost(cv, (w-142, h-34, w-14, h-20), card.get("cost"), 8)
-        text(cv, w/2, h-14, "已购买的卡面 · 只读欣赏", 9, MUTED, "center")
+def _gc_text(cv,x,y,value,size=9,color=_GC_LIGHT,anchor='w',bold=False,width=None):
+    text(cv,x,y,value,size,color,anchor,bold,width)
+
+
+def _gc_button(cv,rect,label,selected=False,enabled=True):
+    box(cv,rect,'#d9bd83' if selected else '#344d44','#d9bd83' if enabled else '#53645a')
+    _gc_text(cv,(rect[0]+rect[2])/2,(rect[1]+rect[3])/2,label,8,
+             '#182d27' if selected else (_GC_LIGHT if enabled else '#9ba99c'),'center',True)
+
+
+@lru_cache(maxsize=6)
+def _gc_jewel_source(color):
+    from PIL import Image
+    from boardgames.gallery import resource_path
+    with Image.open(resource_path('gemcity-jewels.webp')) as image:
+        image=image.convert('RGBA')
+        i=(*COLORS,'g').index(color)
+        return image.crop((i%3*image.width//3,i//3*image.height//2,
+                           (i%3+1)*image.width//3,(i//3+1)*image.height//2))
+
+
+def _gc_jewel(cv,x,y,color,radius):
+    """Preserve the transparent jewel atlas, with a bounded per-canvas Tk cache."""
+    if color not in _GC_FILL:return
+    if isinstance(getattr(cv,'_w',None),str):
+        try:
+            from PIL import Image,ImageTk
+            side=max(8,round(radius*2.25))
+            cache=getattr(cv,'_gc_jewel_photos',None)
+            if cache is None:cache=cv._gc_jewel_photos=OrderedDict()
+            key=color,side
+            if key not in cache:
+                cache[key]=ImageTk.PhotoImage(_gc_jewel_source(color).resize((side,side),Image.Resampling.LANCZOS),master=cv)
+                while len(cache)>48:cache.popitem(last=False)
+            cache.move_to_end(key)
+            cv.create_image(x,y,image=cache[key],tags='gc-jewel')
+            return
+        except (ImportError,OSError,ValueError):pass
+    fill=_GC_FILL[color]
+    if color=='d':points=[x,y-radius,x+radius,y,x,y+radius,x-radius,y]
+    elif color=='e':points=[x-radius*.6,y-radius,x+radius*.6,y-radius,x+radius,y-radius*.6,x+radius,y+radius*.6,x+radius*.6,y+radius,x-radius*.6,y+radius,x-radius,y+radius*.6,x-radius,y-radius*.6]
+    elif color=='r':points=[x-radius*.6,y-radius,x+radius*.6,y-radius,x+radius,y,x+radius*.6,y+radius,x-radius*.6,y+radius,x-radius,y]
+    elif color=='o':points=[x-radius*.7,y-radius,x+radius*.7,y-radius,x+radius,y-radius*.7,x+radius,y+radius*.7,x+radius*.7,y+radius,x-radius*.7,y+radius,x-radius,y+radius*.7,x-radius,y-radius*.7]
+    else:
+        cv.create_oval(x-radius,y-radius,x+radius,y+radius,fill=fill,outline='#d7d3c5',width=1,tags='gc-jewel-fallback')
         return
-    if view == "market":
-        row_height = (bottom-top)/3
-        card_width = (w-40)/4-6
-        for row, tier in enumerate((3, 2, 1)):
-            y = top+row*row_height
-            cv.create_rectangle(6, y+3, 25, y+27, fill=GREEN, outline=GREEN, tags="gc-tier-label")
-            text(cv, 15.5, y+15, str(tier), 9, PAPER, "center", True)
-            for index, card in enumerate(market.get(str(tier), market.get(tier, []))[:4]):
-                x = 28+index*(card_width+6)
-                rect = x, y, x+card_width, y+row_height-6
-                ok = afford(mine, discount, card)
-                r = _development(cv, card, rect, ok, True)
-                ui["gc_cards"].append((*rect, tier, index, ok))
-                ui["gc_reserve"].append((*r, tier, index))
-    elif view in ("reserved", "collection"):
-        cards = reserved if view == "reserved" else collection
-        page = min(max(0, ui.get("gc_page", 0)), max(0, (len(cards)-1)//6))
-        ui["gc_page"] = page
-        shown = cards[page*6:page*6+6]
-        cols = 3
-        rows = 1 if len(shown) <= 3 else 2
-        cw, ch = (w-28)/cols-8, (bottom-top-26)/rows-5
-        for i, card in enumerate(shown):
-            x, y = 14+(i%cols)*(cw+8), top+(i//cols)*(ch+5)
-            rect = x, y, x+cw, y+ch
-            ok = afford(mine, discount, card)
-            _development(cv, card, rect, ok if view == "reserved" else False)
-            if view == "reserved":
-                ui["gc_reserved"].append((*rect, page*6+i, ok))
-            else:
-                ui["gc_navigation"].append((*rect, ("open", page*6+i)))
-        if not cards:
-            text(cv, w/2, (top+bottom)/2, "暂无保留卡" if view == "reserved" else
-                 (f"已购 {private.get('cards', 0)} 张，服务器未提供卡册" if private.get("cards") else "购买发展卡后会收入你的卡册"),
-                 11, MUTED, "center")
-        elif view == "reserved":
-            text(cv, 14, bottom-10, "绿边卡可点击购买 · 图号与市集原卡一致", 9, GREEN)
+    cv.create_polygon(*points,fill=fill,outline='#d7d3c5',width=1,tags='gc-jewel-fallback')
+
+
+def _gc_chip(cv,x,y,color,value,radius=7):
+    """Costs always have a circular ground and a true, contrasting rule number."""
+    fill=_GC_FILL.get(color,'#68776b')
+    cv.create_oval(x-radius,y-radius,x+radius,y+radius,fill=fill,outline='#f5e9d0',width=1,tags='gc-cost-chip')
+    _gc_text(cv,x,y,value,max(7,round(radius*.8)),'#172d32' if color in ('d','g') else '#ffffff','center',True)
+
+
+def _gc_cost(cv,x,y,width,cost,radius=7):
+    values=[(k,(cost or {}).get(k,0)) for k in COLORS if (cost or {}).get(k,0)]
+    if not values:
+        _gc_text(cv,x,y,'免费',7,'#fff8e6',bold=True)
+        return
+    pitch=radius*2+2
+    cols=max(1,min(len(values),int(width//pitch)))
+    rows=(len(values)+cols-1)//cols
+    for i,(key,value) in enumerate(values):
+        _gc_chip(cv,x+radius+(i%cols)*pitch,y-(rows-1-i//cols)*pitch,key,value,radius)
+
+
+def _gc_art_index(card):
+    index,disc=card.get('art'),card.get('disc')
+    if (card.get('art_set')=='jewel-v2' and type(index) is int and 0<=index<20
+            and disc in COLORS and index//4==COLORS.index(disc)):
+        return index
+    return None
+
+
+def _gc_name(card):
+    # Older cards could have an unrelated yellow/purple/blue painting and name.
+    # Their actual permanent discount is the only safe source for the neutral face.
+    if _gc_art_index(card) is not None and card.get('title'):return str(card['title'])
+    return f"{_GC_NAMES.get(card.get('disc'),'宝石')}·{card.get('tier',1)}级发展卡"
+
+
+def _gc_signature(card):
+    return (card.get('art_set'),card.get('tier'),card.get('art'),card.get('disc'),
+            card.get('title'),card.get('pts'),tuple(sorted((card.get('cost') or {}).items())))
+
+
+def _development(cv,card,rect,affordable=False,reserve=False,selected=False,contain=False):
+    """Full-bleed portrait; only real prestige, permanent jewel and costs overlay it."""
+    x0,y0,x1,y1=rect
+    height,width=y1-y0,x1-x0
+    box(cv,rect,'#384d43','#ffe1a1' if selected else ('#92c799' if affordable else '#bbac87'),3 if selected else 1)
+    index=_gc_art_index(card)
+    inner=x0+2,y0+2,x1-2,y1-2
+    if index is None or not art(cv,f"gemcity-tier{card.get('tier',1)}.webp",index,4,5,inner,contain=contain):
+        fill=_GC_FILL.get(card.get('disc'),'#546356')
+        box(cv,inner,'#3a4d43','#3a4d43')
+        # Neutral cards have a large unambiguous jewel, never the old illustration.
+        _gc_jewel(cv,(x0+x1)/2,y0+height*.46,card.get('disc'),min(width*.24,height*.19))
+        _gc_text(cv,(x0+x1)/2,y0+height*.7,_GC_NAMES.get(card.get('disc'),'发展卡'),7,'#f0e6d3','center')
+    r=max(7,min(13,width*.14))
+    # Dark local backing keeps a white diamond distinct from every painting.
+    cv.create_oval(x1-r*2.15,y0+3,x1-3,y0+r*2.15,fill='#203832',outline='#cfba8c',tags='gc-permanent-ground')
+    _gc_jewel(cv,x1-r-3,y0+r+3,card.get('disc'),r*.85)
+    pts=card.get('pts',0)
+    if pts:
+        # Small shadow rather than a badge or a strip cut from the artwork.
+        _gc_text(cv,x0+6,y0+13,pts,max(11,min(22,round(height*.13))),'#1c2924',bold=True)
+        _gc_text(cv,x0+5,y0+12,pts,max(11,min(22,round(height*.13))),'#fff3cb',bold=True)
+    # A narrow dark caption is part of the full card; there is no white fee panel.
+    box(cv,(x0+2,y1-15,x1-2,y1-2),'#273e36','#273e36')
+    label=_gc_name(card)
+    limit=max(4,int(width/10))
+    if len(label)>limit:label=label[:limit-1]+'…'
+    _gc_text(cv,(x0+x1)/2,y1-8,label,7 if width<100 else 9,'#fff2d5','center')
+    _gc_cost(cv,x0+5,y1-25,width-10,card.get('cost'),max(6,min(10,round(width*.1))))
+
+
+def _gc_active(st,ui,me):
+    return (ui.get('connected',True) and _member(st,ui,me)
+            and st.get('status',(ui.get('room') or {}).get('status'))=='playing'
+            and (ui.get('room') or {}).get('status','playing')=='playing'
+            and st.get('turn_uid')==me and st.get('winner_uid') is None)
+
+
+def _gc_book(st,field,uid):
+    values=st.get(field) or {}
+    return values.get(str(uid),values.get(uid,{}))
+
+
+def _gc_resolve(ui,focus=None):
+    st,me=ui.get('state') or {},ui.get('me')
+    focus=ui.get('gc_focus') if focus is None else focus
+    if not isinstance(focus,tuple) or len(focus)!=4:return None
+    kind,tier,index,signature=focus
+    if kind=='market':
+        market=st.get('market') or {}
+        cards=market.get(str(tier),market.get(tier,[]))
+    else:
+        cards=_private(st,ui,me,ui.get('_card_private')).get(kind) or []
+    if type(index) is not int or not 0<=index<len(cards):return None
+    card=cards[index]
+    return card if _gc_signature(card)==signature else None
+
+
+def _gc_focus(kind,tier,index,card):
+    return kind,tier,index,_gc_signature(card)
+
+
+def _gc_layout(w,h):
+    top,bottom=57,h-83
+    row=(bottom-top)/3
+    ch=max(38,row-6);cw=ch*.72
+    deck=min(40,max(24,cw*.34));bank=min(76,max(44,cw*.63));noble=min(144,max(76,cw*1.25));gap=8
+    total=deck+gap+4*cw+18+gap+bank+gap+noble
+    if total>w-12:
+        ratio=max(.1,(w-12-42)/(total-42))
+        cw*=ratio;ch*=ratio;deck*=ratio;bank*=ratio;noble*=ratio
+        total=deck+gap+4*cw+18+gap+bank+gap+noble
+    left=max(4,(w-total)/2)
+    market=left+deck+gap
+    bx=market+4*cw+18+gap
+    return dict(top=top,bottom=bottom,row=row,ch=ch,cw=cw,deck=deck,left=left,
+                market=market,bank=(bx,bx+bank),noble=(bx+bank+gap,bx+bank+gap+noble))
+
+
+def _gc_nobles(cv,st,rect,ui=None,large=False):
+    x0,y0,x1,y1=rect
+    nobles=st.get('nobles') or []
+    ids,titles=st.get('noble_art') or [],st.get('noble_titles') or []
+    _gc_text(cv,(x0+x1)/2,y0+6,'贵宾',9,'#e3cea0','center',True)
+    if not nobles:
+        _gc_text(cv,(x0+x1)/2,(y0+y1)/2,'均已受邀',8,'#d0c7ac','center')
+        return
+    pitch=(y1-y0-18)/len(nobles)
+    for i,cost in enumerate(nobles):
+        top=y0+18+i*pitch
+        height=min(pitch-4,(x1-x0)*1.2 if large else pitch-4)
+        r=x0+1,top,x1-1,top+height
+        box(cv,r,'#3b4e42','#b89d70')
+        art(cv,'gemcity-patrons.webp',ids[i] if i<len(ids) else None,5,1,(r[0]+1,r[1]+1,r[2]-1,r[3]-1))
+        _gc_text(cv,r[2]-5,r[1]+10,'3',11,'#fff2c2','e',True)
+        if large or pitch>82:
+            box(cv,(r[0]+1,r[3]-34,r[2]-1,r[3]-1),'#293e33','#293e33')
+            _gc_text(cv,r[0]+5,r[3]-26,titles[i] if i<len(titles) else f'贵宾 {i+1}',8,width=x1-x0-10)
+        _gc_cost(cv,r[0]+4,r[3]-10,x1-x0-8,cost,7 if x1-x0<110 else 9)
+        if large:_gc_text(cv,r[0]+4,r[1]+11,'需折扣',7,'#f5e8c4')
+    if ui is not None:ui['gc_navigation'].append((*rect,'nobles'))
+
+
+def _gc_bank(cv,st,ui,rect,active):
+    x0,y0,x1,y1=rect;center=(x0+x1)/2
+    _gc_text(cv,center,y0+6,'银行',9,'#e3cea0','center',True)
+    pitch=(y1-y0-18)/6
+    for i,key in enumerate((*COLORS,'g')):
+        y=y0+18+(i+.42)*pitch
+        radius=max(10,min(19,pitch*.29))
+        fill=_GC_FILL[key]
+        for offset in (3,1,0):
+            cv.create_oval(center-radius,y-radius+offset,center+radius,y+radius+offset,fill=fill,outline='#d5c5a1')
+        _gc_jewel(cv,center,y-2,key,radius*.7)
+        # The count is a separate contrasting disc, not painted into the jewel art.
+        cv.create_oval(center+radius*.35,y+radius*.1,center+radius*1.2,y+radius*.95,fill='#172b26',outline='#e0d1b0')
+        _gc_text(cv,center+radius*.76,y+radius*.55,(st.get('bank') or {}).get(key,0),8,'#fff4d4','center',True)
+        _gc_text(cv,center,y+radius+9,'金·万能' if key=='g' else GEMS[key][0],7,'#e7ddc6','center')
+        if key in (ui.get('gc_sel') or []):
+            cv.create_oval(center-radius-3,y-radius-3,center+radius+3,y+radius+3,outline='#ffe098',width=2)
+        if key!='g':
+            r=(x0,y0+18+i*pitch,x1,y0+18+(i+1)*pitch)
+            ui['gc_bank'].append((*r,key));ui['gc_navigation'].append((*r,('bank',key)))
+
+
+def _gc_player_bar(cv,st,ui,me,nick,w,h):
+    box(cv,(0,h-48,w,h),'#182e28','#44594a')
+    players=st.get('players') or []
+    order=([me] if me in players else [])+[u for u in players if u!=me]
+    ui['gc_players']=players
+    slots=min(len(order),max(1,int(w//230)))
+    if not slots:
+        _gc_text(cv,12,h-24,'观战 · 私人保留与藏册仅本人可见',9)
+        return
+    offset=ui.get('gc_inspect_idx',0)%len(order)
+    shown=(order+order)[offset:offset+slots]
+    for i,uid in enumerate(shown):
+        left=i*w/slots;right=(i+1)*w/slots
+        name=('我' if uid==me else str(nick(uid))[:5])
+        score=(st.get('score') or {}).get(str(uid),(st.get('score') or {}).get(uid,0))
+        _gc_text(cv,left+8,h-35,f'{name}  {score}分',8,'#efddb6',bold=True)
+        _gc_text(cv,left+8,h-15,'折扣',7,'#b0c5af')
+        held,discount=_gc_book(st,'tokens',uid),_gc_book(st,'discount',uid)
+        start=left+74;step=min(25,(right-start-6)/6)
+        for j,key in enumerate((*COLORS,'g')):
+            x=start+j*step
+            _gc_jewel(cv,x,h-35,key,5)
+            _gc_text(cv,x+7,h-35,held.get(key,0),7,'#fff4d4')
+            if key!='g':
+                _gc_jewel(cv,x,h-15,key,5)
+                _gc_text(cv,x+7,h-15,discount.get(key,0),7,'#fff4d4')
+        ui['gc_navigation'].append((left,h-48,right,h,'inspect'))
+
+
+def _gc_action_bar(cv,st,ui,me,private,w,h,afford):
+    y=h-79;box(cv,(5,y,w-5,h-52),'#2d4439','#68755b')
+    focus=ui.get('gc_focus');card=_gc_resolve(ui)
+    active=_gc_active(st,ui,me)
+    if card is not None:
+        kind,tier,index,_=focus
+        _gc_text(cv,12,y+13,_gc_name(card),8,width=max(80,w-266))
+        commands=[('赏卡','detail',True)]
+        if kind!='collection':
+            can_buy=active and afford(_gc_book(st,'tokens',me),_gc_book(st,'discount',me),card)
+            commands.insert(0,('买入' if active else '等待回合','buy',can_buy))
+        if kind=='market':commands.insert(1,('保留','reserve',active and len(private.get('reserved') or [])<3))
+        for j,(label,op,enabled) in enumerate(commands):
+            r=w-7-(len(commands)-j)*76,y+2,w-12-(len(commands)-1-j)*76,y+25
+            _gc_button(cv,r,label,op=='buy' and enabled,enabled)
+            if enabled:ui['gc_navigation'].append((*r,('command',op,focus)))
+        return
+    sel=ui.get('gc_sel') or []
+    _gc_text(cv,12,y+13,'选牌看费用 · 点宝石选色' if not sel else '已选 '+ '、'.join(GEMS[k][0] for k in sel),8,width=w-200)
+    take=w-177,y+2,w-94,y+25
+    _gc_button(cv,take,f'取 {len(sel)} 颗' if sel else '确认取筹码',bool(sel),active and bool(sel))
+    if active and sel:
+        ui['gc_take']=take;ui['gc_navigation'].append((*take,('take',tuple(sel))))
+    two=w-88,y+2,w-12,y+25
+    can_two=active and len(sel)==1 and (st.get('bank') or {}).get(sel[0],0)>=4
+    _gc_button(cv,two,'取同色 2',False,can_two)
+    if can_two:ui['gc_navigation'].append((*two,('take2',sel[0])))
+
+
+def paint_gemcity(cv,st,me,nick,submit,repaint,ui,priv,w,h,afford):
+    box(cv,(0,0,w,h),_GC_DARK,_GC_DARK)
+    ui.update(game='gemcity',_card_private=priv,_gc_afford=afford)
+    ui.pop('_hover',None)
+    context=ui.get('_room_context'),me
+    if ui.get('gc_view_context')!=context:
+        ui.update(gc_view_context=context,gc_view='market',gc_page=0,gc_detail=None,gc_focus=None,gc_sel=[])
+    private=_private(st,ui,me,priv)
+    view=ui.get('gc_view','market')
+    if not _member(st,ui,me) and view in ('reserved','collection'):
+        view=ui['gc_view']='market';ui['gc_detail']=ui['gc_focus']=None
+    for key in ('gc_cards','gc_reserve','gc_reserved','gc_bank','gc_navigation'):ui[key]=[]
+    ui['gc_take']=None
+    if not _gc_active(st,ui,me):ui['gc_sel']=[]
+    if _gc_resolve(ui) is None:ui['gc_focus']=None
+    box(cv,(0,0,w,27),'#182f28','#8e875f')
+    _gc_text(cv,10,13,'璀璨宝石 · 珠宝市集',11,'#f0dcad',bold=True)
+    status=(f"{nick(st['winner_uid'])} 获胜" if st.get('winner_uid') is not None else
+            '轮到你' if _gc_active(st,ui,me) else '等待 '+str(nick(st.get('turn_uid'))))
+    _gc_text(cv,w-10,13,status,8,'#e7dac0','e')
+    reserved,collection=private.get('reserved') or [],private.get('collection') or []
+    tabs=[('market','三级市集'),('reserved',f'保留 {len(reserved)}'),
+          ('collection',f"藏册 {len(collection) or private.get('cards',0)}"),('nobles',f"贵宾 {len(st.get('nobles') or [])}")]
+    for i,(key,label) in enumerate(tabs):
+        r=6+i*(w-12)/4,31,3+(i+1)*(w-12)/4,52
+        enabled=key not in ('reserved','collection') or _member(st,ui,me)
+        _gc_button(cv,r,label,view==key,enabled)
+        if enabled:ui['gc_navigation'].append((*r,key))
+    layout=_gc_layout(w,h);top,bottom=layout['top'],layout['bottom']
+    detail=ui.get('gc_detail')
+    detail_card=None
+    if type(detail) is int and view=='collection' and 0<=detail<len(collection):detail_card=collection[detail]
+    elif isinstance(detail,tuple):detail_card=_gc_resolve(ui,detail)
+    if detail_card is not None:
+        r=10,top,w-10,bottom;box(cv,r,'#253c32','#9c986f')
+        back=16,top+6,112,top+29;_gc_button(cv,back,'返回藏册' if view=='collection' else '返回牌桌')
+        ui['gc_navigation'].append((*back,'album_back'))
+        ch=max(40,bottom-top-43);cw=ch*.72
+        rect=18,top+36,18+cw,bottom-7
+        _development(cv,detail_card,rect,selected=True,contain=True)
+        x=rect[2]+20
+        _gc_text(cv,x,top+53,_gc_name(detail_card),12,bold=True,width=w-x-16)
+        _gc_text(cv,x,top+89,f"声望 {detail_card.get('pts',0)}",10,'#f1d69d')
+        _gc_jewel(cv,x+9,top+118,detail_card.get('disc'),10)
+        _gc_text(cv,x+28,top+118,_GC_NAMES.get(detail_card.get('disc'),'宝石')+'永久折扣 +1',9,width=w-x-42)
+        _gc_text(cv,x,top+153,'原价费用',9)
+        _gc_cost(cv,x,top+178,w-x-18,detail_card.get('cost'),10)
+        _gc_text(cv,x,bottom-20,'已购买的卡面 · 只读欣赏' if view=='collection' else '选中卡牌 · 确认后才执行交易',8,'#c8cdb7',width=w-x-16)
+    elif view=='market':
+        market=st.get('market') or {};mine=_gc_book(st,'tokens',me);discount=_gc_book(st,'discount',me)
+        for row,tier in enumerate((3,2,1)):
+            y=top+row*layout['row']
+            back=(layout['left'],y+4,layout['left']+layout['deck'],y+layout['ch']-3)
+            box(cv,back,('#657f61','#8e824a','#a57543')[row],'#d5c195')
+            _gc_text(cv,(back[0]+back[2])/2,y+layout['ch']*.32,('III','II','I')[row],10,'#ffedc4','center',True)
+            remaining=(st.get('deck_left') or {}).get(str(tier),(st.get('deck_left') or {}).get(tier))
+            _gc_text(cv,(back[0]+back[2])/2,y+layout['ch']*.66,str(remaining) if remaining is not None else '—',8,'#fff0cf','center')
+            for index,card in enumerate(market.get(str(tier),market.get(tier,[]))[:4]):
+                x=layout['market']+index*(layout['cw']+6)
+                rect=x,y,x+layout['cw'],y+layout['ch']
+                focus=_gc_focus('market',tier,index,card);ok=afford(mine,discount,card)
+                _development(cv,card,rect,ok,selected=focus==ui.get('gc_focus'))
+                ui['gc_cards'].append((*rect,tier,index,ok))
+                ui['gc_navigation'].append((*rect,('select',focus)))
+        _gc_bank(cv,st,ui,(layout['bank'][0],top,layout['bank'][1],bottom),_gc_active(st,ui,me))
+        _gc_nobles(cv,st,(layout['noble'][0],top,layout['noble'][1],bottom),ui)
+    elif view in ('reserved','collection'):
+        cards=reserved if view=='reserved' else collection
+        page=min(max(0,ui.get('gc_page',0)),max(0,(len(cards)-1)//6));ui['gc_page']=page
+        shown=cards[page*6:page*6+6];rows=1 if len(shown)<=3 else 2
+        ch=(bottom-top-27)/rows-6;cw=min(ch*.72,(w-52)/3)
+        full=cw*3+24;left=(w-full)/2
+        for i,card in enumerate(shown):
+            idx=page*6+i;x=left+i%3*(cw+12);y=top+i//3*(ch+6)
+            rect=x,y,x+cw,y+ch;focus=_gc_focus(view,card.get('tier'),idx,card)
+            ok=afford(_gc_book(st,'tokens',me),_gc_book(st,'discount',me),card)
+            _development(cv,card,rect,view=='reserved' and ok,selected=focus==ui.get('gc_focus'))
+            if view=='reserved':
+                ui['gc_reserved'].append((*rect,idx,ok));ui['gc_navigation'].append((*rect,('select',focus)))
+            else:ui['gc_navigation'].append((*rect,('open',idx)))
+        if not shown:_gc_text(cv,w/2,(top+bottom)/2,'暂无保留卡' if view=='reserved' else '购买的发展卡会收入你的藏册',10,'#d8d6bc','center')
         else:
-            for rect, key, label in (((14, bottom-22, 76, bottom), "prev", "上一页"),
-                                      ((w-76, bottom-22, w-14, bottom), "next", "下一页")):
-                button(cv, rect, label)
-                ui["gc_navigation"].append((*rect, key))
-            text(cv, w/2, bottom-11, f"点击卡面欣赏 · {page+1}/{max(1, (len(cards)+5)//6)} 页", 9, GREEN, "center")
+            for r,key,label in [((12,bottom-23,82,bottom-2),'prev','上一页'),((w-82,bottom-23,w-12,bottom-2),'next','下一页')]:
+                _gc_button(cv,r,label);ui['gc_navigation'].append((*r,key))
+            _gc_text(cv,w/2,bottom-12,f'{page+1}/{max(1,(len(cards)+5)//6)} · 点卡赏图' if view=='collection' else '点牌后确认买入',8,'#dbd6ba','center')
     else:
-        nobles = st.get("nobles") or []
-        ids, titles = st.get("noble_art") or [], st.get("noble_titles") or []
-        count = max(1, len(nobles))
-        cw = (w-20)/count-6
-        for i, cost in enumerate(nobles):
-            x, y = 10+i*(cw+6), top+10
-            rect = x, y, x+cw, bottom-12
-            box(cv, rect, "#fffaf0", "#c1a16d")
-            art(cv, "gemcity-patrons.webp", ids[i] if i < len(ids) else None, 5, 1,
-                (x+2, y+2, x+cw-2, bottom-76))
-            text(cv, x+5, bottom-66, titles[i] if i < len(titles) else f"贵宾 {i+1}", 8, bold=True)
-            text(cv, x+5, bottom-49, "+3 分 · 需折扣", 8, GOLD)
-            _cost(cv, (x+4, bottom-29, x+cw-4, bottom-19), cost, 7)
-        if not nobles:
-            text(cv, w/2, (top+bottom)/2, "贵宾均已受邀", 12, GOLD, "center")
-    # The shared bank never disappears when browsing the private card album.
-    box(cv, (6, h-96, w-6, h-5), "#eef1e6", "#b8c9b7")
-    text(cv, 14, h-76, "宝石池", 9, bold=True)
-    step = min(43, (w-160)/6)
-    for i, key in enumerate((*COLORS, "g")):
-        x = 82+i*step
-        _token(cv, x, h-77, key, (st.get("bank") or {}).get(key, 0), 10)
-        text(cv, x, h-59, GEMS[key][0], 8, MUTED, "center")
-        if key != "g":
-            ui["gc_bank"].append((x-17, h-92, x+17, h-58, key))
-        if key in sel:
-            cv.create_oval(x-14, h-91, x+14, h-63, outline=GREEN, width=3)
-    rect = w-102, h-92, w-14, h-62
-    button(cv, rect, f"取 {len(sel)} 颗" if sel else "点选宝石", bool(sel), bool(sel))
-    if sel:
-        ui["gc_take"] = rect
-    public_players = st.get("players") or []
-    ui["gc_players"] = public_players
-    if public_players:
-        order = ([me] if me in public_players else []) + [u for u in public_players if u != me]
-        viewed = order[ui.get("gc_inspect_idx", 0) % len(order)]
-        held = tokens.get(str(viewed), tokens.get(viewed, {}))
-        reductions = discounts.get(str(viewed), discounts.get(viewed, {}))
-        who = "我" if viewed == me else "他人 " + str(nick(viewed))[:5]
-        own = who + " ↔  " + "  ".join(f"{GEMS[k][0]}{held.get(k, 0)}" for k in (*COLORS, "g"))
-        disc = "折扣  " + "  ".join(f"{GEMS[k][0]}{reductions.get(k, 0)}" for k in COLORS)
-        text(cv, 14, h-38, own, 9)
-        text(cv, 14, h-19, disc, 9, GREEN)
-        score = (st.get("score") or {}).get(str(viewed), (st.get("score") or {}).get(viewed, 0))
-        text(cv, w-15, h-20, f"{score}/15 分", 10, GREEN, "e", True)
-        ui["gc_navigation"].append((8, h-52, 90, h-28, "inspect"))
-    else:
-        text(cv, 14, h-29, "旁观席 · 私人保留与卡册仅本人可见", 10, MUTED)
+        # The public noble page opens larger portraits without hiding any requirement.
+        nobles=st.get('nobles') or [];cols=max(1,min(5,len(nobles)));cw=(w-24)/cols-6
+        for i,cost in enumerate(nobles):
+            mini={**st,'nobles':[cost],'noble_art':(st.get('noble_art') or [None]*len(nobles))[i:i+1],
+                  'noble_titles':(st.get('noble_titles') or ['贵宾']*len(nobles))[i:i+1]}
+            _gc_nobles(cv,mini,(12+i*(cw+6),top,12+i*(cw+6)+cw,bottom),large=True)
+        if not nobles:_gc_text(cv,w/2,(top+bottom)/2,'贵宾均已受邀',12,'#e8cea1','center')
+    _gc_action_bar(cv,st,ui,me,private,w,h,afford)
+    _gc_player_bar(cv,st,ui,me,nick,w,h)
 
 
-def browse_gemcity(ui, x, y):
-    for *rect, key in ui.get("gc_navigation") or []:
-        if hit(rect, x, y):
-            if isinstance(key, tuple) and key[0] == "open":
-                ui["gc_detail"] = key[1]
-            elif key == "album_back":
-                ui["gc_detail"] = None
-            elif key == "inspect":
-                ui["gc_inspect_idx"] = ui.get("gc_inspect_idx", 0)+1
-            elif key == "prev":
-                ui["gc_page"] = max(0, ui.get("gc_page", 0)-1)
-            elif key == "next":
-                ui["gc_page"] = ui.get("gc_page", 0)+1
-            else:
-                ui.update(gc_view=key, gc_page=0, gc_detail=None)
-            ui.get("repaint", lambda: None)()
-            return True
+def browse_gemcity(ui,x,y):
+    """Selection and confirmation use the existing click hook, never per-card buys."""
+    for *rect,key in ui.get('gc_navigation') or []:
+        if not hit(rect,x,y):continue
+        st,me=ui.get('state') or {},ui.get('me')
+        private=_private(st,ui,me,ui.get('_card_private'))
+        if isinstance(key,tuple):
+            kind=key[0]
+            if kind=='select':
+                if _gc_resolve(ui,key[1]) is not None:ui.update(gc_focus=key[1],gc_sel=[])
+            elif kind=='open':
+                cards=private.get('collection') or [];idx=key[1]
+                if 0<=idx<len(cards):ui.update(gc_detail=idx,gc_focus=_gc_focus('collection',cards[idx].get('tier'),idx,cards[idx]))
+            elif kind=='bank':
+                if _gc_active(st,ui,me) and (st.get('bank') or {}).get(key[1],0)>0:
+                    sel=list(ui.get('gc_sel') or [])
+                    if key[1] in sel:sel.remove(key[1])
+                    elif len(sel)<3:sel.append(key[1])
+                    ui.update(gc_sel=sel,gc_focus=None,gc_detail=None)
+            elif kind in ('take','take2'):
+                if _gc_active(st,ui,me):
+                    bank=st.get('bank') or {};sel=list(ui.get('gc_sel') or [])
+                    valid=(kind=='take' and tuple(sel)==key[1] and 1<=len(sel)<=3 and all(k in COLORS and bank.get(k,0)>0 for k in sel))
+                    valid_two=(kind=='take2' and sel==[key[1]] and key[1] in COLORS and bank.get(key[1],0)>=4)
+                    if valid or valid_two:
+                        action={'op':'take','colors':sel} if valid else {'op':'take2','color':key[1]}
+                        ui.get('submit',lambda action:None)(action);ui.update(gc_sel=[],gc_focus=None)
+            elif kind=='command':
+                op,focus=key[1:];card=_gc_resolve(ui,focus)
+                if card is not None and focus==ui.get('gc_focus'):
+                    if op=='detail':ui['gc_detail']=focus[2] if focus[0]=='collection' else focus
+                    elif _gc_active(st,ui,me):
+                        afford=ui.get('_gc_afford',lambda *a:False)
+                        can_buy=afford(_gc_book(st,'tokens',me),_gc_book(st,'discount',me),card)
+                        if op=='buy' and focus[0] in ('market','reserved') and can_buy:
+                            action={'op':'buy','tier':focus[1],'idx':focus[2]} if focus[0]=='market' else {'op':'buy_res','idx':focus[2]}
+                            ui.get('submit',lambda action:None)(action);ui.update(gc_focus=None,gc_detail=None,gc_sel=[])
+                        elif op=='reserve' and focus[0]=='market' and len(private.get('reserved') or [])<3:
+                            ui.get('submit',lambda action:None)({'op':'reserve','tier':focus[1],'idx':focus[2]})
+                            ui.update(gc_focus=None,gc_detail=None,gc_sel=[])
+        elif key=='album_back':ui['gc_detail']=None
+        elif key=='inspect':ui['gc_inspect_idx']=ui.get('gc_inspect_idx',0)+1
+        elif key=='prev':ui['gc_page']=max(0,ui.get('gc_page',0)-1)
+        elif key=='next':ui['gc_page']=ui.get('gc_page',0)+1
+        elif key in ('reserved','collection') and not _member(st,ui,me):pass
+        else:ui.update(gc_view=key,gc_page=0,gc_detail=None,gc_focus=None,gc_sel=[])
+        ui.get('repaint',lambda:None)()
+        return True
     return False
 
 

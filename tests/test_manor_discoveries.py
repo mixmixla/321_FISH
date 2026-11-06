@@ -1,3 +1,8 @@
+from io import BytesIO
+
+from PIL import Image
+
+from boardgames.gallery import read_resource
 from boardgames.manor_catalog import ATLASES
 from games_pkg.betrayal import (
     BetrayalGame, EVENT_DECK, ITEM_DECK, ITEM_TEXT, OMEN_DECK, ROOM_SHORT,
@@ -11,6 +16,13 @@ def test_atlases_cover_the_actual_room_and_card_catalogues():
     for kind, atlas in ATLASES.items():
         assert names[kind] == set(atlas["names"])
         assert len(atlas["names"]) == atlas["cols"] * atlas["rows"] == len(names[kind])
+        data, mime = read_resource(atlas["file"])
+        with Image.open(BytesIO(data)) as sheet:
+            assert mime == "image/webp" and sheet.format == "WEBP"
+            width, extra_x = divmod(sheet.width, atlas["cols"])
+            height, extra_y = divmod(sheet.height, atlas["rows"])
+            assert (extra_x, extra_y) == (0, 0)
+            assert width == height if kind == "room" else 3 * width == 4 * height
     assert set(ITEM_TEXT) == names["item"]
 
 

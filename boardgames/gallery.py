@@ -23,6 +23,7 @@ ART_FILES = frozenset(COVERS.values()) | {
     "gemcity-patrons.webp", "lovelove-court.webp",
     "betrayal-rooms.webp", "betrayal-items.webp",
     "betrayal-events.webp", "betrayal-omens.webp",
+    "gemcity-jewels.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}

@@ -51,12 +51,27 @@ const api=vm.runInContext('CardTableWeb',ctx);
 function love(s,pv){setScene('lovelove',s,pv);root=new Element('main');api.lovelove(root,s);return root;}
 let loveScene={game:'lovelove',status:'playing',cur:7,alive:[7,8],dead:[],discard:[[8,2]],deck_left:8,winner_uid:null};
 love(loveScene,{hand:4,drawn:1});let picks=all(root,'ct-love-hand')[0].children;assert.equal(picks.length,2);
-click(picks[1]);all(root,'ct-love-target')[0].value='8';all(root,'ct-love-guess')[0].value='6';click(all(root,'ct-love-submit')[0]);
+click(picks[1]);let target=all(root,'ct-love-target')[0],guess=all(root,'ct-love-guess')[0],submit=all(root,'ct-love-submit')[0];
+assert.equal(submit.disabled,true);assert.equal(submit.textContent,'先选目标');submit.onclick();assert.equal(ctx.calls.length,0);
+target.value='8';target.onchange();assert.equal(submit.disabled,true);assert.equal(submit.textContent,'再选猜值');submit.onclick();assert.equal(ctx.calls.length,0);
+guess.value='6';guess.onchange();assert.equal(submit.disabled,false);
+target.value='';target.onchange();assert.equal(submit.disabled,true);submit.onclick();assert.equal(ctx.calls.length,0);
+target.value='8';target.onchange();guess.value='';guess.oninput();assert.equal(submit.disabled,true);submit.onclick();assert.equal(ctx.calls.length,0);
+guess.value='6';guess.oninput();assert.equal(submit.disabled,false);submit.onclick();submit.onclick();assert.equal(ctx.calls.length,1);
 assert.deepEqual(ctx.calls.pop(),{op:'discard',play:1,target:8,val:6});
 const stale=all(root,'ct-love-submit')[0];ctx.state.gpriv={hand:8};click(stale);assert.equal(ctx.calls.length,0);
 love({...loveScene,cur:8},{hand:4,drawn:8});assert.equal(all(root,'ct-love-hand')[0].children.length,1);assert.equal(all(root,'ct-love-controls').length,0);
 love(loveScene,{hand:8,drawn:7});picks=all(root,'ct-love-hand')[0].children;assert.equal(picks[0].disabled,true);click(picks[1]);click(all(root,'ct-love-submit')[0]);assert.equal(ctx.calls.pop().play,7);
-love(loveScene,{hand:5,drawn:2});click(all(root,'ct-love-hand')[0].children[0]);assert.ok(all(root,'ct-love-target')[0].children.some(o=>String(o.value)==='7'));
+for(const value of [2,3,5,6]){
+ love(loveScene,{hand:value});click(all(root,'ct-love-hand')[0].children[0]);target=all(root,'ct-love-target')[0];submit=all(root,'ct-love-submit')[0];
+ assert.equal(submit.disabled,true);submit.onclick();assert.equal(ctx.calls.length,0);
+ target.value='7';target.onchange();assert.equal(submit.disabled,value!==5);
+ target.value='8';target.onchange();assert.equal(submit.disabled,false);submit.onclick();assert.deepEqual(ctx.calls.pop(),{op:'discard',play:value,target:8});
+}
+for(const value of [4,7,8]){love(loveScene,{hand:value});click(all(root,'ct-love-hand')[0].children[0]);submit=all(root,'ct-love-submit')[0];assert.equal(submit.disabled,false);click(submit);assert.deepEqual(ctx.calls.pop(),{op:'discard',play:value});}
+love({...loveScene,protected:[8]},{hand:5});click(all(root,'ct-love-hand')[0].children[0]);assert.ok(all(root,'ct-love-target')[0].children.some(o=>String(o.value)==='7'));
+target=all(root,'ct-love-target')[0];target.value='7';target.onchange();click(all(root,'ct-love-submit')[0]);assert.deepEqual(ctx.calls.pop(),{op:'discard',play:5,target:7});
+love({...loveScene,protected:[8]},{hand:2});click(all(root,'ct-love-hand')[0].children[0]);target=all(root,'ct-love-target')[0];target.value='8';target.onchange();click(all(root,'ct-love-submit')[0]);assert.equal(ctx.calls.pop().target,8);
 love(loveScene,{hand:6});assert.equal(all(root,'ct-love-hand')[0].children.length,1);
 ctx.state.uid=99;love(loveScene,{hand:8,drawn:7});assert.equal(all(root,'ct-love-private').length,0);assert.equal(all(root,'ct-role').length,1);
-console.log(JSON.stringify({market_cards:12,patrons:5,collection_cards:31,art_zero:true,gem_actions:true,drawn_guard:true,forced_countess:true,prince_self:true,spectator_private_hidden:true,legacy_cards:true,stale_controls_rejected:true}));
+console.log(JSON.stringify({market_cards:12,patrons:5,collection_cards:31,art_zero:true,gem_actions:true,drawn_guard:true,target_guess_gated:true,single_submit:true,forced_countess:true,prince_self:true,protected_target_allowed:true,spectator_private_hidden:true,legacy_cards:true,stale_controls_rejected:true}));

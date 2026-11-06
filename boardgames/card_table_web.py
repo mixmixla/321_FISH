@@ -140,10 +140,31 @@ const CardTableWeb = (() => {
       const targetLabel=node('label','','目标 '),targets=node('select','ct-love-target');
       const guessLabel=node('label','','护卫猜值 '),guess=node('select','ct-love-guess');
       const submit=node('button','gbtn go ct-love-submit','先选择要弃出的牌');submit.type='button';submit.disabled=true;
-      let selected=null;
+      let selected=null,submitted=false;
       function option(select,value,text){const o=node('option','',text);o.value=value;select.appendChild(o);}
-      option(guess,'','不猜值');for(let value=1;value<=8;value++)option(guess,value,value+' · '+loveNames[value]);
+      option(guess,'','请选择猜值');for(let value=1;value<=8;value++)option(guess,value,value+' · '+loveNames[value]);
       targetLabel.appendChild(targets);guessLabel.appendChild(guess);targetLabel.hidden=guessLabel.hidden=true;
+      function readiness(){
+        if(submitted)return {ready:false,label:'正在出牌…'};
+        if(!selected)return {ready:false,label:'先选择要弃出的牌'};
+        if(!canAct('lovelove',s,s.cur)||state.gpriv!==pv)return {ready:false,label:'等待本人回合'};
+        if(forced&&selected.value!==7)return {ready:false,label:'必须弃出伯爵夫人'};
+        const action={op:'discard',play:selected.value};
+        if([1,2,3,5,6].includes(selected.value)){
+          const target=Number(targets.value);
+          if(targets.value===''||!Number.isInteger(target)||!live.includes(target)||(target===me&&selected.value!==5))
+            return {ready:false,label:'先选目标'};
+          action.target=target;
+        }
+        if(selected.value===1){
+          const value=Number(guess.value);
+          if(guess.value===''||!valid(value))return {ready:false,label:'再选猜值'};
+          action.val=value;
+        }
+        return {ready:true,label:'弃出 '+loveNames[selected.value]+' · '+selected.value,action};
+      }
+      function updateReady(){const status=readiness();submit.disabled=!status.ready;submit.textContent=status.label;}
+      targets.oninput=targets.onchange=updateReady;guess.oninput=guess.onchange=updateReady;
       const buttons=[];
       choices.forEach((choice,index)=>{
         const pick=role(choice.value,choice.label,myTurn);buttons.push(pick);cards.appendChild(pick);
@@ -151,10 +172,11 @@ const CardTableWeb = (() => {
           pick.onclick=()=>{
             if(!canAct('lovelove',s,s.cur)||state.gpriv!==pv||pick.disabled)return;
             selected=choice;buttons.forEach((button,i)=>{button.classList.toggle('ct-picked',i===index);button.setAttribute('aria-pressed',String(i===index));});
-            note.textContent=loveEffects[choice.value];submit.disabled=false;submit.textContent='弃出 '+loveNames[choice.value]+' · '+choice.value;
-            targets.innerHTML='';option(targets,'','不指定目标');
+            note.textContent=loveEffects[choice.value];guess.value='';
+            targets.innerHTML='';option(targets,'','请选择目标');
             live.forEach(uid=>{if(choice.value===5||uid!==me)option(targets,uid,gnick(uid)+(uid===me?'（自己）':''));});
             targetLabel.hidden=![1,2,3,5,6].includes(choice.value);guessLabel.hidden=choice.value!==1;
+            updateReady();
           };
         }
       });
@@ -162,11 +184,11 @@ const CardTableWeb = (() => {
       section.appendChild(note);
       if(myTurn){controls.append(targetLabel,guessLabel,submit);section.appendChild(controls);}
       submit.onclick=()=>{
-        if(!selected||!canAct('lovelove',s,s.cur)||state.gpriv!==pv)return;
-        const action={op:'discard',play:selected.value};
-        if(!targetLabel.hidden&&targets.value!=='')action.target=Number(targets.value);
-        if(!guessLabel.hidden&&guess.value!=='')action.val=Number(guess.value);
-        gameAPI('action',{room_id:state.groom,action});
+        const status=readiness();if(!status.ready){updateReady();return;}
+        submitted=true;updateReady();
+        const request=gameAPI('action',{room_id:state.groom,action:status.action});
+        const retry=()=>{if(submit.isConnected){submitted=false;updateReady();}};
+        if(request&&typeof request.then==='function')request.then(result=>{if(result&&result.ok===false)retry();},retry);
       };
     }else table.appendChild(node('p','ct-empty',mine?'等待本人私有手牌':'观战中 · 仅展示公开牌'));
     const publicSection=node('section','ct-love-public');table.appendChild(publicSection);

@@ -15,6 +15,19 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 桌游二次元美术与直接操作 · ANIME-TABLES-20261106 v1.1
+
+[任务包](task-packages/ANIME-TABLES-20261106.md) / [逐款评审](review-packages/ANIME-TABLES-20261106-r1.md)。本批基线为 8602c8a；旧主控已完成山屋与宝石原版交付。独立功能分支 codex/anime-boardgames-20261106 逐款推送；主控负责集成、范围核对及非本人成果的技术审查。
+
+| 游戏 | 状态与下一步 |
+| --- | --- |
+| 璀璨宝石 | AI_ACCEPTED · 60张卡、5位贵宾、6筹码完成，桌面和网页均完成真实交易；纳入本次功能分支推送。 |
+| 情书 | IMPLEMENTED · 8位女性角色和牧师的本人私见已交，主控核对图、实际动作及封面接入。 |
+| 石头剪刀布 | IMPLEMENTED · 三种手势可直接点击或用键盘出拳；已提交独立代码审查。 |
+| 铁路、花砖物语、山屋惊魂 | READY · 按原地图、砖色和房间牌号分工重绘验证。 |
+
+
+
 ## 宝石牌桌重做 · GEM-TABLE-20261106 v1
 
 **AI_ACCEPTED · 全量通过**。[任务](task-packages/GEM-TABLE-20261106.md) / [最终评审](review-packages/MANOR-GEM-20261106-r1.md)。60 张固定牌、三级竖版市场、筹码/费用/实际折扣以及另七款游戏错配已完成。原暖纸底专测失败保留，修订后完整候选共 3370 通过。本批 Git 交付见 [PR #12](https://github.com/mixmixla/321_FISH/pull/12)，合并状态以远端记录为准。

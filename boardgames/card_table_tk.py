@@ -532,10 +532,10 @@ def browse_gemcity(ui,x,y):
 
 def _portrait(cv, value, rect, label, selected=False, enabled=False):
     x0, y0, x1, y1 = rect
-    box(cv, rect, "#fff7ec", GREEN if selected else "#ba9b8c", 3 if selected else 1)
+    box(cv, rect, "#fff8f2", "#a44166" if selected else "#c7a9ac", 3 if selected else 1)
     if value in ROLES:
         art(cv, "lovelove-court.webp", value-1, 4, 2, (x0+3, y0+3, x1-3, y1-42))
-        text(cv, x0+7, y1-30, f"{value} · {ROLES[value]}", 10, GREEN if enabled else INK, bold=True)
+        text(cv, x0+7, y1-30, f"{value} · {ROLES[value]}", 10, "#913d5d" if enabled else INK, bold=True)
     else:
         text(cv, (x0+x1)/2, (y0+y1)/2, "未公开", 12, MUTED, "center")
     text(cv, x0+7, y1-12, label, 8, MUTED)
@@ -558,7 +558,7 @@ def paint_lovelove(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             ui.update(ll_play=None, ll_target=None, ll_guess=None)
         ui["ll_context"] = key
     ui["ll_hits"] = []
-    box(cv, (0, 0, w, h), "#f3eadf", "#f3eadf")
+    box(cv, (0, 0, w, h), "#fbf2ec", "#fbf2ec")
     box(cv, (0, 0, w, 34), "#654251", "#654251")
     text(cv, 12, 17, "情书 · 宫廷人物", 12, "#fff", bold=True)
     text(cv, w-12, 17, f"牌堆 {st.get('deck_left', 0)} 张", 9, "#fff", "e")
@@ -568,9 +568,10 @@ def paint_lovelove(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     title = (f"{nick(st['winner_uid'])} 获胜" if st.get("winner_uid") is not None else
              ("你的回合 · 选一张牌，再确认出牌" if active else "旁观公开牌" if not _member(st, ui, me) else "等待 " + str(nick(st.get("cur")))))
     text(cv, 12, 72, title, 10, GREEN, bold=True)
-    top, bottom = 88, h-116
-    gap, cw = 12, (w-48)/3
     selected = ui.get("ll_play")
+    guard_controls = selected == 1 and active
+    top, bottom = 88, h-(164 if guard_controls else 116)
+    gap, cw = 12, (w-48)/3
     forced = {hand, drawn} == {7, 8}
     if _member(st, ui, me) and hand in ROLES:
         for i, (value, label) in enumerate(((hand, "我的持牌"), (drawn if active else None, "本回合新摸牌"))):
@@ -586,8 +587,15 @@ def paint_lovelove(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     if table not in ROLES and discard:
         table = discard[-1][1]
     rect = 12+2*(cw+gap), top, w-12, bottom
-    _portrait(cv, table, rect, "公开刚弃角色")
-    y = h-103
+    peek = private.get("peek") or {}
+    if (st.get("status") == "playing" and st.get("winner_uid") is None
+            and peek.get("target") in alive and peek.get("value") in ROLES):
+        _portrait(cv, peek["value"], rect, f"仅你可见 · {str(nick(peek['target']))[:6]} · 当时")
+        box(cv, (rect[0]+3, top+3, min(rect[2]-3, rect[0]+83), top+23), "#654251", "#654251")
+        text(cv, rect[0]+7, top+13, "牧师私见", 9, "#fff", bold=True)
+    else:
+        _portrait(cv, table, rect, "公开刚弃角色")
+    y = bottom+13
     if selected in ROLES and active:
         text(cv, 12, y, f"选择 {ROLES[selected]}：{EFFECTS[selected]}", 9, GREEN)
         y += 23
@@ -601,11 +609,14 @@ def paint_lovelove(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 ui["ll_hits"].append((*rect, "target", uid))
             y += 25
         if selected == 1:
-            text(cv, 12, y, "猜值", 9)
+            text(cv, 12, y+19, "猜值", 9)
             step = (w-66)/8
             for i in range(8):
-                rect = 54+i*step, y-12, 51+(i+1)*step, y+10
-                button(cv, rect, f"{i+1}{ROLES[i+1][0]}", ui.get("ll_guess") == i+1)
+                rect = 54+i*step, y-12, 51+(i+1)*step, h-38
+                picked = ui.get("ll_guess") == i+1
+                box(cv, rect, "#f6e0e7" if picked else "#fff8f2", "#a44166" if picked else "#c7a9ac", 2 if picked else 1)
+                art(cv, "lovelove-court.webp", i, 4, 2, (rect[0]+2, rect[1]+2, rect[2]-2, rect[3]-19))
+                text(cv, (rect[0]+rect[2])/2, rect[3]-9, f"{i+1}{ROLES[i+1]}", 7, "#71334c", "center", True)
                 ui["ll_hits"].append((*rect, "guess", i+1))
         ready = (selected not in (1, 2, 3, 5, 6) or ui.get("ll_target") is not None) and (selected != 1 or ui.get("ll_guess") is not None)
         rect = w-123, h-30, w-12, h-7

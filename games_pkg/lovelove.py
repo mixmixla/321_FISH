@@ -33,7 +33,14 @@ class LoveLoveGame(BaseGame):
         self.burned = []                             # 开局烧掉的暗牌（不参与对局）
         self.winner = None
         self.game_over = False
+        self._peeks = {}                          # 牧师结果仅交付给行动者
         self._deal()
+
+    def _forget_peeks(self, *uids):
+        """A hand change/leave invalidates observations involving that player."""
+        changed = set(uids)
+        self._peeks = {viewer: peek for viewer, peek in self._peeks.items()
+                       if viewer not in changed and peek["target"] not in changed}
 
     def _build_deck(self):
         deck = []
@@ -94,6 +101,7 @@ class LoveLoveGame(BaseGame):
             return msgs
         hand = self.hand[uid]
         drawn = self.deck.pop()
+        self._forget_peeks(uid)
         self.hand[uid] = hand if play == drawn else drawn
         # 弃掉 play
         self._table_card = play
@@ -138,8 +146,8 @@ class LoveLoveGame(BaseGame):
         elif play == 2:                     # 牧师：看牌
             target = action.get("target")
             if target in self.alive and target != uid:
-                msgs.append(f"🔭 {self._nick(uid)} 偷看 {self._nick(target)}：{_names(self.hand[target])}" +
-                            (f"（{self.hand[target]}）"))
+                self._peeks[uid] = {"target": target, "value": self.hand[target]}
+                msgs.append(f"🔭 {self._nick(uid)} 查看了 {self._nick(target)} 的手牌")
         elif play == 3:                     # 男爵：比点
             target = action.get("target")
             if self.hand[uid] > self.hand[target]:
@@ -155,6 +163,7 @@ class LoveLoveGame(BaseGame):
             msgs.append(f"🛡️ {self._nick(uid)} 受到侍女保护，直到下次轮到自己")
         elif play == 5:                     # 王子：令一人弃而重抽（可指定自己）
             target = action.get("target")
+            self._forget_peeks(target)
             old = self.hand[target]
             if old == PRINCE_SS:
                 self._eliminate(target, "被王子强制丢弃了公主")
@@ -167,6 +176,7 @@ class LoveLoveGame(BaseGame):
                 msgs.append(f"🌪️ {self._nick(uid)} 令 {self._nick(target)} 弃 {_names(old)} 重抽")
         elif play == 6:                     # 国王：换手
             target = action.get("target")
+            self._forget_peeks(uid, target)
             self.hand[uid], self.hand[target] = self.hand[target], self.hand[uid]
             msgs.append(f"🤲 {self._nick(uid)} 与 {self._nick(target)} 交换手牌")
         elif play == 7:                     # 伯爵夫人（仅当拿+8强制弃）——本身无效果
@@ -174,6 +184,7 @@ class LoveLoveGame(BaseGame):
         return msgs
 
     def _eliminate(self, uid, why):
+        self._forget_peeks(uid)
         if uid in self.alive:
             self.alive.remove(uid)
             self.dead.append(uid)
@@ -183,12 +194,14 @@ class LoveLoveGame(BaseGame):
         if len(self.alive) == 1:
             self.winner = self.alive[0]
             self.game_over = True
+            self._peeks.clear()
             msgs.append(f"🏆 {self._nick(self.winner)} 成为最后的倾慕者！")
             return
         # 牌堆摸完：本轮直接比手牌，避免下一位无牌可抽
         if not self.deck:
             self.game_over = True
         if self.game_over:
+            self._peeks.clear()
             # 牌堆空比手中牌高
             best = max((self.hand[u] or 0) for u in self.alive)
             leaders = [u for u in self.alive if (self.hand[u] or 0) == best]
@@ -224,6 +237,8 @@ class LoveLoveGame(BaseGame):
         if uid not in self.hand:
             return None
         cards = {"hand": self.hand[uid]}
+        if not self.game_over and self.winner is None and uid in self._peeks:
+            cards["peek"] = dict(self._peeks[uid])
         if self.deck and self.alive and not self.game_over and self.winner is None and uid == self.cur:
             cards["drawn"] = self.deck[-1]
         return cards
@@ -238,6 +253,7 @@ class LoveLoveGame(BaseGame):
     def player_left(self, uid):
         if uid not in self.players:
             return []
+        self._forget_peeks(uid)
         prev = self.cur if self.alive else None
         was_cur = (prev == uid)
         if uid in self.alive:
@@ -245,6 +261,7 @@ class LoveLoveGame(BaseGame):
         self.miss.discard(uid)
         if not self.alive:
             self.game_over = True
+            self._peeks.clear()
             return [f"💨 {self._nick(uid)} 离开了对局"]
         if prev is not None and not was_cur and prev in self.alive:
             self.turn_idx = self.alive.index(prev)
@@ -259,6 +276,7 @@ class LoveLoveGame(BaseGame):
         if len(self.alive) == 1 and not self.winner:
             self.winner = self.alive[0]
             self.game_over = True
+            self._peeks.clear()
             return [f"💨 {self._nick(uid)} 离开，{self._nick(self.winner)} 胜"]
         return [f"💨 {self._nick(uid)} 离开了对局"]
 

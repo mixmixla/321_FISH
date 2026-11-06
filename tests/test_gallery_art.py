@@ -7,21 +7,25 @@ from PIL import Image
 from boardgames import gallery
 
 
-def test_five_distinct_compact_covers_and_shared_gomoku_art():
+def test_distinct_compact_covers_and_shared_gomoku_art():
+    original = {gallery.COVERS[game] for game in ("tielu", "azul", "tile2048", "gomoku", "gemcity")}
+    assert len(original) == 5
     names = set(gallery.COVERS.values())
-    assert len(names) == 5
     assert gallery.COVERS["gomoku"] == gallery.COVERS["gomoku_solo"]
     pixels = []
     total = 0
     for name in names:
         data, mime = gallery.read_resource(name)
         assert mime == "image/webp"
-        total += len(data)
+        if name in original:
+            total += len(data)
+        else:
+            assert len(data) < 150_000
         with Image.open(BytesIO(data)) as image:
             assert image.format == "WEBP"
             assert image.size == (768, 384)
             pixels.append(image.tobytes())
-    assert len(set(pixels)) == 5
+    assert len(set(pixels)) == len(names)
     assert total < 600_000
 
 
@@ -116,7 +120,7 @@ def test_live_tk_filtering_reuses_decoded_art_and_keeps_create_actions():
         for query in ("", "g", "go", "gomoku", "", "铁路", "花砖", "", "2048", ""):
             host.game_query_var.set(query)
             root.update()
-        assert gallery._cover_source.cache_info().misses == 5
+        assert gallery._cover_source.cache_info().misses == len(set(gallery.COVERS.values()))
         for name in gallery.FEATURED:
             assert host.game_cards[name].cover.find_withtag("gallery-cover")
             host.game_cards[name].create_btn.invoke()

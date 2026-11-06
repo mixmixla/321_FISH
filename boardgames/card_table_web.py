@@ -568,6 +568,7 @@ button.ct-role{cursor:pointer}button.ct-role:disabled{opacity:1;cursor:default}.
 .ct-inspect-card .ct-price-coin{width:34px;height:34px}.ct-inspect-card .ct-price-coin b{font-size:21px}.ct-inspect-card .ct-discount .ct-jewel{width:48px;height:48px}
 .ct-inspect-card .ct-points{font-size:44px}
 @media(min-width:761px) and (max-height:850px){
+  .ct-gemcity .ct-gem-tools{position:static}
   .ct-bank-row,.ct-gemcity .ct-patrons{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
   .ct-gemcity .ct-bank-chip,.ct-gemcity button.ct-bank-chip{min-height:46px;padding:3px;gap:1px;border-radius:10px}
   .ct-bank-chip .ct-jewel{width:25px;height:25px}.ct-bank-count{font-size:15px}.ct-bank-name{font-size:8px}

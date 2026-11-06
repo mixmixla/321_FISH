@@ -42,7 +42,8 @@ function create(name){const card=cards().find(n=>n.dataset.game===name);assert.o
  assert.equal(nodes['#glPlayers'].value,'4');assert.deepEqual(names(),['tielu']);
  filter(' TIELU ','2');assert.deepEqual(names(),['tielu']);
  filter('tielu','1');assert.equal(cards().length,0);assert.match(nodes['#glGames'].children[0].textContent,/没有符合/);
- filter('','1');assert.deepEqual(names().sort(),['balatro_solo','go_solo']);create('go_solo');
+ filter('','1');assert.deepEqual(names().sort(),['balatro_solo','go_solo','gomoku_solo','tile2048']);create('go_solo');
+ for(const name of ['gomoku_solo','tile2048']){ctx.gameLobby();filter('','1');create(name);assert.equal(calls.at(-1).game,name);}
  ctx.gameLobby();filter('','2');assert.ok(names().includes('gomoku'));assert.ok(!names().includes('rps'));
  create('gomoku');ctx.gameLobby();filter('','4');assert.ok(names().includes('rps'));assert.ok(!names().includes('gomoku'));
  create('rps');ctx.gameLobby();filter('','17');assert.ok(names().includes('spy'));assert.ok(!names().includes('tielu'));

@@ -73,6 +73,8 @@ ICONS = {
 # 24-unit view box and shape tuples as ICONS, so the single source drives both
 # the Tk rasteriser and the Web inline SVG. Purely additive: ICONS is untouched.
 GAME_ICONS = {
+    'tile2048':[('rect',(3,3,18,18,2)),('line',[(12,3),(12,21)]),('line',[(3,12),(21,12)]),('line',[(6,6),(9,6),(6,9),(9,9)]),('line',[(15,6),(15,9),(18,9),(18,6)]),('ellipse',(6,15,9,18)),('ellipse',(15,15,18,18))],
+    'gomoku_solo':[('rect',(3,3,18,18,2)),('line',[(9,3),(9,21)]),('line',[(15,3),(15,21)]),('line',[(3,9),(21,9)]),('line',[(3,15),(21,15)]),('ellipse',(4.5,4.5,9.5,9.5)),('ellipse',(14.5,14.5,19.5,19.5)),('ellipse',(16,3,22,9))],
     'guess_number':[('line',[(9,3),(9,21)]),('line',[(15,3),(15,21)]),('line',[(3,9),(21,9)]),('line',[(3,15),(21,15)])],
     'gomoku':[('rect',(3,3,18,18,2)),('line',[(9,3),(9,21)]),('line',[(15,3),(15,21)]),('line',[(3,9),(21,9)]),('line',[(3,15),(21,15)]),('ellipse',(4.5,4.5,9.5,9.5)),('ellipse',(14.5,14.5,19.5,19.5))],
     'rps':[('ellipse',(3,4,8,9)),('ellipse',(3,15,8,20)),('line',[(7,7),(21,20)]),('line',[(7,17),(21,4)])],

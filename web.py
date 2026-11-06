@@ -4003,6 +4003,8 @@ const GART={
   ninja:["#33415a","#1d2736",'<g stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M24 42 V20 M24 28 L12 18 M24 28 L36 18 M24 20 l6 8 M24 20 l-6 8"/></g><circle cx="24" cy="20" r="4.5" fill="none" stroke="#efca63" stroke-width="2.4"/><path d="M18 14 a6 6 0 0 1 12 0" fill="#efca63" stroke="none" opacity=".7"/>'],
   coc:["#1f5236","#123022",'<g fill="none" stroke="#fff" stroke-linecap="round"><path d="M12 18 L20 26 L32 14 M16 34 h20 M14 30 q6 5 12 0 M26 10 a4 4 0 0 1 0 8 a4 4 0 0 1 0 -8" stroke-width="2.4"/></g><circle cx="24" cy="24" r="12" fill="none" stroke="#efca63" stroke-width="1.6" stroke-dasharray="2 3"/><circle cx="38" cy="35" r="2.6" fill="#efca63"/>'],
 };
+GART.gomoku_solo=GART.gomoku;
+GART.tile2048=["#d99448","#a86831",'<rect x="7" y="7" width="34" height="34" rx="6" fill="#f5e9d0"/><text x="24" y="29" font-size="14" fill="#805021" font-weight="800" text-anchor="middle" font-family="Segoe UI,Arial">2048</text>'];
 function gArt(name,size){
   const a=GART[name]||GART.guess_number,s=size||48;
   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 48 48">'
@@ -4335,15 +4337,17 @@ const GRENDER={
     else bar.innerHTML="<span style='color:var(--dim);font-size:12px'>下一轮即将开始…</span>";
     box.appendChild(bar);
   },
+  gomoku_solo(box,s){ GRENDER.gomoku(box,s); },
   gomoku(box,s){
     const n=s.board.length,cell=24,pad=26,W=n*cell+pad*2;
     const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:4px;font-size:13px";
-    info.innerHTML=(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 获胜"
+    info.innerHTML=(s.solo?((s.players||[]).includes(state.uid)?"你执黑 · 电脑执白 · ":"观战 · 电脑执白 · "):"")
+      +(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 获胜"
       :(s.draw?"平局":"轮到 "+esc(gnick(s.turn_uid))+(s.turn_uid===state.uid?"（你执子）":"")));
     box.appendChild(info);
     const mine=s.winner_uid==null&&!s.draw&&s.turn_uid===state.uid;
     const cv=document.createElement("canvas");cv.width=W;cv.height=W;
-    cv.style.cssText="display:block;margin:0 auto;background:#d9a45b;border-radius:6px;cursor:"
+    cv.style.cssText="display:block;max-width:100%;height:auto;margin:0 auto;background:#d9a45b;border-radius:6px;touch-action:manipulation;cursor:"
       +(mine?"pointer":"default");
     box.appendChild(cv);
     const ctx=cv.getContext("2d");
@@ -4368,7 +4372,7 @@ const GRENDER={
       ctx.fillStyle="#e33";ctx.fill();}
     if(mine)
       cv.onclick=e=>{const r=cv.getBoundingClientRect();
-        const x=Math.round((e.clientX-r.left-pad)/cell),y=Math.round((e.clientY-r.top-pad)/cell);
+        const x=Math.round(((e.clientX-r.left)*W/r.width-pad)/cell),y=Math.round(((e.clientY-r.top)*W/r.height-pad)/cell);
         if(x<0||y<0||x>=n||y>=n||s.board[y][x])return;
         gameAPI("action",{room_id:state.groom,action:{x:x,y:y}});};
   },

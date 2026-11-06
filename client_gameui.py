@@ -971,7 +971,7 @@ def _turn_banner(cv, w, header_h, text, accent, ypad=8):
 
 def _hover_overlay(cv, ui):
     """按 ui['_hover'] 给当前悬停格画淡白高亮（render 收尾统一调用）。"""
-    if ui.get("game") in ("gomoku", "connect4"):
+    if ui.get("game") in ("gomoku", "gomoku_solo", "connect4"):
         _flagship_hover(cv, ui)
         return
     h = ui.get("_hover")
@@ -1441,7 +1441,9 @@ def handle_drag(cv, ui, x, y, phase):
 
 
 def _cell_of(ui, x, y):
-    if ui.get("game") in ("gomoku", "go"):
+    if ui.get("game") == "tile2048":
+        return None
+    if ui.get("game") in ("gomoku", "gomoku_solo", "go"):
         return _intersection_of(ui, x, y)
     if ui.get("game") == "connect4":
         return _connect4_column_of(ui, x, y)
@@ -1494,9 +1496,11 @@ def _intersection_of(ui, x, y):
 def flagship_status(game, st, me, nick):
     """Player colour is fixed by seat, independently of whose turn it is."""
     players = st.get("players") or []
-    colours = ("黑", "白") if game == "gomoku" else ("红", "黄")
+    colours = ("黑", "白") if game in ("gomoku", "gomoku_solo") else ("红", "黄")
     seat = players.index(me) if me in players else -1
     identity = f"你执{colours[seat]}" if 0 <= seat < 2 else "观战"
+    if game == "gomoku_solo":
+        identity += " · 电脑执白"
     def _status_nick(uid):
         value = str(nick(uid))
         return value if len(value) <= 8 else value[:7] + "…"
@@ -1563,7 +1567,7 @@ def _flagship_feedback(cv, ui, st, needed, now, lastpx):
                            outline="#aa9d75", width=1, tags="flagship-pulse")
     line = flagship_win_line(st, needed)
     if line:
-        offset = 0.0 if ui["game"] == "gomoku" else 0.5
+        offset = 0.0 if ui["game"] in ("gomoku", "gomoku_solo") else 0.5
         start, end = line[0], line[-1]
         cv.create_line(ui["ox"] + (start[0] + offset) * ui["cell"],
                        ui["oy"] + (start[1] + offset) * ui["cell"],
@@ -1579,7 +1583,10 @@ def _flagship_feedback(cv, ui, st, needed, now, lastpx):
 def flagship_win_line(st, needed):
     """First winning direction's full contiguous run through the final move."""
     board, last = st.get("board") or [], st.get("last_move")
-    players, winner = st.get("players") or [], st.get("winner_uid")
+    players, winner = list(st.get("players") or []), st.get("winner_uid")
+    if (st.get("game") == "gomoku_solo" and st.get("ai_uid") is not None
+            and st.get("ai_uid") not in players):
+        players.append(st["ai_uid"])
     if st.get("draw") or winner is None or winner not in players or not last or len(last) != 2:
         return []
     x, y = last
@@ -1613,7 +1620,7 @@ def _click_xy(ui, x, y):
     c = _cell_of(ui, x, y)
     if not c:
         return
-    if ui.get("game") == "gomoku":
+    if ui.get("game") in ("gomoku", "gomoku_solo"):
         board = (ui.get("state") or {}).get("board") or []
         if (not ui.get("can_move") or c[1] >= len(board)
                 or c[0] >= len(board[c[1]]) or board[c[1]][c[0]]):
@@ -1981,6 +1988,7 @@ def _click_gemcity(ui, x, y):
 
 
 _CLICKS = {
+    "gomoku_solo": _click_xy,
     "gomoku": _click_xy, "othello": _click_xy, "tictactoe": _click_xy,
     "go": _click_go, "xiangqi": _click_move, "chess": _click_move,
     "connect4": _click_col, "kalah": _click_kalah,
@@ -2472,14 +2480,16 @@ def _g_kalah_sow_fx(cv, ui, now, holectr, holeR, start_center):
                            outline="#b8860b", width=1, tags="_k_sow")
 
 
+@_register("gomoku_solo")
 @_register("gomoku")
 def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["gomoku"][1]
     n = st.get("size") or 15
-    title = flagship_status("gomoku", st, me, nick)
+    game = "gomoku_solo" if st.get("game") == "gomoku_solo" else "gomoku"
+    title = flagship_status(game, st, me, nick)
     _turn_banner(cv, w, 46, title, accent)
     ox, oy, cell = _fit(n, w, h, header=46)
-    ui.update(ox=ox, oy=oy, cell=cell, n=n, rows=n, cols=n, game="gomoku")
+    ui.update(ox=ox, oy=oy, cell=cell, n=n, rows=n, cols=n, game=game)
     # 棋盘（纸面木纹底）加柔和投影
     _soft_shadow(cv, ox - 18, oy - 14, ox + n * cell + 14, oy + n * cell + 14,
                  6, 5)

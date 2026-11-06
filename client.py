@@ -11535,6 +11535,13 @@ _GAME_ACTIONS = {
         ("猜数字", {"key": "guess", "kind": "int"}, "输入 1~100 数字（猜）"),
     ],
     "gomoku": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）")],
+    "gomoku_solo": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）")],
+    "tile2048": [
+        ("↑ 上", {"fixed": {"op": "move", "dir": "up"}}, ""),
+        ("↓ 下", {"fixed": {"op": "move", "dir": "down"}}, ""),
+        ("← 左", {"fixed": {"op": "move", "dir": "left"}}, ""),
+        ("→ 右", {"fixed": {"op": "move", "dir": "right"}}, ""),
+    ],
     "rps": [
         ("✊ 石头", {"fixed": {"choice": "rock"}}, ""),
         ("✌️ 剪刀", {"fixed": {"choice": "scissors"}}, ""),
@@ -11757,6 +11764,8 @@ def _actions_for(game: str, priv: dict | None) -> list:
 
 # 棋盘直操类游戏的首屏引导（无按钮可指时告诉玩家怎么操作）
 _GAME_HINTS = {
+    "tile2048": "用方向按钮滑动；点击棋盘聚焦后可按方向键。相同数字合并，挑战 2048",
+    "gomoku_solo": "你执黑，点击交叉点落子；电脑执白自动应手，恰好五连获胜",
     "azul": "拖动：从工厂盘 / 中央池抓起花砖，拖到自己的花纹行或地板线松手",
     "go_solo": "单人练习：点击交叉点落子，电脑会自动应手；连续两次「过一手」终局",
 }
@@ -11804,6 +11813,7 @@ _KIND_INPUTS = _KIND_INPUTS()
 
 # 桌游卡片图标（大厅可视化）
 _GAME_ICON = {
+    "tile2048": "🔢", "gomoku_solo": "🤖",
     "guess_number": "🔢", "gomoku": "⚫", "rps": "✊", "spy": "🕵️",
     "uno": "🃏", "blackjack": "🂠", "drawguess": "🎨",
     "connect4": "🔴", "othello": "◐", "calc24": "➗", "matchpairs": "🃏",
@@ -11831,6 +11841,7 @@ _GAME_ICON = {
 # 桌游封面渐变色（对齐网页端 GART 前两色，QQ游戏大厅式彩色封面）。
 # 棋类（xiangqi/chess/go/shogi/junqi/dou）网页端无 GART，用统默认蓝灰渐变。
 _GAME_GRAD = {
+    "tile2048": ("#d99448", "#a86831"), "gomoku_solo": ("#b07c45", "#765437"),
     "guess_number": ("#5b8def", "#3b6fd4"), "gomoku": ("#b07c45", "#8a5a2b"),
     "rps": ("#e2634b", "#c24a33"), "spy": ("#7b5fb0", "#5d4592"),
     "uno": ("#e4483c", "#c2362c"), "blackjack": ("#2f6f4f", "#1f5236"),
@@ -12576,13 +12587,14 @@ class GameWindow:
         self._cv_ui = {"sel": {}}
         self._last_board_ui = self._cv_ui   # 最近被点击的棋盘 ui（供动作读取/清理）
         self.game_cv = tk.Canvas(wrap, bg=self._pal["win"], highlightthickness=0,
-                                 height=1)
+                                 height=1, takefocus=True)
         self.game_cv.pack(fill="both", expand=True)
         self.game_cv.bind("<Configure>", self._on_cv_resize)
         self.game_cv.bind("<Button-1>", self._on_cv_click)
         self.game_cv.bind("<Motion>", self._on_cv_motion)
         self.game_cv.bind("<B1-Motion>", self._on_cv_drag)
         self.game_cv.bind("<ButtonRelease-1>", self._on_cv_drag_end)
+        self._bind_board_keys(self.game_cv, self._cv_ui)
         # 日志区（系统事件 / 私密信息 / 规则提示）：底部固定高度，不抢对局面板
         self.state_text = tk.Text(right, font=f, state="disabled", wrap="word",
                                   relief="flat", bg=self._pal["win"], height=5)
@@ -13104,7 +13116,7 @@ class GameWindow:
         ui["can_move"] = (
             client_gameui.flagship_can_move(room, st, self.core.uid,
                                              getattr(self.core, "connected", False))
-            if game in ("gomoku", "connect4") else False
+            if game in ("gomoku", "gomoku_solo", "connect4") else False
         )
         ui["submit"] = lambda action, target_ui=ui: self._do_action(action, target_ui)
         ui["repaint"] = lambda target_cv=cv, target_ui=ui: self._render_to(
@@ -13122,7 +13134,23 @@ class GameWindow:
         except Exception:
             pass
 
+    def _bind_board_keys(self, cv, ui) -> None:
+        # Widget-local bindings leave chat fields and other windows alone.
+        for key, direction in (("Up", "up"), ("Down", "down"),
+                               ("Left", "left"), ("Right", "right")):
+            cv.bind(f"<{key}>", lambda evt, d=direction, target=ui:
+                    self._on_board_direction(evt, d, target))
+
+    def _on_board_direction(self, evt, direction, ui):
+        if (self.core.game_room or {}).get("game") != "tile2048":
+            return None
+        if evt.widget.focus_get() is not evt.widget:
+            return None
+        self._do_action({"op": "move", "dir": direction}, ui)
+        return "break"
+
     def _on_cv_click(self, evt) -> None:
+        self.game_cv.focus_set()
         self._last_board_ui = self._cv_ui
         try:
             client_gameui.handle_click(self._cv_ui, evt.x, evt.y)
@@ -13187,7 +13215,7 @@ class GameWindow:
             if lg:
                 lines.append(f"上轮 {self._nick(lg['uid'])} 猜 {lg['val']}：{lg['dir']}")
             lines.append(f"区间 {st.get('low')}~{st.get('high')}")
-        elif game == "gomoku" and "board" in st:
+        elif game in ("gomoku", "gomoku_solo") and "board" in st:
             board = st["board"]
             lines.append("  " + " ".join(str(i % 10) for i in range(len(board[0]))))
             for y, row in enumerate(board):
@@ -13199,6 +13227,14 @@ class GameWindow:
                 lines.append(f"🏆 {self._nick(st['winner_uid'])} 获胜")
             elif st.get("draw"):
                 lines.append("平局")
+        elif game == "tile2048":
+            lines.append(f"分数：{st.get('score', 0)}")
+            for row in st.get("board") or []:
+                lines.append(" ".join(str(value) if value else "·" for value in row))
+            if st.get("winner_uid") is not None:
+                lines.append("🏆 已合成 2048，挑战成功")
+            elif st.get("status") == "lost":
+                lines.append("无路可走，本局结束")
         elif game == "rps":
             sub = st.get("submitted") or {}
             lines.append(f"已出拳：{len(sub)}/{len(st.get('players', []))}")
@@ -13920,6 +13956,18 @@ class GameWindow:
         st = self.core.game_state or {}
         rid = room.get("room_id")
         game = room.get("game")
+        if game in ("tile2048", "gomoku_solo"):
+            if source_ui is not None and (
+                    source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st):
+                return
+            if (not getattr(self.core, "connected", False)
+                    or self.core.uid not in room.get("players", [])
+                    or st.get("winner_uid") is not None
+                    or st.get("draw") or st.get("status") in ("ended", "won", "lost")):
+                return
+            if game == "gomoku_solo" and st.get("turn_uid") != self.core.uid:
+                return
         if game == "kalah" or (source_ui is not None and source_ui.get("game") == "kalah"):
             if game != "kalah":
                 return
@@ -14133,7 +14181,7 @@ class BoardFocusWindow:
         _make_draggable(bar, target=win)
 
         # 棋盘画布：独占全部剩余空间，随窗口拉伸；事件全部转发到渲染/交互核心
-        cv = tk.Canvas(win, bg=self._pal["win"], highlightthickness=0)
+        cv = tk.Canvas(win, bg=self._pal["win"], highlightthickness=0, takefocus=True)
         cv.pack(fill="both", expand=True, padx=4, pady=(0, 4))
         self.game_cv = cv
         cv.bind("<Configure>", self._on_resize)
@@ -14141,6 +14189,7 @@ class BoardFocusWindow:
         cv.bind("<Motion>", self._on_motion)
         cv.bind("<B1-Motion>", self._on_drag)
         cv.bind("<ButtonRelease-1>", self._on_drag_end)
+        self.host._bind_board_keys(cv, self._cv_ui)
 
         win.protocol("WM_DELETE_WINDOW", self.hide)
 
@@ -14159,6 +14208,7 @@ class BoardFocusWindow:
             pass
 
     def _on_click(self, evt) -> None:
+        self.game_cv.focus_set()
         try:
             self.host._last_board_ui = self._cv_ui
         except Exception:

@@ -32,7 +32,7 @@ WEB_CSS = r"""
 .rail-postmark{width:clamp(29px,5cqw,44px);aspect-ratio:1;background-image:url("/game-art/tielu-stations.webp");background-repeat:no-repeat;background-size:400% 200%;border:2px dotted #fbf5d9;box-shadow:0 0 0 1px #a18a6d;transform:rotate(-3deg)}
 .rail-place:last-child .rail-postmark{transform:rotate(3deg)}.rail-contract .rail-ticket-score{display:flex;flex-direction:column;gap:1px;font-weight:750;border:0;text-align:center;padding:0}.rail-ticket-score small{font-size:10px}
 .rail-contract .rail-seal{padding:2px 4px;border:1px solid #aa9571;border-radius:30%;color:#806e57;font-size:9px;justify-self:center;margin-top:3px;letter-spacing:1px}.rail-contract.is-connected .rail-seal{color:#17755c;border-color:#368b6b}
-.rail-end{width:100%;border-collapse:collapse;margin:6px 0;font-size:12px;text-align:center}.rail-end th,.rail-end td{padding:4px;border-bottom:1px solid #cdb894}.rail-end caption{font-weight:700;text-align:left;margin-bottom:5px}
+.rail-end{grid-column:1/-1;width:100%;border-collapse:collapse;margin:6px 0;font-size:12px;text-align:center}.rail-end th,.rail-end td{padding:4px;border-bottom:1px solid #cdb894}.rail-end caption{font-weight:700;text-align:left;margin-bottom:5px}
 #gpanel .card:has(.rail-desk){width:min(900px,96vw)}#gmain:has(.rail-desk){max-height:calc(90vh - 122px)}#gpanel .card:has(.rail-desk) #glog{max-height:53px}
 @container(max-width:510px){.rail-body{grid-template-columns:minmax(0,1fr);padding:6px;gap:7px}.rail-side{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.2fr);gap:7px}.rail-pass{grid-column:1/-1;justify-self:end}.rail-piles{gap:4px}.rail-head{padding:5px 7px;gap:6px}.rail-head h3{font-size:16px}.rail-head .rail-stamp{width:34px;height:34px}.rail-seat{font-size:10px;max-width:80px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rail-chart{border-radius:5px}.rail-quote{font-size:11px}.rail-cards{gap:3px}.rail-caption{font-size:10px}.rail-caption b{font-size:13px}.rail-deck b{font-size:10px}.rail-deck{min-height:66px}.rail-print{aspect-ratio:1.5}}
 """
@@ -162,7 +162,8 @@ const RailTable=(()=>{
     const scores=el("div","rail-scores");
     (s.players||[]).forEach((u,i)=>{
       const p=el("span","rail-seat"+(s.turn_uid===u?" is-turn":""));p.title=gnick(u);
-      p.append(el("span","name",gnick(u)),el("b",null,(s.score?.[u]||0)+"分"));
+      const points=s.winner_uid!=null?s.final_scores?.[u]?.total:s.score?.[u];
+      p.append(el("span","name",gnick(u)),el("b",null,(points??0)+"分"));
       p.style.setProperty("--owner",seats[i%seats.length]);scores.append(p);
     });header.append(scores);root.append(header);
     const body=el("div","rail-body"),field=el("div","rail-field"),side=el("div","rail-side");
@@ -242,7 +243,7 @@ const RailTable=(()=>{
         }
         const score=el("span","rail-ticket-score");
         score.append(el("b",null,"+"+t.v),el("small",null,"−"+t.v));
-        pass.append(stops,score,el("small","rail-seal",t.connected?"已连通":"待连通"));
+        pass.append(stops,score,el("small","rail-seal",t.connected?"已连通":s.winner_uid!=null?"未连通":"待连通"));
         list.append(pass);
       }
     }

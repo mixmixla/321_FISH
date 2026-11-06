@@ -47,6 +47,7 @@ state.gst.state={...s,winner_uid:uid,routes:[{a:goal.a,b:via,length:2,claimed:ui
  final_scores:{[uid]:{route:5,ticket_bonus:goal.v,ticket_penalty:0,total:5+goal.v}}};
 render();assert.ok(controls("rail-end").length);assert.equal(controls("rail-deck").length,0);assert.equal(controls("rail-contract").length,2);
 assert.ok(controls("rail-contract")[0].className.includes("is-connected"));
+assert.equal(controls("rail-seat")[0].children[1].textContent,String(state.gst.state.final_scores[uid].total)+"分");
 state.uid=999;state.gpriv=fixture.private;state.gst.room=room;state.gst.state=s;render();
 assert.equal(controls("rail-coach").length,0);assert.equal(controls("rail-contract").length,0);
 assert.ok(controls("rail-deck").every(e=>e.disabled));

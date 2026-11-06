@@ -28,6 +28,8 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 
 
+六条独立制作线由用户授权开启，首项 READY 分别为谁是卧底、UNO、工坊、斗兽棋、飞行棋、德国心脏病。按任务包 v1.2 队列逐款提交与独审，公共集成和远端推送由本主控负责；原窗口和两位原画作者各自继续已分配的游戏。
+
 ## 宝石牌桌重做 · GEM-TABLE-20261106 v1
 
 **AI_ACCEPTED · 全量通过**。[任务](task-packages/GEM-TABLE-20261106.md) / [最终评审](review-packages/MANOR-GEM-20261106-r1.md)。60 张固定牌、三级竖版市场、筹码/费用/实际折扣以及另七款游戏错配已完成。原暖纸底专测失败保留，修订后完整候选共 3370 通过。本批 Git 交付见 [PR #12](https://github.com/mixmixla/321_FISH/pull/12)，合并状态以远端记录为准。

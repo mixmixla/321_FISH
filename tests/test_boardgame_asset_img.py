@@ -55,35 +55,9 @@ def _azul_state():
 
 
 def _gemcity_state():
-    state = {
-        "game": "gemcity", "status": "playing", "turn_uid": 7,
-        "winner_uid": None,
-        "bank": {"o": 4, "d": 4, "r": 4, "e": 4, "s": 4, "g": 5},
-        "market": {
-            "1": [{"tier": 1, "disc": "r", "pts": 0, "cost": {"r": 1}},
-                  {"tier": 1, "disc": "d", "pts": 1, "cost": {"r": 2}},
-                  {"tier": 1, "disc": "s", "pts": 0, "cost": {"e": 1}},
-                  {"tier": 1, "disc": "e", "pts": 0, "cost": {"s": 1}}],
-            "2": [{"tier": 2, "disc": "s", "pts": 2, "cost": {"s": 3}},
-                  {"tier": 2, "disc": "r", "pts": 2, "cost": {"d": 3}},
-                  {"tier": 2, "disc": "d", "pts": 1, "cost": {"o": 3}},
-                  {"tier": 2, "disc": "e", "pts": 3, "cost": {"o": 4}}],
-            "3": [{"tier": 3, "disc": "r", "pts": 4, "cost": {"r": 5}},
-                  {"tier": 3, "disc": "d", "pts": 5, "cost": {"d": 6}},
-                  {"tier": 3, "disc": "s", "pts": 4, "cost": {"s": 5}},
-                  {"tier": 3, "disc": "e", "pts": 3, "cost": {"e": 4}}],
-        },
-        "tokens": {"7": {"r": 2, "s": 1}, "8": {"d": 1}},
-        "discount": {"7": {"r": 1}, "8": {}},
-        "score": {"7": 9, "8": 6},
-        "nobles": [{"r": 3, "g": 3}],
-        "players": [7, 8],
-    }
-    for cards in state["market"].values():
-        for index, card in enumerate(cards):
-            card["art"] = index
-    state["noble_art"] = [0]
-    return state
+    # Real jewel-v2 cards: five fixed colour rows, actual costs/points and portraits.
+    from games_pkg.gemcity import GemCityGame
+    return GemCityGame([7, 8], seed=6).snapshot()
 
 
 # --------------------------------------------------------------- headless 桩
@@ -186,9 +160,14 @@ def test_azul_painter_consumes_package_assets():
         except Exception: pass
 
 
-def test_gemcity_painter_uses_plain_paper_across_all_card_views():
-    if cu._BG_ASSETS is None or cu._PILImage is None or cu._PILImageTk is None:
-        pytest.skip("Pillow/Tk assets unavailable")
+@pytest.mark.parametrize("legacy", [False, True], ids=["jewel-v2", "legacy-neutral"])
+def test_gemcity_painter_renders_card_contract_across_all_views(legacy):
+    """Real portraits/rewards/costs in every view; old cards retain truthful colour."""
+    import copy
+    from collections import Counter
+    from boardgames import card_table_tk as table
+    from games_pkg.gemcity import COLORS, COLOR_CN
+
     tk = pytest.importorskip("tkinter")
     try:
         root = tk.Tk()
@@ -199,26 +178,107 @@ def test_gemcity_painter_uses_plain_paper_across_all_card_views():
         cv.pack()
         root.update_idletasks()
         root.update()
-        ui = {}
-        state = _gemcity_state()
-        private = {"cards": 1, "collection": [state["market"]["1"][0]],
-                   "reserved": [state["market"]["2"][0]]}
+        state = copy.deepcopy(_gemcity_state())
+        assert {card["disc"] for row in state["market"].values() for card in row} == set(COLORS)
+        private = {"cards": 1, "collection": [copy.deepcopy(state["market"]["1"][0])],
+                   "reserved": [copy.deepcopy(state["market"]["2"][0])]}
+        if legacy:
+            for card in [c for row in state["market"].values() for c in row] + private["collection"] + private["reserved"]:
+                card.pop("art_set")
+                card["title"] = "错配黄晶旧图"
+
+        sent = []
+        ui = {"state": state, "me": 7, "room": {"status": "playing", "players": [7, 8]},
+              "_room_context": ("synthetic-art", 1), "submit": sent.append,
+              "repaint": lambda: None}
+
+        def inside(point, rect):
+            return rect[0] <= point[0] <= rect[2] and rect[1] <= point[1] <= rect[3]
+
+        def card_contract(card, rect):
+            x0, y0, x1, y1 = rect
+            assert 0 <= x0 < x1 <= cv.winfo_width()
+            assert 0 <= y0 < y1 <= cv.winfo_height() and x1-x0 < y1-y0
+            images = [item for item in cv.find_withtag("card-illustration")
+                      if inside(cv.coords(item), rect)]
+            if legacy:
+                assert not images, "旧卡不得继续读取可能错色的旧插画"
+                labels = [cv.itemcget(item, "text") for item in cv.find_all()
+                          if cv.type(item) == "text" and inside(cv.coords(item), rect)]
+                name = "白钻石" if card["disc"] == "d" else COLOR_CN[card["disc"]]
+                assert name in labels and not any("错配黄晶" in label for label in labels)
+            else:
+                assert len(images) == 1
+                expected = f"gemcity-tier{card['tier']}.webp"
+                photos = {str(photo) for key, photo in cv._card_art_cache.items()
+                          if key[0] == expected and key[1] == card["art"]}
+                assert cv.itemcget(images[0], "image") in photos
+                atlas = table._atlas(expected)
+                assert atlas.width/4 < atlas.height/5  # Each actual atlas cell is a portrait.
+                assert card["art_set"] == "jewel-v2" and card["art"]//4 == COLORS.index(card["disc"])
+
+            grounds = [item for item in cv.find_withtag("gc-permanent-ground")
+                       if inside(cv.coords(item)[:2], rect)]
+            assert len(grounds) == 1
+            ground = cv.coords(grounds[0])
+            assert ground[0] > (x0+x1)/2 and ground[3] < y0+(y1-y0)/3
+            rewards = {str(photo) for (color, _), photo in cv._gc_jewel_photos.items()
+                       if color == card["disc"]}
+            assert any(inside(cv.coords(item), ground) and cv.itemcget(item, "image") in rewards
+                       for item in cv.find_withtag("gc-jewel"))
+
+            chips = []
+            for item in cv.find_withtag("gc-cost-chip"):
+                a, b, c, d = cv.coords(item)
+                center = (a+c)/2, (b+d)/2
+                if inside(center, rect):
+                    assert center[1] > (y0+y1)/2
+                    chips.append((item, center))
+            cost = [(color, card["cost"].get(color, 0)) for color in COLORS if card["cost"].get(color, 0)]
+            assert len(chips) == len(cost)
+            for (item, center), (color, amount) in zip(chips, cost):
+                assert any(cv.type(label) == "text" and cv.coords(label) == list(center)
+                           and cv.itemcget(label, "text") == str(amount) for label in cv.find_all())
+                r, g, b = (v/257 for v in cv.winfo_rgb(cv.itemcget(item, "fill")))
+                if color == "o": assert max(r, g, b) < 90 and max(r, g, b)-min(r, g, b) < 20
+                elif color == "d": assert min(r, g, b) > 200
+                elif color == "r": assert r > g*1.5 and r > b*1.5
+                elif color == "e": assert g > r*1.5 and g > b*1.2
+                else: assert b > r*1.5 and b > g*1.2
+
         for view in ("market", "reserved", "collection", "nobles"):
             ui["gc_view"] = view
             cu.render(cv, "gemcity", state, 7, lambda uid: f"P{uid}",
-                      lambda m: None, lambda: None, ui, private,
+                      sent.append, lambda: None, ui, private,
                       cv.winfo_width(), cv.winfo_height())
-            paper = cv.find_withtag("card-table-paper")
-            assert len(paper) == 1 and cv.find_all()[0] == paper[0]
-            assert cv.itemcget(paper[0], "fill") == "#fbf7ed"
-            assert len(cv.find_withtag("card-illustration")) > 0
-            assert ("azulejo", None) not in getattr(cv, "_asset_img_cache", {})
-            assert ("felt", None) not in getattr(cv, "_asset_img_cache", {})
+            assert ui["gc_view"] == view and cv.find_all()
             if view == "market":
-                assert len(cv.find_withtag("gc-tier-label")) == 3
+                cards = [(state["market"][str(tier)][index], rect[:4])
+                         for *rect, tier, index, _ in ui["gc_cards"]]
+                assert [r[4] for r in ui["gc_cards"]] == [3]*4+[2]*4+[1]*4
+                assert len(ui["gc_bank"]) == 5
+                left = min(rect[0] for _, rect in cards)
+                deck = [cv.itemcget(item, "text") for item in cv.find_all()
+                        if cv.type(item) == "text" and cv.coords(item)[0] < left
+                        and min(rect[1] for _, rect in cards) <= cv.coords(item)[1] <= max(rect[3] for _, rect in cards)]
+                assert all(deck.count(label) == 1 for label in ("III", "II", "I"))
+                assert Counter(label for label in deck if label.isdecimal()) == Counter(str(n) for n in state["deck_left"].values())
+            elif view == "reserved":
+                cards = [(private["reserved"][index], rect[:4]) for *rect, index, _ in ui["gc_reserved"]]
+                assert len(cards) == 1
+            elif view == "collection":
+                cards = [(private["collection"][key[1]], rect[:4]) for *rect, key in ui["gc_navigation"]
+                         if isinstance(key, tuple) and key[0] == "open"]
+                assert len(cards) == 1
+            else:
+                cards = []
+            for card, rect in cards:
+                card_contract(card, rect)
+            noble_count = len(state["nobles"]) if view in ("market", "nobles") else 0
+            assert len(cv.find_withtag("card-illustration")) == noble_count + (0 if legacy else len(cards))
+            assert not sent, "渲染和浏览不能交易"
     finally:
-        try: root.destroy()
-        except Exception: pass
+        root.destroy()
 
 
 # ------------------------------------------------- headless 键序遥测（新画师契约）

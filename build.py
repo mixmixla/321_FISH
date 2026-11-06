@@ -50,6 +50,11 @@ COMMON_HIDDEN = [
     "--hidden-import=boardgames.azul.desktop",
     "--hidden-import=boardgames.azul.web",
     "--hidden-import=boardgames.azul._art",
+    "--hidden-import=boardgames.tile2048",
+    "--hidden-import=boardgames.tile2048.desktop",
+    "--hidden-import=boardgames.tile2048.web",
+    "--hidden-import=boardgames.gallery",
+    "--hidden-import=boardgames.gomoku_art",
 ]
 # R71：vosk 仅 client 用（optional.transcribe_wav 函数内 import）→ 只收集进 client.exe。
 STT_MODEL_DIR = os.path.join(HERE, "models", "vosk")
@@ -110,7 +115,13 @@ def build() -> int:
         icon = None
 
     icon_args = [f"--icon={icon}"] if icon else []
-    common = COMMON_HIDDEN + icon_args + ["--noconfirm", "--clean"]
+    common = COMMON_HIDDEN + icon_args + [
+        "--add-data=" + os.path.join(HERE, "assets", "boardgame", "tielu_travel.jpg")
+        + os.pathsep + "assets/boardgame",
+        "--add-data=" + os.path.join(HERE, "assets", "boardgame", "gallery")
+        + os.pathsep + "assets/boardgame/gallery",
+        "--noconfirm", "--clean",
+    ]
 
     rc = _run(["--onefile", "--console", *common,
                "--name=server", "server.py"])

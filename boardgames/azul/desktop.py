@@ -13,12 +13,12 @@
 """
 import math
 
-from client_gameui import THEME, _text, _FONT_F
+from client_gameui import THEME, _text, _FONT_F, _asset_img
 from boardgames import geom, shell
 
 COLORS = ["r", "w", "b", "y", "k"]                 # 引擎墙拉丁方用色序
-ACOL = {"r": "#D2534F", "w": "#F0F0F0", "b": "#4A7DE0",
-        "y": "#E0B33C", "k": "#3A3A3A"}            # 花砖实色（矢量回退用）
+ACOL = {"r": "#B9361F", "w": "#F7EACB", "b": "#17469A",
+        "y": "#EAB325", "k": "#192231"}            # 花砖实色（矢量回退用）
 _MARKERS = "rwbyk"                                 # 计分棋子色序（按玩家序号轮转）
 KEYS = {                                           # 角色 → Azul 素材键（含 {c} 模板）
     "board": "azul_board",
@@ -141,8 +141,12 @@ def _paint_drag(cv, ui, src_hits, dst_hits, rows_st, wall_st, me):
     gx, gy = d.get("x"), d.get("y")
     if gx is None:
         return
-    cv.create_oval(gx - 13.0, gy - 13.0, gx + 13.0, gy + 13.0, fill=ACOL[col],
-                   outline="#FFFFFF", width=2, tags="azul_ghost")
+    ghost = _asset_img(cv, "azul_tile_" + col, 26)
+    if ghost:
+        cv.create_image(gx, gy, image=ghost, tags="azul_ghost")
+    else:
+        cv.create_oval(gx - 13.0, gy - 13.0, gx + 13.0, gy + 13.0, fill=ACOL[col],
+                       outline="#FFFFFF", width=2, tags="azul_ghost")
     d["gx"], d["gy"] = gx, gy
 
 

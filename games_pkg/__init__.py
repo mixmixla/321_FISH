@@ -8,6 +8,8 @@ from games_pkg.calc24 import Calc24Game
 from games_pkg.connect4 import Connect4Game
 from games_pkg.drawguess import DrawGuessGame
 from games_pkg.gomoku import GomokuGame
+from games_pkg.gomoku_solo import GomokuSoloGame
+from games_pkg.tile2048 import Tile2048Game
 from games_pkg.guess_number import GuessNumberGame
 from games_pkg.matchpairs import MatchPairsGame
 from games_pkg.othello import OthelloGame
@@ -51,6 +53,7 @@ from games_pkg.coc import CocGame
 def _label(name: str) -> str:
     return {
         "guess_number": "猜数字", "gomoku": "五子棋", "rps": "石头剪刀布",
+        "gomoku_solo": "五子棋·陪练", "tile2048": "2048",
         "spy": "谁是卧底", "uno": "UNO", "blackjack": "21点", "drawguess": "你画我猜",
         "connect4": "四子棋", "othello": "奥赛罗", "calc24": "24点",
         "matchpairs": "抽牌配对", "betrayal": "山屋惊魂",
@@ -79,6 +82,8 @@ def _desc(name: str) -> str:
     return {
         "guess_number": "出题 1~100，猜中得分",
         "gomoku": "双人对弈，先连五子胜",
+        "gomoku_solo": "你执黑、电脑执白，恰好五连胜",
+        "tile2048": "四向滑动合并数字，挑战 2048",
         "rps": "三选一互克，人多热闹",
         "spy": "找卧底！描述别暴露",
         "uno": "同色同数出牌，先出完胜",
@@ -135,6 +140,11 @@ def _rules(name: str) -> str:
                         "猜中者得 1 分，下一轮换人出题。",
         "gomoku": "两人轮流点击交叉点落子（黑先），横/竖/斜恰好连成 5 子者胜"
                   "（连成 6 子及以上不算）；棋盘下满无人成五则平局。",
+        "gomoku_solo": "单人陪练：你执黑先行，电脑执白自动应手。点击交叉点落子，横/竖/斜"
+                       "恰好连成 5 子者胜（6 子及以上不算）；棋盘下满无人成五则平局。",
+        "tile2048": "在 4×4 棋盘向上、下、左、右滑动，相同数字相撞会合并，每块每手至多"
+                    "合并一次并累加分数。有效移动后随机出现新块；合成 2048 获胜，无合法移动则结束。"
+                    "桌面可用方向按钮，点击棋盘聚焦后也可按方向键；手机可用按钮或滑动。",
         "rps": "每轮同时出拳：✊ 石头赢 ✌️ 剪刀、✌️ 剪刀赢 ✋ 布、✋ 布赢 ✊ 石头；"
                "胜者得 1 分，平局重出。",
         "spy": "每人抽到词（卧底是不同词），轮流描述但不能说出词；每轮投票淘汰疑似卧底，"
@@ -280,7 +290,8 @@ def _rules(name: str) -> str:
 
 GAME_TYPES = {
     cls.name: cls
-    for cls in (GuessNumberGame, GomokuGame, RpsGame, SpyGame, UnoGame,
+    for cls in (GuessNumberGame, GomokuGame, GomokuSoloGame, Tile2048Game,
+                RpsGame, SpyGame, UnoGame,
                 BlackjackGame, DrawGuessGame, Connect4Game, OthelloGame,
                 Calc24Game, MatchPairsGame, BetrayalGame,
                 KaituoGame, LingdiGame, TieluGame, GongfangGame,

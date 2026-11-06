@@ -48,7 +48,7 @@ def test_tk_name_id_and_actual_player_count_compose(lobby):
     assert not gw.game_cards
     assert any("没有符合" in w.cget("text") for w in gw.game_inner.winfo_children())
     gw.game_query_var.set("")
-    assert set(gw.game_cards) == {"go_solo", "balatro_solo"}
+    assert set(gw.game_cards) == {"go_solo", "balatro_solo", "gomoku_solo", "tile2048"}
     gw.game_players_var.set("2")
     assert {"gomoku", "tielu"} <= set(gw.game_cards)
     assert not {"go_solo", "rps"} & set(gw.game_cards)
@@ -78,7 +78,8 @@ def test_tk_creation_never_uses_a_hidden_selection(lobby):
     gw.game_query_var.set("does-not-exist")
     gw._on_create()
     assert len(created) == 1 and gw._sel_game is None
-    for name, count in (("go_solo", "1"), ("gomoku", "2"), ("rps", "3")):
+    for name, count in (("go_solo", "1"), ("gomoku_solo", "1"), ("tile2048", "1"),
+                        ("gomoku", "2"), ("rps", "3")):
         gw.game_query_var.set(name)
         gw.game_players_var.set(count)
         gw.game_cards[name].create_btn.invoke()

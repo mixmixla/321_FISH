@@ -971,7 +971,7 @@ def _turn_banner(cv, w, header_h, text, accent, ypad=8):
 
 def _hover_overlay(cv, ui):
     """按 ui['_hover'] 给当前悬停格画淡白高亮（render 收尾统一调用）。"""
-    if ui.get("game") in ("gomoku", "connect4"):
+    if ui.get("game") in ("gomoku", "gomoku_solo", "connect4"):
         _flagship_hover(cv, ui)
         return
     h = ui.get("_hover")
@@ -1441,7 +1441,9 @@ def handle_drag(cv, ui, x, y, phase):
 
 
 def _cell_of(ui, x, y):
-    if ui.get("game") in ("gomoku", "go"):
+    if ui.get("game") == "tile2048":
+        return None
+    if ui.get("game") in ("gomoku", "gomoku_solo", "go"):
         return _intersection_of(ui, x, y)
     if ui.get("game") == "connect4":
         return _connect4_column_of(ui, x, y)
@@ -1494,9 +1496,11 @@ def _intersection_of(ui, x, y):
 def flagship_status(game, st, me, nick):
     """Player colour is fixed by seat, independently of whose turn it is."""
     players = st.get("players") or []
-    colours = ("黑", "白") if game == "gomoku" else ("红", "黄")
+    colours = ("黑", "白") if game in ("gomoku", "gomoku_solo") else ("红", "黄")
     seat = players.index(me) if me in players else -1
     identity = f"你执{colours[seat]}" if 0 <= seat < 2 else "观战"
+    if game == "gomoku_solo":
+        identity += " · 电脑执白"
     def _status_nick(uid):
         value = str(nick(uid))
         return value if len(value) <= 8 else value[:7] + "…"
@@ -1563,7 +1567,7 @@ def _flagship_feedback(cv, ui, st, needed, now, lastpx):
                            outline="#aa9d75", width=1, tags="flagship-pulse")
     line = flagship_win_line(st, needed)
     if line:
-        offset = 0.0 if ui["game"] == "gomoku" else 0.5
+        offset = 0.0 if ui["game"] in ("gomoku", "gomoku_solo") else 0.5
         start, end = line[0], line[-1]
         cv.create_line(ui["ox"] + (start[0] + offset) * ui["cell"],
                        ui["oy"] + (start[1] + offset) * ui["cell"],
@@ -1579,7 +1583,10 @@ def _flagship_feedback(cv, ui, st, needed, now, lastpx):
 def flagship_win_line(st, needed):
     """First winning direction's full contiguous run through the final move."""
     board, last = st.get("board") or [], st.get("last_move")
-    players, winner = st.get("players") or [], st.get("winner_uid")
+    players, winner = list(st.get("players") or []), st.get("winner_uid")
+    if (st.get("game") == "gomoku_solo" and st.get("ai_uid") is not None
+            and st.get("ai_uid") not in players):
+        players.append(st["ai_uid"])
     if st.get("draw") or winner is None or winner not in players or not last or len(last) != 2:
         return []
     x, y = last
@@ -1613,7 +1620,7 @@ def _click_xy(ui, x, y):
     c = _cell_of(ui, x, y)
     if not c:
         return
-    if ui.get("game") == "gomoku":
+    if ui.get("game") in ("gomoku", "gomoku_solo"):
         board = (ui.get("state") or {}).get("board") or []
         if (not ui.get("can_move") or c[1] >= len(board)
                 or c[0] >= len(board[c[1]]) or board[c[1]][c[0]]):
@@ -1981,6 +1988,7 @@ def _click_gemcity(ui, x, y):
 
 
 _CLICKS = {
+    "gomoku_solo": _click_xy,
     "gomoku": _click_xy, "othello": _click_xy, "tictactoe": _click_xy,
     "go": _click_go, "xiangqi": _click_move, "chess": _click_move,
     "connect4": _click_col, "kalah": _click_kalah,
@@ -2472,26 +2480,33 @@ def _g_kalah_sow_fx(cv, ui, now, holectr, holeR, start_center):
                            outline="#b8860b", width=1, tags="_k_sow")
 
 
+@_register("gomoku_solo")
 @_register("gomoku")
 def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["gomoku"][1]
     n = st.get("size") or 15
-    title = flagship_status("gomoku", st, me, nick)
+    game = "gomoku_solo" if st.get("game") == "gomoku_solo" else "gomoku"
+    use_art = game == "gomoku_solo"
+    if use_art:
+        from boardgames import gomoku_art
+    title = flagship_status(game, st, me, nick)
     _turn_banner(cv, w, 46, title, accent)
     ox, oy, cell = _fit(n, w, h, header=46)
-    ui.update(ox=ox, oy=oy, cell=cell, n=n, rows=n, cols=n, game="gomoku")
+    ui.update(ox=ox, oy=oy, cell=cell, n=n, rows=n, cols=n, game=game)
     # 棋盘（纸面木纹底）加柔和投影
     _soft_shadow(cv, ox - 18, oy - 14, ox + n * cell + 14, oy + n * cell + 14,
                  6, 5)
-    _paper_board(cv, ox - 16, oy - 16, ox + n * cell + 16, oy + n * cell + 16,
-                 base="#f6f3e9", edge="#c8c2b0")
+    if not use_art or not gomoku_art.draw_board(
+            cv, ox - 16, oy - 16, ox + n * cell + 16, oy + n * cell + 16):
+        _paper_board(cv, ox - 16, oy - 16, ox + n * cell + 16, oy + n * cell + 16,
+                     base="#f6f3e9", edge="#c8c2b0")
     for i in range(n):
         cv.create_line(ox, oy + i * cell, ox + (n - 1) * cell, oy + i * cell,
                        fill="#8a5a2b")
         cv.create_line(ox + i * cell, oy, ox + i * cell, oy + (n - 1) * cell,
                        fill="#8a5a2b")
     _draw_hoshi(cv, ox, oy, cell, n, ink="#6b4423")
-    _board_coords(cv, ox, oy, cell, n, ink="#a08b6a", mg=9)
+    _board_coords(cv, ox, oy, cell, n, ink="#62482d" if use_art else "#a08b6a", mg=9)
     board = st.get("board") or []
     last = st.get("last_move")
     if isinstance(last, list) and len(last) == 2:
@@ -2510,10 +2525,13 @@ def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                 continue
             cx, cy = ox + x * cell, oy + y * cell
             stone_anchors.append((cx, cy))
-            _stone(cv, cx, cy, cell * 0.42,
-                   "#111" if v == 1 else "#fff", "#888",
-                   last == (x, y), glow=False, gint=breathing)
+            if not use_art or not gomoku_art.draw_stone(cv, cx, cy, cell * 0.42, v):
+                _stone(cv, cx, cy, cell * 0.42,
+                       "#111" if v == 1 else "#fff", "#888",
+                       last == (x, y), glow=False, gint=breathing)
     _flagship_feedback(cv, ui, st, 5, now, lastpx)
+    if use_art and lastpx:
+        gomoku_art.draw_last_move(cv, *lastpx, cell * 0.42)
 
 
 @_register("connect4")
@@ -5437,6 +5455,30 @@ def _tl_seg_dist(px, py, x0, y0, x1, y1):
     return math.hypot(px - (x0 + t * dx), py - (y0 + t * dy))
 
 
+def _tl_map_art(cv, x0, y0, x1, y1):
+    """One source bitmap and one size per canvas; Tk owns its PhotoImage lifetime."""
+    if not _real_cv(cv) or _PILImage is None or _PILImageTk is None:
+        return False
+    try:
+        source = getattr(cv, "_tl_art_source", None)
+        if source is None:
+            from pathlib import Path
+            path = Path(__file__).resolve().parent / "assets/boardgame/tielu_travel.jpg"
+            with _PILImage.open(path) as image:
+                source = image.convert("RGB")
+            cv._tl_art_source = source
+        size = (max(1, round(x1 - x0)), max(1, round(y1 - y0)))
+        cached = getattr(cv, "_tl_art_photo", None)
+        if not cached or cached[0] != size:
+            photo = _PILImageTk.PhotoImage(
+                source.resize(size, _PILImage.Resampling.LANCZOS), master=cv)
+            cv._tl_art_photo = (size, photo)
+        cv.create_image(x0, y0, image=cv._tl_art_photo[1], anchor="nw", tags="_tl_map")
+        return True
+    except (OSError, ValueError, tk.TclError):
+        return False
+
+
 @_register("tielu")
 def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     cv.create_rectangle(0, 0, w, h, fill="#111b2b", outline="")
@@ -5485,6 +5527,9 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
                       "#ffd75e" if u == st.get("winner_uid") else "#dfe6ef", _FONT_B)
         return
     order = [int(k) for k in cities] or list(range(st.get("cities_count", 8)))
+    map_box = (12, map_top, w - 12, max(map_top + 50, h - 122))
+    cv.create_rectangle(*map_box, fill="#e6dab9", outline="#aa9168", width=1)
+    _tl_map_art(cv, *map_box)
     cx, cy = w / 2, map_top + (h - 132 - map_top) / 2
     Rx = (w - 40) / 3.2
     Ry = max(30, (h - 172 - map_top) / 2)
@@ -5493,7 +5538,17 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     for i, cid in enumerate(order):
         ang = i / n * 2 * math.pi - math.pi / 2
         pos[cid] = (cx + Rx * math.cos(ang), cy + Ry * math.sin(ang))
+    # Scenic landmarks are illustrative; these real nodes remain authoritative.
+    landmarks = {0: (.16, .23), 1: (.42, .19), 2: (.72, .20), 3: (.88, .43),
+                 4: (.77, .76), 5: (.46, .76), 6: (.18, .75), 7: (.10, .49)}
+    for cid in order:
+        if cid in landmarks:
+            fx, fy = landmarks[cid]
+            pos[cid] = (map_box[0] + fx * (map_box[2] - map_box[0]),
+                        map_box[1] + fy * (map_box[3] - map_box[1]))
     routes = st.get("routes") or []
+    labels = []
+    occupied = [(px - 25, py - 10, px + 25, py + 33) for px, py in pos.values()]
     for rt in routes:
         if (rt.get("a") not in pos) or (rt.get("b") not in pos):
             continue
@@ -5503,28 +5558,48 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         color = rt.get("color")
         length = int(rt.get("length") or 0)
         can_pay = bool(color) and int(hand.get(color, 0)) >= length
+        cv.create_line(x0, y0, x1, y1, fill="#fff4d8", width=9)
         if claimed:
             col = _pcolor(claimed, players)
             cv.create_line(x0, y0, x1, y1, fill=col, width=6)
+            cv.create_line(x0, y0, x1, y1, fill="#fff4d8", width=1, dash=(2, 8))
         else:
             base = ccmap.get(color, "#b9c6d8")
-            # 买得起：亮色且线宽 +1；买不起：降饱和虚线
-            col = _shade(base, 0.2) if can_pay else _shade(base, -0.45)
-            width = 4 if can_pay else 2
+            # Affordable routes are solid; dashed routes still show their card color.
+            col = _shade(base, -0.12)
+            width = 5 if can_pay else 3
             kw = {"fill": col, "width": width}
             if not can_pay:
                 kw["dash"] = (4, 4)
             cv.create_line(x0, y0, x1, y1, **kw)
             ui["tl_routes"].append((x0, y0, x1, y1, rt.get("a"), rt.get("b"),
                                     color, length, can_pay))
-        mx, my = (x0 + x1) / 2, (y0 + y1) / 2
-        _text(cv, mx, my - 8, str(rt.get("length", "")), "#fff",
-              (_FONT_F[0], 8))
+        # Slide cost signs along their own segment to keep small boards readable.
+        choices = []
+        for t in (.38, .62, .5, .26, .74, .18, .82, .44, .56):
+            mx, my = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
+            box = (mx - 15, my - 10, mx + 15, my + 10)
+            overlap = sum(max(0, min(box[2], b[2]) - max(box[0], b[0]))
+                          * max(0, min(box[3], b[3]) - max(box[1], b[1])) for b in occupied)
+            choices.append((overlap, mx, my, box))
+            if overlap == 0:
+                break
+        _, mx, my, box = min(choices, key=lambda item: item[0])
+        occupied.append(box)
+        labels.append((mx, my,
+                       str(length) + (st.get("colors") or {}).get(color, ""),
+                       "#263c40" if claimed else _shade(ccmap.get(color, "#66706b"), -.35)))
+    for mx, my, label, col in labels:
+        cv.create_rectangle(mx - 13, my - 8, mx + 13, my + 8,
+                            fill="#fff5dc", outline=col, width=1)
+        _text(cv, mx, my, label, col, (_FONT_F[0], 8, "bold"))
     for cid, (px, py) in pos.items():
-        cv.create_oval(px - 15, py - 15, px + 15, py + 15,
-                       fill="#33415a", outline="#fff", width=2)
+        cv.create_oval(px - 8, py - 8, px + 8, py + 8,
+                       fill="#263c40", outline="#fff5dc", width=2)
         _text(cv, px, py, str(cid), "#fff", (_FONT_F[0], 9))
-        _text(cv, px, py + 24, city(cid), "#dfe6ef",
+        cv.create_rectangle(px - 24, py + 11, px + 24, py + 31,
+                            fill="#fff5dc", outline="#796746", width=1)
+        _text(cv, px, py + 21, city(cid), "#263c40",
               (_FONT_F[0], 9))
     _text(cv, w / 2, h - 102,
           "点线路认领（需对应颜色车票卡 N 张，N = 线路长度）", _MUTED,

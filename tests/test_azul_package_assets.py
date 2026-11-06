@@ -51,3 +51,20 @@ def test_azul_asset_is_png_data_uri_with_expected_size(key, wh):
     raw = base64.b64decode(url.split(",", 1)[1])
     img = Image.open(io.BytesIO(raw))
     assert img.size == wh
+
+
+def test_glaze_atlas_rebuilds_both_runtime_and_packaged_pngs():
+    """交付的唯一美术源可以离线重建；两端内嵌与打包 PNG 不得漂移。"""
+    from boardgames.azul import sprites
+    rebuilt = sprites.build_all()
+    assert rebuilt == _art.ASSETS
+    for key, uri in rebuilt.items():
+        assert (sprites.ASSETS_DIR / (key + ".png")).read_bytes() == base64.b64decode(uri.split(",", 1)[1])
+
+
+def test_glaze_mat_has_no_preprinted_grid():
+    """玩家板内部保持低对比釉面，避免旧版硬边槽线叠在真实 Web 格子下。"""
+    from PIL import ImageStat
+    raw = base64.b64decode(_art.ASSETS["azul_board"].split(",", 1)[1])
+    mat = Image.open(io.BytesIO(raw)).convert("RGBA").convert("RGB").crop((24, 24, 360, 264))
+    assert max(ImageStat.Stat(mat).stddev) < 12

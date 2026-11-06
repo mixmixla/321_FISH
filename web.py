@@ -61,7 +61,7 @@ _BG_ASSET_KEYS = ("azulejo",
                   "azul_wall_bg", "azul_board", "azul_plate_center", "azul_track_ring", "azul_chip",
                   "azul_marker_r", "azul_marker_w", "azul_marker_b", "azul_marker_y", "azul_marker_k",
                   "gem_o", "gem_d", "gem_r", "gem_e", "gem_s", "gem_g",
-                  "card_frame", "panel")
+                  "card_frame", "panel", "tielu_travel")
 
 
 def _bg_assets_all():
@@ -73,6 +73,13 @@ def _bg_assets_all():
         from boardgames.registry import package_assets
         out.update(package_assets() or {})
     except Exception:
+        pass
+    # Railway-specific original art: one compact bitmap shared with Tk.
+    try:
+        from pathlib import Path
+        art = Path(__file__).resolve().parent / "assets/boardgame/tielu_travel.jpg"
+        out["tielu_travel"] = "data:image/jpeg;base64," + base64.b64encode(art.read_bytes()).decode("ascii")
+    except OSError:
         pass
     return out
 
@@ -106,6 +113,13 @@ def _SERVED_PAGE():
     _resico['__fallback'] = resource_icon_svg('', 18)
     page = page.replace('@@UX_RESOURCE_ICONS@@', _js_json_literal(_resico))
     page = page.replace('@@UX_BG_ASSETS@@', _js_json_literal(_bg_assets_subset()))
+    from boardgames.gallery import COVERS, FEATURED, cover_url
+    page = page.replace('@@UX_GALLERY@@', _js_json_literal({
+        "covers": {name: cover_url(name) for name in COVERS},
+        "featured": FEATURED,
+    }))
+    from boardgames.gomoku_art import WEB_JS as gomoku_art_js
+    page = page.replace('/*@@GOMOKU_ART@@*/', gomoku_art_js)
     try:
         from boardgames.registry import web_parts
         _gjs, _gcss = web_parts()
@@ -555,6 +569,8 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
 body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.90),rgba(255,255,255,.90)),var(--azulejo);background-size:auto,256px 256px;background-repeat:no-repeat,repeat;background-position:center,top left}
 #ghead{display:flex;align-items:center;gap:8px;font-weight:700;font-size:var(--body-font,14px);color:var(--txt)}
 #gmain{overflow:auto;max-height:50vh}
+/* Railway map and its controls share the available height, including phones. */
+#gmain:has(.tl-map){max-height:calc(90vh - 180px)}
 #gpriv{background:var(--side);border:1px dashed var(--line);border-radius:var(--r1);padding:8px 12px;font-size:var(--secondary-font,12px);color:var(--txt)}
 #glog{background:var(--side);border:1px solid var(--line);border-radius:var(--r1);padding:7px 12px;font-size:var(--secondary-font,12px);max-height:15vh;overflow:auto;color:var(--dim)}
 .gbtn{cursor:pointer;border:1px solid var(--line);background:var(--side);color:var(--txt);border-radius:var(--r1);padding:5px 14px;font-size:var(--secondary-font,12px);font-weight:600;transition:background .15s,border-color .15s}
@@ -566,6 +582,9 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 .gcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
 .gcard b{font-size:var(--body-font,14px)}
 .gcard .go{margin-top:auto}
+.gallery-cover{aspect-ratio:2/1;border-radius:16px 16px 16px 7px;margin:-12px -12px 8px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.gallery-cover img[data-gallery-cover]{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.gallery-cover img[hidden]{display:none}
 .gcell{width:36px;height:36px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;border-radius:var(--r1);background:var(--card);transition:transform .1s,box-shadow .1s}
 .gcell:hover{transform:scale(1.06);box-shadow:var(--shadow-sm)}
 .gmap{display:grid;gap:3px;font-size:10px}
@@ -3917,6 +3936,7 @@ function applyRO(){
 // game_list（房间清单）/ game_state（房间快照+events+nicks）/ game_private（手牌/词面）。
 state.gmeta={};state.grooms=[];state.groom=null;state.gst=null;state.gpriv=null;state.gleft={};
 state.gnicks={};state.glog=[];state.globbyOpen=false;
+const GALLERY=JSON.parse("@@UX_GALLERY@@");
 state.fish={};state.fishOpen=false;state.fishGame="";   // R70H 摸鱼排行榜缓存
 // E1：47 款游戏统一矢量图标（单源 ui_design.GAME_ICONS → SVG），大厅房间行复用。
 // 与 GART（渐变封面美术）正交：GICON 只做单色轮廓小图标，颜色随 currentColor。
@@ -3994,6 +4014,8 @@ const GART={
   ninja:["#33415a","#1d2736",'<g stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M24 42 V20 M24 28 L12 18 M24 28 L36 18 M24 20 l6 8 M24 20 l-6 8"/></g><circle cx="24" cy="20" r="4.5" fill="none" stroke="#efca63" stroke-width="2.4"/><path d="M18 14 a6 6 0 0 1 12 0" fill="#efca63" stroke="none" opacity=".7"/>'],
   coc:["#1f5236","#123022",'<g fill="none" stroke="#fff" stroke-linecap="round"><path d="M12 18 L20 26 L32 14 M16 34 h20 M14 30 q6 5 12 0 M26 10 a4 4 0 0 1 0 8 a4 4 0 0 1 0 -8" stroke-width="2.4"/></g><circle cx="24" cy="24" r="12" fill="none" stroke="#efca63" stroke-width="1.6" stroke-dasharray="2 3"/><circle cx="38" cy="35" r="2.6" fill="#efca63"/>'],
 };
+GART.gomoku_solo=GART.gomoku;
+GART.tile2048=["#d99448","#a86831",'<rect x="7" y="7" width="34" height="34" rx="6" fill="#f5e9d0"/><text x="24" y="29" font-size="14" fill="#805021" font-weight="800" text-anchor="middle" font-family="Segoe UI,Arial">2048</text>'];
 function gArt(name,size){
   const a=GART[name]||GART.guess_number,s=size||48;
   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+s+'" height="'+s+'" viewBox="0 0 48 48">'
@@ -4124,9 +4146,12 @@ function renderLobby(){
   grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px";
   const query=(state.glQuery||"").trim().toLowerCase(),rawPlayers=(state.glPlayers||"").trim();
   const players=rawPlayers?Number(rawPlayers):null;
+  const gallery=typeof GALLERY==="object"?GALLERY:{covers:{},featured:[]};
   const games=Object.entries(state.gmeta).filter(([name,g])=>
     (!query||name.toLowerCase().includes(query)||(g.label||name).toLowerCase().includes(query))&&
     (players===null||(/^\d+$/.test(rawPlayers)&&players>=1&&players>=g.min&&(!g.max||players<=g.max))));
+  const ranks=new Map((gallery.featured||[]).map((name,index)=>[name,index]));
+  games.sort((a,b)=>(ranks.has(a[0])?ranks.get(a[0]):ranks.size)-(ranks.has(b[0])?ranks.get(b[0]):ranks.size));
   $("#glCount").textContent="显示 "+games.length+" / "+Object.keys(state.gmeta).length+" 款 · 人数留空不限";
   if(!games.length){const empty=document.createElement("div");
     empty.textContent=Object.keys(state.gmeta).length?"没有符合条件的桌游，请修改条件或点击「清空筛选」":"正在获取桌游列表…";
@@ -4138,11 +4163,15 @@ function renderLobby(){
     const cover=art.length?art:pastels[pi];
     const grad="linear-gradient(135deg,"+cover[0]+","+cover[1]+")";
     const c=document.createElement("div");c.className="gcard";c.dataset.game=name;
-    c.innerHTML="<div style='height:52px;border-radius:16px 16px 16px 7px;margin:-12px -12px 8px;display:flex;align-items:center;justify-content:center;background:"+grad+"'>"
-      +"<img src='"+gArt(name,30)+"' width='30' height='30' style='border-radius:10px;box-shadow:0 2px 6px rgba(120,80,40,.35);background:#fff' alt=''></div>"
+    const imageURL=(gallery.covers||{})[name]||"";
+    c.innerHTML="<div class='gallery-cover' style='background:"+grad+"'>"
+      +(imageURL?"<img data-gallery-cover src='"+esc(imageURL)+"' loading='lazy' decoding='async' alt=''>":"")
+      +"<img class='gallery-fallback' "+(imageURL?"hidden ":"")+"src='"+gArt(name,30)+"' width='30' height='30' style='border-radius:10px;box-shadow:0 2px 6px rgba(120,80,40,.35);background:#fff' alt=''></div>"
       +"<b style='font-size:14px;color:#3d3a54'>"+esc(g.label||name)+"</b>"
       +"<span style='color:var(--dim);font-size:11px'>"+esc(g.desc||"")+"</span>"
       +"<span style='color:var(--dim);font-size:10px'>👥 "+g.min+"~"+(g.max||"∞")+" 人</span>";
+    if(imageURL){const image=c.querySelector('[data-gallery-cover]');
+      image.onerror=()=>{image.hidden=true;c.querySelector('.gallery-fallback').hidden=false;};}
     let optSel=null;                                  // 围棋等：创建前选棋盘路数
     const sizes=(g.options&&g.options.size)||[];
     if(sizes.length>1){
@@ -4298,6 +4327,7 @@ function gLegalTos(fx,fy){
   return out;
 }
 // ---- 各游戏渲染器（s = game_state.state）----
+/*@@GOMOKU_ART@@*/
 const GRENDER={
   guess_number(box,s){
     const d=document.createElement("div");d.style.cssText="text-align:center;padding:6px";
@@ -4326,18 +4356,25 @@ const GRENDER={
     else bar.innerHTML="<span style='color:var(--dim);font-size:12px'>下一轮即将开始…</span>";
     box.appendChild(bar);
   },
+  gomoku_solo(box,s){ GRENDER.gomoku(box,s); },
   gomoku(box,s){
     const n=s.board.length,cell=24,pad=26,W=n*cell+pad*2;
     const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:4px;font-size:13px";
-    info.innerHTML=(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 获胜"
+    info.innerHTML=(s.solo?((s.players||[]).includes(state.uid)?"你执黑 · 电脑执白 · ":"观战 · 电脑执白 · "):"")
+      +(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 获胜"
       :(s.draw?"平局":"轮到 "+esc(gnick(s.turn_uid))+(s.turn_uid===state.uid?"（你执子）":"")));
     box.appendChild(info);
     const mine=s.winner_uid==null&&!s.draw&&s.turn_uid===state.uid;
     const cv=document.createElement("canvas");cv.width=W;cv.height=W;
-    cv.style.cssText="display:block;margin:0 auto;background:#d9a45b;border-radius:6px;cursor:"
+    cv.style.cssText="display:block;max-width:100%;height:auto;margin:0 auto;background:#d9a45b;border-radius:6px;touch-action:manipulation;cursor:"
       +(mine?"pointer":"default");
     box.appendChild(cv);
     const ctx=cv.getContext("2d");
+    const art=(s.solo||s.game==="gomoku_solo")&&typeof createGomokuArtPainter==="function"
+      ?createGomokuArtPainter(cv,paint):null;
+    function paint(){
+    ctx.clearRect(0,0,W,W);
+    if(art)art.board(0,0,W,W);
     // 坐标：列 A~O、行 1~15（BGA 默认显示坐标）
     ctx.fillStyle="#5a3d16";ctx.font="11px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
     for(let i=0;i<n;i++){
@@ -4345,21 +4382,25 @@ const GRENDER={
       ctx.fillText(String(i+1),pad-16,pad+i*cell);}
     ctx.strokeStyle="#6b4a1b";
     for(let i=0;i<n;i++){
-      ctx.beginPath();ctx.moveTo(pad+i*cell,pad);ctx.lineTo(pad+i*cell,W-pad);ctx.stroke();
-      ctx.beginPath();ctx.moveTo(pad,pad+i*cell);ctx.lineTo(W-pad,pad+i*cell);ctx.stroke();}
+      ctx.beginPath();ctx.moveTo(pad+i*cell,pad);ctx.lineTo(pad+i*cell,pad+(n-1)*cell);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(pad,pad+i*cell);ctx.lineTo(pad+(n-1)*cell,pad+i*cell);ctx.stroke();}
     // 天元/星位
     ctx.fillStyle="#5a3d16";
     for(const h of [[3,3],[11,3],[3,11],[11,11],[7,7]]){
       if(h[0]<n&&h[1]<n){ctx.beginPath();ctx.arc(pad+h[0]*cell,pad+h[1]*cell,3,0,7);ctx.fill();}}
     for(let y=0;y<n;y++)for(let x=0;x<n;x++){const v=s.board[y][x];if(!v)continue;
+      if(art){art.stone(pad+x*cell,pad+y*cell,cell*0.42,v);continue;}
       ctx.beginPath();ctx.arc(pad+x*cell,pad+y*cell,cell*0.42,0,7);
       ctx.fillStyle=v===1?"#111":"#fff";ctx.fill();ctx.stroke();}
-    if(s.last_move){ctx.beginPath();
+    if(s.last_move&&art)art.last(pad+s.last_move[0]*cell,pad+s.last_move[1]*cell,cell*.42);
+    else if(s.last_move){ctx.beginPath();
       ctx.arc(pad+s.last_move[0]*cell,pad+s.last_move[1]*cell,3,0,7);
       ctx.fillStyle="#e33";ctx.fill();}
+    }
+    paint();
     if(mine)
       cv.onclick=e=>{const r=cv.getBoundingClientRect();
-        const x=Math.round((e.clientX-r.left-pad)/cell),y=Math.round((e.clientY-r.top-pad)/cell);
+        const x=Math.round(((e.clientX-r.left)*W/r.width-pad)/cell),y=Math.round(((e.clientY-r.top)*W/r.height-pad)/cell);
         if(x<0||y<0||x>=n||y>=n||s.board[y][x])return;
         gameAPI("action",{room_id:state.groom,action:{x:x,y:y}});};
   },
@@ -5096,34 +5137,54 @@ const GRENDER={
     const n=ids.length||1,cx=170,cy=130,Rx=130,Ry=95,pos={};
     ids.forEach((id,i)=>{const an=i/n*2*Math.PI-Math.PI/2;
       pos[id]=[cx+Rx*Math.cos(an),cy+Ry*Math.sin(an)];});
+    const landmarks={0:[.16,.23],1:[.42,.19],2:[.72,.20],3:[.88,.43],
+      4:[.77,.76],5:[.46,.76],6:[.18,.75],7:[.10,.49]};
+    ids.forEach(id=>{if(landmarks[id])pos[id]=[340*landmarks[id][0],260*landmarks[id][1]];});
     const pv=(state.gpriv&&state.gpriv.hand)||{};
     const myTurn=s.turn_uid!=null&&s.turn_uid===state.uid;
     const P2=(v)=>Math.round(v*10)/10;
-    let svg="<svg viewBox='0 0 340 260' style='width:100%;max-width:460px;display:block;margin:4px auto;background:#111b2b;border-radius:10px'>";
+    let svg="<svg class='tl-map' role='img' aria-label='铁路旅行地图，点击可支付的线路认领' viewBox='0 0 340 260' style='width:min(100%,max(290px,calc(117.69vh - 562px)));max-width:600px;display:block;margin:4px auto;background:#e6dab9;border-radius:10px;border:1px solid #aa9168'>";
+    if(BG.tielu_travel)svg+="<image href='"+BG.tielu_travel+"' width='340' height='260' preserveAspectRatio='none' pointer-events='none'/>";
+    let routeLabels="",routeHits="";
+    const occupied=ids.map(id=>{const p=pos[id];return [p[0]-23,p[1]-9,p[0]+23,p[1]+30];});
     (s.routes||[]).forEach(rt=>{
       const A=pos[rt.a],B=pos[rt.b];if(!A||!B)return;
-      const claimed=!!rt.claimed,col=claimed?"#666":(P_COL[rt.color]||"#999");
+      const claimed=!!rt.claimed;
+      const ownerColors=["#e0535a","#4a7de0","#37a25f","#e0a13c","#9a6fd0","#26c6b0"];
+      const col=claimed?ownerColors[Math.max(0,(s.players||[]).indexOf(rt.claimed))%ownerColors.length]:(P_COL[rt.color]||"#66706b");
       const cnm=CN[rt.color]||"";
       const canPay=!claimed&&myTurn&&(pv[rt.color]||0)>=rt.length;
       const ln="x1='"+P2(A[0])+"' y1='"+P2(A[1])+"' x2='"+P2(B[0])+"' y2='"+P2(B[1])+"'";
-      svg+="<line "+ln+" stroke='"+col+"' stroke-width='"+(claimed?6:4)+"' stroke-linecap='round'"
-        +(claimed?"":(canPay?"":" style='opacity:.35'"))+"/>";
-      if(!claimed)svg+="<line "+ln
-        +(canPay?" data-tla='"+rt.a+"' data-tlb='"+rt.b+"' style='cursor:pointer'":"")
-        +" stroke='transparent' stroke-width='16'/>";
-      svg+="<text x='"+P2((A[0]+B[0])/2)+"' y='"+P2((A[1]+B[1])/2-3)
-        +"' fill='#fff' font-size='9' text-anchor='middle'>"+rt.length+" "+cnm+"</text>";
+      svg+="<line "+ln+" stroke='#fff4d8' stroke-width='8' stroke-linecap='round'"
+        +(claimed||canPay?"":" style='opacity:.35'")+"/>"
+        +"<line "+ln+" stroke='"+col+"' stroke-width='"+(claimed?5:3.5)+"' stroke-linecap='round'"
+        +(claimed?"":(canPay?"":" stroke-dasharray='4 3'"))+"/>";
+      if(claimed)svg+="<line "+ln+" stroke='#fff4d8' stroke-width='1' stroke-dasharray='2 7'/>";
+      if(canPay)routeHits+="<line "+ln+" data-tla='"+rt.a+"' data-tlb='"+rt.b+"' style='cursor:pointer'"
+        +" stroke='transparent' stroke-width='16'><title>"+esc(s.cities[rt.a])+" → "+esc(s.cities[rt.b])+" · "+cnm+rt.length+"张</title></line>";
+      const choices=[];
+      for(const t of [.38,.62,.5,.26,.74,.18,.82,.44,.56]){
+        const x=A[0]+(B[0]-A[0])*t,y=A[1]+(B[1]-A[1])*t,b=[x-14,y-9,x+14,y+9];
+        const overlap=occupied.reduce((sum,r)=>sum+Math.max(0,Math.min(b[2],r[2])-Math.max(b[0],r[0]))
+          *Math.max(0,Math.min(b[3],r[3])-Math.max(b[1],r[1])),0);
+        choices.push({overlap,x,y,b});if(!overlap)break;
+      }
+      choices.sort((a,b)=>a.overlap-b.overlap);const best=choices[0],mx=best.x,my=best.y;occupied.push(best.b);
+      routeLabels+="<g pointer-events='none'><rect x='"+P2(mx-12)+"' y='"+P2(my-7)+"' width='24' height='14' rx='3' fill='#fff5dc' stroke='"+col+"'/>"
+        +"<text x='"+P2(mx)+"' y='"+P2(my+3.2)+"' fill='#263c40' font-size='9' font-weight='bold' text-anchor='middle'>"+rt.length+" "+cnm+"</text></g>";
     });
+    svg+=routeLabels+routeHits;
     ids.forEach(id=>{const P=pos[id];
-      svg+="<circle cx='"+P2(P[0])+"' cy='"+P2(P[1])+"' r='15' fill='#33415a' stroke='#fff' stroke-width='2'/>"
+      svg+="<g pointer-events='none'><circle cx='"+P2(P[0])+"' cy='"+P2(P[1])+"' r='7' fill='#263c40' stroke='#fff5dc' stroke-width='2'/>"
         +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+3)+"' fill='#fff' font-size='9' text-anchor='middle'>"+id+"</text>"
-        +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+26)+"' fill='#dfe6ef' font-size='9' text-anchor='middle'>"
-        +esc(s.cities[id]||"")+"</text>";});
+        +"<rect x='"+P2(P[0]-21)+"' y='"+P2(P[1]+10)+"' width='42' height='18' rx='3' fill='#fff5dc' stroke='#796746'/>"
+        +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+23)+"' fill='#263c40' font-size='11' font-weight='bold' text-anchor='middle'>"
+        +esc(s.cities[id]||"")+"</text></g>";});
     svg+="</svg>";
     const d=document.createElement("div");
     d.innerHTML="<div style='font-size:11px;color:var(--dim)'>"+(s.final_round?"最后一轮 · ":"")+"回合 → "+esc(gnick(s.turn_uid))
       +"　剩线路 "+s.route_left+"　手牌×"+(s.hand_count[state.uid]||0)+"　"+scoreHTML(s.score)+"</div>"
-      +"<div class='gsec'>线路图（点线路认领：需对应颜色车票卡，长度即张数）</div>"+svg;
+      +"<div class='gsec'>旅行线路 · 实线可认领，虚线需补票卡，带白点为已认领</div>"+svg;
     d.querySelectorAll("line[data-tla]").forEach(el=>{
       el.onclick=()=>gameAPI("action",{room_id:state.groom,
         action:{op:"claim",a:+el.getAttribute("data-tla"),b:+el.getAttribute("data-tlb")}});});
@@ -6890,6 +6951,19 @@ class _Handler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Cache-Control", "no-cache")   # R41G：页面随服务器更新，禁浏览器陈旧缓存
             self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+        elif path.startswith("/game-art/"):
+            from boardgames.gallery import read_resource
+            try:
+                data, mime = read_resource(path[len("/game-art/"):])
+            except (OSError, ValueError):
+                self._json(404, {"ok": False, "error": "not found"})
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", mime)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "public, max-age=3600")
             self.end_headers()
             self.wfile.write(data)
         elif path == "/api/events":

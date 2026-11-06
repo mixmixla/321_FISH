@@ -15,6 +15,10 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 游戏与美术升级 · ARCADE-20261106 v1.1
+
+**AI_ACCEPTED · 完整候选通过**。铁路/大厅/手机点按已由[PR #9](https://github.com/mixmixla/321_FISH/pull/9)合并。本批见[任务 v1.1](task-packages/ARCADE-20261106.md)及[最终评审](review-packages/ARCADE-20261106-r1.md)。应用候选 b270e8a，从 162eef9 开发，分支 feature/arcade-20261106。全量 243 文件、3274 通过、0 失败、20 默认跳过，用时 29 分 28 秒；所有实现、试玩、测试已结束。本批 Git 交付见 [PR #10](https://github.com/mixmixla/321_FISH/pull/10)，合并状态以远端记录为准。当前范围结束，无下一项 READY。
+
 ## 桌游试玩 · PLAY-20261106 v1
 
 **AI_ACCEPTED · 全量通过**。三项已完成主控审查。[批次任务](task-packages/PLAY-20261106.md) / [集成评审](review-packages/PLAY-20261106-r1.md)。应用候选 d0f31ba，基线 de4031e，集成分支 feature/boardgame-play-20261106。最终全量 237 文件、3226 通过、0 失败、20 项默认跳过，退出 0。三个实现窗口和后台验证均已结束；下一步按用户授权推送功能分支、通过 PR 合并，结果以远端 Git 为准。

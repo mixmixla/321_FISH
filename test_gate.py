@@ -1046,6 +1046,12 @@ def _write_summary(run_dir: Path, manifest: dict, progress: dict,
         "environment": manifest.get("environment"),
         "sandbox_policy": manifest.get("sandbox_policy"),
         "files": len(results),
+        "planned_files": len(manifest.get("tests", [])),
+        "pending_files": [entry["path"] for entry in manifest.get("tests", [])
+                          if not any(r.get("file") == entry["path"]
+                                     and r.get("status") in TERMINAL_STATUSES
+                                     for r in results)],
+        "stop_reason": progress.get("stop_reason"),
         "failures": failures,
         "cleanup_failures": cleanup_failures,
         "totals": totals,
@@ -1072,6 +1078,10 @@ def _parse(argv: list[str] | None):
     parser.add_argument("--run-visual", action="store_true")
     parser.add_argument("--run-hardware", action="store_true")
     parser.add_argument("--max-files", type=int, default=None)
+    parser.add_argument("--fail-fast", action="store_true",
+                        help="首个非通过文件后停止；保留失败，不重跑")
+    parser.add_argument("--stop-file", type=Path,
+                        help="此文件存在时不再启动下一文件；当前文件正常收尾")
     args, pytest_args = parser.parse_known_args(raw_argv)
     if any(str(value).startswith("--basetemp") for value in pytest_args):
         parser.error("--basetemp 由逐文件门禁管理")
@@ -1153,7 +1163,11 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     _write_progress(run_dir / "progress.json", progress)
     total = len(manifest.get("tests", []))
+    progress.pop("stop_reason", None)
     for index, entry in enumerate(manifest.get("tests", []), 1):
+        if args.stop_file is not None and args.stop_file.exists():
+            progress["stop_reason"] = "stop_file"
+            break
         name = entry["path"]
         record = _new_record(progress, name)
         if record.get("status") in TERMINAL_STATUSES:
@@ -1162,6 +1176,9 @@ def main(argv: list[str] | None = None) -> int:
                       file=sys.stderr)
                 _write_summary(run_dir, manifest, progress, started, 2)
                 return 2
+            if args.fail_fast and record.get("status") != "passed":
+                progress["stop_reason"] = "fail_fast"
+                break
             continue
         # interrupted records remain as history and are deliberately rerun.
         _execute_one(
@@ -1180,6 +1197,10 @@ def main(argv: list[str] | None = None) -> int:
             _write_summary(run_dir, manifest, progress, started, 2)
             print("VB-01 stopped: process cleanup could not be verified", file=sys.stderr)
             return 2
+        if args.fail_fast and record.get("status") != "passed":
+            progress["stop_reason"] = "fail_fast"
+            break
+    _write_progress(run_dir / "progress.json", progress)
     failures = [record for record in progress.get("results", [])
                 if record.get("status") != "passed"]
     cleanup_failed = any(

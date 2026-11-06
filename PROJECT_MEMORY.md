@@ -20,6 +20,9 @@
 
 ## Architecture
 
+- 2048（tile2048）和五子棋陪练（gomoku_solo）使用单人游戏房间；前者的分数为数字，后者规则内部用 -1 表示电脑，房间人数只计真人。桌游大厅封面顺序及本地/网页图库文件名来自 boardgames/gallery.py，网页按需从 /game-art/ 加载。
+
+
 - 铁路目标票仅在 `private(uid).tickets` 带实时 `connected`，抽票公共事件不含目的地；
   达标后的当前行动者与 `extra` 待补名单分开，线路耗尽不取消补回合。
   终局公开 `final_scores`（线路/票证加分/票证扣分/总分），同分沿座次首人胜；

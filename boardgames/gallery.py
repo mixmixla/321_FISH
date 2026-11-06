@@ -41,6 +41,7 @@ ART_FILES = frozenset(COVERS.values()) | {
     "arcade-orchard.webp",
     "arcade-bell.png",
     "arcade-yacht.webp",
+    "arcade-atelier.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}

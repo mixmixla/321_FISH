@@ -1412,13 +1412,17 @@ def handle_drag(cv, ui, x, y, phase):
     if game != "drawguess":
         return
     st = ui.get("state") or {}
-    if (st.get("status") or st.get("phase")) != "drawing" \
-            or st.get("drawer_uid") != ui.get("me"):
+    from boardgames.arcade_drawguess import can_draw, COLORS, WIDTHS
+    if not can_draw(st, ui):
+        ui.pop("dg_last", None)
         return
     mp = ui.get("dg_map")
     if not mp:
         return
     ox, oy, scale = mp
+    if phase == "down" and not (ox <= x <= ox+400*scale and oy <= y <= oy+300*scale):
+        ui.pop("dg_last", None)
+        return
     lx = max(0.0, min(400.0, (x - ox) / scale))
     ly = max(0.0, min(300.0, (y - oy) / scale))
     if phase == "down":
@@ -1435,12 +1439,16 @@ def handle_drag(cv, ui, x, y, phase):
     if abs(lx - x1) < 1 and abs(ly - y1) < 1:
         return
     ui["dg_last"] = (lx, ly)
+    color = ui.get("dg_color", COLORS[0])
+    width = ui.get("dg_width", 5)
+    color = color if color in COLORS else COLORS[0]
+    width = width if width in WIDTHS else 5
     stroke = {"type": "line", "x1": int(x1), "y1": int(y1),
-              "x2": int(lx), "y2": int(ly), "color": "black", "width": 3}
+              "x2": int(lx), "y2": int(ly), "color": color, "width": width}
     try:
         cv.create_line(ox + x1 * scale, oy + y1 * scale,
                        ox + lx * scale, oy + ly * scale,
-                       fill="black", width=3, capstyle="round", tags="dg_ink")
+                       fill=color, width=max(1, width*scale), capstyle="round", tags="dg_ink")
     except Exception:
         pass
     try:
@@ -4339,69 +4347,16 @@ def _p_guess_number(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("drawguess")
 def _p_drawguess(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["drawguess"][1]
-    phase = st.get("status") or st.get("phase") or "drawing"
-    drawer = st.get("drawer_uid")
-    title = "🎨 你画我猜"
-    if phase == "round_end":
-        word = st.get("word") or ""
-        title = f"🎉 答案揭晓：{word}"
-    elif drawer is not None:
-        title += f"　画手：{nick(drawer)}" + ("（你）" if drawer == me else "")
-    _turn_banner(cv, w, 46, title, accent)
-    _status_hud(cv, w, 58, st, me, nick, accent)      # F6：阶段·轮次 + 计分
-    # 画布区域：统一 400×300 逻辑坐标（与 Web 端一致），等比缩放并居中；
-    # 命中反算见 handle_drag，保证桌面/网页两端笔画坐标可互通。
-    canvas_x, canvas_y, canvas_w, canvas_h = 14, 70, w - 28, h - 150
-    scale = max(min(canvas_w / 400.0, canvas_h / 300.0), 0.05)
-    dw, dh = 400 * scale, 300 * scale
-    ox = canvas_x + (canvas_w - dw) / 2.0
-    oy = canvas_y + (canvas_h - dh) / 2.0
-    ui["dg_map"] = (ox, oy, scale)
-    cv.create_rectangle(ox, oy, ox + dw, oy + dh, fill="#fff", outline=_PANEL_BD)
-    strokes = st.get("strokes") or []
-    for s in strokes:
-        if not isinstance(s, dict):
-            continue
-        if s.get("type") == "line":
-            x1, y1 = s.get("x1", 0), s.get("y1", 0)
-            x2, y2 = s.get("x2", 400), s.get("y2", 300)
-            _col = s.get("color") or "black"
-            _wid = s.get("width") or 3
-            try:
-                cv.create_line(ox + x1 * scale, oy + y1 * scale,
-                               ox + x2 * scale, oy + y2 * scale,
-                               fill=_col, width=int(_wid), capstyle="round")
-            except Exception:
-                pass
-    # 顶部信息
-    if phase == "drawing":
-        wlen = st.get("word_len")
-        if drawer == me:
-            wlen_txt = priv.get("word", "?") if priv and priv.get("word") else "?"
-            _text(cv, w - 14, 60 + canvas_h + 10, f"你的词：{wlen_txt}",
-                  "#c0392b", _FONT_B, anchor="e")
-        else:
-            _text(cv, w - 14, 60 + canvas_h + 10,
-                  f"词长：{'■' * (st.get('word_len') or 0)}" if st.get("word_len")
-                  else "画手中…", _MUTED, _FONT_F, anchor="e")
-        gy = st.get("guessed_by")
-        if gy is not None:
-            _text(cv, 14, 60 + canvas_h + 10, f"已猜中：{nick(gy)}", "#37a25f",
-                  _FONT_B, anchor="w")
-    # 猜词日志（计分已由顶部 F6 HUD 统一呈现）
-    log = st.get("guess_log") or []
-    if log:
-        last = log[-2:]
-        _text(cv, w - 14, 60 + canvas_h + 30, "最近：" + "；".join(
-            f"{nick(x['uid'])}「{x['text']}」{'✓' if x.get('ok') else '✗'}"
-            for x in last), _MUTED, (_FONT_F[0], 9), anchor="e")
+    from boardgames.arcade_drawguess import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
-# ---------------------------------------------------------------------------
-# 德式策略组：面板 + 资源 + 棋盘，统一走下方按钮区操作，painter 只画状态
-# ---------------------------------------------------------------------------
-_PALETTE = ["#e0535a", "#4a7de0", "#37a25f", "#e0a13c", "#9a6fd0", "#26c6b0"]
+def _click_drawguess(ui, x, y):
+    from boardgames.arcade_drawguess import click
+    click(ui, x, y)
+
+
+_CLICKS["drawguess"] = _click_drawguess
 
 
 def _pcolor(uid, players):

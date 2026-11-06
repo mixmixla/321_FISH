@@ -149,6 +149,9 @@ def _SERVED_PAGE():
     from boardgames.arcade_yahtzee import WEB_JS as yacht_js, WEB_CSS as yacht_css
     page = page.replace('/*@@ARCADE_YACHT_JS@@*/', yacht_js)
     page = page.replace('@@ARCADE_YACHT_CSS@@', yacht_css)
+    from boardgames.arcade_drawguess import WEB_JS as atelier_js, WEB_CSS as atelier_css
+    page = page.replace('/*@@ARCADE_ATELIER_JS@@*/', atelier_js)
+    page = page.replace('@@ARCADE_ATELIER_CSS@@', atelier_css)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -710,6 +713,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 @@RAIL_CSS@@
 @@ARCADE_ORCHARD_CSS@@
 @@ARCADE_YACHT_CSS@@
+@@ARCADE_ATELIER_CSS@@
 @@MANOR_CSS@@
 </style>
 </head>
@@ -4328,7 +4332,7 @@ function renderGamePanel(){
     main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
     const note=document.createElement("div");note.className="gsec";
     note.textContent=gname==="tielu"?"🏁 本局结束，保留结算 30 秒后回到房间":"🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
-  const pv=(gname==="tielu"||gname==="gemcity"||gname==="lovelove"||gname==="betrayal")?null:state.gpriv;if(pv){
+  const pv=(gname==="tielu"||gname==="gemcity"||gname==="lovelove"||gname==="betrayal"||gname==="drawguess")?null:state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
       ?pv.hand.join(" ")
@@ -4366,6 +4370,7 @@ function gLegalTos(fx,fy){
 /*@@CARD_TABLE_JS@@*/
 /*@@ARCADE_ORCHARD_JS@@*/
 /*@@ARCADE_YACHT_JS@@*/
+/*@@ARCADE_ATELIER_JS@@*/
 const MANOR_ATLASES=JSON.parse("@@MANOR_ATLASES@@");
 const RAIL_TICKET_COUNT=@@RAIL_TICKET_COUNT@@;
 /*@@RAIL_JS@@*/
@@ -4921,52 +4926,7 @@ const GRENDER={
       box.appendChild(w);}
   },
   betrayal(box,s){ ManorWeb.paint(box,s); },
-  drawguess(box,s){
-    const my=state.uid,amDrawer=s.drawer_uid===my;
-    const d=document.createElement("div");d.style.cssText="text-align:center;margin-bottom:6px;font-size:13px";
-    d.innerHTML="🎨 画手 "+esc(gnick(s.drawer_uid))+(amDrawer?"（你）":"")
-      +(s.phase==="round_end"?"　答案："+esc(s.word||""):"　猜词中…")
-      +"　第 "+s.round+" 轮　"+scoreHTML(s.scores);
-    box.appendChild(d);
-    const cv=document.createElement("canvas");cv.width=400;cv.height=300;
-    cv.style.cssText="display:block;margin:0 auto;border:1px solid var(--line,#ddd);border-radius:8px;background:#fff;cursor:crosshair";
-    box.appendChild(cv);
-    const ctx=cv.getContext("2d");ctx.lineCap="round";
-    const repaint=()=>{ctx.clearRect(0,0,400,300);
-      (s.strokes||[]).forEach(k=>{if(k.type!=="line")return;
-        ctx.beginPath();ctx.moveTo(k.x1,k.y1);ctx.lineTo(k.x2,k.y2);
-        ctx.strokeStyle=k.color||"black";ctx.lineWidth=k.width||3;ctx.stroke();});};
-    repaint();
-    if(amDrawer&&s.phase==="drawing"){
-      let drawing=false,lx=0,ly=0,pend=[];
-      const pos=e=>{const r=cv.getBoundingClientRect();
-        return [Math.round((e.clientX-r.left)*400/r.width),
-                Math.round((e.clientY-r.top)*300/r.height)];};
-      cv.onmousedown=e=>{[lx,ly]=pos(e);drawing=true};
-      cv.onmousemove=e=>{if(!drawing)return;const [x,y]=pos(e);
-        if(x===lx&&y===ly)return;
-        pend.push({type:"line",x1:lx,y1:ly,x2:x,y2:y,color:"black",width:3});
-        ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.lineWidth=3;ctx.stroke();
-        lx=x;ly=y;};
-      const flush=()=>{if(!drawing)return;drawing=false;
-        pend.forEach(k=>gameAPI("action",{room_id:state.groom,action:{stroke:k}},true));
-        pend=[];};
-      cv.onmouseup=flush;cv.onmouseleave=flush;
-      const bar=document.createElement("div");bar.style.cssText="text-align:center;margin:6px";
-      bar.appendChild(gBtn("🗑 清空",{clear:true}));box.appendChild(bar);
-      if(state.gpriv&&state.gpriv.word){
-        const w=document.createElement("div");w.style.cssText="text-align:center;margin:4px;font-weight:700";
-        w.textContent="你的词："+state.gpriv.word;box.appendChild(w);}}
-    else if(s.phase==="drawing"&&(s.players||[]).includes(my)){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;justify-content:center;margin:8px";
-      const inp=document.createElement("input");inp.placeholder="输入你猜的词";
-      inp.style.cssText="width:180px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px 8px";
-      const b=document.createElement("button");b.className="gbtn";b.textContent="猜！";
-      b.onclick=()=>{const t=inp.value.trim();if(t)gameAPI("action",{room_id:state.groom,action:{guess:t}})};
-      inp.addEventListener("keydown",e=>{if(e.key==="Enter")b.click()});
-      bar.append(inp,b);box.appendChild(bar);}
-    (s.guess_log||[]).slice(-10).forEach(x=>gLog("💬 "+gnick(x.uid)+"："+x.text+(x.ok?" ✅":"")));
-  },
+  drawguess(box,s){AtelierTable.render(box,s);},
   kaituo(box,s){
     box.appendChild(gTitle("kaituo","开拓 · 资源建设"));
     const R_CN={wood:"木头",brick:"砖",lamb:"羊",wheat:"麦",ore:"矿"};

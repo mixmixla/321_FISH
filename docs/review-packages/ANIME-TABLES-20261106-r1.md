@@ -77,3 +77,7 @@ dc9d0ad/e12532c/1658059 的八个棋种逐格核对，7×9 连续森林上有两
 ## 快艇骰子 · AI_ACCEPTED
 
 5901cce、a374353。通过实际骰盅和骰面保留第2、5枚，重掷后位置保持，直接在13项计分纸落笔。同步修复旧规则允许反复首次掷骰与重掷移动已保留骰位置两个复现问题。 各款Web输入绑定账号及当前房/轮和帧身份。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/yahtzee/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/yahtzee/mobile.webp)。
+
+## 你画我猜 · AI_ACCEPTED
+
+f0572bc。实际鼠标/触摸使用笔、颜色、清除与画板，猜方只看可见笔画并能输入答案；画手的题目不作为公开文案。真实规则夹具回放双端笔迹，不把演练认作外部局域网联测。 各款Web输入绑定账号及当前房/轮和帧身份。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/drawguess/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/drawguess/mobile.webp)。

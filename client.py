@@ -11554,11 +11554,7 @@ _GAME_ACTIONS = {
         ("要牌", {"fixed": {"action": "hit"}}, ""),
         ("停牌", {"fixed": {"action": "stand"}}, ""),
     ],
-    "drawguess": [
-        ("笔画", {"key": "stroke", "kind": "stroke"}, "画手输入 x1,y1,x2,y2"),
-        ("猜词", {"key": "guess", "kind": "text"}, "输入你的猜测"),
-        ("🗑 清空", {"fixed": {"clear": True}}, "画手清空画布（也可直接在画布上拖动作画）"),
-    ],
+    "drawguess": [],  # Canvas strokes, palette, cloth and native guess field.
     "connect4": [("落子", {"key": "col", "kind": "int"}, "输入列号 0~6")],
     "othello": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起）")],
     "calc24": [("作答", {"key": "expr", "kind": "text"}, "输入凑 24 的表达式，如 1+2+3*4")],
@@ -11741,6 +11737,7 @@ def _actions_for(game: str, priv: dict | None) -> list:
 _GAME_HINTS = {
     "blokus": "点右侧实际拼块，换向后点棋格放置；金边预览可落，红边表示受阻。",
     "ludo": "点棋盘中央骰子，再点机棚或轨道飞机；R掷骰、1–4选机。",
+    "drawguess": "选画笔颜色与粗细，在画板拖动作画；猜词者在画板下写下答案",
     "yahtzee": "点骰盅掷骰，点骰面保留；点自己的空白记分格写入预览分数",
     "halloween": "点牌堆翻牌，点桌铃收牌，点箭头结束回合；F / B / P 快捷键",
     "betrayal": "点自己所在房间的方向门移动；发现簿回看揭牌，背包阅读与使用道具。全图只作导航",
@@ -12680,7 +12677,7 @@ class GameWindow:
         if core.game_private != self._last_private:
             self._last_private = core.game_private
             self._render_private()
-            if (core.game_room or {}).get("game") in ("tielu", "gemcity", "lovelove"):
+            if (core.game_room or {}).get("game") in ("tielu", "gemcity", "lovelove", "drawguess"):
                 self._render_canvas()  # 私有目标/手牌晚于公共状态到达时也立即更新。
         if len(core.game_events) < self._events_shown:
             self._events_shown = 0
@@ -13219,7 +13216,7 @@ class GameWindow:
     def _fmt_state(self, st: dict) -> str:
         """公开快照 → 可读文本（按游戏定制 + 兜底 key-value）"""
         game = st.get("game", "")
-        if game in ("halloween", "yahtzee"):
+        if game in ("halloween", "yahtzee", "drawguess"):
             return ""  # Public fruit cards and score seats are on the table.
         lines = []
         if st.get("status") == "await_secret":
@@ -13516,6 +13513,8 @@ class GameWindow:
         return " · ".join(bits)
 
     def _render_private(self) -> None:
+        if (self.core.game_room or {}).get("game") == "drawguess":
+            return  # The private prompt is printed only on the artist card.
         p = self.core.game_private
         if (self.core.game_room or {}).get("game") == "tielu":
             return  # Private tickets and all five coach-card counts are on the table.

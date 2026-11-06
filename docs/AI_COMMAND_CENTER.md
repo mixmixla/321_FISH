@@ -38,6 +38,7 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 | 角斗士棋 | AI_ACCEPTED · 拼块盘直接展示每块的形状；选择、旋转和落到棋盘均直接作用于实物对象。 |
 | 德国心脏病 | AI_ACCEPTED · 中央实体桌铃、各家水果翻牌堆与真实五枚条件。 |
 | 快艇骰子 | AI_ACCEPTED · 在骰盅和五枚大骰上掷/留/重掷，点真实记分纸的落笔格计分。 |
+| 你画我猜 | AI_ACCEPTED · 画笔直接在画布绘制，颜色、粗细和猜词框与当前角色相符。 |
 
 
 

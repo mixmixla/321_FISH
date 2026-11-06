@@ -4087,6 +4087,7 @@ function renderGames(){                        // 侧栏房间速览
 function gameLobby(){
   uxSelectNavigation('game');
   state.globbyOpen=true;
+  state.glQuery=state.glQuery||"";state.glPlayers=state.glPlayers||"";
   let m=$("#globby");if(m)m.remove();
   m=document.createElement("div");m.id="globby";
   m.style.cssText="position:fixed;inset:0;background:rgba(90,70,50,.5);display:flex;align-items:center;justify-content:center;z-index:98";
@@ -4095,9 +4096,20 @@ function gameLobby(){
   c.innerHTML="<div style='font-weight:900;font-size:17px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;color:#3d3a54'>"
     +"<span>🃏 桌游小屋 <span style='font-size:11px;color:var(--dim);font-weight:500'>—— 摸鱼开一局</span></span>"
     +"<span style='cursor:pointer;font-size:15px' onclick='closeLobby()' title='关闭'>✕</span></div>"
-    +"<div class='gsec'>🎲 游戏列表（点击卡片创建房间）</div><div id='glGames'></div>"
+    +"<div class='gsec'>🎲 游戏列表（点击卡片创建房间）</div>"
+    +"<div style='display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px'>"
+    +"<label style='flex:1;min-width:150px'>名称/ID <input id='glQuery' type='search' placeholder='中文名或游戏 id' style='width:100%;box-sizing:border-box'></label>"
+    +"<label>人数 <input id='glPlayers' type='number' min='1' step='1' placeholder='不限' style='display:block;width:76px;box-sizing:border-box'></label>"
+    +"<button id='glClear' class='gbtn' type='button'>清空筛选</button></div>"
+    +"<div id='glCount' style='font-size:12px;color:var(--dim);margin-bottom:6px' aria-live='polite'></div><div id='glGames'></div>"
     +"<div style='height:12px'></div><div class='gsec'>🕹 进行中的房间</div><div id='glRooms'></div>";
   m.appendChild(c);document.body.appendChild(m);
+  const query=$("#glQuery"),players=$("#glPlayers");
+  query.value=state.glQuery;players.value=state.glPlayers;
+  query.oninput=()=>{state.glQuery=query.value;renderLobby()};
+  players.oninput=()=>{state.glPlayers=players.value;renderLobby()};
+  $("#glClear").onclick=()=>{state.glQuery="";state.glPlayers="";
+    query.value="";players.value="";renderLobby();query.focus()};
   m.onclick=e=>{if(e.target===m)closeLobby()};
   fetch("/api/game_list").then(r=>r.json()).then(d=>{
     if(d.ok){state.gmeta={};(d.games||[]).forEach(g=>state.gmeta[g.name]=g);
@@ -4110,13 +4122,22 @@ function renderLobby(){
   gb.innerHTML="";
   const grid=document.createElement("div");
   grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px";
-  Object.entries(state.gmeta).forEach(([name,g])=>{
+  const query=(state.glQuery||"").trim().toLowerCase(),rawPlayers=(state.glPlayers||"").trim();
+  const players=rawPlayers?Number(rawPlayers):null;
+  const games=Object.entries(state.gmeta).filter(([name,g])=>
+    (!query||name.toLowerCase().includes(query)||(g.label||name).toLowerCase().includes(query))&&
+    (players===null||(/^\d+$/.test(rawPlayers)&&players>=1&&players>=g.min&&(!g.max||players<=g.max))));
+  $("#glCount").textContent="显示 "+games.length+" / "+Object.keys(state.gmeta).length+" 款 · 人数留空不限";
+  if(!games.length){const empty=document.createElement("div");
+    empty.textContent=Object.keys(state.gmeta).length?"没有符合条件的桌游，请修改条件或点击「清空筛选」":"正在获取桌游列表…";
+    empty.style.cssText="font-size:13px;color:var(--dim);padding:12px 0";gb.appendChild(empty);}
+  games.forEach(([name,g])=>{
     const pastels=[["#ffe3b8","#ffd0a3"],["#ffd6e0","#ffc1cf"],["#d8e0ff","#c3cfff"],["#cceee0","#b0e6cf"],["#fff0b8","#ffe29a"],["#e8dcff","#d8c7ff"],["#ffdfc2","#ffc9a6"],["#cfeeff","#bbe0ff"]];
     const art=GART[name]||[];
     const pi=(name.length||0)%pastels.length;
     const cover=art.length?art:pastels[pi];
     const grad="linear-gradient(135deg,"+cover[0]+","+cover[1]+")";
-    const c=document.createElement("div");c.className="gcard";
+    const c=document.createElement("div");c.className="gcard";c.dataset.game=name;
     c.innerHTML="<div style='height:52px;border-radius:16px 16px 16px 7px;margin:-12px -12px 8px;display:flex;align-items:center;justify-content:center;background:"+grad+"'>"
       +"<img src='"+gArt(name,30)+"' width='30' height='30' style='border-radius:10px;box-shadow:0 2px 6px rgba(120,80,40,.35);background:#fff' alt=''></div>"
       +"<b style='font-size:14px;color:#3d3a54'>"+esc(g.label||name)+"</b>"
@@ -4242,7 +4263,7 @@ function renderGamePanel(){
   if(room.status==="ended"){
     main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
     const note=document.createElement("div");note.className="gsec";
-    note.textContent="🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
+    note.textContent=gname==="tielu"?"🏁 本局结束，保留结算 30 秒后回到房间":"🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
   const pv=state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
@@ -5052,6 +5073,23 @@ const GRENDER={
   },
   tielu(box,s){
     box.appendChild(gTitle("tielu","铁路 · 连线得分"));
+    const tickets=(state.gpriv&&state.gpriv.tickets)||[];
+    const goals=document.createElement("div");goals.className="gsec";
+    goals.innerHTML="<b>你的私人目标票</b> · 连通加分，未连通扣分"
+      +tickets.map(t=>"<div>"+esc((s.cities||{})[t.a])+" → "+esc((s.cities||{})[t.b])
+        +" · "+t.v+"分 · "+(t.connected?"✅ 已连通":"○ 尚未连通")+"</div>").join("");
+    if(tickets.length)box.appendChild(goals);
+    const result=s.final_scores||{};
+    if(s.winner_uid!=null){
+      const end=document.createElement("div");
+      end.innerHTML="<div class='gsec'>🏆 "+esc(gnick(s.winner_uid))+" 票证结算后总分最高</div>"
+        +"<table style='width:100%;text-align:center'><thead><tr><th>玩家</th><th>线路分</th><th>票证加分</th><th>票证扣分</th><th>总分</th></tr></thead><tbody>"
+        +(s.players||[]).map(u=>{const r=result[u]||{};
+          return "<tr><td>"+esc(gnick(u))+"</td><td>"+(r.route||0)+"</td><td>+"+(r.ticket_bonus||0)
+            +"</td><td>−"+(r.ticket_penalty||0)+"</td><td><b>"+(r.total||0)+"</b></td></tr>";}).join("")
+        +"</tbody></table>";
+      box.appendChild(end);return;
+    }
     const P_COL={red:"#e05555",yellow:"#e8b93c",green:"#3ba55d",blue:"#4a7de0",purple:"#9b5fbf"};
     const CN={red:"红",yellow:"黄",green:"绿",blue:"蓝",purple:"紫"};
     const ids=Object.keys(s.cities||{}).map(Number).sort((a,b)=>a-b);
@@ -5061,7 +5099,7 @@ const GRENDER={
     const pv=(state.gpriv&&state.gpriv.hand)||{};
     const myTurn=s.turn_uid!=null&&s.turn_uid===state.uid;
     const P2=(v)=>Math.round(v*10)/10;
-    let svg="<svg viewBox='0 0 340 260' style='width:100%;max-width:460px;display:block;margin:4px auto'>";
+    let svg="<svg viewBox='0 0 340 260' style='width:100%;max-width:460px;display:block;margin:4px auto;background:#111b2b;border-radius:10px'>";
     (s.routes||[]).forEach(rt=>{
       const A=pos[rt.a],B=pos[rt.b];if(!A||!B)return;
       const claimed=!!rt.claimed,col=claimed?"#666":(P_COL[rt.color]||"#999");
@@ -5083,7 +5121,7 @@ const GRENDER={
         +esc(s.cities[id]||"")+"</text>";});
     svg+="</svg>";
     const d=document.createElement("div");
-    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>回合 → "+esc(gnick(s.turn_uid))
+    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>"+(s.final_round?"最后一轮 · ":"")+"回合 → "+esc(gnick(s.turn_uid))
       +"　剩线路 "+s.route_left+"　手牌×"+(s.hand_count[state.uid]||0)+"　"+scoreHTML(s.score)+"</div>"
       +"<div class='gsec'>线路图（点线路认领：需对应颜色车票卡，长度即张数）</div>"+svg;
     d.querySelectorAll("line[data-tla]").forEach(el=>{

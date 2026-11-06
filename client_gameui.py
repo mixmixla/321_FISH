@@ -5439,12 +5439,14 @@ def _tl_seg_dist(px, py, x0, y0, x1, y1):
 
 @_register("tielu")
 def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
+    cv.create_rectangle(0, 0, w, h, fill="#111b2b", outline="")
     accent = THEME["tielu"][1]
     players = st.get("players") or []
     title = "🚆 铁路·连线"
     if st.get("winner_uid") is not None:
         title = f"🏆 {nick(st['winner_uid'])} 票证结算后总分最高"
     elif st.get("turn_uid") is not None:
+        title += ("　最后一轮" if st.get("final_round") else "")
         title += f"　轮到 {nick(st['turn_uid'])} · 线路剩 {st.get('route_left', 0)}"
     _turn_banner(cv, w, 46, title, accent)
     ui.update(game="tielu")
@@ -5455,10 +5457,37 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     ccmap = {"red": "#d2534f", "yellow": "#e0b33c", "green": "#4a9b5f",
              "blue": "#4a7de0", "purple": "#9a6fd0"}
     cities = st.get("cities") or {}
+    city = lambda cid: cities.get(str(cid), cities.get(cid, str(cid)))
+    tickets = (priv or {}).get("tickets") or []
+    if tickets:
+        _text(cv, 12, 60, "你的私人目标票 · 连通加分，未连通扣分", "#dfe6ef",
+              (_FONT_F[0], 9), anchor="w")
+    for i, t in enumerate(tickets):
+        label = (f"{city(t['a'])}→{city(t['b'])} · {t['v']}分 · "
+                 + ("已连通" if t.get("connected") else "尚未连通"))
+        _text(cv, 12 + (i % 2) * w / 2, 82 + (i // 2) * 20, label,
+              "#91dab0" if t.get("connected") else "#e8d2ae",
+              (_FONT_F[0], 9), anchor="w")
+    map_top = 100 + (len(tickets) - 1) // 2 * 20 if tickets else 66
+    final = st.get("final_scores") or {}
+    if final:
+        # 结算用独立表格替换线路图，避免仍把线路分当作最终成绩。
+        columns = [w * f for f in (.18, .43, .60, .76, .91)]
+        for x, text in zip(columns, ("玩家", "线路分", "票证加分", "票证扣分", "总分")):
+            _text(cv, x, map_top + 10, text, "#cfe0d8", (_FONT_F[0], 10))
+        for i, u in enumerate(players):
+            row = final.get(str(u)) or {}
+            values = (nick(u), str(row.get("route", 0)),
+                      f"+{row.get('ticket_bonus', 0)}", f"−{row.get('ticket_penalty', 0)}",
+                      str(row.get("total", 0)))
+            for x, text in zip(columns, values):
+                _text(cv, x, map_top + 44 + i * 36, text,
+                      "#ffd75e" if u == st.get("winner_uid") else "#dfe6ef", _FONT_B)
+        return
     order = [int(k) for k in cities] or list(range(st.get("cities_count", 8)))
-    cx, cy = w / 2, 60 + (h - 46 - 92 - 60) / 2
+    cx, cy = w / 2, map_top + (h - 132 - map_top) / 2
     Rx = (w - 40) / 3.2
-    Ry = (h - 46 - 92 - 40) / 3.2
+    Ry = max(30, (h - 172 - map_top) / 2)
     pos = {}
     n = max(1, len(order))
     for i, cid in enumerate(order):
@@ -5495,7 +5524,7 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         cv.create_oval(px - 15, py - 15, px + 15, py + 15,
                        fill="#33415a", outline="#fff", width=2)
         _text(cv, px, py, str(cid), "#fff", (_FONT_F[0], 9))
-        _text(cv, px, py + 24, cities.get(str(cid), ""), "#dfe6ef",
+        _text(cv, px, py + 24, city(cid), "#dfe6ef",
               (_FONT_F[0], 9))
     _text(cv, w / 2, h - 102,
           "点线路认领（需对应颜色车票卡 N 张，N = 线路长度）", _MUTED,
@@ -5514,12 +5543,12 @@ def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
               "#fff", _FONT_B)
         _text(cv, x0 + pw / 2, py0 + 38, f"🎫手牌 {hc.get(str(u), 0)}",
               "#cfe0d8", _FONT_F)
-        _text(cv, x0 + pw / 2, py0 + 55, f"🏆 {_pscore(st, u)} 分", "#ffd75e",
+        _text(cv, x0 + pw / 2, py0 + 55, f"线路 {_pscore(st, u)} 分", "#ffd75e",
               (_FONT_F[0], 9))
     if priv and priv.get("hand"):
         hd = priv["hand"]
         _text(cv, w / 2, h - 20, "你的票卡：" + "  ".join(
-            f"{c}:{v}" for c, v in sorted(hd.items())), "#dfe6ef",
+            f"{(st.get('colors') or {}).get(c, c)}:{v}" for c, v in sorted(hd.items())), "#dfe6ef",
             (_FONT_F[0], 8))
 
 

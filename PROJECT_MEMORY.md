@@ -20,6 +20,11 @@
 
 ## Architecture
 
+- 铁路目标票仅在 `private(uid).tickets` 带实时 `connected`，抽票公共事件不含目的地；
+  达标后的当前行动者与 `extra` 待补名单分开，线路耗尽不取消补回合。
+  终局公开 `final_scores`（线路/票证加分/票证扣分/总分），同分沿座次首人胜；
+  桌面/Web 共用该结算数据，铁路保留结束画面30秒。见 `games_pkg/tielu.py` 与 TIELU-PLAY-01 Review。
+
 - Gomoku/Connect4 平局与胜局公开快照均无 turn_uid；桌面文字摘要对带旧行动人的 draw 快照也先呈现终局，不再显示轮到提示。
 
 - 群移除与已确认主动退群均使用 `error/group_removed`（含 gid），与管理员全账号 `kicked` 分离；通知该 UID 已有全部 Session，不撤 Web token；退群的群/成员资格重核、删除及回收该群管理员资格同在 Hub 锁内，拒绝和通知 IO 在锁外；合法重入后需群主重新授权才恢复管理员，加入许可和禁言现状保持。Hub 锁内运行态 `group_revision` 排序群快照/移除，Core 丢弃旧帧并清该群重入/成员/邀请/密钥；WELCOME 仅清服务端 revision，本地 generation 保留以挡跨续连旧密钥 worker。合法新成员快照允许显式重入；旧服务器的模糊 kicked 不作文字猜测。

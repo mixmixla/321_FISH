@@ -12450,8 +12450,28 @@ class GameWindow:
         tk.Button(btns, text="开始", command=self._on_start, font=f, relief="flat",
                   padx=2, bg=soft_bg, fg="teal").pack(side="left", padx=(0, 2))
 
-        tk.Label(left, text="桌游 · 双击创建", fg=self._pal["sub"], font=f, anchor="w",
-                 bg=self._pal["win"]).pack(fill="x")
+        heading = tk.Frame(left, bg=pal["win"])
+        heading.pack(fill="x")
+        tk.Label(heading, text="桌游 · 双击创建", fg=pal["sub"], font=f,
+                 bg=pal["win"]).pack(side="left")
+        self.game_count_label = tk.Label(heading, text="人数留空不限", font=(FONT_FAMILY, FONT_SIZE - 2),
+                                         bg=pal["win"], fg=pal["sub"])
+        self.game_count_label.pack(side="right")
+        find = tk.Frame(left, bg=pal["win"])
+        find.pack(fill="x", pady=(0, 2))
+        tk.Label(find, text="名称/ID", font=f, bg=pal["win"], fg=pal["sub"]).pack(side="left")
+        self.game_query_var = tk.StringVar(master=self.win)
+        self.game_query_entry = tk.Entry(find, textvariable=self.game_query_var, width=10, font=f)
+        self.game_query_entry.pack(side="left", fill="x", expand=True, padx=(2, 4))
+        tk.Label(find, text="人数", font=f, bg=pal["win"], fg=pal["sub"]).pack(side="left")
+        self.game_players_var = tk.StringVar(master=self.win)
+        self.game_players_entry = tk.Entry(find, textvariable=self.game_players_var, width=3, font=f)
+        self.game_players_entry.pack(side="left", padx=2)
+        tk.Button(find, text="清空", command=self._clear_game_filter, font=f, relief="flat",
+                  bg=soft_bg, fg=pal["fg"], padx=2).pack(side="left")
+        self._game_filter_traces = [
+            (var, var.trace_add("write", self._change_game_filter))
+            for var in (self.game_query_var, self.game_players_var)]
         wrap, self.game_inner = self._scroll_area(left, height=self._game_zone_h)
         # 高度锁定为 2 行桌游卡（不再 expand）：剩余纵向空间全部让给房间列表。
         # 原先桌游区与房间列表都 expand，房间列表被挤成一条缝，新刷出的房间
@@ -12662,6 +12682,8 @@ class GameWindow:
         if core.game_private != self._last_private:
             self._last_private = core.game_private
             self._render_private()
+            if (core.game_room or {}).get("game") == "tielu":
+                self._render_canvas()  # 私有目标/手牌晚于公共状态到达时也立即更新。
         if len(core.game_events) < self._events_shown:
             self._events_shown = 0
         if len(core.game_events) > self._events_shown:
@@ -12676,6 +12698,29 @@ class GameWindow:
                 self._render_chat(hist)
 
     # ---------- 列表（卡片式） ----------
+    def _filter_games(self) -> list[str]:
+        query = self.game_query_var.get().strip().casefold()
+        raw_players = self.game_players_var.get().strip()
+        if raw_players and (not raw_players.isdecimal() or int(raw_players) < 1):
+            return []
+        players = int(raw_players) if raw_players else None
+        return [name for name, meta in sorted(self.core.game_meta.items())
+                if (not query or query in name.casefold() or
+                    query in meta.get("label", name).casefold())
+                and (players is None or (meta["min"] <= players and
+                     (not meta.get("max") or players <= meta["max"])))]
+
+    def _change_game_filter(self, *_args) -> None:
+        self._refresh_games()
+        self._scroll_regions[0][0].yview_moveto(0)
+        self._render_rules()
+        if not self.core.game_room:
+            self._render_state()
+
+    def _clear_game_filter(self) -> None:
+        self.game_query_var.set("")
+        self.game_players_var.set("")
+
     def _refresh_lists(self) -> None:
         self._refresh_games()
         self._refresh_rooms()
@@ -12691,11 +12736,16 @@ class GameWindow:
         for w in self.game_inner.winfo_children():
             w.destroy()
         self.game_cards = {}
-        self._game_order = sorted(core.game_meta.keys())
-        if self._sel_game not in core.game_meta:
+        self._game_order = self._filter_games()
+        self.game_count_label.config(
+            text=f"显示 {len(self._game_order)} / {len(core.game_meta)} 款 · 人数留空不限")
+        if self._sel_game not in self._game_order:
             self._sel_game = None
+            self._render_rules()
         if not self._game_order:                   # 空状态：别让大厅变成一片空白
-            tk.Label(self.game_inner, text="正在获取桌游列表…\n请确认已连接服务器（桌游随服务器端启停）",
+            text = ("没有符合条件的桌游\n请修改条件或点击「清空」" if core.game_meta else
+                    "正在获取桌游列表…\n请确认已连接服务器（桌游随服务器端启停）")
+            tk.Label(self.game_inner, text=text,
                      bg=self._pal["win"], fg=self._pal["sub"], justify="center",
                      font=(FONT_FAMILY, FONT_SIZE)).grid(
                 row=0, column=0, columnspan=6, sticky="nsew", padx=8, pady=12)
@@ -12820,6 +12870,8 @@ class GameWindow:
         self._render_state()
 
     def _on_create_game(self, name: str) -> None:
+        if name not in self._filter_games():
+            return
         status, note = _desktop_game_status(name)
         if status == "unsupported":
             self._append_state(f"{name}：{note}，保留服务器/Web入口；本端不创建房间", "warn")
@@ -13894,7 +13946,8 @@ class GameWindow:
 
     # ---------- 房间操作 ----------
     def _on_create(self) -> None:
-        name = self._sel_game or next(iter(self.core.game_meta), None)
+        visible = self._filter_games()
+        name = self._sel_game if self._sel_game in visible else next(iter(visible), None)
         if not name:
             self._append_state("先点选一张桌游卡片", "sys")
             return
@@ -13989,6 +14042,13 @@ class GameWindow:
 
     def close(self) -> None:
         self._closed = True
+        # Variable trace commands outlive widgets and retain this bound owner.
+        for var, trace in self._game_filter_traces:
+            try:
+                var.trace_remove("write", trace)
+            except tk.TclError:
+                pass
+        self._game_filter_traces.clear()
         # Cancel through the widget that registered these Tcl commands.
         # Other windows' timers and hide/show polling remain independent.
         for job in tuple(self._after_jobs):

@@ -1,7 +1,7 @@
 # 321_FISH AI 指挥中心
 
 本文件是当前执行状态与下一任务的唯一权威。需求见 task-packages，证据和审查结论见
-review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-10-25（UTC；以下旧记录保留原时区）。
+review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更新日期：2026-11-06（北京时间）。
 
 ## 2026-10-22 恢复前历史检查点（当前状态见路线区首项）
 
@@ -14,6 +14,10 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 用户要求今日停止；分支 feature/r1-restart-reconnect-20261021、HEAD ddf1c79b0143890a4c98941b6b5b500b6909e761。未提交：tests/test_client_core.py（真实持久 Hub 重开后原 ClientCore 续连回归）及 docs/task-packages/R1-RESTART-RECONNECT-01.md。既有对照 2P，最终目标用例 1P，领域 75P；独立代码复审 0 MUST。唯一实际全量 run r1-restart-reconnect-full-20261021-20261021-224241-6202d94027 于用户停工时中断：最后原进度 189/213 文件 passed，tests/test_server.py 标 running，无 summary，exit1 是人工中止，绝不判作全量通过或产品失败。原件留本地 _tmp_gui/test-gate/ 对应 run 与 _tmp_gui/r1-restart-reconnect-20261021/final-gate-output.txt。已确认无本轮 test_gate/pytest/Python 自有进程；未 commit/push/merge。明日先核 git status、进程、原进度/日志，再决定重新完成唯一有效全量门禁；之后独立终审、脱敏记录和经授权的正常集成。本检查点不代表 R1/M1/GUI/EXE/LAN 验收。
 
 <!-- BEGIN_ROADMAP_VIEW -->
+
+## 桌游试玩 · PLAY-20261106 v1
+
+**AI_ACCEPTED · 全量通过**。三项已完成主控审查。[批次任务](task-packages/PLAY-20261106.md) / [集成评审](review-packages/PLAY-20261106-r1.md)。应用候选 d0f31ba，基线 de4031e，集成分支 feature/boardgame-play-20261106。最终全量 237 文件、3226 通过、0 失败、20 项默认跳过，退出 0。三个实现窗口和后台验证均已结束；下一步按用户授权推送功能分支、通过 PR 合并，结果以远端 Git 为准。
 
 ## 当前有限密钥竞态复现 · KEY-INIT-RACE-REPRO-01 v1（2026-10-25）
 

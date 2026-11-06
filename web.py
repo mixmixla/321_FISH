@@ -131,6 +131,10 @@ def _SERVED_PAGE():
     from boardgames.card_table_web import WEB_JS as card_js, WEB_CSS as card_css
     page = page.replace('/*@@CARD_TABLE_JS@@*/', card_js)
     page = page.replace('@@CARD_TABLE_CSS@@', card_css)
+    from boardgames.rail_table_web import WEB_JS as rail_js, WEB_CSS as rail_css
+    from games_pkg.tielu import TICKETS as route_tickets
+    page = page.replace('/*@@RAIL_JS@@*/', rail_js).replace('@@RAIL_CSS@@', rail_css)
+    page = page.replace('@@RAIL_TICKET_COUNT@@', str(len(route_tickets)))
     from boardgames.manor_web import WEB_JS as manor_js, WEB_CSS as manor_css
     try:
         from boardgames.manor_catalog import ATLASES
@@ -697,6 +701,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 @@UX_CHAT_CSS@@
 @@UX_GAME_CSS@@
 @@CARD_TABLE_CSS@@
+@@RAIL_CSS@@
 @@MANOR_CSS@@
 </style>
 </head>
@@ -2564,6 +2569,7 @@ function leaveLogin(){
   state.token=null;state.uid=0;state.nick="";state.is_admin=false;
   state.roster=[];state.groups=[];state.convos=[];state.unread={};
   state.drafts={};state.blocked=[];state.scheds=[];state.cur={type:"public"};
+  if(typeof RailTable!=='undefined')RailTable.reset();
   state.groom=null;state.gst=null;state.gpriv=null;state.glog=[];state.grooms=[];state.gleft={};
   const msgs=document.getElementById("msgs");if(msgs)msgs.innerHTML="";
   const gpanel=document.getElementById("gpanel");if(gpanel)gpanel.remove();
@@ -3814,6 +3820,7 @@ function openStream(){
       if(state.groom===d.room_id){
         const previous=state.gst&&state.gst.room;
         if(!previous||previous.round!==d.room.round||d.room.status==="created"){
+          if(typeof RailTable!=='undefined')RailTable.reset();
           state.gpriv=null;state.glog=[];}
         if(d.room.status!=="playing")state.gpriv=null;
         state.gst=d;(d.events||[]).forEach(e=>state.glog.push(e));
@@ -4243,7 +4250,7 @@ function openGamePanel(rid){uxSelectNavigation('game');
   p.onclick=e=>{if(e.target===p)hideGamePanel()};
   renderGamePanel();
 }
-function hideGamePanel(){uxSelectNavigation('chat');state.groom=null;state.gst=null;state.gpriv=null;state.glog=[];
+function hideGamePanel(){if(typeof RailTable!=='undefined')RailTable.reset();uxSelectNavigation('chat');state.groom=null;state.gst=null;state.gpriv=null;state.glog=[];
   const p=$("#gpanel");if(p)p.remove()}
 function gHeadBtn(txt,fn){const b=document.createElement("button");b.className="gbtn";b.textContent=txt;b.onclick=fn;return b}
 function gBtn(txt,act,dis){const b=document.createElement("button");b.className="gbtn";b.textContent=txt;
@@ -4313,7 +4320,7 @@ function renderGamePanel(){
     main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
     const note=document.createElement("div");note.className="gsec";
     note.textContent=gname==="tielu"?"🏁 本局结束，保留结算 30 秒后回到房间":"🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
-  const pv=(gname==="gemcity"||gname==="lovelove"||gname==="betrayal")?null:state.gpriv;if(pv){
+  const pv=(gname==="tielu"||gname==="gemcity"||gname==="lovelove"||gname==="betrayal")?null:state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
       ?pv.hand.join(" ")
@@ -4350,6 +4357,8 @@ function gLegalTos(fx,fy){
 /*@@GOMOKU_ART@@*/
 /*@@CARD_TABLE_JS@@*/
 const MANOR_ATLASES=JSON.parse("@@MANOR_ATLASES@@");
+const RAIL_TICKET_COUNT=@@RAIL_TICKET_COUNT@@;
+/*@@RAIL_JS@@*/
 /*@@MANOR_JS@@*/
 const GRENDER={
   guess_number(box,s){
@@ -5122,100 +5131,7 @@ const GRENDER={
       [r,c,mt,b].forEach(x=>bar.appendChild(x));bar.appendChild(gBtn("⏭ 跳过",{op:"pass"}));
       box.appendChild(bar);}
   },
-  tielu(box,s){
-    box.appendChild(gTitle("tielu","铁路 · 连线得分"));
-    const tickets=(state.gpriv&&state.gpriv.tickets)||[];
-    const goals=document.createElement("div");goals.className="gsec";
-    goals.innerHTML="<b>你的私人目标票</b> · 连通加分，未连通扣分"
-      +tickets.map(t=>"<div>"+esc((s.cities||{})[t.a])+" → "+esc((s.cities||{})[t.b])
-        +" · "+t.v+"分 · "+(t.connected?"✅ 已连通":"○ 尚未连通")+"</div>").join("");
-    if(tickets.length)box.appendChild(goals);
-    const result=s.final_scores||{};
-    if(s.winner_uid!=null){
-      const end=document.createElement("div");
-      end.innerHTML="<div class='gsec'>🏆 "+esc(gnick(s.winner_uid))+" 票证结算后总分最高</div>"
-        +"<table style='width:100%;text-align:center'><thead><tr><th>玩家</th><th>线路分</th><th>票证加分</th><th>票证扣分</th><th>总分</th></tr></thead><tbody>"
-        +(s.players||[]).map(u=>{const r=result[u]||{};
-          return "<tr><td>"+esc(gnick(u))+"</td><td>"+(r.route||0)+"</td><td>+"+(r.ticket_bonus||0)
-            +"</td><td>−"+(r.ticket_penalty||0)+"</td><td><b>"+(r.total||0)+"</b></td></tr>";}).join("")
-        +"</tbody></table>";
-      box.appendChild(end);return;
-    }
-    const P_COL={red:"#e05555",yellow:"#e8b93c",green:"#3ba55d",blue:"#4a7de0",purple:"#9b5fbf"};
-    const CN={red:"红",yellow:"黄",green:"绿",blue:"蓝",purple:"紫"};
-    const ids=Object.keys(s.cities||{}).map(Number).sort((a,b)=>a-b);
-    const n=ids.length||1,cx=170,cy=130,Rx=130,Ry=95,pos={};
-    ids.forEach((id,i)=>{const an=i/n*2*Math.PI-Math.PI/2;
-      pos[id]=[cx+Rx*Math.cos(an),cy+Ry*Math.sin(an)];});
-    const landmarks={0:[.16,.23],1:[.42,.19],2:[.72,.20],3:[.88,.43],
-      4:[.77,.76],5:[.46,.76],6:[.18,.75],7:[.10,.49]};
-    ids.forEach(id=>{if(landmarks[id])pos[id]=[340*landmarks[id][0],260*landmarks[id][1]];});
-    const pv=(state.gpriv&&state.gpriv.hand)||{};
-    const myTurn=s.turn_uid!=null&&s.turn_uid===state.uid;
-    const P2=(v)=>Math.round(v*10)/10;
-    let svg="<svg class='tl-map' role='img' aria-label='铁路旅行地图，点击可支付的线路认领' viewBox='0 0 340 260' style='width:min(100%,max(290px,calc(117.69vh - 562px)));max-width:600px;display:block;margin:4px auto;background:#e6dab9;border-radius:10px;border:1px solid #aa9168'>";
-    if(BG.tielu_travel)svg+="<image href='"+BG.tielu_travel+"' width='340' height='260' preserveAspectRatio='none' pointer-events='none'/>";
-    let routeLabels="",routeHits="";
-    const occupied=ids.map(id=>{const p=pos[id];return [p[0]-23,p[1]-9,p[0]+23,p[1]+30];});
-    (s.routes||[]).forEach(rt=>{
-      const A=pos[rt.a],B=pos[rt.b];if(!A||!B)return;
-      const claimed=!!rt.claimed;
-      const ownerColors=["#e0535a","#4a7de0","#37a25f","#e0a13c","#9a6fd0","#26c6b0"];
-      const col=claimed?ownerColors[Math.max(0,(s.players||[]).indexOf(rt.claimed))%ownerColors.length]:(P_COL[rt.color]||"#66706b");
-      const cnm=CN[rt.color]||"";
-      const canPay=!claimed&&myTurn&&(pv[rt.color]||0)>=rt.length;
-      const ln="x1='"+P2(A[0])+"' y1='"+P2(A[1])+"' x2='"+P2(B[0])+"' y2='"+P2(B[1])+"'";
-      svg+="<line "+ln+" stroke='#fff4d8' stroke-width='8' stroke-linecap='round'"
-        +(claimed||canPay?"":" style='opacity:.35'")+"/>"
-        +"<line "+ln+" stroke='"+col+"' stroke-width='"+(claimed?5:3.5)+"' stroke-linecap='round'"
-        +(claimed?"":(canPay?"":" stroke-dasharray='4 3'"))+"/>";
-      if(claimed)svg+="<line "+ln+" stroke='#fff4d8' stroke-width='1' stroke-dasharray='2 7'/>";
-      if(canPay)routeHits+="<line "+ln+" data-tla='"+rt.a+"' data-tlb='"+rt.b+"' style='cursor:pointer'"
-        +" stroke='transparent' stroke-width='16'><title>"+esc(s.cities[rt.a])+" → "+esc(s.cities[rt.b])+" · "+cnm+rt.length+"张</title></line>";
-      const choices=[];
-      for(const t of [.38,.62,.5,.26,.74,.18,.82,.44,.56]){
-        const x=A[0]+(B[0]-A[0])*t,y=A[1]+(B[1]-A[1])*t,b=[x-14,y-9,x+14,y+9];
-        const overlap=occupied.reduce((sum,r)=>sum+Math.max(0,Math.min(b[2],r[2])-Math.max(b[0],r[0]))
-          *Math.max(0,Math.min(b[3],r[3])-Math.max(b[1],r[1])),0);
-        choices.push({overlap,x,y,b});if(!overlap)break;
-      }
-      choices.sort((a,b)=>a.overlap-b.overlap);const best=choices[0],mx=best.x,my=best.y;occupied.push(best.b);
-      routeLabels+="<g pointer-events='none'><rect x='"+P2(mx-12)+"' y='"+P2(my-7)+"' width='24' height='14' rx='3' fill='#fff5dc' stroke='"+col+"'/>"
-        +"<text x='"+P2(mx)+"' y='"+P2(my+3.2)+"' fill='#263c40' font-size='9' font-weight='bold' text-anchor='middle'>"+rt.length+" "+cnm+"</text></g>";
-    });
-    svg+=routeLabels+routeHits;
-    ids.forEach(id=>{const P=pos[id];
-      svg+="<g pointer-events='none'><circle cx='"+P2(P[0])+"' cy='"+P2(P[1])+"' r='7' fill='#263c40' stroke='#fff5dc' stroke-width='2'/>"
-        +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+3)+"' fill='#fff' font-size='9' text-anchor='middle'>"+id+"</text>"
-        +"<rect x='"+P2(P[0]-21)+"' y='"+P2(P[1]+10)+"' width='42' height='18' rx='3' fill='#fff5dc' stroke='#796746'/>"
-        +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+23)+"' fill='#263c40' font-size='11' font-weight='bold' text-anchor='middle'>"
-        +esc(s.cities[id]||"")+"</text></g>";});
-    svg+="</svg>";
-    const d=document.createElement("div");
-    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>"+(s.final_round?"最后一轮 · ":"")+"回合 → "+esc(gnick(s.turn_uid))
-      +"　剩线路 "+s.route_left+"　手牌×"+(s.hand_count[state.uid]||0)+"　"+scoreHTML(s.score)+"</div>"
-      +"<div class='gsec'>旅行线路 · 实线可认领，虚线需补票卡，带白点为已认领</div>"+svg;
-    d.querySelectorAll("line[data-tla]").forEach(el=>{
-      el.onclick=()=>gameAPI("action",{room_id:state.groom,
-        action:{op:"claim",a:+el.getAttribute("data-tla"),b:+el.getAttribute("data-tlb")}});});
-    box.appendChild(d);
-    if(s.turn_uid===state.uid){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-      const S=()=>Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
-      const S_a=S();
-      ids.forEach(id=>{const o=document.createElement("option");o.value=id;
-        o.textContent=(s.cities[id]||("城市"+id));S_a.appendChild(o)});
-      bar.appendChild(document.createTextNode("认领 "));bar.appendChild(S_a);
-      bar.appendChild(document.createTextNode("→"));
-      const S_b=S();S_b.innerHTML=S_a.innerHTML;
-      const bb=document.createElement("button");bb.className="gbtn go";bb.textContent="🚂 认领";
-      bb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"claim",a:S_a.value,b:S_b.value}});
-      bar.append(S_b,bb);box.appendChild(bar);
-      const bar2=document.createElement("div");bar2.style.cssText="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap";
-      bar2.appendChild(gBtn("🎫 摸2张",{op:"draw"}));
-      bar2.appendChild(gBtn("📜 抽票证",{op:"ticket"}));
-      bar2.appendChild(gBtn("⏭ 跳过",{op:"skip"}));box.appendChild(bar2);}
-  },
+  tielu(box,s){ RailTable.paint(box,s); },
   gongfang(box,s){
     box.appendChild(gTitle("gongfang","工坊 · 工人放置"));
     const d=document.createElement("div");

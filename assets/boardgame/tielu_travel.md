@@ -24,3 +24,11 @@
 封面完整提示词：
 
 > Use case: stylized-concept. A beautiful ORIGINAL ANIME BISHOUJO illustration for a railway board game lobby cover. Landscape 2:1 full-bleed, no frame. Foreground left: a charming clearly YOUNG ADULT FEMALE train conductor age 24, bright green eyes, flowing chestnut hair in a practical side braid, elegant navy conductor cap and navy uniform jacket with brass details, white shirt and teal neck scarf, friendly confident smile. She is holding TWO clearly recognizable PLAIN rectangular train tickets at chest level (simple blank cream ticket stock, no writing or numbers). Correct hands and anatomy. Behind and to the right: a vivid teal-and-cream vintage passenger TRAIN travels on a graceful stone viaduct above a sparkling coastal bay, distant small harbor village and forested mountains. Fine clean Japanese cel animation line art, luminous sunny sky, crisp contours, nuanced but simple cel shadows, beautiful character design, animated feature-film polish, warm inviting travel mood. Face and tickets and train readable at 768x384. No male characters, no other people, no existing IP characters. Absolutely NO text, letters, numbers, logos, watermark, rules icons, game interface or card frames.
+
+## 实物牌桌 · 票卡与目的站
+
+内置 ImageGen 原画。五色票和检票员用 3 列 × 2 行方格；行优先为红色蒸汽机车、黄色有轨电车、绿色通勤列车、蓝色特快、紫色卧铺列车、女性检票员。提示要求中央突出不同车头的剪影和主色，票面文字和张数由程序追加。五张只能从盲抽车票堆取得，检票员用于目的票牌堆或桌边。
+
+城市邮票用 4 列 × 2 行方格，按规则城市号排列，提示要求在缩小的旅行邮票中也能认出单一标志。上排为港口灯塔和白船、河城石桥、山城缆车、雪镇木车站；下排为沙堡砂岩塔、雾谷高架、林郡林间瞭望台、金矿井架与矿车。两端分别用目的票的 a、b 选图，票值、持牌数量、连接印章、车厢节数和归属均来自当前牌局。
+
+输出为 assets/boardgame/gallery/tielu-coach-cards.webp（1152×768）及 tielu-stations.webp（1024×512）。实盘只由玩家点线路查看花费，再确认认领。按颜色点手牌可查看同色线路，点私人目的票标出两座车站。

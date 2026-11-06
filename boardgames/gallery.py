@@ -27,6 +27,7 @@ ART_FILES = frozenset(COVERS.values()) | {
     "betrayal-rooms.webp", "betrayal-items.webp",
     "betrayal-events.webp", "betrayal-omens.webp",
     "gemcity-jewels.webp", "rps-hands.webp",
+    "tielu-coach-cards.webp", "tielu-stations.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}

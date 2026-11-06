@@ -11708,10 +11708,7 @@ _GAME_ACTIONS = {
         ("👑 换分", {"fixed": {"op": "convert"}}, "3 金币换 1 胜利点"),
     ],
     "tielu": [
-        ("🚂 认领", {"op": "claim", "key": None, "kind": "ab"}, "输入 城市A 城市B（0~7）"),
-        ("🎫 摸2张", {"fixed": {"op": "draw"}}, "摸 2 张车票卡"),
-        ("📜 抽票证", {"fixed": {"op": "ticket"}}, "抽 1 张私人票证"),
-        ("⏭ 跳过", {"fixed": {"op": "skip"}}, "结束本回合"),
+        # Railway actions live on the route, physical decks and table controls.
     ],
     "yahtzee": [
         ("🎲 掷骰", {"fixed": {"op": "roll"}}, "掷 5 骰（可再重掷 2 次）"),
@@ -13118,6 +13115,10 @@ class GameWindow:
             pending = getattr(self, "_rps_pending", None)
             ui["rps_sending"] = bool(pending and pending[1] is st
                                      and pending[0][:3] == (*context, self.core.uid))
+        if game == "tielu":
+            pending = getattr(self, "_rail_pending", None)
+            ui["tl_sending"] = bool(pending and pending[1] is st
+                                    and pending[0] == (*context, self.core.uid))
         ui["can_move"] = (
             client_gameui.flagship_can_move(room, st, self.core.uid,
                                              getattr(self.core, "connected", False))
@@ -13143,6 +13144,9 @@ class GameWindow:
         # Widget-local bindings leave chat fields and other windows alone.
         for choice in range(3):
             cv.bind(str(choice+1), lambda evt, c=choice: self._on_rps_key(evt, c, ui))
+        for key in ("Tab", "Return", "Escape", "d", "D", "t", "T", "s", "S"):
+            cv.bind(f"<{key}>", lambda evt, k=key, target=ui:
+                    self._on_tielu_key(evt, k, target))
         for key, direction in (("Up", "up"), ("Down", "down"),
                                ("Left", "left"), ("Right", "right")):
             cv.bind(f"<{key}>", lambda evt, d=direction, target=ui:
@@ -13151,6 +13155,12 @@ class GameWindow:
     def _on_rps_key(self, evt, choice, ui):
         if ui.get("game") == "rps" and evt.widget.focus_get() is evt.widget:
             self._do_action({"choice": choice}, ui)
+            return "break"
+
+    def _on_tielu_key(self, evt, key, ui):
+        if ui.get("game") == "tielu" and evt.widget.focus_get() is evt.widget:
+            from boardgames.rail_table_tk import key as table_key
+            table_key(ui, key)
             return "break"
 
     def _on_board_direction(self, evt, direction, ui):
@@ -13520,6 +13530,8 @@ class GameWindow:
 
     def _render_private(self) -> None:
         p = self.core.game_private
+        if (self.core.game_room or {}).get("game") == "tielu":
+            return  # Private tickets and all five coach-card counts are on the table.
         if not p:
             return
         if set(p.keys()) <= {"legal"}:
@@ -13971,8 +13983,8 @@ class GameWindow:
         if source_ui is not None:
             source_game = source_ui.get("game")
             if source_game != game and (
-                    game in ("gemcity", "lovelove", "betrayal", "rps")
-                    or source_game in ("gemcity", "lovelove", "betrayal", "rps")):
+                    game in ("gemcity", "lovelove", "betrayal", "rps", "tielu")
+                    or source_game in ("gemcity", "lovelove", "betrayal", "rps", "tielu")):
                 return
         if game == "rps":
             from boardgames.rps_table import can_choose
@@ -13991,6 +14003,24 @@ class GameWindow:
             if self.core.game_action(rid, {"choice": action["choice"], "round": ticket[-1]}):
                 self._rps_pending = ticket, st
                 if source_ui and source_ui.get("repaint"):
+                    source_ui["repaint"]()
+            return
+        if game == "tielu":
+            from boardgames.rail_table_tk import active
+            if source_ui is None or (
+                    source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st or source_ui.get("me") != self.core.uid
+                    or source_ui.get("tl_private") is not self.core.game_private):
+                return
+            ticket = (rid, room.get("round"), self.core.uid)
+            pending = getattr(self, "_rail_pending", None)
+            if (not active(source_ui) or not getattr(self.core, "connected", False)
+                    or room.get("status") != "playing" or self.core.uid not in room.get("players", ())
+                    or pending and pending[0] == ticket and pending[1] is st):
+                return
+            if self.core.game_action(rid, action):
+                self._rail_pending = ticket, st
+                if source_ui.get("repaint"):
                     source_ui["repaint"]()
             return
         if game == "betrayal":

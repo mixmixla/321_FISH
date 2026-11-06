@@ -4087,6 +4087,7 @@ function renderGames(){                        // 侧栏房间速览
 function gameLobby(){
   uxSelectNavigation('game');
   state.globbyOpen=true;
+  state.glQuery=state.glQuery||"";state.glPlayers=state.glPlayers||"";
   let m=$("#globby");if(m)m.remove();
   m=document.createElement("div");m.id="globby";
   m.style.cssText="position:fixed;inset:0;background:rgba(90,70,50,.5);display:flex;align-items:center;justify-content:center;z-index:98";
@@ -4095,9 +4096,20 @@ function gameLobby(){
   c.innerHTML="<div style='font-weight:900;font-size:17px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;color:#3d3a54'>"
     +"<span>🃏 桌游小屋 <span style='font-size:11px;color:var(--dim);font-weight:500'>—— 摸鱼开一局</span></span>"
     +"<span style='cursor:pointer;font-size:15px' onclick='closeLobby()' title='关闭'>✕</span></div>"
-    +"<div class='gsec'>🎲 游戏列表（点击卡片创建房间）</div><div id='glGames'></div>"
+    +"<div class='gsec'>🎲 游戏列表（点击卡片创建房间）</div>"
+    +"<div style='display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px'>"
+    +"<label style='flex:1;min-width:150px'>名称/ID <input id='glQuery' type='search' placeholder='中文名或游戏 id' style='width:100%;box-sizing:border-box'></label>"
+    +"<label>人数 <input id='glPlayers' type='number' min='1' step='1' placeholder='不限' style='display:block;width:76px;box-sizing:border-box'></label>"
+    +"<button id='glClear' class='gbtn' type='button'>清空筛选</button></div>"
+    +"<div id='glCount' style='font-size:12px;color:var(--dim);margin-bottom:6px' aria-live='polite'></div><div id='glGames'></div>"
     +"<div style='height:12px'></div><div class='gsec'>🕹 进行中的房间</div><div id='glRooms'></div>";
   m.appendChild(c);document.body.appendChild(m);
+  const query=$("#glQuery"),players=$("#glPlayers");
+  query.value=state.glQuery;players.value=state.glPlayers;
+  query.oninput=()=>{state.glQuery=query.value;renderLobby()};
+  players.oninput=()=>{state.glPlayers=players.value;renderLobby()};
+  $("#glClear").onclick=()=>{state.glQuery="";state.glPlayers="";
+    query.value="";players.value="";renderLobby();query.focus()};
   m.onclick=e=>{if(e.target===m)closeLobby()};
   fetch("/api/game_list").then(r=>r.json()).then(d=>{
     if(d.ok){state.gmeta={};(d.games||[]).forEach(g=>state.gmeta[g.name]=g);
@@ -4110,13 +4122,22 @@ function renderLobby(){
   gb.innerHTML="";
   const grid=document.createElement("div");
   grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px";
-  Object.entries(state.gmeta).forEach(([name,g])=>{
+  const query=(state.glQuery||"").trim().toLowerCase(),rawPlayers=(state.glPlayers||"").trim();
+  const players=rawPlayers?Number(rawPlayers):null;
+  const games=Object.entries(state.gmeta).filter(([name,g])=>
+    (!query||name.toLowerCase().includes(query)||(g.label||name).toLowerCase().includes(query))&&
+    (players===null||(/^\d+$/.test(rawPlayers)&&players>=1&&players>=g.min&&(!g.max||players<=g.max))));
+  $("#glCount").textContent="显示 "+games.length+" / "+Object.keys(state.gmeta).length+" 款 · 人数留空不限";
+  if(!games.length){const empty=document.createElement("div");
+    empty.textContent=Object.keys(state.gmeta).length?"没有符合条件的桌游，请修改条件或点击「清空筛选」":"正在获取桌游列表…";
+    empty.style.cssText="font-size:13px;color:var(--dim);padding:12px 0";gb.appendChild(empty);}
+  games.forEach(([name,g])=>{
     const pastels=[["#ffe3b8","#ffd0a3"],["#ffd6e0","#ffc1cf"],["#d8e0ff","#c3cfff"],["#cceee0","#b0e6cf"],["#fff0b8","#ffe29a"],["#e8dcff","#d8c7ff"],["#ffdfc2","#ffc9a6"],["#cfeeff","#bbe0ff"]];
     const art=GART[name]||[];
     const pi=(name.length||0)%pastels.length;
     const cover=art.length?art:pastels[pi];
     const grad="linear-gradient(135deg,"+cover[0]+","+cover[1]+")";
-    const c=document.createElement("div");c.className="gcard";
+    const c=document.createElement("div");c.className="gcard";c.dataset.game=name;
     c.innerHTML="<div style='height:52px;border-radius:16px 16px 16px 7px;margin:-12px -12px 8px;display:flex;align-items:center;justify-content:center;background:"+grad+"'>"
       +"<img src='"+gArt(name,30)+"' width='30' height='30' style='border-radius:10px;box-shadow:0 2px 6px rgba(120,80,40,.35);background:#fff' alt=''></div>"
       +"<b style='font-size:14px;color:#3d3a54'>"+esc(g.label||name)+"</b>"

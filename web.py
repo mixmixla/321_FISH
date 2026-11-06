@@ -143,6 +143,9 @@ def _SERVED_PAGE():
     page = page.replace('/*@@MANOR_JS@@*/', manor_js)
     page = page.replace('@@MANOR_CSS@@', manor_css)
     page = page.replace('@@MANOR_ATLASES@@', _js_json_literal(ATLASES))
+    from boardgames.arcade_halloween import WEB_JS as orchard_js, WEB_CSS as orchard_css
+    page = page.replace('/*@@ARCADE_ORCHARD_JS@@*/', orchard_js)
+    page = page.replace('@@ARCADE_ORCHARD_CSS@@', orchard_css)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -702,6 +705,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 @@UX_GAME_CSS@@
 @@CARD_TABLE_CSS@@
 @@RAIL_CSS@@
+@@ARCADE_ORCHARD_CSS@@
 @@MANOR_CSS@@
 </style>
 </head>
@@ -4356,6 +4360,7 @@ function gLegalTos(fx,fy){
 // ---- 各游戏渲染器（s = game_state.state）----
 /*@@GOMOKU_ART@@*/
 /*@@CARD_TABLE_JS@@*/
+/*@@ARCADE_ORCHARD_JS@@*/
 const MANOR_ATLASES=JSON.parse("@@MANOR_ATLASES@@");
 const RAIL_TICKET_COUNT=@@RAIL_TICKET_COUNT@@;
 /*@@RAIL_JS@@*/
@@ -5496,30 +5501,7 @@ const GRENDER={
     box.appendChild(w);
   },
   lovelove(box,s){ CardTableWeb.lovelove(box,s); },
-  halloween(box,s){
-    box.appendChild(gTitle("halloween","德国心脏病 · 翻牌抢铃"));
-    const w=document.createElement("div");w.style.cssText="font-size:12px;line-height:20px";
-    w.innerHTML="<div class='gsec'>轮到："+esc(gnick(s.turn))+"</div>"
-      +"<div>"+(Object.entries(s.counts||{}).map(([f,n])=>"<span style='margin-right:10px'>"+f+"×"+n+"</span>").join("")||"旁观")+"</div>"
-      +"<div style='margin-top:4px'>桌上："+(s.area&&s.area.length
-        ?s.area.map(f=>"<span class='vtile w' style='font-size:18px'>"+f+"</span>").join("")
-        :"<span style='color:var(--dim)'>（空）</span>")+"</div>"
-      +(s.can_slap?"<div style='color:#c2362c;font-weight:700'>🔔 桌上已有 5 个相同水果！</div>":"");
-    box.appendChild(w);
-    const me=state.uid;
-    if(s.turn===me&&!s.winner_uid){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;margin-top:8px";
-      bar.appendChild(gBtn(s.flipped?"(已翻)":"🫲 翻牌",{op:"flip"}));
-      if(s.flipped){
-        bar.appendChild(gBtn(s.can_slap?"🔔 拍铃收牌!":"拍铃(未5会扣分)",{op:"slap"}));
-        bar.appendChild(gBtn("过",{op:"pass"}));
-      }
-      box.appendChild(bar);
-    }
-    const sc=Object.entries(s.score||{}).map(([u,v])=>esc(gnick(+u))+" "+v).join("　");
-    box.appendChild(Object.assign(document.createElement("div"),
-      {style:"font-size:11px;color:var(--dim);margin-top:6px",textContent:"得分："+sc}));
-  },
+  halloween(box,s){OrchardTable.render(box,s);},
   tictactoe(box,s){
     const n=s.size||3;
     const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:6px;font-size:13px";

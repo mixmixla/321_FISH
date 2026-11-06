@@ -69,3 +69,7 @@ dc9d0ad/e12532c/1658059 的八个棋种逐格核对，7×9 连续森林上有两
 ## 角斗士棋 · AI_ACCEPTED
 
 来源709752f。主控核对棋盘占用、拼块轮廓、角接触以及可放与非法位置的视觉设定，桌面480与Web390使用合成真实局面验证轮流拼放。保留游戏阶段/阵营、键盘、等待方与终局区别。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/blokus/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/blokus/mobile.webp)。
+
+## 德国心脏病 · AI_ACCEPTED
+
+候选 d786959 及中央大铃重构6cfb364。每家当前翻牌按归属摆在实体铃旁，中心条件按五种水果真实总数读取；图集复裁确认点数没有烘焙重复。正式桌面与无头网页的合成游戏验证翻牌、恰好五枚时拍铃及所得牌的归属。历史一次额外共享卡桌初始化失败留存；独立同基线/该版复测均通过，故未认定原因为基线。 各款Web输入绑定账号及当前房/轮和帧身份。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/halloween/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/halloween/mobile.webp)。

@@ -11582,11 +11582,7 @@ _GAME_ACTIONS = {
     "lovelove": [
         ("弃牌出效果", {"key": "ldisc", "kind": "ldisc"}, "输入 play [target [val]] 空格分隔"),
     ],
-    "halloween": [
-        ("翻牌", {"fixed": {"op": "flip"}}, ""),
-        ("拍铃", {"fixed": {"op": "slap"}}, ""),
-        ("过", {"fixed": {"op": "pass"}}, ""),
-    ],
+    "halloween": [],  # Direct deck, bell and turn-marker interactions.
     "tictactoe": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）")],
     "go": [
         ("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）"),
@@ -11749,6 +11745,7 @@ def _actions_for(game: str, priv: dict | None) -> list:
 _GAME_HINTS = {
     "blokus": "点右侧实际拼块，换向后点棋格放置；金边预览可落，红边表示受阻。",
     "ludo": "点棋盘中央骰子，再点机棚或轨道飞机；R掷骰、1–4选机。",
+    "halloween": "点牌堆翻牌，点桌铃收牌，点箭头结束回合；F / B / P 快捷键",
     "betrayal": "点自己所在房间的方向门移动；发现簿回看揭牌，背包阅读与使用道具。全图只作导航",
     "gemcity": "先选市场牌，再点「买入」或「保留」；在「藏册」点卡可放大赏图",
     "lovelove": "先点持牌或新摸牌，再选目标／护卫猜值，最后点「确认出牌」",
@@ -13225,6 +13222,8 @@ class GameWindow:
     def _fmt_state(self, st: dict) -> str:
         """公开快照 → 可读文本（按游戏定制 + 兜底 key-value）"""
         game = st.get("game", "")
+        if game == "halloween":
+            return ""  # Public fruit cards and score seats are on the table.
         lines = []
         if st.get("status") == "await_secret":
             lines.append("等待出题者设置数字…")

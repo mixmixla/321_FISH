@@ -31,6 +31,7 @@ class HalloweenGame(BaseGame):
         self.stack = {u: list(p) for u, p in zip(players, piles)}
         self.counts = [0] * len(FRUITS)
         self.area = []                       # 公共已翻区
+        self.area_owners = []                # 与 area 同序，只记录公开翻牌归属
         self.score = {u: 0 for u in players}
         self.turn = players[0]
         self.have_flipped = False
@@ -76,7 +77,9 @@ class HalloweenGame(BaseGame):
             raise GameRuleError("你已经没有牌可翻，对局接近尾声")
         f = self.stack[uid].pop()
         self.counts[f] += 1
+        self.area_owners.extend([None] * max(0, len(self.area)-len(self.area_owners)))
         self.area.append(f)
+        self.area_owners.append(uid)
         self.have_flipped = True
         self.last = ("flip", uid, f)
         msgs = [f"🫲 {self._nick(uid)} 翻开 {FRUITS[f]}（桌上 {FRUITS[f]}×{self.counts[f]}）"]
@@ -93,6 +96,7 @@ class HalloweenGame(BaseGame):
             got = len(self.area)
             self.score[uid] += got
             self.area = []
+            self.area_owners = []
             self.counts = [0] * len(FRUITS)
             self.have_flipped = False          # 再走一次
             self.last = ("slap_ok", uid, got)
@@ -145,6 +149,10 @@ class HalloweenGame(BaseGame):
             "left": {str(u): len(self.stack[u]) for u in self.players},
             "winner_uid": self.winner,
             "fruits": FRUITS, "can_slap": self._is_slapable(), "flipped": self.have_flipped,
+            "area_cards": [{"fruit": FRUITS[f], "uid": self.area_owners[i] if i < len(self.area_owners) else None}
+                           for i, f in enumerate(self.area)],
+            "last_action": ({"op": self.last[0], "uid": self.last[1], "value": self.last[2]}
+                            if self.last else None),
         }
 
     def private(self, uid):

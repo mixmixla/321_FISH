@@ -4305,64 +4305,16 @@ def _p_liar(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("halloween")
 def _p_halloween(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["halloween"][1]
-    title = "🔔 德国心脏病（慢棋版）"
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 收牌最多"
-    elif st.get("turn"):
-        title += f"　轮到 {nick(st['turn'])}"
-        if st.get("can_slap"):
-            title += "　🔔 可拍铃！"
-    _turn_banner(cv, w, 46, title, accent)
-    # 桌面公共翻牌区
-    area = st.get("area") or []
-    counts = st.get("counts") or {}
-    fruits = st.get("fruits") or ["🍓", "🍋", "🍊", "🍌", "🍎"]
-    _text(cv, w / 2, 78, "— 公共翻牌区 —", _MUTED, _FONT_F)
-    if area:
-        per = max(1, (w - 24) // 74)
-        base = (w - min(per, len(area)) * 74 + 4) / 2
-        for i, f in enumerate(area[-per:]):
-            cx = base + i * 74
-            _card_face(cv, cx, 96, cx + 68, 132, face=_shade("#c2362c", 0.25),
-                       edge="#c2362c", r=_UXR_CTRL)
-            _text(cv, cx + 34, 114, f, "#fff", (_FONT_BIG[0], 22))
-    else:
-        _text(cv, w / 2, 118, "（空白，可翻牌）", _MUTED, _FONT_F)
-    # 计数提示
-    yc = 150
-    _text(cv, w / 2, yc, "计数：" + "　".join(
-        f"{f}×{counts.get(f, 0)}" for f in fruits if counts.get(f)), "#333",
-        _FONT_F)
-    if st.get("can_slap"):
-        _text(cv, w / 2, yc + 22, "🔔 已有 5 个相同水果，可拍铃收牌！", "#c0392b",
-              _FONT_B)
-    # 玩家矩阵（得分 + 余牌）
-    players = st.get("players") or []
-    score = st.get("score") or {}
-    left = st.get("left") or {}
-    cw, ch = 118, 62
-    gap = 14
-    per2 = max(1, int((w - 40) / (cw + gap)))
-    y0 = yc + 46
-    for i, u in enumerate(players):
-        row, col = divmod(i, per2)
-        cards_row = players[row * per2: row * per2 + per2]
-        base = (w - (len(cards_row) * (cw + gap) - gap)) / 2
-        cx = base + col * (cw + gap)
-        cy = y0 + row * (ch + gap)
-        acting = u == st.get("turn")
-        fill = _shade("#e05555", 0.4)
-        if acting:
-            fill = _shade("#e05555", 0.05)
-        _rrect(cv, cx, cy, cx + cw, cy + ch, 10, fill,
-               "#ffd75e" if u == me else _PANEL, 2 if u == me else 1)
-        _text(cv, cx + cw / 2, cy + 24, nick(u) + ("（我）" if u == me else ""),
-              "#fff", _FONT_B)
-        _text(cv, cx + cw / 2, cy + 46,
-              f"得 {score.get(str(u), 0)} · 余 {left.get(str(u), 0)}",
-              _shade("#ffe0e0", 0.6), (_FONT_F[0], 9))
+    from boardgames.arcade_halloween import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
+
+def _click_halloween(ui, x, y):
+    from boardgames.arcade_halloween import click
+    click(ui, x, y)
+
+
+_CLICKS["halloween"] = _click_halloween
 
 @_register("ninja")
 def _p_ninja(cv, st, me, nick, submit, repaint, ui, priv, w, h):

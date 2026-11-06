@@ -61,9 +61,10 @@ def art(cv, filename, index, columns, rows, rect, contain=False):
             col, row = index % columns, index // columns
             crop = source.crop((col*source.width//columns, row*source.height//rows,
                                 (col+1)*source.width//columns, (row+1)*source.height//rows))
-            # Short windows keep the face and headdress, cropping the lower
-            # body rather than the top of a court/patron portrait.
-            center = (0.5, 0.0) if filename in ("lovelove-court.webp", "gemcity-patrons.webp") else (0.5, 0.5)
+            # The anime patrons place faces and role props below tall hair.
+            # A short patron banner keeps that face/prop band in view.
+            center = ((0.5, 0.45) if filename == "gemcity-patrons.webp" else
+                      (0.5, 0.0) if filename == "lovelove-court.webp" else (0.5, 0.5))
             pixels = (ImageOps.pad(crop, (width, height), Image.Resampling.LANCZOS, color="#eee7d9")
                       if contain else ImageOps.fit(crop, (width, height), Image.Resampling.LANCZOS, centering=center))
             data = io.BytesIO()

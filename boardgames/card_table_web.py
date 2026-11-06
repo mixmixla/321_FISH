@@ -7,7 +7,7 @@ const CardTableWeb = (() => {
   const gemColors=['o','d','r','e','s'];
   const gemNames={o:'黑玛瑙',d:'白钻石',r:'红宝石',e:'祖母绿',s:'蓝宝石',g:'黄金'};
   const tierNames={1:'矿场',2:'工坊',3:'商贸城市'};
-  const jewelFiles={1:'gemcity-tier1.webp?v=jewel-v2',2:'gemcity-tier2.webp?v=jewel-v2',3:'gemcity-tier3.webp?v=jewel-v2'};
+  const jewelFiles={1:'gemcity-tier1.webp?v=anime-v1',2:'gemcity-tier2.webp?v=anime-v1',3:'gemcity-tier3.webp?v=anime-v1'};
   const loveNames={1:'护卫',2:'牧师',3:'男爵',4:'侍女',5:'王子',6:'国王',7:'伯爵夫人',8:'公主'};
   const loveEffects={1:'猜中目标持牌即可淘汰',2:'查看一名目标的持牌',3:'与目标比较持牌点数',4:'获得侍女保护',5:'令目标弃牌并重新摸牌',6:'与目标交换持牌',7:'与公主同持时必须弃出',8:'弃出公主即刻出局'};
   const sources=new Map();
@@ -43,7 +43,7 @@ const CardTableWeb = (() => {
   }
   function jewel(color){
     const index=[...gemColors,'g'].indexOf(color);
-    const e=index>=0?art('gemcity-jewels.webp',index,3,2,gemNames[color]):node('span');
+    const e=index>=0?art('gemcity-jewels.webp?v=anime-v1',index,3,2,gemNames[color]):node('span');
     e.className='ct-jewel ct-jewel-'+color;
     e.setAttribute('role','img');e.setAttribute('aria-label',gemNames[color]||'宝石');
     e.appendChild(node('i','ct-jewel-core'));return e;
@@ -146,7 +146,7 @@ const CardTableWeb = (() => {
     const row=node('div','ct-patrons');
     (s.nobles||[]).forEach((threshold,index)=>{
       const title=(s.noble_titles||[])[index]||('贵宾 '+(index+1));
-      const card=node('article','ct-patron');const image=art('gemcity-patrons.webp',(s.noble_art||[])[index],5,1,title);
+      const card=node('article','ct-patron');const image=art('gemcity-patrons.webp?v=anime-v1',(s.noble_art||[])[index],5,1,title);
       card.append(image,node('strong','ct-card-name',title),cost(threshold,s.colors));
       const ready=Object.entries(threshold).every(([color,count])=>(discount[color]||0)>=count);
       card.appendChild(node('small','ct-patron-status',ready?'门槛已达':'门槛'));row.appendChild(card);
@@ -228,7 +228,7 @@ const CardTableWeb = (() => {
     const patronsRow=node('div','ct-patrons');patronsSection.appendChild(patronsRow);aside.appendChild(patronsSection);
     (s.nobles||[]).forEach((threshold,index)=>{
       const title=(s.noble_titles||[])[index]||('贵宾 '+(index+1));
-      const card=node('article','ct-patron'),image=art('gemcity-patrons.webp',(s.noble_art||[])[index],5,1,title);
+      const card=node('article','ct-patron'),image=art('gemcity-patrons.webp?v=anime-v1',(s.noble_art||[])[index],5,1,title);
       const points=node('b','ct-patron-points',String(Number.isFinite(s.noble_points)?s.noble_points:3));
       image.append(points,node('strong','ct-card-name',title));
       card.append(image,gemCost(threshold));

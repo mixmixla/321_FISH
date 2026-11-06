@@ -7,6 +7,7 @@ import copy
 import pytest
 
 from boardgames.tile2048 import PKG
+from boardgames.tile2048 import desktop as tile_desktop
 from boardgames.tile2048.desktop import paint
 from boardgames.tile2048.web import WEB_CSS, WEB_JS
 from games_pkg.base import GameRuleError
@@ -147,6 +148,10 @@ def test_package_and_render_contracts_are_self_contained():
     for direction in ("left", "right", "up", "down"):
         assert direction in WEB_JS
     assert "touchstart" in WEB_JS and "touchend" in WEB_JS
+    assert "tile2048-atlas.webp" in WEB_CSS
+    assert "dataset.stage" in WEB_JS
+    assert "box-sizing:border-box" in WEB_CSS
+    assert "min-width:0" in WEB_CSS
     assert "touch-action:none" in WEB_CSS
 
 
@@ -171,3 +176,34 @@ def test_desktop_painter_draws_board_and_exposes_hit_geometry():
     assert 0 <= x0 < x1 <= 420
     assert 0 <= y0 < y1 <= 520
     assert sum(kind == "rectangle" for kind, _args, _kwargs in cv.calls) >= 18
+
+
+def test_desktop_atlas_is_cropped_once_and_cached(monkeypatch):
+    from PIL import ImageTk
+
+    calls = []
+
+    class _Photo:
+        pass
+
+    def fake_photo(*args, **kwargs):
+        calls.append((args, kwargs))
+        return _Photo()
+
+    monkeypatch.setattr(ImageTk, "PhotoImage", fake_photo)
+    ui = {}
+    assert tile_desktop._is_tk_canvas(object()) is False
+    assert tile_desktop._tile_images(object(), ui, 28.0) == {}
+    assert calls == []
+    monkeypatch.setattr(tile_desktop, "_is_tk_canvas", lambda _cv: True)
+    first = tile_desktop._tile_images(object(), ui, 28.0)
+    second = tile_desktop._tile_images(object(), ui, 28.0)
+    assert set(first) == {2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048}
+    assert second is first
+    assert len(calls) == 11
+    old_tiles = first
+    resized = tile_desktop._tile_images(object(), ui, 32.0)
+    assert resized is not first
+    assert old_tiles == {}
+    assert ui["tile2048_image_cache"]["size"] == 32
+    assert len(calls) == 22

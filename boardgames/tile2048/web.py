@@ -22,11 +22,14 @@ Object.assign(GRENDER,{
 
     const grid=document.createElement("div");grid.className="t2048-grid";
     grid.setAttribute("role","grid");grid.setAttribute("aria-label","2048 棋盘");
+    const stages=[2,4,8,16,32,64,128,256,512,1024,2048];
     board.forEach((row,y)=>row.forEach((value,x)=>{
       const cell=document.createElement("div");cell.className="t2048-cell";
       cell.setAttribute("role","gridcell");
       const n=Number(value)||0;
-      if(n){cell.classList.add("has-tile");cell.dataset.value=String(n);cell.textContent=String(n);
+      if(n){cell.classList.add("has-tile");cell.dataset.value=String(n);
+        const stage=stages.indexOf(n);if(stage>=0)cell.dataset.stage=String(stage);
+        cell.textContent=String(n);
         cell.setAttribute("aria-label",String(n)+" 方块，第 "+(y+1)+" 行第 "+(x+1)+" 列");}
       else cell.setAttribute("aria-label","空格，第 "+(y+1)+" 行第 "+(x+1)+" 列");
       grid.appendChild(cell);
@@ -65,8 +68,8 @@ Object.assign(GRENDER,{
 
 
 WEB_CSS = r"""
-.t2048-root{max-width:430px;margin:0 auto;padding:8px 6px;color:#edf4f8}
-.t2048-info{display:flex;align-items:center;gap:8px;min-height:42px;margin-bottom:8px}
+.t2048-root{width:100%;max-width:430px;min-width:0;box-sizing:border-box;margin:0 auto;padding:8px 6px;color:#edf4f8}
+.t2048-info{display:flex;align-items:center;gap:8px;min-width:0;min-height:42px;margin-bottom:8px}
 .t2048-note{flex:1;font-size:13px;line-height:1.45;color:#2f4757;background:#edf4f7;
   border:1px solid #bfd1dc;border-radius:8px;padding:6px 9px}
 .t2048-score{display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -74,8 +77,8 @@ WEB_CSS = r"""
 .t2048-score small{font-size:10px;color:#afc1d1}.t2048-score b{font-size:18px;color:#ffd166;line-height:1.1}
 .t2048-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:7px;
   background:#14283a;border:2px solid #456a84;border-radius:12px;touch-action:none;
-  user-select:none;-webkit-user-select:none;max-width:410px;margin:0 auto}
-.t2048-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;
+  user-select:none;-webkit-user-select:none;box-sizing:border-box;min-width:0;width:100%;max-width:410px;margin:0 auto}
+.t2048-cell{aspect-ratio:1;min-width:0;display:flex;align-items:center;justify-content:center;border-radius:8px;
   background:#203a50;color:#f4f7fb;font-size:clamp(17px,6vw,31px);font-weight:800;line-height:1}
 .t2048-cell.has-tile{background:#f5e9d0;color:#3d3022;box-shadow:inset 0 -2px 0 rgba(0,0,0,.12)}
 .t2048-cell[data-value="4"]{background:#f4d7a4}.t2048-cell[data-value="8"]{background:#f6b26b;color:#fff}
@@ -84,6 +87,14 @@ WEB_CSS = r"""
 .t2048-cell[data-value="256"]{background:#e2bd45;color:#fff}.t2048-cell[data-value="512"]{background:#d9b635;color:#fff}
 .t2048-cell[data-value="1024"]{background:#c99e32;color:#fff;font-size:clamp(14px,4.6vw,25px)}
 .t2048-cell[data-value="2048"]{background:#b8862d;color:#fff;box-shadow:0 0 0 2px #ffd166,0 0 16px rgba(255,209,102,.65)}
+.t2048-cell.has-tile{background-image:url("/game-art/tile2048-atlas.webp");background-size:400% 300%;
+  background-repeat:no-repeat;text-shadow:0 2px 4px #061321,0 0 2px #061321}
+.t2048-cell[data-stage="0"]{background-position:0% 0%}.t2048-cell[data-stage="1"]{background-position:33.3333% 0%}
+.t2048-cell[data-stage="2"]{background-position:66.6667% 0%}.t2048-cell[data-stage="3"]{background-position:100% 0%}
+.t2048-cell[data-stage="4"]{background-position:0% 50%}.t2048-cell[data-stage="5"]{background-position:33.3333% 50%}
+.t2048-cell[data-stage="6"]{background-position:66.6667% 50%}.t2048-cell[data-stage="7"]{background-position:100% 50%}
+.t2048-cell[data-stage="8"]{background-position:0% 100%}.t2048-cell[data-stage="9"]{background-position:33.3333% 100%}
+.t2048-cell[data-stage="10"]{background-position:66.6667% 100%}
 .t2048-controls{display:grid;grid-template-columns:repeat(3,minmax(62px,1fr));gap:7px;
   max-width:280px;margin:10px auto 2px}
 .t2048-btn{min-height:42px;border:1px solid #6687a0;border-radius:8px;background:#203f57;color:#f7fbff;

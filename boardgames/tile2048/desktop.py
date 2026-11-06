@@ -6,6 +6,7 @@
 """
 from __future__ import annotations
 
+from pathlib import Path
 
 _BOARD_BG = "#14283A"
 _CELL_BG = "#203A50"
@@ -17,6 +18,9 @@ _TILES = {
     16: "#F28C63", 32: "#ED705B", 64: "#E6534E", 128: "#E9C764",
     256: "#E2BD45", 512: "#D9B635", 1024: "#C99E32", 2048: "#B8862D",
 }
+_ATLAS_PATH = (Path(__file__).resolve().parents[2] / "assets" / "boardgame"
+               / "gallery" / "tile2048-atlas.webp")
+_ATLAS_VALUES = (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048)
 
 
 def _tile_color(value):
@@ -25,14 +29,59 @@ def _tile_color(value):
     return "#9D6D35" if value > 2048 else _CELL_BG
 
 
-def _text_color(value):
-    return "#3D3022" if value in (2, 4) else _TEXT
-
-
 def _font_size(value, cell):
     digits = len(str(value)) if value else 1
     scale = 0.30 if digits <= 2 else (0.25 if digits == 3 else 0.19)
     return max(10, int(cell * scale))
+
+
+def _is_tk_canvas(cv):
+    """Only real Tk Canvas instances may receive ImageTk PhotoImages."""
+    try:
+        import tkinter as tk
+
+        return isinstance(cv, tk.Canvas)
+    except Exception:
+        return False
+
+
+def _tile_images(cv, ui, cell):
+    """Keep one current-size tile group and one decoded atlas per game window."""
+    if not _is_tk_canvas(cv):
+        old = ui.pop("tile2048_image_cache", None)
+        if old:
+            old.get("tiles", {}).clear()
+        return {}
+    size = max(1, int(round(cell)))
+    current = ui.get("tile2048_image_cache")
+    if current and current.get("size") == size:
+        return current.get("tiles", {})
+    if current:
+        current.get("tiles", {}).clear()
+    if not _ATLAS_PATH.is_file():
+        ui["tile2048_image_cache"] = {"size": size, "tiles": {}}
+        return ui["tile2048_image_cache"]["tiles"]
+    try:
+        from PIL import Image, ImageTk
+
+        atlas = ui.get("tile2048_atlas")
+        if atlas is None:
+            with Image.open(_ATLAS_PATH) as source:
+                atlas = source.convert("RGB")
+            ui["tile2048_atlas"] = atlas
+        cols, rows = 4, 3
+        tile_w, tile_h = atlas.width // cols, atlas.height // rows
+        tiles = {}
+        for index, value in enumerate(_ATLAS_VALUES):
+            col, row = index % cols, index // cols
+            crop = atlas.crop((col * tile_w, row * tile_h,
+                               (col + 1) * tile_w, (row + 1) * tile_h))
+            crop = crop.resize((size, size), Image.Resampling.LANCZOS)
+            tiles[value] = ImageTk.PhotoImage(crop, master=cv)
+    except Exception:
+        tiles = {}
+    ui["tile2048_image_cache"] = {"size": size, "tiles": tiles}
+    return tiles
 
 
 def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
@@ -65,6 +114,7 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     ui["tile2048_board"] = (x0, y0, x0 + side, y0 + side)
     gap = max(4.0, side * 0.024)
     cell = (side - gap * 5.0) / 4.0
+    tile_images = _tile_images(cv, ui, cell)
     cv.create_rectangle(x0, y0, x0 + side, y0 + side,
                         fill=_BOARD_BG, outline="#456A84", width=2)
     for row in range(4):
@@ -73,12 +123,20 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             left = x0 + gap + col * (cell + gap)
             top = y0 + gap + row * (cell + gap)
             right, bottom = left + cell, top + cell
-            cv.create_rectangle(left, top, right, bottom,
-                                fill=_tile_color(value), outline="")
+            image = tile_images.get(value)
+            if image is not None:
+                cv.create_image((left + right) / 2.0, (top + bottom) / 2.0,
+                                image=image)
+            else:
+                cv.create_rectangle(left, top, right, bottom,
+                                    fill=_tile_color(value), outline="")
             if value:
+                font = ("Segoe UI", _font_size(value, cell), "bold")
+                cv.create_text((left + right) / 2.0 + 1,
+                               (top + bottom) / 2.0 + 1,
+                               text=str(value), fill="#061321", font=font)
                 cv.create_text((left + right) / 2.0, (top + bottom) / 2.0,
-                               text=str(value), fill=_text_color(value),
-                               font=("Segoe UI", _font_size(value, cell), "bold"))
+                               text=str(value), fill="#FFFFFF", font=font)
 
     status = state.get("status", "playing")
     if status == "won":

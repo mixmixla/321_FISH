@@ -13098,6 +13098,7 @@ class GameWindow:
         ui["_room_context"] = context
         ui["room"] = room
         ui["state"] = st
+        ui["_drawn_private"] = self.core.game_private
         ui["connected"] = bool(getattr(self.core, "connected", False))
         ui["_cancel_repaint"] = lambda target_ui=ui: self._cancel_repaint(target_ui)
         ui["_schedule_repaint"] = (
@@ -13982,6 +13983,23 @@ class GameWindow:
         game = room.get("game")
         if source_ui is not None:
             source_game = source_ui.get("game")
+            if "_room_context" in source_ui:
+                uid = self.core.uid
+                if (source_ui["_room_context"] != (rid, room.get("round"))
+                        or source_ui.get("game", game) != game
+                        or source_ui.get("me", uid) != uid
+                        or not getattr(self.core, "connected", False)
+                        or room.get("status") != "playing"
+                        or uid not in room.get("players", ())
+                        or uid in room.get("spectators", ())):
+                    return
+                # Azul verifies its own take/place pair because the first
+                # action may receive a new frame before the paired place.
+                if game != "azul" and (
+                        source_ui.get("state", st) is not st
+                        or ("_drawn_private" in source_ui
+                            and source_ui["_drawn_private"] is not self.core.game_private)):
+                    return
             if source_game != game and (
                     game in ("gemcity", "lovelove", "betrayal", "rps", "tielu")
                     or source_game in ("gemcity", "lovelove", "betrayal", "rps", "tielu")):

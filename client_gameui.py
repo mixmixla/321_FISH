@@ -971,6 +971,14 @@ def _turn_banner(cv, w, header_h, text, accent, ypad=8):
 
 def _hover_overlay(cv, ui):
     """按 ui['_hover'] 给当前悬停格画淡白高亮（render 收尾统一调用）。"""
+    if ui.get("game") == "junqi" and ui.get("junqi_cw"):
+        hovered = ui.get("_hover")
+        if hovered and 0 <= hovered[0] < 5 and 0 <= hovered[1] < 10:
+            x0 = ui["ox"] + hovered[0] * ui["junqi_cw"]
+            y0 = ui["oy"] + hovered[1] * ui["cell"]
+            cv.create_rectangle(x0+2, y0+2, x0+ui["junqi_cw"]-2, y0+ui["cell"]-2,
+                                outline="#e6b44b", width=2, tags="_hover")
+        return
     if ui.get("game") in ("gomoku", "gomoku_solo", "connect4"):
         _flagship_hover(cv, ui)
         return
@@ -1442,6 +1450,11 @@ def handle_drag(cv, ui, x, y, phase):
 
 
 def _cell_of(ui, x, y):
+    if ui.get("game") == "junqi" and ui.get("junqi_cw"):
+        ox, oy, cw, ch = (ui.get(k) for k in ("ox", "oy", "junqi_cw", "cell"))
+        if None in (ox, oy, cw, ch) or not (ox <= x < ox + 5*cw and oy <= y < oy + 10*ch):
+            return None
+        return int((x-ox)/cw), int((y-oy)/ch)
     if ui.get("game") == "betrayal":
         return None
     if ui.get("game") in ("gemcity", "lovelove"):
@@ -1660,6 +1673,11 @@ def _click_move(ui, x, y):
         sel["game"] = ui["game"]
         sel["fx"], sel["fy"] = c[0], c[1]
     ui["repaint"]()
+
+
+def _click_junqi(ui, x, y):
+    from boardgames.chess_junqi import click
+    click(ui, x, y)
 
 
 def _click_dou(ui, x, y):
@@ -2007,7 +2025,7 @@ _CLICKS = {
     "connect4": _click_col, "kalah": _click_kalah,
     "uno": _click_uno, "coc": _click_coc_deck,
     "halma": _click_move, "checkers": _click_move,
-    "junqi": _click_move, "dou": _click_dou,
+    "junqi": _click_junqi, "dou": _click_dou,
     "shogi": _click_shogi, "ludo": _click_ludo,
     "rummikub": _click_rummikub, "balatro": _click_balatro,
     "balatro_solo": _click_balatro_solo,   # 单人版：商店/消耗品 + select/unselect
@@ -3618,53 +3636,8 @@ def _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
 
 @_register("junqi")
 def _p_junqi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    rows = st.get("rows") or 10
-    cols = st.get("cols") or 5
-    legend = st.get("legend") or {}
-    now = time.monotonic()
-    breathing = _g_breath(now)             # 呼吸辉光强度（纯时间推导，idle 唯一增量）
-    anchors = []                           # 棋子中心，作胜利星点锚点
-
-    def pt(cv, y, x, code, x0, y0, cell):
-        if not code:
-            return
-        side = 1 if code >= 40 else 0
-        rank = code - 40 if code >= 40 else code - 10
-        cn = legend.get(str(rank), str(rank))
-        side_col = ("#e05555" if side == 0 else "#2c2c2c")
-        cx, cy = x0 + cell / 2, y0 + cell / 2
-        anchors.append((cx, cy))
-        _junqi_piece(cv, cx, cy, cell, cn, side_col, breathing)
-
-    _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
-                "junqi", rows, cols, "⚔ 军棋（明棋）", pt)
-    # ---- 最近一步金色光晕标记（服务端 last_move 目标格）----
-    lastpx = None
-    last = st.get("last_move")
-    if last and len(last) == 2 and last[1]:
-        cell = ui.get("cell") or 0
-        try:
-            lx, ly = int(last[1][0]), int(last[1][1])
-        except (TypeError, ValueError, IndexError):
-            lx = ly = -1
-        if 0 <= lx < cols and 0 <= ly < rows and cell:
-            lastpx = (ui["ox"] + lx * cell + cell / 2, ui["oy"] + ly * cell + cell / 2)
-    # ---- 动效：落子光晕/微粒子 + 胜利星点（数量封顶 ≤48）----
-    _g_draw_last(cv, ui, now, lastpx, ui.get("cell") or 0)
-    # ---- 结果反馈：炸弹/挖雷/兑子/吃子徽标（服务端 last_event）----
-    evpx = evkind = None
-    ev = st.get("last_event")
-    cell = ui.get("cell") or 0
-    if ev and cell:
-        ex, ey = int(ev.get("x", -1)), int(ev.get("y", -1))
-        if 0 <= ex < cols and 0 <= ey < rows:
-            evpx = (ui["ox"] + ex * cell + cell / 2,
-                    ui["oy"] + ey * cell + cell / 2)
-            evkind = ev.get("kind")
-    _g_draw_event(cv, ui, now, evpx, evkind, cell)
-    _g_draw_win(cv, ui, now, w, anchors, breathing,
-                st.get("winner_uid") is not None)
-    _anim_need(ui, repaint, gap=0.04, cap=180)
+    from boardgames.chess_junqi import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 @_register("dou")

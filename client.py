@@ -11718,7 +11718,7 @@ _GAME_ACTIONS = {
     # ---- CC-03 桌面交互补齐：5 款仅点击棋类补按钮 ----
     "chess": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
     "xiangqi": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
-    "junqi": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
+    "junqi": [],  # Named rectangular counters provide all board actions.
     "dou": [],  # 兽娘棋格直接选择和落子；保留通用对局菜单/键盘。
     "shogi": [
         ("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）"),

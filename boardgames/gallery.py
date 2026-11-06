@@ -19,9 +19,11 @@ COVERS = {
     "lovelove": "cover-lovelove.webp",
     "rps": "cover-rps.webp",
     "dou": "cover-dou-lobby.webp",
+    "junqi": "cover-junqi-lobby.webp",
 }
 FEATURED = ("tile2048", "gomoku_solo", "tielu", "azul", "gemcity")
 ART_FILES = frozenset(COVERS.values()) | {
+    "cover-junqi.webp",
     "tile2048-atlas.webp", "gomoku-board.webp", "gomoku-stones.png",
     "gemcity-tier1.webp", "gemcity-tier2.webp", "gemcity-tier3.webp",
     "gemcity-patrons.webp", "lovelove-court.webp",
@@ -32,6 +34,7 @@ ART_FILES = frozenset(COVERS.values()) | {
     "cover-dou.webp",
     "dou-beastgirls.webp",
     "dou-terrain.webp",
+    "junqi-officers.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}

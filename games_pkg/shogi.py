@@ -12,8 +12,9 @@ CN = {1: "王", 2: "飞车", 3: "角行", 4: "金", 5: "银", 6: "桂", 7: "香"
 SYM = {1: "玉", 2: "飛", 3: "角", 4: "金", 5: "銀", 6: "桂", 7: "香", 8: "歩", 9: "龍", 10: "馬"}
 
 
-def _t(c):
-    return c % 10 if c else 0
+def piece_type(code):
+    """Black pieces are 1–10 and white pieces are 11–20; zero is an empty square."""
+    return code - 10 if code > 10 else code
 
 
 def _p(c):
@@ -77,7 +78,7 @@ class ShogiGame(BaseGame):
 
     def _move_gen(self, x, y, pl):
         c = self.board[y][x]
-        m = _t(c)
+        m = piece_type(c)
         d = _d(pl)
         out = []
         fwd = d
@@ -247,11 +248,11 @@ class ShogiGame(BaseGame):
         self.board[ty][tx] = c
         self.board[fy][fx] = 0
         self.last_move = ((fx, fy), (tx, ty))
-        if _t(c) == K:
+        if piece_type(c) == K:
             self.kpos[pl] = (tx, ty)
-        msgs = [f"♟ {self._nick(uid)} {CN[_t(c)]} ({fx},{fy})→({tx},{ty})"]
+        msgs = [f"♟ {self._nick(uid)} {CN[piece_type(c)]} ({fx},{fy})→({tx},{ty})"]
         if taken:
-            tt = _t(taken)
+            tt = piece_type(taken)
             if tt in (K,):
                 self.winner = uid
                 msgs.append(f"🏆 {self._nick(uid)} 吃掉对方王获胜！")
@@ -264,11 +265,11 @@ class ShogiGame(BaseGame):
         # 升变：进入对方后三排(黑进0-2，白进6-8)
         prox = (fy <= 2) if pl == 0 else (fy >= 6)
         nprom = (ty <= 2) if pl == 0 else (ty >= 6)
-        if nprom and _t(c) in (R, B, S, N_, L, P):
-            nt = {R: PROM_R, B: PROM_B}.get(_t(c), G)
-            if _t(c) in (P,):       # 兵成金
+        if nprom and piece_type(c) in (R, B, S, N_, L, P):
+            nt = {R: PROM_R, B: PROM_B}.get(piece_type(c), G)
+            if piece_type(c) in (P,):       # 兵成金
                 nt = G
-            if _t(c) in (S, N_, L):
+            if piece_type(c) in (S, N_, L):
                 nt = G
             self.board[ty][tx] = _code(pl, nt)
             msgs.append(f"🎖 升变为 {CN[nt]}")

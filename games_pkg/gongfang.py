@@ -28,11 +28,11 @@ class GongfangGame(BaseGame):
 
     def _new_round(self):
         n = len(self.players)
-        # 工位 = 3n 个，其中 n 个「独占先手」位（1 人拿）
+        # 所有空工位都可领取；新一轮的先手按座位轮换。
         self.spots = []
         for i in range(3 * n):
             self.spots.append({"id": i, "pts": self.rng.randint(1, 4),
-                               "exclusive": (i % 3 == 0), "owner": None})
+                               "exclusive": False, "owner": None})
         self.used = set()
         self.placed = {u: 0 for u in self.players}
         self.done = set()
@@ -68,9 +68,6 @@ class GongfangGame(BaseGame):
             raise GameRuleError("工位不存在")
         if spot["owner"] is not None:
             raise GameRuleError("该工位已被占用")
-        # 独占位只给先手
-        if spot["exclusive"]:
-            pass
         spot["owner"] = uid
         self.placed[uid] += 1
         self.score[uid] += spot["pts"]

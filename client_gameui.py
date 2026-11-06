@@ -1441,6 +1441,8 @@ def handle_drag(cv, ui, x, y, phase):
 
 
 def _cell_of(ui, x, y):
+    if ui.get("game") == "betrayal":
+        return None
     if ui.get("game") in ("gemcity", "lovelove"):
         return None
     if ui.get("game") == "tile2048":
@@ -1714,7 +1716,7 @@ def _click_coc_deck(ui, x, y):
 def _click_shogi(ui, x, y):
     """将棋：既能两段式走子，也能先点底部手牌卡、再点空位打入。"""
     game = ui["game"]
-    sel = ui.get("sel") or {}
+    sel = ui.setdefault("sel", {})
     hands = ui.get("hands") or []       # [(x0,y0,x1,y1,type)]
     # 已处于“选打入手牌”状态：点子=打入空位，点手牌卡=换一枚，点外=取消
     if sel.get("game") == game and "drop" in sel:
@@ -2014,6 +2016,14 @@ def _click_lovelove(ui, x, y):
 
 
 _CLICKS["lovelove"] = _click_lovelove
+
+
+def _click_betrayal(ui, x, y):
+    from boardgames.manor_tk import click
+    click(ui, x, y)
+
+
+_CLICKS["betrayal"] = _click_betrayal
 
 
 # ---------------------------------------------------------------------------
@@ -3083,7 +3093,7 @@ def _draw_uno_card(cv, x0, y0, w, h, cstr, ccmap, font, selected=False):
     col = "#2c2c2c"
     sym = cstr or "?"
     if cstr:
-        head = cstr[0]
+        head = {"红": "red", "黄": "yellow", "绿": "green", "蓝": "blue"}.get(cstr[0], cstr[0])
         if head in ccmap:
             col = ccmap[head]
             sym = cstr[1:]
@@ -3128,8 +3138,9 @@ def _draw_poker(cv, x, y, cstr, face_down=False):
         # 统一牌背（D1）：同一纹样跨游戏一致
         _card_face(cv, x, y, x + w, y + h, back=True, r=_UXR_CTRL)
         return
-    rank = cstr[0] if cstr else ""
-    suit = cstr[1] if len(cstr) > 1 else ""
+    rank, suit = cstr or "", ""
+    if rank and rank[-1] in ("♠", "♥", "♦", "♣"):
+        rank, suit = rank[:-1], rank[-1]
     ink = _suit_ink(suit)
     _card_face(cv, x, y, x + w, y + h, face="#ffffff", edge="#cccccc",
                r=_UXR_CTRL)
@@ -3757,6 +3768,7 @@ def _p_dou(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("shogi")
 def _p_shogi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
+    from games_pkg.shogi import piece_type
     accent = THEME["shogi"][1]
     n = st.get("size") or 9
     title = "♟ 将棋"
@@ -3791,7 +3803,7 @@ def _p_shogi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
             c = board[y][x]
             if not c:
                 continue
-            t = c % 10 if c else 0
+            t = piece_type(c)
             p = 0 if c <= 10 else 1
             cx, cy = ox + x * cell + cell / 2, oy + y * cell + cell / 2
             anchors.append((cx, cy))
@@ -5645,7 +5657,6 @@ def _p_gongfang(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         cx = base + col * (cw + gapx)
         cy = y0 + row * (chh + gapy)
         owner = s.get("owner")
-        ex = s.get("exclusive")
         fill = "#efe9dc"
         bd = _PANEL
         if owner is not None:
@@ -5655,13 +5666,9 @@ def _p_gongfang(cv, st, me, nick, submit, repaint, ui, priv, w, h):
         _text(cv, cx + cw / 2, cy + 24, f"工位 {s.get('id')}", "#333",
               _FONT_B)
         _text(cv, cx + cw / 2, cy + 50, f"+{s.get('pts', 0)} 分",
-              "#ffd75e" if owner is None else "#7c4a1f", _FONT_B)
-        if ex:
-            _text(cv, cx + cw - 8, cy + 12, "👑先手", "#c0392b",
-                  (_FONT_F[0], 9), anchor="ne")
-        if owner is not None:
-            _text(cv, cx + cw / 2, cy + 74, nick(owner), "#fff",
-                  (_FONT_F[0], 9))
+              "#5a4321" if owner is None else "#ffffff", _FONT_B)
+        _text(cv, cx + cw / 2, cy + 74, nick(owner) if owner is not None else "空闲",
+              "#ffffff" if owner is not None else "#5f6e61", (_FONT_F[0], 9))
     # 玩家
     n = len(players)
     gap = 8
@@ -6004,95 +6011,8 @@ def _p_bolan(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("betrayal")
 def _p_betrayal(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["betrayal"][1]
-    players = st.get("players") or []
-    phase = st.get("phase", "explore")
-    title = "🏚️ 山屋惊魂"
-    haunt = st.get("haunt")
-    if st.get("winner_uid") is not None:
-        title = f"🏆 对局结束（见日志）"
-    elif haunt:
-        title += (f" · 惊魂【{haunt.get('scenario')}】· 叛徒 {nick(haunt.get('traitor'))}")
-    else:
-        title += (f" · 探索 · 预兆 {st.get('omens', 0)}"
-                  f" · 轮到 {st.get('turn_uid') is not None and nick(st['turn_uid']) or ''}")
-    _turn_banner(cv, w, 46, title, accent)
-    ui.update(game="betrayal")
-    rooms = st.get("rooms") or {}
-    pos = st.get("pos") or {}
-    alive = set(st.get("alive") or [])
-    exit_cell = (haunt or {}).get("exit")
-    # 房间网格
-    if rooms:
-        keys = [k.split(",") for k in rooms]
-        minx = min(int(k[0]) for k in keys)
-        maxx = max(int(k[0]) for k in keys)
-        miny = min(int(k[1]) for k in keys)
-        maxy = max(int(k[1]) for k in keys)
-        ncol = maxx - minx + 1
-        nrow = maxy - miny + 1
-        bw = w - 24
-        bh = h - 46 - 148 - 24
-        cell = min(bw / ncol, bh / nrow, 52)
-        ox = (w - ncol * cell) / 2
-        oy = 58
-        for key, short in rooms.items():
-            x, y = key.split(",")
-            x, y = int(x), int(y)
-            cx, cy = ox + (x - minx) * cell, oy + (y - miny) * cell
-            is_exit = exit_cell and f"{x},{y}" == exit_cell
-            fill = "#4a2f4a" if is_exit else "#33263b"
-            cv.create_rectangle(cx + 1, cy + 1, cx + cell - 1, cy + cell - 1,
-                                fill=fill, outline="#6a4a7a", width=1)
-            _text(cv, cx + cell / 2, cy + cell / 2,
-                  "🚪" if is_exit else short, "#e8dff0", _FONT_F)
-        # 玩家位置
-        for u in players:
-            pc = pos.get(str(u))
-            if not pc:
-                continue
-            px, py = pc.split(",")
-            px, py = int(px), int(py)
-            if not (minx <= px <= maxx and miny <= py <= maxy):
-                continue
-            cx = ox + (px - minx) * cell + cell / 2
-            cy = oy + (py - miny) * cell + cell / 2
-            r = max(6, cell * 0.26)
-            if u == me:
-                cv.create_oval(cx - r - 3, cy - r - 3, cx + r + 3, cy + r + 3,
-                               outline="#fff", width=2)
-            _stone(cv, cx, cy, r, _pcolor(u, players))
-    else:
-        _text(cv, w / 2, h / 2, "（尚未探索任何房间）", "#cfc0d8", _FONT_F)
-    # 玩家属性面板
-    stats = st.get("stats") or {}
-    items = st.get("items") or {}
-    dead = st.get("dead") or []
-    stmap = {"might": "力", "speed": "速", "sanity": "理", "knowledge": "知"}
-    n = len(players)
-    gap = 8
-    pw = (w - gap * (n + 1)) / n if n else w
-    ply = h - 140
-    for idx, u in enumerate(players):
-        x0 = gap + idx * (pw + gap)
-        is_dead = u in dead
-        fill = "#4a3a3a" if is_dead else "#2b2440"
-        cv.create_rectangle(x0, ply, x0 + pw, h - 10, fill=fill,
-                            outline=_shade(accent, 0.3), width=1)
-        tag = "（我）" if u == me else ""
-        _text(cv, x0 + pw / 2, ply + 14,
-              (nick(u) + tag) + (" · 阵亡" if is_dead else ""), "#fff", _FONT_B)
-        pstats = (stats.get(str(u)) or {})
-        _text(cv, x0 + pw / 2, ply + 34,
-              "　".join(f"{stmap[k]}{pstats.get(k, 0)}"
-                        for k in ("might", "speed", "sanity", "knowledge")),
-              "#cfe0d8", _FONT_F)
-        its = items.get(str(u), [])
-        _text(cv, x0 + pw / 2, ply + 54,
-              "道具：" + ("、".join(its) if its else "—"), "#e0c8a0",
-              (_FONT_F[0], 8))
-    _text(cv, w / 2, h - 2, "移动/结束/道具/攻击/撤离 → 按钮区", "#b0a8c0",
-          (_FONT_F[0], 8))
+    from boardgames.manor_tk import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 # ---------------------------------------------------------------------------

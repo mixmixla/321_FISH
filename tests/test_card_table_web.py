@@ -16,10 +16,8 @@ def test_card_tables_are_injected_into_the_real_page():
 
 
 def test_production_card_actions_collection_privacy_and_legacy_fallback(tmp_path):
-    source = Path(web.__file__).read_text(encoding="utf-8")
-    start = source.index("gemcity(box,s){")
     data = tmp_path / "card-table.json"
-    data.write_text(json.dumps({"js": WEB_JS, "gemcity": source[start:source.index("  siji(box,s){", start)]}), encoding="utf-8")
+    data.write_text(json.dumps({"js": WEB_JS}), encoding="utf-8")
     node = shutil.which("node")
     assert node, "Production JavaScript checks require Node"
     result = subprocess.run([node, str(Path(__file__).with_name("card_table_web_probe.cjs")), str(data)],

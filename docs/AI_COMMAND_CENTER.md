@@ -15,6 +15,14 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 宝石牌桌重做 · GEM-TABLE-20261106 v1
+
+**AI_ACCEPTED · 全量通过**。[任务](task-packages/GEM-TABLE-20261106.md) / [最终评审](review-packages/MANOR-GEM-20261106-r1.md)。60 张固定牌、三级竖版市场、筹码/费用/实际折扣以及另七款游戏错配已完成。原暖纸底专测失败保留，修订后完整候选共 3370 通过。本批 Git 交付见 [PR #12](https://github.com/mixmixla/321_FISH/pull/12)，合并状态以远端记录为准。
+
+## 山屋惊魂 · MANOR-20261106 v1
+
+**AI_ACCEPTED · 全量通过**。基线 c4b2754，受测候选 6a6f521，feature/haunted-manor-20261106。[任务](task-packages/MANOR-20261106.md) / [最终评审](review-packages/MANOR-GEM-20261106-r1.md)。21 个房间图块与 22 幅发现卡已进入真实 Tk 和网页，开门拼接、同格座位、发现回看、物品/惊魂与退出路径按任务核验。完整 255 文件，3370 通过、0 失败、20 默认跳过。运行已收尾。
+
 ## 卡牌插画 · CARDS-STUDIO-20261106 v1
 
 **AI_ACCEPTED · 全量通过**。基线 36ff593，受测应用 bdf11c4，功能分支 feature/cards-studio-20261106。见[任务包](task-packages/CARDS-STUDIO-20261106.md)及[评审结果](review-packages/CARDS-STUDIO-20261106-r1.md)。60 张发展卡、5 位贵宾和 8 张情书人物牌已接入桌面及网页，对局中可以保留、买入、放大赏卡和选择两张私牌之一。最终 246 个测试文件全部覆盖，3294 通过，0 失败，20 项默认跳过。本批试玩与验证结束，Git 交付见 [PR #11](https://github.com/mixmixla/321_FISH/pull/11)，版本与合并状态以远端记录为准。

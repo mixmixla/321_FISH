@@ -64,8 +64,9 @@ def test_desktop_click_registration_and_bank_hotzones():
 
 
 def test_web_click_selection_and_reserved_purchase():
-    src = (ROOT / "web.py").read_text(encoding="utf-8")
-    assert "state.gcsel" in src
-    assert 'op:"buy_res"' in src and 'op:"reserve"' in src
-    assert 'op:"take",colors:cur' in src        # 网页端“取选中的 N 颗”
-    assert "renderGamePanel()" in src
+    # The complete table now belongs to the presentation module; its production
+    # DOM probe verifies selection, explicit confirmation and room fences.
+    from boardgames.card_table_web import WEB_JS
+    assert "gemcity,lovelove" in WEB_JS         # Both public renderer entry points.
+    assert "op:'buy_res'" in WEB_JS and "op:'reserve'" in WEB_JS
+    assert "op:'take',colors" in WEB_JS and "op:'take2'" in WEB_JS

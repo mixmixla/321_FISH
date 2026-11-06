@@ -53,6 +53,15 @@ def _nav(ui, name):
     return next(r for r in ui["gc_navigation"] if r[-1] == name)
 
 
+def _command(ui, name):
+    return next(r for r in ui['gc_navigation']
+                if isinstance(r[-1], tuple) and r[-1][:2] == ('command', name))
+
+
+def _jewel_card(card, index, **extra):
+    return dict(card, art_set='jewel-v2', art=index, disc=table.COLORS[index//4], **extra)
+
+
 def _love(ui, kind, value=None):
     return next(r for r in ui["ll_hits"] if r[-2] == kind and (value is None or r[-1] == value))
 
@@ -65,12 +74,15 @@ def test_market_all_twelve_actions_fit_small_canvas_and_costs_survive_without_ar
     _, room = _room("gemcity")
     ui, sent = _ui(room)
     cv = _paint(room, ui, room.gs.private(7))
-    assert len(ui["gc_cards"]) == 12 and len(ui["gc_reserve"]) == 12
+    assert len(ui["gc_cards"]) == 12 and not ui["gc_reserve"]
     assert len(ui["gc_bank"]) == 5
     for rect in ui["gc_cards"]+ui["gc_reserve"]+ui["gc_bank"]:
         assert 0 <= rect[0] < rect[2] <= 480 and 0 <= rect[1] < rect[3] <= 400
-    assert any("发展卡" in t for t in _labels(cv))
-    _click(ui, ui["gc_reserve"][0])
+    assert any(t.startswith(tuple(table._GC_NAMES.values())) for t in _labels(cv))
+    _click(ui, ui['gc_cards'][0])
+    assert not sent  # A card selects; confirmation is the only mutation path.
+    _paint(room, ui, room.gs.private(7))
+    _click(ui, _command(ui, 'reserve'))
     assert sent == [{"op": "reserve", "tier": 3, "idx": 0}]
 
 
@@ -78,7 +90,7 @@ def test_private_album_has_every_card_pages_off_turn_and_no_spectator_leak():
     _, room = _room("gemcity")
     ui, sent = _ui(room)
     ui["state"] = {**ui["state"], "turn_uid": 8}
-    cards = [dict(room.gs.market[1][0], title=f"私人收藏{i}", art=i) for i in range(13)]
+    cards = [_jewel_card(room.gs.market[1][0], i, title=f"私人收藏{i}") for i in range(13)]
     private = {"cards": 13, "collection": cards, "reserved": [dict(cards[0], title="私人保留") ]}
     _paint(room, ui, private)
     _click(ui, _nav(ui, "collection"))
@@ -122,7 +134,7 @@ def test_owned_album_expands_exact_art_read_only_and_returns_to_same_page(monkey
     _, room = _room("gemcity")
     ui, sent = _ui(room)
     ui["state"] = {**ui["state"], "turn_uid": 8}
-    private = {"collection": [dict(room.gs.market[1][0], title=f"藏品{i}", art=i)
+    private = {"collection": [_jewel_card(room.gs.market[1][0], i, title=f"藏品{i}")
                               for i in range(13)], "cards": 13}
     _paint(room, ui, private)
     _click(ui, _nav(ui, "collection"))
@@ -229,16 +241,18 @@ def test_normal_room_reserve_buy_and_album_keep_card_identity(window):
     wanted = [key for key in table.COLORS if cost.get(key)]
     for key in wanted:
         _click(gw._cv_ui, next(r for r in gw._cv_ui["gc_bank"] if r[-1] == key))
-        if cost[key] == 2 and len(wanted) == 1:
-            _click(gw._cv_ui, next(r for r in gw._cv_ui["gc_bank"] if r[-1] == key))
-    if room.gs.turn == 0:
+    if len(wanted) == 1 and cost[wanted[0]] == 2:
+        _click(gw._cv_ui, _nav(gw._cv_ui, ('take2', wanted[0])))
+    else:
         _click(gw._cv_ui, gw._cv_ui["gc_take"])
     other_turn()
-    _click(gw._cv_ui, next(r for r in gw._cv_ui["gc_reserve"] if r[-2:] == (1, 0)))
+    _click(gw._cv_ui, next(r for r in gw._cv_ui['gc_cards'] if r[-3:-1] == (1, 0)))
+    _click(gw._cv_ui, _command(gw._cv_ui, 'reserve'))
     assert room.gs.reserved[7][0] == original
     other_turn()
     _click(gw._cv_ui, _nav(gw._cv_ui, "reserved"))
-    _click(gw._cv_ui, gw._cv_ui["gc_reserved"][0])
+    _click(gw._cv_ui, gw._cv_ui['gc_reserved'][0])
+    _click(gw._cv_ui, _command(gw._cv_ui, 'buy'))
     assert actions[-1] == {"op": "buy_res", "idx": 0}
     assert room.gs.private(7)["collection"][0] == original
     _click(gw._cv_ui, _nav(gw._cv_ui, "collection"))
@@ -253,7 +267,7 @@ def test_gemcity_late_collection_frame_preserves_open_album_and_bounded_photos(w
     core.game_private = None
     _sync(core, gw, room, private=False)
     _click(gw._cv_ui, _nav(gw._cv_ui, "collection"))
-    card = dict(room.gs.market[1][0], title="迟到的收藏")
+    card = _jewel_card(room.gs.market[1][0], 0, title="迟到的收藏")
     core.game_private = {"cards": 1, "collection": [card], "reserved": []}
     gw._sync()
     assert gw._cv_ui["gc_view"] == "collection"

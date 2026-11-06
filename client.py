@@ -11764,7 +11764,8 @@ def _actions_for(game: str, priv: dict | None) -> list:
 
 # 棋盘直操类游戏的首屏引导（无按钮可指时告诉玩家怎么操作）
 _GAME_HINTS = {
-    "gemcity": "点市集卡购买，点「留」保留；在「我的保留」「我的卡册」「贵宾」切换浏览",
+    "betrayal": "点自己所在房间的方向门移动；发现簿回看揭牌，背包阅读与使用道具。全图只作导航",
+    "gemcity": "先选市场牌，再点「买入」或「保留」；在「藏册」点卡可放大赏图",
     "lovelove": "先点持牌或新摸牌，再选目标／护卫猜值，最后点「确认出牌」",
     "tile2048": "用方向按钮滑动；点击棋盘聚焦后可按方向键。相同数字合并，挑战 2048",
     "gomoku_solo": "你执黑，点击交叉点落子；电脑执白自动应手，恰好五连获胜",
@@ -13966,8 +13967,20 @@ class GameWindow:
         if source_ui is not None:
             source_game = source_ui.get("game")
             if source_game != game and (
-                    game in ("gemcity", "lovelove")
-                    or source_game in ("gemcity", "lovelove")):
+                    game in ("gemcity", "lovelove", "betrayal")
+                    or source_game in ("gemcity", "lovelove", "betrayal")):
+                return
+        if game == "betrayal":
+            if source_ui is not None and (
+                    source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st
+                    or source_ui.get("me") != self.core.uid):
+                return
+            if (not getattr(self.core, "connected", False)
+                    or self.core.uid not in room.get("players", [])
+                    or self.core.uid not in st.get("alive", [])
+                    or st.get("turn_uid") != self.core.uid
+                    or st.get("status") != "playing"):
                 return
         if game in ("gemcity", "lovelove"):
             if source_ui is not None and (

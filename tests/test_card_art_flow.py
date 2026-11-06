@@ -10,9 +10,11 @@ def test_development_art_covers_the_deck_and_survives_reservation_and_purchase()
         assert sorted(card["art"] for card in cards) == list(range(20))
         assert len({card["title"] for card in cards}) == 20
     card = dict(game.snapshot()["market"]["1"][0])
+    assert game.snapshot()["deck_left"] == {"1": 16, "2": 16, "3": 16}
     colour = next(c for c in COLORS if card["cost"][c])
     other_colour = next(c for c in COLORS if c != colour)
     game.act(11, {"op": "reserve", "tier": 1, "idx": 0})
+    assert game.snapshot()["deck_left"] == {"1": 15, "2": 16, "3": 16}
     assert game.private(11)["reserved"] == [card]
     assert game.private(22)["reserved"] == []
     assert game.market[1][0]["art"] != card["art"]
@@ -30,7 +32,7 @@ def test_patron_portraits_follow_the_requirements_after_a_patron_leaves():
     game.nobles_left.remove(NOBLES[1])
     state = game.snapshot()
     assert state["noble_art"] == [0, 2, 3, 4]
-    assert state["noble_titles"] == ["翡翠侯爵", "蓝晶航长", "黄玉银行家", "紫晶工匠王"]
+    assert state["noble_titles"] == ["驯鹰侯爵", "海图航长", "天平银行家", "持锤工匠长"]
 
 
 def test_only_the_actor_sees_the_draw_and_can_play_it_to_keep_their_hand():

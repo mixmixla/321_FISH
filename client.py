@@ -11542,11 +11542,6 @@ _GAME_ACTIONS = {
         ("← 左", {"fixed": {"op": "move", "dir": "left"}}, ""),
         ("→ 右", {"fixed": {"op": "move", "dir": "right"}}, ""),
     ],
-    "rps": [
-        ("✊ 石头", {"fixed": {"choice": "rock"}}, ""),
-        ("✌️ 剪刀", {"fixed": {"choice": "scissors"}}, ""),
-        ("✋ 布", {"fixed": {"choice": "paper"}}, ""),
-    ],
     "spy": [
         ("描述", {"key": "describe", "kind": "text"}, "输入描述（别说出关键词）"),
         ("投票", {"key": "vote", "kind": "uid"}, "输入怀疑对象的 uid"),
@@ -13121,6 +13116,10 @@ class GameWindow:
             return
         game = room.get("game")
         ui["game"] = game
+        if game == "rps":
+            pending = getattr(self, "_rps_pending", None)
+            ui["rps_sending"] = bool(pending and pending[1] is st
+                                     and pending[0][:3] == (*context, self.core.uid))
         ui["can_move"] = (
             client_gameui.flagship_can_move(room, st, self.core.uid,
                                              getattr(self.core, "connected", False))
@@ -13144,10 +13143,17 @@ class GameWindow:
 
     def _bind_board_keys(self, cv, ui) -> None:
         # Widget-local bindings leave chat fields and other windows alone.
+        for choice in range(3):
+            cv.bind(str(choice+1), lambda evt, c=choice: self._on_rps_key(evt, c, ui))
         for key, direction in (("Up", "up"), ("Down", "down"),
                                ("Left", "left"), ("Right", "right")):
             cv.bind(f"<{key}>", lambda evt, d=direction, target=ui:
                     self._on_board_direction(evt, d, target))
+
+    def _on_rps_key(self, evt, choice, ui):
+        if ui.get("game") == "rps" and evt.widget.focus_get() is evt.widget:
+            self._do_action({"choice": choice}, ui)
+            return "break"
 
     def _on_board_direction(self, evt, direction, ui):
         if (self.core.game_room or {}).get("game") != "tile2048":
@@ -13967,9 +13973,28 @@ class GameWindow:
         if source_ui is not None:
             source_game = source_ui.get("game")
             if source_game != game and (
-                    game in ("gemcity", "lovelove", "betrayal")
-                    or source_game in ("gemcity", "lovelove", "betrayal")):
+                    game in ("gemcity", "lovelove", "betrayal", "rps")
+                    or source_game in ("gemcity", "lovelove", "betrayal", "rps")):
                 return
+        if game == "rps":
+            from boardgames.rps_table import can_choose
+            if (not rid or room.get("status") != "playing" or not self.core.connected
+                    or not can_choose(st, self.core.uid)
+                    or self.core.uid not in room.get("players", ())):
+                return
+            if source_ui is not None and (
+                    source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st or source_ui.get("me") != self.core.uid):
+                return
+            ticket = (rid, room.get("round"), self.core.uid, st.get("round", 0))
+            pending = getattr(self, "_rps_pending", None)
+            if pending and pending[0] == ticket and pending[1] is st:
+                return
+            if self.core.game_action(rid, {"choice": action["choice"], "round": ticket[-1]}):
+                self._rps_pending = ticket, st
+                if source_ui and source_ui.get("repaint"):
+                    source_ui["repaint"]()
+            return
         if game == "betrayal":
             if source_ui is not None and (
                     source_ui.get("_room_context") != (rid, room.get("round"))

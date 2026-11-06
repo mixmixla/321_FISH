@@ -113,10 +113,11 @@ def _SERVED_PAGE():
     _resico['__fallback'] = resource_icon_svg('', 18)
     page = page.replace('@@UX_RESOURCE_ICONS@@', _js_json_literal(_resico))
     page = page.replace('@@UX_BG_ASSETS@@', _js_json_literal(_bg_assets_subset()))
+    from boardgames.rps_table import HANDS as rps_hands
     from boardgames.gallery import COVERS, FEATURED, cover_url
     page = page.replace('@@UX_GALLERY@@', _js_json_literal({
         "covers": {name: cover_url(name) for name in COVERS},
-        "featured": FEATURED,
+        "featured": FEATURED, "rpsHands": rps_hands,
     }))
     from boardgames.gomoku_art import WEB_JS as gomoku_art_js
     page = page.replace('/*@@GOMOKU_ART@@*/', gomoku_art_js)
@@ -593,6 +594,12 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 .gcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
 .gcard b{font-size:var(--body-font,14px)}
 .gcard .go{margin-top:auto}
+.rps-table{box-sizing:border-box;padding:12px 10px 8px;border-radius:12px;background:#fff8ec;color:#322e46;text-align:center}
+.rps-table header,.rps-table h4{font-weight:700}.rps-table p,.rps-table h4{margin:5px 0 9px}
+.rps-cards{display:flex;align-items:stretch;justify-content:center;gap:clamp(4px,1.5vw,12px)}
+.rps-card{flex:0 1 102px;min-width:0;overflow:hidden;border:2px solid var(--hand-color);border-radius:9px;padding:0;background:#fffcf6;color:#302d43;cursor:pointer}
+.rps-face{display:block;aspect-ratio:1/2;background-image:url("/game-art/rps-hands.webp");background-size:300% 100%;background-repeat:no-repeat}
+.rps-card strong{display:block;padding:6px 0;font-size:14px}.rps-card:disabled{cursor:default}.rps-card:focus-visible,.rps-card:enabled:hover{outline:3px solid var(--hand-color);outline-offset:1px}
 .gallery-cover{aspect-ratio:2/1;border-radius:16px 16px 16px 7px;margin:-12px -12px 8px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .gallery-cover img[data-gallery-cover]{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
 .gallery-cover img[hidden]{display:none}
@@ -4464,26 +4471,56 @@ const GRENDER={
     box.appendChild(grid);
   },
   rps(box,s){
-    const d=document.createElement("div");d.style.cssText="text-align:center;padding:6px";
-    const total=(s.players||[]).length,did=(s.submitted||[]).length;
-    d.innerHTML="<div class='gsec'>第 "+s.round+" 轮 · 已出拳 "+did+"/"+total+"</div>"
-      +"<div style='margin-top:6px'>"+scoreHTML(s.scores)+"</div>";
-    box.appendChild(d);
-    if((s.submitted||[]).includes(state.uid)){
-      const w=document.createElement("div");w.style.cssText="text-align:center;color:var(--dim);font-size:12px";
-      w.textContent="✅ 已出拳，等待揭晓…";box.appendChild(w);}
-    else if(s.status==="collecting"&&(s.players||[]).includes(state.uid)){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:8px;justify-content:center;margin:10px";
-      [["✊ 石头",0],["✋ 布",1],["✌️ 剪刀",2]].forEach(([t,c])=>bar.appendChild(gBtn(t,{choice:c})));
-      box.appendChild(bar);}
-    if((s.matches||[]).length){
-      const t=document.createElement("div");t.style.marginTop="8px";t.style.fontSize="12px";
-      t.innerHTML="<div class='gsec'>本轮对战</div>"+s.matches.map(m=>{
-        const nm=v=>v===-1?"未出拳":["✊","✋","✌️"][v];
-        return "<div class='glogl'>"+esc(gnick(m.a))+" "+nm(m.ca)+" vs "+esc(gnick(m.b))+" "+nm(m.cb)
-          +(m.winner===-1||m.winner==null?" → 平局":" → "+esc(gnick(m.winner))+" 胜")+"</div>";}).join("")
-        +((s.byes||[]).length?"<div class='glogl'>"+s.byes.map(u=>esc(gnick(u))).join("、")+" 轮空</div>":"");
-      box.appendChild(t);}
+    const hands=GALLERY.rpsHands, room=state.gst.room, uid=state.uid;
+    const submitted=s.submitted||[], players=s.players||[];
+    const section=document.createElement("section");
+    section.className="rps-table";
+    const header=document.createElement("header");
+    header.textContent="第 "+(s.round+1)+" 轮 · 已出拳 "+submitted.length+"/"+players.length;
+    section.appendChild(header);
+    const note=document.createElement("p");
+    const pending=()=>state.rpsPending?.snapshot===s&&state.rpsPending.uid===uid&&state.rpsPending.room===room.room_id;
+    note.textContent=submitted.includes(uid)||pending()?"已出拳，等待其他玩家":players.includes(uid)?"点一张牌出拳":"观战中";
+    section.appendChild(note);
+    const cards=document.createElement("div");cards.className="rps-cards";section.appendChild(cards);
+    const allowed=()=>state.groom===room.room_id&&state.uid===uid&&state.gst?.state===s
+      &&state.gst?.room?.status==="playing"&&s.status==="collecting"&&players.includes(uid)
+      &&!submitted.includes(uid)&&!pending();
+    hands.forEach(([label,sign,color],choice)=>{
+      const card=document.createElement("button");card.type="button";card.className="rps-card";
+      card.dataset.choice=String(choice);card.style.setProperty("--hand-color",color);
+      const image=document.createElement("span");image.className="rps-face";image.setAttribute("aria-hidden","true");
+      image.style.backgroundPosition=(choice*50)+"% center";card.appendChild(image);
+      const name=document.createElement("strong");name.textContent=sign+" "+label;card.appendChild(name);
+      card.disabled=!allowed();card.onclick=()=>{
+        if(card.disabled||!allowed())return;
+        const ticket={snapshot:s,uid,room:room.room_id};state.rpsPending=ticket;
+        note.textContent="已出拳，等待其他玩家";
+        cards.querySelectorAll("button").forEach(button=>button.disabled=true);
+        const retry=()=>{
+          if(state.rpsPending!==ticket)return;
+          state.rpsPending=null;
+          if(allowed())renderGamePanel();
+        };
+        gameAPI("action",{room_id:room.room_id,action:{choice,round:s.round}})
+          .then(reply=>{if(!reply?.ok)retry();},retry);
+      };cards.appendChild(card);
+    });
+    const scores=document.createElement("p");scores.innerHTML=scoreHTML(s.scores);section.appendChild(scores);
+    if((s.matches||[]).length||(s.byes||[]).length){
+      const last=document.createElement("h4");last.textContent="上轮战报 · 第 "+s.round+" 轮";section.appendChild(last);
+      const hand=value=>hands[value]?.[0]||"未出拳";
+      (s.matches||[]).forEach(match=>{
+        const line=document.createElement("div");line.className="glogl";
+        line.textContent=gnick(match.a)+" "+hand(match.ca)+" · "+gnick(match.b)+" "+hand(match.cb)
+          +(match.winner==null||match.winner===-1?" → 平局":" → "+gnick(match.winner)+" 胜");
+        section.appendChild(line);
+      });
+      if((s.byes||[]).length){
+        const line=document.createElement("div");line.textContent=s.byes.map(gnick).join("、")+" 轮空";section.appendChild(line);
+      }
+    }
+    box.appendChild(section);
   },
   spy(box,s){
     const d=document.createElement("div");d.style.cssText="padding:4px";

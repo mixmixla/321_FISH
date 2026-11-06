@@ -8,7 +8,7 @@ render() 按游戏名分派到对应 painter；未覆盖的游戏走 _generic �
   - 棋盘类（gomoku/connect4/othello/tictactoe/xiangqi/chess/go/kalah）
     点击格子直接落子/走子；走子类（象棋/围棋）先点己方子选中、再点落点。
   - 手牌/选卡类（uno/coc setup）点击卡片直接提交。
-  - 其余交互（rps/blackjack/calc24/werewolf/avalon/spy 的投票、技能、出拳等）
+  - 其余交互（blackjack/calc24/werewolf/avalon/spy 的投票、技能等）
     仍复用底层 _GAME_ACTIONS 按钮区，本模块只负责把局面画好看。
 
 点击坐标→动作由 handle_click() 统一分发，client 绑定一个 Canvas 单击即可。
@@ -3150,69 +3150,16 @@ def _draw_poker(cv, x, y, cstr, face_down=False):
 
 @_register("rps")
 def _p_rps(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["rps"][1]
-    phase = st.get("phase", "collecting")
-    title = "✊✌️✋ 石头剪刀布"
-    if phase == "collecting":
-        title += f"　已出拳 {len(st.get('submitted') or [])}/{len(st.get('players') or [])}"
-    else:
-        title += "　揭晓中…"
-    _turn_banner(cv, w, 46, title, accent)
-    _status_hud(cv, w, 68, st, me, nick, accent)      # F6：阶段·轮次 + 计分
-    icons = ["✊", "✋", "✌️"]
-    sizes = [("石头", 0), ("剪刀", 1), ("布", 2)]
-    gap = 90
-    bgx = (w - (gap * 3)) / 2 + gap / 2
-    y = h / 2 + 20
-    # 三个大图标展示
-    for i, (name, code) in enumerate(sizes):
-        cx = bgx + i * gap
-        f = _shade(accent, 0.35)
-        cv.create_oval(cx - 44, y - 44, cx + 44, y + 44, fill=f, outline=_WHITE,
-                       width=2)
-        _text(cv, cx, y, icons[code], _WHITE, (_FONT_BIG[0], 30))
-        _text(cv, cx, y + 64, name, _MUTED, _FONT_F)
-    # 已出拳名单
-    subm = st.get("submitted") or []
-    if subm:
-        _text(cv, w / 2, y - 100, "已出拳：" + "　".join(nick(int(u)) for u in subm),
-              _MUTED, _FONT_F)
-    # 最近战报（对战结果可视化：逐对呈现双方出拳与胜负，替代原「请见日志」）
-    matches = st.get("matches") or []
-    byes = st.get("byes") or []
-    if matches or byes:
-        rnd = st.get("round") or 0
-        top = y + 104
-        row_h = 44
-        sx = min(1.0, w / 560.0)          # 横向偏移随画布宽度缩放，窄窗不溢出
-        _text(cv, w / 2, top - 24, f"上轮战报 · 第 {rnd} 轮", _MUTED, _FONT_B)
-        rows = [("m", m) for m in matches] + [("b", u) for u in byes]
-        avail = max(1, int((h - top - 14) / row_h))   # 只画放得下的行，剩余折叠
-        for i, (kind, item) in enumerate(rows[:avail]):
-            ry = top + i * row_h
-            if kind == "b":
-                _text(cv, w / 2, ry, f"{nick(int(item))} 轮空（本轮无对手）",
-                      _MUTED, _FONT_F)
-                continue
-            a, b, wu = item.get("a"), item.get("b"), item.get("winner")
-            ca, cb = item.get("ca", -1), item.get("cb", -1)
-            ga = "－" if ca == -1 else icons[ca]
-            gb = "－" if cb == -1 else icons[cb]
-            win_a, win_b = (wu == a), (wu == b)
-            na = ("🏆 " if win_a else "") + nick(int(a))
-            nb = nick(int(b)) + (" 🏆" if win_b else ("（平）" if wu == -1 else ""))
-            _text(cv, w / 2 - 96 * sx, ry, na, _OK if win_a else _MUTED,
-                  _FONT_B, anchor="e")
-            _text(cv, w / 2 - 44 * sx, ry, ga, _WHITE if win_a else _MUTED,
-                  (_FONT_BIG[0], 16))
-            _text(cv, w / 2, ry, "⚔", _MUTED, _FONT_F)
-            _text(cv, w / 2 + 44 * sx, ry, gb, _WHITE if win_b else _MUTED,
-                  (_FONT_BIG[0], 16))
-            _text(cv, w / 2 + 96 * sx, ry, nb, _OK if win_b else _MUTED,
-                  _FONT_B, anchor="w")
-        rest = len(rows) - avail
-        if rest > 0:
-            _text(cv, w / 2, top + avail * row_h, f"…另有 {rest} 场", _MUTED, _FONT_F)
+    from boardgames.rps_table import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
+
+
+def _click_rps(ui, x, y):
+    from boardgames.rps_table import click
+    click(ui, x, y)
+
+
+_CLICKS["rps"] = _click_rps
 
 
 @_register("calc24")

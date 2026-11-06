@@ -17,6 +17,7 @@ COVERS = {
     "gomoku_solo": "cover-gomoku.webp",
     "gemcity": "cover-gemcity.webp",
     "lovelove": "cover-lovelove.webp",
+    "rps": "cover-rps.webp",
 }
 FEATURED = ("tile2048", "gomoku_solo", "tielu", "azul", "gemcity")
 ART_FILES = frozenset(COVERS.values()) | {
@@ -25,7 +26,7 @@ ART_FILES = frozenset(COVERS.values()) | {
     "gemcity-patrons.webp", "lovelove-court.webp",
     "betrayal-rooms.webp", "betrayal-items.webp",
     "betrayal-events.webp", "betrayal-omens.webp",
-    "gemcity-jewels.webp",
+    "gemcity-jewels.webp", "rps-hands.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}

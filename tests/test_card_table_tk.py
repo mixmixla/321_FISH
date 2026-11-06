@@ -263,3 +263,40 @@ def test_gemcity_late_collection_frame_preserves_open_album_and_bounded_photos(w
     for width in range(80, 680, 8):
         assert table.art(gw.game_cv, "lovelove-court.webp", 0, 4, 2, (0, 0, width, 96))
     assert len(gw.game_cv._card_art_cache) == 64
+
+
+@pytest.mark.parametrize("source,current", [
+    ("kalah", "gemcity"), ("gomoku", "lovelove"),
+    ("gemcity", "kalah"), ("lovelove", "guess_number"), ("lovelove", "gemcity"),
+])
+def test_cross_game_canvas_is_discarded_before_accessing_card_private(source, current):
+    sent = []
+    state = {"status": "playing", "turn_uid": 7, "cur": 7}
+    # Intentionally no game_private: a stale foreign Canvas must be discarded
+    # before the current game's private-state or game-specific checks.
+    core = SimpleNamespace(uid=7, connected=True, game_state=state,
+                           game_room={"room_id": "g1", "round": 1, "game": current,
+                                      "status": "playing", "players": [7]},
+                           game_action=lambda *args: sent.append(args))
+    ui = {"game": source, "_room_context": ("g1", 1), "state": state, "me": 7}
+    client.GameWindow._do_action(SimpleNamespace(core=core), {"op": "discard", "play": 1}, ui)
+    assert not sent
+
+
+@pytest.mark.parametrize("game", ["gemcity", "lovelove"])
+def test_matching_card_canvas_still_routes_normal_action_to_real_room(game):
+    manager, room = _room(game)
+    private = room.gs.private(7)
+    state = room.gs.snapshot()
+    action = ({"op": "take", "colors": ["r"]} if game == "gemcity" else
+              {"op": "discard", "play": private["drawn"], "target": 8, "val": 2})
+    sent = []
+    def send(rid, payload):
+        manager.handle_action(7, rid, payload)
+        sent.append((rid, payload))
+    core = SimpleNamespace(uid=7, connected=True, game_state=state, game_private=private,
+                           game_room=room.summary(), game_action=send)
+    ui = {"game": game, "_room_context": (room.room_id, room.round_no),
+          "state": state, "me": 7, "_card_private": private}
+    client.GameWindow._do_action(SimpleNamespace(core=core), action, ui)
+    assert sent == [(room.room_id, action)]

@@ -13963,6 +13963,12 @@ class GameWindow:
         st = self.core.game_state or {}
         rid = room.get("room_id")
         game = room.get("game")
+        if source_ui is not None:
+            source_game = source_ui.get("game")
+            if source_game != game and (
+                    game in ("gemcity", "lovelove")
+                    or source_game in ("gemcity", "lovelove")):
+                return
         if game in ("gemcity", "lovelove"):
             if source_ui is not None and (
                     source_ui.get("_room_context") != (rid, room.get("round"))

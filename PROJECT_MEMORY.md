@@ -20,6 +20,9 @@
 
 ## Architecture
 
+- 山屋惊魂沿用 `rooms` 简称，`room_names` 返回已揭房间全称，`discoveries` 记实际开门者、坐标和当次揭牌，旧房重走不会增加记录。两端按 `boardgames/manor_catalog.py` 的图号拼图。
+- 璀璨宝石的 `jewel-v2` 发展卡把图位、名称、永久宝石、费用和声望固定在同一张牌；按黑、白、红、绿、蓝排列，每级每色四张。`deck_left` 是扣除市场明牌后的剩余张数。
+
 - 2048（tile2048）和五子棋陪练（gomoku_solo）使用单人游戏房间；前者的分数为数字，后者规则内部用 -1 表示电脑，房间人数只计真人。桌游大厅封面顺序及本地/网页图库文件名来自 boardgames/gallery.py，网页按需从 /game-art/ 加载。
 
 

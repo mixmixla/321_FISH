@@ -17,13 +17,11 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 宝石牌桌重做 · GEM-TABLE-20261106 v1
 
-**READY，与山屋并行**。依据用户针对已合并 PR #11 的实拍反馈，新增[有限任务](task-packages/GEM-TABLE-20261106.md)。保留已启动山屋工作，两个任务分别提交、由主控统一验证后经 PR 合并。新牌桌的永久宝石、画作与名称需一致，市场按参考图布局。原开发目录保持。
-
+**AI_ACCEPTED · 全量通过**。[任务](task-packages/GEM-TABLE-20261106.md) / [最终评审](review-packages/MANOR-GEM-20261106-r1.md)。60 张固定牌、三级竖版市场、筹码/费用/实际折扣以及另七款游戏错配已完成。原暖纸底专测失败保留，修订后完整候选共 3370 通过。本批通过功能分支 PR 合并，最终交付以远端记录为准。
 
 ## 山屋惊魂 · MANOR-20261106 v1
 
-**READY**。承接已合并的 [PR #11](https://github.com/mixmixla/321_FISH/pull/11)，基线 c4b2754。按用户要求冻结[任务包](task-packages/MANOR-20261106.md)。房间拼图、发现牌、桌面和网页各自独立工作；主控负责已揭示数据、整合、评审、后台全量与 PR 合并。
-
+**AI_ACCEPTED · 全量通过**。基线 c4b2754，受测候选 6a6f521，feature/haunted-manor-20261106。[任务](task-packages/MANOR-20261106.md) / [最终评审](review-packages/MANOR-GEM-20261106-r1.md)。21 个房间图块与 22 幅发现卡已进入真实 Tk 和网页，开门拼接、同格座位、发现回看、物品/惊魂与退出路径按任务核验。完整 255 文件，3370 通过、0 失败、20 默认跳过。运行已收尾。
 
 ## 卡牌插画 · CARDS-STUDIO-20261106 v1
 

@@ -150,6 +150,7 @@ def test_package_and_render_contracts_are_self_contained():
     assert "touchstart" in WEB_JS and "touchend" in WEB_JS
     assert "tile2048-atlas.webp" in WEB_CSS
     assert "dataset.stage" in WEB_JS
+    assert ".t2048-cell.has-tile{color:#fff" in WEB_CSS
     assert "box-sizing:border-box" in WEB_CSS
     assert "min-width:0" in WEB_CSS
     assert "touch-action:none" in WEB_CSS

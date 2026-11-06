@@ -87,8 +87,9 @@ WEB_CSS = r"""
 .t2048-cell[data-value="256"]{background:#e2bd45;color:#fff}.t2048-cell[data-value="512"]{background:#d9b635;color:#fff}
 .t2048-cell[data-value="1024"]{background:#c99e32;color:#fff;font-size:clamp(14px,4.6vw,25px)}
 .t2048-cell[data-value="2048"]{background:#b8862d;color:#fff;box-shadow:0 0 0 2px #ffd166,0 0 16px rgba(255,209,102,.65)}
-.t2048-cell.has-tile{background-image:url("/game-art/tile2048-atlas.webp");background-size:400% 300%;
-  background-repeat:no-repeat;text-shadow:0 2px 4px #061321,0 0 2px #061321}
+.t2048-cell.has-tile{color:#fff;background-image:url("/game-art/tile2048-atlas.webp");background-size:400% 300%;
+  background-repeat:no-repeat;-webkit-text-stroke:1px #061321;
+  text-shadow:0 2px 4px #061321,0 0 2px #061321}
 .t2048-cell[data-stage="0"]{background-position:0% 0%}.t2048-cell[data-stage="1"]{background-position:33.3333% 0%}
 .t2048-cell[data-stage="2"]{background-position:66.6667% 0%}.t2048-cell[data-stage="3"]{background-position:100% 0%}
 .t2048-cell[data-stage="4"]{background-position:0% 50%}.t2048-cell[data-stage="5"]{background-position:33.3333% 50%}

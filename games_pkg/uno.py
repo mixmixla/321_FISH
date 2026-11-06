@@ -84,7 +84,7 @@ class UnoGame(BaseGame):
             "direction": "→" if self.direction == 1 else "←",
             "current_uid": None if self.phase != "playing" else self.players[self.current_idx],
             "hand_counts": {str(u): len(h) for u, h in self.hands.items()},
-            "deck_remaining": len(self.discard),   # 弃牌堆剩余（示意）
+            "deck_remaining": len(self.deck),
             "winner_uid": self.winner_uid,
             "match_winner": self.match_winner,
         }
@@ -92,8 +92,12 @@ class UnoGame(BaseGame):
     def private(self, uid: int):
         if self.phase == "playing" and uid in self.hands:
             # R49：并行 hand_ids 供网页端点牌出牌（桌面端忽略未知键，兼容不变）
-            return {"hand": [_card_str(c) for c in self.hands[uid]],
-                    "hand_ids": [c["id"] for c in self.hands[uid]]}
+            hand = self.hands[uid]
+            has_current = any(c["kind"] != "wild" and c["color"] == self.current_color for c in hand)
+            return {"hand": [_card_str(c) for c in hand],
+                    "hand_ids": [c["id"] for c in hand],
+                    "playable_ids": [c["id"] for c in hand if self._playable(c)
+                                     and not (UNO_ENFORCE_WILD4 and has_current and c["value"] == "wild4")]}
         return None
 
     def act(self, uid: int, action: dict) -> list:
@@ -207,11 +211,16 @@ class UnoGame(BaseGame):
             raise GameRuleError("还没轮到你")
         if not self.deck:
             self._reshuffle()
+        before = len(self.hands[uid])
         self._give_cards(uid, 1)
+        if len(self.hands[uid]) == before:
+            self._advance_turn()
+            return [f"{self._nick(uid)} 无牌可摸，过"]
         drawn = self.hands[uid][-1]
-        msgs = [f"{self._nick(uid)} 摸牌：{_card_str(drawn)}"]
+        # Events are public. Only private(uid) may disclose the drawn card.
+        msgs = [f"{self._nick(uid)} 摸了 1 张牌"]
         if self._playable(drawn) and drawn["kind"] != "wild":
-            msgs.append(f"{self._nick(uid)} 摸到的牌可出，可再点「出牌」或「过」")
+            msgs.append(f"{self._nick(uid)} 可继续出牌或摸牌")
             return msgs
         msgs.append(f"{self._nick(uid)} 过")
         self._advance_turn()

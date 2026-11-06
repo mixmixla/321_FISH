@@ -158,6 +158,9 @@ def _SERVED_PAGE():
     from boardgames.arcade_numbers import WEB_JS as number_js, WEB_CSS as number_css
     page = page.replace('/*@@ARCADE_NUMBER_JS@@*/', number_js)
     page = page.replace('@@ARCADE_NUMBER_CSS@@', number_css)
+    from boardgames.cards_uno_web import WEB_JS as uno_js, WEB_CSS as uno_css
+    page = page.replace('/*@@CARDS_UNO@@*/', uno_js)
+    page = page.replace('/*@@CARDS_UNO_CSS@@*/', uno_css)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -627,6 +630,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 .gmap{display:grid;gap:3px;font-size:10px}
 .gmap>div{border:1px solid var(--line);border-radius:var(--r1);padding:2px;min-height:26px;text-align:center;background:var(--card)}
 .glogl{padding:1px 0;border-bottom:1px dashed var(--line)}
+/*@@CARDS_UNO_CSS@@*/
 .unocard{display:inline-block;border:1.5px solid var(--line);border-radius:var(--r1);padding:3px 9px;margin:2px;cursor:pointer;background:var(--card);color:var(--txt);font-size:var(--secondary-font,12px);font-weight:600;box-shadow:var(--shadow-sm)}
 .unocard.dis{background:var(--ux-disabled-background,var(--side));color:var(--ux-disabled-text,var(--dim));cursor:default;box-shadow:none;opacity:1}
 .gsec{font-weight:700;margin:8px 0 3px;font-size:var(--secondary-font,12px);color:var(--dim)}
@@ -4340,7 +4344,7 @@ function renderGamePanel(){
     main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
     const note=document.createElement("div");note.className="gsec";
     note.textContent=gname==="tielu"?"🏁 本局结束，保留结算 30 秒后回到房间":"🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
-  const pv=(gname==="tielu"||gname==="gemcity"||gname==="lovelove"||gname==="betrayal"||gname==="drawguess"||gname==="balatro")?null:state.gpriv;if(pv){
+  const pv=(gname==="tielu"||gname==="gemcity"||gname==="lovelove"||gname==="betrayal"||gname==="drawguess"||gname==="balatro"||gname==="uno")?null:state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
       ?pv.hand.join(" ")
@@ -4807,54 +4811,7 @@ const GRENDER={
     if(s.done){const t=document.createElement("div");t.style.cssText="margin-top:8px;font-weight:800;font-size:15px";
       t.textContent="🏆 "+esc(gnick(s.winner))+" 是最后存活的忍者！";box.appendChild(t);}
   },
-  uno(box,s){
-    const my=state.uid,isMe=s.current_uid===my;
-    const d=document.createElement("div");d.style.cssText="text-align:center;padding:4px";
-    d.innerHTML="<div style='margin:6px'>桌面：<span style='display:inline-block;vertical-align:middle'>"
-      +unoCardHTML(s.top||"")+"</span>"
-      +(s.top_color?"<span style='font-size:11px;color:var(--dim)'> 当前色 "
-        +(UNO_COLOR_CN[s.top_color]||s.top_color)+"</span>":"")+"</div>"
-      +"<div>方向 "+s.direction+" · 轮到 "+esc(gnick(s.current_uid))+(isMe?"（你）":"")+"</div>"
-      +"<div style='color:var(--dim);font-size:11px;margin-top:2px'>"
-      +Object.entries(s.hand_counts||{}).map(([u,c])=>esc(gnick(+u))+"×"+c).join("　")+"</div>"
-      +"<div style='margin-top:4px'>"+scoreHTML(s.scores)+"</div>";
-    box.appendChild(d);
-    const p=state.gpriv;
-    if(p&&p.hand&&isMe){
-      const bar=document.createElement("div");bar.style.cssText="text-align:center;margin:8px";
-      p.hand.forEach((cs,i)=>{
-        const pt=unoParts(cs);
-        const isWild=pt.wild;
-        const act=()=>{
-          if(!isWild)gameAPI("action",{room_id:state.groom,action:{card:p.hand_ids[i]}});
-          else{
-            const cbar=box.querySelector(".wbar");
-            if(cbar)cbar.remove();
-            const sel=document.createElement("div");sel.className="wbar";
-            sel.style.cssText="text-align:center;margin:4px";
-            sel.innerHTML="<span style='font-size:11px;color:var(--dim)'>选颜色：</span>";
-            ["red","yellow","green","blue"].forEach(cl=>{
-              const b=document.createElement("button");b.className="gbtn";
-              b.textContent=UNO_COLOR_CN[cl];
-              b.onclick=()=>{sel.remove();
-                gameAPI("action",{room_id:state.groom,action:{card:p.hand_ids[i],color:cl}})};
-              sel.appendChild(b);});
-            box.appendChild(sel);}};
-        const c=mkCard({cls:"uno click "+pt.cls,sym:pt.sym,cor:pt.cor,title:pt.title,click:act});
-        bar.appendChild(c);});
-      box.appendChild(bar);
-      const draw=document.createElement("div");draw.style.cssText="text-align:center;margin:6px";
-      draw.appendChild(gBtn("🂠 摸牌",{draw:true}));
-      box.appendChild(draw);}
-    else if(p&&p.hand){
-      const w=document.createElement("div");w.style.cssText="text-align:center;margin-top:4px";
-      w.innerHTML="<span style='color:var(--dim);font-size:12px'>你的手牌：</span>"+p.hand.map(unoCardHTML).join("");
-      box.appendChild(w);}
-    if(s.winner_uid!=null)
-      box.appendChild(Object.assign(document.createElement("div"),
-        {style:"text-align:center;margin-top:6px",innerHTML:"🏆 "+esc(gnick(s.winner_uid))+" 出完！"
-          +(s.match_winner!=null?"　比赛冠军 "+esc(gnick(s.match_winner)):"")}));
-  },
+  uno(box,s){/*@@CARDS_UNO@@*/},
   blackjack(box,s){
     const d=document.createElement("div");d.style.cssText="padding:4px";
     d.innerHTML="<div class='gsec'>庄家："+(s.dealer||[]).map(pokerCard).join("")+"（"+s.dealer_value+"）</div>"

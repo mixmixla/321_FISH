@@ -1729,14 +1729,8 @@ def _click_kalah(ui, x, y):
 
 
 def _click_uno(ui, x, y):
-    """点击手牌出牌：由 priv.hand_ids 推断 id"""
-    cards = ui.get("cards")       # [(cx0,cy0,cx1,cy1,id)]
-    if not cards:
-        return
-    for c0x, c0y, c1x, c1y, cid in cards:
-        if c0x <= x <= c1x and c0y <= y <= c1y:
-            ui["submit"]({"card": cid})
-            return
+    from boardgames.cards_uno import click
+    click(ui, x, y)
 
 
 def _click_coc_deck(ui, x, y):
@@ -3030,58 +3024,8 @@ _PAINTERS["go_solo"] = _p_go
 
 @_register("uno")
 def _p_uno(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["uno"][1]
-    title = "🃏 UNO"
-    if st.get("match_winner"):
-        title = f"🏆 {nick(st['match_winner'])} 赢得整局"
-    elif st.get("winner_uid"):
-        title = f"🏆 {nick(st['winner_uid'])} 出完手牌"
-    elif st.get("current_uid"):
-        title += f"　轮到 {nick(st['current_uid'])}"
-    _turn_banner(cv, w, 46, title, accent)
-    ccmap = {"red": "#e05555", "yellow": "#f2c94c", "green": "#4a9b5f",
-             "blue": "#4a7de0"}
-    # 弃牌堆顶
-    top = st.get("top")
-    _text(cv, w / 2 - 130, 100, "弃牌堆顶", _MUTED, _FONT_F)
-    if top:
-        # 弃牌堆顶：统一卡面自带柔影，直接绘制
-        _draw_uno_card(cv, w / 2 - 150, 96, 100, 140, top, ccmap, _FONT_BIG)
-        # 刚出的牌（top 即上一手）：淡金描边呼吸渐隐 + 金色星点一簇（≤14，纯时间推导）
-        _g_play_fx(cv, ui, time.monotonic(), top,
-                   w / 2 - 150, 96, 100, 140, repaint, base=3)
-    _text(cv, w / 2 + 60, 100, "方向 " + st.get("direction", "→"), _MUTED, _FONT_F)
-    hc = st.get("hand_counts") or {}
-    _text(cv, w / 2 + 60, 130, "牌数：" + "　".join(
-        f"{nick(int(u))}:{c}" for u, c in sorted(hc.items())), _MUTED, _FONT_F)
-    # 手牌（私有）
-    hand = []
-    hand_ids = []
-    if priv and isinstance(priv.get("hand"), list):
-        hand = priv["hand"]
-        hand_ids = priv.get("hand_ids") or list(range(len(hand)))
-    if hand:
-        _text(cv, w / 2, h - 40, "你的手牌（点击出牌）", _MUTED, _FONT_F)
-        cw, ch = 64, 92
-        gap = 6
-        total = len(hand) * (cw + gap) - gap
-        x0 = (w - total) / 2
-        cards = []
-        rects = []
-        for i, cstr in enumerate(hand):
-            cx0 = x0 + i * (cw + gap)
-            y0 = h - 150
-            on, dy = _lift(cv, ui, i, cx0, y0, cx0 + cw, y0 + ch, 9, "#ffd75e")
-            if on:                     # 悬停牌加轻微呼吸光环辅助视觉（复用 _g_breath）
-                _g_card_breath_ring(cv, time.monotonic(), cx0, y0,
-                                    cx0 + cw, y0 + ch)
-            _draw_uno_card(cv, cx0, y0 + dy, cw, ch, cstr, ccmap, _FONT_B,
-                           selected=on)
-            cards.append((cx0, y0, cx0 + cw, y0 + ch, hand_ids[i]))
-            rects.append((cx0, y0 - 18, cx0 + cw, y0 + ch))
-        _hov_rects(ui, rects)
-        ui.update(game="uno", cards=cards)
-    ui.update(me=me)
+    from boardgames.cards_uno import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 def _draw_uno_card(cv, x0, y0, w, h, cstr, ccmap, font, selected=False):

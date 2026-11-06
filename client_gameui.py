@@ -1819,15 +1819,8 @@ def _click_rummikub(ui, x, y):
 
 
 def _click_balatro(ui, x, y):
-    """小丑牌：点出战区已出战的牌 → unselect；点手牌 → select（cid 反查自 ui）。"""
-    for c0x, c0y, c1x, c1y, cid in ui.get("balatro_sel") or ():
-        if c0x <= x <= c1x and c0y <= y <= c1y:
-            ui["submit"]({"op": "unselect", "cid": cid})
-            return
-    for c0x, c0y, c1x, c1y, cid in ui.get("balatro_cards") or ():
-        if c0x <= x <= c1x and c0y <= y <= c1y:
-            ui["submit"]({"op": "select", "cid": cid})
-            return
+    from boardgames.jokers.desktop import click
+    click(ui, x, y)
 
 
 def _toggle_solo_use(ui, slot):
@@ -5729,44 +5722,8 @@ def _p_balatro_hand(cv, w, card_y, hand, sel_ids, ui, repaint):
 
 @_register("balatro")
 def _p_balatro(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    _p_balatro_bg(cv, w, h)
-    done, turn, players, alive, hp, scr, cleared = \
-        _p_balatro_top(cv, w, h, st, me, nick)
-    sel_rects, played, cw, chh, py = _p_balatro_playarea(cv, w, h, priv, ui)
-    hand = priv.get("hand") if priv and isinstance(priv.get("hand"), list) else []
-    # 结算加分检测：对比上次累计分，增量 → 在出战区位置触发上飘
-    _p_balatro_fx_detect(ui, st, me, w / 2, py + chh / 2)
-    # 我的小丑牌（常驻被动展示）；hbase = 手牌 hover 矩形数量
-    jy = py + chh + 26
-    hsel = set(priv.get("sel") or []) if priv else set()
-    hrow, _h1, _h2, _h3, _h4 = _balatro_hand_layout(hand, hsel, w)
-    joker_rects, jchh = _p_balatro_jokers(cv, w, jy, st, me, ui, len(hrow))
-    ui["balatro_jokers"] = joker_rects
-    # 提示语
-    prog_y = jy + (8 if joker_rects else 0) + (jchh if joker_rects else 0) + 26
-    if done:
-        _text(cv, w / 2, prog_y, f"🏆 {nick(st.get('winner'))} 斩获本局胜利！",
-              _B_BLNDT, (_FONT_BF, 12, "bold"))
-    elif turn == me:
-        _text(cv, w / 2, prog_y,
-              f"点手牌选牌，凑好牌型后「出牌」（已选 {len(played)}/5）",
-              _B_BLNDT, (_FONT_BF, 11, "bold"))
-    else:
-        _text(cv, w / 2, prog_y, f"等待 {nick(turn)}…", "#d8b89a",
-              (_FONT_BF, 11, "bold"))
-    # 手牌区（点牌=select；hover 缓动上浮）。高度计算保持原几何，方便鼠标对齐。
-    card_y = max(prog_y + 18, h - 128)
-    # 左右两侧：盲注进度 / 手牌结算（自上而下贴到手上方，不遮挡点击矩形）
-    sidetop = py + chh + 14
-    sidebot = card_y - 14
-    if sidebot - sidetop >= 40 and w >= 560:
-        _p_balatro_blind(cv, w, me, st, sidetop, sidebot)
-        _p_balatro_score(cv, w, me, played, st, sidetop, sidebot)
-    hand_rects = _p_balatro_hand(cv, w, card_y, hand, hsel, ui, repaint)
-    # 上飘文字覆盖在最上层；hover 命中区 = 手牌矩形 + 小丑矩形
-    _p_balatro_fx_draw(cv, ui, repaint)
-    _hov_rects(ui, hand_rects + joker_rects)
-    ui.update(game="balatro")
+    from boardgames.jokers.desktop import paint
+    return paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 def _p_balatro_solo_top(cv, w, st, me):

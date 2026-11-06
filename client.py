@@ -11619,12 +11619,7 @@ _GAME_ACTIONS = {
         ("🂠摸牌", {"fixed": {"op": "draw"}}, "本回合未出牌时摸一张并结束回合"),
         ("✅结束回合", {"fixed": {"op": "done"}}, "结束本回合"),
     ],
-    "balatro": [
-        ("🎮 出牌", {"fixed": {"op": "play"}}, "结算当前出战的牌型"),
-        ("🗑 弃牌", {"op": "discard", "key": None, "kind": "handidx",
-                  "ui_list": "balatro_cards", "ui_cid_key": "cid"},
-         "输入要弃掉的手牌序号（棋盘窗手牌从左到右 1 起）"),
-    ],
+    "balatro": [],
     "balatro_solo": [
         ("🎮 出牌", {"fixed": {"op": "play"}}, "结算当前出战的牌型"),
         ("🗑 弃牌", {"op": "discard", "key": None, "kind": "handidx",
@@ -11851,7 +11846,9 @@ def _desktop_game_status(name: str) -> tuple[str, str]:
         return "unsupported", "桌面端当前不支持主要操作"
     if name in ("gomoku", "connect4"):
         return "flagship", "Windows 旗舰桌面流程"
-    if name in ("balatro", "balatro_solo"):
+    if name == "balatro":
+        return "unverified", "桌面实体牌桌候选"
+    if name == "balatro_solo":
         return "unverified", "桌面端未验证（私有信息显示有已知缺陷）"
     return "unverified", "桌面端流程未验证"
 
@@ -13470,8 +13467,8 @@ class GameWindow:
         return " · ".join(bits)
 
     def _render_private(self) -> None:
-        if (self.core.game_room or {}).get("game") == "drawguess":
-            return  # The private prompt is printed only on the artist card.
+        if (self.core.game_room or {}).get("game") in ("drawguess", "balatro"):
+            return  # Only the illustrated tabletop shows this private information.
         p = self.core.game_private
         if (self.core.game_room or {}).get("game") == "betrayal":
             return
@@ -13929,6 +13926,25 @@ class GameWindow:
             from boardgames.boards_ludo import submit_allowed
             if not submit_allowed(self.core, source_ui, action):
                 return
+        if game == "balatro" or (source_ui is not None and source_ui.get("game") == "balatro"):
+            if (game != "balatro" or room.get("status") != "playing"
+                    or not getattr(self.core, "connected", False)
+                    or self.core.uid not in room.get("players", [])
+                    or self.core.uid not in st.get("alive", [])
+                    or st.get("turn_uid", st.get("turn")) != self.core.uid
+                    or st.get("done") or st.get("winner") is not None):
+                return False
+            pv = self.core.game_private or {}
+            if (not pv or pv.get("owner_uid", self.core.uid) != self.core.uid
+                    or pv.get("game", game) != game):
+                return False
+            if source_ui is not None and (
+                    source_ui.get("game") != game
+                    or source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st or source_ui.get("me") != self.core.uid
+                    or source_ui.get("_jt_private") is not self.core.game_private):
+                return False
+            return self.core.game_action(rid, action)
         if source_ui is not None:
             source_game = source_ui.get("game")
             if "_room_context" in source_ui:

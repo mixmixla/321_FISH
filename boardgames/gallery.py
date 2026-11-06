@@ -21,6 +21,7 @@ COVERS = {
     "rps": "cover-rps.webp",
     "dou": "cover-dou-lobby.webp",
     "junqi": "cover-junqi-lobby.webp",
+    "balatro": "cover-balatro.webp",
 }
 FEATURED = ("tile2048", "gomoku_solo", "tielu", "azul", "gemcity")
 ART_FILES = frozenset(COVERS.values()) | {
@@ -45,6 +46,7 @@ ART_FILES = frozenset(COVERS.values()) | {
     "arcade-atelier.webp",
     "arcade-math.webp",
     "arcade-numbers.webp",
+    "balatro-jokers-core.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}

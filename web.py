@@ -4340,7 +4340,7 @@ function renderGamePanel(){
     main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
     const note=document.createElement("div");note.className="gsec";
     note.textContent=gname==="tielu"?"🏁 本局结束，保留结算 30 秒后回到房间":"🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
-  const pv=(gname==="tielu"||gname==="gemcity"||gname==="lovelove"||gname==="betrayal"||gname==="drawguess")?null:state.gpriv;if(pv){
+  const pv=(gname==="tielu"||gname==="gemcity"||gname==="lovelove"||gname==="betrayal"||gname==="drawguess"||gname==="balatro")?null:state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
       ?pv.hand.join(" ")

@@ -129,6 +129,7 @@ class BalatroGame(BaseGame):
         self._hp = {u: START_HP for u in players}
         self._out = set()
         self._jokers = {}            # uid -> list[id] 小丑牌
+        self._last_play = None      # 仅保存已经公开结算的出战牌
         self.deck = []               # 全牌池（未发）
         self._build_deck()
         self._assign_jokers()
@@ -331,6 +332,9 @@ class BalatroGame(BaseGame):
         cards = [c for c in self._hand[uid] if c["id"] in self._sel[uid]]
         type_id, base, tname = self._hand_type(cards)
         pts, effs = self._apply_jokers(uid, type_id, base)
+        self._last_play = {"uid": uid, "blind": self.blind,
+                           "cards": [dict(c) for c in cards], "type": type_id,
+                           "name": tname, "base": base, "points": pts, "effects": list(effs)}
         self._score[uid] += pts
         self._plays_used[uid] = self._plays_used.get(uid, 0) + 1
         # 消耗出战牌：移出本回合手牌（不再回补，留待下盲注重发）
@@ -403,7 +407,7 @@ class BalatroGame(BaseGame):
 
     def snapshot(self):
         alive = [p for p in self.players if p not in self._out]
-        return {
+        state = {
             "game": self.name,
             "phase": self.phase,
             "blind": self.blind,
@@ -420,11 +424,26 @@ class BalatroGame(BaseGame):
             "winner": self.winner,
             "done": self.winner is not None,
         }
+        if self.name == "balatro":
+            state.update({
+                "blind_targets": {str(u): self._target(u) for u in self.players},
+                "discards_left": {str(u): max(0, DISCARD_MAX-self._discard_used.get(u, 0)) for u in self.players},
+                "plays_left": {str(u): max(0, PLAYS_PER_BLIND-self._plays_used.get(u, 0)) for u in self.players},
+                "last_play": (dict(self._last_play, cards=[dict(c) for c in self._last_play["cards"]],
+                                   effects=list(self._last_play["effects"])) if self._last_play else None),
+            })
+        return state
 
     def private(self, uid):
         if uid not in self._hand:
             return None
+        selected = [c for c in self._hand[uid] if c["id"] in self._sel.get(uid, [])]
+        preview = None
+        if selected:
+            kind, base, name = self._hand_type(selected)
+            preview = {"type": kind, "base": base, "name": name}
         return {
+            "owner_uid": uid, "game": self.name, "preview": preview,
             "hand": [{"c": c["c"], "s": c["s"], "id": c["id"]}
                      for c in self._hand.get(uid, [])],
             "sel": list(self._sel.get(uid, [])),

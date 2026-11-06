@@ -53,6 +53,10 @@ COMMON_HIDDEN = [
     "--hidden-import=boardgames.tile2048",
     "--hidden-import=boardgames.tile2048.desktop",
     "--hidden-import=boardgames.tile2048.web",
+    "--hidden-import=boardgames.jokers",
+    "--hidden-import=boardgames.jokers.desktop",
+    "--hidden-import=boardgames.jokers.web",
+    "--hidden-import=boardgames.jokers.catalog",
     "--hidden-import=boardgames.gallery",
     "--hidden-import=boardgames.gomoku_art",
 ]

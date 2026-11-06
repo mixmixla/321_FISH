@@ -4309,31 +4309,16 @@ def _p_onewolf(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("guess_number")
 def _p_guess_number(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["guess_number"][1]
-    status = st.get("status", "await_secret")
-    owner = st.get("owner_uid")
-    title = "🔢 猜数字"
-    if owner is not None:
-        title += f"　出题者：{nick(owner)}" + ("（你）" if owner == me else "")
-    _turn_banner(cv, w, 46, title, accent)
-    _status_hud(cv, w, 68, st, me, nick, accent)      # F6：阶段·轮次 + 计分
-    low, high = st.get("low"), st.get("high")
-    if low is None or high is None:
-        low, high = 1, 100
-    # 大字区间
-    _text(cv, w / 2, 130, f"区间：{low} ~ {high}", accent, _FONT_BIG)
-    if status == "await_secret":
-        _text(cv, w / 2, 170, "等待出题者设定数字…", _MUTED, _FONT_F)
-    elif status == "round_end":
-        _text(cv, w / 2, 170, f"答案 {st.get('secret')}！", "#c0392b", _FONT_B)
-    else:
-        _text(cv, w / 2, 170, "大家开始猜（按钮区输入 / 猜）", _MUTED, _FONT_F)
-    lg = st.get("last_guess")
-    if lg:
-        dir_txt = {"low": "低了 ↑", "high": "高了 ↓", "hit": "猜中 🎉"}.get(
-            lg.get("dir"), "")
-        _text(cv, w / 2, 210, f"上一位 {nick(lg['uid'])} 猜 {lg.get('val')}：{dir_txt}",
-              "#333", _FONT_B)
+    from boardgames.arcade_numbers import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
+
+
+def _click_guess_number(ui, x, y):
+    from boardgames.arcade_numbers import click
+    click(ui, x, y)
+
+
+_CLICKS["guess_number"] = _click_guess_number
 
 
 @_register("drawguess")

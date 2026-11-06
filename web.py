@@ -155,6 +155,9 @@ def _SERVED_PAGE():
     from boardgames.arcade_calc24 import WEB_JS as math_js, WEB_CSS as math_css
     page = page.replace('/*@@ARCADE_MATH_JS@@*/', math_js)
     page = page.replace('@@ARCADE_MATH_CSS@@', math_css)
+    from boardgames.arcade_numbers import WEB_JS as number_js, WEB_CSS as number_css
+    page = page.replace('/*@@ARCADE_NUMBER_JS@@*/', number_js)
+    page = page.replace('@@ARCADE_NUMBER_CSS@@', number_css)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -718,6 +721,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 @@ARCADE_YACHT_CSS@@
 @@ARCADE_ATELIER_CSS@@
 @@ARCADE_MATH_CSS@@
+@@ARCADE_NUMBER_CSS@@
 @@MANOR_CSS@@
 </style>
 </head>
@@ -4376,38 +4380,13 @@ function gLegalTos(fx,fy){
 /*@@ARCADE_YACHT_JS@@*/
 /*@@ARCADE_ATELIER_JS@@*/
 /*@@ARCADE_MATH_JS@@*/
+/*@@ARCADE_NUMBER_JS@@*/
 const MANOR_ATLASES=JSON.parse("@@MANOR_ATLASES@@");
 const RAIL_TICKET_COUNT=@@RAIL_TICKET_COUNT@@;
 /*@@RAIL_JS@@*/
 /*@@MANOR_JS@@*/
 const GRENDER={
-  guess_number(box,s){
-    const d=document.createElement("div");d.style.cssText="text-align:center;padding:6px";
-    d.innerHTML="<div class='gsec'>第 "+s.round+" 轮 · 出题 "+esc(gnick(s.owner_uid))+"</div>"
-      +(s.secret!=null?"<div>答案揭晓：<b>"+s.secret+"</b></div>"
-        :"<div style='font-size:22px;font-weight:700;margin:8px'>"+s.low+" ~ "+s.high+"</div>")
-      +(s.last_guess?"<div style='color:var(--dim)'>"+esc(gnick(s.last_guess.uid))+" 猜 "
-        +s.last_guess.val+"："+({low:"低了",high:"高了",hit:"🎉 猜中！"}[s.last_guess.dir]||"")+"</div>":"")
-      +"<div style='margin-top:8px'>"+scoreHTML(s.scores)+"</div>";
-    box.appendChild(d);
-    const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;justify-content:center;margin:8px";
-    const inp=document.createElement("input");inp.type="number";
-    inp.style.cssText="width:110px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px 8px";
-    if(s.status==="await_secret"&&s.owner_uid===state.uid){
-      const b=document.createElement("button");b.className="gbtn";b.textContent="🎲 出题";
-      b.onclick=()=>{const v=parseInt(inp.value);
-        if(v>=1&&v<=100)gameAPI("action",{room_id:state.groom,action:{secret:v}});
-        else showStatus("请输入 1~100")};
-      bar.append(inp,b);}
-    else if(s.status==="playing"){
-      const b=document.createElement("button");b.className="gbtn";b.textContent="猜！";
-      b.onclick=()=>{const v=parseInt(inp.value);
-        if(v>=s.low&&v<=s.high)gameAPI("action",{room_id:state.groom,action:{guess:v}});
-        else showStatus("数字须在 "+s.low+"~"+s.high)};
-      bar.append(inp,b);}
-    else bar.innerHTML="<span style='color:var(--dim);font-size:12px'>下一轮即将开始…</span>";
-    box.appendChild(bar);
-  },
+  guess_number(box,s){NumberTable.render(box,s);},
   gomoku_solo(box,s){ GRENDER.gomoku(box,s); },
   gomoku(box,s){
     const n=s.board.length,cell=24,pad=26,W=n*cell+pad*2;

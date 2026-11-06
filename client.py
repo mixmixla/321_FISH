@@ -11530,10 +11530,7 @@ class ChatWindow:
 
 # 游戏动作配置：按钮 -> 动作（fixed=直接发；key+kind=取输入框内容构造）
 _GAME_ACTIONS = {
-    "guess_number": [
-        ("出题", {"key": "secret", "kind": "int"}, "输入 1~100 数字（出题）"),
-        ("猜数字", {"key": "guess", "kind": "int"}, "输入 1~100 数字（猜）"),
-    ],
+    "guess_number": [],  # Number cards and the legal interval board.
     "gomoku": [],  # Placement is directly on the real board intersections.
     "gomoku_solo": [],
     "tile2048": [
@@ -11737,6 +11734,7 @@ def _actions_for(game: str, priv: dict | None) -> list:
 _GAME_HINTS = {
     "blokus": "点右侧实际拼块，换向后点棋格放置；金边预览可落，红边表示受阻。",
     "ludo": "点棋盘中央骰子，再点机棚或轨道飞机；R掷骰、1–4选机。",
+    "guess_number": "点数字牌出题或猜测；区间会自动收窄，方向键选牌后Enter提交",
     "calc24": "点数字牌与运算筹片组合算式；点24印章或Enter提交，也可直接输入表达式",
     "drawguess": "选画笔颜色与粗细，在画板拖动作画；猜词者在画板下写下答案",
     "yahtzee": "点骰盅掷骰，点骰面保留；点自己的空白记分格写入预览分数",
@@ -13217,7 +13215,7 @@ class GameWindow:
     def _fmt_state(self, st: dict) -> str:
         """公开快照 → 可读文本（按游戏定制 + 兜底 key-value）"""
         game = st.get("game", "")
-        if game in ("halloween", "yahtzee", "drawguess", "calc24"):
+        if game in ("halloween", "yahtzee", "drawguess", "calc24", "guess_number"):
             return ""  # Public fruit cards and score seats are on the table.
         lines = []
         if st.get("status") == "await_secret":

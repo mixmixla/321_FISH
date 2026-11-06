@@ -40,6 +40,7 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 | 快艇骰子 | AI_ACCEPTED · 在骰盅和五枚大骰上掷/留/重掷，点真实记分纸的落笔格计分。 |
 | 你画我猜 | AI_ACCEPTED · 画笔直接在画布绘制，颜色、粗细和猜词框与当前角色相符。 |
 | 24点 | AI_ACCEPTED · 四张数字牌配可点运算筹片，以表达式和提交章完成当轮判断。 |
+| 猜数字 | AI_ACCEPTED · 用数字牌密封出题和猜值，按服务器每轮真实上下界显示可选区。 |
 
 
 

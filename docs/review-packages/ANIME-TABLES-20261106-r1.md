@@ -85,3 +85,7 @@ f0572bc。实际鼠标/触摸使用笔、颜色、清除与画板，猜方只看
 ## 24点 · AI_ACCEPTED
 
 32be5f6。正式Tk与390px Web在同一数学牌面上选数字、括号、四则运算并提交，保留需要的自然表达式键盘输入；真实规则用原有Fraction解析，末轮正常计分。 各款Web输入绑定账号及当前房/轮和帧身份。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/calc24/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/calc24/mobile.webp)。
+
+## 猜数字 · AI_ACCEPTED
+
+a9067e7。正式交互密封73、猜50后区间51..100，再猜90及73后结算，本人的秘密不在公共面板；网页与Tk均走真实选择/规则状态。 各款Web输入绑定账号及当前房/轮和帧身份。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/guess_number/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/guess_number/mobile.webp)。

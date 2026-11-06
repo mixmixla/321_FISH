@@ -15,6 +15,10 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 卡牌插画 · CARDS-STUDIO-20261106 v1
+
+**AI_ACCEPTED · 全量通过**。基线 36ff593，受测应用 bdf11c4，功能分支 feature/cards-studio-20261106。见[任务包](task-packages/CARDS-STUDIO-20261106.md)及[评审结果](review-packages/CARDS-STUDIO-20261106-r1.md)。60 张发展卡、5 位贵宾和 8 张情书人物牌已接入桌面及网页，对局中可以保留、买入、放大赏卡和选择两张私牌之一。最终 246 个测试文件全部覆盖，3294 通过，0 失败，20 项默认跳过。本批试玩与验证结束，Git 交付见 [PR #11](https://github.com/mixmixla/321_FISH/pull/11)，版本与合并状态以远端记录为准。
+
 ## 游戏与美术升级 · ARCADE-20261106 v1.1
 
 **AI_ACCEPTED · 完整候选通过**。铁路/大厅/手机点按已由[PR #9](https://github.com/mixmixla/321_FISH/pull/9)合并。本批见[任务 v1.1](task-packages/ARCADE-20261106.md)及[最终评审](review-packages/ARCADE-20261106-r1.md)。应用候选 b270e8a，从 162eef9 开发，分支 feature/arcade-20261106。全量 243 文件、3274 通过、0 失败、20 默认跳过，用时 29 分 28 秒；所有实现、试玩、测试已结束。本批 Git 交付见 [PR #10](https://github.com/mixmixla/321_FISH/pull/10)，合并状态以远端记录为准。当前范围结束，无下一项 READY。

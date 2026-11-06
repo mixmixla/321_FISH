@@ -17,10 +17,10 @@ COVERS = {
     "gemcity": "cover-gemcity.webp",
 }
 FEATURED = ("tile2048", "gomoku_solo", "tielu", "azul", "gemcity")
-# These three names are delivered by the dedicated 2048 / gomoku art workers.
-# Keep this list exact: HTTP must never become a general filesystem endpoint.
 ART_FILES = frozenset(COVERS.values()) | {
     "tile2048-atlas.webp", "gomoku-board.webp", "gomoku-stones.png",
+    "gemcity-tier1.webp", "gemcity-tier2.webp", "gemcity-tier3.webp",
+    "gemcity-patrons.webp", "lovelove-court.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}

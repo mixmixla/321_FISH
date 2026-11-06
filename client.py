@@ -11764,6 +11764,8 @@ def _actions_for(game: str, priv: dict | None) -> list:
 
 # 棋盘直操类游戏的首屏引导（无按钮可指时告诉玩家怎么操作）
 _GAME_HINTS = {
+    "gemcity": "点市集卡购买，点「留」保留；在「我的保留」「我的卡册」「贵宾」切换浏览",
+    "lovelove": "先点持牌或新摸牌，再选目标／护卫猜值，最后点「确认出牌」",
     "tile2048": "用方向按钮滑动；点击棋盘聚焦后可按方向键。相同数字合并，挑战 2048",
     "gomoku_solo": "你执黑，点击交叉点落子；电脑执白自动应手，恰好五连获胜",
     "azul": "拖动：从工厂盘 / 中央池抓起花砖，拖到自己的花纹行或地板线松手",
@@ -12697,7 +12699,7 @@ class GameWindow:
         if core.game_private != self._last_private:
             self._last_private = core.game_private
             self._render_private()
-            if (core.game_room or {}).get("game") == "tielu":
+            if (core.game_room or {}).get("game") in ("tielu", "gemcity", "lovelove"):
                 self._render_canvas()  # 私有目标/手牌晚于公共状态到达时也立即更新。
         if len(core.game_events) < self._events_shown:
             self._events_shown = 0
@@ -13961,6 +13963,25 @@ class GameWindow:
         st = self.core.game_state or {}
         rid = room.get("room_id")
         game = room.get("game")
+        if source_ui is not None:
+            source_game = source_ui.get("game")
+            if source_game != game and (
+                    game in ("gemcity", "lovelove")
+                    or source_game in ("gemcity", "lovelove")):
+                return
+        if game in ("gemcity", "lovelove"):
+            if source_ui is not None and (
+                    source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st
+                    or source_ui.get("me") != self.core.uid
+                    or source_ui.get("_card_private") is not self.core.game_private):
+                return
+            turn = st.get("turn_uid") if game == "gemcity" else st.get("cur")
+            if (not getattr(self.core, "connected", False)
+                    or self.core.uid not in room.get("players", [])
+                    or turn != self.core.uid or st.get("winner_uid") is not None
+                    or st.get("status") != "playing"):
+                return
         if game in ("tile2048", "gomoku_solo"):
             if source_ui is not None and (
                     source_ui.get("_room_context") != (rid, room.get("round"))

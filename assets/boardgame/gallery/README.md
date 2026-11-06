@@ -13,3 +13,9 @@
 | cover-tile2048.webp | 飞船、矿晶与金色环状行星 | 72568 |
 | cover-gomoku.webp | 山间棋亭、木棋盘与黑白棋子 | 79352 |
 | cover-gemcity.webp | 珠宝工匠工作台 | 102746 |
+
+## 对局中的卡牌
+
+璀璨宝石的三个发展卡图集依次描绘矿场、工坊和商贸城市。每张 WebP 为 4 列 5 行，每幅 512×384，按行对应牌上的图号 0–19。五位贵宾排列在独立的肖像图集中。四张图集均由 ImageGen 原创绘制，合计 4,606,550 字节。费用、永久折扣和积分由游戏按本局实际卡面绘制。
+
+[矿场](gemcity-tier1.webp) · [工坊](gemcity-tier2.webp) · [商贸城市](gemcity-tier3.webp) · [贵宾](gemcity-patrons.webp) · [情书人物与牌序](lovelove-court.md)

@@ -1441,6 +1441,8 @@ def handle_drag(cv, ui, x, y, phase):
 
 
 def _cell_of(ui, x, y):
+    if ui.get("game") in ("gemcity", "lovelove"):
+        return None
     if ui.get("game") == "tile2048":
         return None
     if ui.get("game") in ("gomoku", "gomoku_solo", "go"):
@@ -1929,6 +1931,9 @@ def _gc_pick(sel, color, bank):
 
 def _click_gemcity(ui, x, y):
     """璀璨宝石点击：保留徽标→reserve；市场卡→buy；保留卡→buy_res；宝石池→取筹码。"""
+    from boardgames.card_table_tk import browse_gemcity
+    if browse_gemcity(ui, x, y):
+        return
     st = ui.get("state") or {}
     me = ui.get("me")
     room = ui.get("room") or {}
@@ -2001,6 +2006,14 @@ _CLICKS = {
     "blokus": _click_blokus,               # 角斗士棋：选拼块/换方向/跳过/点棋盘落子
 }
 _CLICKS["gemcity"] = _click_gemcity        # 璀璨宝石：筹码/市场卡/保留卡点击
+
+
+def _click_lovelove(ui, x, y):
+    from boardgames.card_table_tk import click_lovelove
+    click_lovelove(ui, x, y)
+
+
+_CLICKS["lovelove"] = _click_lovelove
 
 
 # ---------------------------------------------------------------------------
@@ -4631,58 +4644,8 @@ def _p_davinci(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("lovelove")
 def _p_lovelove(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["lovelove"][1]
-    title = "💌 情书 Love Letter"
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 成为最后的倾慕者"
-    elif st.get("cur"):
-        title += f"　轮到 {nick(st['cur'])}"
-    _turn_banner(cv, w, 46, title, accent)
-    _text(cv, w - 12, 76, f"牌堆剩 {st.get('deck_left', 0)} 张", _MUTED, _FONT_F,
-          anchor="e")
-    alive = st.get("alive") or []
-    players = st.get("players") or []
-    cw, ch = 118, 62
-    gap = 14
-    per = max(1, int((w - 40) / (cw + gap)))
-    y0 = 110
-    _text(cv, w / 2, y0 - 20, "存活玩家", _MUTED, _FONT_F)
-    for i, u in enumerate(players):
-        row, col = divmod(i, per)
-        cards_row = players[row * per: row * per + per]
-        base = (w - (len(cards_row) * (cw + gap) - gap)) / 2
-        cx = base + col * (cw + gap)
-        cy = y0 + row * (ch + gap)
-        alive_now = u in alive
-        acting = u == st.get("cur")
-        fill = _shade("#c265a4", 0.35) if alive_now else "#444"
-        if acting:
-            fill = _shade("#c265a4", 0.05)
-        _rrect(cv, cx, cy, cx + cw, cy + ch, 10, fill,
-               "#ffd75e" if u == me else _PANEL, 2 if u == me else 1)
-        _text(cv, cx + cw / 2, cy + 24, nick(u) + ("（我）" if u == me else ""),
-              "#fff", _FONT_B)
-        _text(cv, cx + cw / 2, cy + 46, "存活" if alive_now else "出局",
-              "#ffd75e" if alive_now else "#999", (_FONT_F[0], 9))
-    # 我的密信牌
-    y_card = y0 + ((len(players) - 1) // per + 1) * (ch + gap) + 20
-    _text(cv, w / 2, y_card - 18, "你的密信牌（单张）", _MUTED, _FONT_F)
-    if priv and isinstance(priv.get("hand"), int):
-        v = priv["hand"]
-        names = {1: "护卫", 2: "牧师", 3: "男爵", 4: "侍女", 5: "王子",
-                 6: "国王", 7: "伯爵夫人", 8: "公主"}
-        cx = w / 2 - 32
-        _card_face(cv, cx, y_card + 2, cx + 64, y_card + 90,
-                   face=_shade("#c265a4", 0.5), edge="#c265a4", r=_UXR_BIG)
-        _text(cv, cx + 32, y_card + 34, str(v), "#fff", _FONT_BIG)
-        _text(cv, cx + 32, y_card + 58, names.get(v, ""), "#fff",
-              (_FONT_F[0], 9))
-    # 弃牌堆简示
-    disc = st.get("discard") or []
-    if disc:
-        _text(cv, w / 2, h - 20, "弃牌堆：" + "、".join(
-            f"{nick(int(x[0]))}:{x[1]}" for x in disc[-10:]), _MUTED,
-            (_FONT_F[0], 9))
+    from boardgames.card_table_tk import paint_lovelove
+    paint_lovelove(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 @_register("matchpairs")
@@ -5813,202 +5776,8 @@ def _p_chengzhu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("gemcity")
 def _p_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["gemcity"][1]
-    players = st.get("players") or []
-    title = "💎 璀璨宝石"
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 总分最高"
-    elif st.get("turn_uid") is not None:
-        title += f"　轮到 {nick(st['turn_uid'])} · 目标 {15} 分"
-    _turn_banner(cv, w, 46, title, accent)
-    ui.update(game="gemcity")
-    # 点击热区：每次重绘重建（画与命中同源），避免残留旧坐标
-    ui["gc_bank"] = []
-    ui["gc_cards"] = []
-    ui["gc_reserve"] = []
-    ui["gc_take"] = None
-    ui["gc_reserved"] = []
-    if st.get("winner_uid") is not None or st.get("turn_uid") != me:
-        ui["gc_sel"] = []
-    if not isinstance(ui.get("gc_sel"), list):
-        ui["gc_sel"] = []
-    # P3：阿兹勒赫花砖壁纸底（原创位图平铺；非真画布/缺素材时保留原底色，零回归）
-    _asset_bg(cv, "azulejo", 0, 47, w, h)
-    gcol = {"o": "#3a3a3a", "d": "#f0f0f0", "r": "#d2534f",
-            "e": "#3a9b5f", "s": "#4a7de0", "g": "#e0b33c"}
-    gtok = {"o": "⬛", "d": "⬜", "r": "🔴", "e": "🟢", "s": "🔵", "g": "🟡"}
-    # E3：宝石图标描边色（卡面/银行/玩家面板均为深底，"o"需提亮才可辨识）
-    gdisp = dict(gcol)
-    gdisp["o"] = "#a6a6a6"
-    colors = ["o", "d", "r", "e", "s"]
-    market = st.get("market") or {}
-    tokens_all = st.get("tokens") or {}
-    disc_all = st.get("discount") or {}
-    my_toks = tokens_all.get(str(me)) or {}
-    my_disc = disc_all.get(str(me)) or {}
-    sel = [c for c in (ui.get("gc_sel") or []) if c in colors]
-    reserved = (priv or {}).get("reserved") or []
-    # 市场 3 级 × 4（有保留卡时预留底部一条紧凑卡位）
-    chh = min(108, max(40, (h - 46 - 120 - (36 if reserved else 0)) / 4))
-    cw = (w - 40) / 4.5
-    y0 = 58
-    for tier in ("1", "2", "3"):
-        cards = market.get(tier) or []
-        _text(cv, 18, y0 + 14, f"{tier}级", "#213336", _FONT_B, anchor="w")
-        for i, cd in enumerate(cards):
-            x0 = 46 + i * (cw + 6)
-            x1, y1 = x0 + cw, y0 + chh
-            ok = _gc_afford(my_toks, my_disc, cd)
-            # P3：卡面用九宫格面板位图铺底（圆角描边），不可用时回退既有 _rrect 浅底
-            if not _asset_nine_at(cv, "panel", x0, y0, cw, chh, border=14):
-                _rrect(cv, x0, y0, x1, y1, 8, "#F4F8FB", "#DCE6E2")
-            # 买得起描绿边；买不起淡描边 + 灰字，降低存在感
-            cv.create_rectangle(x0, y0, x1, y1,
-                                outline="#2E8B57" if ok else "#D6DFDB",
-                                width=2 if ok else 1)
-            _text(cv, x0 + cw - 8, y0 + 14, f"+{cd.get('pts', 0)}",
-                  "#16796C" if ok else "#8FA39C", _FONT_B, anchor="ne")
-            dc = gcol.get(cd.get("disc"), "#888")
-            dk = cd.get("disc")
-            # P3：市场宝石改用原创刻面宝石位图；失败回退 E3 矢量资源图标
-            if not _asset_at(cv, f"gem_{dk}", x0 + 17, y0 + 17, 26,
-                             anchor="center"):
-                if _real_cv(cv):
-                    cv.create_image(x0 + 17, y0 + 17, anchor="center",
-                                    image=_res_img(cv, dk,
-                                                   gdisp.get(dk, "#888"), 18))
-                else:
-                    cv.create_oval(x0 + 8, y0 + 8, x0 + 26, y0 + 26, fill=dc,
-                                   outline="#fff")
-            cost = cd.get("cost") or {}
-            yy = y0 + 40
-            for k in colors:
-                v = cost.get(k, 0)
-                if v:
-                    if _real_cv(cv):
-                        cv.create_image(x0 + 15, yy, anchor="center",
-                                        image=_res_img(cv, k, gdisp[k], 12))
-                        _text(cv, x0 + 25, yy, f"×{v}",
-                              "#5F706A" if ok else "#9DAAA4",
-                              (_FONT_F[0], 9), anchor="w")
-                    else:
-                        _text(cv, x0 + 12, yy, f"{gtok[k]}×{v}",
-                              "#5F706A" if ok else "#9DAAA4",
-                              (_FONT_F[0], 9), anchor="w")
-                    yy += 15
-            # 左上角📥保留徽标（点击发 reserve；先于卡面本体命中）
-            _rrect(cv, x0 + 2, y0 + 2, x0 + 18, y0 + 16, 4, "#FFF7E6", "#D9C79A")
-            _text(cv, x0 + 10, y0 + 9, "📥", "#7a5b22", (_FONT_F[0], 9))
-            ui["gc_reserve"].append((x0 + 2, y0 + 2, x0 + 18, y0 + 16, tier, i))
-            ui["gc_cards"].append((x0, y0, x1, y1, tier, i, ok))
-        y0 += chh + 14
-    # 银行 + 贵宾
-    bank = st.get("bank") or {}
-    bx = 18
-    py = y0 + 6
-    _text(cv, bx, py, "宝石池：", "#213336", _FONT_B, anchor="w")
-    xx = bx + 80
-    for k in colors + ["g"]:
-        # P3：宝石池改用原创刻面宝石位图；失败回退 E3 矢量资源图标
-        if not _asset_at(cv, f"gem_{k}", xx + 8, py, 20, anchor="center"):
-            if _real_cv(cv):
-                cv.create_image(xx + 8, py, anchor="center",
-                                image=_res_img(cv, k, gdisp.get(k, "#888"), 16))
-            else:
-                cv.create_oval(xx, py - 8, xx + 16, py + 8,
-                               fill=gcol.get(k, "#888"), outline="")
-        _text(cv, xx + 22, py, str(bank.get(k, 0)), "#5F706A", _FONT_F,
-              anchor="w")
-        # 只登记 5 色筹码（金不可取）；已选筹码加高亮圈
-        if k in colors:
-            if k in sel:
-                cv.create_oval(xx - 3, py - 11, xx + 21, py + 11,
-                               outline="#2E8B57", width=2)
-            ui["gc_bank"].append((xx - 5, py - 13, xx + 29, py + 13, k))
-        xx += 34
-    if sel:
-        hint = "已选：" + "、".join(sel)
-        if len(sel) == 1 and int(bank.get(sel[0], 0) or 0) >= 4:
-            hint += "（再点同色可取 2）"
-        else:
-            hint += f"（{len(sel)}/3，选满自动取）"
-        _text(cv, w - 14, py + 10, hint, "#16796C", (_FONT_F[0], 9), anchor="e")
-        # 取 1~3 颗的确认按钮（不选满 3 色也能取 1~2 颗）
-        bx0, by0, bx1, by1 = w - 104, py + 18, w - 10, py + 36
-        _rrect(cv, bx0, by0, bx1, by1, 7, "#2E8B57", "#1f6b42")
-        _text(cv, (bx0 + bx1) / 2, (by0 + by1) / 2, f"取 {len(sel)} 颗",
-              "#ffffff", (_FONT_F[0], 9))
-        ui["gc_take"] = (bx0, by0, bx1, by1)
-    nobles = st.get("nobles") or []
-    if nobles:
-        lx = bx + 4
-        if _real_cv(cv):
-            cv.create_image(lx, py + 24, anchor="center",
-                            image=_res_img(cv, "crown", "#16796C", 13))
-            lx += 11
-        _text(cv, lx, py + 24, "贵宾 +3(" + "  ".join(
-            "+".join(f"{k}{v}" for k, v in nb.items())
-            for nb in nobles[:3]) + ")", "#16796C", (_FONT_F[0], 9), anchor="w")
-    # 玩家（宝石/折扣/分）
-    n = len(players)
-    gap = 8
-    pw = (w - gap * (n + 1)) / n if n else w
-    ply = h - 74
-    # 我的保留卡：玩家面板上方 3 个紧凑卡位（点击购买）
-    if reserved:
-        ry = max(py + 34, ply - 42)
-        if ry - 10 > py + 30:            # 紧凑高度下不挤压贵宾行
-            _text(cv, 18, ry - 8, "保留卡（点卡购买）", "#213336",
-                  (_FONT_F[0], 8), anchor="w")
-        cw2 = min(112, max(60, (w - 24) / 3 - 8))
-        for i, cd in enumerate(reserved[:3]):
-            rx0 = 18 + i * (cw2 + 6)
-            ry1 = ry + 30
-            ok = _gc_afford(my_toks, my_disc, cd)
-            _rrect(cv, rx0, ry, rx0 + cw2, ry1, 7, "#F4F8FB",
-                   "#2E8B57" if ok else "#D6DFDB", width=2 if ok else 1)
-            dk = cd.get("disc")
-            if not _asset_at(cv, f"gem_{dk}", rx0 + 12, ry + 15, 16,
-                             anchor="center"):
-                if _real_cv(cv):
-                    cv.create_image(rx0 + 12, ry + 15, anchor="center",
-                                    image=_res_img(cv, dk,
-                                                   gdisp.get(dk, "#888"), 13))
-                else:
-                    cv.create_oval(rx0 + 6, ry + 9, rx0 + 18, ry + 21,
-                                   fill=gcol.get(dk, "#888"), outline="")
-            _text(cv, rx0 + 24, ry + 15, f"+{cd.get('pts', 0)} 购",
-                  "#16796C" if ok else "#8FA39C", (_FONT_F[0], 9), anchor="w")
-            ui["gc_reserved"].append((rx0, ry, rx0 + cw2, ry1, i, ok))
-    tokens = st.get("tokens") or {}
-    for idx, u in enumerate(players):
-        x0 = gap + idx * (pw + gap)
-        cv.create_rectangle(x0, ply, x0 + pw, h - 10, fill="#E5F3EE",
-                            outline="#8FB6CE", width=1)
-        _text(cv, x0 + pw / 2, ply + 14, nick(u) + ("（我）" if u == me else ""),
-              "#213336", _FONT_B)
-        _text(cv, x0 + pw - 6, ply + 14, f"🏆 {_pscore(st, u)}", "#16796C",
-              _FONT_B, anchor="e")
-        tk_tok = tokens.get(str(u), {})
-        xx = x0 + 8
-        for k in colors:
-            # P3：玩家持有宝石改用原创刻面宝石位图；失败回退 E3 矢量资源图标
-            if not _asset_at(cv, f"gem_{k}", xx + 6, ply + 34, 16,
-                             anchor="center"):
-                if _real_cv(cv):
-                    cv.create_image(xx + 6, ply + 34, anchor="center",
-                                    image=_res_img(cv, k, gdisp[k], 13))
-                else:
-                    cv.create_oval(xx, ply + 28, xx + 12, ply + 40,
-                                   fill=gcol.get(k, "#888"), outline="")
-            _text(cv, xx + 16, ply + 34, str(tk_tok.get(k, 0)), "#5F706A",
-                  (_FONT_F[0], 8), anchor="w")
-            xx += 30
-        disco = st.get("discount") or {}
-        dd = disco.get(str(u), {})
-        _text(cv, x0 + pw / 2, ply + 56,
-              "折扣:" + " ".join(f"{k}→{dd.get(k,0)}" for k in colors),
-              "#213336", (_FONT_F[0], 8))
+    from boardgames.card_table_tk import paint_gemcity
+    paint_gemcity(cv, st, me, nick, submit, repaint, ui, priv, w, h, _gc_afford)
 
 
 @_register("siji")

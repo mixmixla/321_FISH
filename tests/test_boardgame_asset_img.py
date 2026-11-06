@@ -55,7 +55,7 @@ def _azul_state():
 
 
 def _gemcity_state():
-    return {
+    state = {
         "game": "gemcity", "status": "playing", "turn_uid": 7,
         "winner_uid": None,
         "bank": {"o": 4, "d": 4, "r": 4, "e": 4, "s": 4, "g": 5},
@@ -79,6 +79,11 @@ def _gemcity_state():
         "nobles": [{"r": 3, "g": 3}],
         "players": [7, 8],
     }
+    for cards in state["market"].values():
+        for index, card in enumerate(cards):
+            card["art"] = index
+    state["noble_art"] = [0]
+    return state
 
 
 # --------------------------------------------------------------- headless 桩
@@ -181,7 +186,7 @@ def test_azul_painter_consumes_package_assets():
         except Exception: pass
 
 
-def test_gemcity_painter_switches_felt_to_azulejo():
+def test_gemcity_painter_uses_plain_paper_across_all_card_views():
     if cu._BG_ASSETS is None or cu._PILImage is None or cu._PILImageTk is None:
         pytest.skip("Pillow/Tk assets unavailable")
     tk = pytest.importorskip("tkinter")
@@ -195,12 +200,22 @@ def test_gemcity_painter_switches_felt_to_azulejo():
         root.update_idletasks()
         root.update()
         ui = {}
-        cu.render(cv, "gemcity", _gemcity_state(), 7, lambda uid: f"P{uid}",
-                  lambda m: None, lambda: None, ui, None,
-                  cv.winfo_width(), cv.winfo_height())
-        cache = getattr(cv, "_asset_img_cache", {})
-        assert ("azulejo", None) in cache
-        assert ("felt", None) not in cache
+        state = _gemcity_state()
+        private = {"cards": 1, "collection": [state["market"]["1"][0]],
+                   "reserved": [state["market"]["2"][0]]}
+        for view in ("market", "reserved", "collection", "nobles"):
+            ui["gc_view"] = view
+            cu.render(cv, "gemcity", state, 7, lambda uid: f"P{uid}",
+                      lambda m: None, lambda: None, ui, private,
+                      cv.winfo_width(), cv.winfo_height())
+            paper = cv.find_withtag("card-table-paper")
+            assert len(paper) == 1 and cv.find_all()[0] == paper[0]
+            assert cv.itemcget(paper[0], "fill") == "#fbf7ed"
+            assert len(cv.find_withtag("card-illustration")) > 0
+            assert ("azulejo", None) not in getattr(cv, "_asset_img_cache", {})
+            assert ("felt", None) not in getattr(cv, "_asset_img_cache", {})
+            if view == "market":
+                assert len(cv.find_withtag("gc-tier-label")) == 3
     finally:
         try: root.destroy()
         except Exception: pass

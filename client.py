@@ -11534,7 +11534,7 @@ _GAME_ACTIONS = {
         ("出题", {"key": "secret", "kind": "int"}, "输入 1~100 数字（出题）"),
         ("猜数字", {"key": "guess", "kind": "int"}, "输入 1~100 数字（猜）"),
     ],
-    "gomoku": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）")],
+    "gomoku": [],  # Placement is directly on the real board intersections.
     "gomoku_solo": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）")],
     "tile2048": [
         ("↑ 上", {"fixed": {"op": "move", "dir": "up"}}, ""),
@@ -11758,6 +11758,7 @@ _GAME_HINTS = {
     "gemcity": "先选市场牌，再点「买入」或「保留」；在「藏册」点卡可放大赏图",
     "lovelove": "先点持牌或新摸牌，再选目标／护卫猜值，最后点「确认出牌」",
     "tile2048": "用方向按钮滑动；点击棋盘聚焦后可按方向键。相同数字合并，挑战 2048",
+    "gomoku": "点击棋盘交叉点落子；恰好五连获胜",
     "gomoku_solo": "你执黑，点击交叉点落子；电脑执白自动应手，恰好五连获胜",
     "azul": "点花砖，再点花纹行或地板；也可拖动。键盘：←→选砖，↑↓选落点，Enter落砖，Esc取消",
     "go_solo": "单人练习：点击交叉点落子，电脑会自动应手；连续两次「过一手」终局",
@@ -13239,11 +13240,6 @@ class GameWindow:
                 lines.append(f"上轮 {self._nick(lg['uid'])} 猜 {lg['val']}：{lg['dir']}")
             lines.append(f"区间 {st.get('low')}~{st.get('high')}")
         elif game in ("gomoku", "gomoku_solo") and "board" in st:
-            board = st["board"]
-            lines.append("  " + " ".join(str(i % 10) for i in range(len(board[0]))))
-            for y, row in enumerate(board):
-                lines.append(f"{y%10} " + " ".join("●" if c == 1 else
-                                                   "○" if c == 2 else "·" for c in row))
             if not (st.get("winner_uid") is not None or st.get("draw")) and st.get("turn_uid"):
                 lines.append(f"轮到 {self._nick(st['turn_uid'])}")
             if st.get("winner_uid"):

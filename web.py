@@ -4397,12 +4397,17 @@ const GRENDER={
       :(s.draw?"平局":"轮到 "+esc(gnick(s.turn_uid))+(s.turn_uid===state.uid?"（你执子）":"")));
     box.appendChild(info);
     const mine=s.winner_uid==null&&!s.draw&&s.turn_uid===state.uid;
+    const host=document.createElement('div');host.className='gomoku-host';
+    host.style.cssText='display:flex;gap:12px;align-items:center;max-width:'+W+'px;margin:5px auto 8px;background:#fff7e9;border:1px solid #d3bc8d;border-radius:7px;color:#55452d';
+    const portrait=document.createElement('div');portrait.setAttribute('role','img');portrait.setAttribute('aria-label','棋馆女棋手');
+    portrait.style.cssText='width:92px;height:68px;flex:none;border-radius:6px;background:url(/game-art/cover-gomoku.webp?v=anime-v1) 0 30% / 233% auto no-repeat';
+    const welcome=document.createElement('div');welcome.innerHTML='<b>五子棋 · 棋馆</b><br><small>点击交叉点，恰好五连获胜</small>';host.append(portrait,welcome);box.appendChild(host);
     const cv=document.createElement("canvas");cv.width=W;cv.height=W;
     cv.style.cssText="display:block;max-width:100%;height:auto;margin:0 auto;background:#d9a45b;border-radius:6px;touch-action:manipulation;cursor:"
       +(mine?"pointer":"default");
     box.appendChild(cv);
     const ctx=cv.getContext("2d");
-    const art=(s.solo||s.game==="gomoku_solo")&&typeof createGomokuArtPainter==="function"
+    const art=typeof createGomokuArtPainter==="function"
       ?createGomokuArtPainter(cv,paint):null;
     function paint(){
     ctx.clearRect(0,0,W,W);

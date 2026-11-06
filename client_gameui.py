@@ -2518,12 +2518,13 @@ def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["gomoku"][1]
     n = st.get("size") or 15
     game = "gomoku_solo" if st.get("game") == "gomoku_solo" else "gomoku"
-    use_art = game == "gomoku_solo"
+    use_art = True  # Both real-player and solo games share the same physical set.
     if use_art:
         from boardgames import gomoku_art
     title = flagship_status(game, st, me, nick)
     _turn_banner(cv, w, 46, title, accent)
-    ox, oy, cell = _fit(n, w, h, header=46)
+    gomoku_art.draw_host(cv, w)
+    ox, oy, cell = _fit(n, w, h, header=126)
     ui.update(ox=ox, oy=oy, cell=cell, n=n, rows=n, cols=n, game=game)
     # 棋盘（纸面木纹底）加柔和投影
     _soft_shadow(cv, ox - 18, oy - 14, ox + n * cell + 14, oy + n * cell + 14,

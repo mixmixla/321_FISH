@@ -18,6 +18,31 @@ NOBLES = [  # {cost: {color: n}, pts: 3}
 ]
 TIERS = 3
 MARKET_PER_TIER = 4
+# Each row follows the position of a painting in that tier's 4 × 5 atlas.
+CARD_TITLES = {
+    1: (
+        "翡翠矿坑", "红宝井巷", "蓝晶泉谷", "琥珀溪场",
+        "石榴矿灯", "海蓝峭壁", "欧泊晶穴", "黄晶日坡",
+        "紫晶幽窟", "黑曜石场", "珍珠淘湾", "碧玺山脊",
+        "孔雀石林", "黄玉沙井", "尖晶隧道", "月光石窟",
+        "橄榄石台", "珊瑚暗礁", "水晶天峰", "青金驼队",
+    ),
+    2: (
+        "翡翠切坊", "红宝火磨", "蓝晶水轮", "琥珀琢室",
+        "石榴镶工", "海蓝商舟", "欧泊灯坊", "黄晶金匠",
+        "紫晶染坊", "黑曜雕台", "珍珠绣坊", "碧玺玻坊",
+        "孔雀石厅", "黄玉驳船", "尖晶银铺", "月石镜坊",
+        "橄榄珠坊", "珊瑚香市", "水晶刻室", "青金商旅",
+    ),
+    3: (
+        "翡翠港厅", "红宝宫门", "蓝晶灯塔", "琥珀商会",
+        "石榴剧院", "海蓝船坞", "欧泊穹顶", "黄晶银行",
+        "紫晶宫苑", "黑曜铸馆", "珍珠海关", "碧玺拱廊",
+        "孔雀石庭", "黄玉香料港", "尖晶钟楼", "月石天文台",
+        "橄榄公馆", "珊瑚集市", "水晶议厅", "青金宫市",
+    ),
+}
+NOBLE_TITLES = ("翡翠侯爵", "红宝女侯", "蓝晶航长", "黄玉银行家", "紫晶工匠王")
 
 
 class GemCityGame(BaseGame):
@@ -39,8 +64,8 @@ class GemCityGame(BaseGame):
         self.market = {t: [] for t in range(1, TIERS + 1)}
         self.deck = {t: [] for t in range(1, TIERS + 1)}
         for t in range(1, TIERS + 1):
-            for art in range(20):
-                self.deck[t].append(self._make_card(t, art))
+            for art, title in enumerate(CARD_TITLES[t]):
+                self.deck[t].append(self._make_card(t, art, title))
             self.rng.shuffle(self.deck[t])
             for _ in range(MARKET_PER_TIER):
                 self.market[t].append(self.deck[t].pop())
@@ -51,7 +76,7 @@ class GemCityGame(BaseGame):
         self.extra = []          # 触发终局后仍需行动（按回合顺序）的玩家
         self.winner = None
 
-    def _make_card(self, tier, art):
+    def _make_card(self, tier, art, title):
         disc = self.rng.choice(COLORS)
         cost = {c: 0 for c in COLORS}
         budget = tier + 1
@@ -60,7 +85,8 @@ class GemCityGame(BaseGame):
             if c in cost:
                 cost[c] += 1
                 budget -= 1
-        return {"tier": tier, "art": art, "disc": disc, "pts": tier, "cost": cost}
+        return {"tier": tier, "art": art, "title": title,
+                "disc": disc, "pts": tier, "cost": cost}
 
     # ---------- 动作 ----------
     def act(self, uid, action):
@@ -281,6 +307,7 @@ class GemCityGame(BaseGame):
             "score": {str(u): v for u, v in self.score.items()},
             "nobles": self.nobles_left,
             "noble_art": noble_art,
+            "noble_titles": [NOBLE_TITLES[i] if i is not None else "贵宾" for i in noble_art],
             "turn_uid": None if self.winner else self.players[self.turn],
             "players": list(self.players), "winner_uid": self.winner,
             "trigger_uid": self.trigger_uid,

@@ -17,8 +17,7 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 卡牌插画 · CARDS-STUDIO-20261106 v1
 
-**READY**。承接已合并的 [PR #10](https://github.com/mixmixla/321_FISH/pull/10)，远端 main 基线 36ff593。主控依用户新要求冻结[任务包](task-packages/CARDS-STUDIO-20261106.md)：璀璨宝石整副发展卡和贵宾插画、情书八张人物牌。三个层次的写入分开，桌面和网页各一名入口写入者；原开发目录保留。主控负责视觉复核、最终后台全量及 PR 合并。
-
+**AI_ACCEPTED · 全量通过**。基线 36ff593，受测应用 bdf11c4，功能分支 feature/cards-studio-20261106。见[任务包](task-packages/CARDS-STUDIO-20261106.md)及[评审结果](review-packages/CARDS-STUDIO-20261106-r1.md)。60 张发展卡、5 位贵宾和 8 张情书人物牌已接入桌面及网页，对局中可以保留、买入、放大赏卡和选择两张私牌之一。最终 246 个测试文件全部覆盖，3294 通过，0 失败，20 项默认跳过。所有试玩和验证已结束；本批 Git 交付走 PR 合并 main。
 
 ## 游戏与美术升级 · ARCADE-20261106 v1.1
 

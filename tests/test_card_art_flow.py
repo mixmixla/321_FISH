@@ -32,7 +32,7 @@ def test_patron_portraits_follow_the_requirements_after_a_patron_leaves():
     game.nobles_left.remove(NOBLES[1])
     state = game.snapshot()
     assert state["noble_art"] == [0, 2, 3, 4]
-    assert state["noble_titles"] == ["翡翠侯爵", "蓝晶航长", "黄玉银行家", "紫晶工匠王"]
+    assert state["noble_titles"] == ["驯鹰侯爵", "海图航长", "天平银行家", "持锤工匠长"]
 
 
 def test_only_the_actor_sees_the_draw_and_can_play_it_to_keep_their_hand():

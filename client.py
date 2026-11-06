@@ -12469,8 +12469,9 @@ class GameWindow:
         self.game_players_entry.pack(side="left", padx=2)
         tk.Button(find, text="清空", command=self._clear_game_filter, font=f, relief="flat",
                   bg=soft_bg, fg=pal["fg"], padx=2).pack(side="left")
-        self.game_query_var.trace_add("write", self._change_game_filter)
-        self.game_players_var.trace_add("write", self._change_game_filter)
+        self._game_filter_traces = [
+            (var, var.trace_add("write", self._change_game_filter))
+            for var in (self.game_query_var, self.game_players_var)]
         wrap, self.game_inner = self._scroll_area(left, height=self._game_zone_h)
         # 高度锁定为 2 行桌游卡（不再 expand）：剩余纵向空间全部让给房间列表。
         # 原先桌游区与房间列表都 expand，房间列表被挤成一条缝，新刷出的房间
@@ -14041,6 +14042,13 @@ class GameWindow:
 
     def close(self) -> None:
         self._closed = True
+        # Variable trace commands outlive widgets and retain this bound owner.
+        for var, trace in self._game_filter_traces:
+            try:
+                var.trace_remove("write", trace)
+            except tk.TclError:
+                pass
+        self._game_filter_traces.clear()
         # Cancel through the widget that registered these Tcl commands.
         # Other windows' timers and hide/show polling remain independent.
         for job in tuple(self._after_jobs):

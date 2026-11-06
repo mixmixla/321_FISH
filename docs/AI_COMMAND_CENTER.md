@@ -17,8 +17,7 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 游戏与美术升级 · ARCADE-20261106 v1.1
 
-**实现与联调中**。用户追加系列美术升级，范围见[任务 v1.1](task-packages/ARCADE-20261106.md)。两款玩法与铁路原创地图已进入功能分支；两端大厅/开局由集成窗口联调。2048 图鉴、五子棋、花砖彩釉和大厅封面四项 READY，分包开发，公共入口由指定写入者整合。主控负责效果图、交互与最终全量，通过后 PR 合并 main。
-
+**AI_ACCEPTED · 完整候选通过**。铁路/大厅/手机点按已由[PR #9](https://github.com/mixmixla/321_FISH/pull/9)合并。本批见[任务 v1.1](task-packages/ARCADE-20261106.md)及[最终评审](review-packages/ARCADE-20261106-r1.md)。应用候选 b270e8a，从 162eef9 开发，分支 feature/arcade-20261106。全量 243 文件、3274 通过、0 失败、20 默认跳过，用时 29 分 28 秒；所有实现、试玩、测试已结束。按用户授权由主控将通过评审的结果经 PR 合并 main。
 
 ## 桌游试玩 · PLAY-20261106 v1
 

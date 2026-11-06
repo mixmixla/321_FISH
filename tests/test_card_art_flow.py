@@ -10,9 +10,11 @@ def test_development_art_covers_the_deck_and_survives_reservation_and_purchase()
         assert sorted(card["art"] for card in cards) == list(range(20))
         assert len({card["title"] for card in cards}) == 20
     card = dict(game.snapshot()["market"]["1"][0])
+    assert game.snapshot()["deck_left"] == {"1": 16, "2": 16, "3": 16}
     colour = next(c for c in COLORS if card["cost"][c])
     other_colour = next(c for c in COLORS if c != colour)
     game.act(11, {"op": "reserve", "tier": 1, "idx": 0})
+    assert game.snapshot()["deck_left"] == {"1": 15, "2": 16, "3": 16}
     assert game.private(11)["reserved"] == [card]
     assert game.private(22)["reserved"] == []
     assert game.market[1][0]["art"] != card["art"]

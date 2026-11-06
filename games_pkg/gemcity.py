@@ -304,6 +304,7 @@ class GemCityGame(BaseGame):
             "game": self.name, "status": "playing",
             "bank": self.bank, "colors": COLOR_CN,
             "market": {str(t): self.market[t] for t in self.market},
+            "deck_left": {str(t): len(cards) for t, cards in self.deck.items()},
             "tokens": {str(u): v for u, v in self.tokens.items()},
             "discount": {str(u): v for u, v in self.discount.items()},
             "score": {str(u): v for u, v in self.score.items()},

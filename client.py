@@ -11535,7 +11535,7 @@ _GAME_ACTIONS = {
         ("猜数字", {"key": "guess", "kind": "int"}, "输入 1~100 数字（猜）"),
     ],
     "gomoku": [],  # Placement is directly on the real board intersections.
-    "gomoku_solo": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）")],
+    "gomoku_solo": [],
     "tile2048": [
         ("↑ 上", {"fixed": {"op": "move", "dir": "up"}}, ""),
         ("↓ 下", {"fixed": {"op": "move", "dir": "down"}}, ""),

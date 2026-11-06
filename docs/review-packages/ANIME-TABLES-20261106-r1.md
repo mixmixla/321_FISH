@@ -49,3 +49,7 @@ d961bf5，经营组独立审查从原始旧房复现与真发送方法开始，�
 ## 五子棋 · AI_ACCEPTED
 
 共享美术候选 fc8fc53。主控核对双人正式桌面与手机原图，15路的交叉点、黑白棋色、最后一手和五连位置都由真实状态提供。双人桌面双方轮流9次直接落子直到黑方恰好五连；网页同样用正常Hub的两位合成玩家完成9次手机触摸。原坐标输入及重复的字符棋盘已撤下，旧API仍可接合法落子。原两模式专测6文件72通过，棋子透明度、尺寸与中心颜色断言保留。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/gomoku/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/gomoku/mobile.webp)。
+
+## 五子棋陪练 · AI_ACCEPTED
+
+同一共享原画候选 fc8fc53。本次独立收尾陪练入口，撤下单人坐标输入。实际 Tk 与正常Hub网页均用真人点两次、电脑应两次，最新落子归属为电脑，重复点已有棋子的交叉点或观战点击没有提交动作。主控复看480专注窗及手机回合后截图。两模式共用三份原画；各模式的实盘和推送单独记录。 [桌面实盘](../review-assets/ANIME-TABLES-20261106/gomoku_solo/desktop.webp) / [网页实盘](../review-assets/ANIME-TABLES-20261106/gomoku_solo/mobile.webp)。

@@ -11551,16 +11551,7 @@ _GAME_ACTIONS = {
     "othello": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起）")],
     "calc24": [],  # Four value cards, operator chips and expression seal.
     "matchpairs": [("摸牌", {"fixed": {"draw": True}}, "")],
-    "betrayal": [
-        ("⬆ 上", {"fixed": {"move": "up"}}, ""),
-        ("⬇ 下", {"fixed": {"move": "down"}}, ""),
-        ("⬅ 左", {"fixed": {"move": "left"}}, ""),
-        ("➡ 右", {"fixed": {"move": "right"}}, ""),
-        ("结束回合", {"fixed": {"end": True}}, ""),
-        ("使用道具", {"key": "use", "kind": "text"}, "输入道具名，如 急救包"),
-        ("攻击", {"key": "attack", "kind": "uid"}, "输入同一房间的目标 uid（惊魂阶段）"),
-        ("全员撤离", {"fixed": {"escape": True}}, ""),
-    ],
+    "betrayal": [],  # Doors, inventory and exit are on the tabletop.
     "davinci": [
         ("摸明牌", {"fixed": {"op": "draw", "open": True}}, ""),
         ("摸暗牌", {"fixed": {"op": "draw", "open": False}}, ""),
@@ -13077,6 +13068,11 @@ class GameWindow:
             self._cancel_repaint(ui)
         ui["_room_context"] = context
         ui["room"] = room
+        if (room or {}).get("game") == "betrayal":
+            ui["manor_outcome"] = ""
+            if room.get("status") == "ended":
+                ui["manor_outcome"] = next((line.partition("：")[2] for line in reversed(self.core.game_events)
+                                            if line.startswith("🏁 本局结束：")), "")
         ui["state"] = st
         ui["_drawn_private"] = self.core.game_private
         ui["connected"] = bool(getattr(self.core, "connected", False))
@@ -13394,40 +13390,7 @@ class GameWindow:
             if st.get("loser_uid"):
                 lines.append(f"🐢 {self._nick(st['loser_uid'])} 成为王八！")
         elif game == "betrayal":
-            rooms = st.get("rooms") or {}
-            pos = {int(u): tuple(map(int, v.split(",")))
-                   for u, v in (st.get("pos") or {}).items()}
-            seats = {int(u): n for u, n in (st.get("seats") or {}).items()}
-            if rooms:
-                pts = [tuple(map(int, k.split(","))) for k in rooms]
-                occ = {}
-                for u, p in pos.items():
-                    occ.setdefault(p, []).append(seats.get(u, "?"))
-                for y in range(min(p[1] for p in pts), max(p[1] for p in pts) + 1):
-                    row = [rooms.get(f"{x},{y}", "·")
-                           for x in range(min(p[0] for p in pts), max(p[0] for p in pts) + 1)]
-                    lines.append("  " + " ".join(row))
-                for (x, y), ss in sorted(occ.items()):
-                    lines.append(f"  {rooms.get(f'{x},{y}', '?')}({x},{y})："
-                                 + "、".join(f"{s}号" for s in ss))
-            alive = set(st.get("alive") or [])
-            items = st.get("items") or {}
-            for u, s in (st.get("stats") or {}).items():
-                ui = int(u)
-                extra = f"｜{'、'.join(items.get(u, []))}" if items.get(u) else ""
-                lines.append(f"{seats.get(ui, '?')}号 {self._nick(ui)}"
-                             f"{'☠' if ui not in alive else ''}"
-                             f" 力{s['might']} 速{s['speed']}"
-                             f" 智{s['sanity']} 知{s['knowledge']}{extra}")
-            if st.get("phase") == "haunt" and st.get("haunt"):
-                h = st["haunt"]
-                lines.append(f"⚡ 惊魂降临《{h['scenario']}》 叛徒：{self._nick(h['traitor'])}")
-                lines.append(f"🚪 出口之门位于 ({h['exit']})，幸存者全员抵达后可全员撤离")
-            else:
-                lines.append(f"预兆 {st.get('omens', 0)} 枚（每抽一枚需做惊魂检定）")
-            if st.get("turn_uid"):
-                lines.append(f"轮到 {self._nick(st['turn_uid'])}"
-                             f"（剩余 {st.get('steps_left', 0)} 步）")
+            pass  # The map and journal already show the room.
         elif game == "davinci":
             lbl = st.get("label") or {}
             def lav(v): return lbl.get(str(v), v)
@@ -13510,6 +13473,8 @@ class GameWindow:
         if (self.core.game_room or {}).get("game") == "drawguess":
             return  # The private prompt is printed only on the artist card.
         p = self.core.game_private
+        if (self.core.game_room or {}).get("game") == "betrayal":
+            return
         if (self.core.game_room or {}).get("game") == "tielu":
             return  # Private tickets and all five coach-card counts are on the table.
         if not p:

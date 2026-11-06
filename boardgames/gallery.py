@@ -16,6 +16,7 @@ COVERS = {
     "gomoku": "cover-gomoku.webp",
     "gomoku_solo": "cover-gomoku.webp",
     "gemcity": "cover-gemcity.webp",
+    "betrayal": "cover-betrayal.webp",
     "lovelove": "cover-lovelove.webp",
     "rps": "cover-rps.webp",
     "dou": "cover-dou-lobby.webp",

@@ -2,8 +2,8 @@
 from boardgames.card_table_tk import art
 
 
-PAPER, INK, MUTED = "#eee5d2", "#293c36", "#617168"
-NIGHT, GOLD, EDGE = "#1c302b", "#c99d52", "#829185"
+PAPER, INK, MUTED = "#f3edf5", "#332c48", "#615774"
+NIGHT, GOLD, EDGE = "#28223c", "#e1b760", "#9e91b0"
 DIRS = {"up": (0, -1, "北"), "down": (0, 1, "南"), "left": (-1, 0, "西"), "right": (1, 0, "东")}
 PLAYER_COLORS = ("#e7bd56", "#8dc8bb", "#c8a9df", "#8cb9e2", "#ec9b74", "#d395b1")
 # Fallback copy for old snapshots, matching BetrayalGame._use exactly.
@@ -27,7 +27,7 @@ def panel(cv, rect, fill=PAPER, edge=EDGE, line=1, tag=""):
 
 
 def control(cv, ui, rect, title, key, selected=False, enabled=True):
-    panel(cv, rect, NIGHT if selected else "#dbe1d2", GOLD if enabled else "#a9b3a8")
+    panel(cv, rect, NIGHT if selected else "#e1d9eb", GOLD if enabled else "#a9b3a8")
     label(cv, (rect[0]+rect[2])/2, (rect[1]+rect[3])/2, title, 9,
           PAPER if selected else INK if enabled else "#899389", "center", True)
     if enabled:
@@ -98,12 +98,19 @@ def _viewport(ui, st, w, h):
         left = right = cx
         north = south = cy
     else:
-        left, right, north, south = cx-1, cx+1, cy-1, cy+1
+        points = [point(key) for key in rooms]
+        near = points and all(abs(x-cx)<=1 and abs(y-cy)<=1 for x, y in points)
+        if near and ui.get("manor_follow", True):
+            left, right = min(x for x, _ in points), max(x for x, _ in points)
+            north, south = min(y for _, y in points), max(y for _, y in points)
+        else:
+            left, right, north, south = cx-1, cx+1, cy-1, cy+1
     cols, rows = right-left+1, south-north+1
-    cell = max(1, min((w-20)/cols, (bottom-top)/rows, 190))
+    map_w = w - (min(168, int(w*.29)) if st.get("discoveries") and not ui.get("manor_overview") else 0)
+    cell = max(1, min((map_w-20)/cols, (bottom-top)/rows, 250))
     if cell >= 24:
         cell = (int(cell)//8)*8  # Match the image cache sizes: adjoining art has no inset gap.
-    ox, oy = (w-cols*cell)/2, top+(bottom-top-rows*cell)/2
+    ox, oy = (map_w-cols*cell)/2, top+(bottom-top-rows*cell)/2
     return left, right, north, south, cell, ox, oy
 
 
@@ -112,9 +119,6 @@ def _map(cv, st, me, nick, ui, w, h):
     control(cv, ui, (10, 65, 82, 87), "回到我", "follow")
     control(cv, ui, (88, 65, 150, 87), "局部图" if overview else "看全图", "overview", overview)
     control(cv, ui, (156, 65, 216, 87), "看周边" if ui.get("manor_close") else "近看房间", "close", ui.get("manor_close", False))
-    label(cv, w-160, 76, "视野", 8, MUTED)
-    for i, (direction, title) in enumerate((("left", "←"), ("up", "↑"), ("down", "↓"), ("right", "→"))):
-        control(cv, ui, (w-126+i*29, 65, w-100+i*29, 87), title, ("pan", direction))
     rooms, positions = st.get("rooms") or {}, st.get("pos") or {}
     left, right, north, south, cell, ox, oy = _viewport(ui, st, w, h)
     focus = coord(*ui.get("manor_center", (0, 0)))
@@ -127,10 +131,8 @@ def _map(cv, st, me, nick, ui, w, h):
             key = coord(x, y)
             x0, y0 = ox+(x-left)*cell, oy+(y-north)*cell
             rect = x0, y0, x0+cell, y0+cell
-            panel(cv, rect, "#31403a" if key in rooms else "#24352f", "#526053")
+            panel(cv, rect, "#41374d" if key in rooms else "#292638", "#5e506c")
             if key not in rooms:
-                if cell >= 44:
-                    label(cv, x0+cell/2, y0+cell/2, "未探索", 8, "#829083", "center")
                 continue
             ui["manor_cells"][key] = rect
             ui["manor_hits"].append((*rect, ("room", key)))
@@ -152,9 +154,21 @@ def _map(cv, st, me, nick, ui, w, h):
                                fill=PLAYER_COLORS[(int(seat)-1)%6] if uid in alive else "#7a7976",
                                outline="#fffbe8" if uid == me else NIGHT, width=2 if uid == me else 1,
                                tags="manor-player")
+                attackable = (not overview and can_act(ui) and st.get("phase") == "haunt"
+                              and not st.get("attack_used") and positions.get(str(me)) == key
+                              and uid != me and uid in alive)
+                if attackable:
+                    cv.create_oval(px-radius-2, py-radius-2, px+radius+2, py+radius+2,
+                                   outline=GOLD, width=2, tags="manor-fight")
                 label(cv, px, py, seat, max(6, min(9, int(radius))), NIGHT, "center", True)
                 hit = px-radius, py-radius, px+radius, py+radius
                 ui["manor_people"].append((*hit, uid, key))
+            if key == exit_pos and not overview and me in alive:
+                traitor = (st.get("haunt") or {}).get("traitor")
+                if me != traitor:
+                    ready = all(positions.get(str(uid)) == key for uid in alive if uid != traitor)
+                    rect = (x0+cell*.24, y0+cell*.70, x0+cell*.79, y0+cell*.89)
+                    control(cv, ui, rect, "撤离", ("action", {"escape": True}), enabled=ready and can_act(ui))
             if positions.get(str(me)) == key:
                 panel(cv, (x0+1, y0+1, x0+cell-1, y0+cell-1), "", "#e9daa8", 2)
     # Door hits are restricted to the four true edge centres of my current tile.
@@ -176,7 +190,23 @@ def _map(cv, st, me, nick, ui, w, h):
             label(cv, px, py, title, 8, NIGHT, "center", True)
             if enabled:
                 ui["manor_doors"].append((*rect, direction, target))
-    label(cv, 11, h-74, "全图只作导航：点房间放大" if overview else "点当前房间的方向门移动 · 点房间回看发现", 8, MUTED)
+    discovered = st.get("discoveries") or []
+    if discovered and not overview:
+        entry = discovered[-1]
+        cards = entry.get("cards") or []
+        if cards:
+            rail = min(168, int(w*.29))
+            left, right = w-rail+3, w-8
+            label(cv, left, 100, "刚刚揭开 · "+entry["room"], 8, INK, bold=True)
+            slot = min(100, max(44, (h-203)/len(cards)))
+            for i, card in enumerate(cards):
+                y = 112+i*slot
+                frame = left, y, right, y+slot-3
+                panel(cv, frame, "#e3d8ed", GOLD)
+                illustration(cv, card["kind"], card["name"], (left+1,y+1,right-1,y+slot-19))
+                label(cv, (left+right)/2, y+slot-11, card["name"], 8, INK, "center", True)
+                ui["manor_hits"].append((*frame, ("reveal", entry["pos"])))
+    label(cv, 11, h-74, "全图只作导航：点房间放大" if overview else "点当前房间的方向门移动 · 点房间回看发现" if not st.get("haunt") else "点门移动 · 点同格金圈棋子攻击 · 齐集出口撤离", 8, MUTED)
 
 
 def _journal(cv, st, me, nick, ui, w, h):
@@ -191,7 +221,7 @@ def _journal(cv, st, me, nick, ui, w, h):
     index = keys.index(selected)
     control(cv, ui, (10, 65, 78, 87), "上一间", ("book", -1), enabled=index > 0)
     control(cv, ui, (w-78, 65, w-10, 87), "下一间", ("book", 1), enabled=index+1 < len(keys))
-    label(cv, w/2, 76, f"{room_name(st, selected)} · {selected} · {index+1}/{len(keys)}", 10, INK, "center", True)
+    label(cv, w/2, 76, f"{room_name(st, selected)} · {index+1}/{len(keys)}", 10, INK, "center", True)
     record = next((r for r in st.get("discoveries") or [] if r.get("pos") == selected), None)
     cards = (record or {}).get("cards") or []
     if record:
@@ -242,11 +272,18 @@ def _inventory(cv, st, me, nick, ui, w, h):
     label(cv, 14, h-115, f"{selected+1}/{len(items)} · {items[selected]}", 10, INK, bold=True)
     label(cv, w/2+4, 124, "道具用途", 10, INK, bold=True)
     label(cv, w/2+4, 146, _item_text(st, items[selected]), 9, INK, "nw", width=w/2-18)
-    control(cv, ui, (10, h-105, 71, h-83), "上一件", ("item", max(0, selected-1)), enabled=selected > 0)
-    control(cv, ui, (w-71, h-105, w-10, h-83), "下一件", ("item", min(len(items)-1, selected+1)), enabled=selected+1 < len(items))
-    use = ("action", {"use": items[selected]})
-    control(cv, ui, (w/2-64, h-105, w/2+64, h-83), "被动武器" if items[selected] == "消防斧" else "使用 "+items[selected],
-            use, enabled=can_act(ui) and owner == me and items[selected] != "消防斧")
+    # Each owned object is its own selector. The enlarged card itself is the use target.
+    width = min(55, (w-24)/len(items))
+    for i, item in enumerate(items if len(items) > 1 else ()):
+        left = 12+i*width
+        thumb = left, h-104, left+width-4, h-72
+        panel(cv, thumb, NIGHT, GOLD if i == selected else EDGE, 2 if i == selected else 1)
+        illustration(cv, "item", item, thumb)
+        ui["manor_hits"].append((*thumb, ("item", i)))
+    usable = can_act(ui) and owner == me and items[selected] != "消防斧"
+    if usable:
+        ui["manor_hits"].append((*rect, ("action", {"use": items[selected]})))
+        label(cv, w/2+4, h-123, "点左侧道具牌使用", 9, INK, bold=True)
 
 
 def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
@@ -282,24 +319,30 @@ def paint(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     else:
         _inventory(cv, st, me, nick, ui, w, h)
     # The focus window retains real turn controls and a selected player's stats.
-    panel(cv, (5, h-67, w-5, h-5), "#dbe1d2", EDGE)
+    panel(cv, (5, h-67, w-5, h-5), "#e1d9eb", EDGE)
     who = ui.get("manor_inspect", me)
     stats = (st.get("stats") or {}).get(str(who)) or {}
     seat = (st.get("seats") or {}).get(str(who), "?")
-    summary = f"#{seat} {nick(who)}" + ("（我）" if who == me else f" · UID{who}")
-    label(cv, 12, h-53, summary+" · "+" ".join(n+str(stats.get(k, 0)) for k, n in (("might", "力"), ("speed", "速"), ("sanity", "理"), ("knowledge", "知"))), 8, INK)
-    notice = "探索余量："+str(st.get("tiles_left", "未知"))+" 间"
-    if discoveries:
-        record = discoveries[-1]
-        names = " / ".join(c.get("name", "") for c in record.get("cards") or [])
-        notice = f"发现 {record.get('room', '')} · {names}（发现簿可回看效果）"
-    label(cv, 12, h-35, notice, 8, MUTED, "nw", width=w-126)
+    if ended:
+        panel(cv, (6,h-65,w-6,h-6), "#3b2b52", GOLD, 2, "manor-result")
+        label(cv, 16, h-51, "◆ 终局", 10, "#f5cf77", bold=True)
+        verdict = ui.get("manor_outcome") or "本局结束"
+        label(cv, 16, h-40, verdict, 10, "#fff4dd", "nw", width=w-36)
+        return
+    label(cv, 12,h-52,f"{seat}号 · {nick(who)}",9,INK,bold=True)
+    attributes = (("might","力","#b4455a"),("speed","速","#34796e"),
+                  ("sanity","理","#765ca0"),("knowledge","知","#4e6f9a"))
+    for i,(key,short,color) in enumerate(attributes):
+        x=12+i*44
+        panel(cv,(x,h-37,x+40,h-15),color,color,tag="manor-stat")
+        label(cv,x+20,h-26,f"{short} {stats.get(key,0)}",9,"#fff","center",True)
+    label(cv,w-118,h-52,"未探 "+str(st.get("tiles_left","?"))+" 间",8,MUTED,"e")
     control(cv, ui, (w-108, h-39, w-12, h-13), "结束回合", ("action", {"end": True}), enabled=can_act(ui))
 
 
 def click(ui, x, y):
     st, me = ui.get("state") or {}, ui.get("me")
-    # Doors win hit testing over adjacent room edges; occupants remain read-only.
+    # Doors precede room inspection. In a haunt, highlighted occupied seats are attack targets.
     for x0, y0, x1, y1, direction, target in ui.get("manor_doors") or []:
         if x0 <= x <= x1 and y0 <= y <= y1:
             if can_act(ui) and st.get("steps_left", 0) > 0:
@@ -307,6 +350,11 @@ def click(ui, x, y):
             return
     for x0, y0, x1, y1, uid, key in ui.get("manor_people") or []:
         if x0 <= x <= x1 and y0 <= y <= y1:
+            if (can_act(ui) and st.get("phase") == "haunt" and not st.get("attack_used")
+                    and not ui.get("manor_overview") and uid != me and uid in (st.get("alive") or [])
+                    and (st.get("pos") or {}).get(str(me)) == key):
+                ui["submit"]({"attack": uid})
+                return
             ui["manor_inspect"] = uid
             ui.get("repaint", lambda: None)()
             return
@@ -330,6 +378,8 @@ def click(ui, x, y):
                 ui.update(manor_center=point(key[1]), manor_follow=False, manor_overview=False)
             else:
                 ui.update(manor_tab="journal", manor_book_pos=key[1])
+        elif key[0] == "reveal":
+            ui.update(manor_tab="journal", manor_book_pos=key[1])
         elif key[0] == "book":
             keys = list(st.get("rooms") or {})
             index = keys.index(ui["manor_book_pos"])

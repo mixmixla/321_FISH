@@ -15,6 +15,11 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 宝石牌桌重做 · GEM-TABLE-20261106 v1
+
+**READY，与山屋并行**。依据用户针对已合并 PR #11 的实拍反馈，新增[有限任务](task-packages/GEM-TABLE-20261106.md)。保留已启动山屋工作，两个任务分别提交、由主控统一验证后经 PR 合并。新牌桌的永久宝石、画作与名称需一致，市场按参考图布局。原开发目录保持。
+
+
 ## 山屋惊魂 · MANOR-20261106 v1
 
 **READY**。承接已合并的 [PR #11](https://github.com/mixmixla/321_FISH/pull/11)，基线 c4b2754。按用户要求冻结[任务包](task-packages/MANOR-20261106.md)。房间拼图、发现牌、桌面和网页各自独立工作；主控负责已揭示数据、整合、评审、后台全量与 PR 合并。

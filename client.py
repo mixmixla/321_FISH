@@ -1983,6 +1983,11 @@ class ChatWindow:
 
     def _on_error(self, ev: dict) -> None:
         code = ev.get("code")
+        if code == "game" and ev.get("request_id"):
+            window = getattr(self, "_game_win", None)
+            if window is not None:
+                from boardgames.economy_kaituo import reject_action
+                reject_action(window, ev["request_id"])
         if code in ("kicked", "deleted") or (code == "retired" and ev.get("manual_login_required") is True):
             if not self._closed:
                 self.request_switch_account()
@@ -11644,14 +11649,7 @@ _GAME_ACTIONS = {
         ("👷 工作", {"op": "work", "key": "id", "kind": "int"}, "输入工位 id"),
         ("⏭ 过牌", {"fixed": {"op": "pass"}}, "本轮不再放置工人"),
     ],
-    "kaituo": [
-        ("🎲 掷骰", {"fixed": {"op": "roll"}}, "掷 2 骰并结算资源"),
-        ("🏠 布置（开局）", {"key": None, "kind": "setup2"}, "开局：输入 顶点i 顶点j 路端b_i 路端b_j"),
-        ("⛏ 建造", {"op": "build", "key": None, "kind": "buildspec"}, "输入 类型 i j [b_i b_j]，类型 road/settle/city"),
-        ("🦹 移动盗匪", {"op": "robber", "key": None, "kind": "rc"}, "输入 行 列（0~4）"),
-        ("🔄 交换", {"op": "trade", "key": None, "kind": "tradespec"}, "输入 给 得 [数量]，如 wood brick 4"),
-        ("⏭ 跳过", {"fixed": {"op": "skip"}}, "结束本回合"),
-    ],
+    "kaituo": [],
     "lingdi": [
         ("🏗 放置", {"op": "place", "key": None, "kind": "rcmeeple"}, "输入 行 列 [self | 米行,米列]，self 表示就地放米宝"),
         ("⏭ 跳过", {"fixed": {"op": "pass"}}, "跳过本回合"),
@@ -12953,10 +12951,10 @@ class GameWindow:
         self.state_text.configure(state="disabled")
         room = self.core.game_room
         st = self.core.game_state
-        if (room or {}).get("game") in ("uno", "blackjack") and (room or {}).get("status") in ("playing", "ended"):
+        if (room or {}).get("game") in ("uno", "blackjack", "kaituo") and (room or {}).get("status") in ("playing", "ended"):
             self.state_text.pack_forget()
             self._cards_log_scroll.pack_forget()
-            self._rebuild_actions("uno")
+            self._rebuild_actions("kaituo" if room["game"] == "kaituo" else "uno")
             return
         if not self.state_text.winfo_manager():
             self._cards_log_scroll.pack(side="right", fill="y")
@@ -13088,6 +13086,9 @@ class GameWindow:
             return
         game = room.get("game")
         ui["game"] = game
+        if game == "kaituo":
+            from boardgames.economy_kaituo import sync_pending
+            ui["kt_pending"] = sync_pending(self, room, st)
         if game == "rps":
             pending = getattr(self, "_rps_pending", None)
             ui["rps_sending"] = bool(pending and pending[1] is st
@@ -13985,6 +13986,9 @@ class GameWindow:
                     game in ("gemcity", "lovelove", "betrayal", "rps", "tielu")
                     or source_game in ("gemcity", "lovelove", "betrayal", "rps", "tielu")):
                 return
+        if game == "kaituo" or (source_ui is not None and source_ui.get("game") == "kaituo"):
+            from boardgames.economy_kaituo import submit_action
+            return submit_action(self, room, st, source_ui, action)
         if game == "rps":
             from boardgames.rps_table import can_choose
             if (not rid or room.get("status") != "playing" or not self.core.connected

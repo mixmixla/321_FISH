@@ -131,6 +131,8 @@ def _SERVED_PAGE():
     from boardgames.card_table_web import WEB_JS as card_js, WEB_CSS as card_css
     page = page.replace('/*@@CARD_TABLE_JS@@*/', card_js)
     page = page.replace('@@CARD_TABLE_CSS@@', card_css)
+    from boardgames.kaituo_web import WEB_JS as kaituo_js, WEB_CSS as kaituo_css
+    page = page.replace("/*@@KAITUO_JS@@*/", kaituo_js).replace("@@KAITUO_CSS@@", kaituo_css)
     from boardgames.rail_table_web import WEB_JS as rail_js, WEB_CSS as rail_css
     from games_pkg.tielu import TICKETS as route_tickets
     page = page.replace('/*@@RAIL_JS@@*/', rail_js).replace('@@RAIL_CSS@@', rail_css)
@@ -725,6 +727,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 @@UX_GAME_CSS@@
 @@CARD_TABLE_CSS@@
 @@RAIL_CSS@@
+@@KAITUO_CSS@@
 @@ARCADE_ORCHARD_CSS@@
 @@ARCADE_YACHT_CSS@@
 @@ARCADE_ATELIER_CSS@@
@@ -3862,6 +3865,7 @@ function openStream(){
       if(d.game){state.fish=Object.assign({},state.fish||{});state.fish[d.game]=d.entries||[];}
       if(state.fishOpen)window.fishRender();}
     else if(d.t==="error"){
+      if(d.code==="game" && d.request_id)KaituoTable.reject(d.request_id);
       if(d.code==="kicked")leaveLogin();
       showStatus(d.text||d.code||"操作失败");
     }
@@ -4392,6 +4396,7 @@ function gLegalTos(fx,fy){
 const MANOR_ATLASES=JSON.parse("@@MANOR_ATLASES@@");
 const RAIL_TICKET_COUNT=@@RAIL_TICKET_COUNT@@;
 /*@@RAIL_JS@@*/
+/*@@KAITUO_JS@@*/
 /*@@MANOR_JS@@*/
 const GRENDER={
   guess_number(box,s){NumberTable.render(box,s);},
@@ -4840,156 +4845,7 @@ const GRENDER={
   },
   betrayal(box,s){ ManorWeb.paint(box,s); },
   drawguess(box,s){AtelierTable.render(box,s);},
-  kaituo(box,s){
-    box.appendChild(gTitle("kaituo","开拓 · 资源建设"));
-    const R_CN={wood:"木头",brick:"砖",lamb:"羊",wheat:"麦",ore:"矿"};
-    const R_COL={wood:"#8a5b2c",brick:"#c24a33",lamb:"#7fbf4f",wheat:"#e8b93c",ore:"#7a8499",desert:"#e2c9a0"};
-    const PC=["#e0535a","#4a7de0","#37a25f","#e0a13c","#9a6fd0","#26c6b0"];
-    const my=state.uid, players=s.players||[];
-    const myTurn=players.includes(my)&&s.winner_uid==null&&s.turn_uid===my;
-    const setup=s.phase==="setup", pending=!!s.robber_pending;
-    const gact=(a)=>gameAPI("action",{room_id:state.groom,action:a});
-    if(!myTurn)state.ktsel=null;
-    if(!state.ktmode)state.ktmode="road";
-    const d=document.createElement("div");
-    let html="<div style='font-size:11px;color:var(--dim);margin-bottom:4px'>"
-      +"回合 → "+esc(gnick(s.turn_uid))+"　"+scoreHTML(s.score)+"</div>";
-    if(setup)html+="<div class='gsec'>布置阶段：先点村，再点相邻顶点修路</div>";
-    else if(s.last_roll!=null)html+="<div>🎲 上次掷骰 "+s.last_roll+"</div>";
-    if(pending&&myTurn)html+="<div style='color:#c0392b;font-size:12px'>🦹 请先点地块移动盗匪</div>";
-    d.innerHTML=html;box.appendChild(d);
-    // 模式切换：布置阶段不生效，统一走 setup 手势
-    const mbar=document.createElement("div");
-    mbar.style.cssText="display:flex;gap:4px;justify-content:center;margin:2px 0 4px";
-    [["road","路"],["settle","村"],["city","城"]].forEach(k=>{
-      const on=!setup&&state.ktmode===k[0];
-      const b=document.createElement("button");b.className="gbtn";b.textContent=k[1];
-      b.style.cssText="min-width:40px;padding:2px 8px;font-size:12px;"
-        +(on?"background:#37a25f;color:#fff;border-color:#37a25f":"");
-      b.disabled=!myTurn||setup;
-      if(!b.disabled)b.onclick=()=>{state.ktmode=k[0];state.ktsel=null;renderGamePanel();};
-      mbar.appendChild(b);});
-    box.appendChild(mbar);
-    // 地图：5x5 地块 + 6x6 绝对定位交点按钮（同桌面两段式选点状态机）
-    const N=5, cell=34, board=s.board||{};
-    const wrap=document.createElement("div");
-    wrap.style.cssText="position:relative;width:"+(N*cell)+"px;height:"+(N*cell)+"px;margin:4px auto";
-    for(let r=0;r<N;r++)for(let c=0;c<N;c++){
-      const t=s.tiles[r+","+c];if(!t)continue;
-      const isRb=s.robber&&s.robber[0]===r&&s.robber[1]===c;
-      const el=document.createElement("div");
-      el.style.cssText="position:absolute;left:"+(c*cell)+"px;top:"+(r*cell)+"px;width:"
-        +cell+"px;height:"+cell+"px;box-sizing:border-box;border:1px solid rgba(0,0,0,.22);border-radius:3px;background:"
-        +(R_COL[t.res]||"#999")+";color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700";
-      el.textContent=isRb?"🦹":(t.res==="desert"?"🟤":(t.num||""));
-      if(pending&&myTurn&&!isRb){
-        el.style.cursor="pointer";el.style.borderColor="#e0535a";
-        el.style.boxShadow="inset 0 0 0 2px rgba(224,83,90,.55)";
-        el.onclick=()=>gact({op:"robber",r:r,c:c});}
-      wrap.appendChild(el);}
-    Object.keys(board).forEach(k=>{
-      const p=k.split(","),i=+p[0],j=+p[1],b=board[k];
-      const col=PC[Math.max(0,players.indexOf(b.owner))%PC.length];
-      const dot=document.createElement("div");
-      dot.style.cssText="position:absolute;left:"+(j*cell-5)+"px;top:"+(i*cell-5)+"px;width:10px;height:10px;border-radius:50%;background:"
-        +col+";border:1px solid #fff;pointer-events:none"+(b.city?";box-shadow:0 0 0 2px "+col:"");
-      wrap.appendChild(dot);});
-    const adj=(a,b)=>Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])===1;
-    const kv=(v)=>v[0]+","+v[1];
-    const pick=(v)=>{
-      if(!myTurn||pending)return;
-      const mode=setup?"setup":(state.ktmode||"road");
-      const sel=state.ktsel;
-      if(mode==="settle"){
-        if(board[kv(v)])return;
-        state.ktsel=null;gact({op:"build",kind:"settle",i:v[0],j:v[1]});return;}
-      if(mode==="city"){
-        const b=board[kv(v)];
-        if(!b||b.owner!==my||b.city)return;
-        state.ktsel=null;gact({op:"build",kind:"city",i:v[0],j:v[1]});return;}
-      if(!sel){
-        if(mode==="setup"){
-          if(board[kv(v)])return;
-          const around=[[v[0]+1,v[1]],[v[0]-1,v[1]],[v[0],v[1]+1],[v[0],v[1]-1]];
-          if(around.some(p=>board[kv(p)]))return;}
-        state.ktsel=v;renderGamePanel();return;}
-      if(sel[0]===v[0]&&sel[1]===v[1]){state.ktsel=null;renderGamePanel();return;}
-      if(!adj(sel,v))return;
-      state.ktsel=null;
-      if(mode==="setup")gact({op:"setup",i:sel[0],j:sel[1],b_i:v[0],b_j:v[1]});
-      else gact({op:"build",kind:"road",i:sel[0],j:sel[1],b_i:v[0],b_j:v[1]});};
-    for(let i=0;i<=N;i++)for(let j=0;j<=N;j++){
-      const on=state.ktsel&&state.ktsel[0]===i&&state.ktsel[1]===j;
-      const vb=document.createElement("button");
-      vb.style.cssText="position:absolute;left:"+(j*cell-9)+"px;top:"+(i*cell-9)+"px;width:18px;height:18px;box-sizing:border-box;padding:0;border-radius:50%;z-index:3;border:1px solid "
-        +(on?"#2E8B57":"rgba(0,0,0,.30)")+";background:"+(on?"#37a25f":"rgba(255,255,255,.35)")
-        +";cursor:"+(myTurn&&!pending?"pointer":"default");
-      vb.title="交点 ("+i+","+j+")";
-      if(myTurn&&!pending)vb.onclick=()=>pick([i,j]);
-      wrap.appendChild(vb);}
-    box.appendChild(wrap);
-    // 资源与建筑统计
-    const info=document.createElement("div");
-    info.innerHTML="<div class='gsec'>你的资源（"+esc(gnick(state.uid))+"）</div>";
-    const res=s.res[state.uid]||{};
-    for(const k of ["wood","brick","lamb","wheat","ore"])
-      info.innerHTML+="<span style='margin:0 6px'><span style='color:"+(R_COL[k]||"#666")+"'>"
-        +resIcon(k,14)+"</span>"+R_CN[k]+"×"+(res[k]||0)+"</span>";
-    info.innerHTML+="<div class='gsec'>定居点/城市/道路</div>"
-      +"<div style='font-size:11px;color:var(--dim)'>村 ×"+(Object.values(board).filter(v=>!v.city).length)
-      +"　城 ×"+(Object.values(board).filter(v=>v.city).length)
-      +"　路 ×"+(Object.keys(s.roads||{}).length)+"</div>";
-    box.appendChild(info);
-    // 以下为文本输入兜底（点击区之后）
-    if(!myTurn){box.appendChild(gBtn("⏭ 跳过",{op:"skip"},true));return}
-    if(s.robber_pending){
-      const rbar=document.createElement("div");rbar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-      const I=(ph)=>Object.assign(document.createElement("input"),{type:"number",placeholder:ph,
-        style:"width:52px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"}),
-        rr=I("行"),rc=I("列"),
-        rbtn=document.createElement("button");rbtn.className="gbtn go";rbtn.textContent="🦹 移动";
-      rbtn.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"robber",r:rr.value,c:rc.value}});
-      rbar.append(document.createTextNode("🦹 移动盗匪：行"),rr,document.createTextNode("列"),rc,rbtn);
-      box.appendChild(rbar);return}
-    if(s.phase==="setup"){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px";
-      const I=(ph)=>Object.assign(document.createElement("input"),{type:"number",placeholder:ph,
-        style:"width:52px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"}),
-        i=I("纵(0~5)"),j=I("横(0~5)"),bi=I("末纵"),bj=I("末横"),
-        b=document.createElement("button");b.className="gbtn";b.textContent="🏠 布置村+路";
-      b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"setup",i:i.value,j:j.value,b_i:bi.value,b_j:bj.value}});
-      [i,j,bi,bj,b].forEach(x=>bar.appendChild(x));box.appendChild(bar);return}
-    const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-    bar.appendChild(gBtn("🎲 掷骰",{op:"roll"}));
-    box.appendChild(bar);
-    const b2=document.createElement("div");b2.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-    const sel=Object.assign(document.createElement("select"),{});sel.style.cssText="border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)";
-    [["road","路"],["settle","村"],["city","城"]].forEach(k=>{const o=document.createElement("option");o.value=k[0];o.textContent=k[1];sel.appendChild(o)});
-    const I=(ph)=>Object.assign(document.createElement("input"),{type:"number",placeholder:ph,
-      style:"width:52px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"}),
-      ia=I("纵"),jb=I("横"),ib=I("末纵"),jj=I("末横"),
-      bb=document.createElement("button");bb.className="gbtn go";bb.textContent="⛏ 建造";
-    bb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"build",kind:sel.value,i:ia.value,j:jb.value,b_i:ib.value,b_j:jj.value}});
-    b2.append(document.createTextNode("建造："),sel,ia,jb);
-    if(sel.value==="road"){b2.append(ib,jj)}
-    sel.onchange=()=>{if(sel.value==="road"){b2.append(ib,jj)}};
-    b2.appendChild(bb);box.appendChild(b2);
-    const b3=document.createElement("div");b3.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center";
-    const MKS=Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
-    const MKD=Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
-    ["wood","brick","lamb","wheat","ore"].forEach(k=>{
-      const o1=document.createElement("option");o1.value=k;o1.textContent=R_CN[k];MKS.appendChild(o1);
-      const o2=document.createElement("option");o2.value=k;o2.textContent=R_CN[k];MKD.appendChild(o2);});
-    const nI=Object.assign(document.createElement("input"),{type:"number",value:"4",min:"4",
-      style:"width:52px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"});
-    const tb=document.createElement("button");tb.className="gbtn";tb.textContent="🔄 交换";
-    tb.onclick=()=>{const g=MKS.value,w=MKD.value,n=parseInt(nI.value,10)||4;
-      if(g===w){gLog("❌ 不能换同一种资源");return}
-      gameAPI("action",{room_id:state.groom,action:{op:"trade",give:g,want:w,n}});};
-    b3.append(document.createTextNode("交换 "),MKS,document.createTextNode("给 ×"),nI,document.createTextNode("→ 换 "),MKD,tb);
-    box.appendChild(b3);
-    box.appendChild(gBtn("⏭ 跳过",{op:"skip"}));
-  },
+  kaituo(box,s){ KaituoTable.paint(box,s); },
   lingdi(box,s){
     box.appendChild(gTitle("lingdi","领地 · 拼贴得分"));
     const d=document.createElement("div");

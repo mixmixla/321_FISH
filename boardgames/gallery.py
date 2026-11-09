@@ -49,6 +49,8 @@ ART_FILES = frozenset(COVERS.values()) | {
     "balatro-jokers-core.webp",
     "cards-uno-dealer.webp",
     "cards-blackjack-dealer.webp",
+    "economy-kaituo-terrain-v2.webp", "kaituo-merchant.webp",
+    "kaituo-goods.webp", "kaituo-models.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}

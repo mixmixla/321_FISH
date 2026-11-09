@@ -1,0 +1,14 @@
+{
+  "candidate": "469fa49ffdc9034853e1b1a2445012265ade4d65",
+  "images": {
+    "desktop.png": "4fc7a0613f57a5a53d6a37179b8dedf6b405bbf372f9a776cf322fb8cc92eeb5",
+    "mobile.png": "434a9857d11ed8102af4b94d499d712471308de55478e0b91dc1b557cb64ea3e",
+    "goods.png": "964cebb523df7f515107f98ce184e02f54ecd7786a6fec2e1a66dcebb28c8a76"
+  },
+  "assets": {
+    "kaituo-goods.webp": "939a29a05d9613c9988cb3d248f020f8d873c1fe3a8676809374f97df38bb666",
+    "kaituo-models.webp": "bc052a36a8ff5128a29cd42cb0f480517ec613fd43070320965b914fe40647bd",
+    "kaituo-merchant.webp": "a170f54c9c9b883eb61d83f7d088eba13267e49739594f68362317aa36797178",
+    "economy-kaituo-terrain-v2.webp": "ae9093a1bc301dfb802a842d4cdcb797375c83efc95b0d54335a4e334360386c"
+  }
+}

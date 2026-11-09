@@ -17,8 +17,9 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 ## 开拓实物牌桌 · KAITUO-TABLETOP-20261109
 
-**READY · 仅此一款。** 用户2026-11-09恢复本款的验图、内容核对、修订与推送。[任务](task-packages/KAITUO-TABLETOP-20261109.md)。base89375a8，主控在独立codex/kaituo-tabletop-20261109工作树；经营树5b09d87+未提交v2作为来源。已核无旧Python测试进程。当前先处理手机地貌被样式遮住、文字对比和矮窗地图过小，再核真实建造/交易/骰点对应。其他游戏继续暂停；本轮不启动全量。
+**AI_ACCEPTED · 本款收口。** 用户2026-11-09只恢复本款，由原经营窗口制作，主控核图并独立审查通过。[任务](task-packages/KAITUO-TABLETOP-20261109.md) / [验收](review-packages/KAITUO-TABLETOP-20261109-r1.md)。产品469fa49，基线89375a8；codex/kaituo-tabletop-20261109 同步累计功能分支，实际远端版本以Git为准。
 
+透明物件、固定同稿柜台娘、地图与港口响应式布局，以及真实骰点/费用/入账已核。独审0 MUST，7项专项通过，保留切房回调RED/GREEN。后台真实Tk窗口与生产Web验证，含明确补库存和近终局夹具，验证范围见Review。本轮按用户要求仅本款必要验证，其他暂停队列等待用户选择。
 
 
 ## 桌游二次元美术与直接操作 · ANIME-TABLES-20261106 v1.1

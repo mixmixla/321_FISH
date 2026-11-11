@@ -21,6 +21,8 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 
 
+用户追加本轮只做画面审核、正式网页实操和本款受影响专项，明确不跑全量；合并仍等待用户确认。
+
 ## 开拓实物牌桌 · KAITUO-TABLETOP-20261109
 
 **AI_ACCEPTED · 本款收口。** 用户2026-11-09只恢复本款，由原经营窗口制作，主控核图并独立审查通过。[任务](task-packages/KAITUO-TABLETOP-20261109.md) / [验收](review-packages/KAITUO-TABLETOP-20261109-r1.md)。产品469fa49，基线89375a8；codex/kaituo-tabletop-20261109 同步累计功能分支，实际远端版本以Git为准。

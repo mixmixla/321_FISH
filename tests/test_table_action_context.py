@@ -21,9 +21,13 @@ def test_old_table_cannot_send_a_decision_into_the_current_room(game, action, ch
     core = SimpleNamespace(uid=7, connected=True,
                            game_room={"room_id": "A", "round": 1, "game": game,
                                       "status": "playing", "players": [7, 8], "spectators": []},
-                           game_state={"game": game, "turn_uid": 7}, game_private={},
+                           game_state={"game": game, "status": "playing",
+                                       "players": [7, 8], "turn_uid": 7,
+                                       "dice": None, "winner_uid": None},
+                           game_private={},
                            game_action=lambda rid, value: sent.append((rid, value)))
-    frame = {"_room_context": ("A", 1), "state": core.game_state, "game": game,
+    frame = {"_room_context": ("A", 1), "room": core.game_room,
+             "state": core.game_state, "game": game,
              "me": 7, "_drawn_private": core.game_private}
     if change == "room":
         core.game_room["room_id"] = "B"

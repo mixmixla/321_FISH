@@ -136,7 +136,8 @@ def _SERVED_PAGE():
     from boardgames.rail_table_web import WEB_JS as rail_js, WEB_CSS as rail_css
     from games_pkg.tielu import TICKETS as route_tickets
     page = page.replace('/*@@RAIL_JS@@*/', rail_js).replace('@@RAIL_CSS@@', rail_css)
-    page = page.replace('@@RAIL_TICKET_COUNT@@', str(len(route_tickets)))
+    page = page.replace('const RAIL_TICKET_COUNT=0;',
+                        f'const RAIL_TICKET_COUNT={len(route_tickets)};')
     from boardgames.manor_web import WEB_JS as manor_js, WEB_CSS as manor_css
     try:
         from boardgames.manor_catalog import ATLASES
@@ -4394,7 +4395,7 @@ function gLegalTos(fx,fy){
 /*@@ARCADE_MATH_JS@@*/
 /*@@ARCADE_NUMBER_JS@@*/
 const MANOR_ATLASES=JSON.parse("@@MANOR_ATLASES@@");
-const RAIL_TICKET_COUNT=@@RAIL_TICKET_COUNT@@;
+const RAIL_TICKET_COUNT=0;  /* 构建期替换为真实票证数量，占位保持 JS 可解析 */
 /*@@RAIL_JS@@*/
 /*@@KAITUO_JS@@*/
 /*@@MANOR_JS@@*/

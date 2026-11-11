@@ -6749,6 +6749,7 @@ class _Handler(BaseHTTPRequestHandler):
                 return
             header["action"] = action
         matchpairs = None
+        accepted = False
         if op == "action" and "index" in header["action"]:
             with self.hub.rooms.lock:
                 room = self.hub.rooms.room_for(header["room_id"])
@@ -6759,10 +6760,14 @@ class _Handler(BaseHTTPRequestHandler):
                                            or action.get("seq") != matchpairs.seq):
                 self._json(409, {"ok": False, "refresh": True, "error": "牌面已变化，请重新选择"})
                 return
+            if matchpairs is not None:
+                def acknowledge():
+                    nonlocal accepted
+                    accepted = True
+
+                header["_on_game_action_accepted"] = acknowledge
         self.hub.dispatch(sess, header)
-        if matchpairs is not None and matchpairs.seq == action["seq"]:
-            # Hub broadcasts rule errors separately. A draw that leaves this
-            # revision untouched can be retried by the browser.
+        if matchpairs is not None and not accepted:
             self._json(409, {"ok": False, "refresh": True, "error": "抽牌未完成，请重新选择"})
             return
         self._json(200, {"ok": True})

@@ -15,6 +15,12 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 抽牌配对网页版 · MATCHPAIRS-WEB-20261111
+
+**READY · 仅此一款。** 用户2026-11-11指定只推进网页版，原纸牌窗口制作，主控盯画风、内容及实际选牌；核对完成后通过PR合入main。[任务](task-packages/MATCHPAIRS-WEB-20261111.md)。base037e5d6，独立codex/matchpairs-web-20261111；主控确认8ca0070已被朋友合入，新主干还有领地/城主拖拽和页面语法修复。当前先审网页完整牌桌草稿，再核本人私牌与真实背牌索引、配对弃牌和结算。其他游戏继续暂停。
+
+
+
 ## 开拓实物牌桌 · KAITUO-TABLETOP-20261109
 
 **AI_ACCEPTED · 本款收口。** 用户2026-11-09只恢复本款，由原经营窗口制作，主控核图并独立审查通过。[任务](task-packages/KAITUO-TABLETOP-20261109.md) / [验收](review-packages/KAITUO-TABLETOP-20261109-r1.md)。产品469fa49，基线89375a8；codex/kaituo-tabletop-20261109 同步累计功能分支，实际远端版本以Git为准。

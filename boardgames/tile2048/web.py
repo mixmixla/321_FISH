@@ -4,12 +4,13 @@
 WEB_JS = r"""
 Object.assign(GRENDER,{
   tile2048(box,s){
-    box.appendChild(gTitle("tile2048","2048 · 方块合成"));
+    box.appendChild(gTitle("tile2048","2048 · 星阶合成"));
     const values=(s.board||[]).map(r=>Array.isArray(r)?r:[]);
     while(values.length<4)values.push([]);
     const board=values.slice(0,4).map(r=>r.slice(0,4).concat([0,0,0,0]).slice(0,4));
     const done=s.status==="won"||s.status==="lost"||s.winner_uid!=null;
     const room=state.gst&&state.gst.room;
+    const captured={room,token:state.token,uid:state.uid,rid:state.groom,round:room&&room.round};
     const active=!done&&room&&room.status==="playing"&&(s.turn_uid==null||s.turn_uid===state.uid)
       &&(s.players||[]).includes(state.uid);
     const root=document.createElement("div");root.className="t2048-root";
@@ -29,7 +30,8 @@ Object.assign(GRENDER,{
       const n=Number(value)||0;
       if(n){cell.classList.add("has-tile");cell.dataset.value=String(n);
         const stage=stages.indexOf(n);if(stage>=0)cell.dataset.stage=String(stage);
-        cell.textContent=String(n);
+        const number=document.createElement('b');number.className='t2048-number';number.textContent=String(n);cell.appendChild(number);
+        if(stage<0)cell.style.backgroundImage='none';
         cell.setAttribute("aria-label",String(n)+" 方块，第 "+(y+1)+" 行第 "+(x+1)+" 列");}
       else cell.setAttribute("aria-label","空格，第 "+(y+1)+" 行第 "+(x+1)+" 列");
       grid.appendChild(cell);
@@ -39,10 +41,11 @@ Object.assign(GRENDER,{
     const dirs=[
       ["up","↑ 上"],["left","← 左"],["down","↓ 下"],["right","→ 右"]
     ];
-    const send=dir=>{if(active)gameAPI("action",{room_id:state.groom,action:{op:"move",dir:dir}})};
+    const current=()=>active&&state.gst&&state.gst.state===s&&state.gst.room===captured.room&&state.token===captured.token&&state.uid===captured.uid&&state.groom===captured.rid&&state.gst.room.round===captured.round;
+    const send=dir=>{if(current())gameAPI("action",{room_id:state.groom,action:{op:"move",dir:dir}})};
     const controls=document.createElement("div");controls.className="t2048-controls";
     dirs.forEach(([dir,label])=>{const b=document.createElement("button");b.type="button";
-      b.className="t2048-btn";b.dataset.dir=dir;b.textContent=label;b.disabled=!active;
+      b.className="t2048-btn";b.dataset.dir=dir;b.textContent=label.slice(0,1);b.disabled=!active;
       b.setAttribute("aria-label","向"+label.slice(2)+"移动");b.onclick=()=>send(dir);controls.appendChild(b);});
     root.appendChild(controls);
 
@@ -61,6 +64,12 @@ Object.assign(GRENDER,{
       send(Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up"));
     },{passive:false});
     grid.addEventListener("touchcancel",()=>{startX=startY=null},{passive:true});
+    grid.tabIndex=0;grid.addEventListener('keydown',e=>{const d={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'}[e.key];if(d&&current()){e.preventDefault();send(d);}});
+    // Mouse/pen pointer swipes complement touchstart/touchend without doubling touch actions.
+    let pointer=null;
+    grid.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||!current())return;pointer=[e.clientX,e.clientY];grid.setPointerCapture(e.pointerId);grid.focus();});
+    grid.addEventListener('pointerup',e=>{if(e.pointerType==='touch'||!pointer)return;const dx=e.clientX-pointer[0],dy=e.clientY-pointer[1];pointer=null;if(Math.max(Math.abs(dx),Math.abs(dy))>=24)send(Math.abs(dx)>Math.abs(dy)?dx>0?'right':'left':dy>0?'down':'up');});
+    grid.addEventListener('pointercancel',()=>{pointer=null;});
     box.appendChild(root);
   }
 });
@@ -87,7 +96,7 @@ WEB_CSS = r"""
 .t2048-cell[data-value="256"]{background:#e2bd45;color:#fff}.t2048-cell[data-value="512"]{background:#d9b635;color:#fff}
 .t2048-cell[data-value="1024"]{background:#c99e32;color:#fff;font-size:clamp(14px,4.6vw,25px)}
 .t2048-cell[data-value="2048"]{background:#b8862d;color:#fff;box-shadow:0 0 0 2px #ffd166,0 0 16px rgba(255,209,102,.65)}
-.t2048-cell.has-tile{color:#fff;background-image:url("/game-art/tile2048-atlas.webp");background-size:400% 300%;
+.t2048-cell.has-tile{color:#fff;background-image:url("/game-art/tile2048-atlas.webp?v=anime-arcade-v1");background-size:400% 300%;
   background-repeat:no-repeat;-webkit-text-stroke:1px #061321;
   text-shadow:0 2px 4px #061321,0 0 2px #061321}
 .t2048-cell[data-stage="0"]{background-position:0% 0%}.t2048-cell[data-stage="1"]{background-position:33.3333% 0%}
@@ -105,4 +114,5 @@ WEB_CSS = r"""
 .t2048-btn:hover:not(:disabled),.t2048-btn:focus-visible{background:#2f5c79;border-color:#ffd166;outline:2px solid #ffd166;outline-offset:1px}
 .t2048-btn:disabled{opacity:.5;cursor:default}
 @media (max-width:560px){.t2048-root{padding-inline:0}.t2048-grid{gap:5px;padding:5px}.t2048-controls{gap:5px;margin-top:8px}}
+.t2048-cell{position:relative;overflow:hidden}.t2048-number{position:absolute;left:0;right:0;bottom:0;height:32%;background:#122b42;display:flex;align-items:center;justify-content:center;color:#fff;font-size:inherit;-webkit-text-stroke:0;text-shadow:0 1px 1px #000}.t2048-cell.has-tile{animation:star-tile .15s ease-out}@keyframes star-tile{from{transform:scale(.94)}to{transform:scale(1)}}#gmain:has(.t2048-root){max-height:calc(90vh - 145px)}#gmain .t2048-btn{background:#203f57;color:#f7fbff;border-radius:50%;width:43px;min-width:43px;height:43px;min-height:43px;padding:0;border:2px solid #b99b58;box-shadow:0 2px 0 #102a3c;font-size:23px}.t2048-controls{grid-template-columns:repeat(3,43px);width:max-content;gap:4px}
 """

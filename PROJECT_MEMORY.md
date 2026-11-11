@@ -20,6 +20,8 @@
 
 ## Architecture
 
+- 开拓实物牌桌在 boardgames/economy_kaituo.py 与 kaituo_web.py，货物与模型图集由 kaituo_objects.py 等格取图。rules snapshot 的 last_dice/production 显示实际骰面与入账，action_seq 用于同帧提交锁，last_trade 仅记录最后成功交易。柜台娘取固定11∶12图，视口变化时重排桌面。
+
 - 山屋惊魂沿用 `rooms` 简称，`room_names` 返回已揭房间全称，`discoveries` 记实际开门者、坐标和当次揭牌，旧房重走不会增加记录。两端按 `boardgames/manor_catalog.py` 的图号拼图。
 - 璀璨宝石的 `jewel-v2` 发展卡把图位、名称、永久宝石、费用和声望固定在同一张牌；按黑、白、红、绿、蓝排列，每级每色四张。`deck_left` 是扣除市场明牌后的剩余张数。
 

@@ -1,0 +1,16 @@
+const {chromium}=require(process.env.ARCADE_PLAYWRIGHT||'playwright-core');const {spawn}=require('node:child_process');const fs=require('node:fs'),path=require('node:path');
+const root=path.resolve(__dirname,'..'),out=path.join(root,'docs/review-assets/ANIME-ARCADE-20261106');
+const server=spawn(process.env.ARCADE_PYTHON||'D:/Project/321_FISH/.venv/Scripts/python.exe',[path.join(__dirname,'arcade_web_server.py')],{cwd:root,env:{...process.env,ARCADE_GAME:'guess_number'},windowsHide:true,stdio:['ignore','pipe','pipe']});
+(async()=>{let browser;try{
+ const port=await new Promise((res,rej)=>{server.stdout.once('data',d=>res(Number(String(d).trim())));server.once('exit',c=>rej(Error('Fixture exited '+c)));server.stderr.on('data',d=>process.stderr.write(d));}),url='http://127.0.0.1:'+port;
+ browser=await chromium.launch({headless:true,executablePath:process.env.ARCADE_CHROMIUM||'C:/Users/liang/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe'});const page=await browser.newPage({viewport:{width:1000,height:900}}),errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());await page.goto(url);
+ async function refresh(uid=7){const f=await(await fetch(url+'/fixture')).json();await page.evaluate(({f,uid})=>{state.uid=uid;state.groom='SYNTHETIC';state.gst={room:{game:'guess_number',room_id:'SYNTHETIC',round:1,status:'playing',players:[7,8],spectators:[9]},state:f.state};if(!document.querySelector('#gpanel'))openGamePanel('SYNTHETIC');renderGamePanel();},{f,uid});return f;}
+ async function shot(name){await page.locator('#gmain').evaluate(e=>e.scrollTop=0);await page.locator('#gpanel .card').screenshot({path:path.join(out,'guess-number-web-'+name+'.png')});}
+ async function number(n,uid=8){await page.locator('.number-tabs button[data-page="'+Math.floor((n-1)/25)+'"]').click();await page.locator('.number-card[data-value="'+n+'"]').click();await page.waitForTimeout(80);return refresh(uid);}
+ await refresh();await shot('start');let f=await number(73);if(f.state.secret!==null||f.state.status!=='playing')throw Error('Secret setup failed');
+ f=await number(50);if(f.state.low!==51)throw Error('Low interval failed');f=await number(90);if(f.state.high!==89)throw Error('High interval failed');await shot('decision');
+ await page.setViewportSize({width:390,height:844});await refresh(8);await shot('mobile');if(await page.locator('.number-table').evaluate(e=>e.scrollWidth>e.clientWidth+1))throw Error('Mobile overflow');
+ if(await page.locator('#gmain input').count())throw Error('Legacy integer input remains');await refresh(9);if(await page.locator('.number-card:enabled').count())throw Error('Spectator gate failed');
+ await refresh(8);f=await number(73);if(f.state.secret!==73||f.state.correct_uid!==8||f.state.scores['8']!==1)throw Error('Hit failed');await shot('ended');
+ if(errors.length)throw Error(errors.join('\n'));fs.writeFileSync(path.join(out,'guess-number-web-actions.json'),JSON.stringify({actions:f.actions,state:f.state,mobile_width:390,page_errors:errors},null,2));console.log(JSON.stringify({actions:f.actions,score:f.state.scores,page_errors:errors}));
+}finally{if(browser)await browser.close();server.kill();}})().catch(e=>{console.error(e);process.exitCode=1;});

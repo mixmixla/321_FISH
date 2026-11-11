@@ -41,6 +41,10 @@ class KaituoGame(BaseGame):
         self.phase = "setup"     # setup -> play -> done
         self.setup_count = 0     # 已布置村数
         self.last_roll = None
+        self.last_dice = None
+        self.production = []
+        self.action_seq = 0
+        self.last_trade = None
         self.rolled = False      # 本回合是否已掷骰
         self.winner = None
         self._ni = SIZE          # 顶点坐标上限 = SIZE
@@ -90,6 +94,13 @@ class KaituoGame(BaseGame):
 
     # ---------- 动作 ----------
     def act(self, uid, action):
+        messages = self._act(uid, action)
+        self.action_seq += 1
+        if action.get("op") != "trade":
+            self.last_trade = None
+        return messages
+
+    def _act(self, uid, action):
         if self.winner is not None or not self.players:
             raise GameRuleError("本局已结束")
         if uid != self.players[self.turn]:
@@ -144,12 +155,15 @@ class KaituoGame(BaseGame):
             raise GameRuleError("本回合已掷过骰")
         d1, d2 = self.rng.randint(1, 6), self.rng.randint(1, 6)
         msgs = self._resolve_roll(uid, d1 + d2)
+        self.last_dice = [d1, d2]
         self.rolled = True
         return msgs
 
     def _resolve_roll(self, uid, roll):
         """结算一次掷骰：7 点弃牌并触发盗匪，其余点数产资源（跳过盗匪地块）。"""
         self.last_roll = roll
+        self.last_dice = None  # direct sum-resolution fixtures do not invent faces
+        self.production = []
         msgs = [f"🎲 {self._nick(uid)} 掷出 {roll}"]
         if roll == 7:
             for u in self.players:
@@ -185,6 +199,7 @@ class KaituoGame(BaseGame):
                         continue
                     amt = 2 if x["city"] else 1
                     self.res[x["owner"]][t["res"]] += amt
+                    self.production.append({"r": tr[0], "c": tr[1], "uid": x["owner"], "res": t["res"], "n": amt})
                     msgs.append(f"⛰ {self._nick(x['owner'])} +{amt}{RES_CN[t['res']]}")
         return msgs
 
@@ -279,6 +294,7 @@ class KaituoGame(BaseGame):
             raise GameRuleError(f"{RES_CN[give]} 不足")
         self.res[uid][give] -= amt
         self.res[uid][want] += 1
+        self.last_trade = {"uid": uid, "give": give, "want": want, "n": amt}
         return [f"🔄 {self._nick(uid)} {amt}{RES_CN[give]} → 1{RES_CN[want]}"]
 
     def _advance(self, uid):
@@ -364,7 +380,11 @@ class KaituoGame(BaseGame):
             "score": {str(u): self._score(u) for u in self.players},
             "turn_uid": (None if (self.winner is not None or not self.players)
                          else self.players[self.turn]),
+            "action_seq": self.action_seq,
+            "last_trade": dict(self.last_trade) if self.last_trade else None,
             "last_roll": self.last_roll,
+            "last_dice": list(self.last_dice) if self.last_dice else None,
+            "production": [dict(item) for item in self.production],
             "rolled": self.rolled,
             "robber": [self.robber[0], self.robber[1]],
             "robber_pending": bool(self.robber_pending),

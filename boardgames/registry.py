@@ -24,7 +24,15 @@ class GamePackage(NamedTuple):
     assets: Optional[str] = None
 
 
-PACKAGE_MODULES: tuple = ("boardgames.azul", "boardgames.tile2048")
+PACKAGE_MODULES: tuple = (
+    "boardgames.azul",
+    "boardgames.tile2048",
+    "boardgames.chess_dou",
+    "boardgames.chess_junqi",
+    "boardgames.boards_ludo",
+    "boardgames.boards_blokus",
+    "boardgames.jokers",
+)
 
 _REGISTRY: dict = {}
 _LOADED = False

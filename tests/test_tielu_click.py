@@ -62,14 +62,20 @@ def test_painter_registers_affordable_unclaimed_routes():
         assert affordable == (hand.get(color, 0) >= length)
 
 
-def test_click_claims_nearest_affordable_route_only():
+def test_click_selects_nearest_route_and_confirmation_claims_only_that_route():
+    from boardgames.rail_table_tk import key
     sent, painted = [], []
     ui = {"state": {"status": "playing", "players": [1, 2], "turn_uid": 1,
-                    "winner_uid": None},
+                    "winner_uid": None, "routes": [
+                        {"a":0,"b":7,"color":"green","length":5,"claimed":False},
+                        {"a":1,"b":2,"color":"red","length":2,"claimed":False}]},
           "me": 1, "submit": sent.append, "repaint": lambda: painted.append(1),
+          "tl_private": {"hand":{"green":5,"red":2}},
           "tl_routes": [(0, 0, 100, 0, 0, 7, "green", 5, True),
                         (0, 60, 100, 60, 1, 2, "red", 2, True)]}
     cu._click_tielu(ui, 50, 3)
+    assert sent == [] and ui['tl_selected'] == (0, 7, 'green', 5)
+    key(ui, 'Return')
     assert sent == [{"op": "claim", "a": 0, "b": 7}]
     assert painted
 
@@ -99,30 +105,38 @@ def test_desktop_click_registration_is_wired():
     assert "_tl_seg_dist" in src
 
 
-def test_web_svg_map_and_claim_wiring():
-    src = (ROOT / "web.py").read_text(encoding="utf-8")
-    start = src.index("tielu(box,s){")
-    section = src[start:src.index("gongfang(box,s){", start)]
-    assert "stroke-width" in section
-    assert 'op:"claim"' in section
-    assert "opacity:.35" in section
-    assert "<svg" in section and "viewBox='0 0 340 260'" in section
-    assert "transparent" in section and "data-tla" in section
+def test_web_svg_map_and_claim_wiring(tmp_path):
+    import json
+    import shutil
+    import subprocess
+    from boardgames.rail_table_web import WEB_JS
+    from games_pkg.tielu import TICKETS
+
+    game = TieluGame([1, 2], seed=1)
+    fixture = tmp_path / "rail.json"
+    fixture.write_text(json.dumps({"js": WEB_JS, "state": game.snapshot(),
+                                   "private": game.private(1), "ticketCount": len(TICKETS)}),
+                       encoding="utf-8")
+    node = shutil.which("node")
+    assert node
+    run = subprocess.run([node, str(ROOT / "tests" / "rail_table_web_probe.cjs"), str(fixture)],
+                         capture_output=True, text=True, encoding="utf-8", timeout=15)
+    assert run.returncode == 0, run.stdout + run.stderr
+    assert "guarded confirmation OK" in run.stdout
 
 
 def test_desktop_painter_shows_private_goals_then_final_ticket_totals():
     g = TieluGame([1, 2], seed=79)
-    cv, ui = Canvas(), {}
+    cv, ui = Canvas(), {'tl_context': (None, None, 1), 'tl_view': 'goals'}
     cu._p_tielu(cv, g.snapshot(), 1, lambda u: f"P{u}", None, None, ui,
                 g.private(1), 480, 366)
-    assert "河城→雾谷 · 2分 · 尚未连通" in cv.text
-    assert "沙堡→金矿 · 3分 · 尚未连通" in cv.text
+    assert all(label in cv.text for label in ("河城","雾谷","沙堡","金矿","尚未连通","+2","−2","+3","−3"))
     g.hand[1]["blue"] = 3
     g.act(1, {"op": "claim", "a": 1, "b": 5})
     cv = Canvas()
     cu._p_tielu(cv, g.snapshot(), 1, lambda u: f"P{u}", None, None, ui,
                 g.private(1), 480, 366)
-    assert "河城→雾谷 · 2分 · 已连通" in cv.text
+    assert all(label in cv.text for label in ("河城","雾谷","已连通","+2"))
     g.route_deck = []
     g.ended()
     cv = Canvas()

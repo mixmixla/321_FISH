@@ -10433,7 +10433,8 @@ class Hub:
         try:
             lines = self.rooms.handle_action(sess.uid, room_id, action)
         except GameRuleError as exc:
-            self._error(sess, "game", str(exc))
+            request = action.get("_kt_request") if getattr(captured_gs, "name", None) == "kaituo" else None
+            self._error(sess, "game", str(exc), request_id=request)
             return
         room = self.rooms.room_for(room_id)
         if not room:

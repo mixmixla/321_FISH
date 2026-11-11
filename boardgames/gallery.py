@@ -4,6 +4,7 @@ Only optimized bitmaps live in assets; no base64 is injected into the chat page.
 Pillow/Tk remain lazy so the server and headless callers can import this module.
 """
 from functools import lru_cache
+from hashlib import sha256
 from pathlib import Path
 
 
@@ -15,15 +16,41 @@ COVERS = {
     "gomoku": "cover-gomoku.webp",
     "gomoku_solo": "cover-gomoku.webp",
     "gemcity": "cover-gemcity.webp",
+    "betrayal": "cover-betrayal.webp",
+    "lovelove": "cover-lovelove.webp",
+    "rps": "cover-rps.webp",
+    "dou": "cover-dou-lobby.webp",
+    "junqi": "cover-junqi-lobby.webp",
+    "balatro": "cover-balatro.webp",
 }
 FEATURED = ("tile2048", "gomoku_solo", "tielu", "azul", "gemcity")
 ART_FILES = frozenset(COVERS.values()) | {
+    "cover-junqi.webp",
     "tile2048-atlas.webp", "gomoku-board.webp", "gomoku-stones.png",
     "gemcity-tier1.webp", "gemcity-tier2.webp", "gemcity-tier3.webp",
     "gemcity-patrons.webp", "lovelove-court.webp",
     "betrayal-rooms.webp", "betrayal-items.webp",
     "betrayal-events.webp", "betrayal-omens.webp",
-    "gemcity-jewels.webp",
+    "gemcity-jewels.webp", "rps-hands.webp",
+    "tielu-coach-cards.webp", "tielu-stations.webp",
+    "cover-dou.webp",
+    "dou-beastgirls.webp",
+    "dou-terrain.webp",
+    "junqi-officers.webp",
+    "ludo-aviators.webp",
+    "ludo-cloud-airports.webp",
+    "blokus-artisans.webp",
+    "arcade-orchard.webp",
+    "arcade-bell.png",
+    "arcade-yacht.webp",
+    "arcade-atelier.webp",
+    "arcade-math.webp",
+    "arcade-numbers.webp",
+    "balatro-jokers-core.webp",
+    "cards-uno-dealer.webp",
+    "cards-blackjack-dealer.webp",
+    "economy-kaituo-terrain-v2.webp", "kaituo-merchant.webp",
+    "kaituo-goods.webp", "kaituo-models.webp",
 }
 MIME_TYPES = {".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
               ".png": "image/png"}
@@ -46,10 +73,20 @@ def read_resource(name):
     return path.read_bytes(), MIME_TYPES[path.suffix.lower()]
 
 
+@lru_cache(maxsize=len(set(COVERS.values())))
+def _cover_version(name):
+    return sha256(resource_path(name).read_bytes()).hexdigest()[:12]
+
+
 def cover_url(game):
     """Known cover URL or an empty string for the existing gradient fallback."""
     name = COVERS.get(game)
-    return "/game-art/" + name if name else ""
+    if not name:
+        return ""
+    try:
+        return f"/game-art/{name}?v={_cover_version(name)}"
+    except OSError:
+        return ""
 
 
 def prioritise(names):
@@ -58,7 +95,7 @@ def prioritise(names):
     return sorted(names, key=lambda name: ranks.get(name, len(ranks)))
 
 
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=len(set(COVERS.values())))
 def _cover_source(name):
     from PIL import Image
     with Image.open(resource_path(name)) as image:

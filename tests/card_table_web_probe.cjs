@@ -38,7 +38,7 @@ assert.equal(all(root,'ct-album-view')[0].hidden,false);assert.equal(all(root,'c
 assert.equal(all(all(root,'ct-album-view')[0],'ct-art')[0].dataset.art,'12');assert.equal(ctx.calls.length,0);
 click(all(root,'ct-album-back')[0]);assert.equal(all(root,'ct-album-grid')[0].hidden,false);assert.equal(ctx.calls.length,0);
 let market=chooseMarket();
-assert.equal(all(market,'ct-art')[0].dataset.art,'12');assert.equal(all(market,'ct-art')[0].dataset.artFile,'gemcity-tier3.webp?v=jewel-v2');
+assert.equal(all(market,'ct-art')[0].dataset.art,'12');assert.equal(all(market,'ct-art')[0].dataset.artFile,'gemcity-tier3.webp?v=anime-v1');
 assert.equal(ctx.calls.length,0,'selecting never buys');assert.equal(all(root,'ct-reserve').length,0,'no repeated per-card action rows');
 click(all(root,'ct-view-card')[0]);assert.equal(all(root,'ct-card-inspector')[0].hidden,false);assert.equal(ctx.calls.length,0);
 click(all(root,'ct-inspect-close')[0]);assert.equal(all(root,'ct-card-inspector')[0].hidden,true);

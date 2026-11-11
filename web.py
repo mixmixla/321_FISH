@@ -113,10 +113,11 @@ def _SERVED_PAGE():
     _resico['__fallback'] = resource_icon_svg('', 18)
     page = page.replace('@@UX_RESOURCE_ICONS@@', _js_json_literal(_resico))
     page = page.replace('@@UX_BG_ASSETS@@', _js_json_literal(_bg_assets_subset()))
+    from boardgames.rps_table import HANDS as rps_hands
     from boardgames.gallery import COVERS, FEATURED, cover_url
     page = page.replace('@@UX_GALLERY@@', _js_json_literal({
         "covers": {name: cover_url(name) for name in COVERS},
-        "featured": FEATURED,
+        "featured": FEATURED, "rpsHands": rps_hands,
     }))
     from boardgames.gomoku_art import WEB_JS as gomoku_art_js
     page = page.replace('/*@@GOMOKU_ART@@*/', gomoku_art_js)
@@ -130,6 +131,12 @@ def _SERVED_PAGE():
     from boardgames.card_table_web import WEB_JS as card_js, WEB_CSS as card_css
     page = page.replace('/*@@CARD_TABLE_JS@@*/', card_js)
     page = page.replace('@@CARD_TABLE_CSS@@', card_css)
+    from boardgames.kaituo_web import WEB_JS as kaituo_js, WEB_CSS as kaituo_css
+    page = page.replace("/*@@KAITUO_JS@@*/", kaituo_js).replace("@@KAITUO_CSS@@", kaituo_css)
+    from boardgames.rail_table_web import WEB_JS as rail_js, WEB_CSS as rail_css
+    from games_pkg.tielu import TICKETS as route_tickets
+    page = page.replace('/*@@RAIL_JS@@*/', rail_js).replace('@@RAIL_CSS@@', rail_css)
+    page = page.replace('@@RAIL_TICKET_COUNT@@', str(len(route_tickets)))
     from boardgames.manor_web import WEB_JS as manor_js, WEB_CSS as manor_css
     try:
         from boardgames.manor_catalog import ATLASES
@@ -138,6 +145,27 @@ def _SERVED_PAGE():
     page = page.replace('/*@@MANOR_JS@@*/', manor_js)
     page = page.replace('@@MANOR_CSS@@', manor_css)
     page = page.replace('@@MANOR_ATLASES@@', _js_json_literal(ATLASES))
+    from boardgames.arcade_halloween import WEB_JS as orchard_js, WEB_CSS as orchard_css
+    page = page.replace('/*@@ARCADE_ORCHARD_JS@@*/', orchard_js)
+    page = page.replace('@@ARCADE_ORCHARD_CSS@@', orchard_css)
+    from boardgames.arcade_yahtzee import WEB_JS as yacht_js, WEB_CSS as yacht_css
+    page = page.replace('/*@@ARCADE_YACHT_JS@@*/', yacht_js)
+    page = page.replace('@@ARCADE_YACHT_CSS@@', yacht_css)
+    from boardgames.arcade_drawguess import WEB_JS as atelier_js, WEB_CSS as atelier_css
+    page = page.replace('/*@@ARCADE_ATELIER_JS@@*/', atelier_js)
+    page = page.replace('@@ARCADE_ATELIER_CSS@@', atelier_css)
+    from boardgames.arcade_calc24 import WEB_JS as math_js, WEB_CSS as math_css
+    page = page.replace('/*@@ARCADE_MATH_JS@@*/', math_js)
+    page = page.replace('@@ARCADE_MATH_CSS@@', math_css)
+    from boardgames.arcade_numbers import WEB_JS as number_js, WEB_CSS as number_css
+    page = page.replace('/*@@ARCADE_NUMBER_JS@@*/', number_js)
+    page = page.replace('@@ARCADE_NUMBER_CSS@@', number_css)
+    from boardgames.cards_uno_web import WEB_JS as uno_js, WEB_CSS as uno_css
+    page = page.replace('/*@@CARDS_UNO@@*/', uno_js)
+    page = page.replace('/*@@CARDS_UNO_CSS@@*/', uno_css)
+    from boardgames.cards_blackjack_web import WEB_JS as blackjack_js, WEB_CSS as blackjack_css
+    page = page.replace('/*@@CARDS_BLACKJACK@@*/', blackjack_js)
+    page = page.replace('/*@@CARDS_BLACKJACK_CSS@@*/', blackjack_css)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -593,6 +621,12 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 .gcard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
 .gcard b{font-size:var(--body-font,14px)}
 .gcard .go{margin-top:auto}
+.rps-table{box-sizing:border-box;padding:12px 10px 8px;border-radius:12px;background:#fff8ec;color:#322e46;text-align:center}
+.rps-table header,.rps-table h4{font-weight:700}.rps-table p,.rps-table h4{margin:5px 0 9px}
+.rps-cards{display:flex;align-items:stretch;justify-content:center;gap:clamp(4px,1.5vw,12px)}
+.rps-card{flex:0 1 102px;min-width:0;overflow:hidden;border:2px solid var(--hand-color);border-radius:9px;padding:0;background:#fffcf6;color:#302d43;cursor:pointer}
+.rps-face{display:block;aspect-ratio:1/2;background-image:url("/game-art/rps-hands.webp");background-size:300% 100%;background-repeat:no-repeat}
+.rps-card strong{display:block;padding:6px 0;font-size:14px}.rps-card:disabled{cursor:default}.rps-card:focus-visible,.rps-card:enabled:hover{outline:3px solid var(--hand-color);outline-offset:1px}
 .gallery-cover{aspect-ratio:2/1;border-radius:16px 16px 16px 7px;margin:-12px -12px 8px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .gallery-cover img[data-gallery-cover]{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
 .gallery-cover img[hidden]{display:none}
@@ -601,6 +635,8 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 .gmap{display:grid;gap:3px;font-size:10px}
 .gmap>div{border:1px solid var(--line);border-radius:var(--r1);padding:2px;min-height:26px;text-align:center;background:var(--card)}
 .glogl{padding:1px 0;border-bottom:1px dashed var(--line)}
+/*@@CARDS_UNO_CSS@@*/
+/*@@CARDS_BLACKJACK_CSS@@*/
 .unocard{display:inline-block;border:1.5px solid var(--line);border-radius:var(--r1);padding:3px 9px;margin:2px;cursor:pointer;background:var(--card);color:var(--txt);font-size:var(--secondary-font,12px);font-weight:600;box-shadow:var(--shadow-sm)}
 .unocard.dis{background:var(--ux-disabled-background,var(--side));color:var(--ux-disabled-text,var(--dim));cursor:default;box-shadow:none;opacity:1}
 .gsec{font-weight:700;margin:8px 0 3px;font-size:var(--secondary-font,12px);color:var(--dim)}
@@ -690,6 +726,13 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 @@UX_CHAT_CSS@@
 @@UX_GAME_CSS@@
 @@CARD_TABLE_CSS@@
+@@RAIL_CSS@@
+@@KAITUO_CSS@@
+@@ARCADE_ORCHARD_CSS@@
+@@ARCADE_YACHT_CSS@@
+@@ARCADE_ATELIER_CSS@@
+@@ARCADE_MATH_CSS@@
+@@ARCADE_NUMBER_CSS@@
 @@MANOR_CSS@@
 </style>
 </head>
@@ -2557,6 +2600,7 @@ function leaveLogin(){
   state.token=null;state.uid=0;state.nick="";state.is_admin=false;
   state.roster=[];state.groups=[];state.convos=[];state.unread={};
   state.drafts={};state.blocked=[];state.scheds=[];state.cur={type:"public"};
+  if(typeof RailTable!=='undefined')RailTable.reset();
   state.groom=null;state.gst=null;state.gpriv=null;state.glog=[];state.grooms=[];state.gleft={};
   const msgs=document.getElementById("msgs");if(msgs)msgs.innerHTML="";
   const gpanel=document.getElementById("gpanel");if(gpanel)gpanel.remove();
@@ -3807,6 +3851,7 @@ function openStream(){
       if(state.groom===d.room_id){
         const previous=state.gst&&state.gst.room;
         if(!previous||previous.round!==d.room.round||d.room.status==="created"){
+          if(typeof RailTable!=='undefined')RailTable.reset();
           state.gpriv=null;state.glog=[];}
         if(d.room.status!=="playing")state.gpriv=null;
         state.gst=d;(d.events||[]).forEach(e=>state.glog.push(e));
@@ -3820,6 +3865,7 @@ function openStream(){
       if(d.game){state.fish=Object.assign({},state.fish||{});state.fish[d.game]=d.entries||[];}
       if(state.fishOpen)window.fishRender();}
     else if(d.t==="error"){
+      if(d.code==="game" && d.request_id)KaituoTable.reject(d.request_id);
       if(d.code==="kicked")leaveLogin();
       showStatus(d.text||d.code||"操作失败");
     }
@@ -4236,7 +4282,7 @@ function openGamePanel(rid){uxSelectNavigation('game');
   p.onclick=e=>{if(e.target===p)hideGamePanel()};
   renderGamePanel();
 }
-function hideGamePanel(){uxSelectNavigation('chat');state.groom=null;state.gst=null;state.gpriv=null;state.glog=[];
+function hideGamePanel(){if(typeof RailTable!=='undefined')RailTable.reset();uxSelectNavigation('chat');state.groom=null;state.gst=null;state.gpriv=null;state.glog=[];
   const p=$("#gpanel");if(p)p.remove()}
 function gHeadBtn(txt,fn){const b=document.createElement("button");b.className="gbtn";b.textContent=txt;b.onclick=fn;return b}
 function gBtn(txt,act,dis){const b=document.createElement("button");b.className="gbtn";b.textContent=txt;
@@ -4306,7 +4352,7 @@ function renderGamePanel(){
     main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
     const note=document.createElement("div");note.className="gsec";
     note.textContent=gname==="tielu"?"🏁 本局结束，保留结算 30 秒后回到房间":"🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
-  const pv=(gname==="gemcity"||gname==="lovelove"||gname==="betrayal")?null:state.gpriv;if(pv){
+  const pv=(gname==="tielu"||gname==="gemcity"||gname==="lovelove"||gname==="betrayal"||gname==="drawguess"||gname==="balatro"||gname==="uno")?null:state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
       ?pv.hand.join(" ")
@@ -4342,36 +4388,18 @@ function gLegalTos(fx,fy){
 // ---- 各游戏渲染器（s = game_state.state）----
 /*@@GOMOKU_ART@@*/
 /*@@CARD_TABLE_JS@@*/
+/*@@ARCADE_ORCHARD_JS@@*/
+/*@@ARCADE_YACHT_JS@@*/
+/*@@ARCADE_ATELIER_JS@@*/
+/*@@ARCADE_MATH_JS@@*/
+/*@@ARCADE_NUMBER_JS@@*/
 const MANOR_ATLASES=JSON.parse("@@MANOR_ATLASES@@");
+const RAIL_TICKET_COUNT=@@RAIL_TICKET_COUNT@@;
+/*@@RAIL_JS@@*/
+/*@@KAITUO_JS@@*/
 /*@@MANOR_JS@@*/
 const GRENDER={
-  guess_number(box,s){
-    const d=document.createElement("div");d.style.cssText="text-align:center;padding:6px";
-    d.innerHTML="<div class='gsec'>第 "+s.round+" 轮 · 出题 "+esc(gnick(s.owner_uid))+"</div>"
-      +(s.secret!=null?"<div>答案揭晓：<b>"+s.secret+"</b></div>"
-        :"<div style='font-size:22px;font-weight:700;margin:8px'>"+s.low+" ~ "+s.high+"</div>")
-      +(s.last_guess?"<div style='color:var(--dim)'>"+esc(gnick(s.last_guess.uid))+" 猜 "
-        +s.last_guess.val+"："+({low:"低了",high:"高了",hit:"🎉 猜中！"}[s.last_guess.dir]||"")+"</div>":"")
-      +"<div style='margin-top:8px'>"+scoreHTML(s.scores)+"</div>";
-    box.appendChild(d);
-    const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;justify-content:center;margin:8px";
-    const inp=document.createElement("input");inp.type="number";
-    inp.style.cssText="width:110px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px 8px";
-    if(s.status==="await_secret"&&s.owner_uid===state.uid){
-      const b=document.createElement("button");b.className="gbtn";b.textContent="🎲 出题";
-      b.onclick=()=>{const v=parseInt(inp.value);
-        if(v>=1&&v<=100)gameAPI("action",{room_id:state.groom,action:{secret:v}});
-        else showStatus("请输入 1~100")};
-      bar.append(inp,b);}
-    else if(s.status==="playing"){
-      const b=document.createElement("button");b.className="gbtn";b.textContent="猜！";
-      b.onclick=()=>{const v=parseInt(inp.value);
-        if(v>=s.low&&v<=s.high)gameAPI("action",{room_id:state.groom,action:{guess:v}});
-        else showStatus("数字须在 "+s.low+"~"+s.high)};
-      bar.append(inp,b);}
-    else bar.innerHTML="<span style='color:var(--dim);font-size:12px'>下一轮即将开始…</span>";
-    box.appendChild(bar);
-  },
+  guess_number(box,s){NumberTable.render(box,s);},
   gomoku_solo(box,s){ GRENDER.gomoku(box,s); },
   gomoku(box,s){
     const n=s.board.length,cell=24,pad=26,W=n*cell+pad*2;
@@ -4381,12 +4409,17 @@ const GRENDER={
       :(s.draw?"平局":"轮到 "+esc(gnick(s.turn_uid))+(s.turn_uid===state.uid?"（你执子）":"")));
     box.appendChild(info);
     const mine=s.winner_uid==null&&!s.draw&&s.turn_uid===state.uid;
+    const host=document.createElement('div');host.className='gomoku-host';
+    host.style.cssText='display:flex;gap:12px;align-items:center;max-width:'+W+'px;margin:5px auto 8px;background:#fff7e9;border:1px solid #d3bc8d;border-radius:7px;color:#55452d';
+    const portrait=document.createElement('div');portrait.setAttribute('role','img');portrait.setAttribute('aria-label','棋馆女棋手');
+    portrait.style.cssText='width:92px;height:68px;flex:none;border-radius:6px;background:url(/game-art/cover-gomoku.webp?v=anime-v1) 0 30% / 233% auto no-repeat';
+    const welcome=document.createElement('div');welcome.innerHTML='<b>五子棋 · 棋馆</b><br><small>点击交叉点，恰好五连获胜</small>';host.append(portrait,welcome);box.appendChild(host);
     const cv=document.createElement("canvas");cv.width=W;cv.height=W;
     cv.style.cssText="display:block;max-width:100%;height:auto;margin:0 auto;background:#d9a45b;border-radius:6px;touch-action:manipulation;cursor:"
       +(mine?"pointer":"default");
     box.appendChild(cv);
     const ctx=cv.getContext("2d");
-    const art=(s.solo||s.game==="gomoku_solo")&&typeof createGomokuArtPainter==="function"
+    const art=typeof createGomokuArtPainter==="function"
       ?createGomokuArtPainter(cv,paint):null;
     function paint(){
     ctx.clearRect(0,0,W,W);
@@ -4464,26 +4497,56 @@ const GRENDER={
     box.appendChild(grid);
   },
   rps(box,s){
-    const d=document.createElement("div");d.style.cssText="text-align:center;padding:6px";
-    const total=(s.players||[]).length,did=(s.submitted||[]).length;
-    d.innerHTML="<div class='gsec'>第 "+s.round+" 轮 · 已出拳 "+did+"/"+total+"</div>"
-      +"<div style='margin-top:6px'>"+scoreHTML(s.scores)+"</div>";
-    box.appendChild(d);
-    if((s.submitted||[]).includes(state.uid)){
-      const w=document.createElement("div");w.style.cssText="text-align:center;color:var(--dim);font-size:12px";
-      w.textContent="✅ 已出拳，等待揭晓…";box.appendChild(w);}
-    else if(s.status==="collecting"&&(s.players||[]).includes(state.uid)){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:8px;justify-content:center;margin:10px";
-      [["✊ 石头",0],["✋ 布",1],["✌️ 剪刀",2]].forEach(([t,c])=>bar.appendChild(gBtn(t,{choice:c})));
-      box.appendChild(bar);}
-    if((s.matches||[]).length){
-      const t=document.createElement("div");t.style.marginTop="8px";t.style.fontSize="12px";
-      t.innerHTML="<div class='gsec'>本轮对战</div>"+s.matches.map(m=>{
-        const nm=v=>v===-1?"未出拳":["✊","✋","✌️"][v];
-        return "<div class='glogl'>"+esc(gnick(m.a))+" "+nm(m.ca)+" vs "+esc(gnick(m.b))+" "+nm(m.cb)
-          +(m.winner===-1||m.winner==null?" → 平局":" → "+esc(gnick(m.winner))+" 胜")+"</div>";}).join("")
-        +((s.byes||[]).length?"<div class='glogl'>"+s.byes.map(u=>esc(gnick(u))).join("、")+" 轮空</div>":"");
-      box.appendChild(t);}
+    const hands=GALLERY.rpsHands, room=state.gst.room, uid=state.uid;
+    const submitted=s.submitted||[], players=s.players||[];
+    const section=document.createElement("section");
+    section.className="rps-table";
+    const header=document.createElement("header");
+    header.textContent="第 "+(s.round+1)+" 轮 · 已出拳 "+submitted.length+"/"+players.length;
+    section.appendChild(header);
+    const note=document.createElement("p");
+    const pending=()=>state.rpsPending?.snapshot===s&&state.rpsPending.uid===uid&&state.rpsPending.room===room.room_id;
+    note.textContent=submitted.includes(uid)||pending()?"已出拳，等待其他玩家":players.includes(uid)?"点一张牌出拳":"观战中";
+    section.appendChild(note);
+    const cards=document.createElement("div");cards.className="rps-cards";section.appendChild(cards);
+    const allowed=()=>state.groom===room.room_id&&state.uid===uid&&state.gst?.state===s
+      &&state.gst?.room?.status==="playing"&&s.status==="collecting"&&players.includes(uid)
+      &&!submitted.includes(uid)&&!pending();
+    hands.forEach(([label,sign,color],choice)=>{
+      const card=document.createElement("button");card.type="button";card.className="rps-card";
+      card.dataset.choice=String(choice);card.style.setProperty("--hand-color",color);
+      const image=document.createElement("span");image.className="rps-face";image.setAttribute("aria-hidden","true");
+      image.style.backgroundPosition=(choice*50)+"% center";card.appendChild(image);
+      const name=document.createElement("strong");name.textContent=sign+" "+label;card.appendChild(name);
+      card.disabled=!allowed();card.onclick=()=>{
+        if(card.disabled||!allowed())return;
+        const ticket={snapshot:s,uid,room:room.room_id};state.rpsPending=ticket;
+        note.textContent="已出拳，等待其他玩家";
+        cards.querySelectorAll("button").forEach(button=>button.disabled=true);
+        const retry=()=>{
+          if(state.rpsPending!==ticket)return;
+          state.rpsPending=null;
+          if(allowed())renderGamePanel();
+        };
+        gameAPI("action",{room_id:room.room_id,action:{choice,round:s.round}})
+          .then(reply=>{if(!reply?.ok)retry();},retry);
+      };cards.appendChild(card);
+    });
+    const scores=document.createElement("p");scores.innerHTML=scoreHTML(s.scores);section.appendChild(scores);
+    if((s.matches||[]).length||(s.byes||[]).length){
+      const last=document.createElement("h4");last.textContent="上轮战报 · 第 "+s.round+" 轮";section.appendChild(last);
+      const hand=value=>hands[value]?.[0]||"未出拳";
+      (s.matches||[]).forEach(match=>{
+        const line=document.createElement("div");line.className="glogl";
+        line.textContent=gnick(match.a)+" "+hand(match.ca)+" · "+gnick(match.b)+" "+hand(match.cb)
+          +(match.winner==null||match.winner===-1?" → 平局":" → "+gnick(match.winner)+" 胜");
+        section.appendChild(line);
+      });
+      if((s.byes||[]).length){
+        const line=document.createElement("div");line.textContent=s.byes.map(gnick).join("、")+" 轮空";section.appendChild(line);
+      }
+    }
+    box.appendChild(section);
   },
   spy(box,s){
     const d=document.createElement("div");d.style.cssText="padding:4px";
@@ -4757,88 +4820,9 @@ const GRENDER={
     if(s.done){const t=document.createElement("div");t.style.cssText="margin-top:8px;font-weight:800;font-size:15px";
       t.textContent="🏆 "+esc(gnick(s.winner))+" 是最后存活的忍者！";box.appendChild(t);}
   },
-  uno(box,s){
-    const my=state.uid,isMe=s.current_uid===my;
-    const d=document.createElement("div");d.style.cssText="text-align:center;padding:4px";
-    d.innerHTML="<div style='margin:6px'>桌面：<span style='display:inline-block;vertical-align:middle'>"
-      +unoCardHTML(s.top||"")+"</span>"
-      +(s.top_color?"<span style='font-size:11px;color:var(--dim)'> 当前色 "
-        +(UNO_COLOR_CN[s.top_color]||s.top_color)+"</span>":"")+"</div>"
-      +"<div>方向 "+s.direction+" · 轮到 "+esc(gnick(s.current_uid))+(isMe?"（你）":"")+"</div>"
-      +"<div style='color:var(--dim);font-size:11px;margin-top:2px'>"
-      +Object.entries(s.hand_counts||{}).map(([u,c])=>esc(gnick(+u))+"×"+c).join("　")+"</div>"
-      +"<div style='margin-top:4px'>"+scoreHTML(s.scores)+"</div>";
-    box.appendChild(d);
-    const p=state.gpriv;
-    if(p&&p.hand&&isMe){
-      const bar=document.createElement("div");bar.style.cssText="text-align:center;margin:8px";
-      p.hand.forEach((cs,i)=>{
-        const pt=unoParts(cs);
-        const isWild=pt.wild;
-        const act=()=>{
-          if(!isWild)gameAPI("action",{room_id:state.groom,action:{card:p.hand_ids[i]}});
-          else{
-            const cbar=box.querySelector(".wbar");
-            if(cbar)cbar.remove();
-            const sel=document.createElement("div");sel.className="wbar";
-            sel.style.cssText="text-align:center;margin:4px";
-            sel.innerHTML="<span style='font-size:11px;color:var(--dim)'>选颜色：</span>";
-            ["red","yellow","green","blue"].forEach(cl=>{
-              const b=document.createElement("button");b.className="gbtn";
-              b.textContent=UNO_COLOR_CN[cl];
-              b.onclick=()=>{sel.remove();
-                gameAPI("action",{room_id:state.groom,action:{card:p.hand_ids[i],color:cl}})};
-              sel.appendChild(b);});
-            box.appendChild(sel);}};
-        const c=mkCard({cls:"uno click "+pt.cls,sym:pt.sym,cor:pt.cor,title:pt.title,click:act});
-        bar.appendChild(c);});
-      box.appendChild(bar);
-      const draw=document.createElement("div");draw.style.cssText="text-align:center;margin:6px";
-      draw.appendChild(gBtn("🂠 摸牌",{draw:true}));
-      box.appendChild(draw);}
-    else if(p&&p.hand){
-      const w=document.createElement("div");w.style.cssText="text-align:center;margin-top:4px";
-      w.innerHTML="<span style='color:var(--dim);font-size:12px'>你的手牌：</span>"+p.hand.map(unoCardHTML).join("");
-      box.appendChild(w);}
-    if(s.winner_uid!=null)
-      box.appendChild(Object.assign(document.createElement("div"),
-        {style:"text-align:center;margin-top:6px",innerHTML:"🏆 "+esc(gnick(s.winner_uid))+" 出完！"
-          +(s.match_winner!=null?"　比赛冠军 "+esc(gnick(s.match_winner)):"")}));
-  },
-  blackjack(box,s){
-    const d=document.createElement("div");d.style.cssText="padding:4px";
-    d.innerHTML="<div class='gsec'>庄家："+(s.dealer||[]).map(pokerCard).join("")+"（"+s.dealer_value+"）</div>"
-      +"<div style='font-size:12px'>"+Object.entries(s.hands||{}).map(([u,h])=>{
-        const uid=+u;
-        return "<div class='glogl'>"+(uid===state.uid?"<b>你</b>":esc(gnick(uid)))
-          +"："+h.map(pokerCard).join("")+"（"+(s.hand_values[u]||0)+"）"
-          +(s.current_uid===uid?" ⏳":(s.stand||[]).includes(uid)?" 🛑 已停":"")
-          +(s.results[u]!=null?(" → "+({win:"✅ 胜",draw:"➖ 平",lose:"❌ 负"}[s.results[u]]||s.results[u])):"")+"</div>";}).join("")+"</div>";
-    box.appendChild(d);
-    if(s.status==="playing"&&s.current_uid===state.uid){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:8px;justify-content:center;margin:8px";
-      bar.appendChild(gBtn("🃏 要牌",{action:"hit"}));bar.appendChild(gBtn("🛑 停牌",{action:"stand"}));
-      box.appendChild(bar);}
-    else box.appendChild(Object.assign(document.createElement("div"),
-      {style:"text-align:center;color:var(--dim);font-size:12px",
-       textContent:s.status==="playing"?"等待 "+gnick(s.current_uid)+" 操作…":"本局结束"}));
-  },
-  calc24(box,s){
-    const d=document.createElement("div");d.style.cssText="text-align:center;padding:6px";
-    d.innerHTML="<div style='margin:8px'>"+(s.cards||[]).map(c=>vcardHTML({cls:"wide",sym:c})).join("")+"</div>"
-      +(s.status==="answering"?"<div style='color:var(--dim)'>剩余 "+s.wait+"s</div>"
-        :(s.solved_uid?"<div>🎉 "+esc(gnick(s.solved_uid))+" 答对："+esc(s.win_expr||"")+"</div>":"下一轮即将开始…"))
-      +"<div style='margin-top:6px'>"+scoreHTML(s.scores)+"</div>";
-    box.appendChild(d);
-    if(s.status==="answering"&&(s.players||[]).includes(state.uid)&&s.solved_uid==null){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;justify-content:center;margin:8px";
-      const inp=document.createElement("input");inp.placeholder="如 (5-1/5)*5";
-      inp.style.cssText="width:180px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px 8px";
-      const b=document.createElement("button");b.className="gbtn";b.textContent="作答";
-      b.onclick=()=>{const t=inp.value.trim();if(t)gameAPI("action",{room_id:state.groom,action:{expr:t}})};
-      inp.addEventListener("keydown",e=>{if(e.key==="Enter")b.click()});
-      bar.append(inp,b);box.appendChild(bar);}
-  },
+  uno(box,s){/*@@CARDS_UNO@@*/},
+  blackjack(box,s){/*@@CARDS_BLACKJACK@@*/},
+  calc24(box,s){MathTable.render(box,s);},
   matchpairs(box,s){
     const d=document.createElement("div");d.style.cssText="padding:4px";
     d.innerHTML="<div class='gsec'>轮到 "+esc(gnick(s.turn_uid))+"</div>"
@@ -4860,202 +4844,8 @@ const GRENDER={
       box.appendChild(w);}
   },
   betrayal(box,s){ ManorWeb.paint(box,s); },
-  drawguess(box,s){
-    const my=state.uid,amDrawer=s.drawer_uid===my;
-    const d=document.createElement("div");d.style.cssText="text-align:center;margin-bottom:6px;font-size:13px";
-    d.innerHTML="🎨 画手 "+esc(gnick(s.drawer_uid))+(amDrawer?"（你）":"")
-      +(s.phase==="round_end"?"　答案："+esc(s.word||""):"　猜词中…")
-      +"　第 "+s.round+" 轮　"+scoreHTML(s.scores);
-    box.appendChild(d);
-    const cv=document.createElement("canvas");cv.width=400;cv.height=300;
-    cv.style.cssText="display:block;margin:0 auto;border:1px solid var(--line,#ddd);border-radius:8px;background:#fff;cursor:crosshair";
-    box.appendChild(cv);
-    const ctx=cv.getContext("2d");ctx.lineCap="round";
-    const repaint=()=>{ctx.clearRect(0,0,400,300);
-      (s.strokes||[]).forEach(k=>{if(k.type!=="line")return;
-        ctx.beginPath();ctx.moveTo(k.x1,k.y1);ctx.lineTo(k.x2,k.y2);
-        ctx.strokeStyle=k.color||"black";ctx.lineWidth=k.width||3;ctx.stroke();});};
-    repaint();
-    if(amDrawer&&s.phase==="drawing"){
-      let drawing=false,lx=0,ly=0,pend=[];
-      const pos=e=>{const r=cv.getBoundingClientRect();
-        return [Math.round((e.clientX-r.left)*400/r.width),
-                Math.round((e.clientY-r.top)*300/r.height)];};
-      cv.onmousedown=e=>{[lx,ly]=pos(e);drawing=true};
-      cv.onmousemove=e=>{if(!drawing)return;const [x,y]=pos(e);
-        if(x===lx&&y===ly)return;
-        pend.push({type:"line",x1:lx,y1:ly,x2:x,y2:y,color:"black",width:3});
-        ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.lineWidth=3;ctx.stroke();
-        lx=x;ly=y;};
-      const flush=()=>{if(!drawing)return;drawing=false;
-        pend.forEach(k=>gameAPI("action",{room_id:state.groom,action:{stroke:k}},true));
-        pend=[];};
-      cv.onmouseup=flush;cv.onmouseleave=flush;
-      const bar=document.createElement("div");bar.style.cssText="text-align:center;margin:6px";
-      bar.appendChild(gBtn("🗑 清空",{clear:true}));box.appendChild(bar);
-      if(state.gpriv&&state.gpriv.word){
-        const w=document.createElement("div");w.style.cssText="text-align:center;margin:4px;font-weight:700";
-        w.textContent="你的词："+state.gpriv.word;box.appendChild(w);}}
-    else if(s.phase==="drawing"&&(s.players||[]).includes(my)){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;justify-content:center;margin:8px";
-      const inp=document.createElement("input");inp.placeholder="输入你猜的词";
-      inp.style.cssText="width:180px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px 8px";
-      const b=document.createElement("button");b.className="gbtn";b.textContent="猜！";
-      b.onclick=()=>{const t=inp.value.trim();if(t)gameAPI("action",{room_id:state.groom,action:{guess:t}})};
-      inp.addEventListener("keydown",e=>{if(e.key==="Enter")b.click()});
-      bar.append(inp,b);box.appendChild(bar);}
-    (s.guess_log||[]).slice(-10).forEach(x=>gLog("💬 "+gnick(x.uid)+"："+x.text+(x.ok?" ✅":"")));
-  },
-  kaituo(box,s){
-    box.appendChild(gTitle("kaituo","开拓 · 资源建设"));
-    const R_CN={wood:"木头",brick:"砖",lamb:"羊",wheat:"麦",ore:"矿"};
-    const R_COL={wood:"#8a5b2c",brick:"#c24a33",lamb:"#7fbf4f",wheat:"#e8b93c",ore:"#7a8499",desert:"#e2c9a0"};
-    const PC=["#e0535a","#4a7de0","#37a25f","#e0a13c","#9a6fd0","#26c6b0"];
-    const my=state.uid, players=s.players||[];
-    const myTurn=players.includes(my)&&s.winner_uid==null&&s.turn_uid===my;
-    const setup=s.phase==="setup", pending=!!s.robber_pending;
-    const gact=(a)=>gameAPI("action",{room_id:state.groom,action:a});
-    if(!myTurn)state.ktsel=null;
-    if(!state.ktmode)state.ktmode="road";
-    const d=document.createElement("div");
-    let html="<div style='font-size:11px;color:var(--dim);margin-bottom:4px'>"
-      +"回合 → "+esc(gnick(s.turn_uid))+"　"+scoreHTML(s.score)+"</div>";
-    if(setup)html+="<div class='gsec'>布置阶段：先点村，再点相邻顶点修路</div>";
-    else if(s.last_roll!=null)html+="<div>🎲 上次掷骰 "+s.last_roll+"</div>";
-    if(pending&&myTurn)html+="<div style='color:#c0392b;font-size:12px'>🦹 请先点地块移动盗匪</div>";
-    d.innerHTML=html;box.appendChild(d);
-    // 模式切换：布置阶段不生效，统一走 setup 手势
-    const mbar=document.createElement("div");
-    mbar.style.cssText="display:flex;gap:4px;justify-content:center;margin:2px 0 4px";
-    [["road","路"],["settle","村"],["city","城"]].forEach(k=>{
-      const on=!setup&&state.ktmode===k[0];
-      const b=document.createElement("button");b.className="gbtn";b.textContent=k[1];
-      b.style.cssText="min-width:40px;padding:2px 8px;font-size:12px;"
-        +(on?"background:#37a25f;color:#fff;border-color:#37a25f":"");
-      b.disabled=!myTurn||setup;
-      if(!b.disabled)b.onclick=()=>{state.ktmode=k[0];state.ktsel=null;renderGamePanel();};
-      mbar.appendChild(b);});
-    box.appendChild(mbar);
-    // 地图：5x5 地块 + 6x6 绝对定位交点按钮（同桌面两段式选点状态机）
-    const N=5, cell=34, board=s.board||{};
-    const wrap=document.createElement("div");
-    wrap.style.cssText="position:relative;width:"+(N*cell)+"px;height:"+(N*cell)+"px;margin:4px auto";
-    for(let r=0;r<N;r++)for(let c=0;c<N;c++){
-      const t=s.tiles[r+","+c];if(!t)continue;
-      const isRb=s.robber&&s.robber[0]===r&&s.robber[1]===c;
-      const el=document.createElement("div");
-      el.style.cssText="position:absolute;left:"+(c*cell)+"px;top:"+(r*cell)+"px;width:"
-        +cell+"px;height:"+cell+"px;box-sizing:border-box;border:1px solid rgba(0,0,0,.22);border-radius:3px;background:"
-        +(R_COL[t.res]||"#999")+";color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700";
-      el.textContent=isRb?"🦹":(t.res==="desert"?"🟤":(t.num||""));
-      if(pending&&myTurn&&!isRb){
-        el.style.cursor="pointer";el.style.borderColor="#e0535a";
-        el.style.boxShadow="inset 0 0 0 2px rgba(224,83,90,.55)";
-        el.onclick=()=>gact({op:"robber",r:r,c:c});}
-      wrap.appendChild(el);}
-    Object.keys(board).forEach(k=>{
-      const p=k.split(","),i=+p[0],j=+p[1],b=board[k];
-      const col=PC[Math.max(0,players.indexOf(b.owner))%PC.length];
-      const dot=document.createElement("div");
-      dot.style.cssText="position:absolute;left:"+(j*cell-5)+"px;top:"+(i*cell-5)+"px;width:10px;height:10px;border-radius:50%;background:"
-        +col+";border:1px solid #fff;pointer-events:none"+(b.city?";box-shadow:0 0 0 2px "+col:"");
-      wrap.appendChild(dot);});
-    const adj=(a,b)=>Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])===1;
-    const kv=(v)=>v[0]+","+v[1];
-    const pick=(v)=>{
-      if(!myTurn||pending)return;
-      const mode=setup?"setup":(state.ktmode||"road");
-      const sel=state.ktsel;
-      if(mode==="settle"){
-        if(board[kv(v)])return;
-        state.ktsel=null;gact({op:"build",kind:"settle",i:v[0],j:v[1]});return;}
-      if(mode==="city"){
-        const b=board[kv(v)];
-        if(!b||b.owner!==my||b.city)return;
-        state.ktsel=null;gact({op:"build",kind:"city",i:v[0],j:v[1]});return;}
-      if(!sel){
-        if(mode==="setup"){
-          if(board[kv(v)])return;
-          const around=[[v[0]+1,v[1]],[v[0]-1,v[1]],[v[0],v[1]+1],[v[0],v[1]-1]];
-          if(around.some(p=>board[kv(p)]))return;}
-        state.ktsel=v;renderGamePanel();return;}
-      if(sel[0]===v[0]&&sel[1]===v[1]){state.ktsel=null;renderGamePanel();return;}
-      if(!adj(sel,v))return;
-      state.ktsel=null;
-      if(mode==="setup")gact({op:"setup",i:sel[0],j:sel[1],b_i:v[0],b_j:v[1]});
-      else gact({op:"build",kind:"road",i:sel[0],j:sel[1],b_i:v[0],b_j:v[1]});};
-    for(let i=0;i<=N;i++)for(let j=0;j<=N;j++){
-      const on=state.ktsel&&state.ktsel[0]===i&&state.ktsel[1]===j;
-      const vb=document.createElement("button");
-      vb.style.cssText="position:absolute;left:"+(j*cell-9)+"px;top:"+(i*cell-9)+"px;width:18px;height:18px;box-sizing:border-box;padding:0;border-radius:50%;z-index:3;border:1px solid "
-        +(on?"#2E8B57":"rgba(0,0,0,.30)")+";background:"+(on?"#37a25f":"rgba(255,255,255,.35)")
-        +";cursor:"+(myTurn&&!pending?"pointer":"default");
-      vb.title="交点 ("+i+","+j+")";
-      if(myTurn&&!pending)vb.onclick=()=>pick([i,j]);
-      wrap.appendChild(vb);}
-    box.appendChild(wrap);
-    // 资源与建筑统计
-    const info=document.createElement("div");
-    info.innerHTML="<div class='gsec'>你的资源（"+esc(gnick(state.uid))+"）</div>";
-    const res=s.res[state.uid]||{};
-    for(const k of ["wood","brick","lamb","wheat","ore"])
-      info.innerHTML+="<span style='margin:0 6px'><span style='color:"+(R_COL[k]||"#666")+"'>"
-        +resIcon(k,14)+"</span>"+R_CN[k]+"×"+(res[k]||0)+"</span>";
-    info.innerHTML+="<div class='gsec'>定居点/城市/道路</div>"
-      +"<div style='font-size:11px;color:var(--dim)'>村 ×"+(Object.values(board).filter(v=>!v.city).length)
-      +"　城 ×"+(Object.values(board).filter(v=>v.city).length)
-      +"　路 ×"+(Object.keys(s.roads||{}).length)+"</div>";
-    box.appendChild(info);
-    // 以下为文本输入兜底（点击区之后）
-    if(!myTurn){box.appendChild(gBtn("⏭ 跳过",{op:"skip"},true));return}
-    if(s.robber_pending){
-      const rbar=document.createElement("div");rbar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-      const I=(ph)=>Object.assign(document.createElement("input"),{type:"number",placeholder:ph,
-        style:"width:52px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"}),
-        rr=I("行"),rc=I("列"),
-        rbtn=document.createElement("button");rbtn.className="gbtn go";rbtn.textContent="🦹 移动";
-      rbtn.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"robber",r:rr.value,c:rc.value}});
-      rbar.append(document.createTextNode("🦹 移动盗匪：行"),rr,document.createTextNode("列"),rc,rbtn);
-      box.appendChild(rbar);return}
-    if(s.phase==="setup"){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px";
-      const I=(ph)=>Object.assign(document.createElement("input"),{type:"number",placeholder:ph,
-        style:"width:52px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"}),
-        i=I("纵(0~5)"),j=I("横(0~5)"),bi=I("末纵"),bj=I("末横"),
-        b=document.createElement("button");b.className="gbtn";b.textContent="🏠 布置村+路";
-      b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"setup",i:i.value,j:j.value,b_i:bi.value,b_j:bj.value}});
-      [i,j,bi,bj,b].forEach(x=>bar.appendChild(x));box.appendChild(bar);return}
-    const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-    bar.appendChild(gBtn("🎲 掷骰",{op:"roll"}));
-    box.appendChild(bar);
-    const b2=document.createElement("div");b2.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-    const sel=Object.assign(document.createElement("select"),{});sel.style.cssText="border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)";
-    [["road","路"],["settle","村"],["city","城"]].forEach(k=>{const o=document.createElement("option");o.value=k[0];o.textContent=k[1];sel.appendChild(o)});
-    const I=(ph)=>Object.assign(document.createElement("input"),{type:"number",placeholder:ph,
-      style:"width:52px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"}),
-      ia=I("纵"),jb=I("横"),ib=I("末纵"),jj=I("末横"),
-      bb=document.createElement("button");bb.className="gbtn go";bb.textContent="⛏ 建造";
-    bb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"build",kind:sel.value,i:ia.value,j:jb.value,b_i:ib.value,b_j:jj.value}});
-    b2.append(document.createTextNode("建造："),sel,ia,jb);
-    if(sel.value==="road"){b2.append(ib,jj)}
-    sel.onchange=()=>{if(sel.value==="road"){b2.append(ib,jj)}};
-    b2.appendChild(bb);box.appendChild(b2);
-    const b3=document.createElement("div");b3.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center";
-    const MKS=Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
-    const MKD=Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
-    ["wood","brick","lamb","wheat","ore"].forEach(k=>{
-      const o1=document.createElement("option");o1.value=k;o1.textContent=R_CN[k];MKS.appendChild(o1);
-      const o2=document.createElement("option");o2.value=k;o2.textContent=R_CN[k];MKD.appendChild(o2);});
-    const nI=Object.assign(document.createElement("input"),{type:"number",value:"4",min:"4",
-      style:"width:52px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"});
-    const tb=document.createElement("button");tb.className="gbtn";tb.textContent="🔄 交换";
-    tb.onclick=()=>{const g=MKS.value,w=MKD.value,n=parseInt(nI.value,10)||4;
-      if(g===w){gLog("❌ 不能换同一种资源");return}
-      gameAPI("action",{room_id:state.groom,action:{op:"trade",give:g,want:w,n}});};
-    b3.append(document.createTextNode("交换 "),MKS,document.createTextNode("给 ×"),nI,document.createTextNode("→ 换 "),MKD,tb);
-    box.appendChild(b3);
-    box.appendChild(gBtn("⏭ 跳过",{op:"skip"}));
-  },
+  drawguess(box,s){AtelierTable.render(box,s);},
+  kaituo(box,s){ KaituoTable.paint(box,s); },
   lingdi(box,s){
     box.appendChild(gTitle("lingdi","领地 · 拼贴得分"));
     const FCOL={c:"#c05550",r:"#a8a48f",f:"#7fb069"};
@@ -5200,100 +4990,7 @@ const GRENDER={
       [r,c,mt,b].forEach(x=>bar.appendChild(x));bar.appendChild(gBtn("⏭ 跳过",{op:"pass"}));
       box.appendChild(bar);}
   },
-  tielu(box,s){
-    box.appendChild(gTitle("tielu","铁路 · 连线得分"));
-    const tickets=(state.gpriv&&state.gpriv.tickets)||[];
-    const goals=document.createElement("div");goals.className="gsec";
-    goals.innerHTML="<b>你的私人目标票</b> · 连通加分，未连通扣分"
-      +tickets.map(t=>"<div>"+esc((s.cities||{})[t.a])+" → "+esc((s.cities||{})[t.b])
-        +" · "+t.v+"分 · "+(t.connected?"✅ 已连通":"○ 尚未连通")+"</div>").join("");
-    if(tickets.length)box.appendChild(goals);
-    const result=s.final_scores||{};
-    if(s.winner_uid!=null){
-      const end=document.createElement("div");
-      end.innerHTML="<div class='gsec'>🏆 "+esc(gnick(s.winner_uid))+" 票证结算后总分最高</div>"
-        +"<table style='width:100%;text-align:center'><thead><tr><th>玩家</th><th>线路分</th><th>票证加分</th><th>票证扣分</th><th>总分</th></tr></thead><tbody>"
-        +(s.players||[]).map(u=>{const r=result[u]||{};
-          return "<tr><td>"+esc(gnick(u))+"</td><td>"+(r.route||0)+"</td><td>+"+(r.ticket_bonus||0)
-            +"</td><td>−"+(r.ticket_penalty||0)+"</td><td><b>"+(r.total||0)+"</b></td></tr>";}).join("")
-        +"</tbody></table>";
-      box.appendChild(end);return;
-    }
-    const P_COL={red:"#e05555",yellow:"#e8b93c",green:"#3ba55d",blue:"#4a7de0",purple:"#9b5fbf"};
-    const CN={red:"红",yellow:"黄",green:"绿",blue:"蓝",purple:"紫"};
-    const ids=Object.keys(s.cities||{}).map(Number).sort((a,b)=>a-b);
-    const n=ids.length||1,cx=170,cy=130,Rx=130,Ry=95,pos={};
-    ids.forEach((id,i)=>{const an=i/n*2*Math.PI-Math.PI/2;
-      pos[id]=[cx+Rx*Math.cos(an),cy+Ry*Math.sin(an)];});
-    const landmarks={0:[.16,.23],1:[.42,.19],2:[.72,.20],3:[.88,.43],
-      4:[.77,.76],5:[.46,.76],6:[.18,.75],7:[.10,.49]};
-    ids.forEach(id=>{if(landmarks[id])pos[id]=[340*landmarks[id][0],260*landmarks[id][1]];});
-    const pv=(state.gpriv&&state.gpriv.hand)||{};
-    const myTurn=s.turn_uid!=null&&s.turn_uid===state.uid;
-    const P2=(v)=>Math.round(v*10)/10;
-    let svg="<svg class='tl-map' role='img' aria-label='铁路旅行地图，点击可支付的线路认领' viewBox='0 0 340 260' style='width:min(100%,max(290px,calc(117.69vh - 562px)));max-width:600px;display:block;margin:4px auto;background:#e6dab9;border-radius:10px;border:1px solid #aa9168'>";
-    if(BG.tielu_travel)svg+="<image href='"+BG.tielu_travel+"' width='340' height='260' preserveAspectRatio='none' pointer-events='none'/>";
-    let routeLabels="",routeHits="";
-    const occupied=ids.map(id=>{const p=pos[id];return [p[0]-23,p[1]-9,p[0]+23,p[1]+30];});
-    (s.routes||[]).forEach(rt=>{
-      const A=pos[rt.a],B=pos[rt.b];if(!A||!B)return;
-      const claimed=!!rt.claimed;
-      const ownerColors=["#e0535a","#4a7de0","#37a25f","#e0a13c","#9a6fd0","#26c6b0"];
-      const col=claimed?ownerColors[Math.max(0,(s.players||[]).indexOf(rt.claimed))%ownerColors.length]:(P_COL[rt.color]||"#66706b");
-      const cnm=CN[rt.color]||"";
-      const canPay=!claimed&&myTurn&&(pv[rt.color]||0)>=rt.length;
-      const ln="x1='"+P2(A[0])+"' y1='"+P2(A[1])+"' x2='"+P2(B[0])+"' y2='"+P2(B[1])+"'";
-      svg+="<line "+ln+" stroke='#fff4d8' stroke-width='8' stroke-linecap='round'"
-        +(claimed||canPay?"":" style='opacity:.35'")+"/>"
-        +"<line "+ln+" stroke='"+col+"' stroke-width='"+(claimed?5:3.5)+"' stroke-linecap='round'"
-        +(claimed?"":(canPay?"":" stroke-dasharray='4 3'"))+"/>";
-      if(claimed)svg+="<line "+ln+" stroke='#fff4d8' stroke-width='1' stroke-dasharray='2 7'/>";
-      if(canPay)routeHits+="<line "+ln+" data-tla='"+rt.a+"' data-tlb='"+rt.b+"' style='cursor:pointer'"
-        +" stroke='transparent' stroke-width='16'><title>"+esc(s.cities[rt.a])+" → "+esc(s.cities[rt.b])+" · "+cnm+rt.length+"张</title></line>";
-      const choices=[];
-      for(const t of [.38,.62,.5,.26,.74,.18,.82,.44,.56]){
-        const x=A[0]+(B[0]-A[0])*t,y=A[1]+(B[1]-A[1])*t,b=[x-14,y-9,x+14,y+9];
-        const overlap=occupied.reduce((sum,r)=>sum+Math.max(0,Math.min(b[2],r[2])-Math.max(b[0],r[0]))
-          *Math.max(0,Math.min(b[3],r[3])-Math.max(b[1],r[1])),0);
-        choices.push({overlap,x,y,b});if(!overlap)break;
-      }
-      choices.sort((a,b)=>a.overlap-b.overlap);const best=choices[0],mx=best.x,my=best.y;occupied.push(best.b);
-      routeLabels+="<g pointer-events='none'><rect x='"+P2(mx-12)+"' y='"+P2(my-7)+"' width='24' height='14' rx='3' fill='#fff5dc' stroke='"+col+"'/>"
-        +"<text x='"+P2(mx)+"' y='"+P2(my+3.2)+"' fill='#263c40' font-size='9' font-weight='bold' text-anchor='middle'>"+rt.length+" "+cnm+"</text></g>";
-    });
-    svg+=routeLabels+routeHits;
-    ids.forEach(id=>{const P=pos[id];
-      svg+="<g pointer-events='none'><circle cx='"+P2(P[0])+"' cy='"+P2(P[1])+"' r='7' fill='#263c40' stroke='#fff5dc' stroke-width='2'/>"
-        +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+3)+"' fill='#fff' font-size='9' text-anchor='middle'>"+id+"</text>"
-        +"<rect x='"+P2(P[0]-21)+"' y='"+P2(P[1]+10)+"' width='42' height='18' rx='3' fill='#fff5dc' stroke='#796746'/>"
-        +"<text x='"+P2(P[0])+"' y='"+P2(P[1]+23)+"' fill='#263c40' font-size='11' font-weight='bold' text-anchor='middle'>"
-        +esc(s.cities[id]||"")+"</text></g>";});
-    svg+="</svg>";
-    const d=document.createElement("div");
-    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>"+(s.final_round?"最后一轮 · ":"")+"回合 → "+esc(gnick(s.turn_uid))
-      +"　剩线路 "+s.route_left+"　手牌×"+(s.hand_count[state.uid]||0)+"　"+scoreHTML(s.score)+"</div>"
-      +"<div class='gsec'>旅行线路 · 实线可认领，虚线需补票卡，带白点为已认领</div>"+svg;
-    d.querySelectorAll("line[data-tla]").forEach(el=>{
-      el.onclick=()=>gameAPI("action",{room_id:state.groom,
-        action:{op:"claim",a:+el.getAttribute("data-tla"),b:+el.getAttribute("data-tlb")}});});
-    box.appendChild(d);
-    if(s.turn_uid===state.uid){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-      const S=()=>Object.assign(document.createElement("select"),{style:"border-radius:8px;padding:4px;border:1px solid var(--line,#ddd)"});
-      const S_a=S();
-      ids.forEach(id=>{const o=document.createElement("option");o.value=id;
-        o.textContent=(s.cities[id]||("城市"+id));S_a.appendChild(o)});
-      bar.appendChild(document.createTextNode("认领 "));bar.appendChild(S_a);
-      bar.appendChild(document.createTextNode("→"));
-      const S_b=S();S_b.innerHTML=S_a.innerHTML;
-      const bb=document.createElement("button");bb.className="gbtn go";bb.textContent="🚂 认领";
-      bb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"claim",a:S_a.value,b:S_b.value}});
-      bar.append(S_b,bb);box.appendChild(bar);
-      const bar2=document.createElement("div");bar2.style.cssText="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap";
-      bar2.appendChild(gBtn("🎫 摸2张",{op:"draw"}));
-      bar2.appendChild(gBtn("📜 抽票证",{op:"ticket"}));
-      bar2.appendChild(gBtn("⏭ 跳过",{op:"skip"}));box.appendChild(bar2);}
-  },
+  tielu(box,s){ RailTable.paint(box,s); },
   gongfang(box,s){
     box.appendChild(gTitle("gongfang","工坊 · 工人放置"));
     const d=document.createElement("div");
@@ -5571,73 +5268,7 @@ const GRENDER={
     be.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"extend",row:row.value,tiles:ids.value.trim().split(/\\s+/).map(Number)}});
     bar.append(ids,bm,row,be,gBtn("✅ 结束回合",{op:"done"}));box.appendChild(bar);
   },
-  yahtzee(box,s){
-    box.appendChild(gTitle("yahtzee","快艇骰子 · 记分"));
-    const me=state.uid,mine=(s.scores||{})[me]||{};
-    const sig=(s.dice||[]).join(",")+"|"+(s.rolls_left||0);
-    if(state.yzsig!==sig){state.yzsig=sig;state.yzkeep=[];}
-    if(!Array.isArray(state.yzkeep))state.yzkeep=[];
-    const myturn=s.turn_uid===me&&s.winner_uid==null;
-    const canPick=!!(myturn&&s.rolled&&s.rolls_left>0&&!s.category);
-    const canScore=!!(myturn&&s.rolled&&!s.category);
-    const d=document.createElement("div");
-    d.innerHTML="<div style='font-size:11px;color:var(--dim)'>第 "+s.round+" 动 · 回合 → "+esc(gnick(s.turn_uid))
-      +"（可再重掷 "+s.rolls_left+" 次）　"+Object.entries(s.totals||{}).map(([u,v])=>esc(gnick(+u))+"="+v).join("　")+"</div>";
-    const row=document.createElement("div");
-    row.style.cssText="display:flex;gap:8px;justify-content:center;align-items:flex-end;margin:10px 0 4px;min-height:58px";
-    (s.dice||[]).forEach((v,i)=>{
-      const kept=state.yzkeep.indexOf(i)>=0;
-      const db=document.createElement("button");
-      db.className="gbtn"+(kept?" go":"");
-      db.textContent=String(v);
-      db.style.cssText="min-width:46px;height:50px;font-size:22px;font-weight:800;border-radius:12px;padding:0 8px;"
-        +(kept?"transform:translateY(-6px);border:2px solid #e0a13c;box-shadow:0 0 0 3px rgba(224,161,60,.22);":"");
-      db.title=kept?"点击取消保留":"点击保留这枚骰子";
-      if(canPick)db.onclick=()=>{
-        const k=state.yzkeep.slice(),p=k.indexOf(i);
-        if(p>=0)k.splice(p,1);else k.push(i);
-        state.yzkeep=k;renderGamePanel();
-      };else db.disabled=true;
-      row.appendChild(db);
-    });
-    d.appendChild(row);
-    if(canPick){
-      const rw=document.createElement("div");rw.style.cssText="display:flex;justify-content:center;margin:2px 0 6px";
-      const rb=document.createElement("button");rb.className="gbtn go";rb.textContent="🔁 重掷未保留";
-      rb.onclick=()=>gameAPI("action",{room_id:state.groom,
-        action:{op:"reroll",keep:state.yzkeep.slice().sort((a,b)=>a-b)}});
-      rw.appendChild(rb);d.appendChild(rw);
-    }
-    const hd=document.createElement("div");hd.className="gsec";hd.textContent="记分表（点我的格子记分）";
-    d.appendChild(hd);
-    const grid=document.createElement("div");
-    grid.style.cssText="display:grid;grid-template-columns:repeat(auto-fill,96px);gap:4px";
-    Object.entries(s.cats||{}).forEach(([k,v])=>{
-      const got=mine[k],ok=canScore&&got==null;
-      const cb=document.createElement("button");cb.className="gbtn";
-      cb.textContent=v+"："+(got==null?"-":got);
-      cb.style.cssText="font-size:11px;padding:5px 4px;"
-        +(ok?"border:1px solid #67a86b;background:rgba(103,168,107,.16);":"");
-      if(ok)cb.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"score",cat:k}});
-      else cb.disabled=true;
-      grid.appendChild(cb);
-    });
-    d.appendChild(grid);
-    box.appendChild(d);
-    if(s.turn_uid!==state.uid)return;
-    const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center";
-    bar.appendChild(gBtn("🎲 掷骰",{op:"roll"}));
-    const I=Object.assign(document.createElement("input"),{placeholder:"保留位如 0 1 2",style:"width:130px;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px"});
-    const br=document.createElement("button");br.className="gbtn";br.textContent="🔁 重掷其余";
-    br.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"reroll",keep:I.value.trim().split(/\\s+/).map(Number)}});
-    bar.append(I,br);box.appendChild(bar);
-    const bar2=document.createElement("div");bar2.style.cssText="display:flex;gap:6px;margin-top:6px;align-items:center";
-    const S=document.createElement("select");
-    Object.entries(s.cats||{}).forEach(([k,v])=>{const o=document.createElement("option");o.value=k;o.textContent=v;S.appendChild(o)});
-    const bs=document.createElement("button");bs.className="gbtn go";bs.textContent="📝 记分";
-    bs.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"score",cat:S.value}});
-    bar2.append(document.createTextNode("选分类 "),S,bs);box.appendChild(bar2);
-  },
+  yahtzee(box,s){YachtTable.render(box,s);},
   nimmt(box,s){
     box.appendChild(gTitle("nimmt","牛头王 · 避牛头"));
     const d=document.createElement("div");
@@ -5757,30 +5388,7 @@ const GRENDER={
     box.appendChild(w);
   },
   lovelove(box,s){ CardTableWeb.lovelove(box,s); },
-  halloween(box,s){
-    box.appendChild(gTitle("halloween","德国心脏病 · 翻牌抢铃"));
-    const w=document.createElement("div");w.style.cssText="font-size:12px;line-height:20px";
-    w.innerHTML="<div class='gsec'>轮到："+esc(gnick(s.turn))+"</div>"
-      +"<div>"+(Object.entries(s.counts||{}).map(([f,n])=>"<span style='margin-right:10px'>"+f+"×"+n+"</span>").join("")||"旁观")+"</div>"
-      +"<div style='margin-top:4px'>桌上："+(s.area&&s.area.length
-        ?s.area.map(f=>"<span class='vtile w' style='font-size:18px'>"+f+"</span>").join("")
-        :"<span style='color:var(--dim)'>（空）</span>")+"</div>"
-      +(s.can_slap?"<div style='color:#c2362c;font-weight:700'>🔔 桌上已有 5 个相同水果！</div>":"");
-    box.appendChild(w);
-    const me=state.uid;
-    if(s.turn===me&&!s.winner_uid){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;margin-top:8px";
-      bar.appendChild(gBtn(s.flipped?"(已翻)":"🫲 翻牌",{op:"flip"}));
-      if(s.flipped){
-        bar.appendChild(gBtn(s.can_slap?"🔔 拍铃收牌!":"拍铃(未5会扣分)",{op:"slap"}));
-        bar.appendChild(gBtn("过",{op:"pass"}));
-      }
-      box.appendChild(bar);
-    }
-    const sc=Object.entries(s.score||{}).map(([u,v])=>esc(gnick(+u))+" "+v).join("　");
-    box.appendChild(Object.assign(document.createElement("div"),
-      {style:"font-size:11px;color:var(--dim);margin-top:6px",textContent:"得分："+sc}));
-  },
+  halloween(box,s){OrchardTable.render(box,s);},
   tictactoe(box,s){
     const n=s.size||3;
     const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:6px;font-size:13px";
@@ -5858,110 +5466,8 @@ const GRENDER={
       grid.appendChild(c);}
     box.appendChild(grid);
   },
-  blokus(box,s){
-    const n=s.size||20;
-    const idxOf={};(s.players||[]).forEach((u,i)=>idxOf[u]=i);
-    const colFor=(u)=>(s.colors&&s.colors[idxOf[u]])||"#888";
-    const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:6px;font-size:13px";
-    info.innerHTML=(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 获胜":"轮到 "+esc(gnick(s.turn_uid)));
-    box.appendChild(info);
-    const grid=document.createElement("div");
-    grid.style.cssText="display:grid;grid-template-columns:repeat(20,15px);gap:1px;justify-content:center;margin:0 auto;max-width:340px";
-    for(let y=0;y<n;y++)for(let x=0;x<n;x++){
-      const c=document.createElement("div");c.className="gcell";c.style.cssText="padding:0;min-height:15px;border-radius:1px;background:"+(s.board[y][x]!=null?colFor(s.board[y][x]):"rgba(0,0,0,.06)");
-      if(s.board[y][x]==null&&state.blockMode&&s.winner_uid==null){
-        c.style.cursor="pointer";c.onclick=()=>{placeBlokus({x:x,y:y});};
-      }
-      grid.appendChild(c);}
-    box.appendChild(grid);
-    if(state.uid==null)return;
-    const meh=s.has_piece?s.has_piece[String(state.uid)]:[];
-    if(s.winner_uid!=null)return;
-    if(s.turn_uid!==state.uid){box.appendChild(document.createElement("div")).textContent="";return;}
-    const zone=document.createElement("div");zone.style.cssText="margin-top:8px";
-    const row=document.createElement("div");row.style.cssText="display:flex;flex-wrap:wrap;gap:4px;align-items:center";
-    const cat=s.pieces||{};
-    const pick=state.blokP||(meh[0]||"");
-    const ots=cat[pick]||[];
-    const oi=state.blokO||0;
-    row.appendChild(Object.assign(document.createElement("span"),{textContent:"拼块:"}));
-    (meh||[]).forEach(pc=>{
-      const b=document.createElement("button");b.className="gbtn"+(pc===pick?" go":"");b.textContent=pc;
-      b.onclick=()=>{state.blokP=pc;state.blokO=0;};row.appendChild(b);});
-    const prev=document.createElement("span");prev.style.cssText="display:inline-block;margin-left:6px";
-    if(ots.length){const oc=ots[oi];let mini="";
-      for(let r=0;r<6;r++){for(let ccol=0;ccol<6;ccol++){mini+=oc.includes(r+","+ccol)?"▣":"·";}mini+="<br>";}
-      prev.innerHTML=mini;
-      row.appendChild(prev);
-    }
-    zone.appendChild(row);
-    const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;margin-top:6px;align-items:center";
-    if(ots.length){
-      const rot=document.createElement("button");rot.className="gbtn";rot.textContent="↻ 方向 "+oi+"/"+ots.length;
-      rot.onclick=()=>{state.blokO=(oi+1)%(ots.length||1);box.innerHTML="";renderGamePanel();};
-      bar.appendChild(rot);
-    }
-    bar.appendChild(gBtn("🙋 跳过回合",{op:"pass"}));
-    const allow=document.createElement("button");allow.className="gbtn go";allow.textContent=state.blockMode?"已完成预览 · 点棋盘落子":"🔍 预览放置位置";
-    allow.onclick=()=>{state.blockMode=!state.blockMode;box.innerHTML="";renderGamePanel();};
-    bar.appendChild(allow);
-    zone.appendChild(bar);
-    box.appendChild(zone);
-    function placeBlokus(corner){gameAPI("action",{room_id:state.groom,action:{op:"place",piece:pick,oi:oi||0,x:corner.y,y:corner.x}});}
-  },
-  ludo(box,s){
-    const tr=s.track||40,per=11,ARMCOL=["#e05555","#3f6fe0","#3ba55d","#e8b93c"];
-    const idxOf={};(s.players||[]).forEach((u,i)=>idxOf[u]=i);
-    const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:6px;font-size:13px";
-    info.innerHTML=(s.winner_uid!=null?"🏆 "+esc(gnick(s.winner_uid))+" 获胜"
-      :"轮到 "+esc(gnick(s.turn_uid))+" · 🎲 "+((s.dice!=null)?s.dice:"—"));
-    box.appendChild(info);
-    const ring=(t)=>{if(t<per)return [t,0];const t2=t-per;if(t2<per)return [10,1+t2];
-      const t3=t-2*per;if(t3<per)return [10-t3,10];const t4=t-3*per;return [0,10-t4];};
-    const rc={};for(let t=0;t<tr;t++){const p=ring(t);rc[t]=[p[1],p[0]];}
-    // 中心基地的四格也映射到每玩家停机坪显示位
-    const stallPos=[[5,4],[6,5],[5,6],[4,5]];
-    const grid=document.createElement("div");
-    grid.style.cssText="display:grid;grid-template-columns:repeat(11,23px);gap:1px;justify-content:center;margin:0 auto";
-    for(let yy=0;yy<11;yy++)for(let xx=0;xx<11;xx++){
-      const cell=document.createElement("div");
-      cell.style.cssText="min-height:23px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:1px";
-      grid.appendChild(cell);}
-    // 环格
-    for(let t=0;t<tr;t++){const [ry,rx]=rc[t];const cell=grid.children[ry*11+rx];cell.style.background="#efca63";cell.style.border="1px solid #caa832";}
-    // 中心基地底色
-    for(let pl=0;pl<(s.players||[]).length;pl++){const [sy,sx]=stallPos[pl%4];
-      for(let dy=0;dy<2;dy++)for(let dx=0;dx<2;dx++){const g=grid.children[(sy+dy)*11+(sx+dx)];g.style.background=ARMCOL[pl%4];g.style.opacity="0.9";}}
-    // 子
-    for(let pl=0;pl<(s.players||[]).length;pl++){
-      const u=s.players[pl];const col=ARMCOL[pl%4];
-      (s.positions[String(u)]||[]).forEach((t,pdx)=>{
-        const st=document.createElement("div");st.style.cssText="width:16px;height:16px;border-radius:50%;background:"+col+";box-shadow:inset 0 0 0 2px rgba(255,255,255,.4)";
-        st.title="玩家"+u+" 机"+(pdx+1);
-        if(typeof t==="number"){
-          if(t<0){const [sy,sx]=stallPos[pl%4];grid.children[(sy+(pdx>>1))*11+(sx+(pdx%2))].appendChild(st);}
-          else{const [ry,rx]=rc[t];grid.children[ry*11+rx].appendChild(st);}
-        }else{ // FIN 停到基地
-          const [sy,sx]=stallPos[pl%4];grid.children[sy*11+sx].appendChild(st);
-        }});
-    }
-    box.appendChild(grid);
-    const u=state.uid;
-    if(s.turn_uid===u&&s.winner_uid==null){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;justify-content:center;margin-top:8px";
-      if(s.dice==null)bar.appendChild(gBtn("🎲 掷骰",{op:"roll"}));
-      else{
-        const pieceRow=document.createElement("div");pieceRow.style.cssText="margin-top:6px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap";
-        (s.positions[String(u)]||[]).forEach((t,pdx)=>{
-          const b=document.createElement("button");b.className="gbtn";b.textContent="机"+(pdx+1)+((t===-1)?"(起飞)":(t==="FIN"?"(到)":" →"));
-          if(t!=="FIN")b.onclick=()=>gameAPI("action",{room_id:state.groom,action:{op:"move",idx:pdx}});
-          pieceRow.appendChild(b);});
-        box.appendChild(pieceRow);
-        bar.appendChild(gBtn("🙅 结束本回合",{op:"skip"}));
-      }
-      box.appendChild(bar);
-    }
-  },
+  blokus(box,s){BoardsBlokus.paint(box,s);},
+  ludo(box,s){BoardsLudo.paint(box,s);},
   // ---- W4 重型棋类：通用"选中→目标"落子 ----
   _move_click(box,s,rows,cols,col_bg,getText,onMove){
     const info=document.createElement("div");info.style.cssText="text-align:center;margin-bottom:6px;font-size:13px";

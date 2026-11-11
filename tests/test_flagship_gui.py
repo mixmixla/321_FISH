@@ -202,23 +202,14 @@ def test_real_game_window_bindings_focus_gate_and_collapse_restore(monkeypatch):
         root.update()
         assert core.calls and core.calls[-1][1] == {"x": 0, "y": 0}
 
-        # The action button uses the same latest-state gate.  Replace the
-        # dialog provider only for this synthetic input, then trigger the
-        # actual Tk Button invoke path.
-        old_input = client_module._KIND_INPUTS["pos"]
-        client_module._KIND_INPUTS["pos"] = lambda *_args: "1,1"
-        try:
-            button = next(w for w in gw.act_btns.winfo_children()
-                          if w.cget("text") == "落子")
-            button.invoke()
-            after_invoke = len(core.calls)
-            button.focus_force()
-            root.update()
-            button.event_generate("<KeyPress-Return>", when="tail")
-            root.update()
-        finally:
-            client_module._KIND_INPUTS["pos"] = old_input
-        assert len(core.calls) >= after_invoke + 1
+        # There is no duplicate coordinate-input placement path. A second
+        # actual board click uses the same latest-state gate.
+        assert not any(w.cget('text')=='落子' for w in gw.act_btns.winfo_children())
+        before_click=len(core.calls)
+        gw.game_cv.event_generate('<Button-1>',x=round(ui['ox']+ui['cell']),
+                                 y=round(ui['oy']+ui['cell']),when='tail')
+        root.update()
+        assert len(core.calls)==before_click+1
         assert core.calls[-1][1] == {"x": 1, "y": 1}
 
         # The normal minimum layout remains usable after an explicit resize.

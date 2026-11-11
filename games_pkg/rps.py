@@ -47,6 +47,8 @@ class RpsGame(BaseGame):
             raise GameRuleError("你不在本局")
         if uid in self.submitted:
             raise GameRuleError("你已出拳")
+        if "round" in action and action["round"] != self.round:
+            raise GameRuleError("出拳所属轮次已经结束")
         c = action.get("choice")
         if isinstance(c, str):                       # R49：兼容桌面端字符串出拳
             c = {"rock": 0, "paper": 1, "scissors": 2}.get(c.strip().lower())

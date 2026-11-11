@@ -20,7 +20,7 @@ STONE_FILL = 224 / 256
 _PHOTO_LIMIT = 6
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=3)
 def _source(name):
     try:
         from PIL import Image
@@ -37,7 +37,7 @@ def _photo(cv, name, size, value=0):
     if not isinstance(cv, tk.Canvas):
         return None
     try:
-        from PIL import Image, ImageTk
+        from PIL import Image, ImageTk, ImageOps
         cache = getattr(cv, "_gomoku_art_photos", None)
         if cache is None:
             cache = cv._gomoku_art_photos = OrderedDict()
@@ -48,7 +48,10 @@ def _photo(cv, name, size, value=0):
         source = _source(name)
         if source is None:
             return None
-        if value:
+        if value == -1:
+            source=source.crop((0,0,round(source.width*.43),source.height))
+            source=ImageOps.fit(source,size,Image.Resampling.LANCZOS,centering=(.5,.3))
+        elif value:
             half = source.width // 2
             left = (value - 1) * half
             source = source.crop((left, 0, left + half, source.height))
@@ -71,6 +74,17 @@ def draw_board(cv, x0, y0, x1, y1):
         return False
     cv.create_image(x0, y0, image=photo, anchor="nw", tags="_gomoku_art_board")
     return True
+
+
+def draw_host(cv, width):
+    """Keep the visible anime player outside all playable intersections."""
+    cv.create_rectangle(8,48,width-8,122,fill='#fff7e9',outline='#d3bc8d')
+    photo=_photo(cv,'cover-gomoku.webp',(92,68),-1)
+    if photo is not None:
+        cv.create_image(11,51,image=photo,anchor='nw',tags='_gomoku_art_host')
+    cv.create_text(114,70,text='五子棋 · 棋馆',font=('Microsoft YaHei UI',12,'bold'),fill='#55452d',anchor='w')
+    cv.create_text(114,96,text='点击交叉点，恰好五连获胜',font=('Microsoft YaHei UI',9),fill='#6b6255',anchor='w')
+    return photo is not None
 
 
 def draw_stone(cv, cx, cy, radius, value):
@@ -116,7 +130,7 @@ const createGomokuArtPainter = (() => {
   }
   return function createGomokuArtPainter(cv, repaint) {
     const ctx = cv.getContext('2d');
-    const board = source('gomoku-board.webp'), stones = source('gomoku-stones.png');
+    const board = source('gomoku-board.webp?v=anime-v1'), stones = source('gomoku-stones.png?v=anime-v1');
     let pending = false;
     const refresh = () => {
       if (pending || !cv.isConnected) return;

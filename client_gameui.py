@@ -8,7 +8,7 @@ render() 按游戏名分派到对应 painter；未覆盖的游戏走 _generic �
   - 棋盘类（gomoku/connect4/othello/tictactoe/xiangqi/chess/go/kalah）
     点击格子直接落子/走子；走子类（象棋/围棋）先点己方子选中、再点落点。
   - 手牌/选卡类（uno/coc setup）点击卡片直接提交。
-  - 其余交互（rps/blackjack/calc24/werewolf/avalon/spy 的投票、技能、出拳等）
+  - 其余交互（blackjack/calc24/werewolf/avalon/spy 的投票、技能等）
     仍复用底层 _GAME_ACTIONS 按钮区，本模块只负责把局面画好看。
 
 点击坐标→动作由 handle_click() 统一分发，client 绑定一个 Canvas 单击即可。
@@ -971,6 +971,14 @@ def _turn_banner(cv, w, header_h, text, accent, ypad=8):
 
 def _hover_overlay(cv, ui):
     """按 ui['_hover'] 给当前悬停格画淡白高亮（render 收尾统一调用）。"""
+    if ui.get("game") == "junqi" and ui.get("junqi_cw"):
+        hovered = ui.get("_hover")
+        if hovered and 0 <= hovered[0] < 5 and 0 <= hovered[1] < 10:
+            x0 = ui["ox"] + hovered[0] * ui["junqi_cw"]
+            y0 = ui["oy"] + hovered[1] * ui["cell"]
+            cv.create_rectangle(x0+2, y0+2, x0+ui["junqi_cw"]-2, y0+ui["cell"]-2,
+                                outline="#e6b44b", width=2, tags="_hover")
+        return
     if ui.get("game") in ("gomoku", "gomoku_solo", "connect4"):
         _flagship_hover(cv, ui)
         return
@@ -1397,8 +1405,13 @@ def handle_drag(cv, ui, x, y, phase):
     本地即时描线（tag=dg_ink）避免等待心跳回包。
     """
     game = ui.get("game")
+    if game == "tile2048":
+        from boardgames.tile2048.desktop import drag
+        drag(cv, ui, x, y, phase)
+        return
     if game == "azul":
-        _azul_drag(cv, ui, x, y, phase)
+        from boardgames.azul.desktop import drag
+        drag(cv, ui, x, y, phase)
         return
     if game == "lingdi":
         _lingdi_drag(cv, ui, x, y, phase)
@@ -1409,13 +1422,17 @@ def handle_drag(cv, ui, x, y, phase):
     if game != "drawguess":
         return
     st = ui.get("state") or {}
-    if (st.get("status") or st.get("phase")) != "drawing" \
-            or st.get("drawer_uid") != ui.get("me"):
+    from boardgames.arcade_drawguess import can_draw, COLORS, WIDTHS
+    if not can_draw(st, ui):
+        ui.pop("dg_last", None)
         return
     mp = ui.get("dg_map")
     if not mp:
         return
     ox, oy, scale = mp
+    if phase == "down" and not (ox <= x <= ox+400*scale and oy <= y <= oy+300*scale):
+        ui.pop("dg_last", None)
+        return
     lx = max(0.0, min(400.0, (x - ox) / scale))
     ly = max(0.0, min(300.0, (y - oy) / scale))
     if phase == "down":
@@ -1432,12 +1449,16 @@ def handle_drag(cv, ui, x, y, phase):
     if abs(lx - x1) < 1 and abs(ly - y1) < 1:
         return
     ui["dg_last"] = (lx, ly)
+    color = ui.get("dg_color", COLORS[0])
+    width = ui.get("dg_width", 5)
+    color = color if color in COLORS else COLORS[0]
+    width = width if width in WIDTHS else 5
     stroke = {"type": "line", "x1": int(x1), "y1": int(y1),
-              "x2": int(lx), "y2": int(ly), "color": "black", "width": 3}
+              "x2": int(lx), "y2": int(ly), "color": color, "width": width}
     try:
         cv.create_line(ox + x1 * scale, oy + y1 * scale,
                        ox + lx * scale, oy + ly * scale,
-                       fill="black", width=3, capstyle="round", tags="dg_ink")
+                       fill=color, width=max(1, width*scale), capstyle="round", tags="dg_ink")
     except Exception:
         pass
     try:
@@ -1447,6 +1468,11 @@ def handle_drag(cv, ui, x, y, phase):
 
 
 def _cell_of(ui, x, y):
+    if ui.get("game") == "junqi" and ui.get("junqi_cw"):
+        ox, oy, cw, ch = (ui.get(k) for k in ("ox", "oy", "junqi_cw", "cell"))
+        if None in (ox, oy, cw, ch) or not (ox <= x < ox + 5*cw and oy <= y < oy + 10*ch):
+            return None
+        return int((x-ox)/cw), int((y-oy)/ch)
     if ui.get("game") == "betrayal":
         return None
     if ui.get("game") in ("gemcity", "lovelove"):
@@ -1667,6 +1693,16 @@ def _click_move(ui, x, y):
     ui["repaint"]()
 
 
+def _click_junqi(ui, x, y):
+    from boardgames.chess_junqi import click
+    click(ui, x, y)
+
+
+def _click_dou(ui, x, y):
+    from boardgames.chess_dou.desktop import click
+    click(ui, x, y)
+
+
 def _click_go(ui, x, y):
     """围棋：单击交叉点直接落子（GoGame.act 期望 {"x","y"}，无需两段式选子）。"""
     st = ui.get("state") or {}
@@ -1699,14 +1735,13 @@ def _click_kalah(ui, x, y):
 
 
 def _click_uno(ui, x, y):
-    """点击手牌出牌：由 priv.hand_ids 推断 id"""
-    cards = ui.get("cards")       # [(cx0,cy0,cx1,cy1,id)]
-    if not cards:
-        return
-    for c0x, c0y, c1x, c1y, cid in cards:
-        if c0x <= x <= c1x and c0y <= y <= c1y:
-            ui["submit"]({"card": cid})
-            return
+    from boardgames.cards_uno import click
+    click(ui, x, y)
+
+
+def _click_blackjack(ui, x, y):
+    from boardgames.cards_blackjack import click
+    click(ui, x, y)
 
 
 def _click_coc_deck(ui, x, y):
@@ -1769,14 +1804,8 @@ def _click_shogi(ui, x, y):
 
 
 def _click_ludo(ui, x, y):
-    """飞行棋：点自己的一架机（未完成）提交移动。"""
-    tokens = ui.get("tokens") or []     # [(cx,cy,idx,r)]
-    for cx, cy, idx, r in tokens:
-        if cx is None:
-            continue
-        if (x - cx) ** 2 + (y - cy) ** 2 <= r ** 2:
-            ui["submit"]({"op": "move", "idx": idx})
-            return
+    from boardgames.boards_ludo import click
+    click(ui, x, y)
 
 
 def _click_rummikub(ui, x, y):
@@ -1795,15 +1824,8 @@ def _click_rummikub(ui, x, y):
 
 
 def _click_balatro(ui, x, y):
-    """小丑牌：点出战区已出战的牌 → unselect；点手牌 → select（cid 反查自 ui）。"""
-    for c0x, c0y, c1x, c1y, cid in ui.get("balatro_sel") or ():
-        if c0x <= x <= c1x and c0y <= y <= c1y:
-            ui["submit"]({"op": "unselect", "cid": cid})
-            return
-    for c0x, c0y, c1x, c1y, cid in ui.get("balatro_cards") or ():
-        if c0x <= x <= c1x and c0y <= y <= c1y:
-            ui["submit"]({"op": "select", "cid": cid})
-            return
+    from boardgames.jokers.desktop import click
+    click(ui, x, y)
 
 
 def _toggle_solo_use(ui, slot):
@@ -1868,45 +1890,8 @@ def _click_balatro_solo(ui, x, y):
 
 
 def _click_blokus(ui, x, y):
-    """角斗士棋：点拼块 chip 选中 / 换方向 / 跳过 / 点棋盘空格落子。
-
-    落子发送 {"op":"place","piece","oi","x","y"}。服务端 blokus._place 中 x
-    为行偏移、y 为列偏移（位形已归一化，min r=0/min c=0），而 _cell_of 返回
-    (列, 行)，故此处需交换为 (x=行, y=列)。"""
-    st = ui.get("state") or {}
-    if st.get("winner_uid") is not None or st.get("turn_uid") != ui.get("me"):
-        return
-    for key, delta in (("blok_page_prev", -1), ("blok_page_next", 1)):
-        rect = ui.get(key)
-        if rect and rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]:
-            ui["blok_page"] = ui.get("blok_page", 0) + delta
-            ui["repaint"]()
-            return
-    rect = ui.get("blok_rot")
-    if rect and rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]:
-        ots = (st.get("pieces") or {}).get(ui.get("blok_pick")) or []
-        if ots:
-            ui["blok_oi"] = (ui.get("blok_oi", 0) + 1) % len(ots)
-            ui["repaint"]()
-        return
-    rect = ui.get("blok_pass")
-    if rect and rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]:
-        ui["submit"]({"op": "pass"})
-        return
-    for x0, y0, x1, y1, name in ui.get("blok_chips") or ():
-        if x0 <= x <= x1 and y0 <= y <= y1:
-            ui["blok_pick"] = name
-            ui["blok_oi"] = 0
-            ui["repaint"]()
-            return
-    c = _cell_of(ui, x, y)
-    if not c:
-        return
-    name = ui.get("blok_pick")
-    if not name or name not in ((st.get("has_piece") or {}).get(str(ui.get("me"))) or []):
-        return
-    ui["submit"]({"op": "place", "piece": name,
-                  "oi": ui.get("blok_oi", 0), "x": c[1], "y": c[0]})
+    from boardgames.boards_blokus import click
+    click(ui, x, y)
 
 
 def _gc_afford(tokens, discount, card):
@@ -2005,9 +1990,9 @@ _CLICKS = {
     "gomoku": _click_xy, "othello": _click_xy, "tictactoe": _click_xy,
     "go": _click_go, "xiangqi": _click_move, "chess": _click_move,
     "connect4": _click_col, "kalah": _click_kalah,
-    "uno": _click_uno, "coc": _click_coc_deck,
+    "uno": _click_uno, "blackjack": _click_blackjack, "coc": _click_coc_deck,
     "halma": _click_move, "checkers": _click_move,
-    "junqi": _click_move, "dou": _click_move,
+    "junqi": _click_junqi, "dou": _click_dou,
     "shogi": _click_shogi, "ludo": _click_ludo,
     "rummikub": _click_rummikub, "balatro": _click_balatro,
     "balatro_solo": _click_balatro_solo,   # 单人版：商店/消耗品 + select/unselect
@@ -2022,6 +2007,14 @@ def _click_lovelove(ui, x, y):
 
 
 _CLICKS["lovelove"] = _click_lovelove
+
+
+def _click_azul(ui, x, y):
+    from boardgames.azul.desktop import click
+    click(ui, x, y)
+
+
+_CLICKS["azul"] = _click_azul
 
 
 def _click_betrayal(ui, x, y):
@@ -2515,12 +2508,13 @@ def _p_gomoku(cv, st, me, nick, submit, repaint, ui, priv, w, h):
     accent = THEME["gomoku"][1]
     n = st.get("size") or 15
     game = "gomoku_solo" if st.get("game") == "gomoku_solo" else "gomoku"
-    use_art = game == "gomoku_solo"
+    use_art = True  # Both real-player and solo games share the same physical set.
     if use_art:
         from boardgames import gomoku_art
     title = flagship_status(game, st, me, nick)
     _turn_banner(cv, w, 46, title, accent)
-    ox, oy, cell = _fit(n, w, h, header=46)
+    gomoku_art.draw_host(cv, w)
+    ox, oy, cell = _fit(n, w, h, header=126)
     ui.update(ox=ox, oy=oy, cell=cell, n=n, rows=n, cols=n, game=game)
     # 棋盘（纸面木纹底）加柔和投影
     _soft_shadow(cv, ox - 18, oy - 14, ox + n * cell + 14, oy + n * cell + 14,
@@ -3041,58 +3035,8 @@ _PAINTERS["go_solo"] = _p_go
 
 @_register("uno")
 def _p_uno(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["uno"][1]
-    title = "🃏 UNO"
-    if st.get("match_winner"):
-        title = f"🏆 {nick(st['match_winner'])} 赢得整局"
-    elif st.get("winner_uid"):
-        title = f"🏆 {nick(st['winner_uid'])} 出完手牌"
-    elif st.get("current_uid"):
-        title += f"　轮到 {nick(st['current_uid'])}"
-    _turn_banner(cv, w, 46, title, accent)
-    ccmap = {"red": "#e05555", "yellow": "#f2c94c", "green": "#4a9b5f",
-             "blue": "#4a7de0"}
-    # 弃牌堆顶
-    top = st.get("top")
-    _text(cv, w / 2 - 130, 100, "弃牌堆顶", _MUTED, _FONT_F)
-    if top:
-        # 弃牌堆顶：统一卡面自带柔影，直接绘制
-        _draw_uno_card(cv, w / 2 - 150, 96, 100, 140, top, ccmap, _FONT_BIG)
-        # 刚出的牌（top 即上一手）：淡金描边呼吸渐隐 + 金色星点一簇（≤14，纯时间推导）
-        _g_play_fx(cv, ui, time.monotonic(), top,
-                   w / 2 - 150, 96, 100, 140, repaint, base=3)
-    _text(cv, w / 2 + 60, 100, "方向 " + st.get("direction", "→"), _MUTED, _FONT_F)
-    hc = st.get("hand_counts") or {}
-    _text(cv, w / 2 + 60, 130, "牌数：" + "　".join(
-        f"{nick(int(u))}:{c}" for u, c in sorted(hc.items())), _MUTED, _FONT_F)
-    # 手牌（私有）
-    hand = []
-    hand_ids = []
-    if priv and isinstance(priv.get("hand"), list):
-        hand = priv["hand"]
-        hand_ids = priv.get("hand_ids") or list(range(len(hand)))
-    if hand:
-        _text(cv, w / 2, h - 40, "你的手牌（点击出牌）", _MUTED, _FONT_F)
-        cw, ch = 64, 92
-        gap = 6
-        total = len(hand) * (cw + gap) - gap
-        x0 = (w - total) / 2
-        cards = []
-        rects = []
-        for i, cstr in enumerate(hand):
-            cx0 = x0 + i * (cw + gap)
-            y0 = h - 150
-            on, dy = _lift(cv, ui, i, cx0, y0, cx0 + cw, y0 + ch, 9, "#ffd75e")
-            if on:                     # 悬停牌加轻微呼吸光环辅助视觉（复用 _g_breath）
-                _g_card_breath_ring(cv, time.monotonic(), cx0, y0,
-                                    cx0 + cw, y0 + ch)
-            _draw_uno_card(cv, cx0, y0 + dy, cw, ch, cstr, ccmap, _FONT_B,
-                           selected=on)
-            cards.append((cx0, y0, cx0 + cw, y0 + ch, hand_ids[i]))
-            rects.append((cx0, y0 - 18, cx0 + cw, y0 + ch))
-        _hov_rects(ui, rects)
-        ui.update(game="uno", cards=cards)
-    ui.update(me=me)
+    from boardgames.cards_uno import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 def _draw_uno_card(cv, x0, y0, w, h, cstr, ccmap, font, selected=False):
@@ -3114,28 +3058,8 @@ def _draw_uno_card(cv, x0, y0, w, h, cstr, ccmap, font, selected=False):
 
 @_register("blackjack")
 def _p_blackjack(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["blackjack"][1]
-    title = "🂠 21点"
-    if st.get("results"):
-        _text(cv, w / 2, 30, "结算：" + "，".join(
-            f"{nick(int(u))} {'胜' if r=='win' else '平' if r=='draw' else '负'}"
-            for u, r in st["results"].items()), _WHITE, _FONT_B)
-    _turn_banner(cv, w, 46, title, accent)
-    hands = st.get("hands") or {}
-    y = 150
-    # 庄家
-    _text(cv, 30, y - 14, "庄家", _MUTED, _FONT_F, anchor="w")
-    deal = st.get("dealer") or []
-    for i, c in enumerate(deal):
-        _draw_poker(cv, 30 + i * 62, y, c, i == 0)
-    y += 92
-    for u, cards in hands.items():
-        who = "我" if int(u) == me else nick(int(u))
-        _text(cv, 30, y - 6, who + f"（{st.get('hand_values', {}).get(u,'')}点）",
-              _MUTED, _FONT_F, anchor="w")
-        for i, c in enumerate(cards):
-            _draw_poker(cv, 30 + i * 58, y, c, False)
-        y += 88
+    from boardgames.cards_blackjack import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 def _draw_poker(cv, x, y, cstr, face_down=False):
@@ -3156,92 +3080,30 @@ def _draw_poker(cv, x, y, cstr, face_down=False):
 
 @_register("rps")
 def _p_rps(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["rps"][1]
-    phase = st.get("phase", "collecting")
-    title = "✊✌️✋ 石头剪刀布"
-    if phase == "collecting":
-        title += f"　已出拳 {len(st.get('submitted') or [])}/{len(st.get('players') or [])}"
-    else:
-        title += "　揭晓中…"
-    _turn_banner(cv, w, 46, title, accent)
-    _status_hud(cv, w, 68, st, me, nick, accent)      # F6：阶段·轮次 + 计分
-    icons = ["✊", "✋", "✌️"]
-    sizes = [("石头", 0), ("剪刀", 1), ("布", 2)]
-    gap = 90
-    bgx = (w - (gap * 3)) / 2 + gap / 2
-    y = h / 2 + 20
-    # 三个大图标展示
-    for i, (name, code) in enumerate(sizes):
-        cx = bgx + i * gap
-        f = _shade(accent, 0.35)
-        cv.create_oval(cx - 44, y - 44, cx + 44, y + 44, fill=f, outline=_WHITE,
-                       width=2)
-        _text(cv, cx, y, icons[code], _WHITE, (_FONT_BIG[0], 30))
-        _text(cv, cx, y + 64, name, _MUTED, _FONT_F)
-    # 已出拳名单
-    subm = st.get("submitted") or []
-    if subm:
-        _text(cv, w / 2, y - 100, "已出拳：" + "　".join(nick(int(u)) for u in subm),
-              _MUTED, _FONT_F)
-    # 最近战报（对战结果可视化：逐对呈现双方出拳与胜负，替代原「请见日志」）
-    matches = st.get("matches") or []
-    byes = st.get("byes") or []
-    if matches or byes:
-        rnd = st.get("round") or 0
-        top = y + 104
-        row_h = 44
-        sx = min(1.0, w / 560.0)          # 横向偏移随画布宽度缩放，窄窗不溢出
-        _text(cv, w / 2, top - 24, f"上轮战报 · 第 {rnd} 轮", _MUTED, _FONT_B)
-        rows = [("m", m) for m in matches] + [("b", u) for u in byes]
-        avail = max(1, int((h - top - 14) / row_h))   # 只画放得下的行，剩余折叠
-        for i, (kind, item) in enumerate(rows[:avail]):
-            ry = top + i * row_h
-            if kind == "b":
-                _text(cv, w / 2, ry, f"{nick(int(item))} 轮空（本轮无对手）",
-                      _MUTED, _FONT_F)
-                continue
-            a, b, wu = item.get("a"), item.get("b"), item.get("winner")
-            ca, cb = item.get("ca", -1), item.get("cb", -1)
-            ga = "－" if ca == -1 else icons[ca]
-            gb = "－" if cb == -1 else icons[cb]
-            win_a, win_b = (wu == a), (wu == b)
-            na = ("🏆 " if win_a else "") + nick(int(a))
-            nb = nick(int(b)) + (" 🏆" if win_b else ("（平）" if wu == -1 else ""))
-            _text(cv, w / 2 - 96 * sx, ry, na, _OK if win_a else _MUTED,
-                  _FONT_B, anchor="e")
-            _text(cv, w / 2 - 44 * sx, ry, ga, _WHITE if win_a else _MUTED,
-                  (_FONT_BIG[0], 16))
-            _text(cv, w / 2, ry, "⚔", _MUTED, _FONT_F)
-            _text(cv, w / 2 + 44 * sx, ry, gb, _WHITE if win_b else _MUTED,
-                  (_FONT_BIG[0], 16))
-            _text(cv, w / 2 + 96 * sx, ry, nb, _OK if win_b else _MUTED,
-                  _FONT_B, anchor="w")
-        rest = len(rows) - avail
-        if rest > 0:
-            _text(cv, w / 2, top + avail * row_h, f"…另有 {rest} 场", _MUTED, _FONT_F)
+    from boardgames.rps_table import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
+
+
+def _click_rps(ui, x, y):
+    from boardgames.rps_table import click
+    click(ui, x, y)
+
+
+_CLICKS["rps"] = _click_rps
 
 
 @_register("calc24")
 def _p_calc24(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["calc24"][1]
-    title = "➗ 24点"
-    if st.get("solved_uid") is not None:
-        title = f"🎉 {nick(st['solved_uid'])} 答对！{st.get('win_expr','')}"
-    else:
-        title += f"　第 {st.get('round',1)} 轮"
-    _turn_banner(cv, w, 46, title, accent)
-    _status_hud(cv, w, 68, st, me, nick, accent)      # F6：阶段·轮次 + 计分
-    cards = st.get("cards") or []
-    cw, ch = 86, 120
-    total = len(cards) * (cw + 16) - 16
-    x0 = (w - total) / 2
-    for i, v in enumerate(cards):
-        cx = x0 + i * (cw + 16)
-        _card_face(cv, cx, h / 2 - 60, cx + cw, h / 2 - 60 + ch, face="#ffffff",
-                   edge="#cccccc", r=_UXR_BIG)
-        _text(cv, cx + cw / 2, h / 2 - 60 + ch / 2, str(v), "#333", _FONT_BIG)
-    _text(cv, w / 2, h / 2 - 95, "用 + - × ÷ 凑出 24（答案写进下方输入框）",
-          _MUTED, _FONT_F)
+    from boardgames.arcade_calc24 import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
+
+
+def _click_calc24(ui, x, y):
+    from boardgames.arcade_calc24 import click
+    click(ui, x, y)
+
+
+_CLICKS["calc24"] = _click_calc24
 
 
 @_register("coc")
@@ -3662,114 +3524,14 @@ def _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
 
 @_register("junqi")
 def _p_junqi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    rows = st.get("rows") or 10
-    cols = st.get("cols") or 5
-    legend = st.get("legend") or {}
-    now = time.monotonic()
-    breathing = _g_breath(now)             # 呼吸辉光强度（纯时间推导，idle 唯一增量）
-    anchors = []                           # 棋子中心，作胜利星点锚点
-
-    def pt(cv, y, x, code, x0, y0, cell):
-        if not code:
-            return
-        side = 1 if code >= 40 else 0
-        rank = code - 40 if code >= 40 else code - 10
-        cn = legend.get(str(rank), str(rank))
-        side_col = ("#e05555" if side == 0 else "#2c2c2c")
-        cx, cy = x0 + cell / 2, y0 + cell / 2
-        anchors.append((cx, cy))
-        _junqi_piece(cv, cx, cy, cell, cn, side_col, breathing)
-
-    _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
-                "junqi", rows, cols, "⚔ 军棋（明棋）", pt)
-    # ---- 最近一步金色光晕标记（服务端 last_move 目标格）----
-    lastpx = None
-    last = st.get("last_move")
-    if last and len(last) == 2 and last[1]:
-        cell = ui.get("cell") or 0
-        try:
-            lx, ly = int(last[1][0]), int(last[1][1])
-        except (TypeError, ValueError, IndexError):
-            lx = ly = -1
-        if 0 <= lx < cols and 0 <= ly < rows and cell:
-            lastpx = (ui["ox"] + lx * cell + cell / 2, ui["oy"] + ly * cell + cell / 2)
-    # ---- 动效：落子光晕/微粒子 + 胜利星点（数量封顶 ≤48）----
-    _g_draw_last(cv, ui, now, lastpx, ui.get("cell") or 0)
-    # ---- 结果反馈：炸弹/挖雷/兑子/吃子徽标（服务端 last_event）----
-    evpx = evkind = None
-    ev = st.get("last_event")
-    cell = ui.get("cell") or 0
-    if ev and cell:
-        ex, ey = int(ev.get("x", -1)), int(ev.get("y", -1))
-        if 0 <= ex < cols and 0 <= ey < rows:
-            evpx = (ui["ox"] + ex * cell + cell / 2,
-                    ui["oy"] + ey * cell + cell / 2)
-            evkind = ev.get("kind")
-    _g_draw_event(cv, ui, now, evpx, evkind, cell)
-    _g_draw_win(cv, ui, now, w, anchors, breathing,
-                st.get("winner_uid") is not None)
-    _anim_need(ui, repaint, gap=0.04, cap=180)
+    from boardgames.chess_junqi import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 @_register("dou")
 def _p_dou(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    rows = st.get("rows") or 9
-    cols = st.get("cols") or 7
-    water = st.get("water") or []
-
-    def pt(cv, y, x, code, x0, y0, cell):
-        inw = water and y < len(water) and x < len(water[y]) and water[y][x]
-        if inw:
-            cv.create_rectangle(x0, y0, x0 + cell, y0 + cell,
-                                fill="#3f8fe0", outline="#2f6bc0", width=2)
-        cx, cy = x0 + cell / 2, y0 + cell / 2
-        if not code:
-            return
-        if code >= 10:
-            a, side = code - 10, 1
-        else:
-            a, side = code, 0
-        # 营格标红底
-        camp = (x, y) in ((3, 0), (3, 8))
-        if camp:
-            _disc(cv, cx, cy, cell * 0.44, "#a02f2f", outline="#7a1f1f")
-        else:
-            _disc(cv, cx, cy, cell * 0.42, "#f6f4ee", outline=_PANEL_BD)
-        cn = _DOU_CN.get(a, "")
-        _dou_beast(cv, cx, cy - cell * 0.06, cell, a,
-                   ink="#7a2020" if camp else "#333333")
-        cv.create_text(cx, cy + cell * 0.30, text=cn,
-                       fill="#7a2020" if camp else "#333",
-                       font=(_FONT_F[0], max(8, int(cell * 0.16))),
-                       anchor="center")
-
-    _p_rectgrid(cv, st, me, nick, submit, repaint, ui, priv, w, h,
-                "dou", rows, cols, "🐭 斗兽棋", pt)
-    # ---- 最近一步金色光晕标记（服务端 last_move 目标格）----
-    now = time.monotonic()
-    lastpx = None
-    last = st.get("last_move")
-    if last and len(last) == 2 and last[1]:
-        cell = ui.get("cell") or 0
-        try:
-            lx, ly = int(last[1][0]), int(last[1][1])
-        except (TypeError, ValueError, IndexError):
-            lx = ly = -1
-        if 0 <= lx < cols and 0 <= ly < rows and cell:
-            lastpx = (ui["ox"] + lx * cell + cell / 2, ui["oy"] + ly * cell + cell / 2)
-    _g_draw_last(cv, ui, now, lastpx, ui.get("cell") or 0)
-    # ---- 结果反馈：吃子/兑子/获胜徽标（服务端 last_event）----
-    evpx = evkind = None
-    ev = st.get("last_event")
-    cell = ui.get("cell") or 0
-    if ev and cell:
-        ex, ey = int(ev.get("x", -1)), int(ev.get("y", -1))
-        if 0 <= ex < cols and 0 <= ey < rows:
-            evpx = (ui["ox"] + ex * cell + cell / 2,
-                    ui["oy"] + ey * cell + cell / 2)
-            evkind = ev.get("kind")
-    _g_draw_event(cv, ui, now, evpx, evkind, cell)
-    _anim_need(ui, repaint, gap=0.04, cap=180)
+    from boardgames.chess_dou.desktop import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 @_register("shogi")
@@ -3867,321 +3629,14 @@ def _p_shogi(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("blokus")
 def _p_blokus(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["blokus"][1]
-    n = st.get("size") or 20
-    ended = st.get("winner_uid") is not None
-    title = "角斗士棋"
-    title_uid = st.get("winner_uid") if ended else st.get("turn_uid")
-    title_name = str(nick(title_uid)) if title_uid is not None else ""
-    nick_limit = max(4, int((w - 220) // 20))
-    if len(title_name) > nick_limit:
-        title_name = title_name[:nick_limit - 1] + "…"
-    if ended:
-        title = f"🏆 {title_name} 获胜"
-    elif st.get("turn_uid"):
-        title += f"　轮到 {title_name}"
-    # Blokus style sample: a quiet surface with a small piece mark, while
-    # the board/player colors retain the game's own identity.
-    _rrect(cv, 8, 8, w - 8, 44, _UXR_BIG, _UXC["surface"], _PANEL_BD)
-    for dx, dy in ((0, 0), (0, 8), (8, 8)):
-        cv.create_rectangle(22 + dx, 18 + dy, 28 + dx, 24 + dy,
-                            fill=accent, outline="")
-    _text(cv, 48, 26, title, _TXT, _FONT_H, anchor="w")
-    board = st.get("board") or []
-    players = st.get("players") or []
-    colors = st.get("colors") or ["#e05555", "#3f6fe0", "#3ba55d", "#e8b93c"]
-    placed = st.get("placed") or {}
-    has_piece = st.get("has_piece") or {}
-    catalog = st.get("pieces") or {}
-    panel_w = max(150, int(w * 0.22))
-    cell = max(4, min((w - panel_w - 24) / n, (h - 46 - 24) / n))
-    bx = 10
-    by = 46 + (h - 46 - n * cell) / 2
-    ui.update(ox=bx, oy=by, cell=cell, n=n, game="blokus")
-    cv.create_rectangle(bx - 4, by - 4, bx + n * cell + 4, by + n * cell + 4,
-                        fill="#f0ead8", outline="#888", width=2)
-    for y in range(n):
-        for x in range(n):
-            v = board[y][x]
-            fill = "#f0ead8"
-            if v is not None and v in players:
-                ci = players.index(v)
-                fill = _shade(colors[ci % len(colors)], 0.08) if v != me \
-                    else _shade(colors[ci % len(colors)], 0.3)
-            cv.create_rectangle(bx + x * cell, by + y * cell,
-                                bx + (x + 1) * cell, by + (y + 1) * cell,
-                                fill=fill, outline="#d8d0b8", width=1)
-    # 最近一步标记：本次落子覆盖的格子加金色描边
-    for rc in (st.get("last_move") or []):
-        try:
-            lr, lc = int(rc[0]), int(rc[1])
-        except (TypeError, ValueError, IndexError):
-            continue
-        if 0 <= lr < n and 0 <= lc < n:
-            cv.create_rectangle(bx + lc * cell + 1, by + lr * cell + 1,
-                                bx + (lc + 1) * cell - 1, by + (lr + 1) * cell - 1,
-                                outline="#ffd75e", width=2)
-    # 右侧面板：战况 + 交互区（选择拼块 / 换方向 / 跳过 / 点棋盘落子）
-    px = bx + n * cell + 14
-    py = by + 4
-    right = w - 12
-    panel_width = right - px
-    _rrect(cv, px - 8, by - 12, w - 4, h - 6, _UXR_BIG,
-           _UXC["surface"], _PANEL_BD)
-    _text(cv, px, py, "战况", _TXT, _FONT_B, anchor="w")
-    py += 20
-    for i, u in enumerate(players):
-        col = colors[i % len(colors)]
-        label = "我" if u == me else str(nick(u))
-        if len(label) > 5:
-            label = label[:4] + "…"
-        cv.create_oval(px, py - 3, px + 6, py + 3, fill=col, outline="")
-        _text(cv, px + 12, py, label, _TXT, (_FONT_F[0], 9), anchor="w")
-        _text(cv, right - 4, py, f"{placed.get(str(u), 0)} 格", _UXC["text_secondary"],
-              (_FONT_F[0], 9), anchor="e")
-        py += 16
-    py += 6
-    # 每帧重置点击热区，避免残留失效区域
-    ui["blok_chips"] = []
-    ui["blok_rot"] = None
-    ui["blok_pass"] = None
-    ui["blok_page_prev"] = None
-    ui["blok_page_next"] = None
-    my_turn = (not ended) and st.get("turn_uid") == me
-    mine = has_piece.get(str(me)) or []
-    if my_turn and mine:
-        pick = ui.get("blok_pick")
-        if pick not in mine:
-            pick = mine[0]
-            ui["blok_pick"] = pick
-            ui["blok_oi"] = 0
-            ui["blok_page"] = 0
-        ots = list(catalog.get(pick) or [])
-        oi = ui.get("blok_oi", 0) % len(ots) if ots else 0
-        if ots:
-            ui["blok_oi"] = oi
-        _text(cv, px, py, f"拼块 · {pick}", _TXT, _FONT_B, anchor="w")
-        _text(cv, px, py + 14, f"方向 {oi + 1}/{len(ots)}" if ots else "选择后点棋盘",
-              _UXC["text_secondary"], (_FONT_F[0], 9), anchor="w")
-        # A bounded preview shows rotation feedback without pushing controls down.
-        if ots:
-            cells = []
-            for value in ots[oi]:
-                try:
-                    a, b = map(int, str(value).split(","))
-                except (ValueError, TypeError):
-                    continue
-                cells.append((a, b))
-            if cells:
-                rows = max(a for a, _ in cells) + 1
-                cols = max(b for _, b in cells) + 1
-                msz = min(6, 24 / max(rows, cols))
-                mx0, my0 = right - cols * msz, py - 5
-                for a, b in cells:
-                    cv.create_rectangle(mx0 + b * msz, my0 + a * msz,
-                                        mx0 + (b + 1) * msz, my0 + (a + 1) * msz,
-                                        fill=accent, outline=_UXC["surface"])
-        py += 28
-        # Keep actions anchored above the bottom hint. Page the inventory rather
-        # than shrinking click targets or letting four-player inventories overflow.
-        actions_y = h - 56
-        gap, chh = 4, 24
-        cols_n = max(1, int((panel_width + gap) // 46))
-        cw = (panel_width - gap * (cols_n - 1)) / cols_n
-        rows_fit = max(1, int((actions_y - 8 - py + gap) // (chh + gap)))
-        paged = len(mine) > rows_fit * cols_n
-        if paged:
-            rows_fit = max(1, int((actions_y - 36 - py + gap) // (chh + gap)))
-        capacity = rows_fit * cols_n
-        page_count = (len(mine) + capacity - 1) // capacity
-        page = max(0, min(int(ui.get("blok_page", 0)), page_count - 1))
-        ui["blok_page"] = page
-        chips = []
-        cx, cy = px, py
-        for idx, nm in enumerate(mine[page * capacity:(page + 1) * capacity]):
-            if idx and idx % cols_n == 0:
-                cx = px
-                cy += chh + gap
-            sel = (nm == pick)
-            _rrect(cv, cx, cy, cx + cw, cy + chh, _UXR_CTRL,
-                   accent if sel else _UXC["surface"], accent if sel else _PANEL_BD,
-                   2 if sel else 1)
-            _text(cv, cx + cw / 2, cy + chh / 2, nm,
-                  (_WHITE if sel else _TXT), (_FONT_F[0], 9, "bold") if sel
-                  else (_FONT_F[0], 9))
-            chips.append((cx, cy, cx + cw, cy + chh, nm))
-            cx += cw + gap
-        ui["blok_chips"] = chips
-        if paged:
-            pager_y = actions_y - 28
-            for key, label, enabled, x0 in (
-                    ("blok_page_prev", "‹", page > 0, px),
-                    ("blok_page_next", "›", page + 1 < page_count, right - 28)):
-                rect = (x0, pager_y, x0 + 28, pager_y + 24)
-                _rrect(cv, *rect, _UXR_CTRL, _UXC["surface"], _PANEL_BD)
-                _text(cv, x0 + 14, pager_y + 12, label,
-                      _TXT if enabled else _UXC["disabled_text"], _FONT_B)
-                ui[key] = rect if enabled else None
-            _text(cv, (px + right) / 2, pager_y + 12, f"{page + 1}/{page_count}",
-                  _UXC["text_secondary"], (_FONT_F[0], 9))
-        bw = (panel_width - 8) / 2
-        if ots:
-            rot = (px, actions_y, px + bw, actions_y + 28)
-            _rrect(cv, *rot, _UXR_CTRL, _UXC["selected_background"], accent)
-            _text(cv, px + bw / 2, actions_y + 14, f"换向 {oi + 1}/{len(ots)}",
-                  _TXT, (_FONT_F[0], 9))
-            ui["blok_rot"] = rot
-        pas = (px + bw + 8, actions_y, right, actions_y + 28)
-        _rrect(cv, *pas, _UXR_CTRL, _UXC["surface"], _PANEL_BD)
-        _text(cv, (pas[0] + pas[2]) / 2, actions_y + 14, "跳过", _TXT,
-              (_FONT_F[0], 9))
-        ui["blok_pass"] = pas
-        _text(cv, px, h - 14, "选拼块 → 点棋盘", _UXC["text_secondary"],
-              (_FONT_F[0], 9), anchor="w")
-    elif ended:
-        _text(cv, px, py, "对局已结束", "#666666", _FONT_F, anchor="w")
-    elif st.get("turn_uid") is not None:
-        _text(cv, px, py, f"等待 {nick(st['turn_uid'])} 落子…", "#666666",
-              _FONT_F, anchor="w")
+    from boardgames.boards_blokus import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 @_register("ludo")
 def _p_ludo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["ludo"][1]
-    players = st.get("players") or []
-    stt = st.get("starts") or {}            # {uid_str: 起点格号}
-    pos = st.get("positions") or {}
-    dice = st.get("dice")
-    stones = st.get("stones") or ["✈️", "🚢", "🚗", "🚁"]
-    track = st.get("track") or 40
-    title = "🎲 飞行棋"
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 获胜"
-    elif st.get("turn_uid"):
-        title += f"　轮到 {nick(st['turn_uid'])}"
-    _turn_banner(cv, w, 46, title, accent)
-    header, note_h = 46, 30
-    avail = max(60, min(w - 24, h - header - note_h - 24))
-    cx = w / 2
-    cy = header + note_h + (h - header - note_h - 20) / 2
-    R = avail / 2 - 8                      # 环中心线半径
-
-    def ring_pt(i):
-        i = i % track
-        side = i // 10
-        t = (i % 10) / 9.0
-        if side == 0:
-            return (cx - R + t * 2 * R, cy - R)
-        elif side == 1:
-            return (cx + R, cy - R + t * 2 * R)
-        elif side == 2:
-            return (cx + R - t * 2 * R, cy + R)
-        return (cx - R, cy + R - t * 2 * R)
-
-    step = (2 * R) / 9.0
-    csz = step * 0.86
-    corner_dx = [( -1, -1), (1, -1), (1, 1), (-1, 1)]
-    # 各 player 的颜色
-    pcol = ["#e05555", "#3f6fe0", "#3ba55d", "#f2c94c"]
-    # 轨道环底框
-    cv.create_rectangle(cx - R - 4, cy - R - 4, cx + R + 4, cy + R + 4,
-                        fill="#efe6cd", outline="#b9986a", width=2)
-    # 画 40 个轨道格
-    for i in range(track):
-        x0, y0 = ring_pt(i)
-        mine_start = any(str(stt[sk]) == str(i) for sk in stt) if stt else False
-        cv.create_rectangle(x0 - csz / 2, y0 - csz / 2,
-                            x0 + csz / 2, y0 + csz / 2,
-                            fill=_shade("#efe6cd", 0.35 if not mine_start else 0.6),
-                            outline="#c9ad7e")
-    # 画机棚 & 放子
-    tokens = []                            # [(cx,cy,idx,r)] 我的可动机
-    mono_x = {i: 0 for i in range(track)}
-    for pi, u in enumerate(players):
-        ci = pi % 4
-        col = pcol[ci]
-        ddx, ddy = corner_dx[pi % 4]
-        hx = cx + ddx * R * 0.55
-        hy = cy + ddy * R * 0.55
-        # 机棚框
-        cv.create_rectangle(hx - csz - 4, hy - csz - 4,
-                            hx + csz + 4, hy + csz + 4,
-                            fill=_shade(col, 0.5), outline=col, width=2)
-        vals = pos.get(str(u)) or []
-        h_slot = 0
-        for idx, v in enumerate(vals):
-            if v == -1:                      # 机棚
-                sx = hx + (h_slot % 2 - 0.5) * csz
-                sy = hy + (h_slot // 2 - 0.5) * csz
-                h_slot += 1
-                tw = stones[idx] if u == me else "●"
-                cv.create_oval(sx - csz / 2 + 1, sy - csz / 2 + 1,
-                               sx + csz / 2 - 1, sy + csz / 2 - 1,
-                               fill=col, outline=_shade(col, -0.35))
-                _text(cv, sx, sy, tw, "#fff" if u != me else "#fff",
-                      (_FONT_B[0], int(csz * 0.5)))
-                if u == me:
-                    tokens.append((sx, sy, idx, max(14, csz * 0.9)))
-            elif v == "FIN":                 # 完成
-                sx = cx + ddx * R * 0.76
-                sy = cy + ddy * R * 0.76
-                cv.create_text(sx, sy, text="🏁" if u == me else "✓",
-                               fill=col, font=(_FONT_B[0], int(csz * 0.6)))
-            else:                            # 轨道格
-                try:
-                    s = int(v) % track
-                except (TypeError, ValueError):
-                    continue
-                bx0, by0 = ring_pt(s)
-                off = mono_x[s]
-                mono_x[s] += 1
-                sx = bx0 + (off - 0.5) * csz * 0.5
-                sy = by0 + (off - 0.5) * csz * 0.5
-                tw = stones[idx] if u == me else "●"
-                cv.create_oval(sx - csz / 2 + 1, sy - csz / 2 + 1,
-                               sx + csz / 2 - 1, sy + csz / 2 - 1,
-                               fill=col, outline=_shade(col, -0.35))
-                _text(cv, sx, sy, tw, "#fff", (_FONT_B[0], int(csz * 0.5)))
-                if u == me:
-                    tokens.append((sx, sy, idx, max(14, csz * 0.9)))
-    ui.update(game="ludo", tokens=tokens, me=me)
-    # 最近一步动效：金色光晕标记本次被推动的机（到达提示格 stall 或完成 FIN）
-    now = time.monotonic()
-    lm = st.get("last_move")
-    lastpx = None
-    if isinstance(lm, dict):
-        try:
-            pi = players.index(lm.get("uid"))
-        except (ValueError, TypeError):
-            pi = -1
-        if pi >= 0:
-            ddx2, ddy2 = corner_dx[pi % 4]
-            if lm.get("fin"):
-                lastpx = (cx + ddx2 * R * 0.76, cy + ddy2 * R * 0.76)
-            elif isinstance(lm.get("stall"), int):
-                lastpx = ring_pt(lm["stall"])
-    _g_draw_last(cv, ui, now, lastpx, csz)
-    if lastpx is not None:
-        _anim_need(ui, repaint, gap=0.04, cap=180)
-    # 提示 / 骰面：右上角画统一矢量骰 + 掷骰滚动动画（替代纯文字"骰面：N"）
-    dnow = time.monotonic()
-    dkey = None if dice is None else int(dice)
-    rolling, rk = _die_roll_fx(ui, dnow, dkey, repaint)
-    die_cx = w - 34
-    die_cy = header + note_h / 2
-    ds = 15
-    if dkey is None:
-        _die_face(cv, die_cx, die_cy, ds, None, accent, blank=True)
-        note = "尚未掷骰（点下方「掷骰」）"
-    else:
-        jit = -math.sin(rk * math.pi) * 6 if rolling else 0.0
-        show = _die_scramble(dnow, 3, 6) if rolling else dkey
-        _die_face(cv, die_cx, die_cy + jit, ds, show, accent, fresh=not rolling)
-        if st.get("turn_uid") == me:
-            note = "点你一架机前进"
-        else:
-            note = f"等待 {nick(st.get('turn_uid'))}"
-    _text(cv, w / 2, header + note_h / 2, "🎲 " + note, "#333", _FONT_B)
+    from boardgames.boards_ludo import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 # ---------------------------------------------------------------------------
@@ -4342,156 +3797,16 @@ def _yz_can_score(st, cat, uid):
 
 @_register("yahtzee")
 def _p_yahtzee(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["yahtzee"][1]
-    title = "🎲 快艇骰子"
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 总分最高"
-    elif st.get("turn_uid"):
-        title += f"　轮到 {nick(st['turn_uid'])} · 第 {st.get('round',1)} 轮"
-    _turn_banner(cv, w, 46, title, accent)
-    # 骰面 5 枚（统一矢量骰面 + 掷骰/重掷滚动动画）
-    dice = st.get("dice") or [None] * 5
-    # 点击热区每次重绘重建；新一次掷骰/重掷（骰面+剩余次数签名变化）清空保留位
-    ui["yz_dice"] = []
-    ui["yz_cats"] = []
-    ui["yz_reroll"] = None
-    sig = (tuple(dice), st.get("rolls_left"))
-    if ui.get("yz_sig") != sig:
-        ui["yz_keep"] = set()
-        ui["yz_sig"] = sig
-    keep = {i for i in (ui.get("yz_keep") or ()) if 0 <= i < len(dice)}
-    ui["yz_keep"] = keep
-    can_pick = bool(st.get("rolled") and st.get("rolls_left")
-                    and not st.get("category"))
-    gap = w * 0.06
-    die_s = min(44, int((w - gap * 6) / 5 / 2))
-    x0 = (w - (die_s * 2 * 5 + gap * 4)) / 2
-    y0 = 90
-    now = time.monotonic()
-    rolling, rk = _die_roll_fx(ui, now, tuple(dice), repaint)
-    _text(cv, w / 2, y0 - 30, "本回合骰面" + (f"（还可重掷 {st.get('rolls_left',0)} 次）"
-          if st.get("rolls_left") else ""), _MUTED, _FONT_F)
-    for i, d in enumerate(dice):
-        cx = x0 + i * (die_s * 2 + gap) + die_s
-        jit = -math.sin(rk * math.pi) * die_s * 0.30 if rolling else 0.0
-        cy = y0 + die_s + jit - (6 if i in keep else 0)
-        if d is None:
-            _die_face(cv, cx, cy, die_s, None, accent, blank=True)
-        elif rolling:
-            _die_face(cv, cx, cy, die_s, _die_scramble(now, i, 6), accent)
-        else:
-            _die_face(cv, cx, cy, die_s, d, accent, fresh=True)
-        if i in keep:
-            cv.create_polygon(_rrect_pts(cx - die_s - 3, cy - die_s - 3,
-                                         cx + die_s + 3, cy + die_s + 3,
-                                         die_s * 0.34),
-                              fill="", outline="#e0a13c", width=2,
-                              smooth=True, splinesteps=24)
-            _text(cv, cx, cy - die_s - 9, "保留", "#b8860b",
-                  (_FONT_F[0], 8))
-        ui["yz_dice"].append((cx - die_s, cy - die_s, cx + die_s,
-                              cy + die_s, i))
-    # 重掷按钮（仅已掷骰且还有次数、本回合未记分时出现）
-    if can_pick:
-        by0 = y0 + die_s * 2 + 2
-        by1 = by0 + 22
-        bw = 150
-        bx0, bx1 = (w - bw) / 2, (w + bw) / 2
-        _rrect(cv, bx0, by0, bx1, by1, 9, "#fff3dc", "#e0a13c", 1)
-        _text(cv, w / 2, (by0 + by1) / 2, "🔁 重掷未保留", "#8a5a12",
-              (_FONT_F[0], 10))
-        ui["yz_reroll"] = (bx0, by0, bx1, by1)
-    # 分类得分矩阵
-    cats = st.get("cats") or {}
-    players = st.get("players") or []
-    order = ["1", "2", "3", "4", "5", "6", "three", "four", "house",
-             "small", "large", "yahtzee", "chance"]
-    scores = st.get("scores") or {}
-    totals = st.get("totals") or {}
-    my_row = players.index(me) if me in players else 0
-    col_h = int((h - y0 - die_s * 2 - 70) / (len(order) + 2))
-    col_h = max(15, col_h)
-    tpy = y0 + die_s * 2 + 30
-    col_w = (w - 30) / max(len(players), 1)
-    # 表头
-    _text(cv, 12, tpy + col_h / 2, "分类", _MUTED, (_FONT_F[0], 9), anchor="w")
-    for i, u in enumerate(players):
-        hx = 60 + i * col_w + col_w / 2
-        who = "我" if u == me else nick(u)
-        _text(cv, hx, tpy + col_h / 2, who, "#333", (_FONT_F[0], 9))
-    _text(cv, 12, tpy + col_h / 2, "分类", _MUTED, (_FONT_F[0], 9), anchor="w")
-    for ri, cat in enumerate(order):
-        yy = tpy + (ri + 1) * col_h
-        _text(cv, 14, yy + col_h / 2, cats.get(cat, cat), "#444",
-              (_FONT_F[0], 9), anchor="w")
-        for i, u in enumerate(players):
-            v = (scores.get(str(u)) or {}).get(cat)
-            hx = 60 + i * col_w + col_w / 2
-            if u == me:
-                cx0 = hx - col_w / 2 + 2
-                cx1 = hx + col_w / 2 - 2
-                if _yz_can_score(st, cat, me):
-                    _rrect(cv, cx0, yy + 1, cx1, yy + col_h - 1, 5,
-                           "#e8f5e9", "#67a86b", 1)
-                ui["yz_cats"].append((cx0, yy + 1, cx1, yy + col_h - 1, cat))
-            fg = "#333" if v is not None else _MUTED
-            _text(cv, hx, yy + col_h / 2, "-" if v is None else str(v),
-                  fg, (_FONT_F[0], 9))
-    # 合计行
-    yy = tpy + (len(order) + 1) * col_h
-    cv.create_line(12, yy - 3, w - 12, yy - 3, fill=_PANEL_BD)
-    _text(cv, 14, yy + col_h / 2, "合计", "#333", _FONT_B, anchor="w")
-    for i, u in enumerate(players):
-        hx = 60 + i * col_w + col_w / 2
-        _text(cv, hx, yy + col_h / 2, str(totals.get(str(u), 0)), accent,
-              _FONT_B)
+    from boardgames.arcade_yahtzee import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 def _click_yahtzee(ui, x, y):
-    """快艇骰子点击：重掷未保留 / 点骰子切换保留位 / 点我的分类格记分。"""
-    st = ui.get("state") or {}
-    room = ui.get("room") or {}
-    me = ui.get("me")
-    if (st.get("status") or room.get("status")) != "playing":
-        return
-    if me is None or me not in (st.get("players") or []):
-        return
-    if st.get("turn_uid") != me or st.get("winner_uid") is not None:
-        return
-    submit = ui.get("submit")
-    if submit is None:
-        return
-    repaint = ui.get("repaint") or (lambda: None)
-    can_pick = bool(st.get("rolled") and st.get("rolls_left")
-                    and not st.get("category"))
-
-    def _hit(rect):
-        return bool(rect) and rect[0] <= x <= rect[2] and rect[1] <= y <= rect[3]
-
-    reroll = ui.get("yz_reroll")
-    if can_pick and _hit(reroll):
-        submit({"op": "reroll", "keep": sorted(ui.get("yz_keep") or ())})
-        repaint()
-        return
-    if can_pick:
-        for (x0, y0, x1, y1, idx) in ui.get("yz_dice") or ():
-            if x0 <= x <= x1 and y0 <= y <= y1:
-                keep = set(ui.get("yz_keep") or ())
-                if idx in keep:
-                    keep.discard(idx)
-                else:
-                    keep.add(idx)
-                ui["yz_keep"] = keep
-                repaint()
-                return
-    for (x0, y0, x1, y1, cat) in ui.get("yz_cats") or ():
-        if x0 <= x <= x1 and y0 <= y <= y1 and _yz_can_score(st, cat, me):
-            submit({"op": "score", "cat": cat})
-            repaint()
-            return
+    from boardgames.arcade_yahtzee import click
+    click(ui, x, y)
 
 
-_CLICKS["yahtzee"] = _click_yahtzee       # 快艇骰子：重掷/保留/记分点击
+_CLICKS["yahtzee"] = _click_yahtzee
 
 
 @_register("nimmt")
@@ -4781,64 +4096,16 @@ def _p_liar(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("halloween")
 def _p_halloween(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["halloween"][1]
-    title = "🔔 德国心脏病（慢棋版）"
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 收牌最多"
-    elif st.get("turn"):
-        title += f"　轮到 {nick(st['turn'])}"
-        if st.get("can_slap"):
-            title += "　🔔 可拍铃！"
-    _turn_banner(cv, w, 46, title, accent)
-    # 桌面公共翻牌区
-    area = st.get("area") or []
-    counts = st.get("counts") or {}
-    fruits = st.get("fruits") or ["🍓", "🍋", "🍊", "🍌", "🍎"]
-    _text(cv, w / 2, 78, "— 公共翻牌区 —", _MUTED, _FONT_F)
-    if area:
-        per = max(1, (w - 24) // 74)
-        base = (w - min(per, len(area)) * 74 + 4) / 2
-        for i, f in enumerate(area[-per:]):
-            cx = base + i * 74
-            _card_face(cv, cx, 96, cx + 68, 132, face=_shade("#c2362c", 0.25),
-                       edge="#c2362c", r=_UXR_CTRL)
-            _text(cv, cx + 34, 114, f, "#fff", (_FONT_BIG[0], 22))
-    else:
-        _text(cv, w / 2, 118, "（空白，可翻牌）", _MUTED, _FONT_F)
-    # 计数提示
-    yc = 150
-    _text(cv, w / 2, yc, "计数：" + "　".join(
-        f"{f}×{counts.get(f, 0)}" for f in fruits if counts.get(f)), "#333",
-        _FONT_F)
-    if st.get("can_slap"):
-        _text(cv, w / 2, yc + 22, "🔔 已有 5 个相同水果，可拍铃收牌！", "#c0392b",
-              _FONT_B)
-    # 玩家矩阵（得分 + 余牌）
-    players = st.get("players") or []
-    score = st.get("score") or {}
-    left = st.get("left") or {}
-    cw, ch = 118, 62
-    gap = 14
-    per2 = max(1, int((w - 40) / (cw + gap)))
-    y0 = yc + 46
-    for i, u in enumerate(players):
-        row, col = divmod(i, per2)
-        cards_row = players[row * per2: row * per2 + per2]
-        base = (w - (len(cards_row) * (cw + gap) - gap)) / 2
-        cx = base + col * (cw + gap)
-        cy = y0 + row * (ch + gap)
-        acting = u == st.get("turn")
-        fill = _shade("#e05555", 0.4)
-        if acting:
-            fill = _shade("#e05555", 0.05)
-        _rrect(cv, cx, cy, cx + cw, cy + ch, 10, fill,
-               "#ffd75e" if u == me else _PANEL, 2 if u == me else 1)
-        _text(cv, cx + cw / 2, cy + 24, nick(u) + ("（我）" if u == me else ""),
-              "#fff", _FONT_B)
-        _text(cv, cx + cw / 2, cy + 46,
-              f"得 {score.get(str(u), 0)} · 余 {left.get(str(u), 0)}",
-              _shade("#ffe0e0", 0.6), (_FONT_F[0], 9))
+    from boardgames.arcade_halloween import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
+
+def _click_halloween(ui, x, y):
+    from boardgames.arcade_halloween import click
+    click(ui, x, y)
+
+
+_CLICKS["halloween"] = _click_halloween
 
 @_register("ninja")
 def _p_ninja(cv, st, me, nick, submit, repaint, ui, priv, w, h):
@@ -4974,98 +4241,38 @@ def _p_onewolf(cv, st, me, nick, submit, repaint, ui, priv, w, h):
 
 @_register("guess_number")
 def _p_guess_number(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["guess_number"][1]
-    status = st.get("status", "await_secret")
-    owner = st.get("owner_uid")
-    title = "🔢 猜数字"
-    if owner is not None:
-        title += f"　出题者：{nick(owner)}" + ("（你）" if owner == me else "")
-    _turn_banner(cv, w, 46, title, accent)
-    _status_hud(cv, w, 68, st, me, nick, accent)      # F6：阶段·轮次 + 计分
-    low, high = st.get("low"), st.get("high")
-    if low is None or high is None:
-        low, high = 1, 100
-    # 大字区间
-    _text(cv, w / 2, 130, f"区间：{low} ~ {high}", accent, _FONT_BIG)
-    if status == "await_secret":
-        _text(cv, w / 2, 170, "等待出题者设定数字…", _MUTED, _FONT_F)
-    elif status == "round_end":
-        _text(cv, w / 2, 170, f"答案 {st.get('secret')}！", "#c0392b", _FONT_B)
-    else:
-        _text(cv, w / 2, 170, "大家开始猜（按钮区输入 / 猜）", _MUTED, _FONT_F)
-    lg = st.get("last_guess")
-    if lg:
-        dir_txt = {"low": "低了 ↑", "high": "高了 ↓", "hit": "猜中 🎉"}.get(
-            lg.get("dir"), "")
-        _text(cv, w / 2, 210, f"上一位 {nick(lg['uid'])} 猜 {lg.get('val')}：{dir_txt}",
-              "#333", _FONT_B)
+    from boardgames.arcade_numbers import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
+
+
+def _click_guess_number(ui, x, y):
+    from boardgames.arcade_numbers import click
+    click(ui, x, y)
+
+
+_CLICKS["guess_number"] = _click_guess_number
+
+
+def _click_tile2048(ui, x, y):
+    from boardgames.tile2048.desktop import click
+    click(ui, x, y)
+
+
+_CLICKS["tile2048"] = _click_tile2048
 
 
 @_register("drawguess")
 def _p_drawguess(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["drawguess"][1]
-    phase = st.get("status") or st.get("phase") or "drawing"
-    drawer = st.get("drawer_uid")
-    title = "🎨 你画我猜"
-    if phase == "round_end":
-        word = st.get("word") or ""
-        title = f"🎉 答案揭晓：{word}"
-    elif drawer is not None:
-        title += f"　画手：{nick(drawer)}" + ("（你）" if drawer == me else "")
-    _turn_banner(cv, w, 46, title, accent)
-    _status_hud(cv, w, 58, st, me, nick, accent)      # F6：阶段·轮次 + 计分
-    # 画布区域：统一 400×300 逻辑坐标（与 Web 端一致），等比缩放并居中；
-    # 命中反算见 handle_drag，保证桌面/网页两端笔画坐标可互通。
-    canvas_x, canvas_y, canvas_w, canvas_h = 14, 70, w - 28, h - 150
-    scale = max(min(canvas_w / 400.0, canvas_h / 300.0), 0.05)
-    dw, dh = 400 * scale, 300 * scale
-    ox = canvas_x + (canvas_w - dw) / 2.0
-    oy = canvas_y + (canvas_h - dh) / 2.0
-    ui["dg_map"] = (ox, oy, scale)
-    cv.create_rectangle(ox, oy, ox + dw, oy + dh, fill="#fff", outline=_PANEL_BD)
-    strokes = st.get("strokes") or []
-    for s in strokes:
-        if not isinstance(s, dict):
-            continue
-        if s.get("type") == "line":
-            x1, y1 = s.get("x1", 0), s.get("y1", 0)
-            x2, y2 = s.get("x2", 400), s.get("y2", 300)
-            _col = s.get("color") or "black"
-            _wid = s.get("width") or 3
-            try:
-                cv.create_line(ox + x1 * scale, oy + y1 * scale,
-                               ox + x2 * scale, oy + y2 * scale,
-                               fill=_col, width=int(_wid), capstyle="round")
-            except Exception:
-                pass
-    # 顶部信息
-    if phase == "drawing":
-        wlen = st.get("word_len")
-        if drawer == me:
-            wlen_txt = priv.get("word", "?") if priv and priv.get("word") else "?"
-            _text(cv, w - 14, 60 + canvas_h + 10, f"你的词：{wlen_txt}",
-                  "#c0392b", _FONT_B, anchor="e")
-        else:
-            _text(cv, w - 14, 60 + canvas_h + 10,
-                  f"词长：{'■' * (st.get('word_len') or 0)}" if st.get("word_len")
-                  else "画手中…", _MUTED, _FONT_F, anchor="e")
-        gy = st.get("guessed_by")
-        if gy is not None:
-            _text(cv, 14, 60 + canvas_h + 10, f"已猜中：{nick(gy)}", "#37a25f",
-                  _FONT_B, anchor="w")
-    # 猜词日志（计分已由顶部 F6 HUD 统一呈现）
-    log = st.get("guess_log") or []
-    if log:
-        last = log[-2:]
-        _text(cv, w - 14, 60 + canvas_h + 30, "最近：" + "；".join(
-            f"{nick(x['uid'])}「{x['text']}」{'✓' if x.get('ok') else '✗'}"
-            for x in last), _MUTED, (_FONT_F[0], 9), anchor="e")
+    from boardgames.arcade_drawguess import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
-# ---------------------------------------------------------------------------
-# 德式策略组：面板 + 资源 + 棋盘，统一走下方按钮区操作，painter 只画状态
-# ---------------------------------------------------------------------------
-_PALETTE = ["#e0535a", "#4a7de0", "#37a25f", "#e0a13c", "#9a6fd0", "#26c6b0"]
+def _click_drawguess(ui, x, y):
+    from boardgames.arcade_drawguess import click
+    click(ui, x, y)
+
+
+_CLICKS["drawguess"] = _click_drawguess
 
 
 def _pcolor(uid, players):
@@ -5083,263 +4290,18 @@ def _pscore(st, u):
 
 
 # ---- 开拓（卡坦）点击化：顶点/地块热区 + 两段式选点状态机 ----
-_KT_MODES = (("road", "路"), ("settle", "村"), ("city", "城"))
-
-
-def _kt_adjacent(a, b):
-    """两顶点正交相邻：曼哈顿距离为 1。"""
-    return abs(int(a[0]) - int(b[0])) + abs(int(a[1]) - int(b[1])) == 1
-
-
-def _kt_pick(mode, sel, v, board):
-    """顶点点击状态机：返回 (新选中, 动作 | None)。
-
-    setup/road 为两段式：首次点选起点，再点正交相邻点发动作；点同点取消，
-    不相邻保持原选中。settle/city 单击直接生成对应建造动作。
-    """
-    v = (int(v[0]), int(v[1]))
-    if mode in ("setup", "road"):
-        if sel is None:
-            return v, None
-        sel = (int(sel[0]), int(sel[1]))
-        if v == sel:
-            return None, None
-        if not _kt_adjacent(sel, v):
-            return sel, None
-        if mode == "setup":
-            return None, {"op": "setup", "i": sel[0], "j": sel[1],
-                          "b_i": v[0], "b_j": v[1]}
-        return None, {"op": "build", "kind": "road", "i": sel[0], "j": sel[1],
-                      "b_i": v[0], "b_j": v[1]}
-    return None, {"op": "build", "kind": mode, "i": v[0], "j": v[1]}
-
-
-def _kt_settle_free(board, v):
-    """布置可放判定：顶点为空，且四邻（曼哈顿 1）无建筑。"""
-    i, j = v
-    if f"{i},{j}" in board:
-        return False
-    for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-        a, b = i + di, j + dj
-        if 0 <= a <= 5 and 0 <= b <= 5 and f"{a},{b}" in board:
-            return False
-    return True
-
-
-def _kt_vertex_at(ui, x, y):
-    """顶点命中：热区由画师登记且与绘制同源，取半径内最近的一个。"""
-    lim = max(float(ui.get("kt_cell") or 0) * 0.36, 10.0)
-    best = None
-    for (px, py, i, j) in ui.get("kt_vertices") or ():
-        d = (x - px) ** 2 + (y - py) ** 2
-        if d <= lim * lim and (best is None or d < best[0]):
-            best = (d, i, j)
-    return None if best is None else (best[1], best[2])
-
-
 def _click_kaituo(ui, x, y):
-    """开拓点击：模式切换 / 盗匪落点 / 顶点两段式选点（布置·路·村·城）。"""
-    st = ui.get("state") or {}
-    room = ui.get("room") or {}
-    me = ui.get("me")
-    if (st.get("status") or room.get("status")) != "playing":
-        return
-    if st.get("winner_uid") is not None or me is None:
-        return
-    if me not in (st.get("players") or []) or st.get("turn_uid") != me:
-        return
-    submit = ui.get("submit")
-    if submit is None:
-        return
-    repaint = ui.get("repaint") or (lambda: None)
-    board = st.get("board") or {}
-    setup = st.get("phase") == "setup"
-    pending = bool(st.get("robber_pending"))
-    for (x0, y0, x1, y1, mode) in ui.get("kt_modes") or ():
-        if x0 <= x <= x1 and y0 <= y <= y1:
-            if not setup and ui.get("kt_mode") != mode:
-                ui["kt_mode"] = mode
-                ui["kt_sel"] = None
-                repaint()
-            return
-    if pending:
-        # 盗匪待移动：点地块发 robber，此状态下不响应建造点击
-        robber = list(st.get("robber") or [None, None])
-        for (x0, y0, x1, y1, r, c) in ui.get("kt_tiles") or ():
-            if x0 <= x <= x1 and y0 <= y <= y1:
-                if [r, c] == robber:
-                    return
-                submit({"op": "robber", "r": r, "c": c})
-                repaint()
-                return
-        return
-    v = _kt_vertex_at(ui, x, y)
-    if v is None:
-        return
-    mode = "setup" if setup else (ui.get("kt_mode") or "road")
-    sel, action = _kt_pick(mode, ui.get("kt_sel"), v, board)
-    if mode == "setup" and ui.get("kt_sel") is None and not action:
-        if not _kt_settle_free(board, v):        # 只在可放村顶点起手
-            return
-    if mode == "settle" and f"{v[0]},{v[1]}" in board:
-        return
-    if mode == "city":
-        b = board.get(f"{v[0]},{v[1]}")
-        if not b or b.get("owner") != me or b.get("city"):
-            return
-    ui["kt_sel"] = sel
-    if action:
-        submit(action)
-    repaint()
+    from boardgames.economy_kaituo import click
+    click(ui, x, y)
 
 
-# --------------------------------------------------------------------------
 @_register("kaituo")
 def _p_kaituo(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    accent = THEME["kaituo"][1]
-    players = st.get("players") or []
-    title = "🏜️ 开拓·卡坦"
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 率先 10 分获胜"
-    elif st.get("turn_uid") is not None:
-        title += f"　轮到 {nick(st['turn_uid'])}"
-        if st.get("phase"):
-            title += f"（{st['phase']}）"
-    if st.get("last_roll"):
-        title += f"　🎲上次 {st['last_roll']}"
-    if st.get("robber_pending") and st.get("turn_uid") == me:
-        title += "　🦹 请先移动盗匪"
-    _turn_banner(cv, w, 46, title, accent)
-    ui.update(game="kaituo")
-    ui["kt_vertices"] = []
-    ui["kt_tiles"] = []
-    ui["kt_modes"] = []
-    mode = ui.get("kt_mode")
-    if mode not in ("road", "settle", "city"):
-        mode = "road"
-    ui["kt_mode"] = mode
-    setup = st.get("phase") == "setup"
-    mine = me is not None and me in players
-    my_turn = bool(mine and st.get("turn_uid") == me
-                   and st.get("winner_uid") is None)
-    if not my_turn:
-        ui["kt_sel"] = None
-    pending = bool(st.get("robber_pending")) and my_turn
-    rcol = {"wood": "#6aa84f", "brick": "#c27f5a", "lamb": "#a9cc7e",
-            "wheat": "#e4cd6b", "ore": "#9aa0ab", "desert": "#ecd9a0"}
-    bw = w - 20
-    bh = h - 46 - 96 - 20
-    cell = min(bw / 6, bh / 6)
-    ox = (w - cell * 6) / 2
-    oy = 58
-    ui["kt_cell"] = cell
-    # 模式切换放在棋盘下方，避免与顶栏标题叠字
-    mbw = min(54.0, max(30.0, (w - 24) / 4.0))
-    my0 = min(oy + cell * 5 + 4, h - 112)
-    my1 = my0 + 16
-    for idx, (mk, lab) in enumerate(_KT_MODES):
-        x1 = w - 8 - (len(_KT_MODES) - 1 - idx) * (mbw + 4)
-        x0 = x1 - mbw
-        on = (not setup) and mode == mk
-        cv.create_rectangle(x0, my0, x1, my1,
-                            fill=accent if on else _shade(accent, 0.72),
-                            outline=accent, width=1)
-        _text(cv, (x0 + x1) / 2, (my0 + my1) / 2, lab,
-              "#fff" if on else _shade(accent, -0.45), (_FONT_F[0], 8))
-        ui["kt_modes"].append((x0, my0, x1, my1, mk))
-    if setup:
-        _text(cv, 8, (my0 + my1) / 2, "布置：先点村，再点相邻顶点修路",
-              "#fff", (_FONT_F[0], 7), anchor="w")
-    for i in range(6):                       # 6x6 顶点热区（与绘制同源）
-        for j in range(6):
-            ui["kt_vertices"].append((ox + j * cell, oy + i * cell, i, j))
-    tiles = st.get("tiles") or {}
-    robber = list(st.get("robber") or [None, None])
-    for key, t in tiles.items():
-        r, c = key.split(",")
-        r, c = int(r), int(c)
-        x0, y0 = ox + c * cell, oy + r * cell
-        col = rcol.get(t.get("res"), "#ddd")
-        cv.create_rectangle(x0 + 1, y0 + 1, x0 + cell - 1, y0 + cell - 1,
-                            fill=col, outline="#5a4a35", width=1)
-        ui["kt_tiles"].append((x0, y0, x0 + cell, y0 + cell, r, c))
-        if pending and [r, c] != robber:     # 盗匪待移：淡红描边提示可点
-            cv.create_rectangle(x0 + 3, y0 + 3, x0 + cell - 3, y0 + cell - 3,
-                                outline="#e0535a", width=2)
-        fs = max(8, int(cell * 0.30))
-        if t.get("res") == "desert":
-            _text(cv, x0 + cell / 2, y0 + cell / 2, "沙漠", "#a89a7f",
-                  (_FONT_F[0], fs))
-        elif t.get("num"):
-            fg = "#fff" if _luma(col) < 150 else "#222"
-            _text(cv, x0 + cell / 2, y0 + cell / 2, str(t["num"]), fg,
-                  (_FONT_F[0], fs))
-        if [r, c] == robber:
-            rcx, rcy, rr = x0 + cell * 0.78, y0 + cell * 0.22, cell * 0.20
-            cv.create_oval(rcx - rr, rcy - rr, rcx + rr, rcy + rr,
-                           fill="#2b2b2b", outline="#f0e6d8", width=2)
-            _text(cv, rcx, rcy, "盗", "#ffd75e",
-                  (_FONT_F[0], max(8, int(cell * 0.22))))
-    for key, x in (st.get("board") or {}).items():
-        i, j = key.split(",")
-        i, j = int(i), int(j)
-        px, py = ox + j * cell, oy + i * cell
-        ac = _pcolor(x.get("owner"), players)
-        if x.get("city"):
-            _stone(cv, px, py, cell * 0.32, ac)
-            _stone(cv, px, py, cell * 0.16, _shade(ac, 0.35))
-        else:
-            _stone(cv, px, py, cell * 0.23, ac)
-    for key, o in (st.get("roads") or {}).items():
-        a, b = key.split(">")
-        i0, j0 = a.split(",")
-        i1, j1 = b.split(",")
-        x0, y0 = ox + int(j0) * cell, oy + int(i0) * cell
-        x1, y1 = ox + int(j1) * cell, oy + int(i1) * cell
-        cv.create_line(x0, y0, x1, y1, fill=_pcolor(o, players),
-                       width=max(3, int(cell * 0.22)), capstyle="round")
-    sel = ui.get("kt_sel")
-    if sel is not None:
-        sx, sy = ox + sel[1] * cell, oy + sel[0] * cell
-        sr = max(9.0, cell * 0.30)
-        cv.create_oval(sx - sr, sy - sr, sx + sr, sy + sr,
-                       outline="#37a25f", width=3)
-    # 玩家资源面板（底部）
-    res_order = ["wood", "brick", "lamb", "wheat", "ore"]
-    res_color = {"wood": "#6aa84f", "brick": "#c27f5a", "lamb": "#a9cc7e",
-                 "wheat": "#e4cd6b", "ore": "#9aa0ab"}
-    n = len(players)
-    gap = 8
-    pw = (w - gap * (n + 1)) / n if n else w
-    py0 = h - 92
-    resources = st.get("res") or {}
-    for idx, u in enumerate(players):
-        x0 = gap + idx * (pw + gap)
-        cv.create_rectangle(x0, py0, x0 + pw, py0 + 80, fill="#33291d",
-                            outline="#5a4a35", width=1)
-        _text(cv, x0 + pw / 2, py0 + 14, nick(u) + ("（我）" if u == me else ""),
-              "#fff", _FONT_B)
-        _text(cv, x0 + pw - 10, py0 + 14, f"🏆 {_pscore(st, u)}", "#ffd75e",
-              _FONT_B, anchor="e")
-        res = resources.get(str(u), {})
-        sw = pw - 16
-        i = 0
-        for rk in res_order:
-            cx0 = x0 + 8 + i * (sw / 5)
-            if _real_cv(cv):
-                cv.create_image(cx0 + 8, py0 + 39, anchor="center",
-                                image=_res_img(cv, rk, res_color[rk], 16))
-            else:
-                cv.create_oval(cx0 + 2, py0 + 34, cx0 + 13, py0 + 45,
-                               fill=res_color[rk], outline="")
-            _text(cv, cx0 + 17, py0 + 39, str(res.get(rk, 0)), "#f0e6d8",
-                  (_FONT_F[0], 9), anchor="w")
-            i += 1
-        _text(cv, x0 + pw / 2, py0 + 66, "掷骰·建房·贸易 → 按钮区", "#b0a48f",
-              (_FONT_F[0], 8))
+    from boardgames.economy_kaituo import paint
+    paint(cv, st, me, nick, submit, repaint, ui, w, h)
 
 
-_CLICKS["kaituo"] = _click_kaituo          # 开拓：模式切换/盗匪落点/顶点两段式选点
+_CLICKS["kaituo"] = _click_kaituo
 
 
 # ---- 领地（卡卡颂）拖拽投放 + 旋转 ----
@@ -5680,181 +4642,16 @@ def _tl_map_art(cv, x0, y0, x1, y1):
 
 @_register("tielu")
 def _p_tielu(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    cv.create_rectangle(0, 0, w, h, fill="#111b2b", outline="")
-    accent = THEME["tielu"][1]
-    players = st.get("players") or []
-    title = "🚆 铁路·连线"
-    if st.get("winner_uid") is not None:
-        title = f"🏆 {nick(st['winner_uid'])} 票证结算后总分最高"
-    elif st.get("turn_uid") is not None:
-        title += ("　最后一轮" if st.get("final_round") else "")
-        title += f"　轮到 {nick(st['turn_uid'])} · 线路剩 {st.get('route_left', 0)}"
-    _turn_banner(cv, w, 46, title, accent)
-    ui.update(game="tielu")
-    ui["tl_routes"] = []          # 未认领线路热区：(x0,y0,x1,y1,a,b,color,length,affordable)
-    hand = (priv or {}).get("hand") if isinstance(priv, dict) else None
-    if not isinstance(hand, dict):
-        hand = {}
-    ccmap = {"red": "#d2534f", "yellow": "#e0b33c", "green": "#4a9b5f",
-             "blue": "#4a7de0", "purple": "#9a6fd0"}
-    cities = st.get("cities") or {}
-    city = lambda cid: cities.get(str(cid), cities.get(cid, str(cid)))
-    tickets = (priv or {}).get("tickets") or []
-    if tickets:
-        _text(cv, 12, 60, "你的私人目标票 · 连通加分，未连通扣分", "#dfe6ef",
-              (_FONT_F[0], 9), anchor="w")
-    for i, t in enumerate(tickets):
-        label = (f"{city(t['a'])}→{city(t['b'])} · {t['v']}分 · "
-                 + ("已连通" if t.get("connected") else "尚未连通"))
-        _text(cv, 12 + (i % 2) * w / 2, 82 + (i // 2) * 20, label,
-              "#91dab0" if t.get("connected") else "#e8d2ae",
-              (_FONT_F[0], 9), anchor="w")
-    map_top = 100 + (len(tickets) - 1) // 2 * 20 if tickets else 66
-    final = st.get("final_scores") or {}
-    if final:
-        # 结算用独立表格替换线路图，避免仍把线路分当作最终成绩。
-        columns = [w * f for f in (.18, .43, .60, .76, .91)]
-        for x, text in zip(columns, ("玩家", "线路分", "票证加分", "票证扣分", "总分")):
-            _text(cv, x, map_top + 10, text, "#cfe0d8", (_FONT_F[0], 10))
-        for i, u in enumerate(players):
-            row = final.get(str(u)) or {}
-            values = (nick(u), str(row.get("route", 0)),
-                      f"+{row.get('ticket_bonus', 0)}", f"−{row.get('ticket_penalty', 0)}",
-                      str(row.get("total", 0)))
-            for x, text in zip(columns, values):
-                _text(cv, x, map_top + 44 + i * 36, text,
-                      "#ffd75e" if u == st.get("winner_uid") else "#dfe6ef", _FONT_B)
-        return
-    order = [int(k) for k in cities] or list(range(st.get("cities_count", 8)))
-    map_box = (12, map_top, w - 12, max(map_top + 50, h - 122))
-    cv.create_rectangle(*map_box, fill="#e6dab9", outline="#aa9168", width=1)
-    _tl_map_art(cv, *map_box)
-    cx, cy = w / 2, map_top + (h - 132 - map_top) / 2
-    Rx = (w - 40) / 3.2
-    Ry = max(30, (h - 172 - map_top) / 2)
-    pos = {}
-    n = max(1, len(order))
-    for i, cid in enumerate(order):
-        ang = i / n * 2 * math.pi - math.pi / 2
-        pos[cid] = (cx + Rx * math.cos(ang), cy + Ry * math.sin(ang))
-    # Scenic landmarks are illustrative; these real nodes remain authoritative.
-    landmarks = {0: (.16, .23), 1: (.42, .19), 2: (.72, .20), 3: (.88, .43),
-                 4: (.77, .76), 5: (.46, .76), 6: (.18, .75), 7: (.10, .49)}
-    for cid in order:
-        if cid in landmarks:
-            fx, fy = landmarks[cid]
-            pos[cid] = (map_box[0] + fx * (map_box[2] - map_box[0]),
-                        map_box[1] + fy * (map_box[3] - map_box[1]))
-    routes = st.get("routes") or []
-    labels = []
-    occupied = [(px - 25, py - 10, px + 25, py + 33) for px, py in pos.values()]
-    for rt in routes:
-        if (rt.get("a") not in pos) or (rt.get("b") not in pos):
-            continue
-        x0, y0 = pos[rt["a"]]
-        x1, y1 = pos[rt["b"]]
-        claimed = rt.get("claimed")
-        color = rt.get("color")
-        length = int(rt.get("length") or 0)
-        can_pay = bool(color) and int(hand.get(color, 0)) >= length
-        cv.create_line(x0, y0, x1, y1, fill="#fff4d8", width=9)
-        if claimed:
-            col = _pcolor(claimed, players)
-            cv.create_line(x0, y0, x1, y1, fill=col, width=6)
-            cv.create_line(x0, y0, x1, y1, fill="#fff4d8", width=1, dash=(2, 8))
-        else:
-            base = ccmap.get(color, "#b9c6d8")
-            # Affordable routes are solid; dashed routes still show their card color.
-            col = _shade(base, -0.12)
-            width = 5 if can_pay else 3
-            kw = {"fill": col, "width": width}
-            if not can_pay:
-                kw["dash"] = (4, 4)
-            cv.create_line(x0, y0, x1, y1, **kw)
-            ui["tl_routes"].append((x0, y0, x1, y1, rt.get("a"), rt.get("b"),
-                                    color, length, can_pay))
-        # Slide cost signs along their own segment to keep small boards readable.
-        choices = []
-        for t in (.38, .62, .5, .26, .74, .18, .82, .44, .56):
-            mx, my = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
-            box = (mx - 15, my - 10, mx + 15, my + 10)
-            overlap = sum(max(0, min(box[2], b[2]) - max(box[0], b[0]))
-                          * max(0, min(box[3], b[3]) - max(box[1], b[1])) for b in occupied)
-            choices.append((overlap, mx, my, box))
-            if overlap == 0:
-                break
-        _, mx, my, box = min(choices, key=lambda item: item[0])
-        occupied.append(box)
-        labels.append((mx, my,
-                       str(length) + (st.get("colors") or {}).get(color, ""),
-                       "#263c40" if claimed else _shade(ccmap.get(color, "#66706b"), -.35)))
-    for mx, my, label, col in labels:
-        cv.create_rectangle(mx - 13, my - 8, mx + 13, my + 8,
-                            fill="#fff5dc", outline=col, width=1)
-        _text(cv, mx, my, label, col, (_FONT_F[0], 8, "bold"))
-    for cid, (px, py) in pos.items():
-        cv.create_oval(px - 8, py - 8, px + 8, py + 8,
-                       fill="#263c40", outline="#fff5dc", width=2)
-        _text(cv, px, py, str(cid), "#fff", (_FONT_F[0], 9))
-        cv.create_rectangle(px - 24, py + 11, px + 24, py + 31,
-                            fill="#fff5dc", outline="#796746", width=1)
-        _text(cv, px, py + 21, city(cid), "#263c40",
-              (_FONT_F[0], 9))
-    _text(cv, w / 2, h - 102,
-          "点线路认领（需对应颜色车票卡 N 张，N = 线路长度）", _MUTED,
-          (_FONT_F[0], 8))
-    # 玩家手牌/分
-    hc = st.get("hand_count") or {}
-    n = len(players)
-    gap = 8
-    pw = (w - gap * (n + 1)) / n if n else w
-    py0 = h - 92
-    for idx, u in enumerate(players):
-        x0 = gap + idx * (pw + gap)
-        cv.create_rectangle(x0, py0, x0 + pw, py0 + 66, fill="#1e2c42",
-                            outline=_shade(accent, 0.3), width=1)
-        _text(cv, x0 + pw / 2, py0 + 16, nick(u) + ("（我）" if u == me else ""),
-              "#fff", _FONT_B)
-        _text(cv, x0 + pw / 2, py0 + 38, f"🎫手牌 {hc.get(str(u), 0)}",
-              "#cfe0d8", _FONT_F)
-        _text(cv, x0 + pw / 2, py0 + 55, f"线路 {_pscore(st, u)} 分", "#ffd75e",
-              (_FONT_F[0], 9))
-    if priv and priv.get("hand"):
-        hd = priv["hand"]
-        _text(cv, w / 2, h - 20, "你的票卡：" + "  ".join(
-            f"{(st.get('colors') or {}).get(c, c)}:{v}" for c, v in sorted(hd.items())), "#dfe6ef",
-            (_FONT_F[0], 8))
+    from boardgames.rail_table_tk import paint
+    paint(cv, st, me, nick, submit, repaint, ui, priv, w, h, _tl_map_art)
 
 
 def _click_tielu(ui, x, y):
-    """铁路点击认领：最近且 ≤12px、买得起的未认领线路 → claim。"""
-    st = ui.get("state") or {}
-    me = ui.get("me")
-    if st.get("status") != "playing" or st.get("winner_uid") is not None:
-        return
-    if me is None or me not in (st.get("players") or []):
-        return
-    if st.get("turn_uid") is None or st.get("turn_uid") != me:
-        return
-    submit = ui.get("submit")
-    if submit is None:
-        return
-    best = None
-    for (x0, y0, x1, y1, a, b, _color, _length, affordable) in ui.get("tl_routes") or ():
-        if not affordable:
-            continue
-        d = _tl_seg_dist(x, y, x0, y0, x1, y1)
-        if d <= 12 and (best is None or d < best[0]):
-            best = (d, a, b)
-    if best is None:
-        return
-    submit({"op": "claim", "a": best[1], "b": best[2]})
-    repaint = ui.get("repaint")
-    if repaint:
-        repaint()
+    from boardgames.rail_table_tk import click
+    click(ui, x, y, _tl_seg_dist)
 
 
-_CLICKS["tielu"] = _click_tielu      # 铁路：点线路认领（最近命中，买得起才发）
+_CLICKS["tielu"] = _click_tielu  # tl_routes select a physical route before confirmation.
 
 
 @_register("gongfang")
@@ -7057,44 +5854,8 @@ def _p_balatro_hand(cv, w, card_y, hand, sel_ids, ui, repaint):
 
 @_register("balatro")
 def _p_balatro(cv, st, me, nick, submit, repaint, ui, priv, w, h):
-    _p_balatro_bg(cv, w, h)
-    done, turn, players, alive, hp, scr, cleared = \
-        _p_balatro_top(cv, w, h, st, me, nick)
-    sel_rects, played, cw, chh, py = _p_balatro_playarea(cv, w, h, priv, ui)
-    hand = priv.get("hand") if priv and isinstance(priv.get("hand"), list) else []
-    # 结算加分检测：对比上次累计分，增量 → 在出战区位置触发上飘
-    _p_balatro_fx_detect(ui, st, me, w / 2, py + chh / 2)
-    # 我的小丑牌（常驻被动展示）；hbase = 手牌 hover 矩形数量
-    jy = py + chh + 26
-    hsel = set(priv.get("sel") or []) if priv else set()
-    hrow, _h1, _h2, _h3, _h4 = _balatro_hand_layout(hand, hsel, w)
-    joker_rects, jchh = _p_balatro_jokers(cv, w, jy, st, me, ui, len(hrow))
-    ui["balatro_jokers"] = joker_rects
-    # 提示语
-    prog_y = jy + (8 if joker_rects else 0) + (jchh if joker_rects else 0) + 26
-    if done:
-        _text(cv, w / 2, prog_y, f"🏆 {nick(st.get('winner'))} 斩获本局胜利！",
-              _B_BLNDT, (_FONT_BF, 12, "bold"))
-    elif turn == me:
-        _text(cv, w / 2, prog_y,
-              f"点手牌选牌，凑好牌型后「出牌」（已选 {len(played)}/5）",
-              _B_BLNDT, (_FONT_BF, 11, "bold"))
-    else:
-        _text(cv, w / 2, prog_y, f"等待 {nick(turn)}…", "#d8b89a",
-              (_FONT_BF, 11, "bold"))
-    # 手牌区（点牌=select；hover 缓动上浮）。高度计算保持原几何，方便鼠标对齐。
-    card_y = max(prog_y + 18, h - 128)
-    # 左右两侧：盲注进度 / 手牌结算（自上而下贴到手上方，不遮挡点击矩形）
-    sidetop = py + chh + 14
-    sidebot = card_y - 14
-    if sidebot - sidetop >= 40 and w >= 560:
-        _p_balatro_blind(cv, w, me, st, sidetop, sidebot)
-        _p_balatro_score(cv, w, me, played, st, sidetop, sidebot)
-    hand_rects = _p_balatro_hand(cv, w, card_y, hand, hsel, ui, repaint)
-    # 上飘文字覆盖在最上层；hover 命中区 = 手牌矩形 + 小丑矩形
-    _p_balatro_fx_draw(cv, ui, repaint)
-    _hov_rects(ui, hand_rects + joker_rects)
-    ui.update(game="balatro")
+    from boardgames.jokers.desktop import paint
+    return paint(cv, st, me, nick, submit, repaint, ui, priv, w, h)
 
 
 def _p_balatro_solo_top(cv, w, st, me):

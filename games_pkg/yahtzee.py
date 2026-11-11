@@ -69,7 +69,7 @@ class YahtzeeGame(BaseGame):
         return all(v is not None for v in self.scores[uid].values())
 
     def act(self, uid, action):
-        if self.done:
+        if self.done is not None:
             raise GameRuleError("本局已结束")
         if uid != self._cur():
             raise GameRuleError("还没轮到你")
@@ -83,6 +83,8 @@ class YahtzeeGame(BaseGame):
         raise GameRuleError("未知动作")
 
     def _roll(self, uid):
+        if self.rolled:
+            raise GameRuleError("本回合已掷骰，请保留后重掷")
         if self._turn_done(uid):
             # 玩家牌全部填过 → 直接下一家
             self._next()
@@ -107,8 +109,8 @@ class YahtzeeGame(BaseGame):
         for k in keep:
             if not (0 <= k < 5):
                 raise GameRuleError("骰子位无效")
-        self.dice = [self.dice[k] for k in keep] \
-            + [self.rng.randint(1, 6) for _ in range(5 - len(keep))]
+        self.dice = [value if i in keep else self.rng.randint(1, 6)
+                     for i, value in enumerate(self.dice)]
         self.rolls_left -= 1
         joined = " ".join(str(d) for d in self.dice)
         return [f"🔁 重掷：{joined}（剩 {self.rolls_left} 次）"]
@@ -140,7 +142,7 @@ class YahtzeeGame(BaseGame):
         return msgs
 
     def _next(self):
-        if self.done:
+        if self.done is not None:
             return
         self.turn = (self.turn + 1) % len(self.players)
         self.round += 1
@@ -154,7 +156,7 @@ class YahtzeeGame(BaseGame):
 
     def snapshot(self):
         return {
-            "game": self.name, "status": "playing",
+            "game": self.name, "status": "ended" if self.done is not None else "playing",
             "turn_uid": self._cur(), "round": self.round,
             "dice": self.dice, "rolls_left": self.rolls_left,
             "rolled": self.rolled,
@@ -163,10 +165,11 @@ class YahtzeeGame(BaseGame):
                        for u, row in self.scores.items()},
             "totals": {str(u): v for u, v in self.totals.items()},
             "players": list(self.players), "winner_uid": self.done,
+            "preview": {cat: _cat_score(cat, self.dice) for cat in CATS} if self.rolled else {},
         }
 
     def ended(self):
-        if self.done:
+        if self.done is not None:
             return {"winner_uid": self.done,
                     "detail": f"{self._nick(self.done)} 总分最高"}
         return None

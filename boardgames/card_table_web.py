@@ -7,7 +7,7 @@ const CardTableWeb = (() => {
   const gemColors=['o','d','r','e','s'];
   const gemNames={o:'黑玛瑙',d:'白钻石',r:'红宝石',e:'祖母绿',s:'蓝宝石',g:'黄金'};
   const tierNames={1:'矿场',2:'工坊',3:'商贸城市'};
-  const jewelFiles={1:'gemcity-tier1.webp?v=jewel-v2',2:'gemcity-tier2.webp?v=jewel-v2',3:'gemcity-tier3.webp?v=jewel-v2'};
+  const jewelFiles={1:'gemcity-tier1.webp?v=anime-v1',2:'gemcity-tier2.webp?v=anime-v1',3:'gemcity-tier3.webp?v=anime-v1'};
   const loveNames={1:'护卫',2:'牧师',3:'男爵',4:'侍女',5:'王子',6:'国王',7:'伯爵夫人',8:'公主'};
   const loveEffects={1:'猜中目标持牌即可淘汰',2:'查看一名目标的持牌',3:'与目标比较持牌点数',4:'获得侍女保护',5:'令目标弃牌并重新摸牌',6:'与目标交换持牌',7:'与公主同持时必须弃出',8:'弃出公主即刻出局'};
   const sources=new Map();
@@ -43,7 +43,7 @@ const CardTableWeb = (() => {
   }
   function jewel(color){
     const index=[...gemColors,'g'].indexOf(color);
-    const e=index>=0?art('gemcity-jewels.webp',index,3,2,gemNames[color]):node('span');
+    const e=index>=0?art('gemcity-jewels.webp?v=anime-v1',index,3,2,gemNames[color]):node('span');
     e.className='ct-jewel ct-jewel-'+color;
     e.setAttribute('role','img');e.setAttribute('aria-label',gemNames[color]||'宝石');
     e.appendChild(node('i','ct-jewel-core'));return e;
@@ -146,7 +146,7 @@ const CardTableWeb = (() => {
     const row=node('div','ct-patrons');
     (s.nobles||[]).forEach((threshold,index)=>{
       const title=(s.noble_titles||[])[index]||('贵宾 '+(index+1));
-      const card=node('article','ct-patron');const image=art('gemcity-patrons.webp',(s.noble_art||[])[index],5,1,title);
+      const card=node('article','ct-patron');const image=art('gemcity-patrons.webp?v=anime-v1',(s.noble_art||[])[index],5,1,title);
       card.append(image,node('strong','ct-card-name',title),cost(threshold,s.colors));
       const ready=Object.entries(threshold).every(([color,count])=>(discount[color]||0)>=count);
       card.appendChild(node('small','ct-patron-status',ready?'门槛已达':'门槛'));row.appendChild(card);
@@ -228,7 +228,7 @@ const CardTableWeb = (() => {
     const patronsRow=node('div','ct-patrons');patronsSection.appendChild(patronsRow);aside.appendChild(patronsSection);
     (s.nobles||[]).forEach((threshold,index)=>{
       const title=(s.noble_titles||[])[index]||('贵宾 '+(index+1));
-      const card=node('article','ct-patron'),image=art('gemcity-patrons.webp',(s.noble_art||[])[index],5,1,title);
+      const card=node('article','ct-patron'),image=art('gemcity-patrons.webp?v=anime-v1',(s.noble_art||[])[index],5,1,title);
       const points=node('b','ct-patron-points',String(Number.isFinite(s.noble_points)?s.noble_points:3));
       image.append(points,node('strong','ct-card-name',title));
       card.append(image,gemCost(threshold));
@@ -351,7 +351,8 @@ const CardTableWeb = (() => {
   }
   function role(value,label,interactive){
     const card=node(interactive?'button':'article','ct-role');if(interactive)card.type='button';
-    card.dataset.value=String(value);const image=art('lovelove-court.webp',value-1,4,2,loveNames[value]);
+    card.dataset.value=String(value);const image=art('lovelove-court.webp?v=anime-court-v1',value-1,4,2,loveNames[value]);
+    if(interactive)card.setAttribute('aria-label',label+' · '+value+' '+loveNames[value]);
     image.appendChild(node('b','ct-role-value',String(value)));
     card.append(image,node('strong','ct-card-name',loveNames[value]||('牌 '+value)));
     if(label)card.appendChild(node('span','ct-role-label',label));
@@ -374,8 +375,13 @@ const CardTableWeb = (() => {
       const choices=[{value:hand,label:'持牌'}];if(valid(drawn))choices.push({value:drawn,label:'新摸牌'});
       const forced=choices.length===2&&choices.some(c=>c.value===7)&&choices.some(c=>c.value===8);
       const controls=node('div','ct-love-controls'),note=node('p','ct-choice-note',myTurn?'先点选一张牌，再选择效果目标':'你的持牌仅自己可见');
-      const targetLabel=node('label','','目标 '),targets=node('select','ct-love-target');
-      const guessLabel=node('label','','护卫猜值 '),guess=node('select','ct-love-guess');
+      const targetLabel=node('section','ct-love-targets'),targets=node('select','ct-love-target');
+      const guessLabel=node('section','ct-love-guesses'),guess=node('select','ct-love-guess');
+      targetLabel.appendChild(node('h3','ct-section-title','选择效果目标'));
+      guessLabel.appendChild(node('h3','ct-section-title','猜对方持牌 · 点选角色'));
+      targets.hidden=guess.hidden=true;targets.setAttribute('aria-label','效果目标');guess.setAttribute('aria-label','护卫猜值');
+      const targetGrid=node('div','ct-love-player-grid'),guessGrid=node('div','ct-love-guess-grid');
+      targetLabel.appendChild(targetGrid);guessLabel.appendChild(guessGrid);
       const submit=node('button','gbtn go ct-love-submit','先选择要弃出的牌');submit.type='button';submit.disabled=true;
       let selected=null,submitted=false;
       function option(select,value,text){const o=node('option','',text);o.value=value;select.appendChild(o);}
@@ -400,8 +406,16 @@ const CardTableWeb = (() => {
         }
         return {ready:true,label:'弃出 '+loveNames[selected.value]+' · '+selected.value,action};
       }
-      function updateReady(){const status=readiness();submit.disabled=!status.ready;submit.textContent=status.label;}
+      function updateReady(){
+        const status=readiness();submit.disabled=!status.ready;submit.textContent=status.label;
+        for(const pick of targetGrid.children){const on=String(pick.dataset.uid)===targets.value;pick.classList.toggle('ct-picked',on);pick.setAttribute('aria-pressed',String(on));}
+        for(const pick of guessGrid.children){const on=String(pick.dataset.value)===guess.value;pick.classList.toggle('ct-picked',on);pick.setAttribute('aria-pressed',String(on));}
+      }
       targets.oninput=targets.onchange=updateReady;guess.oninput=guess.onchange=updateReady;
+      for(let value=1;value<=8;value++){
+        const pick=role(value,'猜 '+value,true);pick.classList.add('ct-love-guess-card');guessGrid.appendChild(pick);
+        pick.onclick=()=>{if(submitted||!canAct('lovelove',s,s.cur)||state.gpriv!==pv)return;guess.value=String(value);updateReady();};
+      }
       const buttons=[];
       choices.forEach((choice,index)=>{
         const pick=role(choice.value,choice.label,myTurn);buttons.push(pick);cards.appendChild(pick);
@@ -411,7 +425,14 @@ const CardTableWeb = (() => {
             selected=choice;buttons.forEach((button,i)=>{button.classList.toggle('ct-picked',i===index);button.setAttribute('aria-pressed',String(i===index));});
             note.textContent=loveEffects[choice.value];guess.value='';
             targets.innerHTML='';option(targets,'','请选择目标');
-            live.forEach(uid=>{if(choice.value===5||uid!==me)option(targets,uid,gnick(uid)+(uid===me?'（自己）':''));});
+            targetGrid.innerHTML='';
+            live.forEach(uid=>{if(choice.value===5||uid!==me){
+              const label=gnick(uid)+(uid===me?'（自己）':'');option(targets,uid,label);
+              const pick=node('button','ct-love-player');pick.type='button';pick.dataset.uid=String(uid);
+              pick.append(node('span','ct-love-seat',String(live.indexOf(uid)+1)),node('strong','',label),node('small','','暗置手牌'));
+              pick.onclick=()=>{if(submitted||!canAct('lovelove',s,s.cur)||state.gpriv!==pv)return;targets.value=String(uid);updateReady();};
+              targetGrid.appendChild(pick);
+            }});
             targetLabel.hidden=![1,2,3,5,6].includes(choice.value);guessLabel.hidden=choice.value!==1;
             updateReady();
           };
@@ -428,6 +449,11 @@ const CardTableWeb = (() => {
         if(request&&typeof request.then==='function')request.then(result=>{if(result&&result.ok===false)retry();},retry);
       };
     }else table.appendChild(node('p','ct-empty',mine?'等待本人私有手牌':'观战中 · 仅展示公开牌'));
+    const peek=pv.peek;
+    if(mine&&s.status==='playing'&&s.winner_uid==null&&peek&&live.includes(peek.target)&&valid(peek.value)){
+      const seen=node('section','ct-love-peek');seen.append(node('h3','ct-section-title','牧师私见 · 仅你可见'),
+        role(peek.value,gnick(peek.target)+' · 当时查看',false));table.appendChild(seen);
+    }
     const publicSection=node('section','ct-love-public');table.appendChild(publicSection);
     publicSection.appendChild(node('h3','ct-section-title','公开弃牌'));
     const discards=Array.isArray(s.discard)?s.discard:[],row=node('div','ct-love-discards');
@@ -480,6 +506,20 @@ button.ct-role{cursor:pointer}button.ct-role:disabled{opacity:1;cursor:default}.
 .ct-love-submit{min-height:38px}.ct-love-discards{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}.ct-love-discards .ct-card-name{font-size:10px}.ct-love-discards .ct-role-label{font-size:9px;overflow-wrap:anywhere}
 .ct-love-discards .ct-role-value{width:18px;height:18px;font-size:13px;line-height:18px;top:3px;left:3px}
 @media(max-width:560px){.ct-album-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ct-market-row{gap:4px}.ct-card-name{font-size:10px;padding-inline:3px}.ct-price{padding-inline:3px;gap:2px;min-height:32px}.ct-price small{font-size:8px}.ct-cost-chip{font-size:9px}.ct-card-head{inset:3px 2px auto}.ct-points,.ct-discount{font-size:9px;padding:2px}.ct-love-discards{grid-template-columns:repeat(4,minmax(0,1fr))}.ct-love-controls{align-items:stretch}.ct-love-submit{width:100%}}
+
+/* Court controls use visible players and role cards; native buttons retain keyboard/touch actions. */
+.ct-love{--court-ink:#533845;--court-rose:#aa506b;background:#fbf4ee;color:var(--court-ink);border:1px solid #d8b9bb;border-radius:12px;padding:12px;box-sizing:border-box}
+.ct-love .ct-turn{color:#7a3852}.ct-love .ct-members{color:#765966}.ct-love .ct-section-title{color:#744252}
+.ct-love-hand{max-width:480px;gap:12px}.ct-love-private>.ct-choice-note{padding:8px 10px;border-left:3px solid #aa506b;background:#f3e2e4;color:#653c4c;border-radius:4px}
+.ct-love .ct-role.ct-picked{border-color:#a44166;box-shadow:0 0 0 2px #a4416633}.ct-love .ct-picked .ct-role-label{background:#a44166}
+.ct-love-controls{display:block}.ct-love-targets,.ct-love-guesses{margin:9px 0}.ct-love-controls section[hidden]{display:none}
+.ct-love-player-grid{display:flex;flex-wrap:wrap;gap:7px}.ct-love button.ct-love-player{min-height:48px;display:grid;grid-template-columns:30px 1fr;gap:1px 7px;align-items:center;padding:6px 11px;border:1px solid #cfb4b9;border-radius:9px;background:#fffaf5;color:#533845;font:inherit;text-align:left;cursor:pointer}
+.ct-love-seat{grid-row:span 2;display:grid;place-items:center;background:#ead8dc;border:1px solid #c496a5;border-radius:50%;width:27px;height:27px;font-weight:700}.ct-love-player small{font-size:10px;color:#856974}
+.ct-love button.ct-love-player.ct-picked{border:2px solid #a44166;background:#f5e2e9}.ct-love-player:focus-visible{outline:3px solid #ad6634;outline-offset:2px}
+.ct-love-guess-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;max-width:700px}.ct-love-guess-grid .ct-card-name{font-size:11px;padding:4px 1px}.ct-love-guess-grid .ct-role-label{display:none}.ct-love-guess-grid .ct-role-value{width:19px;height:19px;font-size:13px;line-height:19px;top:3px;left:3px}
+.ct-love .ct-love-submit{margin-top:6px;background:#91415e;color:#fff;border-color:#91415e;min-height:42px}.ct-love .ct-love-submit:disabled{background:#eadce0;color:#846b76;border-color:#d7c0c7;opacity:1}
+.ct-love-peek{max-width:160px;padding:6px 10px 10px;background:#efe6f7;border:1px solid #c5acd9;border-radius:9px;margin:10px 0}.ct-love-peek .ct-section-title{color:#68477c}
+@media(max-width:560px){.ct-love{padding:9px}.ct-love-guess-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.ct-love-player-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.ct-love button.ct-love-player{padding:6px;min-width:0}.ct-love-hand{gap:9px}.ct-love .ct-role .ct-card-name{font-size:13px}.ct-love-guess-grid .ct-card-name{font-size:11px!important}}
 
 /* Jewel table. All overrides are scoped so the Love Letter court keeps its layout. */
 #gpanel .card:has(.ct-gemcity){width:min(1120px,calc(100vw - 16px));box-sizing:border-box;padding:12px}

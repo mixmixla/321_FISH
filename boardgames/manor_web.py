@@ -13,7 +13,7 @@ const ManorWeb = (() => {
     image.setAttribute('role','img');image.setAttribute('aria-label',name);
     if(index<0||!atlas.file||!atlas.cols||!atlas.rows){image.classList.add('mn-art-fallback');image.textContent=name;return image;}
     image.dataset.artKind=kind;image.dataset.artIndex=String(index);
-    image.style.backgroundImage='url("/game-art/'+atlas.file+'")';
+    image.style.backgroundImage='url("/game-art/'+atlas.file+'?v=moon-manor")';
     image.style.backgroundSize=(atlas.cols*100)+'% '+(atlas.rows*100)+'%';
     image.style.backgroundPosition=(atlas.cols===1?0:index%atlas.cols*100/(atlas.cols-1))+'% '+(atlas.rows===1?0:Math.floor(index/atlas.cols)*100/(atlas.rows-1))+'%';
     return image;
@@ -31,7 +31,7 @@ const ManorWeb = (() => {
     const who=uid=>seat(uid)+'号 '+gnick(uid);
     const name=key=>(s.room_names||{})[key]||(discoveries.find(d=>d.pos===key)||{}).room||rooms[key]||'未知';
     const actorPos=positions[mine?me:s.turn_uid]||'0,0';
-    if(discoveries.length>view.count){view.selected=discoveries[discoveries.length-1].pos;view.pendingReveal=view.selected;view.count=discoveries.length;}
+    if(discoveries.length>view.count){view.selected=discoveries[discoveries.length-1].pos;view.count=discoveries.length;}
     if(!view.selected||rooms[view.selected]==null)view.selected=rooms[actorPos]!=null?actorPos:Object.keys(rooms)[0];
     const focus=point(view.follow?actorPos:view.focus)||point(actorPos)||[0,0];
     const myPoint=point(positions[me]);let busy=false;
@@ -57,31 +57,33 @@ const ManorWeb = (() => {
       }else element.scrollIntoView({block:'nearest'});
     }
     const turn=node('div','mn-turn',room&&room.status==='ended'?'本局结束':(({explore:'探索',haunt:'惊魂'}[s.phase]||s.phase||'探索')+' · '+who(s.turn_uid)+' · 剩 '+(s.steps_left||0)+' 步'));tools.appendChild(turn);
-    const info=node('div','mn-status','预兆 '+(s.omens||0)+' · 可探索房块 '+(s.tiles_left==null?'未知':s.tiles_left));tools.appendChild(info);
-    if(mine&&(s.stats||{})[me]){const own=s.stats[me];tools.appendChild(node('div','mn-status','力量 '+own.might+' · 速度 '+own.speed+' · 理智 '+own.sanity+' · 知识 '+own.knowledge));}
-    if(s.haunt)tools.appendChild(node('div','mn-haunt',(s.haunt.scenario||'惊魂降临')+' · 叛徒 '+who(s.haunt.traitor)+' · 出口 '+s.haunt.exit));
-    const moves=node('div','mn-moves');tools.appendChild(moves);
-    for(const [dir,label,dx,dy,arrow] of directions){
-      const key=myPoint?((myPoint[0]+dx)+','+(myPoint[1]+dy)):'';
-      const allowed=active()&&s.steps_left>0&&(rooms[key]!=null||s.tiles_left==null||s.tiles_left>0);
-      const button=action(arrow+' '+label,{move:dir},allowed);button.dataset.move=dir;moves.appendChild(button);
+    if(room&&room.status==='ended'){
+      const line=Array.from(state.glog||[]).reverse().find(x=>typeof x==='string'&&x.startsWith('🏁 本局结束'));
+      if(line){const result=node('strong','mn-outcome',line.replace(/^🏁 本局结束[：:]\s*/,''));tools.appendChild(result);}
     }
-    const end=action('结束回合',{end:true},active(),'mn-end');end.dataset.end='true';moves.appendChild(end);
-    const inventory=mine&&state.gpriv&&Array.isArray(state.gpriv.items)?state.gpriv.items:((s.items||{})[me]||[]);
-    if(mine&&(inventory.length||s.phase==='haunt')){
-      const extra=node('details','mn-extra');extra.open=!!view.actionsOpen;
-      extra.appendChild(node('summary','','道具与对抗 · '+inventory.length+' 件道具'));
-      extra.ontoggle=()=>{if(extra.isConnected)view.actionsOpen=extra.open;};
-      const bar=node('div','mn-extra-buttons');inventory.forEach(item=>{const b=action('使用 '+item,{use:item},active());b.dataset.use=item;bar.appendChild(b);});
-      if(s.phase==='haunt'){
-        const here=players.filter(uid=>uid!==me&&alive.includes(uid)&&positions[uid]===positions[me]);
-        here.forEach(uid=>{const b=action('攻击 '+who(uid),{attack:uid},active());b.dataset.attack=String(uid);bar.appendChild(b);});
-        const traitor=s.haunt&&s.haunt.traitor,exit=s.haunt&&s.haunt.exit;
-        const allAtExit=!!exit&&alive.filter(uid=>uid!==traitor).every(uid=>positions[uid]===exit);
-        const escape=action('从出口撤离',{escape:true},active()&&me!==traitor&&allAtExit);escape.dataset.escape='true';
-        escape.title=me===traitor?'叛徒无法撤离':'所有幸存者到达出口后可撤离';bar.appendChild(escape);
+    const info=node('div','mn-status','预兆 '+(s.omens||0)+' · 可探索房块 '+(s.tiles_left==null?'未知':s.tiles_left));tools.appendChild(info);
+    if(mine&&(s.stats||{})[me]){
+      const meter=node('div','mn-meter'),stats=s.stats[me];
+      for(const [key,caption] of [['might','力量'],['speed','速度'],['sanity','理智'],['knowledge','知识']]){
+        const chip=node('span','mn-attribute mn-'+key,caption+' '+stats[key]);meter.appendChild(chip);
       }
-      extra.appendChild(bar);tools.appendChild(extra);
+      tools.appendChild(meter);
+    }
+    if(s.haunt)tools.appendChild(node('div','mn-haunt',(s.haunt.scenario||'惊魂降临')+' · 叛徒 '+who(s.haunt.traitor)));
+    const end=action('结束回合',{end:true},active(),'mn-end');end.dataset.end='true';turn.appendChild(end);
+    const inventory=mine&&state.gpriv&&Array.isArray(state.gpriv.items)?state.gpriv.items:((s.items||{})[me]||[]);
+    if(inventory.length){
+      const extra=node('details','mn-extra');extra.open=!!view.actionsOpen;
+      extra.appendChild(node('summary','','背包 · '+inventory.length));
+      extra.ontoggle=()=>{if(extra.isConnected)view.actionsOpen=extra.open;};
+      const tray=node('div','mn-item-tray');
+      inventory.forEach(item=>{
+        const b=action('',{use:item},active()&&item!=='消防斧','mn-item-card');
+        b.dataset.use=item;b.setAttribute('aria-label',item==='消防斧'?'消防斧 · 被动武器':'使用 '+item);
+        b.append(sprite('item',item),node('b','',item),node('small','',item==='消防斧'?'攻击自动 +1':'点牌使用'));
+        tray.appendChild(b);
+      });
+      extra.appendChild(tray);root.appendChild(extra);
     }
     const navigation=node('div','mn-navigation');root.appendChild(navigation);
     function viewButton(label,handler,chosen){const b=node('button','gbtn mn-view-button',label);b.type='button';b.setAttribute('aria-pressed',String(!!chosen));b.onclick=handler;return b;}
@@ -107,14 +109,24 @@ const ManorWeb = (() => {
       const inspect=node('button','mn-room-inspect');inspect.type='button';inspect.setAttribute('aria-label','查看 '+roomName+' '+key);inspect.onclick=()=>select(key);
       inspect.appendChild(sprite('room',roomName));inspect.appendChild(node('strong','mn-room-name',roomName));tileNode.appendChild(inspect);
       const markers=node('div','mn-occupants');(occupants[key]||[]).forEach(uid=>{
-        const marker=node('span','mn-seat',String(seat(uid))+'号'+(uid===me?'·你':''));marker.dataset.uid=String(uid);
+        const canFight=s.phase==='haunt'&&mine&&uid!==me&&alive.includes(uid)&&positions[me]===key;
+        const text=seat(uid)+'号'+(uid===me?'·你':'');
+        const marker=canFight?action('⚔ '+text,{attack:uid},active()&&!s.attack_used,'mn-seat mn-fight'):node('span','mn-seat',text);
+        if(canFight){marker.dataset.attack=String(uid);marker.setAttribute('aria-label','攻击 '+who(uid));}
+        marker.dataset.uid=String(uid);
         marker.style.setProperty('--mn-player',colors[Math.max(0,players.indexOf(uid))%colors.length]);marker.title=who(uid)+(alive.includes(uid)?'':'（阵亡）');
         marker.classList.toggle('mn-dead',!alive.includes(uid));markers.appendChild(marker);
       });tileNode.appendChild(markers);
+      if(s.haunt&&key===s.haunt.exit&&mine&&me!==s.haunt.traitor){
+        const together=alive.filter(uid=>uid!==s.haunt.traitor).every(uid=>positions[uid]===key);
+        const exit=action('⇥ 撤离',{escape:true},active()&&together,'mn-exit-seal');
+        exit.dataset.escape='true';exit.setAttribute('aria-label',together?'全员从出口撤离':'等待幸存者齐集出口');
+        tileNode.appendChild(exit);
+      }
       if(key===positions[me])for(const [dir,label,dx,dy,arrow] of directions){
         const neighbor=(p[0]+dx)+','+(p[1]+dy),revealed=rooms[neighbor]!=null;
         const allowed=active()&&s.steps_left>0&&(revealed||s.tiles_left==null||s.tiles_left>0);
-        const door=action(arrow,{move:dir},allowed,'mn-door mn-door-'+dir);door.dataset.door=dir;
+        const door=action(arrow,{move:dir},allowed,'mn-door mn-door-'+dir);door.dataset.door=dir;door.dataset.move=dir;
         const description='向'+label+(revealed?'移动至 '+name(neighbor):'开门');door.title=description;door.setAttribute('aria-label',description);tileNode.appendChild(door);
       }
       stage.appendChild(tileNode);
@@ -137,7 +149,7 @@ const ManorWeb = (() => {
     };requestAnimationFrame(restore);
     const selected=view.selected,record=discoveries.find(d=>d.pos===selected);
     const findings=node('section','mn-findings');findings.dataset.reviewPos=selected||'';root.appendChild(findings);
-    const findingHead=node('div','mn-finding-head');findingHead.append(node('h3','mn-section-title',name(selected)+(selected?' · '+selected:'')),viewButton('返回地图',()=>reveal(viewport),false));findings.appendChild(findingHead);
+    const findingHead=node('div','mn-finding-head');findingHead.append(node('h3','mn-section-title',name(selected)),viewButton('返回地图',()=>reveal(viewport),false));findings.appendChild(findingHead);
     if(record){
       findings.appendChild(node('p','mn-discovered-by',who(record.uid)+' 发现 · 第 '+(discoveries.indexOf(record)+1)+' 次开门'));
       const cards=node('div','mn-discovery-cards');
@@ -150,13 +162,13 @@ const ManorWeb = (() => {
     const history=node('details','mn-history');history.open=!!view.historyOpen;history.appendChild(node('summary','','发现档案 · '+discoveries.length+' 次 · 回看房间与卡牌'));
     history.ontoggle=()=>{if(history.isConnected)view.historyOpen=history.open;};
     const entries=node('div','mn-history-list');discoveries.slice().reverse().forEach((discovery,reverseIndex)=>{
-      const button=node('button','gbtn mn-history-entry','第 '+(discoveries.length-reverseIndex)+' 次 · '+discovery.room+' · '+who(discovery.uid));button.type='button';button.dataset.discoveryPos=discovery.pos;button.onclick=()=>select(discovery.pos);entries.appendChild(button);
+      const button=node('button','gbtn mn-history-entry');button.append(sprite('room',discovery.room),node('span','',discovery.room+' · '+who(discovery.uid)));button.type='button';button.dataset.discoveryPos=discovery.pos;button.onclick=()=>select(discovery.pos);entries.appendChild(button);
     });
     if(!discoveries.length)entries.appendChild(node('p','mn-empty','首次开门后的房间和卡牌会保存在这里'));history.appendChild(entries);root.appendChild(history);
     const roster=node('details','mn-roster');roster.open=!!view.rosterOpen;roster.appendChild(node('summary','','玩家与属性 · '+players.length+' 人'));
     roster.ontoggle=()=>{if(roster.isConnected)view.rosterOpen=roster.open;};
     players.forEach(uid=>{const stats=(s.stats||{})[uid]||{},key=positions[uid],line=node('div','mn-player-line');
-      line.append(node('strong','',who(uid)+(uid===me?'（你）':'')+(alive.includes(uid)?'':' · 阵亡')),node('div','',name(key)+' · '+(key||'未知')),node('div','mn-stat-values','力量 '+(stats.might??'—')+' · 速度 '+(stats.speed??'—')+' · 理智 '+(stats.sanity??'—')+' · 知识 '+(stats.knowledge??'—')));
+      line.append(node('strong','',who(uid)+(uid===me?'（你）':'')+(alive.includes(uid)?'':' · 阵亡')),node('div','',name(key)),node('div','mn-stat-values','力量 '+(stats.might??'—')+' · 速度 '+(stats.speed??'—')+' · 理智 '+(stats.sanity??'—')+' · 知识 '+(stats.knowledge??'—')));
       const items=(s.items||{})[uid]||[];if(items.length)line.appendChild(node('div','',items.join('、')));roster.appendChild(line);
     });root.appendChild(roster);
     if(view.pendingReveal===selected)requestAnimationFrame(()=>{if(findings.isConnected&&view.pendingReveal===selected){reveal(findings);view.pendingReveal=null;}});
@@ -191,4 +203,12 @@ WEB_CSS = r"""
 .mn-history,.mn-roster{border:1px solid var(--line);border-radius:7px;padding:6px 8px;margin:8px 0}.mn-history-list{display:flex;flex-direction:column;gap:5px;max-height:260px;overflow:auto;margin-top:6px}.mn-shell button.mn-history-entry{text-align:left;font-size:12px;line-height:1.5;padding:5px 8px;flex-shrink:0}
 .mn-player-line{padding:7px 0;border-top:1px solid var(--line);font-size:12px;line-height:1.5}.mn-stat-values{font-size:11px;color:var(--dim)}
 @media(max-width:560px){.mn-discovery-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.mn-room-name{font-size:11px}.mn-tools{padding-top:3px}.mn-shell button.mn-action{font-size:11px;padding:4px 7px}.mn-moves{gap:4px}.mn-haunt{font-size:10px}}
+
+.mn-shell .mn-turn{display:flex;align-items:center;justify-content:space-between;background:#26223b;color:#faf3ff;padding:5px 8px;border-left:4px solid #d9b15a;border-radius:5px}
+.mn-turn .mn-end{margin-left:auto}.mn-extra{margin:5px 0;background:#f3eef8;border:1px solid #aca5bc;border-radius:7px;padding:5px 8px;color:#343040}.mn-extra summary{cursor:pointer}
+.mn-item-tray{display:flex;gap:7px;flex-wrap:wrap;padding:5px 0}.mn-shell button.mn-item-card{width:100px;padding:0 0 4px;overflow:hidden;border:1px solid #ae9dba;background:#fff8ed;color:#35283d;border-radius:6px}.mn-item-card .mn-art{aspect-ratio:4/3}.mn-item-card b,.mn-item-card small{display:block}.mn-item-card small{font-size:10px}
+.mn-shell button.mn-fight{pointer-events:auto;min-height:22px;min-width:29px;margin:0;padding:1px 3px;font-size:10px;line-height:1.1;color:#fff;background:var(--mn-player);border:2px solid #f3ba76;cursor:pointer}
+.mn-shell button.mn-exit-seal{position:absolute;right:3px;bottom:3px;z-index:3;min-height:22px;padding:2px 4px;border:1px solid #eec369;background:#47316d;color:#fff5ce;font-size:10px}.mn-shell button.mn-exit-seal:disabled{opacity:.65}
+.mn-history-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:5px}.mn-shell button.mn-history-entry{display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:3px;max-width:120px}.mn-history-entry .mn-art{aspect-ratio:1}.mn-history-entry span{font-size:10px}.mn-art{background-color:#403248}
+ .mn-outcome{display:block;margin:4px 0;padding:6px 9px;color:#fff5cc;background:#47365c;border-left:4px solid #dcb75a;border-radius:5px;font-size:12px}.mn-meter{display:flex;flex-wrap:wrap;gap:3px;padding:2px 0}.mn-attribute{font-size:10px;font-weight:700;color:#fff;padding:2px 5px;border-radius:4px}.mn-might{background:#a73d50}.mn-speed{background:#27675f}.mn-sanity{background:#6b5091}.mn-knowledge{background:#425f88}
 """

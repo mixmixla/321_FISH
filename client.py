@@ -1983,6 +1983,11 @@ class ChatWindow:
 
     def _on_error(self, ev: dict) -> None:
         code = ev.get("code")
+        if code == "game" and ev.get("request_id"):
+            window = getattr(self, "_game_win", None)
+            if window is not None:
+                from boardgames.economy_kaituo import reject_action
+                reject_action(window, ev["request_id"])
         if code in ("kicked", "deleted") or (code == "retired" and ev.get("manual_login_required") is True):
             if not self._closed:
                 self.request_switch_account()
@@ -11530,54 +11535,22 @@ class ChatWindow:
 
 # 游戏动作配置：按钮 -> 动作（fixed=直接发；key+kind=取输入框内容构造）
 _GAME_ACTIONS = {
-    "guess_number": [
-        ("出题", {"key": "secret", "kind": "int"}, "输入 1~100 数字（出题）"),
-        ("猜数字", {"key": "guess", "kind": "int"}, "输入 1~100 数字（猜）"),
-    ],
-    "gomoku": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）")],
-    "gomoku_solo": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）")],
-    "tile2048": [
-        ("↑ 上", {"fixed": {"op": "move", "dir": "up"}}, ""),
-        ("↓ 下", {"fixed": {"op": "move", "dir": "down"}}, ""),
-        ("← 左", {"fixed": {"op": "move", "dir": "left"}}, ""),
-        ("→ 右", {"fixed": {"op": "move", "dir": "right"}}, ""),
-    ],
-    "rps": [
-        ("✊ 石头", {"fixed": {"choice": "rock"}}, ""),
-        ("✌️ 剪刀", {"fixed": {"choice": "scissors"}}, ""),
-        ("✋ 布", {"fixed": {"choice": "paper"}}, ""),
-    ],
+    "guess_number": [],  # Number cards and the legal interval board.
+    "gomoku": [],  # Placement is directly on the real board intersections.
+    "gomoku_solo": [],
+    "tile2048": [],  # Board swipes, local direction compass and arrow keys.
     "spy": [
         ("描述", {"key": "describe", "kind": "text"}, "输入描述（别说出关键词）"),
         ("投票", {"key": "vote", "kind": "uid"}, "输入怀疑对象的 uid"),
     ],
-    "uno": [
-        ("摸牌", {"fixed": {"draw": True}}, ""),
-        ("出牌", {"key": "card", "kind": "card"}, "输入 牌id [颜色]"),
-    ],
-    "blackjack": [
-        ("要牌", {"fixed": {"action": "hit"}}, ""),
-        ("停牌", {"fixed": {"action": "stand"}}, ""),
-    ],
-    "drawguess": [
-        ("笔画", {"key": "stroke", "kind": "stroke"}, "画手输入 x1,y1,x2,y2"),
-        ("猜词", {"key": "guess", "kind": "text"}, "输入你的猜测"),
-        ("🗑 清空", {"fixed": {"clear": True}}, "画手清空画布（也可直接在画布上拖动作画）"),
-    ],
+    "uno": [],  # Card objects and widget-local keyboard own the actions.
+    "blackjack": [],  # 牌靴与停牌标记承担所有常规行动。
+    "drawguess": [],  # Canvas strokes, palette, cloth and native guess field.
     "connect4": [("落子", {"key": "col", "kind": "int"}, "输入列号 0~6")],
     "othello": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起）")],
-    "calc24": [("作答", {"key": "expr", "kind": "text"}, "输入凑 24 的表达式，如 1+2+3*4")],
+    "calc24": [],  # Four value cards, operator chips and expression seal.
     "matchpairs": [("摸牌", {"fixed": {"draw": True}}, "")],
-    "betrayal": [
-        ("⬆ 上", {"fixed": {"move": "up"}}, ""),
-        ("⬇ 下", {"fixed": {"move": "down"}}, ""),
-        ("⬅ 左", {"fixed": {"move": "left"}}, ""),
-        ("➡ 右", {"fixed": {"move": "right"}}, ""),
-        ("结束回合", {"fixed": {"end": True}}, ""),
-        ("使用道具", {"key": "use", "kind": "text"}, "输入道具名，如 急救包"),
-        ("攻击", {"key": "attack", "kind": "uid"}, "输入同一房间的目标 uid（惊魂阶段）"),
-        ("全员撤离", {"fixed": {"escape": True}}, ""),
-    ],
+    "betrayal": [],  # Doors, inventory and exit are on the tabletop.
     "davinci": [
         ("摸明牌", {"fixed": {"op": "draw", "open": True}}, ""),
         ("摸暗牌", {"fixed": {"op": "draw", "open": False}}, ""),
@@ -11587,11 +11560,7 @@ _GAME_ACTIONS = {
     "lovelove": [
         ("弃牌出效果", {"key": "ldisc", "kind": "ldisc"}, "输入 play [target [val]] 空格分隔"),
     ],
-    "halloween": [
-        ("翻牌", {"fixed": {"op": "flip"}}, ""),
-        ("拍铃", {"fixed": {"op": "slap"}}, ""),
-        ("过", {"fixed": {"op": "pass"}}, ""),
-    ],
+    "halloween": [],  # Direct deck, bell and turn-marker interactions.
     "tictactoe": [("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）")],
     "go": [
         ("落子", {"key": None, "kind": "pos"}, "输入 x,y（0 起，用逗号分隔）"),
@@ -11603,15 +11572,8 @@ _GAME_ACTIONS = {
     ],
     "halma": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（直移或隔子直跳）")],
     "checkers": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（斜移/斜跳吃子）")],
-    "blokus": [
-        ("放置", {"key": None, "kind": "blok"}, "输入 拼块名 方向号 x y（也可直接在棋盘上点击落子）"),
-        ("⏭ 跳过", {"fixed": {"op": "pass"}}, "跳过本回合"),
-    ],
-    "ludo": [
-        ("掷骰", {"fixed": {"op": "roll"}}, ""),
-        ("走机", {"key": None, "kind": "ludomove"}, "输入机号 0~3"),
-        ("结束回合", {"fixed": {"op": "skip"}}, ""),
-    ],
+    "blokus": [],  # Select a physical polyomino, then its board location.
+    "ludo": [],  # Dice and aircraft are direct canvas controls.
     "onewolf": [
         ("🔮预言看一人", {"op": "peek", "key": "look_one", "kind": "uid"}, "输入目标 uid（预言家）"),
         ("🔮看中心(自选)", {"op": "peek", "key": "look_center", "kind": "twoidx"}, "预言家选中心两张：两个序号 0~2（空格分隔）"),
@@ -11656,12 +11618,7 @@ _GAME_ACTIONS = {
         ("🂠摸牌", {"fixed": {"op": "draw"}}, "本回合未出牌时摸一张并结束回合"),
         ("✅结束回合", {"fixed": {"op": "done"}}, "结束本回合"),
     ],
-    "balatro": [
-        ("🎮 出牌", {"fixed": {"op": "play"}}, "结算当前出战的牌型"),
-        ("🗑 弃牌", {"op": "discard", "key": None, "kind": "handidx",
-                  "ui_list": "balatro_cards", "ui_cid_key": "cid"},
-         "输入要弃掉的手牌序号（棋盘窗手牌从左到右 1 起）"),
-    ],
+    "balatro": [],
     "balatro_solo": [
         ("🎮 出牌", {"fixed": {"op": "play"}}, "结算当前出战的牌型"),
         ("🗑 弃牌", {"op": "discard", "key": None, "kind": "handidx",
@@ -11671,10 +11628,8 @@ _GAME_ACTIONS = {
         ("▶ 继续", {"fixed": {"op": "next"}}, "商店结束，进下一盲注"),
     ],
     # ---- CC-03 桌面交互补齐：11 款此前被拦截的桌游 ----
-    # azul 取砖/落砖改走棋盘拖拽（client_gameui._azul_drag），不再弹输入窗。
-    "azul": [
-        ("🌀 溢出地板", {"fixed": {"op": "floor"}}, "本回合取的砖全部溢出（地板扣分）"),
-    ],
+    # 花砖直接点/拖实物到花纹行或地板，键盘在同一画布完成。
+    "azul": [],
     "bolan": [
         ("🗳 投放", {"op": "place", "key": "r", "kind": "int"}, "输入选区 0~4"),
         ("🔥 弃2枚翻倍", {"op": "devote", "key": "r", "kind": "int"}, "输入选区 0~4（耗 2 枚影响力）"),
@@ -11694,14 +11649,7 @@ _GAME_ACTIONS = {
         ("👷 工作", {"op": "work", "key": "id", "kind": "int"}, "输入工位 id"),
         ("⏭ 过牌", {"fixed": {"op": "pass"}}, "本轮不再放置工人"),
     ],
-    "kaituo": [
-        ("🎲 掷骰", {"fixed": {"op": "roll"}}, "掷 2 骰并结算资源"),
-        ("🏠 布置（开局）", {"key": None, "kind": "setup2"}, "开局：输入 顶点i 顶点j 路端b_i 路端b_j"),
-        ("⛏ 建造", {"op": "build", "key": None, "kind": "buildspec"}, "输入 类型 i j [b_i b_j]，类型 road/settle/city"),
-        ("🦹 移动盗匪", {"op": "robber", "key": None, "kind": "rc"}, "输入 行 列（0~4）"),
-        ("🔄 交换", {"op": "trade", "key": None, "kind": "tradespec"}, "输入 给 得 [数量]，如 wood brick 4"),
-        ("⏭ 跳过", {"fixed": {"op": "skip"}}, "结束本回合"),
-    ],
+    "kaituo": [],
     "lingdi": [
         ("🏗 放置", {"op": "place", "key": None, "kind": "rcmeeple"}, "输入 行 列 [self | 米行,米列]，self 表示就地放米宝"),
         ("⏭ 跳过", {"fixed": {"op": "pass"}}, "跳过本回合"),
@@ -11715,21 +11663,14 @@ _GAME_ACTIONS = {
         ("👑 换分", {"fixed": {"op": "convert"}}, "3 金币换 1 胜利点"),
     ],
     "tielu": [
-        ("🚂 认领", {"op": "claim", "key": None, "kind": "ab"}, "输入 城市A 城市B（0~7）"),
-        ("🎫 摸2张", {"fixed": {"op": "draw"}}, "摸 2 张车票卡"),
-        ("📜 抽票证", {"fixed": {"op": "ticket"}}, "抽 1 张私人票证"),
-        ("⏭ 跳过", {"fixed": {"op": "skip"}}, "结束本回合"),
+        # Railway actions live on the route, physical decks and table controls.
     ],
-    "yahtzee": [
-        ("🎲 掷骰", {"fixed": {"op": "roll"}}, "掷 5 骰（可再重掷 2 次）"),
-        ("🔁 重掷", {"op": "reroll", "key": "keep", "kind": "intlist"}, "输入要保留的骰位 0~4（逗号分隔）"),
-        ("📝 记分", {"op": "score", "key": "cat", "kind": "text"}, "输入分类键，如 1/3/three/house/small/large/yahtzee/chance"),
-    ],
+    "yahtzee": [],  # Dice tray, cup and writable scorebook.
     # ---- CC-03 桌面交互补齐：5 款仅点击棋类补按钮 ----
     "chess": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
     "xiangqi": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
-    "junqi": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
-    "dou": [("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）")],
+    "junqi": [],  # Named rectangular counters provide all board actions.
+    "dou": [],  # 兽娘棋格直接选择和落子；保留通用对局菜单/键盘。
     "shogi": [
         ("走子", {"key": None, "kind": "halmamove"}, "输入 fx,fy tx,ty（0 起）"),
         ("打入", {"op": "drop", "key": None, "kind": "droptxy"}, "输入 子类型编号 x y"),
@@ -11764,12 +11705,20 @@ def _actions_for(game: str, priv: dict | None) -> list:
 
 # 棋盘直操类游戏的首屏引导（无按钮可指时告诉玩家怎么操作）
 _GAME_HINTS = {
+    "blokus": "点右侧实际拼块，换向后点棋格放置；金边预览可落，红边表示受阻。",
+    "ludo": "点棋盘中央骰子，再点机棚或轨道飞机；R掷骰、1–4选机。",
+    "guess_number": "点数字牌出题或猜测；区间会自动收窄，方向键选牌后Enter提交",
+    "calc24": "点数字牌与运算筹片组合算式；点24印章或Enter提交，也可直接输入表达式",
+    "drawguess": "选画笔颜色与粗细，在画板拖动作画；猜词者在画板下写下答案",
+    "yahtzee": "点骰盅掷骰，点骰面保留；点自己的空白记分格写入预览分数",
+    "halloween": "点牌堆翻牌，点桌铃收牌，点箭头结束回合；F / B / P 快捷键",
     "betrayal": "点自己所在房间的方向门移动；发现簿回看揭牌，背包阅读与使用道具。全图只作导航",
     "gemcity": "先选市场牌，再点「买入」或「保留」；在「藏册」点卡可放大赏图",
     "lovelove": "先点持牌或新摸牌，再选目标／护卫猜值，最后点「确认出牌」",
-    "tile2048": "用方向按钮滑动；点击棋盘聚焦后可按方向键。相同数字合并，挑战 2048",
+    "tile2048": "拖动棋盘或点方向罗盘滑动；聚焦后可按方向键，真实数字相同才合并",
+    "gomoku": "点击棋盘交叉点落子；恰好五连获胜",
     "gomoku_solo": "你执黑，点击交叉点落子；电脑执白自动应手，恰好五连获胜",
-    "azul": "拖动：从工厂盘 / 中央池抓起花砖，拖到自己的花纹行或地板线松手",
+    "azul": "点花砖，再点花纹行或地板；也可拖动。键盘：←→选砖，↑↓选落点，Enter落砖，Esc取消",
     "go_solo": "单人练习：点击交叉点落子，电脑会自动应手；连续两次「过一手」终局",
 }
 
@@ -11889,7 +11838,9 @@ def _desktop_game_status(name: str) -> tuple[str, str]:
         return "unsupported", "桌面端当前不支持主要操作"
     if name in ("gomoku", "connect4"):
         return "flagship", "Windows 旗舰桌面流程"
-    if name in ("balatro", "balatro_solo"):
+    if name == "balatro":
+        return "unverified", "桌面实体牌桌候选"
+    if name == "balatro_solo":
         return "unverified", "桌面端未验证（私有信息显示有已知缺陷）"
     return "unverified", "桌面端流程未验证"
 
@@ -12606,6 +12557,7 @@ class GameWindow:
                                   relief="flat", bg=self._pal["win"], height=5)
         sb = tk.Scrollbar(right, command=self.state_text.yview)
         self.state_text.configure(yscrollcommand=sb.set)
+        self._cards_log_scroll = sb
         sb.pack(side="right", fill="y")
         self.state_text.pack(side="bottom", fill="x")
         self.state_text.tag_configure("head", foreground=self._pal["fg"],
@@ -12700,7 +12652,7 @@ class GameWindow:
         if core.game_private != self._last_private:
             self._last_private = core.game_private
             self._render_private()
-            if (core.game_room or {}).get("game") in ("tielu", "gemcity", "lovelove"):
+            if (core.game_room or {}).get("game") in ("tielu", "gemcity", "lovelove", "drawguess", "uno"):
                 self._render_canvas()  # 私有目标/手牌晚于公共状态到达时也立即更新。
         if len(core.game_events) < self._events_shown:
             self._events_shown = 0
@@ -12999,6 +12951,14 @@ class GameWindow:
         self.state_text.configure(state="disabled")
         room = self.core.game_room
         st = self.core.game_state
+        if (room or {}).get("game") in ("uno", "blackjack", "kaituo") and (room or {}).get("status") in ("playing", "ended"):
+            self.state_text.pack_forget()
+            self._cards_log_scroll.pack_forget()
+            self._rebuild_actions("kaituo" if room["game"] == "kaituo" else "uno")
+            return
+        if not self.state_text.winfo_manager():
+            self._cards_log_scroll.pack(side="right", fill="y")
+            self.state_text.pack(side="bottom", fill="x")
         if not room:
             r = self._room_by_id(self._sel_room) if self._sel_room else None
             if r:
@@ -13052,12 +13012,11 @@ class GameWindow:
 
     def _render_canvas(self, force: bool = False) -> None:
         """桌游对局 Canvas 图形渲染（棋盘/手牌/角色面板）。
-        持独立专注窗时改画到专注窗；否则画到大厅内嵌棋盘。"""
-        if getattr(self, "_board_win", None) and self._board_win.active():
-            self._board_win.redraw(force=force)
-            return
+        大厅和专注窗各按自己的真实 Canvas 尺寸重绘，避免缩窗后残留裁切。"""
         self._cv_ui["_after_owner"] = self.win
         self._render_to(self.game_cv, self._cv_ui)
+        if getattr(self, "_board_win", None) and self._board_win.active():
+            self._board_win.redraw(force=force)
 
     def _cancel_repaint(self, ui) -> None:
         job = ui.pop("_after_id", None)
@@ -13107,7 +13066,13 @@ class GameWindow:
             self._cancel_repaint(ui)
         ui["_room_context"] = context
         ui["room"] = room
+        if (room or {}).get("game") == "betrayal":
+            ui["manor_outcome"] = ""
+            if room.get("status") == "ended":
+                ui["manor_outcome"] = next((line.partition("：")[2] for line in reversed(self.core.game_events)
+                                            if line.startswith("🏁 本局结束：")), "")
         ui["state"] = st
+        ui["_drawn_private"] = self.core.game_private
         ui["connected"] = bool(getattr(self.core, "connected", False))
         ui["_cancel_repaint"] = lambda target_ui=ui: self._cancel_repaint(target_ui)
         ui["_schedule_repaint"] = (
@@ -13121,6 +13086,17 @@ class GameWindow:
             return
         game = room.get("game")
         ui["game"] = game
+        if game == "kaituo":
+            from boardgames.economy_kaituo import sync_pending
+            ui["kt_pending"] = sync_pending(self, room, st)
+        if game == "rps":
+            pending = getattr(self, "_rps_pending", None)
+            ui["rps_sending"] = bool(pending and pending[1] is st
+                                     and pending[0][:3] == (*context, self.core.uid))
+        if game == "tielu":
+            pending = getattr(self, "_rail_pending", None)
+            ui["tl_sending"] = bool(pending and pending[1] is st
+                                    and pending[0] == (*context, self.core.uid))
         ui["can_move"] = (
             client_gameui.flagship_can_move(room, st, self.core.uid,
                                              getattr(self.core, "connected", False))
@@ -13143,13 +13119,38 @@ class GameWindow:
             pass
 
     def _bind_board_keys(self, cv, ui) -> None:
+        from boardgames.cards_uno import bind_keys
+        bind_keys(cv, ui)
+        from boardgames.cards_blackjack import bind_keys as blackjack_keys
+        blackjack_keys(cv, ui)
         # Widget-local bindings leave chat fields and other windows alone.
+        for choice in range(3):
+            cv.bind(str(choice+1), lambda evt, c=choice: self._on_rps_key(evt, c, ui))
+        for key in ("Tab", "Return", "Escape", "d", "D", "t", "T", "s", "S"):
+            cv.bind(f"<{key}>", lambda evt, k=key, target=ui:
+                    self._on_tielu_key(evt, k, target))
         for key, direction in (("Up", "up"), ("Down", "down"),
                                ("Left", "left"), ("Right", "right")):
             cv.bind(f"<{key}>", lambda evt, d=direction, target=ui:
                     self._on_board_direction(evt, d, target))
 
+    def _on_rps_key(self, evt, choice, ui):
+        if ui.get("game") == "rps" and evt.widget.focus_get() is evt.widget:
+            self._do_action({"choice": choice}, ui)
+            return "break"
+
+    def _on_tielu_key(self, evt, key, ui):
+        if ui.get("game") == "tielu" and evt.widget.focus_get() is evt.widget:
+            from boardgames.rail_table_tk import key as table_key
+            table_key(ui, key)
+            return "break"
+
     def _on_board_direction(self, evt, direction, ui):
+        if (self.core.game_room or {}).get("game") == "uno":
+            from boardgames.cards_uno import key
+            if evt.widget.focus_get() is evt.widget:
+                return key(ui, direction.title())
+            return None
         if (self.core.game_room or {}).get("game") != "tile2048":
             return None
         if evt.widget.focus_get() is not evt.widget:
@@ -13215,6 +13216,8 @@ class GameWindow:
     def _fmt_state(self, st: dict) -> str:
         """公开快照 → 可读文本（按游戏定制 + 兜底 key-value）"""
         game = st.get("game", "")
+        if game in ("halloween", "yahtzee", "drawguess", "calc24", "guess_number", "tile2048"):
+            return ""  # Public fruit cards and score seats are on the table.
         lines = []
         if st.get("status") == "await_secret":
             lines.append("等待出题者设置数字…")
@@ -13224,11 +13227,6 @@ class GameWindow:
                 lines.append(f"上轮 {self._nick(lg['uid'])} 猜 {lg['val']}：{lg['dir']}")
             lines.append(f"区间 {st.get('low')}~{st.get('high')}")
         elif game in ("gomoku", "gomoku_solo") and "board" in st:
-            board = st["board"]
-            lines.append("  " + " ".join(str(i % 10) for i in range(len(board[0]))))
-            for y, row in enumerate(board):
-                lines.append(f"{y%10} " + " ".join("●" if c == 1 else
-                                                   "○" if c == 2 else "·" for c in row))
             if not (st.get("winner_uid") is not None or st.get("draw")) and st.get("turn_uid"):
                 lines.append(f"轮到 {self._nick(st['turn_uid'])}")
             if st.get("winner_uid"):
@@ -13402,40 +13400,7 @@ class GameWindow:
             if st.get("loser_uid"):
                 lines.append(f"🐢 {self._nick(st['loser_uid'])} 成为王八！")
         elif game == "betrayal":
-            rooms = st.get("rooms") or {}
-            pos = {int(u): tuple(map(int, v.split(",")))
-                   for u, v in (st.get("pos") or {}).items()}
-            seats = {int(u): n for u, n in (st.get("seats") or {}).items()}
-            if rooms:
-                pts = [tuple(map(int, k.split(","))) for k in rooms]
-                occ = {}
-                for u, p in pos.items():
-                    occ.setdefault(p, []).append(seats.get(u, "?"))
-                for y in range(min(p[1] for p in pts), max(p[1] for p in pts) + 1):
-                    row = [rooms.get(f"{x},{y}", "·")
-                           for x in range(min(p[0] for p in pts), max(p[0] for p in pts) + 1)]
-                    lines.append("  " + " ".join(row))
-                for (x, y), ss in sorted(occ.items()):
-                    lines.append(f"  {rooms.get(f'{x},{y}', '?')}({x},{y})："
-                                 + "、".join(f"{s}号" for s in ss))
-            alive = set(st.get("alive") or [])
-            items = st.get("items") or {}
-            for u, s in (st.get("stats") or {}).items():
-                ui = int(u)
-                extra = f"｜{'、'.join(items.get(u, []))}" if items.get(u) else ""
-                lines.append(f"{seats.get(ui, '?')}号 {self._nick(ui)}"
-                             f"{'☠' if ui not in alive else ''}"
-                             f" 力{s['might']} 速{s['speed']}"
-                             f" 智{s['sanity']} 知{s['knowledge']}{extra}")
-            if st.get("phase") == "haunt" and st.get("haunt"):
-                h = st["haunt"]
-                lines.append(f"⚡ 惊魂降临《{h['scenario']}》 叛徒：{self._nick(h['traitor'])}")
-                lines.append(f"🚪 出口之门位于 ({h['exit']})，幸存者全员抵达后可全员撤离")
-            else:
-                lines.append(f"预兆 {st.get('omens', 0)} 枚（每抽一枚需做惊魂检定）")
-            if st.get("turn_uid"):
-                lines.append(f"轮到 {self._nick(st['turn_uid'])}"
-                             f"（剩余 {st.get('steps_left', 0)} 步）")
+            pass  # The map and journal already show the room.
         elif game == "davinci":
             lbl = st.get("label") or {}
             def lav(v): return lbl.get(str(v), v)
@@ -13515,7 +13480,13 @@ class GameWindow:
         return " · ".join(bits)
 
     def _render_private(self) -> None:
+        if (self.core.game_room or {}).get("game") in ("drawguess", "balatro", "uno", "blackjack"):
+            return  # Only the illustrated tabletop shows this private information.
         p = self.core.game_private
+        if (self.core.game_room or {}).get("game") == "betrayal":
+            return
+        if (self.core.game_room or {}).get("game") == "tielu":
+            return  # Private tickets and all five coach-card counts are on the table.
         if not p:
             return
         if set(p.keys()) <= {"legal"}:
@@ -13635,6 +13606,9 @@ class GameWindow:
         for w in self.act_btns.winfo_children():
             w.destroy()
         self.act_hint.config(text=_GAME_HINTS.get(game) or "")
+        if game in ("uno", "blackjack"):
+            self.act_hint.config(text="")
+            return  # Deck, cards and color picker are the action controls.
         if not game or (self.core.game_room or {}).get("status") != "playing":
             return
         desktop_status, desktop_note = _desktop_game_status(game)
@@ -13964,11 +13938,119 @@ class GameWindow:
         st = self.core.game_state or {}
         rid = room.get("room_id")
         game = room.get("game")
+        if game == "ludo" or (source_ui is not None and source_ui.get("game") == "ludo"):
+            from boardgames.boards_ludo import submit_allowed
+            if not submit_allowed(self.core, source_ui, action):
+                return
+        if game == "balatro" or (source_ui is not None and source_ui.get("game") == "balatro"):
+            if (game != "balatro" or room.get("status") != "playing"
+                    or not getattr(self.core, "connected", False)
+                    or self.core.uid not in room.get("players", [])
+                    or self.core.uid not in st.get("alive", [])
+                    or st.get("turn_uid", st.get("turn")) != self.core.uid
+                    or st.get("done") or st.get("winner") is not None):
+                return False
+            pv = self.core.game_private or {}
+            if (not pv or pv.get("owner_uid", self.core.uid) != self.core.uid
+                    or pv.get("game", game) != game):
+                return False
+            if source_ui is not None and (
+                    source_ui.get("game") != game
+                    or source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st or source_ui.get("me") != self.core.uid
+                    or source_ui.get("_jt_private") is not self.core.game_private):
+                return False
+            return self.core.game_action(rid, action)
         if source_ui is not None:
             source_game = source_ui.get("game")
+            if "_room_context" in source_ui:
+                uid = self.core.uid
+                if (source_ui["_room_context"] != (rid, room.get("round"))
+                        or source_ui.get("game", game) != game
+                        or source_ui.get("me", uid) != uid
+                        or not getattr(self.core, "connected", False)
+                        or room.get("status") != "playing"
+                        or uid not in room.get("players", ())
+                        or uid in room.get("spectators", ())):
+                    return
+                # Azul verifies its own take/place pair because the first
+                # action may receive a new frame before the paired place.
+                if game != "azul" and (
+                        source_ui.get("state", st) is not st
+                        or ("_drawn_private" in source_ui
+                            and source_ui["_drawn_private"] is not self.core.game_private)):
+                    return
+            if source_game != game and (game in ("uno", "blackjack") or source_game in ("uno", "blackjack")):
+                return
             if source_game != game and (
-                    game in ("gemcity", "lovelove", "betrayal")
-                    or source_game in ("gemcity", "lovelove", "betrayal")):
+                    game in ("gemcity", "lovelove", "betrayal", "rps", "tielu")
+                    or source_game in ("gemcity", "lovelove", "betrayal", "rps", "tielu")):
+                return
+        if game == "kaituo" or (source_ui is not None and source_ui.get("game") == "kaituo"):
+            from boardgames.economy_kaituo import submit_action
+            return submit_action(self, room, st, source_ui, action)
+        if game == "rps":
+            from boardgames.rps_table import can_choose
+            if (not rid or room.get("status") != "playing" or not self.core.connected
+                    or not can_choose(st, self.core.uid)
+                    or self.core.uid not in room.get("players", ())):
+                return
+            if source_ui is not None and (
+                    source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st or source_ui.get("me") != self.core.uid):
+                return
+            ticket = (rid, room.get("round"), self.core.uid, st.get("round", 0))
+            pending = getattr(self, "_rps_pending", None)
+            if pending and pending[0] == ticket and pending[1] is st:
+                return
+            if self.core.game_action(rid, {"choice": action["choice"], "round": ticket[-1]}):
+                self._rps_pending = ticket, st
+                if source_ui and source_ui.get("repaint"):
+                    source_ui["repaint"]()
+            return
+        if game == "tielu":
+            from boardgames.rail_table_tk import active
+            if source_ui is None or (
+                    source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st or source_ui.get("me") != self.core.uid
+                    or source_ui.get("tl_private") is not self.core.game_private):
+                return
+            ticket = (rid, room.get("round"), self.core.uid)
+            pending = getattr(self, "_rail_pending", None)
+            if (not active(source_ui) or not getattr(self.core, "connected", False)
+                    or room.get("status") != "playing" or self.core.uid not in room.get("players", ())
+                    or pending and pending[0] == ticket and pending[1] is st):
+                return
+            if self.core.game_action(rid, action):
+                self._rail_pending = ticket, st
+                if source_ui.get("repaint"):
+                    source_ui["repaint"]()
+            return
+        if game == "blackjack":
+            if source_ui is not None and (
+                    source_ui.get("game") != game
+                    or source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st
+                    or source_ui.get("me") != self.core.uid):
+                return
+            if (not getattr(self.core, "connected", False)
+                    or self.core.uid not in room.get("players", [])
+                    or self.core.uid in room.get("spectators", [])
+                    or st.get("current_uid") != self.core.uid
+                    or st.get("status") != "playing"):
+                return
+        if game == "uno":
+            if source_ui is not None and (
+                    source_ui.get("_room_context") != (rid, room.get("round"))
+                    or source_ui.get("state") is not st
+                    or source_ui.get("me") != self.core.uid
+                    or source_ui.get("_uno_private") is not self.core.game_private):
+                return
+            if (not getattr(self.core, "connected", False)
+                    or self.core.uid not in room.get("players", [])
+                    or self.core.uid in room.get("spectators", [])
+                    or st.get("current_uid") != self.core.uid
+                    or st.get("status") != "playing"):
                 return
         if game == "betrayal":
             if source_ui is not None and (
@@ -13994,6 +14076,24 @@ class GameWindow:
                     or self.core.uid not in room.get("players", [])
                     or turn != self.core.uid or st.get("winner_uid") is not None
                     or st.get("status") != "playing"):
+                return
+        if game == "azul" or (source_ui is not None and source_ui.get("game") == "azul"):
+            if (game != "azul" or not getattr(self.core, "connected", False)
+                    or self.core.uid not in room.get("players", [])
+                    or st.get("turn_uid") != self.core.uid or st.get("winner_uid") is not None
+                    or st.get("status") != "playing"):
+                return
+            if source_ui is not None:
+                context = (rid, room.get("round"))
+                pair = source_ui.get("_azul_pair") or {}
+                paired = (pair.get("accepted") and action == pair.get("follow")
+                          and pair.get("snapshot") is source_ui.get("state")
+                          and pair.get("context") == context and pair.get("me") == self.core.uid
+                          and st.get("pending") == pair.get("tiles"))
+                if (source_ui.get("game") != "azul" or source_ui.get("_room_context") != context or source_ui.get("me") != self.core.uid
+                        or (source_ui.get("state") is not st and not paired)):
+                    return
+            if action.get("op") == "take" and st.get("pending"):
                 return
         if game in ("tile2048", "gomoku_solo"):
             if source_ui is not None and (
@@ -14029,7 +14129,14 @@ class GameWindow:
                     getattr(self.core, "connected", False)):
                 return
         if rid and room.get("status") == "playing":
-            self.core.game_action(rid, action)
+            result = self.core.game_action(rid, action)
+            if game == "azul":
+                if source_ui is not None:
+                    pair = source_ui.get("_azul_pair")
+                    if (pair and action == pair.get("take") and pair.get("snapshot") is st
+                            and pair.get("context") == (rid, room.get("round"))):
+                        pair["accepted"] = bool(result)
+                return result
 
     # ---------- 房间操作 ----------
     def _on_create(self) -> None:

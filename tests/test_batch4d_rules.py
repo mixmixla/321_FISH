@@ -51,6 +51,17 @@ def test_guess_number_round_flow_and_owner_rotation():
 
 
 # ================================================================ 石头剪刀布
+def test_rps_late_duplicate_cannot_enter_the_next_round():
+    g = RpsGame([7, 8, 9], seed=1)
+    g.act(8, {"choice": 1})
+    g.act(9, {"choice": 2})
+    last = {"choice": 0, "round": 0}
+    g.act(7, last)
+    with pytest.raises(GameRuleError):
+        g.act(7, last)
+    assert g.round == 1 and g.submitted == {}
+
+
 def test_rps_first_choice_does_not_auto_timeout():
     """回归：此前本轮 deadline 初始为 0，第一手提交后下一次 tick 立刻把其余人判负。"""
     g = RpsGame([1, 2, 3], seed=1)

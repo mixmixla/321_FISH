@@ -1,0 +1,24 @@
+{
+  "candidate": "2cdf7446a57c36be4adbd80428029700d986ddbc",
+  "source": "659f3416a39ee803a359568bdf25ccabaab5acc28d6eec9d40d148e8a37598dd",
+  "served": "1295d4a32eb19f2c4f8a037a625dc90def3bac20a9230f0f15da458d23a72c40",
+  "images": {
+    "desktop.png": "3f81b1682040c71e2efea52f3f6e72e275fb86ead992656c630556b7129d9223",
+    "mobile.png": "687175a70acc6511433ef00b1c8bdbcb08492881e4d230b29b205527b4fb77fd"
+  },
+  "files": {
+    "games_pkg/matchpairs.py": "2e96239e83792e96d95e0abe7fc8bbc944247abf31db09aed4bf0bfbef095092",
+    "boardgames/cards_matchpairs_web.py": "fa966d8485da032e2423ffea6d1d7f35be28c74121e9ec0334240818059c4c4c",
+    "assets/boardgame/gallery/cards-matchpairs-hostess.webp": "467c807afac337299e5ee27a54563d83be350799e463feeaa0818380e173776f",
+    "web.py": "ebf5e8cb4263b9be52ce2c16b75584e18c39b6998ad3b565e4df6129747e1340",
+    "server.py": "47fd8dae75e29589bb3f7584c0ec3efbe40ea48d525355834a81215747d9e0a9"
+  },
+  "checks": {
+    "rule_passed": 71,
+    "web_assets_passed": 13,
+    "web_assets_failed": 1,
+    "same_failure_on_baseline": true,
+    "independent_review": "PASS",
+    "full_suite_run": false
+  }
+}

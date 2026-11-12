@@ -15,3 +15,5 @@
 最终实盘源码标识659f3416a39ee803a359568bdf25ccabaab5acc28d6eec9d40d148e8a37598dd，served页面SHA256为1295d4a32eb19f2c4f8a037a625dc90def3bac20a9230f0f15da458d23a72c40。候选源码及素材与短昵称预览逐项匹配，HTTP修订前后页面字节相同。独立原件位于本树 _tmp_gui/matchpairs-web-20261111/independent/，规则与正式长昵称实盘见同目录status.json及final-03，过程的早期探针问题保留。
 
 [电脑牌桌](../review-assets/MATCHPAIRS-WEB-20261111/desktop.png) · [手机配对结果](../review-assets/MATCHPAIRS-WEB-20261111/mobile.png)。本款提交后等待用户确认合并，其他游戏由用户另选。
+
+2026-11-12，已推送功能分支并建立[PR #13](https://github.com/mixmixla/321_FISH/pull/13)，状态为草稿，等待用户确认合并。

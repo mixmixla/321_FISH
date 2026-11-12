@@ -1,0 +1,33 @@
+{
+  "candidate": "060d8c310e6f42b45c0a11bcbd5f817ab067812c",
+  "main_scene_candidate": "e22cf9c675ae752890d28d2047a3580d630127ba",
+  "main_scene_source": "3167e428ffce9c6a698ce04296538a2be00d3147ac767096f2bb8ff892929af6",
+  "departure_source": "815aa135766fb886f76a158db822bfe0d0da6081188970abe264e0e8a9fc87d4",
+  "images": {
+    "desktop.png": "00d3921c74abaea85e259b8af30709c4282535d55f16fdde0ec86c0fe8ce7643",
+    "mobile.png": "093f54ea670fdeb566d6011ca3c7b932d31eafcc2d3ae19d514c19802c5e75a8"
+  },
+  "rules_passed": 11,
+  "full_suite_run": false,
+  "browser": {
+    "rooms": 4,
+    "requests": 63,
+    "accepted": 61,
+    "errors": 0
+  },
+  "departure_check": {
+    "accepted": 8,
+    "errors": 0
+  },
+  "files": {
+    "games_pkg/spy.py": "6e16424fc9210f51a3a22de2d7703706f9760aeb1ab4f9d92d492d6a28aa0b11",
+    "boardgames/spy_web.py": "82067a3af0624e167c88bca06305cb991eb540426b4fe458c895fca6d9100087",
+    "web.py": "2f166912bba3d658830b19a1d6b9e782ca2d67cc97bdebf11bfcc58531fd3ca7"
+  },
+  "independent_review": {
+    "candidate": "060d8c310e6f42b45c0a11bcbd5f817ab067812c",
+    "verdict": "PASS",
+    "must_fix": 0,
+    "renderer_sha256": "82067a3af0624e167c88bca06305cb991eb540426b4fe458c895fca6d9100087"
+  }
+}

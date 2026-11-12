@@ -49,6 +49,7 @@ ART_FILES = frozenset(COVERS.values()) | {
     "balatro-jokers-core.webp",
     "cards-uno-dealer.webp",
     "cards-blackjack-dealer.webp",
+    "cards-matchpairs-hostess.webp",
     "economy-kaituo-terrain-v2.webp", "kaituo-merchant.webp",
     "kaituo-goods.webp", "kaituo-models.webp",
 }

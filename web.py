@@ -167,6 +167,9 @@ def _SERVED_PAGE():
     from boardgames.cards_blackjack_web import WEB_JS as blackjack_js, WEB_CSS as blackjack_css
     page = page.replace('/*@@CARDS_BLACKJACK@@*/', blackjack_js)
     page = page.replace('/*@@CARDS_BLACKJACK_CSS@@*/', blackjack_css)
+    from boardgames.cards_matchpairs_web import WEB_JS as matchpairs_js, WEB_CSS as matchpairs_css
+    page = page.replace('/*@@CARDS_MATCHPAIRS@@*/', matchpairs_js)
+    page = page.replace('/*@@CARDS_MATCHPAIRS_CSS@@*/', matchpairs_css)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -638,6 +641,7 @@ body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.9
 .glogl{padding:1px 0;border-bottom:1px dashed var(--line)}
 /*@@CARDS_UNO_CSS@@*/
 /*@@CARDS_BLACKJACK_CSS@@*/
+/*@@CARDS_MATCHPAIRS_CSS@@*/
 .unocard{display:inline-block;border:1.5px solid var(--line);border-radius:var(--r1);padding:3px 9px;margin:2px;cursor:pointer;background:var(--card);color:var(--txt);font-size:var(--secondary-font,12px);font-weight:600;box-shadow:var(--shadow-sm)}
 .unocard.dis{background:var(--ux-disabled-background,var(--side));color:var(--ux-disabled-text,var(--dim));cursor:default;box-shadow:none;opacity:1}
 .gsec{font-weight:700;margin:8px 0 3px;font-size:var(--secondary-font,12px);color:var(--dim)}
@@ -3854,7 +3858,7 @@ function openStream(){
         if(!previous||previous.round!==d.room.round||d.room.status==="created"){
           if(typeof RailTable!=='undefined')RailTable.reset();
           state.gpriv=null;state.glog=[];}
-        if(d.room.status!=="playing")state.gpriv=null;
+        if(d.room.status!=="playing"&&!(d.room.game==="matchpairs"&&d.room.status==="ended"))state.gpriv=null;
         state.gst=d;(d.events||[]).forEach(e=>state.glog.push(e));
         if(state.glog.length>200)state.glog=state.glog.slice(-200);
         renderGamePanel();}}
@@ -4353,7 +4357,7 @@ function renderGamePanel(){
     main.querySelectorAll("button,input,select").forEach(e=>e.disabled=true);
     const note=document.createElement("div");note.className="gsec";
     note.textContent=gname==="tielu"?"🏁 本局结束，保留结算 30 秒后回到房间":"🏁 本局结束，3 秒后自动回到房间";main.prepend(note);return;}
-  const pv=(gname==="tielu"||gname==="gemcity"||gname==="lovelove"||gname==="betrayal"||gname==="drawguess"||gname==="balatro"||gname==="uno")?null:state.gpriv;if(pv){
+  const pv=(gname==="tielu"||gname==="gemcity"||gname==="lovelove"||gname==="betrayal"||gname==="drawguess"||gname==="balatro"||gname==="uno"||gname==="matchpairs")?null:state.gpriv;if(pv){
     const bits=[];
     if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
       ?pv.hand.join(" ")
@@ -4824,26 +4828,7 @@ const GRENDER={
   uno(box,s){/*@@CARDS_UNO@@*/},
   blackjack(box,s){/*@@CARDS_BLACKJACK@@*/},
   calc24(box,s){MathTable.render(box,s);},
-  matchpairs(box,s){
-    const d=document.createElement("div");d.style.cssText="padding:4px";
-    d.innerHTML="<div class='gsec'>轮到 "+esc(gnick(s.turn_uid))+"</div>"
-      +"<div style='font-size:12px'>"+Object.entries(s.hand_size||{}).map(([u,c])=>{
-        const uid=+u;
-        return "<div class='glogl'>"+(uid===state.uid?"<b>你</b>":esc(gnick(uid)))+"：剩 "+c+" 张"
-          +((s.safe||[]).includes(uid)?"　✅ 安全":"")+"</div>";}).join("")+"</div>";
-    box.appendChild(d);
-    if(s.loser_uid!=null)
-      box.appendChild(Object.assign(document.createElement("div"),
-        {style:"text-align:center;margin:8px",innerHTML:"🐢 王八是 "+esc(gnick(s.loser_uid))}));
-    else if(s.turn_uid===state.uid){
-      const bar=document.createElement("div");bar.style.cssText="text-align:center;margin:8px";
-      bar.appendChild(gBtn("🂠 摸牌",{draw:true}));box.appendChild(bar);}
-    const p=state.gpriv;
-    if(p&&p.hand){const w=document.createElement("div");
-      w.style.cssText="text-align:center;margin-top:4px";
-      w.innerHTML="<span style='color:var(--dim);font-size:12px'>你的手牌：</span>"+p.hand.map(pokerCard).join("");
-      box.appendChild(w);}
-  },
+  matchpairs(box,s){/*@@CARDS_MATCHPAIRS@@*/},
   betrayal(box,s){ ManorWeb.paint(box,s); },
   drawguess(box,s){AtelierTable.render(box,s);},
   kaituo(box,s){ KaituoTable.paint(box,s); },
@@ -6763,7 +6748,28 @@ class _Handler(BaseHTTPRequestHandler):
                 self._json(400, {"ok": False, "error": "动作格式错误"})
                 return
             header["action"] = action
+        matchpairs = None
+        accepted = False
+        if op == "action" and "index" in header["action"]:
+            with self.hub.rooms.lock:
+                room = self.hub.rooms.room_for(header["room_id"])
+                if room is not None and room.game_name == "matchpairs" and sess.uid in room.players:
+                    matchpairs = room.gs
+            action = header["action"]
+            if matchpairs is not None and (action.get("round_key") != matchpairs.round_key
+                                           or action.get("seq") != matchpairs.seq):
+                self._json(409, {"ok": False, "refresh": True, "error": "牌面已变化，请重新选择"})
+                return
+            if matchpairs is not None:
+                def acknowledge():
+                    nonlocal accepted
+                    accepted = True
+
+                header["_on_game_action_accepted"] = acknowledge
         self.hub.dispatch(sess, header)
+        if matchpairs is not None and not accepted:
+            self._json(409, {"ok": False, "refresh": True, "error": "抽牌未完成，请重新选择"})
+            return
         self._json(200, {"ok": True})
 
     def _whoami(self):

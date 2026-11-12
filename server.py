@@ -10436,6 +10436,11 @@ class Hub:
             request = action.get("_kt_request") if getattr(captured_gs, "name", None) == "kaituo" else None
             self._error(sess, "game", str(exc), request_id=request)
             return
+        # Only the in-process HTTP adapter can supply this callback. Record
+        # acceptance after the rules apply the action, outside the room lock.
+        acknowledge = header.get("_on_game_action_accepted")
+        if callable(acknowledge):
+            acknowledge()
         room = self.rooms.room_for(room_id)
         if not room:
             return

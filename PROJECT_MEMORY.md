@@ -2,6 +2,8 @@
 
 ## Snapshot
 
+- 用户2026-11-11确定后续桌游开发以网页版为交付面，按款推进；电脑与手机浏览器一起验图和操作，必要的共享规则/服务端配套一并处理。完成检查并推送分支/PR后先交用户本人审核，收到明确确认后再合并main。
+
 - 用途：Windows 局域网聊天、文件/媒体、网页端与桌游；Tkinter 桌面客户端。
 - 栈与入口：Python 3.14.5，`dev.ps1` / `run.py`；Hub 加密 TCP，网页 HTTP(S)/SSE。
 - 最近源码核对：2026-10-03；有限RESOURCE数值资格补正、Windows旗舰与本地试用配置已整合，
@@ -19,6 +21,8 @@
 - 便携构建和私有桌面登录不证明完整EXE对局、自然窗口退出、物理LAN或非开发机可用；确切版本/结果只放Task/Review和指挥中心。
 
 ## Architecture
+
+- 抽牌配对网页由 boardgames/cards_matchpairs_web.py 绘制真实牌背索引与本人手牌。新请求用本局标识和序号校验目标牌位，public只公开已成对弃牌，drawn_card只在本人private；原无index的随机抽牌调用仍可用。
 
 - 开拓实物牌桌在 boardgames/economy_kaituo.py 与 kaituo_web.py，货物与模型图集由 kaituo_objects.py 等格取图。rules snapshot 的 last_dice/production 显示实际骰面与入账，action_seq 用于同帧提交锁，last_trade 仅记录最后成功交易。柜台娘取固定11∶12图，视口变化时重排桌面。
 

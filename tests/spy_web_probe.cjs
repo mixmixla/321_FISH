@@ -492,9 +492,26 @@ async function run(browser) {
     assert.equal(current.status, 'voting');
     assert.equal(current.reveal_words, null);
     assert.equal(await first.page.locator('.spy-word-card, .spy-reveal-words').count(), 0);
+    assert.equal(await first.page.evaluate(() => state.gpriv), null);
+    assert.equal(await first.page.locator('.spy-paper-label').textContent(), '第 1 轮');
+    assert.equal(await first.page.locator('.spy-paper-detail').textContent(), '玩家离开 · 当前 3 人，至少需要 4 人');
+    assert.equal(await first.page.locator('.spy-vote-progress, .spy-public-reveal').count(), 0);
     await shot(first, 'departure-desktop-aborted');
     evidence.checks.departure = {pending_through_redraw:true, other_revision_did_not_unlock:true,
-      re_voted_after_5_to_4:true, aborted_on_4_to_3:true};
+      re_voted_after_5_to_4:true, aborted_on_4_to_3:true, terminal_reason:true,
+      no_reveal_or_pending_vote:true, private_word_cleared:true};
+  }
+
+  async function departureScenario() {
+    const five = await session(5, '离');
+    await describeRound(five, 'departure');
+    await latchAndDeparture(five);
+    await closeGame(five);
+  }
+
+  if (cfg.stage === 'departure') {
+    await departureScenario();
+    return;
   }
 
   const six = await session(6, '');
@@ -539,10 +556,7 @@ async function run(browser) {
   await settleAndRestart(four, four.spy, 'four');
   await closeGame(four);
 
-  const five = await session(5, '离');
-  await describeRound(five, 'departure');
-  await latchAndDeparture(five);
-  await closeGame(five);
+  await departureScenario();
 
   const eight = await session(8, '八');
   const current = await describeRound(eight, 'eight');

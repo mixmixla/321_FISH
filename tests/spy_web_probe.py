@@ -44,7 +44,7 @@ def bind_source():
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--stage", choices=("art", "final"), required=True)
+    parser.add_argument("--stage", choices=("art", "final", "departure"), required=True)
     parser.add_argument("--run", required=True)
     parser.add_argument("--runtime", type=Path, required=True)
     parser.add_argument("--cache", type=Path, required=True)

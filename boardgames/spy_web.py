@@ -332,7 +332,10 @@ const SpyWeb = (() => {
     view.copy.replaceChildren();
     const title = ending ? (status !== 'reveal' ? '对局中止' : publicFrame.winner_uid == null ? '平民胜' : '卧底胜')
       : status === 'voting' ? '票投给谁？' : speaking ? '轮到你发言' : gnick(publicFrame.speaker_uid) + ' 发言中';
-    view.copy.append(element('div', 'spy-paper-label', ending ? '揭晓' : '第 ' + clueRound + ' 轮 · ' + (status === 'voting' ? '投票' : '发言')),
+    const roundLabel = '第 ' + clueRound + ' 轮';
+    const paperLabel = status === 'reveal' ? '揭晓'
+      : ending ? roundLabel : roundLabel + ' · ' + (status === 'voting' ? '投票' : '发言');
+    view.copy.append(element('div', 'spy-paper-label', paperLabel),
       element('h3', 'spy-paper-title', title));
     if (status === 'reveal') {
       view.copy.append(element('p', 'spy-public-reveal', '卧底是 ' + gnick(publicFrame.spy_uid)));
@@ -345,6 +348,15 @@ const SpyWeb = (() => {
         }
         view.copy.append(words);
       }
+    } else if (ending) {
+      const prefix = '🏁 本局结束：';
+      const result = (envelope.events || []).findLast(line => typeof line === 'string' && line.startsWith(prefix));
+      if (result) table.abortReason = result.slice(prefix.length).replace(/，对局中止$/, '');
+      const minimum = state.gmeta.spy?.min ?? 4;
+      const headcount = room.players.length < minimum
+        ? '当前 ' + room.players.length + ' 人，至少需要 ' + minimum + ' 人' : '';
+      const reason = [table.abortReason, headcount].filter(Boolean).join(' · ');
+      if (reason) view.copy.append(element('p', 'spy-paper-detail', reason));
     } else if (status === 'voting') {
       const note = element('p', 'spy-paper-detail', voted ? '已投票，等待其他玩家'
         : choosing ? '点一位存活玩家投票' : '等待玩家投票');

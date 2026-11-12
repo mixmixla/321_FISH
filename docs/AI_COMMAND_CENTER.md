@@ -15,14 +15,20 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 谁是卧底网页版 · SPY-WEB-20261112
+
+**READY · 仅此一款。** 用户2026-11-12同意推进《谁是卧底》网页版并要求主控把关。[任务](task-packages/SPY-WEB-20261112.md)。base9e564ea，codex/spy-web-20261112；原推理窗口为唯一产品写入者，主控审构图、隐私与真实发言/投票。先交电脑/390px正式网页实拍再收口，只做本款相关专项和独立审查。分支及PR交用户过目，明确确认后才合main。
+
+
+
 ## 抽牌配对网页版 · MATCHPAIRS-WEB-20261111
 
-**AI_ACCEPTED / PUSHED · PR #13 草稿，待用户确认合并。** 产品候选2cdf744，base037e5d6，codex/matchpairs-web-20261111。[任务](task-packages/MATCHPAIRS-WEB-20261111.md) / [核验](review-packages/MATCHPAIRS-WEB-20261111-r1.md)。原纸牌窗口制作、主控核图、独审0 MUST；用户已授权提交，PR交本人过目后明确确认再合main。
+**MERGED_MAIN · PR #13已获用户确认并合并。** 产品候选2cdf744，base037e5d6，codex/matchpairs-web-20261111。[任务](task-packages/MATCHPAIRS-WEB-20261111.md) / [核验](review-packages/MATCHPAIRS-WEB-20261111-r1.md)。原纸牌窗口制作、主控核图、独审0 MUST；用户已授权提交，PR交本人过目后明确确认再合main。
 
 真实牌背索引、私牌、弃对、待确认及本次请求回执已核。生产HTTP/SSE有2人/5人正常开局、自然终局及再开，电脑1360与手机390实拍。规则专项71通过；页面资源13通过/1失败在同环境基线复现同一Blokus断言，保留原失败。按用户要求未跑全量。此款完成提交后停止，其他游戏继续按用户逐款选择。
 
 
-2026-11-12主控已核对远端分支b05bb57及[PR #13](https://github.com/mixmixla/321_FISH/pull/13)，base main037e5d6，PR可合并但保持草稿。用户“可以提交”已执行为分支推送与PR提交。主控按此前明确的用户确认门槛在此停止，等待确认合入main。所有本款测试与浏览器均结束。
+2026-11-12用户明确“可以合”后，[PR #13](https://github.com/mixmixla/321_FISH/pull/13)已合入main9e564ea，已审head794e251为祖先且合并树无文件差异。全部该款测试与浏览器已结束。
 
 ## 开拓实物牌桌 · KAITUO-TABLETOP-20261109
 

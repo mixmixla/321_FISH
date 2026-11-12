@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """谁是卧底：4+ 人文字社交推理。词库内置近义词对，1 卧底其余平民。"""
+from secrets import token_hex
+
 from games_pkg.base import BaseGame, GameRuleError
 
 # (平民词, 卧底词)
@@ -20,8 +22,13 @@ class SpyGame(BaseGame):
 
     def __init__(self, players, seed=None):
         super().__init__(players, seed)
-        self.alive = list(players)
-        self.scores = {u: 0 for u in players}
+        self.round_key = token_hex(12)
+        self.revision = 0
+        self.clue_round = 1
+        self.seat_order = tuple(self.players)
+        self.last_ballot = None
+        self.alive = list(self.players)
+        self.scores = {u: 0 for u in self.players}
         self.phase = "dealing"            # dealing | describing | voting | checking | reveal
         self.spy_uid = None
         self.pair_idx = 0
@@ -35,8 +42,11 @@ class SpyGame(BaseGame):
         self._deal()
 
     def snapshot(self) -> dict:
+        ballot = self.last_ballot
         return {
             "game": self.name, "status": self.phase,
+            "round_key": self.round_key, "revision": self.revision,
+            "clue_round": self.clue_round, "seat_order": list(self.seat_order),
             "alive": list(self.alive), "players": list(self.players),
             "spy_uid": None if self.phase != "reveal" else self.spy_uid,
             "pair_idx": None if self.phase != "reveal" else self.pair_idx,
@@ -44,6 +54,9 @@ class SpyGame(BaseGame):
             "describes": list(self.describes),
             "voted": sorted(self.votes.keys()),
             "vote_counts": self._vote_counts() if self.phase in ("checking", "reveal") else {},
+            "last_ballot": {**ballot, "counts": dict(ballot["counts"])} if ballot else None,
+            "reveal_words": (dict(zip(("civilian", "spy"), WORD_PAIRS[self.pair_idx]))
+                             if self.phase == "reveal" else None),
             "eliminated_uid": self.eliminated_uid,
             "winner_uid": self.winner_uid,
             "scores": dict(self.scores),
@@ -54,15 +67,23 @@ class SpyGame(BaseGame):
             w = self.words.get(uid)
             if w is not None:
                 role = "spy" if uid == self.spy_uid else "civilian"
-                return {"role": role, "word": w}
+                return {"game": self.name, "owner_uid": uid, "round_key": self.round_key,
+                        "revision": self.revision, "role": role, "word": w,
+                        "own_vote": self.votes.get(uid) if self.phase == "voting" else None}
         return None
 
     def act(self, uid: int, action: dict) -> list:
+        if "spy_context" in action and action["spy_context"] != {
+                "round_key": self.round_key, "clue_round": self.clue_round}:
+            raise GameRuleError("这一轮已变化，请重新选择")
         if "describe" in action:
-            return self._describe(uid, action["describe"])
-        if "vote" in action:
-            return self._vote(uid, action["vote"])
-        raise GameRuleError("未知动作")
+            messages = self._describe(uid, action["describe"])
+        elif "vote" in action:
+            messages = self._vote(uid, action["vote"])
+        else:
+            raise GameRuleError("未知动作")
+        self.revision += 1
+        return messages
 
     # ---- 开局 ----
     def _deal(self) -> list:
@@ -125,6 +146,8 @@ class SpyGame(BaseGame):
         else:
             self.eliminated_uid = None
             msgs.append(f"最高票平票（{len(top)} 人），本局无人出局")
+        self.last_ballot = {"clue_round": self.clue_round, "counts": counts,
+                            "eliminated_uid": self.eliminated_uid, "tie": len(top) > 1}
         self.phase = "checking"
         if self.eliminated_uid is not None:
             self.alive.remove(self.eliminated_uid)
@@ -146,6 +169,7 @@ class SpyGame(BaseGame):
             self.phase = "reveal"
         else:
             msgs.append("卧底仍在场，进入下一轮描述")
+            self.clue_round += 1
             self.phase = "describing"
             self.speaker_idx = 0
             self.describes = []
@@ -162,6 +186,7 @@ class SpyGame(BaseGame):
         """掉线者视作退出：清理座位/词面，避免描述或投票等不到他而卡死。"""
         if uid not in self.players:
             return []
+        self.revision += 1
         msgs = [f"{self._nick(uid)} 离开了游戏"]
         was_alive = uid in self.alive
         alive_idx = self.alive.index(uid) if was_alive else None

@@ -50,6 +50,9 @@ ART_FILES = frozenset(COVERS.values()) | {
     "cards-uno-dealer.webp",
     "cards-blackjack-dealer.webp",
     "cards-matchpairs-hostess.webp",
+    "spy-roundtable.webp", "spy-word-cards.webp",
+    "spy-seat-1.webp", "spy-seat-2.webp", "spy-seat-3.webp",
+    "spy-seat-4.webp", "spy-seat-5.webp", "spy-seat-6.webp",
     "economy-kaituo-terrain-v2.webp", "kaituo-merchant.webp",
     "kaituo-goods.webp", "kaituo-models.webp",
 }

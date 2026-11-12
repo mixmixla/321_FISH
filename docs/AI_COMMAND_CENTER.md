@@ -15,14 +15,23 @@ review-packages，稳定架构见 [PROJECT_MEMORY](../PROJECT_MEMORY.md)。更�
 
 <!-- BEGIN_ROADMAP_VIEW -->
 
+## 谁是卧底网页版 · SPY-WEB-20261112
+
+**AI_ACCEPTED / PUSHED · PR #14草稿，待用户审阅确认合并。** 最终产品060d8c3，主体e22cf9c，base9e564ea，codex/spy-web-20261112。[任务](task-packages/SPY-WEB-20261112.md) / [核验](review-packages/SPY-WEB-20261112-r1.md)。原推理窗口制作，主控逐图整改并检查，独立只读审查对主体和最终中止提示补正均为PASS、0 MUST。
+
+圆桌、私词卡、真实投票和唱票已进入完整网页。4/5/6/8席，电脑1360及390px、两种胜负、平票、离席重投与中止、再开及旧帧/错误重试有原件；规则11项通过，主实盘63请求/61接受，最后中止场景8接受。按用户要求只做相关专项，保留历史失败。本款分支/PR交用户过目，明确确认后合main，其他游戏等待另选。
+
+
+2026-11-12已推送codex/spy-web-20261112，并建立[PR #14](https://github.com/mixmixla/321_FISH/pull/14)供用户过目，已核base为main9e564ea。主控到此停止，等待明确合并确认。
+
 ## 抽牌配对网页版 · MATCHPAIRS-WEB-20261111
 
-**AI_ACCEPTED / PUSHED · PR #13 草稿，待用户确认合并。** 产品候选2cdf744，base037e5d6，codex/matchpairs-web-20261111。[任务](task-packages/MATCHPAIRS-WEB-20261111.md) / [核验](review-packages/MATCHPAIRS-WEB-20261111-r1.md)。原纸牌窗口制作、主控核图、独审0 MUST；用户已授权提交，PR交本人过目后明确确认再合main。
+**MERGED_MAIN · PR #13已获用户确认并合并。** 产品候选2cdf744，base037e5d6，codex/matchpairs-web-20261111。[任务](task-packages/MATCHPAIRS-WEB-20261111.md) / [核验](review-packages/MATCHPAIRS-WEB-20261111-r1.md)。原纸牌窗口制作、主控核图、独审0 MUST；用户已授权提交，PR交本人过目后明确确认再合main。
 
 真实牌背索引、私牌、弃对、待确认及本次请求回执已核。生产HTTP/SSE有2人/5人正常开局、自然终局及再开，电脑1360与手机390实拍。规则专项71通过；页面资源13通过/1失败在同环境基线复现同一Blokus断言，保留原失败。按用户要求未跑全量。此款完成提交后停止，其他游戏继续按用户逐款选择。
 
 
-2026-11-12主控已核对远端分支b05bb57及[PR #13](https://github.com/mixmixla/321_FISH/pull/13)，base main037e5d6，PR可合并但保持草稿。用户“可以提交”已执行为分支推送与PR提交。主控按此前明确的用户确认门槛在此停止，等待确认合入main。所有本款测试与浏览器均结束。
+2026-11-12用户明确“可以合”后，[PR #13](https://github.com/mixmixla/321_FISH/pull/13)已合入main9e564ea，已审head794e251为祖先且合并树无文件差异。全部该款测试与浏览器已结束。
 
 ## 开拓实物牌桌 · KAITUO-TABLETOP-20261109
 

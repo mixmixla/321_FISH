@@ -170,6 +170,9 @@ def _SERVED_PAGE():
     from boardgames.cards_matchpairs_web import WEB_JS as matchpairs_js, WEB_CSS as matchpairs_css
     page = page.replace('/*@@CARDS_MATCHPAIRS@@*/', matchpairs_js)
     page = page.replace('/*@@CARDS_MATCHPAIRS_CSS@@*/', matchpairs_css)
+    from boardgames.spy_web import WEB_JS as spy_js, WEB_CSS as spy_css
+    page = page.replace('/*@@SPY_WEB_JS@@*/', spy_js)
+    page = page.replace('/*@@SPY_WEB_CSS@@*/', spy_css)
     return page.encode("utf-8")
 
 COOKIE_NAME = "mt_token"                 # 登录态 Cookie（HttpOnly）
@@ -612,6 +615,7 @@ body.shaking{animation:moeyu-shake .6s ease-in-out}
 body.hasBgArt #gpanel .card{background-image:linear-gradient(rgba(255,255,255,.90),rgba(255,255,255,.90)),var(--azulejo);background-size:auto,256px 256px;background-repeat:no-repeat,repeat;background-position:center,top left}
 #ghead{display:flex;align-items:center;gap:8px;font-weight:700;font-size:var(--body-font,14px);color:var(--txt)}
 #gmain{overflow:auto;max-height:50vh}
+/*@@SPY_WEB_CSS@@*/
 /* Railway map and its controls share the available height, including phones. */
 #gmain:has(.tl-map){max-height:calc(90vh - 180px)}
 #gpriv{background:var(--side);border:1px dashed var(--line);border-radius:var(--r1);padding:8px 12px;font-size:var(--secondary-font,12px);color:var(--txt)}
@@ -2606,6 +2610,7 @@ function leaveLogin(){
   state.roster=[];state.groups=[];state.convos=[];state.unread={};
   state.drafts={};state.blocked=[];state.scheds=[];state.cur={type:"public"};
   if(typeof RailTable!=='undefined')RailTable.reset();
+  SpyWeb.reset();
   state.groom=null;state.gst=null;state.gpriv=null;state.glog=[];state.grooms=[];state.gleft={};
   const msgs=document.getElementById("msgs");if(msgs)msgs.innerHTML="";
   const gpanel=document.getElementById("gpanel");if(gpanel)gpanel.remove();
@@ -3855,9 +3860,11 @@ function openStream(){
       if(!state.groom&&inR)openGamePanel(d.room_id);       // 建房/加入自动开面板
       if(state.groom===d.room_id){
         const previous=state.gst&&state.gst.room;
+        if(d.room.game==="spy"&&SpyWeb.stalePublic(state.gst,d))return;
         if(!previous||previous.round!==d.room.round||d.room.status==="created"){
           if(typeof RailTable!=='undefined')RailTable.reset();
           state.gpriv=null;state.glog=[];}
+        if(d.room.game==="spy"&&!SpyWeb.validPrivate(d,state.gpriv))state.gpriv=null;
         if(d.room.status!=="playing"&&!(d.room.game==="matchpairs"&&d.room.status==="ended"))state.gpriv=null;
         state.gst=d;(d.events||[]).forEach(e=>state.glog.push(e));
         if(state.glog.length>200)state.glog=state.glog.slice(-200);
@@ -3865,6 +3872,8 @@ function openStream(){
     else if(d.t==="game_private"){                         // R49：私密投递（手牌/词面）
       if(state.groom===d.room_id&&state.gst&&state.gst.room
           &&state.gst.room.status==="playing"){
+        if((state.gst.room.game==="spy"||d.state?.game==="spy")
+            &&(state.gst.room.game!=="spy"||!SpyWeb.validPrivate(state.gst,d.state)))return;
         state.gpriv=d.state;renderGamePanel();}}
     else if(d.t==="fish_board"){                           // R70H：排行榜实时刷新（广播/单播同形）
       if(d.game){state.fish=Object.assign({},state.fish||{});state.fish[d.game]=d.entries||[];}
@@ -4317,18 +4326,22 @@ function renderGamePanel(){
   const head=$("#ghead");head.innerHTML="";
   const st=state.gst,room=st?st.room:null;
   const gname=room?room.game:"";
+  const spySyncing=gname==="spy"&&room.room_id!==state.groom;
+  p.classList.toggle("spy-room",gname==="spy");
   const meta=state.gmeta[gname]||{};
   const title=document.createElement("span");title.style.cssText="display:flex;align-items:center;gap:6px";
-  if(room){title.appendChild(gImg(gname,20));}
+  if(room&&!spySyncing){title.appendChild(gImg(gname,20));}
   const roomSz=(room&&room.options&&room.options.size)?"·"+room.options.size+"路":"";
-  title.appendChild(document.createTextNode(room?((meta.label||gname)+roomSz+" · "+room.room_id+" · "
+  title.appendChild(document.createTextNode(spySyncing?"正在同步牌桌…":room?((meta.label||gname)+roomSz+" · "+room.room_id+" · "
     +({created:"等待中",playing:"对局中",ended:"已结束"}[room.status]||room.status)):"已离开房间…"));
   head.appendChild(title);
   const sp=document.createElement("span");sp.style.flex="1";head.appendChild(sp);
-  if(room){
+  if(room&&!spySyncing){
     if(room.status==="created"&&room.owner_uid===state.uid)
-      head.appendChild(gHeadBtn("▶ 开始对局",()=>gameAPI("start",{room_id:room.room_id})));
-    head.appendChild(gHeadBtn("🚪 离开",()=>gameAPI("leave",{room_id:room.room_id},true)));
+      head.appendChild(gname==="spy"?SpyWeb.headerButton(st,"start","▶ 开始对局")
+        :gHeadBtn("▶ 开始对局",()=>gameAPI("start",{room_id:room.room_id})));
+    head.appendChild(gname==="spy"?SpyWeb.headerButton(st,"leave","🚪 离开")
+      :gHeadBtn("🚪 离开",()=>gameAPI("leave",{room_id:room.room_id},true)));
   }
   head.appendChild(gHeadBtn(state.gfull?"⛶ 还原":"⛶ 放大",()=>{
     state.gfull=!state.gfull;
@@ -4338,6 +4351,11 @@ function renderGamePanel(){
   head.appendChild(gHeadBtn("✕",hideGamePanel));
   const lb=$("#glog");lb.innerHTML="";(state.glog||[]).forEach(gLog);
   const main=$("#gmain"),priv=$("#gpriv");
+  if(gname==="spy"){
+    priv.style.display="none";priv.replaceChildren();main.inert=false;
+    SpyWeb.render(main,st);
+    return;
+  }
   main.innerHTML="";priv.style.display="none";priv.innerHTML="";
   if(!room)return;
   main.inert=room.status==="ended";
@@ -4362,7 +4380,6 @@ function renderGamePanel(){
     if(pv.hand)bits.push("🂠 你的手牌："+(Array.isArray(pv.hand)
       ?pv.hand.join(" ")
       :Object.keys(pv.hand).map(k=>k+"×"+pv.hand[k]).join(" ")));
-    if(gname==="spy")bits.push(roleIcon("spy",pv)+" 身份："+(pv.role==="spy"?"卧底":"平民")+" · 词："+esc(pv.word));
     if(pv.hint)bits.push(esc(pv.hint));
     if(pv.stats&&gname==="betrayal"){
       bits.push("💪 力量"+pv.stats.might+"　🏃 速度"+pv.stats.speed
@@ -4393,6 +4410,7 @@ function gLegalTos(fx,fy){
 // ---- 各游戏渲染器（s = game_state.state）----
 /*@@GOMOKU_ART@@*/
 /*@@CARD_TABLE_JS@@*/
+/*@@SPY_WEB_JS@@*/
 /*@@ARCADE_ORCHARD_JS@@*/
 /*@@ARCADE_YACHT_JS@@*/
 /*@@ARCADE_ATELIER_JS@@*/
@@ -4552,38 +4570,6 @@ const GRENDER={
       }
     }
     box.appendChild(section);
-  },
-  spy(box,s){
-    const d=document.createElement("div");d.style.cssText="padding:4px";
-    const alive=s.alive||[];
-    d.innerHTML="<div class='gsec'>存活 "+alive.length+" 人 · 阶段："+({describing:"轮流描述",voting:"投票中",
-      checking:"唱票",reveal:"揭晓",dealing:"发牌"}[s.status]||s.status)+"</div>"
-      +(s.speaker_uid?"<div>🎤 发言："+esc(gnick(s.speaker_uid))+"</div>":"")
-      +(s.spy_uid!=null?"<div>🕵️ 卧底是 "+esc(gnick(s.spy_uid))+"</div>":"")
-      +(s.winner_uid!=null?"<div>🏆 "+esc(gnick(s.winner_uid))+" 阵营胜</div>":"");
-    box.appendChild(d);
-    (s.describes||[]).forEach(x=>gLog("💬 "+gnick(x.uid)+"："+x.text));
-    if(s.status==="describing"&&s.speaker_uid===state.uid){
-      const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;margin:8px 0";
-      const inp=document.createElement("input");inp.placeholder="描述你的词（别说破）";
-      inp.style.cssText="flex:1;border:1px solid var(--line,#ddd);border-radius:8px;padding:4px 8px";
-      const b=document.createElement("button");b.className="gbtn";b.textContent="发言";
-      b.onclick=()=>{const t=inp.value.trim();if(t)gameAPI("action",{room_id:state.groom,action:{describe:t}})};
-      bar.append(inp,b);box.appendChild(bar);}
-    if(s.status==="voting"){
-      const voted=s.voted||[];
-      const w=document.createElement("div");w.className="gsec";
-      w.textContent="投票（已投 "+voted.length+" 人）"+(voted.includes(state.uid)?"　✅ 你已投票":"");box.appendChild(w);
-      if(!voted.includes(state.uid)&&alive.includes(state.uid)){
-        const bar=document.createElement("div");bar.style.cssText="display:flex;gap:6px;flex-wrap:wrap";
-        alive.forEach(u=>{if(u!==state.uid)bar.appendChild(gBtn("投 "+gnick(u),{vote:u}))});
-        box.appendChild(bar);}}
-    if(s.vote_counts&&Object.keys(s.vote_counts).length){
-      const t=document.createElement("div");t.style.fontSize="12px";t.style.marginTop="6px";
-      t.innerHTML="<div class='gsec'>票数</div>"+Object.entries(s.vote_counts)
-        .map(([u,v])=>esc(gnick(+u))+"："+v+" 票").join("　");box.appendChild(t);}
-    box.appendChild(Object.assign(document.createElement("div"),
-      {innerHTML:"<div class='gsec'>积分</div>"+scoreHTML(s.scores)}));
   },
   onewolf(box,s){
     const me=state.uid, pv=state.gpriv;
@@ -6749,7 +6735,15 @@ class _Handler(BaseHTTPRequestHandler):
                 return
             header["action"] = action
         matchpairs = None
+        spy_request = op == "action" and "spy_context" in header["action"]
         accepted = False
+        if spy_request:
+            with self.hub.rooms.lock:
+                room = self.hub.rooms.room_for(header["room_id"])
+                spy_room = room is not None and room.game_name == "spy"
+            if not spy_room:
+                self._json(409, {"ok": False, "refresh": True, "error": "牌桌已变化，请重新选择"})
+                return
         if op == "action" and "index" in header["action"]:
             with self.hub.rooms.lock:
                 room = self.hub.rooms.room_for(header["room_id"])
@@ -6760,15 +6754,18 @@ class _Handler(BaseHTTPRequestHandler):
                                            or action.get("seq") != matchpairs.seq):
                 self._json(409, {"ok": False, "refresh": True, "error": "牌面已变化，请重新选择"})
                 return
-            if matchpairs is not None:
-                def acknowledge():
-                    nonlocal accepted
-                    accepted = True
+        if matchpairs is not None or spy_request:
+            def acknowledge():
+                nonlocal accepted
+                accepted = True
 
-                header["_on_game_action_accepted"] = acknowledge
+            header["_on_game_action_accepted"] = acknowledge
         self.hub.dispatch(sess, header)
         if matchpairs is not None and not accepted:
             self._json(409, {"ok": False, "refresh": True, "error": "抽牌未完成，请重新选择"})
+            return
+        if spy_request and not accepted:
+            self._json(409, {"ok": False, "refresh": True, "error": "这一轮已变化或行动无效，请重试"})
             return
         self._json(200, {"ok": True})
 

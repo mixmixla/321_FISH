@@ -22,6 +22,8 @@
 
 ## Architecture
 
+- 谁是卧底网页以 boardgames/spy_web.py 的圆桌/私词卡呈现。座位图依公开入席序固定；revision、clue_round与round_key用于帧及行动归属，last_ballot保留上一轮真实唱票，reveal_words仅在reveal公开。RoomManager人数不足中止与SpyGame自然胜负分开显示。
+
 - 抽牌配对网页由 boardgames/cards_matchpairs_web.py 绘制真实牌背索引与本人手牌。新请求用本局标识和序号校验目标牌位，public只公开已成对弃牌，drawn_card只在本人private；原无index的随机抽牌调用仍可用。
 
 - 开拓实物牌桌在 boardgames/economy_kaituo.py 与 kaituo_web.py，货物与模型图集由 kaituo_objects.py 等格取图。rules snapshot 的 last_dice/production 显示实际骰面与入账，action_seq 用于同帧提交锁，last_trade 仅记录最后成功交易。柜台娘取固定11∶12图，视口变化时重排桌面。
